@@ -1,9 +1,6 @@
-use std::collections::HashMap;
-use std::fmt::Debug;
-use std::sync::Arc;
-use tokio::sync::mpsc;
-use tokio::sync::Mutex;
-use tokio::sync::RwLock;
+use std::{collections::HashMap, fmt::Debug, sync::Arc};
+
+use tokio::sync::{mpsc, Mutex, RwLock};
 
 #[derive(Clone)]
 pub struct MpscRegistry<T: Debug> {
@@ -33,7 +30,10 @@ impl<T: Debug> MpscRegistry<T> {
     pub async fn send_msg(&self, relationship_key: &str, message: T) {
         let inner = self.sending.read().await;
         if let Some(sender) = inner.get(relationship_key) {
-            sender.send(message).await.expect("Channel is probably closed.")
+            sender
+                .send(message)
+                .await
+                .expect("Channel is probably closed.")
         } else {
             panic!("Relationship {} not found.", relationship_key);
         }

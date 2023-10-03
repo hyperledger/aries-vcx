@@ -1,12 +1,13 @@
-use actix_web::dev::Server;
-use actix_web::{
-    get, post,
-    web::{self, Bytes},
-    App, HttpResponse, HttpServer, Responder,
-};
 use std::{
     collections::{HashMap, VecDeque},
     sync::Mutex,
+};
+
+use actix_web::{
+    dev::Server,
+    get, post,
+    web::{self, Bytes},
+    App, HttpResponse, HttpServer, Responder,
 };
 
 pub type UserMessage = Vec<u8>;
@@ -21,14 +22,12 @@ pub struct UserMessagesById {
 }
 
 pub struct AppState {
-    user_messages: UserMessagesById
+    user_messages: UserMessagesById,
 }
 
 impl AppState {
     pub fn new(user_messages: UserMessagesById) -> Self {
-        AppState {
-            user_messages
-        }
+        AppState { user_messages }
     }
 }
 
@@ -54,7 +53,11 @@ async fn pop_user_message(path: web::Path<String>, data: web::Data<AppState>) ->
 }
 
 #[post("/send_user_message/{user_id}")]
-async fn send_user_message(path: web::Path<String>, body: Bytes, state: web::Data<AppState>) -> impl Responder {
+async fn send_user_message(
+    path: web::Path<String>,
+    body: Bytes,
+    state: web::Data<AppState>,
+) -> impl Responder {
     let user_id = path.into_inner();
     info!("Received message, user_id: {user_id}");
 

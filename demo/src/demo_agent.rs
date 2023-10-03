@@ -1,37 +1,44 @@
-use std::fmt::Debug;
-use std::sync::Arc;
-use async_trait::async_trait;
+use std::{fmt::Debug, sync::Arc};
 
+use aries_vcx::{
+    errors::error::VcxResult,
+    handlers::{out_of_band::sender::OutOfBandSender, util::AnyInvitation},
+    messages::msg_fields::protocols::out_of_band::invitation::OobService,
+    protocols::connection::{
+        invitee::{
+            states::{
+                completed::Completed, initial::Initial, requested::Requested as InviteeRequested,
+            },
+            InviteeConnection,
+        },
+        inviter::{states::requested::Requested as InviterRequested, InviterConnection},
+        pairwise_info::PairwiseInfo,
+        trait_bounds::TheirDidDoc,
+        Connection,
+    },
+    utils::{encryption_envelope::EncryptionEnvelope, mockdata::profile::mock_ledger::MockLedger},
+};
+use aries_vcx_core::{
+    ledger::base_ledger::IndyLedgerRead,
+    wallet::{
+        base_wallet::BaseWallet,
+        indy::{wallet::create_and_open_wallet, IndySdkWallet, WalletConfig},
+    },
+};
+use async_trait::async_trait;
+use diddoc_legacy::aries::service::AriesService;
 use env_logger;
+use messages::{
+    msg_fields::protocols::{
+        basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators},
+        connection::{request::Request, response::Response},
+        out_of_band::invitation::Invitation,
+    },
+    AriesMessage,
+};
 use serde::Deserialize;
 use tokio::sync::mpsc::{Receiver, Sender};
 use url::Url;
-use aries_vcx::errors::error::VcxResult;
-
-use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-use aries_vcx::handlers::util::AnyInvitation;
-use aries_vcx::messages::msg_fields::protocols::out_of_band::invitation::OobService;
-use aries_vcx::protocols::connection::invitee::states::completed::Completed;
-use aries_vcx::protocols::connection::invitee::states::initial::Initial;
-use aries_vcx::protocols::connection::invitee::states::requested::Requested as InviteeRequested;
-use aries_vcx::protocols::connection::invitee::InviteeConnection;
-use aries_vcx::protocols::connection::inviter::states::requested::Requested as InviterRequested;
-use aries_vcx::protocols::connection::inviter::InviterConnection;
-use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
-use aries_vcx::protocols::connection::trait_bounds::TheirDidDoc;
-use aries_vcx::protocols::connection::Connection;
-use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
-use aries_vcx::utils::mockdata::profile::mock_ledger::MockLedger;
-use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy::wallet::create_and_open_wallet;
-use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
-use diddoc_legacy::aries::service::AriesService;
-use messages::msg_fields::protocols::basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators};
-use messages::msg_fields::protocols::connection::request::Request;
-use messages::msg_fields::protocols::connection::response::Response;
-use messages::msg_fields::protocols::out_of_band::invitation::Invitation;
-use messages::AriesMessage;
 
 use crate::mpsc_registry::MpscRegistry;
 
@@ -69,7 +76,9 @@ pub static COLOR_GREEN: &str = "\x1b[32m";
 
 impl DemoAgent {
     pub async fn new(name: String, mediator_base_url: Url, log_color: String) -> DemoAgent {
-        let endpoint_url = mediator_base_url.join(&format!("/send_user_message/{name}")).unwrap();
+        let endpoint_url = mediator_base_url
+            .join(&format!("/send_user_message/{name}"))
+            .unwrap();
         let agent_uuid = uuid::Uuid::new_v4().to_string();
         let wallet_config = WalletConfig {
             wallet_name: format!("demo_{name}_{agent_uuid}"),
@@ -82,7 +91,9 @@ impl DemoAgent {
             rekey_derivation_method: None,
         };
         let handle = create_and_open_wallet(&wallet_config).await.unwrap();
-        let wallet = IndySdkWallet { wallet_handle: handle };
+        let wallet = IndySdkWallet {
+            wallet_handle: handle,
+        };
         info!("Created agent {name} with mediator endpoint {endpoint_url}");
         DemoAgent {
             channels_didcomm: MpscRegistry::new(),
@@ -98,8 +109,9 @@ impl DemoAgent {
         self.name.clone()
     }
 
-    // the reason why we return in Arc is because we don't want fail send if receiver has been dropped somewhere
-    // That simulates reality. Just because we send didcomm message, doesn't mean someone is going to be waiting for it and read it
+    // the reason why we return in Arc is because we don't want fail send if receiver has been
+    // dropped somewhere That simulates reality. Just because we send didcomm message, doesn't
+    // mean someone is going to be waiting for it and read it
     pub async fn register_didcomm_channel(
         &self,
         transport_id: String,
@@ -114,13 +126,21 @@ impl DemoAgent {
             .await;
     }
 
-    pub async fn register_invitation_receiver(&self, transport_id: String, invitation_receiver: Receiver<Invitation>) {
+    pub async fn register_invitation_receiver(
+        &self,
+        transport_id: String,
+        invitation_receiver: Receiver<Invitation>,
+    ) {
         self.channels_invitations
             .register_receiver(transport_id, invitation_receiver)
             .await
     }
 
-    pub async fn register_invitation_sender(&self, transport_id: String, invitation_sender: Sender<Invitation>) {
+    pub async fn register_invitation_sender(
+        &self,
+        transport_id: String,
+        invitation_sender: Sender<Invitation>,
+    ) {
         self.channels_invitations
             .register_sender(transport_id, invitation_sender)
             .await
@@ -136,10 +156,17 @@ impl DemoAgent {
         T: for<'de> Deserialize<'de>,
         T: Debug,
     {
-        info!("{}Agent[{}] is waiting for didcomm message", self.name, self.log_color);
+        info!(
+            "{}Agent[{}] is waiting for didcomm message",
+            self.name, self.log_color
+        );
         let didcomm_msg = self.channels_didcomm.receive_msg(transport_id).await;
-        let unpacked_msg =  self.wallet.unpack_message(&didcomm_msg.0.as_slice()).await.unwrap();
-        let payload_msg: T = serde_json::from_str(&unpacked_msg.message).unwrap();;
+        let unpacked_msg = self
+            .wallet
+            .unpack_message(&didcomm_msg.0.as_slice())
+            .await
+            .unwrap();
+        let payload_msg: T = serde_json::from_str(&unpacked_msg.message).unwrap();
         info!(
             "{}Agent[{}] has received a message sender verkey: {:?}",
             self.name, self.log_color, &unpacked_msg.sender_verkey
@@ -163,11 +190,17 @@ impl DemoAgent {
     }
 
     pub async fn send_invitation_message(&self, transport_id: &str, message: Invitation) {
-        self.channels_invitations.send_msg(transport_id, message).await
+        self.channels_invitations
+            .send_msg(transport_id, message)
+            .await
     }
 
     pub async fn prepare_invitation(&self) -> (Invitation, PairwiseInfo) {
-        let (faber_pw_did, faber_invite_key) = self.wallet.create_and_store_my_did(None, None).await.unwrap();
+        let (faber_pw_did, faber_invite_key) = self
+            .wallet
+            .create_and_store_my_did(None, None)
+            .await
+            .unwrap();
         let service = AriesService {
             id: uuid::Uuid::new_v4().to_string(),
             type_: "".to_string(),
@@ -195,7 +228,11 @@ impl DemoAgent {
         &self,
         msg_oob_invitation: Invitation,
     ) -> (InviteeConnection<InviteeRequested>, EncryptionEnvelope) {
-        let (pw_did, pw_vk) = self.wallet.create_and_store_my_did(None, None).await.unwrap();
+        let (pw_did, pw_vk) = self
+            .wallet
+            .create_and_store_my_did(None, None)
+            .await
+            .unwrap();
         info!(
             "{}Agent[{}] in role of invitee generated pairwise key {pw_vk}",
             self.name, self.log_color
@@ -232,26 +269,23 @@ impl DemoAgent {
         msg_request: Request,
         faber_invite_info: PairwiseInfo,
     ) -> (InviterConnection<InviterRequested>, EncryptionEnvelope) {
-        let inviter_invited = InviterConnection::new_inviter("".to_owned(), faber_invite_info).into_invited(
-            &msg_request
-                .decorators
-                .thread
-                .as_ref()
-                .map(|t| t.thid.as_str())
-                .unwrap_or(msg_request.id.as_str()),
-        );
+        let inviter_invited = InviterConnection::new_inviter("".to_owned(), faber_invite_info)
+            .into_invited(
+                &msg_request
+                    .decorators
+                    .thread
+                    .as_ref()
+                    .map(|t| t.thid.as_str())
+                    .unwrap_or(msg_request.id.as_str()),
+            );
         let inviter_requested = inviter_invited
-            .handle_request(
-                &self.wallet,
-                msg_request,
-                self.endpoint_url.clone(),
-                vec![],
-            )
+            .handle_request(&self.wallet, msg_request, self.endpoint_url.clone(), vec![])
             .await
             .unwrap();
         let msg_response = inviter_requested.get_connection_response_msg();
         info!(
-            "{}Agent[{}] in role of inviter processed connection-request and is sending connection-response {}",
+            "{}Agent[{}] in role of inviter processed connection-request and is sending \
+             connection-response {}",
             self.name,
             self.log_color,
             serde_json::to_string(&msg_response).unwrap()
@@ -281,7 +315,11 @@ impl DemoAgent {
         invitee_complete
     }
 
-    pub async fn encrypt_message<I, S>(&self, connection: Connection<I, S>, message: AriesMessage) -> EncryptionEnvelope
+    pub async fn encrypt_message<I, S>(
+        &self,
+        connection: Connection<I, S>,
+        message: AriesMessage,
+    ) -> EncryptionEnvelope
     where
         S: TheirDidDoc,
     {
@@ -291,6 +329,9 @@ impl DemoAgent {
             self.log_color,
             serde_json::to_string(&message).unwrap()
         );
-        connection.encrypt_message(&self.wallet, &message).await.unwrap()
+        connection
+            .encrypt_message(&self.wallet, &message)
+            .await
+            .unwrap()
     }
 }

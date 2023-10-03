@@ -23,7 +23,7 @@ mod tests {
         test::{self, TestRequest},
         web, App,
     };
-    use simple_message_relay::{UserMessages, pop_user_message, send_user_message, AppState};
+    use simple_message_relay::{pop_user_message, send_user_message, AppState, UserMessages};
 
     fn pop_message_request(user_id: &str) -> TestRequest {
         test::TestRequest::get().uri(&format!("/pop_user_message/{user_id}"))
@@ -51,7 +51,8 @@ mod tests {
         let user_id = "user1";
 
         // pop for unknown user == NO CONTENT
-        let pop_response = test::call_service(&app, pop_message_request(user_id).to_request()).await;
+        let pop_response =
+            test::call_service(&app, pop_message_request(user_id).to_request()).await;
         assert_eq!(pop_response.status(), StatusCode::NO_CONTENT);
         let body = pop_response.into_body();
         assert!(body::to_bytes(body).await.unwrap().is_empty());
@@ -64,13 +65,15 @@ mod tests {
         assert!(resp.status().is_success());
 
         // pop for known user == OK and body
-        let pop_response = test::call_service(&app, pop_message_request(user_id).to_request()).await;
+        let pop_response =
+            test::call_service(&app, pop_message_request(user_id).to_request()).await;
         assert_eq!(pop_response.status(), StatusCode::OK);
         let body = pop_response.into_body();
         assert_eq!(body::to_bytes(body).await.unwrap(), message.as_bytes());
 
         // pop for no messages == NO CONTENT
-        let pop_response = test::call_service(&app, pop_message_request(user_id).to_request()).await;
+        let pop_response =
+            test::call_service(&app, pop_message_request(user_id).to_request()).await;
         assert_eq!(pop_response.status(), StatusCode::NO_CONTENT);
         let body = pop_response.into_body();
         assert!(body::to_bytes(body).await.unwrap().is_empty());
@@ -105,15 +108,27 @@ mod tests {
 
         // pop and check
         let res = test::call_service(&app, pop_message_request(user_id1).to_request()).await;
-        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message1.as_bytes());
+        assert_eq!(
+            body::to_bytes(res.into_body()).await.unwrap(),
+            message1.as_bytes()
+        );
 
         let res = test::call_service(&app, pop_message_request(user_id2).to_request()).await;
-        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message3.as_bytes());
+        assert_eq!(
+            body::to_bytes(res.into_body()).await.unwrap(),
+            message3.as_bytes()
+        );
 
         let res = test::call_service(&app, pop_message_request(user_id1).to_request()).await;
-        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message2.as_bytes());
+        assert_eq!(
+            body::to_bytes(res.into_body()).await.unwrap(),
+            message2.as_bytes()
+        );
 
         let res = test::call_service(&app, pop_message_request(user_id2).to_request()).await;
-        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message4.as_bytes());
+        assert_eq!(
+            body::to_bytes(res.into_body()).await.unwrap(),
+            message4.as_bytes()
+        );
     }
 }
