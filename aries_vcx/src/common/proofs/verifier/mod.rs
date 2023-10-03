@@ -75,7 +75,7 @@ pub mod integration_tests {
             },
         },
         errors::error::AriesVcxErrorKind,
-        utils::{self, constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupProfile},
+        utils::{self, constants::DEFAULT_SCHEMA_ATTRS},
     };
 
     // FUTURE - issuer and holder seperation only needed whilst modular deps not fully implemented

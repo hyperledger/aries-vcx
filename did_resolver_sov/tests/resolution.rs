@@ -7,7 +7,6 @@ use aries_vcx::{
     },
     core::profile::Profile,
     run_setup,
-    utils::devsetup::SetupProfile,
 };
 use did_resolver::{
     did_parser::Did,

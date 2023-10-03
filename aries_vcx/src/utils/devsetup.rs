@@ -30,16 +30,6 @@ use crate::{
     utils::{constants::POOL1_TXN, file::write_file, test_logger::LibvcxDefaultLogger},
 };
 
-#[macro_export]
-macro_rules! assert_match {
-    ($pattern:pat, $var:expr) => {
-        assert!(match $var {
-            $pattern => true,
-            _ => false,
-        })
-    };
-}
-
 lazy_static! {
     static ref TEST_LOGGING_INIT: Once = Once::new();
 }
@@ -50,16 +40,11 @@ pub fn init_test_logging() {
     })
 }
 
-pub fn create_new_seed() -> String {
-    let x = rand::random::<u32>();
-    format!("{x:032}")
-}
-
 pub struct SetupEmpty;
 
 pub struct SetupDefaults;
 
-pub struct SetupMocks {}
+pub struct SetupMocks;
 
 pub const AGENCY_ENDPOINT: &str = "http://localhost:8080";
 pub const AGENCY_DID: &str = "VsKV7grR1BUE29mG2Fm2kX";
@@ -250,9 +235,13 @@ macro_rules! run_setup {
             .await
             .unwrap();
 
-        SetupProfile::new(public_did.to_string(), profile, genesis_file_path)
-            .await
-            .run($func)
+        $crate::utils::devsetup::SetupProfile::new(
+            public_did.to_string(),
+            profile,
+            genesis_file_path,
+        )
+        .await
+        .run($func)
     }};
 }
 

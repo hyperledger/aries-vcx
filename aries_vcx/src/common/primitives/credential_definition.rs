@@ -279,7 +279,7 @@ pub mod integration_tests {
             },
             test_utils::create_and_write_test_schema,
         },
-        utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupProfile},
+        utils::constants::DEFAULT_SCHEMA_ATTRS,
     };
 
     #[tokio::test]

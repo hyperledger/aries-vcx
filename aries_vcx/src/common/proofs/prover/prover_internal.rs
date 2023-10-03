@@ -281,10 +281,7 @@ pub mod pool_tests {
 
     use crate::{
         common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver},
-        utils::{
-            constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
-            devsetup::SetupProfile,
-        },
+        utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
     };
 
     #[tokio::test]

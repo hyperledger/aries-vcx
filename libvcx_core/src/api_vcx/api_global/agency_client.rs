@@ -91,10 +91,11 @@ pub async fn provision_cloud_agent(
 
 #[cfg(test)]
 pub mod tests {
+    use agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::{
         agency_client::{
-            configuration::AgentProvisionConfig, messages::update_message::UIDsByConn,
-            testing::mocking::AgencyMockDecrypted, MessageStatusCode,
+            messages::update_message::UIDsByConn, testing::mocking::AgencyMockDecrypted,
+            MessageStatusCode,
         },
         utils::{constants, devsetup::SetupMocks},
     };
