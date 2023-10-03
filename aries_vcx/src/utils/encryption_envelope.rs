@@ -10,7 +10,6 @@ use uuid::Uuid;
 
 use crate::{errors::error::prelude::*, global::settings, utils::constants};
 
-type AriesMessageBytes = [u8];
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
 
@@ -19,7 +18,7 @@ impl EncryptionEnvelope {
     /// If did_doc includes routing_keys, then also wrap in appropriate layers of forward message.
     pub async fn create(
         wallet: &impl BaseWallet,
-        message: &AriesMessageBytes,
+        message: &[u8],
         pw_verkey: Option<&str>,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<EncryptionEnvelope> {
@@ -44,7 +43,7 @@ impl EncryptionEnvelope {
 
     async fn encrypt_for_pairwise(
         wallet: &impl BaseWallet,
-        message: &AriesMessageBytes,
+        message: &[u8],
         pw_verkey: Option<&str>,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<Vec<u8>> {
