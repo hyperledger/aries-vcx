@@ -305,7 +305,7 @@ where
         )?;
 
         wallet
-            .add(&record.type_, &record.id, &record.value, &record.tags)
+            .add(&record.type_, &record.id, &record.value, &record.tags, true)
             .await?;
     }
 

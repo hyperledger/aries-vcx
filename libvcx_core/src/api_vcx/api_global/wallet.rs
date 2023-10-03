@@ -15,7 +15,7 @@ use aries_vcx::{
             base_wallet::BaseWallet,
             indy::{
                 internal::{close_search_wallet, fetch_next_records_wallet, open_search_wallet},
-                wallet::{close_wallet, create_and_open_wallet, delete_wallet, import},
+                wallet::{close_wallet, create_indy_wallet, import, open_wallet},
                 IndySdkWallet, IssuerConfig, RestoreWalletConfigs, WalletConfig,
             },
             structs_io::UnpackMessageOutput,
@@ -282,7 +282,11 @@ pub async fn wallet_import(config: &RestoreWalletConfigs) -> LibvcxResult<()> {
 
 pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
     let src_wallet_handle = get_main_wallet_handle()?;
-    let dest_wallet_handle = create_and_open_wallet(wallet_config).await?;
+    info!("Assuring target wallet exists.");
+    create_indy_wallet(wallet_config).await?;
+    info!("Opening target wallet.");
+    let dest_wallet_handle = open_wallet(wallet_config).await?;
+    info!("Target wallet is ready.");
 
     let migration_res = wallet_migrator::migrate_wallet(
         src_wallet_handle,
@@ -291,18 +295,11 @@ pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
     )
     .await;
 
-    if let Err(e) = migration_res {
-        close_wallet(dest_wallet_handle).await.ok();
-        delete_wallet(wallet_config).await.ok();
-        Err(LibvcxError::from_msg(
-            LibvcxErrorKind::WalletMigrationFailed,
-            e,
-        ))
-    } else {
-        setup_wallet(dest_wallet_handle)?;
-        close_wallet(src_wallet_handle).await?;
-        Ok(())
-    }
+    info!("Closing source and target wallets");
+    close_wallet(src_wallet_handle).await.ok();
+    close_wallet(dest_wallet_handle).await.ok();
+
+    migration_res.map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::WalletMigrationFailed, e))
 }
 
 #[allow(clippy::unwrap_used)]

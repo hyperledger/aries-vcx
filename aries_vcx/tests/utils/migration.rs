@@ -55,7 +55,7 @@ where
         let old_wh = self.profile.wallet_handle().unwrap();
         let new_wh = migrate_to_new_wallet(old_wh).await;
         let wallet = Arc::new(IndySdkWallet::new(new_wh));
-        let profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet.clone());
+        let profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet);
 
         TestAgent {
             profile,
