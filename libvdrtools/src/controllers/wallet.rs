@@ -9,7 +9,7 @@ use indy_api_types::{
 use indy_utils::crypto::{
     chacha20poly1305_ietf, chacha20poly1305_ietf::Key as MasterKey, randombytes,
 };
-use indy_wallet::{KeyDerivationData, WalletService};
+use indy_wallet::{KeyDerivationData, MigrationResult, WalletService};
 
 use crate::{services::CryptoService, utils::crypto::base58::ToBase58};
 
@@ -59,7 +59,7 @@ impl WalletController {
     /// Algorithm to use for wallet key derivation:                          ARGON2I_MOD -
     /// derive secured wallet master key (used by default)                          ARGON2I_INT
     /// - derive secured wallet master key (less secured but faster)
-    /// RAW - raw wallet key master provided (skip derivation).                                
+    /// RAW - raw wallet key master provided (skip derivation).
     /// RAW keys can be generated with indy_generate_wallet_key call }
     ///
     /// #Returns
@@ -104,7 +104,7 @@ impl WalletController {
     ///                       'Default' storage type allows to store wallet data in the local file.
     ///                       Custom storage types can be registered with
     /// indy_register_wallet_storage call.       "storage_config": optional<object>, Storage
-    /// configuration json. Storage type defines set of supported keys.                         
+    /// configuration json. Storage type defines set of supported keys.
     /// Can be optional if storage supports default configuration.                         For
     /// 'default' storage type configuration is:           {
     ///              "path": optional<string>, Path to the directory with wallet files.
@@ -124,13 +124,13 @@ impl WalletController {
     ///                      Look to key_derivation_method param for information about supported key
     /// derivation methods.       "rekey": optional<string>, If present than wallet master key
     /// will be rotated to a new one.       "storage_credentials": optional<object> Credentials
-    /// for wallet storage. Storage type defines set of supported keys.                         
-    /// Can be optional if storage supports default configuration.                              
+    /// for wallet storage. Storage type defines set of supported keys.
+    /// Can be optional if storage supports default configuration.
     /// For 'default' storage type should be empty.       "key_derivation_method":
-    /// optional<string> Algorithm to use for wallet key derivation:                          
-    /// ARGON2I_MOD - derive secured wallet master key (used by default)                        
-    /// ARGON2I_INT - derive secured wallet master key (less secured but faster)                
-    /// RAW - raw wallet key master provided (skip derivation).                                
+    /// optional<string> Algorithm to use for wallet key derivation:
+    /// ARGON2I_MOD - derive secured wallet master key (used by default)
+    /// ARGON2I_INT - derive secured wallet master key (less secured but faster)
+    /// RAW - raw wallet key master provided (skip derivation).
     /// RAW keys can be generated with indy_generate_wallet_key call
     ///       "rekey_derivation_method": optional<string> Algorithm to use for wallet rekey
     /// derivation:                          ARGON2I_MOD - derive secured wallet master rekey
@@ -225,9 +225,9 @@ impl WalletController {
     /// optional if storage supports default configuration.                          For
     /// 'default' storage type should be empty.   "key_derivation_method": optional<string>
     /// Algorithm to use for wallet key derivation:                             ARGON2I_MOD -
-    /// derive secured wallet master key (used by default)                             
-    /// ARGON2I_INT - derive secured wallet master key (less secured but faster)                
-    /// RAW - raw wallet key master provided (skip derivation).                                
+    /// derive secured wallet master key (used by default)
+    /// ARGON2I_INT - derive secured wallet master key (less secured but faster)
+    /// RAW - raw wallet key master provided (skip derivation).
     /// RAW keys can be generated with indy_generate_wallet_key call }
     ///
     /// #Returns
@@ -339,9 +339,9 @@ impl WalletController {
     /// optional if storage supports default configuration.                          For
     /// 'default' storage type should be empty.   "key_derivation_method": optional<string>
     /// Algorithm to use for wallet key derivation:                             ARGON2I_MOD -
-    /// derive secured wallet master key (used by default)                             
-    /// ARGON2I_INT - derive secured wallet master key (less secured but faster)                
-    /// RAW - raw wallet key master provided (skip derivation).                                
+    /// derive secured wallet master key (used by default)
+    /// ARGON2I_INT - derive secured wallet master key (less secured but faster)
+    /// RAW - raw wallet key master provided (skip derivation).
     /// RAW keys can be generated with indy_generate_wallet_key call }
     /// import_config: Import settings json.
     /// {
@@ -392,7 +392,7 @@ impl WalletController {
         old_wh: WalletHandle,
         new_wh: WalletHandle,
         migrate_fn: impl FnMut(Record) -> Result<Option<Record>, E>,
-    ) -> IndyResult<()>
+    ) -> IndyResult<MigrationResult>
     where
         E: std::fmt::Display,
     {

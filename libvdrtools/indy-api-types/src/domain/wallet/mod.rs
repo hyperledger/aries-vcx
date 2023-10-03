@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 use serde_json::value::Value;
 
@@ -75,7 +75,7 @@ pub struct KeyConfig {
     pub seed: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Record {
     // Wallet record type
     #[serde(rename = "type")]
@@ -86,6 +86,18 @@ pub struct Record {
     pub value: String,
     // Wallet record tags
     pub tags: HashMap<String, String>,
+}
+
+impl fmt::Debug for Record {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Record")
+            .field("type_", &self.type_)
+            .field("id", &self.id)
+            // Censor the value
+            .field("value", &"******".to_string())
+            .field("tags", &self.tags)
+            .finish()
+    }
 }
 
 pub type Tags = HashMap<String, String>;

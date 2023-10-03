@@ -165,6 +165,7 @@ impl Wallet {
         name: &str,
         value: &str,
         tags: &HashMap<String, String>,
+        cache_record: bool,
     ) -> IndyResult<()> {
         let etype = encrypt_as_searchable(
             type_.as_bytes(),
@@ -188,7 +189,9 @@ impl Wallet {
         );
 
         self.storage.add(&etype, &ename, &evalue, &etags).await?;
-        self.cache.add(type_, &etype, &ename, &evalue, &etags);
+        if cache_record {
+            self.cache.add(type_, &etype, &ename, &evalue, &etags);
+        }
 
         Ok(())
     }
