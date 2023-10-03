@@ -56,8 +56,14 @@ pub async fn send_message(
         message,
         &did_doc
     );
-    let EncryptionEnvelope(envelope) =
-        EncryptionEnvelope::create(wallet, &message, Some(&sender_verkey), &did_doc).await?;
+
+    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(
+        wallet,
+        json!(message).to_string().as_bytes(),
+        Some(&sender_verkey),
+        &did_doc,
+    )
+    .await?;
 
     // TODO: Extract from agency client
     agency_client::httpclient::post_message(
@@ -81,7 +87,8 @@ pub async fn send_message_anonymously(
         &did_doc
     );
     let EncryptionEnvelope(envelope) =
-        EncryptionEnvelope::create(wallet, message, None, did_doc).await?;
+        EncryptionEnvelope::create(wallet, json!(message).to_string().as_bytes(), None, did_doc)
+            .await?;
 
     agency_client::httpclient::post_message(
         envelope,
