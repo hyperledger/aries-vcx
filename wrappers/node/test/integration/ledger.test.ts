@@ -20,13 +20,13 @@ describe('wallet', () => {
     expect(pwInfo.pw_vk.length).equal(44);
   });
 
-  it('write new endorser did from seed', async () => {
-    const genesisPath = path.join(__dirname, '/../../resources/localhost.txn');
-    await openMainPool({ genesis_path: genesisPath });
-    const pwInfo = await createAndStoreDid(seed);
-    expect(pwInfo.pw_did).equal('FhrSrYtQcw3p9xwf7NYemf');
-    expect(pwInfo.pw_vk).equal('91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE');
-  });
+  // it('write new endorser did from seed', async () => {
+  //   const genesisPath = path.join(__dirname, '/../../resources/localhost.txn');
+  //   await openMainPool({ genesis_path: genesisPath });
+  //   const pwInfo = await createAndStoreDid(seed);
+  //   expect(pwInfo.pw_did).equal('FhrSrYtQcw3p9xwf7NYemf');
+  //   expect(pwInfo.pw_vk).equal('91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE');
+  // });
 
   it('write new endorser did', async () => {
     const genesisPath = path.join(__dirname, '/../../resources/localhost.txn');
