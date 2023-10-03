@@ -15,9 +15,7 @@ use aries_vcx::{
             base_wallet::BaseWallet,
             indy::{
                 internal::{close_search_wallet, fetch_next_records_wallet, open_search_wallet},
-                wallet::{
-                    close_wallet, create_indy_wallet, import, open_wallet,
-                },
+                wallet::{close_wallet, create_indy_wallet, import, open_wallet},
                 IndySdkWallet, IssuerConfig, RestoreWalletConfigs, WalletConfig,
             },
             structs_io::UnpackMessageOutput,
