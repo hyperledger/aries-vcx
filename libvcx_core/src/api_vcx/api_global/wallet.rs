@@ -15,7 +15,9 @@ use aries_vcx::{
             base_wallet::BaseWallet,
             indy::{
                 internal::{close_search_wallet, fetch_next_records_wallet, open_search_wallet},
-                wallet::{close_wallet, create_and_open_wallet, import},
+                wallet::{
+                    close_wallet, create_indy_wallet, import, open_wallet,
+                },
                 IndySdkWallet, IssuerConfig, RestoreWalletConfigs, WalletConfig,
             },
             structs_io::UnpackMessageOutput,
@@ -282,11 +284,10 @@ pub async fn wallet_import(config: &RestoreWalletConfigs) -> LibvcxResult<()> {
 
 pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
     let src_wallet_handle = get_main_wallet_handle()?;
-    info!(
-        "Creating or opening target wallet {}",
-        &wallet_config.wallet_name
-    );
-    let dest_wallet_handle = create_and_open_wallet(wallet_config).await?;
+    info!("Assuring target wallet exists.");
+    create_indy_wallet(wallet_config).await?;
+    info!("Opening target wallet.");
+    let dest_wallet_handle = open_wallet(wallet_config).await?;
     info!("Target wallet is ready.");
 
     let migration_res = wallet_migrator::migrate_wallet(
