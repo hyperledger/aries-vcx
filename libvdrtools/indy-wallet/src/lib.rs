@@ -735,7 +735,10 @@ impl WalletService {
         while let Some(source_record) = records.next().await? {
             num_record += 1;
             if num_record % 1000 == 1 {
-                info!("Migrating wallet record number {num_record} / {total:?}");
+                warn!(
+                    "Migrating wallet record number {num_record} / {total:?}, intermediary \
+                     migration result: ${migration_result:?}"
+                );
             }
             trace!("Migrating record: {:?}", source_record);
             let unwrapped_type_ = match &source_record.type_ {
@@ -775,7 +778,7 @@ impl WalletService {
             let migrated_record = match migrate_fn(record) {
                 Ok(record) => match record {
                     None => {
-                        warn!("Skipping non-migratable record ({num_record}): {record:?}");
+                        warn!("Skipping non-migratable record ({num_record}): {source_record:?}");
                         migration_result.skipped += 1;
                         continue;
                     }
