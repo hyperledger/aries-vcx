@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - "**"
   pull_request:
     branches:
       - "**"
@@ -208,6 +208,34 @@ jobs:
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
+
+  # todo: move to indy-vdr repo
+  build-docker-simple-relay:
+    needs: [ workflow-setup ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    runs-on: ubuntu-20.04
+    env:
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
+    outputs:
+      image-name: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Build and cache image"
+        uses: ./.github/actions/build-image
+        with:
+          docker-img: "simple-message-relay"
+          dockerfile-path: ".tools/simple_message_relay/Dockerfile"
+          branch-name: ${{ env.BRANCH_NAME }}
+          branch-main: ${{ env.MAIN_BRANCH }}
+          docker-repo-local-name: "simple-message-relay"
+
 
   # todo: move to indy-vdr repo
   build-docker-vdrproxy:
