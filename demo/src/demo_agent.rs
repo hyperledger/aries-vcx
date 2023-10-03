@@ -155,7 +155,7 @@ impl DemoAgent {
     {
         info!(
             "{}Agent[{}] is waiting for didcomm message",
-            self.name, self.log_color
+            self.log_color, self.name
         );
         let didcomm_msg = self.channels_didcomm.receive_msg(transport_id).await;
         let unpacked_msg = self
@@ -166,7 +166,7 @@ impl DemoAgent {
         let payload_msg: T = serde_json::from_str(&unpacked_msg.message).unwrap();
         info!(
             "{}Agent[{}] has received a message sender verkey: {:?}",
-            self.name, self.log_color, &unpacked_msg.sender_verkey
+            self.log_color, self.name, &unpacked_msg.sender_verkey
         );
         Ok(payload_msg)
     }
@@ -174,7 +174,7 @@ impl DemoAgent {
     pub async fn wait_for_invitation_message(&self, transport_id: &str) -> Invitation {
         info!(
             "{}Agent[{}] is waiting for Invitation message",
-            self.name, self.log_color
+            self.log_color, self.name
         );
         self.channels_invitations.receive_msg(transport_id).await
     }
@@ -210,8 +210,8 @@ impl DemoAgent {
         let msg_invitation = sender.as_invitation_msg();
         info!(
             "{}Agent[{}] prepared invitation message: {}",
-            self.name,
             self.log_color,
+            self.name,
             serde_json::to_string(&msg_invitation).unwrap()
         );
         let pw_info_faber = PairwiseInfo {
@@ -232,7 +232,7 @@ impl DemoAgent {
             .unwrap();
         info!(
             "{}Agent[{}] in role of invitee generated pairwise key {pw_vk}",
-            self.name, self.log_color
+            self.log_color, self.name
         );
         let mock_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {}); // cause we know we want call ledger *eew...*
         let invitee_invited =
@@ -249,8 +249,8 @@ impl DemoAgent {
         let msg_connection_request = invitee_requested.get_request().clone();
         info!(
             "{}Agent[{}] in role of invitee is sending connection-request message {}",
-            self.name,
             self.log_color,
+            self.name,
             serde_json::to_string(&msg_connection_request).unwrap()
         );
         let msg_encrypted = invitee_requested
@@ -286,8 +286,8 @@ impl DemoAgent {
         info!(
             "{}Agent[{}] in role of inviter processed connection-request and is sending \
              connection-response {}",
-            self.name,
             self.log_color,
+            self.name,
             serde_json::to_string(&msg_response).unwrap()
         );
 
@@ -310,7 +310,7 @@ impl DemoAgent {
             .unwrap();
         info!(
             "{}Agent[{}] in role of invitee processed connection-response",
-            self.name, self.log_color,
+            self.log_color, self.name,
         );
         invitee_complete
     }
@@ -325,8 +325,8 @@ impl DemoAgent {
     {
         info!(
             "{}Agent[{}] is going to encrypt aries message for a connectin. Message: {}",
-            self.name,
             self.log_color,
+            self.name,
             serde_json::to_string(&message).unwrap()
         );
         connection
