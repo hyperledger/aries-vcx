@@ -50,6 +50,7 @@ pub async fn handle_register(
         return Err(format!("Expected connection response, got {:?}", res_aries));
     };
     let state = agent.handle_response(state, response).await?;
+    agent.save_completed_as_contact(&state).await?;
     Ok(Json(json!({
         "status": "success",
         "state": state

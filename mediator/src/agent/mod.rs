@@ -14,7 +14,7 @@ use aries_vcx_core::{
     },
     WalletHandle,
 };
-use diddoc_legacy::aries::service::AriesService;
+use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
 use messages::{
     msg_fields::protocols::{
         connection::{request::Request, response::Response, Connection},
@@ -171,16 +171,23 @@ impl Agent {
         )
         .await
         .map_err(|e| e.to_string())?;
-        let their_keys = their_diddoc.recipient_keys().map_err(|e| e.to_string())?;
-        let auth_pubkey = their_keys
-            .first()
-            .ok_or("No recipient key for client :/ ?".to_owned())?;
-        self.create_account(vk, auth_pubkey.to_owned()).await?;
+        // let their_keys = their_diddoc.recipient_keys().map_err(|e| e.to_string())?;
+        // let auth_pubkey = their_keys
+        //     .first()
+        //     .ok_or("No recipient key for client :/ ?".to_owned())?;
+        // self.create_account(vk, auth_pubkey.to_owned()).await?;
         Ok(packed_response_envelope)
     }
 
-    pub async fn create_account(&self, _self_vk: VeriKey, their_vk: VeriKey) -> Result<(), String> {
-        self.persistence.create_account(&their_vk).await?;
+    pub async fn create_account(
+        &self,
+        their_vk: &VeriKey,
+        our_vk: &VeriKey,
+        did_doc: &AriesDidDoc,
+    ) -> Result<(), String> {
+        self.persistence
+            .create_account(&their_vk, our_vk, &json!(did_doc).to_string())
+            .await?;
         Ok(())
     }
 }

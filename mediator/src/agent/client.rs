@@ -83,4 +83,14 @@ impl Agent {
             .await
             .map_err(|err| err.to_string())
     }
+    pub async fn save_completed_as_contact(
+        &self,
+        state: &InviteeConnection<Completed>,
+    ) -> Result<(), String> {
+        let their_vk = state.remote_vk().map_err(|e| e.to_string())?;
+        let our_vk = &state.pairwise_info().pw_vk;
+        self.create_account(&their_vk, &our_vk, state.their_did_doc())
+            .await?;
+        Ok(())
+    }
 }

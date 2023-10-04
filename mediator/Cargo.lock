@@ -4810,8 +4810,8 @@ checksum = "a67300977d3dc3f8034dae89778f502b6ba20b269527b3223ba59c0cf393bb8a"
 
 [[package]]
 name = "xum-test-server"
-version = "0.1.0"
-source = "git+https://github.com/nain-F49FF806/axum-test-server.git?branch=aries-vcx-mediator-integration#f383922547eda7867d1476bb694b30a9da6fc795"
+version = "0.2.0"
+source = "git+https://github.com/nain-F49FF806/axum-test-server.git?branch=aries-vcx-mediator-integration#97dcad10a8227a94ab106d77c58b3db55ec79611"
 dependencies = [
  "async-trait",
  "axum",
