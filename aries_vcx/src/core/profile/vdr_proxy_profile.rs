@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use aries_vcx_core::{
-    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds,
     ledger::{
         base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions},
         indy_vdr_ledger::{
@@ -23,14 +23,14 @@ use crate::errors::error::VcxResult;
 #[derive(Debug)]
 pub struct VdrProxyProfile {
     wallet: Arc<IndySdkWallet>,
-    anoncreds: IndySdkAnonCreds,
+    anoncreds: IndyCredxAnonCreds,
     indy_ledger_read: Arc<IndyVdrLedgerRead<VdrProxySubmitter, InMemoryResponseCacher>>,
     indy_ledger_write: IndyVdrLedgerWrite<VdrProxySubmitter, BaseWalletRequestSigner>,
 }
 
 impl VdrProxyProfile {
     pub async fn init(wallet: Arc<IndySdkWallet>, client: VdrProxyClient) -> VcxResult<Self> {
-        let anoncreds = Arc::new(IndyCredxAnonCreds::new(wallet.clone()));
+        let anoncreds = IndyCredxAnonCreds::new(wallet.clone());
         let request_signer = Arc::new(BaseWalletRequestSigner::new(wallet.clone()));
         let request_submitter = Arc::new(VdrProxySubmitter::new(Arc::new(client)));
         let response_parser = Arc::new(ResponseParser);

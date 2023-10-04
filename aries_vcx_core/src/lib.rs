@@ -23,9 +23,6 @@ extern crate serde_json;
 #[macro_use]
 extern crate log;
 
-#[macro_use]
-extern crate derive_builder;
-
 pub mod anoncreds;
 pub mod errors;
 pub mod global;
