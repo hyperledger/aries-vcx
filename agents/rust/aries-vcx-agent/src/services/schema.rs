@@ -46,7 +46,7 @@ impl ServiceSchemas {
 
     pub async fn publish_schema(&self, thread_id: &str) -> AgentResult<()> {
         let schema = self.schemas.get(thread_id)?;
-        let schema = schema.publish(self.profile.ledger_write(), None).await?;
+        let schema = schema.publish(self.profile.ledger_write()).await?;
         self.schemas.insert(thread_id, schema)?;
         Ok(())
     }

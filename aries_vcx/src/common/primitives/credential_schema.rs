@@ -91,35 +91,11 @@ impl Schema {
         })
     }
 
-    pub fn create_from_ledger_json(
-        schema_json: &str,
-        source_id: &str,
-        schema_id: &str,
-    ) -> VcxResult<Self> {
-        let schema_data: SchemaData = serde_json::from_str(schema_json).map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Cannot deserialize schema: {}", err),
-            )
-        })?;
-
-        Ok(Self {
-            source_id: source_id.to_string(),
-            schema_id: schema_id.to_string(),
-            schema_json: schema_json.to_string(),
-            name: schema_data.name,
-            version: schema_data.version,
-            data: schema_data.attr_names,
-            submitter_did: "".to_string(),
-            state: PublicEntityStateType::Published,
-        })
+    pub async fn submitter_did(&self) -> String {
+        self.submitter_did.clone()
     }
 
-    pub async fn publish(
-        self,
-        ledger: &impl AnoncredsLedgerWrite,
-        endorser_did: Option<String>,
-    ) -> VcxResult<Self> {
+    pub async fn publish(self, ledger: &impl AnoncredsLedgerWrite) -> VcxResult<Self> {
         trace!("Schema::publish >>>");
 
         if settings::indy_mocks_enabled() {
@@ -130,7 +106,7 @@ impl Schema {
         }
 
         ledger
-            .publish_schema(&self.schema_json, &self.submitter_did, endorser_did)
+            .publish_schema(&self.schema_json, &self.submitter_did, None)
             .await?;
 
         Ok(Self {

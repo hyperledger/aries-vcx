@@ -11,8 +11,8 @@ use aries_vcx::{
     common::{
         proofs::proof_request::PresentationRequestData,
         test_utils::{
-            create_and_write_credential, create_and_write_test_cred_def,
-            create_and_write_test_rev_reg, create_and_write_test_schema,
+            create_and_publish_test_rev_reg, create_and_write_credential,
+            create_and_write_test_cred_def, create_and_write_test_schema,
         },
     },
     handlers::proof_presentation::{prover::Prover, verifier::Verifier},
@@ -58,7 +58,7 @@ async fn test_agency_pool_generate_proof_with_predicates() {
             true,
         )
         .await;
-        let rev_reg = create_and_write_test_rev_reg(
+        let rev_reg = create_and_publish_test_rev_reg(
             setup.profile.anoncreds(),
             setup.profile.ledger_write(),
             &setup.institution_did,

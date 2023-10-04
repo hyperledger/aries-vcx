@@ -7,7 +7,7 @@ use aries_vcx::{
             revocation_registry::RevocationRegistry,
         },
         test_utils::{
-            create_and_write_test_cred_def, create_and_write_test_rev_reg,
+            create_and_publish_test_rev_reg, create_and_write_test_cred_def,
             create_and_write_test_schema,
         },
     },
@@ -58,7 +58,7 @@ pub async fn create_address_schema_creddef_revreg<P: Profile>(
         true,
     )
     .await;
-    let rev_reg = create_and_write_test_rev_reg(
+    let rev_reg = create_and_publish_test_rev_reg(
         anoncreds,
         ledger_write,
         institution_did,

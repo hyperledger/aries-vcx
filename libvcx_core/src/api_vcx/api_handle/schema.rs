@@ -58,7 +58,7 @@ pub async fn create_and_publish_schema(
         &data,
     )
     .await?
-    .publish(&get_main_anoncreds_ledger_write()?, None)
+    .publish(&get_main_anoncreds_ledger_write()?)
     .await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
     debug!(
@@ -69,25 +69,6 @@ pub async fn create_and_publish_schema(
     SCHEMA_MAP
         .add(schema)
         .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string()))
-}
-
-pub async fn get_schema_attrs(source_id: String, schema_id: String) -> LibvcxResult<(u32, String)> {
-    trace!(
-        "get_schema_attrs >>> source_id: {}, schema_id: {}",
-        source_id,
-        schema_id
-    );
-    let schema_ledger_data_json = get_main_anoncreds_ledger_read()?
-        .get_schema(&schema_id, None)
-        .await?;
-    let schema = Schema::create_from_ledger_json(&schema_ledger_data_json, &source_id, &schema_id)?;
-    let schema_json = schema.to_string_versioned()?;
-
-    let handle = SCHEMA_MAP
-        .add(schema)
-        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string()))?;
-
-    Ok((handle, schema_json))
 }
 
 pub fn is_valid_handle(handle: u32) -> bool {
@@ -192,20 +173,15 @@ pub mod test_utils {
 #[cfg(test)]
 pub mod tests {
     use aries_vcx::{
-        common::test_utils::create_and_write_test_schema,
         global::settings::{set_config_value, DEFAULT_DID},
-        utils::{
-            constants,
-            constants::SCHEMA_ID,
-            devsetup::{SetupDefaults, SetupEmpty, SetupMocks},
-        },
+        utils::devsetup::{SetupDefaults, SetupEmpty, SetupMocks},
     };
 
     use super::*;
     use crate::api_vcx::{
         api_handle::{
             schema,
-            schema::test_utils::{check_schema, create_schema_real, prepare_schema_data},
+            schema::test_utils::{create_schema_real, prepare_schema_data},
         },
         utils::devsetup::SetupGlobalsWalletPoolAgency,
     };
@@ -246,23 +222,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_schema_attrs_success() {
-        let _setup = SetupMocks::init();
-
-        let (handle, schema_json) =
-            get_schema_attrs("Check For Success".to_string(), SCHEMA_ID.to_string())
-                .await
-                .unwrap();
-
-        check_schema(
-            handle,
-            &schema_json,
-            SCHEMA_ID,
-            r#"["name","age","height","sex"]"#,
-        );
-    }
-
-    #[tokio::test]
     async fn test_create_schema_fails() {
         let _setup = SetupDefaults::init();
         set_config_value(CONFIG_INSTITUTION_DID, DEFAULT_DID).unwrap();
@@ -271,33 +230,6 @@ pub mod tests {
                 .await
                 .unwrap_err();
         assert_eq!(err.kind(), LibvcxErrorKind::SerializationError)
-    }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_get_schema_attrs_from_ledger() {
-        SetupGlobalsWalletPoolAgency::run(|setup| async move {
-            let schema = create_and_write_test_schema(
-                &get_main_anoncreds().unwrap(),
-                &get_main_anoncreds_ledger_write().unwrap(),
-                &setup.institution_did,
-                constants::DEFAULT_SCHEMA_ATTRS,
-            )
-            .await;
-
-            let (schema_handle, schema_attrs) =
-                get_schema_attrs("id".to_string(), schema.schema_id.clone())
-                    .await
-                    .unwrap();
-
-            check_schema(
-                schema_handle,
-                &schema_attrs,
-                &schema.schema_id,
-                constants::DEFAULT_SCHEMA_ATTRS,
-            );
-        })
-        .await;
     }
 
     #[tokio::test]
@@ -416,33 +348,6 @@ pub mod tests {
             let schema_json = schema::to_string(schema_handle).unwrap();
 
             let j: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
-            let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
-            assert_eq!(j["version"], "1.0");
-        })
-        .await;
-    }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_vcx_schema_get_attrs_with_pool() {
-        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-            let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
-            let schema_handle = schema::create_and_publish_schema(
-                "source_id",
-                schema_name,
-                schema_version,
-                schema_data,
-            )
-            .await
-            .unwrap();
-            let _schema_json_1 = schema::to_string(schema_handle).unwrap();
-            let schema_id = schema::get_schema_id(schema_handle).unwrap();
-
-            let (_schema_handle, schema_json_2) =
-                schema::get_schema_attrs("source_id".into(), schema_id)
-                    .await
-                    .unwrap();
-            let j: serde_json::Value = serde_json::from_str(&schema_json_2).unwrap();
             let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
             assert_eq!(j["version"], "1.0");
         })

@@ -123,17 +123,13 @@ pub mod tests {
     use std::{thread::sleep, time::Duration};
 
     use aries_vcx::{
-        aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path,
-        common::test_utils::create_and_write_test_schema,
         global::settings::CONFIG_INSTITUTION_DID,
-        utils,
         utils::{constants::SCHEMA_ID, devsetup::SetupMocks},
     };
 
     use super::*;
     use crate::api_vcx::{
-        api_global::settings::get_config_value,
-        api_handle::{revocation_registry, revocation_registry::RevocationRegistryConfig, schema},
+        api_global::settings::get_config_value, api_handle::schema,
         utils::devsetup::SetupGlobalsWalletPoolAgency,
     };
 
@@ -175,50 +171,6 @@ pub mod tests {
     async fn test_create_cred_def() {
         let _setup = SetupMocks::init();
         let (_, _) = create_and_publish_nonrevocable_creddef().await;
-    }
-
-    #[tokio::test]
-    #[ignore]
-    async fn create_revocable_cred_def_and_check_tails_location() {
-        SetupGlobalsWalletPoolAgency::run(|setup| async move {
-            let schema = create_and_write_test_schema(
-                &get_main_anoncreds().unwrap(),
-                &get_main_anoncreds_ledger_write().unwrap(),
-                &setup.institution_did,
-                utils::constants::DEFAULT_SCHEMA_ATTRS,
-            )
-            .await;
-            let issuer_did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
-
-            let path = get_temp_dir_path();
-
-            let handle_cred_def = create(
-                "1".to_string(),
-                schema.schema_id.clone(),
-                "tag1".to_string(),
-                true,
-            )
-            .await
-            .unwrap();
-            publish(handle_cred_def).await.unwrap();
-
-            let rev_reg_config = RevocationRegistryConfig {
-                issuer_did,
-                cred_def_id: get_cred_def_id(handle_cred_def).unwrap(),
-                tag: 1,
-                tails_dir: String::from(path.to_str().unwrap()),
-                max_creds: 2,
-            };
-            let handle_rev_reg = revocation_registry::create(rev_reg_config).await.unwrap();
-            let tails_url = utils::constants::TEST_TAILS_URL;
-
-            revocation_registry::publish(handle_rev_reg, tails_url)
-                .await
-                .unwrap();
-            let rev_reg_def = revocation_registry::get_rev_reg_def(handle_rev_reg).unwrap();
-            assert_eq!(rev_reg_def.value.tails_location, tails_url);
-        })
-        .await;
     }
 
     #[tokio::test]

@@ -25,7 +25,7 @@ use aries_vcx::{
             revocation_registry_delta::RevocationRegistryDelta,
         },
         test_utils::{
-            create_and_write_test_cred_def, create_and_write_test_rev_reg,
+            create_and_publish_test_rev_reg, create_and_write_test_cred_def,
             create_and_write_test_schema,
         },
     },
@@ -33,7 +33,7 @@ use aries_vcx::{
     errors::error::AriesVcxErrorKind,
     run_setup,
     utils::{
-        constants::DEFAULT_SCHEMA_ATTRS,
+        constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_URL},
         devsetup::{SetupPoolDirectory, SetupProfile},
     },
 };
@@ -103,15 +103,15 @@ async fn create_and_store_revocable_credential_def(
         true,
     )
     .await;
-    let rev_reg = create_and_write_test_rev_reg(
+    let rev_reg = create_and_publish_test_rev_reg(
         anoncreds,
         ledger_write,
         issuer_did,
         &cred_def.get_cred_def_id(),
     )
     .await;
-
     tokio::time::sleep(Duration::from_millis(1000)).await;
+
     (schema, cred_def, rev_reg)
 }
 
@@ -514,6 +514,10 @@ async fn test_pool_get_rev_reg() {
             &attrs,
         )
         .await;
+        assert_eq!(
+            TEST_TAILS_URL,
+            rev_reg.get_rev_reg_def().value.tails_location
+        );
 
         let ledger = setup.profile.ledger_read();
         let (id, _rev_reg, _timestamp) = ledger
