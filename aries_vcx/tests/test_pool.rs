@@ -34,7 +34,7 @@ use aries_vcx::{
     run_setup,
     utils::{
         constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_URL},
-        devsetup::{SetupPoolDirectory, SetupProfile},
+        devsetup::SetupPoolDirectory,
     },
 };
 use aries_vcx_core::{
