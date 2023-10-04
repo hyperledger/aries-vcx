@@ -1,7 +1,6 @@
 use std::{fmt::Debug, sync::Arc};
 
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
-
 use axum::{
     body::Bytes,
     extract::State,

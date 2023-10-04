@@ -1,9 +1,6 @@
 /// Client-side focused api accessible Aries Agent
 use log::info;
-use mediator::{
-    agent::AgentMaker,
-    routes::client::build_client_router,
-};
+use mediator::{agent::AgentMaker, routes::client::build_client_router};
 
 #[tokio::main]
 async fn main() {
