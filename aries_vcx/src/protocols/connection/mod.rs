@@ -100,7 +100,13 @@ where
         message: &AriesMessage,
     ) -> VcxResult<EncryptionEnvelope> {
         let sender_verkey = &self.pairwise_info().pw_vk;
-        EncryptionEnvelope::create(wallet, message, Some(sender_verkey), self.their_did_doc()).await
+        EncryptionEnvelope::create(
+            wallet,
+            json!(message).to_string().as_bytes(),
+            Some(sender_verkey),
+            self.their_did_doc(),
+        )
+        .await
     }
 
     pub fn remote_did(&self) -> &str {
