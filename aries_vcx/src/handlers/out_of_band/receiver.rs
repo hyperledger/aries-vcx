@@ -1,4 +1,4 @@
-use std::{clone::Clone, str::FromStr};
+use std::{clone::Clone, fmt::Display, str::FromStr};
 
 use agency_client::agency_client::AgencyClient;
 use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
@@ -323,13 +323,15 @@ impl OutOfBandReceiver {
         self.oob.clone().into()
     }
 
-    pub fn to_string(&self) -> String {
-        json!(AriesMessage::from(self.oob.clone())).to_string()
-    }
-
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
         Ok(Self {
             oob: serde_json::from_str(oob_data)?,
         })
+    }
+}
+
+impl Display for OutOfBandReceiver {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", json!(AriesMessage::from(self.oob.clone())))
     }
 }

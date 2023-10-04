@@ -107,7 +107,7 @@ impl HolderSM {
     pub fn new(source_id: String) -> Self {
         HolderSM {
             thread_id: Uuid::new_v4().to_string(),
-            state: HolderFullState::Initial(InitialHolderState::new()),
+            state: HolderFullState::Initial(InitialHolderState),
             source_id,
         }
     }

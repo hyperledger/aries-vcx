@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::profile::Profile,
+    core::profile::Profile,
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
     utils::{
         constants::TRUSTEE_SEED,

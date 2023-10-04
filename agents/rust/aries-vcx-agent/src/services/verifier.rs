@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     common::proofs::proof_request::PresentationRequestData,
-    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
+    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
     handlers::proof_presentation::verifier::Verifier,
     messages::{
         msg_fields::protocols::present_proof::{

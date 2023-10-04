@@ -12,7 +12,6 @@ use aries_vcx::{
         },
         wallet::{base_wallet::BaseWallet, mock_wallet::MockWallet},
     },
-    global::settings::indy_mocks_enabled,
     utils::mockdata::profile::{
         mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger, mock_profile::MockProfile,
     },
@@ -211,9 +210,6 @@ impl ProfileV2 for MockProfile {
 }
 
 pub fn get_main_profile() -> Arc<dyn ProfileV2> {
-    if indy_mocks_enabled() {
-        return Arc::new(MockProfile {});
-    }
     Arc::new(GLOBAL_PROFILE.clone())
 }
 

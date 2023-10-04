@@ -3,10 +3,7 @@ extern crate serde_json;
 
 #[cfg(test)]
 mod dbtests {
-    use aries_vcx::{
-        global::{settings, settings::init_issuer_config},
-        utils::test_logger::LibvcxDefaultLogger,
-    };
+    use aries_vcx::{global::settings, utils::test_logger::LibvcxDefaultLogger};
     use aries_vcx_core::wallet::{
         base_wallet::BaseWallet,
         indy::{
@@ -45,10 +42,10 @@ mod dbtests {
             .unwrap();
 
         let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
-        let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed)
+        let _config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed)
             .await
             .unwrap();
-        init_issuer_config(&config_issuer.institution_did).unwrap();
+
         let (_, _) = IndySdkWallet::new(wallet_handle)
             .create_and_store_my_did(None, None)
             .await

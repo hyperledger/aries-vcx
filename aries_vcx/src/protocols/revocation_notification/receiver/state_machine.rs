@@ -39,7 +39,7 @@ pub enum ReceiverFullState {
 impl RevocationNotificationReceiverSM {
     pub fn create(rev_reg_id: String, cred_rev_id: String) -> Self {
         Self {
-            state: ReceiverFullState::Initial(InitialState::new()),
+            state: ReceiverFullState::Initial(InitialState),
             rev_reg_id,
             cred_rev_id,
         }

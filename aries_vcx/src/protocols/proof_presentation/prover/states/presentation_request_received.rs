@@ -13,7 +13,7 @@ use messages::msg_fields::protocols::{
 use uuid::Uuid;
 
 use crate::{
-    common::proofs::prover::prover::generate_indy_proof,
+    common::proofs::prover::generate_indy_proof,
     errors::error::prelude::*,
     handlers::{
         proof_presentation::types::SelectedCredentials,

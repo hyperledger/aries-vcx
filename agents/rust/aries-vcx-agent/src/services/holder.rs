@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
+    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
     handlers::issuance::holder::Holder,
     messages::{
         msg_fields::protocols::cred_issuance::v1::{

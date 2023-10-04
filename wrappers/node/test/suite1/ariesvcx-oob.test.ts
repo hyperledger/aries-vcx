@@ -1,6 +1,6 @@
 import '../module-resolver-helper';
 
-import { initVcxTestMode } from 'helpers/utils';
+import { initVcx } from 'helpers/utils';
 import { GoalCode, OutOfBandSender, OutOfBandReceiver, HandshakeProtocol } from 'src';
 import { assert } from 'chai';
 
@@ -28,7 +28,7 @@ const credentialOffer = {
 };
 
 describe('Out of Band:', () => {
-  before(() => initVcxTestMode());
+  before(() => initVcx());
 
   describe('create:', () => {
     it('success', async () => {

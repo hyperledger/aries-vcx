@@ -7,11 +7,11 @@ import {
   dataProofCreateLegacy, dataProofCreate,
   proofCreate,
 } from 'helpers/entities';
-import { initVcxTestMode, shouldThrow } from 'helpers/utils';
+import { initVcx, shouldThrow } from 'helpers/utils';
 import { Proof, VerifierStateType, VCXCode } from 'src';
 
 describe('Proof:', () => {
-  before(() => initVcxTestMode());
+  before(() => initVcx());
 
   describe('create:', () => {
     it('lgeacy success', async () => {

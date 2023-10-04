@@ -1,16 +1,10 @@
 use aries_vcx::{
-    agency_client::testing::mocking::AgencyMockDecrypted,
-    global::settings::indy_mocks_enabled,
     handlers::proof_presentation::{
         mediated_prover::prover_find_message_to_handle, prover::Prover,
     },
     messages::{
         msg_fields::protocols::present_proof::{request::RequestPresentation, PresentProof},
         AriesMessage,
-    },
-    utils::{
-        constants::GET_MESSAGES_DECRYPTED_RESPONSE,
-        mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
     },
 };
 use serde_json;
@@ -278,11 +272,6 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 }
 
 async fn get_proof_request(connection_handle: u32, msg_id: &str) -> LibvcxResult<String> {
-    if indy_mocks_enabled() {
-        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
-    }
-
     let presentation_request = {
         trace!(
             "Prover::get_presentation_request >>> connection_handle: {:?}, msg_id: {:?}",
@@ -349,29 +338,14 @@ mod tests {
     use aries_vcx::{
         utils,
         utils::{
-            constants::{
-                ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS,
-                GET_MESSAGES_DECRYPTED_RESPONSE,
-            },
             devsetup::{SetupDefaults, SetupMocks},
-            mockdata::{
-                mock_settings::MockBuilder,
-                mockdata_proof,
-                mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION},
-            },
+            mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
         },
     };
     use serde_json::Value;
 
     use super::*;
-    #[cfg(test)]
-    use crate::api_vcx::api_handle::mediated_connection::test_utils::{
-        build_test_connection_invitee_completed, build_test_connection_inviter_requested,
-    };
-    use crate::aries_vcx::{
-        common::proofs::proof_request::PresentationRequestData,
-        protocols::proof_presentation::prover::state_machine::ProverState,
-    };
+    use crate::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 
     async fn _get_proof_request_messages(connection_h: u32) -> String {
         let requests = get_proof_request_messages(connection_h).await.unwrap();
@@ -406,116 +380,6 @@ mod tests {
             create_with_proof_request("1", "{}").unwrap_err().kind(),
             LibvcxErrorKind::InvalidJson
         );
-    }
-
-    #[tokio::test]
-    async fn test_proof_cycle() {
-        let _setup = SetupMocks::init();
-
-        let connection_h = build_test_connection_inviter_requested().await;
-
-        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
-
-        let request = _get_proof_request_messages(connection_h).await;
-
-        let handle_proof = create_with_proof_request("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(
-            ProverState::PresentationRequestReceived as u32,
-            get_state(handle_proof).unwrap()
-        );
-
-        let _mock_builder =
-            MockBuilder::init().set_mock_generate_indy_proof("{\"selected\":\"credentials\"}");
-
-        generate_proof(handle_proof, "{\"selected\":\"credentials\"}", "{}")
-            .await
-            .unwrap();
-        send_proof(handle_proof, connection_h).await.unwrap();
-        assert_eq!(
-            ProverState::PresentationSent as u32,
-            get_state(handle_proof).unwrap()
-        );
-
-        update_state(
-            handle_proof,
-            Some(ARIES_PROOF_PRESENTATION_ACK),
-            connection_h,
-        )
-        .await
-        .unwrap();
-        assert_eq!(
-            ProverState::Finished as u32,
-            get_state(handle_proof).unwrap()
-        );
-    }
-
-    #[tokio::test]
-    async fn test_proof_update_state_v2() {
-        let _setup = SetupMocks::init();
-
-        let connection_handle = build_test_connection_inviter_requested().await;
-
-        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PRESENTATION_REQUEST);
-
-        let request = _get_proof_request_messages(connection_handle).await;
-
-        let handle = create_with_proof_request("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(
-            ProverState::PresentationRequestReceived as u32,
-            get_state(handle).unwrap()
-        );
-
-        generate_proof(
-            handle,
-            ARIES_PROVER_CREDENTIALS,
-            ARIES_PROVER_SELF_ATTESTED_ATTRS,
-        )
-        .await
-        .unwrap();
-        assert_eq!(
-            ProverState::PresentationPrepared as u32,
-            get_state(handle).unwrap()
-        );
-
-        send_proof(handle, connection_handle).await.unwrap();
-        assert_eq!(
-            ProverState::PresentationSent as u32,
-            get_state(handle).unwrap()
-        );
-
-        mediated_connection::release(connection_handle).unwrap();
-        let connection_handle = build_test_connection_inviter_requested().await;
-
-        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(
-            mockdata_proof::ARIES_PROOF_PRESENTATION_ACK,
-        );
-
-        update_state(handle, None, connection_handle).await.unwrap();
-        assert_eq!(ProverState::Finished as u32, get_state(handle).unwrap());
-    }
-
-    #[tokio::test]
-    async fn test_proof_reject_cycle() {
-        let _setup = SetupMocks::init();
-
-        let connection_h = build_test_connection_inviter_requested().await;
-
-        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
-
-        let request = _get_proof_request_messages(connection_h).await;
-
-        let handle = create_with_proof_request("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(
-            ProverState::PresentationRequestReceived as u32,
-            get_state(handle).unwrap()
-        );
-
-        reject_proof(handle, connection_h).await.unwrap();
-        assert_eq!(ProverState::Failed as u32, get_state(handle).unwrap());
     }
 
     #[tokio::test]
@@ -554,16 +418,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_proof_request() {
-        let _setup = SetupMocks::init();
-
-        let connection_h = build_test_connection_invitee_completed();
-
-        let request = get_proof_request(connection_h, "123").await.unwrap();
-        let _request: RequestPresentation = serde_json::from_str(&request).unwrap();
-    }
-
-    #[tokio::test]
     async fn test_deserialize_succeeds_with_self_attest_allowed() {
         let _setup = SetupDefaults::init();
 
@@ -571,26 +425,5 @@ mod tests {
 
         let serialized = to_string(handle).unwrap();
         from_string(&serialized).unwrap();
-    }
-
-    #[tokio::test]
-    async fn test_get_proof_request_attachment() {
-        let _setup = SetupMocks::init();
-
-        let connection_h = build_test_connection_inviter_requested().await;
-
-        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
-
-        let request = _get_proof_request_messages(connection_h).await;
-
-        let handle = create_with_proof_request("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(
-            ProverState::PresentationRequestReceived as u32,
-            get_state(handle).unwrap()
-        );
-
-        let attrs = get_proof_request_attachment(handle).unwrap();
-        let _attrs: PresentationRequestData = serde_json::from_str(&attrs).unwrap();
     }
 }

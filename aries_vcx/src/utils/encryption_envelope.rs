@@ -8,7 +8,7 @@ use messages::{
 };
 use uuid::Uuid;
 
-use crate::{errors::error::prelude::*, global::settings, utils::constants};
+use crate::{errors::error::prelude::*, utils::constants};
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -28,10 +28,6 @@ impl EncryptionEnvelope {
             pw_verkey,
             did_doc
         );
-
-        if settings::indy_mocks_enabled() {
-            return Ok(EncryptionEnvelope(vec![]));
-        }
 
         EncryptionEnvelope::encrypt_for_pairwise(wallet, message, pw_verkey, did_doc)
             .and_then(|message| async move {

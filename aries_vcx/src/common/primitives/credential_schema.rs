@@ -8,11 +8,7 @@ use aries_vcx_core::{
 use super::credential_definition::PublicEntityStateType;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    global::settings,
-    utils::{
-        constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON},
-        serialization::ObjectWithVersion,
-    },
+    utils::{constants::DEFAULT_SERIALIZE_VERSION, serialization::ObjectWithVersion},
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -55,19 +51,6 @@ impl Schema {
             data
         );
 
-        if settings::indy_mocks_enabled() {
-            return Ok(Self {
-                source_id: source_id.to_string(),
-                version: version.to_string(),
-                submitter_did: submitter_did.to_string(),
-                schema_id: SCHEMA_ID.to_string(),
-                schema_json: SCHEMA_JSON.to_string(),
-                name: name.to_string(),
-                state: PublicEntityStateType::Built,
-                ..Self::default()
-            });
-        }
-
         let data_str = serde_json::to_string(data).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::SerializationError,
@@ -97,13 +80,6 @@ impl Schema {
 
     pub async fn publish(self, ledger: &impl AnoncredsLedgerWrite) -> VcxResult<Self> {
         trace!("Schema::publish >>>");
-
-        if settings::indy_mocks_enabled() {
-            return Ok(Self {
-                state: PublicEntityStateType::Published,
-                ..self
-            });
-        }
 
         ledger
             .publish_schema(&self.schema_json, &self.submitter_did, None)

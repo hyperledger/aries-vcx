@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::{modular_libs_profile::ModularLibsProfile, profile::Profile},
+    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
     global::settings::WALLET_KDF_RAW,
     utils::devsetup::{dev_build_profile_modular, SetupProfile},
 };

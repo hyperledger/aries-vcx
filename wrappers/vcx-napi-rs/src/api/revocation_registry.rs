@@ -30,8 +30,11 @@ async fn revocation_registry_publish(handle: u32, tails_url: String) -> napi::Re
 }
 
 #[napi]
-async fn revocation_registry_publish_revocations(handle: u32) -> napi::Result<()> {
-    revocation_registry::publish_revocations(handle)
+async fn revocation_registry_publish_revocations(
+    handle: u32,
+    submitter_did: String,
+) -> napi::Result<()> {
+    revocation_registry::publish_revocations(handle, &submitter_did)
         .await
         .map_err(to_napi_err)
 }

@@ -17,7 +17,7 @@ use aries_vcx_core::{
 };
 use async_trait::async_trait;
 
-use super::{prepare_taa_options, profile::Profile};
+use super::{prepare_taa_options, Profile};
 use crate::errors::error::VcxResult;
 
 #[derive(Debug)]

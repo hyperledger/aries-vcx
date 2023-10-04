@@ -9,7 +9,7 @@ use async_trait::async_trait;
 
 use super::{
     ledger::{ArcIndyVdrLedgerRead, ArcIndyVdrLedgerWrite},
-    profile::Profile,
+    Profile,
 };
 use crate::{
     core::profile::ledger::{build_ledger_components, VcxPoolConfig},

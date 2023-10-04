@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
-    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
+    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
     handlers::util::AnyInvitation,
     messages::msg_fields::protocols::{
         connection::{request::Request, response::Response},

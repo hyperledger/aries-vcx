@@ -29,12 +29,12 @@ use aries_vcx::{
             create_and_write_test_schema,
         },
     },
-    core::profile::profile::Profile,
+    core::profile::Profile,
     errors::error::AriesVcxErrorKind,
     run_setup,
     utils::{
         constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_URL},
-        devsetup::{SetupPoolDirectory, SetupProfile},
+        devsetup::SetupPoolDirectory,
     },
 };
 use aries_vcx_core::{

@@ -23,7 +23,7 @@ use aries_vcx::{
         },
     },
     run_setup,
-    utils::devsetup::{SetupProfile, *},
+    utils::devsetup::*,
 };
 use messages::{msg_fields::protocols::present_proof::PresentProof, AriesMessage};
 

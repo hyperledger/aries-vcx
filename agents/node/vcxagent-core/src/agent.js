@@ -15,7 +15,6 @@ const { createServiceLedgerRevocationRegistry } = require('./services/service-re
 const { provisionAgentInAgency } = require('./utils/vcx-workflows')
 const {
   createAgencyClientForMainWallet,
-  initIssuerConfig,
   openMainWallet,
   openMainPool,
   vcxUpdateWebhookUrl,
@@ -25,7 +24,7 @@ const { createStorageService } = require('./storage/storage-service')
 const { waitUntilAgencyIsReady, getAgencyConfig } = require('./common')
 const path = require('path')
 
-async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, endpointInfo, logger }) {
+async function createVcxAgent({ agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, endpointInfo, logger }) {
   genesisPath = genesisPath || path.join(__dirname, '/../resources/docker.txn')
 
   await waitUntilAgencyIsReady(agencyUrl, logger)
@@ -39,12 +38,10 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
   const agentProvision = await storageService.loadAgentProvision()
   const issuerDid = agentProvision.issuerConfig.institution_did
 
-  async function agentInitVcx () {
+  async function agentInitVcx() {
     logger.info(`Initializing ${agentName} vcx session.`)
 
     logger.silly(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
-    logger.silly('Initializing issuer config')
-    await initIssuerConfig(agentProvision.issuerConfig)
     logger.silly('Opening main wallet')
     await openMainWallet(agentProvision.walletConfig)
     logger.silly('Creating cloud agency config')
@@ -53,17 +50,17 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
     await openMainPool({ genesis_path: genesisPath })
   }
 
-  async function agentShutdownVcx () {
+  async function agentShutdownVcx() {
     logger.debug(`Shutting down ${agentName} vcx session.`)
     shutdownVcx()
   }
 
-  async function updateWebhookUrl (webhookUrl) {
+  async function updateWebhookUrl(webhookUrl) {
     logger.info(`Updating webhook url to ${webhookUrl}`)
     await vcxUpdateWebhookUrl({ webhookUrl })
   }
 
-  async function acceptTaa () {
+  async function acceptTaa() {
     const taa = await getLedgerAuthorAgreement()
     const taaJson = JSON.parse(taa)
     const acceptanceMechanism = Object.keys(taaJson.aml)[0]
@@ -71,7 +68,7 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
     await setActiveTxnAuthorAgreementMeta(taaJson.text, taaJson.version, acceptanceMechanism)
   }
 
-  function getInstitutionDid () {
+  function getInstitutionDid() {
     return issuerDid
   }
 

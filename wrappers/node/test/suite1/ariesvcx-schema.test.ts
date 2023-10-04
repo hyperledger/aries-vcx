@@ -2,11 +2,11 @@ import '../module-resolver-helper';
 
 import { assert } from 'chai';
 import { dataSchemaCreate, schemaCreate } from 'helpers/entities';
-import { initVcxTestMode, shouldThrow } from 'helpers/utils';
+import { initVcx, shouldThrow } from 'helpers/utils';
 import { Schema, SchemaState, VCXCode } from 'src';
 
 describe('Schema:', () => {
-  before(() => initVcxTestMode());
+  before(() => initVcx());
 
   describe('create:', () => {
     it('success', async () => {

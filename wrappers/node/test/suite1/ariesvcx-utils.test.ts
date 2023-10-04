@@ -1,7 +1,7 @@
 import '../module-resolver-helper';
 
 import { assert } from 'chai';
-import { initVcxTestMode, shouldThrow } from 'helpers/utils';
+import { initVcx, shouldThrow } from 'helpers/utils';
 import {
   getLedgerAuthorAgreement,
   getVersion,
@@ -11,7 +11,7 @@ import {
 } from 'src';
 
 describe('utils:', () => {
-  before(() => initVcxTestMode());
+  before(() => initVcx());
 
   describe('provisionAgent:', () => {
     it('success', async () => {

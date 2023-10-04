@@ -9,10 +9,7 @@ use aries_vcx::{
         },
         WalletHandle,
     },
-    global::settings::{
-        self, init_issuer_config, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID,
-        DEFAULT_GENESIS_PATH,
-    },
+    global::settings::{self, DEFAULT_GENESIS_PATH},
     utils::devsetup::{init_test_logging, reset_global_state},
 };
 
@@ -37,7 +34,6 @@ async fn dev_setup_issuer_wallet_and_agency_client() -> (String, WalletHandle) {
     let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed)
         .await
         .unwrap();
-    init_issuer_config(&config_issuer.institution_did).unwrap();
 
     (config_issuer.institution_did, wallet_handle)
 }
@@ -51,7 +47,6 @@ impl SetupGlobalsWalletPoolAgency {
     pub async fn init() -> SetupGlobalsWalletPoolAgency {
         reset_global_state();
         init_test_logging();
-        set_config_value(CONFIG_INSTITUTION_DID, DEFAULT_DID).unwrap();
         let (institution_did, wallet_handle) = dev_setup_issuer_wallet_and_agency_client().await;
         SetupGlobalsWalletPoolAgency {
             institution_did,

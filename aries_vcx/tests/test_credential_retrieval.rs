@@ -22,7 +22,7 @@ use aries_vcx::{
         util::AttachmentId,
     },
     run_setup,
-    utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupProfile},
+    utils::constants::DEFAULT_SCHEMA_ATTRS,
 };
 use messages::{
     decorators::attachment::{Attachment, AttachmentData, AttachmentType},

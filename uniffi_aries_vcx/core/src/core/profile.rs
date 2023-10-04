@@ -6,7 +6,7 @@ use aries_vcx::{
         ledger::base_ledger::TxnAuthrAgrmtOptions,
         wallet::indy::{wallet::create_and_open_wallet, IndySdkWallet, WalletConfig},
     },
-    core::profile::profile::Profile,
+    core::profile::Profile,
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     utils::mockdata::profile::mock_ledger::MockLedger,
 };

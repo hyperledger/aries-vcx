@@ -5,10 +5,7 @@ use vdrtools::{
 use crate::{
     anoncreds::indy::{general, general::blob_storage_open_reader},
     errors::error::VcxCoreResult,
-    global::settings,
     indy::utils::parse_and_validate,
-    utils,
-    utils::constants::LIBINDY_CRED_OFFER,
     wallet::indy::wallet_non_secrets::{get_rev_reg_delta, set_rev_reg_delta},
     WalletHandle,
 };
@@ -17,10 +14,6 @@ pub async fn libindy_issuer_create_credential_offer(
     wallet_handle: WalletHandle,
     cred_def_id: &str,
 ) -> VcxCoreResult<String> {
-    if settings::indy_mocks_enabled() {
-        return Ok(LIBINDY_CRED_OFFER.to_string());
-    }
-
     let res = Locator::instance()
         .issuer_controller
         .create_credential_offer(
@@ -40,10 +33,6 @@ pub async fn libindy_issuer_create_credential(
     rev_reg_id: Option<String>,
     tails_file: Option<String>,
 ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
-    if settings::indy_mocks_enabled() {
-        return Ok((utils::constants::CREDENTIAL_JSON.to_owned(), None, None));
-    }
-
     let blob_handle = match tails_file {
         Some(x) => Some(blob_storage_open_reader(&x).await?),
         None => None,
@@ -148,10 +137,6 @@ pub async fn revoke_credential_local(
     rev_reg_id: &str,
     cred_rev_id: &str,
 ) -> VcxCoreResult<()> {
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
-
     let mut new_delta_json =
         libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id)
             .await?;

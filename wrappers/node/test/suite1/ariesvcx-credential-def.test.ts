@@ -2,11 +2,11 @@ import '../module-resolver-helper';
 
 import { assert } from 'chai';
 import { credentialDefCreate } from 'helpers/entities';
-import { initVcxTestMode, shouldThrow } from 'helpers/utils';
+import { initVcx, shouldThrow } from 'helpers/utils';
 import { CredentialDef, VCXCode } from 'src';
 
 describe('CredentialDef:', () => {
-  before(() => initVcxTestMode());
+  before(() => initVcx());
 
   describe('create:', () => {
     it('success', async () => {

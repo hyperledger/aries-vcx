@@ -52,12 +52,9 @@ pub async fn is_cred_revoked(
 #[allow(clippy::unwrap_used)]
 mod integration_tests {
     use super::*;
-    use crate::{
-        common::test_utils::{
-            create_and_publish_test_rev_reg, create_and_write_credential,
-            create_and_write_test_cred_def, create_and_write_test_schema,
-        },
-        utils::devsetup::SetupProfile,
+    use crate::common::test_utils::{
+        create_and_publish_test_rev_reg, create_and_write_credential,
+        create_and_write_test_cred_def, create_and_write_test_schema,
     };
 
     #[tokio::test]

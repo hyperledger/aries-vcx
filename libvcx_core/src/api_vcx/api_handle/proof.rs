@@ -316,26 +316,13 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod tests {
-    use aries_vcx::{
-        agency_client::testing::mocking::HttpClientMockResponse,
-        utils::{
-            constants::{
-                PROOF_REJECT_RESPONSE_STR_V2, REQUESTED_ATTRS, REQUESTED_PREDICATES,
-                V3_OBJECT_SERIALIZE_VERSION,
-            },
-            devsetup::SetupMocks,
-            mockdata::{mock_settings::MockBuilder, mockdata_proof},
-        },
+    use aries_vcx::utils::{
+        constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, V3_OBJECT_SERIALIZE_VERSION},
+        devsetup::SetupMocks,
     };
     use serde_json::Value;
 
     use super::*;
-    #[cfg(test)]
-    use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
-    use crate::{
-        api_vcx::api_handle::proof,
-        aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState,
-    };
 
     async fn create_default_proof() -> u32 {
         create_proof(
@@ -421,180 +408,12 @@ pub mod tests {
     }
 
     #[tokio::test]
-    async fn test_send_proof_request() {
-        let _setup = SetupMocks::init();
-
-        let handle_conn = build_test_connection_inviter_requested().await;
-
-        let handle_proof = create_default_proof().await;
-        send_proof_request(handle_proof, handle_conn).await.unwrap();
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::PresentationRequestSent as u32
-        );
-    }
-
-    #[tokio::test]
     async fn test_get_proof_fails_with_no_proof() {
         let _setup = SetupMocks::init();
 
         let handle = create_default_proof().await;
         assert!(is_valid_handle(handle));
         assert!(get_presentation_msg(handle).is_err())
-    }
-
-    #[tokio::test]
-    async fn test_proof_update_state_v2() {
-        let _setup = SetupMocks::init();
-        let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
-
-        let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof().await;
-
-        send_proof_request(handle_proof, handle_conn).await.unwrap();
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::PresentationRequestSent as u32
-        );
-
-        mediated_connection::release(handle_conn).unwrap();
-        let handle_conn = build_test_connection_inviter_requested().await;
-
-        update_state(
-            handle_proof,
-            Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
-            handle_conn,
-        )
-        .await
-        .unwrap();
-
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::Finished as u32
-        );
-    }
-
-    #[tokio::test]
-    async fn test_update_state() {
-        let _setup = SetupMocks::init();
-        let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
-
-        let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof().await;
-
-        send_proof_request(handle_proof, handle_conn).await.unwrap();
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::PresentationRequestSent as u32
-        );
-
-        update_state(
-            handle_proof,
-            Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
-            handle_conn,
-        )
-        .await
-        .unwrap();
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::Finished as u32
-        );
-    }
-
-    #[tokio::test]
-    async fn test_proof_validation_with_predicate() {
-        let _setup = SetupMocks::init();
-        let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
-
-        let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof().await;
-
-        send_proof_request(handle_proof, handle_conn).await.unwrap();
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::PresentationRequestSent as u32
-        );
-
-        update_state(
-            handle_proof,
-            Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
-            handle_conn,
-        )
-        .await
-        .unwrap();
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::Finished as u32
-        );
-    }
-
-    #[tokio::test]
-    async fn test_update_state_with_reject_message() {
-        let _setup = SetupMocks::init();
-
-        let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof().await;
-
-        send_proof_request(handle_proof, handle_conn).await.unwrap();
-
-        update_state(
-            handle_proof,
-            Some(PROOF_REJECT_RESPONSE_STR_V2),
-            handle_conn,
-        )
-        .await
-        .unwrap();
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::Failed as u32
-        );
-    }
-
-    #[tokio::test]
-    async fn test_send_presentation_request() {
-        let _setup = SetupMocks::init();
-
-        let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof().await;
-
-        send_proof_request(handle_proof, handle_conn).await.unwrap();
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::PresentationRequestSent as u32
-        );
-    }
-
-    #[tokio::test]
-    async fn test_get_proof() {
-        let _setup = SetupMocks::init();
-        let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
-
-        let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof().await;
-
-        send_proof_request(handle_proof, handle_conn).await.unwrap();
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::PresentationRequestSent as u32
-        );
-
-        update_state(
-            handle_proof,
-            Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
-            handle_conn,
-        )
-        .await
-        .unwrap();
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::Finished as u32
-        );
-
-        let proof_str = get_presentation_msg(handle_proof).unwrap();
-        assert_eq!(
-            proof_str,
-            mockdata_proof::ARIES_PROOF_PRESENTATION.replace(['\n', ' '], "")
-        );
     }
 
     #[tokio::test]
@@ -632,111 +451,5 @@ pub mod tests {
         assert!(!is_valid_handle(h1));
         assert!(!is_valid_handle(h2));
         assert!(!is_valid_handle(h3));
-    }
-
-    #[tokio::test]
-    async fn test_send_proof_request_can_be_retried() {
-        let _setup = SetupMocks::init();
-
-        let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof().await;
-
-        let _request = get_presentation_request_msg(handle_proof).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), 1);
-
-        HttpClientMockResponse::set_next_response(
-            aries_vcx::agency_client::errors::error::AgencyClientResult::Err(
-                aries_vcx::agency_client::errors::error::AgencyClientError::from_msg(
-                    aries_vcx::agency_client::errors::error::AgencyClientErrorKind::IOError,
-                    "Sending message timeout.",
-                ),
-            ),
-        );
-        assert_eq!(
-            send_proof_request(handle_proof, handle_conn)
-                .await
-                .unwrap_err()
-                .kind(),
-            LibvcxErrorKind::IOError
-        );
-        assert_eq!(get_state(handle_proof).unwrap(), 1);
-
-        // Retry sending proof request
-        send_proof_request(handle_proof, handle_conn).await.unwrap();
-        assert_eq!(
-            get_state(handle_proof).unwrap(),
-            VerifierState::PresentationRequestSent as u32
-        );
-    }
-
-    #[tokio::test]
-    async fn test_proof_accepted() {
-        let _setup = SetupMocks::init();
-        let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
-
-        let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof().await;
-
-        let _request = get_presentation_request_msg(handle_proof).unwrap();
-        send_proof_request(handle_proof, handle_conn).await.unwrap();
-        update_state(
-            handle_proof,
-            Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
-            handle_conn,
-        )
-        .await
-        .unwrap();
-        assert_eq!(
-            proof::get_state(handle_proof).unwrap(),
-            VerifierState::Finished as u32
-        );
-    }
-
-    #[tokio::test]
-    async fn test_proof_errors() {
-        let _setup = SetupMocks::init();
-
-        let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof().await;
-
-        let bad_handle = 100000;
-        let empty = r#""#;
-
-        assert_eq!(
-            send_proof_request(bad_handle, handle_conn)
-                .await
-                .unwrap_err()
-                .kind(),
-            LibvcxErrorKind::InvalidHandle
-        );
-        assert_eq!(
-            get_verification_status(handle_proof).unwrap(),
-            VcxPresentationVerificationStatus::Unavailable
-        );
-        assert_eq!(
-            create_proof(
-                "my source id".to_string(),
-                empty.to_string(),
-                "{}".to_string(),
-                r#"{"support_revocation":false}"#.to_string(),
-                "my name".to_string(),
-            )
-            .await
-            .unwrap_err()
-            .kind(),
-            LibvcxErrorKind::InvalidJson
-        );
-        assert_eq!(
-            to_string(bad_handle).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidHandle
-        );
-        assert_eq!(
-            get_source_id(bad_handle).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidHandle
-        );
-        assert_eq!(
-            from_string(empty).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidJson
-        );
     }
 }

@@ -8,12 +8,12 @@ import {
   createConnectionInviterRequested,
   dataConnectionCreate,
 } from 'helpers/entities';
-import { initVcxTestMode, shouldThrow } from 'helpers/utils';
+import { initVcx, shouldThrow } from 'helpers/utils';
 import { Connection, MediatedConnectionStateType, VCXCode } from 'src';
 import { ARIES_PING, ARIES_PING_RESPONSE } from '../helpers/mockdata';
 
 describe('Connection:', () => {
-  before(() => initVcxTestMode());
+  before(() => initVcx());
 
   describe('create:', () => {
     it('success', async () => {

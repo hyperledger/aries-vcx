@@ -3,7 +3,7 @@ use vdrtools::{
     Locator, RevocationRegistryDefinition,
 };
 
-use crate::{errors::error::VcxCoreResult, global::settings, utils, WalletHandle};
+use crate::{errors::error::VcxCoreResult, WalletHandle};
 
 pub async fn libindy_prover_store_credential(
     wallet_handle: WalletHandle,
@@ -22,10 +22,6 @@ pub async fn libindy_prover_store_credential(
         cred_def_json,
         rev_reg_def_json,
     );
-
-    if settings::indy_mocks_enabled() {
-        return Ok("cred_id".to_string());
-    }
 
     let cred_req_meta = serde_json::from_str::<CredentialRequestMetadata>(cred_req_meta)?;
 
@@ -83,10 +79,6 @@ pub async fn libindy_prover_create_master_secret(
     wallet_handle: WalletHandle,
     master_secret_id: &str,
 ) -> VcxCoreResult<String> {
-    if settings::indy_mocks_enabled() {
-        return Ok(settings::DEFAULT_LINK_SECRET_ALIAS.to_string());
-    }
-
     let res = Locator::instance()
         .prover_controller
         .create_master_secret(wallet_handle, Some(master_secret_id.into()))
@@ -102,13 +94,6 @@ pub async fn libindy_prover_create_credential_req(
     credential_def_json: &str,
     master_secret_name: &str,
 ) -> VcxCoreResult<(String, String)> {
-    if settings::indy_mocks_enabled() {
-        return Ok((
-            utils::constants::CREDENTIAL_REQ_STRING.to_owned(),
-            String::new(),
-        ));
-    }
-
     let cred_offer = serde_json::from_str::<CredentialOffer>(credential_offer_json)?;
 
     let cred_def = serde_json::from_str::<CredentialDefinition>(credential_def_json)?;

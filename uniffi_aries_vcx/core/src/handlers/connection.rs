@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
-    core::profile::profile::Profile,
+    core::profile::Profile,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::connection::{
         pairwise_info::PairwiseInfo, Connection as VcxConnection,

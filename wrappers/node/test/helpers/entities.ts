@@ -2,26 +2,26 @@ import '../module-resolver-helper';
 
 import { assert } from 'chai';
 import {
-    ARIES_CREDENTIAL_OFFER,
-    ARIES_PROOF_REQUEST,
-    Connection,
-    Credential,
-    CredentialDef,
-    DisclosedProof,
-    IConnectionCreateData,
-    ICredentialCreateWithOffer,
-    ICredentialDefCreateDataV2,
-    IDisclosedProofCreateData,
-    IIssuerCredentialBuildOfferDataV2,
-    IProofCreateData, IProofCreateDataV2,
-    ISchemaCreateData,
-    IssuerCredential,
-    Proof,
-    RevocationRegistry,
-    Schema,
+  ARIES_CREDENTIAL_OFFER,
+  ARIES_PROOF_REQUEST,
+  Connection,
+  Credential,
+  CredentialDef,
+  DisclosedProof,
+  IConnectionCreateData,
+  ICredentialCreateWithOffer,
+  ICredentialDefCreateDataV2,
+  IDisclosedProofCreateData,
+  IIssuerCredentialBuildOfferDataV2,
+  IProofCreateData, IProofCreateDataV2,
+  ISchemaCreateData,
+  IssuerCredential,
+  Proof,
+  RevocationRegistry,
+  Schema,
 } from 'src';
 import * as uuid from 'uuid';
-import { ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST } from './mockdata';
+import { ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, ARIES_ISSUER_DID } from './mockdata';
 
 export const dataConnectionCreate = (): IConnectionCreateData => ({
   id: `testConnectionId-${uuid.v4()}`,
@@ -60,6 +60,7 @@ export const createConnectionInviterFinished = async (
 };
 
 export const dataCredentialDefCreate = (): ICredentialDefCreateDataV2 => ({
+  issuerDid: ARIES_ISSUER_DID,
   schemaId: 'testCredentialDefSchemaId',
   sourceId: 'testCredentialDefSourceId',
   supportRevocation: true,
@@ -165,7 +166,7 @@ export const dataProofCreate = (): IProofCreateDataV2 => ({
     ref3: { names: ['attr3', 'attr4'] },
   },
   name: 'Proof',
-  preds: { pred1: { name: 'pred1', p_type: 'GE', p_value: 123 }},
+  preds: { pred1: { name: 'pred1', p_type: 'GE', p_value: 123 } },
   revocationInterval: {
     from: undefined,
     to: undefined,
@@ -189,7 +190,7 @@ export const dataSchemaCreate = (): ISchemaCreateData => ({
 });
 
 export const schemaCreate = async (data = dataSchemaCreate()): Promise<Schema> => {
-  const schema = await Schema.create(data);
+  const schema = await Schema.create(data, ARIES_ISSUER_DID);
   assert.notEqual(schema.handle, undefined);
   assert.equal(schema.name, data.data.name);
   assert.deepEqual(schema.schemaAttrs, data.data);

@@ -8,10 +8,6 @@ use std::{
 
 use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
 use aries_vcx_core::{
-    global::settings::{
-        disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
-        reset_config_values_ariesvcxcore,
-    },
     ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path},
     wallet::indy::{
         did_mocks::DidMocks,
@@ -29,26 +25,10 @@ use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
 #[cfg(feature = "vdrtools")]
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::{
-    core::profile::{ledger::VcxPoolConfig, profile::Profile},
-    global::{
-        settings,
-        settings::{
-            aries_vcx_disable_indy_mocks, aries_vcx_enable_indy_mocks, init_issuer_config,
-            reset_config_values_ariesvcx, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID,
-        },
-    },
+    core::profile::{ledger::VcxPoolConfig, Profile},
+    global::settings,
     utils::{constants::POOL1_TXN, file::write_file, test_logger::LibvcxDefaultLogger},
 };
-
-#[macro_export]
-macro_rules! assert_match {
-    ($pattern:pat, $var:expr) => {
-        assert!(match $var {
-            $pattern => true,
-            _ => false,
-        })
-    };
-}
 
 lazy_static! {
     static ref TEST_LOGGING_INIT: Once = Once::new();
@@ -60,16 +40,11 @@ pub fn init_test_logging() {
     })
 }
 
-pub fn create_new_seed() -> String {
-    let x = rand::random::<u32>();
-    format!("{x:032}")
-}
-
 pub struct SetupEmpty;
 
 pub struct SetupDefaults;
 
-pub struct SetupMocks {}
+pub struct SetupMocks;
 
 pub const AGENCY_ENDPOINT: &str = "http://localhost:8080";
 pub const AGENCY_DID: &str = "VsKV7grR1BUE29mG2Fm2kX";
@@ -90,10 +65,6 @@ pub fn reset_global_state() {
     warn!("reset_global_state >>");
     AgencyMockDecrypted::clear_mocks();
     DidMocks::clear_mocks();
-    aries_vcx_disable_indy_mocks().unwrap();
-    disable_indy_mocks_core().unwrap();
-    reset_config_values_ariesvcx().unwrap();
-    reset_config_values_ariesvcxcore().unwrap()
 }
 
 impl SetupEmpty {
@@ -126,9 +97,6 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         init_test_logging();
         enable_agency_mocks();
-        aries_vcx_enable_indy_mocks().unwrap();
-        enable_indy_mocks_core().unwrap();
-        set_config_value(CONFIG_INSTITUTION_DID, DEFAULT_DID).unwrap();
         SetupMocks {}
     }
 }
@@ -156,8 +124,7 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
     let (did, _vk) = create_and_store_my_did(wallet_handle, Some(key_seed), None)
         .await
         .unwrap();
-    // todo: can we remove following line completely?
-    init_issuer_config(&did).unwrap();
+
     (did, wallet_handle)
 }
 
@@ -239,7 +206,7 @@ pub async fn dev_build_featured_profile(
 macro_rules! run_setup {
     ($func:expr) => {{
         use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-        use $crate::core::profile::profile::Profile;
+        use $crate::core::profile::Profile;
 
         $crate::utils::devsetup::init_test_logging();
 
@@ -268,9 +235,13 @@ macro_rules! run_setup {
             .await
             .unwrap();
 
-        SetupProfile::new(public_did.to_string(), profile, genesis_file_path)
-            .await
-            .run($func)
+        $crate::utils::devsetup::SetupProfile::new(
+            public_did.to_string(),
+            profile,
+            genesis_file_path,
+        )
+        .await
+        .run($func)
     }};
 }
 

@@ -2,15 +2,10 @@ use vdrtools::Locator;
 
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    global::settings,
     WalletHandle,
 };
 
 pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
-    if settings::indy_mocks_enabled() {
-        return Ok(Vec::from(msg));
-    }
-
     let res = Locator::instance()
         .crypto_controller
         .crypto_sign(wallet_handle, my_vk, msg)
@@ -20,10 +15,6 @@ pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxCo
 }
 
 pub async fn verify(vk: &str, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
-    if settings::indy_mocks_enabled() {
-        return Ok(true);
-    }
-
     let res = Locator::instance()
         .crypto_controller
         .crypto_verify(vk, msg, signature)
@@ -38,10 +29,6 @@ pub async fn pack_message(
     receiver_keys: &str,
     msg: &[u8],
 ) -> VcxCoreResult<Vec<u8>> {
-    if settings::indy_mocks_enabled() {
-        return Ok(msg.to_vec());
-    }
-
     // parse json array of keys
     let receiver_list = serde_json::from_str::<Vec<String>>(receiver_keys)
         .map_err(|_| {
@@ -76,10 +63,6 @@ pub async fn pack_message(
 }
 
 pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
-    if settings::indy_mocks_enabled() {
-        return Ok(Vec::from(msg));
-    }
-
     let res = Locator::instance()
         .crypto_controller
         .unpack_msg(serde_json::from_slice(msg)?, wallet_handle)

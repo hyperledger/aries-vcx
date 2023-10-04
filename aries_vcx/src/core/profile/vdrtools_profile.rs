@@ -8,7 +8,7 @@ use async_trait::async_trait;
 
 use super::{
     ledger::{build_ledger_components, ArcIndyVdrLedgerRead, ArcIndyVdrLedgerWrite, VcxPoolConfig},
-    profile::Profile,
+    Profile,
 };
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 

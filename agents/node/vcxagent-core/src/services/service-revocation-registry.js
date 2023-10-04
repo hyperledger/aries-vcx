@@ -32,10 +32,10 @@ module.exports.createServiceLedgerRevocationRegistry = function createServiceLed
     return { revReg: newRevReg, revRegId: newRevRegId }
   }
 
-  async function publishRevocations (revRegId) {
+  async function publishRevocations (revRegId, submittderDid) {
     logger.info(`Publishing revocations for revocation registry ${revRegId}`)
     const revReg = await loadRevReg(revRegId)
-    await revReg.publishRevocations()
+    await revReg.publishRevocations(submittderDid)
   }
 
   async function getTailsFile (credDefId) {

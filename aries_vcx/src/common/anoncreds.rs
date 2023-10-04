@@ -7,15 +7,12 @@ pub mod integration_tests {
         ledger::{base_ledger::AnoncredsLedgerRead, indy::pool::test_utils::get_temp_dir_path},
     };
 
-    use crate::{
-        common::{
-            credentials::get_cred_rev_id,
-            test_utils::{
-                create_and_publish_test_rev_reg, create_and_write_credential,
-                create_and_write_test_cred_def, create_and_write_test_schema,
-            },
+    use crate::common::{
+        credentials::get_cred_rev_id,
+        test_utils::{
+            create_and_publish_test_rev_reg, create_and_write_credential,
+            create_and_write_test_cred_def, create_and_write_test_schema,
         },
-        utils::devsetup::SetupProfile,
     };
 
     #[tokio::test]

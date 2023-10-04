@@ -42,7 +42,7 @@ pub struct SenderConfig {
 impl RevocationNotificationSenderSM {
     pub fn create() -> Self {
         Self {
-            state: SenderFullState::Initial(InitialState::new()),
+            state: SenderFullState::Initial(InitialState),
         }
     }
 

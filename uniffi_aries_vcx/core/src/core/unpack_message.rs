@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     aries_vcx_core::wallet::{base_wallet::BaseWallet, structs_io::UnpackMessageOutput},
-    core::profile::profile::Profile,
+    core::profile::Profile,
 };
 
 use super::profile::ProfileHolder;

@@ -6,7 +6,7 @@ pub mod utils;
 
 use aries_vcx::{
     common::ledger::transactions::write_endpoint_legacy,
-    core::profile::profile::Profile,
+    core::profile::Profile,
     protocols::{connection::GenericConnection, mediated_connection::pairwise_info::PairwiseInfo},
     utils::{devsetup::*, encryption_envelope::EncryptionEnvelope},
 };
