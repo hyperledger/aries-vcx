@@ -8,19 +8,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aries-vcx = { version = "0.58.0", path = "../aries_vcx" }
-aries_vcx_core = { version = "0.1.0", path = "../aries_vcx_core", features = ["vdrtools_wallet", "vdrtools_anoncreds"] }
+aries-vcx = { path = "../aries_vcx" }
+aries_vcx_core = { path = "../aries_vcx_core", features = ["vdrtools_wallet", "vdrtools_anoncreds"] }
 axum = "0.6"
 axum-macros = "0.3.8"
 cursive = { version = "0.20.0", features = ["crossterm-backend"] }
-diddoc_legacy = { version = "0.58.0", path = "../diddoc_legacy" }
+diddoc_legacy = { path = "../diddoc_legacy" }
 dotenvy = "0.15"
 env_logger = "0.10.0"
 fast_qr = { version = "0.10.2", features = ["svg"] }
 futures = "0.3.28"
-libvdrtools = { version = "0.8.6", path = "../libvdrtools" } # vdrtools
+libvdrtools = { path = "../libvdrtools" } # vdrtools
 log = "0.4.20"
-messages = { version = "0.58.0", path = "../messages" }
+messages = { path = "../messages" }
 reqwest = { version = "0.11.20", features = ["json"] }
 serde = "1.0.188"
 serde_json = "1.0.106"

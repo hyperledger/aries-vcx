@@ -24,7 +24,6 @@ use messages::{
 };
 
 // use diddoc_legacy::aries::service::AriesService;
-use super::utils::MockTransport;
 use super::Agent;
 use crate::utils::prelude::*;
 // client role utilities
@@ -80,7 +79,7 @@ impl Agent {
         response: Response,
     ) -> Result<InviteeConnection<Completed>, String> {
         state
-            .handle_response(&self.get_wallet_ref(), response, &MockTransport)
+            .handle_response(&self.get_wallet_ref(), response)
             .await
             .map_err(|err| err.to_string())
     }

@@ -22,6 +22,7 @@ use messages::{
     },
     AriesMessage,
 };
+use serde_json::json;
 use xum_test_server::storage::{get_persistence, MediatorPersistence};
 
 use crate::utils::{prelude::*, structs::VeriKey};
@@ -164,7 +165,7 @@ impl Agent {
         let their_diddoc = request.content.connection.did_doc;
         let packed_response_envelope = EncryptionEnvelope::create(
             &self.get_wallet_ref(),
-            &aries_response,
+            &json!(aries_response).to_string().as_bytes(),
             Some(&old_vk),
             &their_diddoc,
         )
