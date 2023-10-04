@@ -176,10 +176,7 @@ pub mod tests {
 
     use super::*;
     use crate::api_vcx::{
-        api_handle::{
-            schema,
-            schema::test_utils::{create_schema_real, prepare_schema_data},
-        },
+        api_handle::schema::test_utils::{create_schema_real, prepare_schema_data},
         utils::devsetup::SetupGlobalsWalletPoolAgency,
     };
 
@@ -344,84 +341,4 @@ pub mod tests {
             LibvcxErrorKind::InvalidHandle
         );
     }
-
-    // #[tokio::test]
-    // #[ignore]
-    // async fn test_vcx_schema_get_state_with_ledger() {
-    //     SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-    //         let handle = create_schema_real().await;
-    //         assert_eq!(1, get_state(handle).unwrap());
-    //     })
-    //     .await;
-    // }
-
-    // #[tokio::test]
-    // #[ignore]
-    // async fn test_vcx_create_schema_with_pool() {
-    //     SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-    //         let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
-    //         let _schema_handle = schema::create_and_publish_schema(
-    //             DEFAULT_DID,
-    //             "source_id",
-    //             schema_name,
-    //             schema_version,
-    //             schema_data,
-    //         )
-    //         .await
-    //         .unwrap();
-    //     })
-    //     .await;
-    // }
-
-    // #[tokio::test]
-    // #[ignore]
-    // async fn test_vcx_schema_serialize_contains_version() {
-    //     SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-    //         let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
-    //         let schema_handle = schema::create_and_publish_schema(
-    //             DEFAULT_DID,
-    //             "source_id",
-    //             schema_name,
-    //             schema_version,
-    //             schema_data,
-    //         )
-    //         .await
-    //         .unwrap();
-
-    //         let schema_json = schema::to_string(schema_handle).unwrap();
-
-    //         let j: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
-    //         let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
-    //         assert_eq!(j["version"], "1.0");
-    //     })
-    //     .await;
-    // }
-
-    // #[tokio::test]
-    // #[ignore]
-    // async fn test_vcx_schema_get_attrs_with_pool() {
-    //     SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-    //         let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
-    //         let schema_handle = schema::create_and_publish_schema(
-    //             DEFAULT_DID,
-    //             "source_id",
-    //             schema_name,
-    //             schema_version,
-    //             schema_data,
-    //         )
-    //         .await
-    //         .unwrap();
-    //         let _schema_json_1 = schema::to_string(schema_handle).unwrap();
-    //         let schema_id = schema::get_schema_id(schema_handle).unwrap();
-
-    //         let (_schema_handle, schema_json_2) =
-    //             schema::get_schema_attrs("source_id".into(), schema_id)
-    //                 .await
-    //                 .unwrap();
-    //         let j: serde_json::Value = serde_json::from_str(&schema_json_2).unwrap();
-    //         let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
-    //         assert_eq!(j["version"], "1.0");
-    //     })
-    //     .await;
-    // }
 }

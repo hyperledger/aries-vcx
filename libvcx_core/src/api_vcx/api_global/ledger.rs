@@ -225,15 +225,4 @@ pub mod tests {
         let auth_agreement = serde_json::to_value(auth_agreement).unwrap();
         assert_eq!(expected, auth_agreement);
     }
-
-    // #[tokio::test]
-    // async fn test_vcx_get_ledger_author_agreement() {
-    //     let _setup = SetupMocks::init();
-
-    //     let agreement = ledger_get_txn_author_agreement().await.unwrap();
-    //     assert_eq!(
-    //         aries_vcx::utils::constants::DEFAULT_AUTHOR_AGREEMENT,
-    //         agreement
-    //     );
-    // }
 }

@@ -424,13 +424,13 @@ pub mod tests {
     };
 
     use super::*;
-    #[cfg(test)]
-    use crate::api_vcx::api_handle::credential::tests_utils::BAD_CREDENTIAL_OFFER;
-    use crate::api_vcx::api_handle::credential::{
-        credential_create_with_offer, get_attributes, get_credential,
+    use crate::api_vcx::api_handle::{
+        credential::{
+            credential_create_with_offer, get_attributes, get_credential,
+            tests_utils::BAD_CREDENTIAL_OFFER,
+        },
+        mediated_connection::test_utils::build_test_connection_invitee_completed,
     };
-    #[cfg(test)]
-    use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_invitee_completed;
 
     async fn _get_offer(handle: u32) -> String {
         let offers = get_credential_offer_messages_with_conn_handle(handle)
@@ -511,77 +511,6 @@ pub mod tests {
         assert_eq!(cred_original_state, cred_restored_state);
         assert_eq!(cred_original_serialized, cred_restored_serialized);
     }
-
-    // #[tokio::test]
-    // async fn full_credential_test() {
-    //     let _setup = SetupMocks::init();
-
-    //     info!("full_credential_test:: going to build_test_connection");
-    //     let handle_conn = build_test_connection_inviter_requested().await;
-
-    //     info!("full_credential_test:: going to _get_offer");
-    //     let offer = _get_offer(handle_conn).await;
-
-    //     info!("full_credential_test:: going to credential_create_with_offer");
-    //     let handle_cred = credential_create_with_offer("TEST_CREDENTIAL", &offer).unwrap();
-    //     assert_eq!(
-    //         HolderState::OfferReceived as u32,
-    //         get_state(handle_cred).unwrap()
-    //     );
-
-    //     info!("full_credential_test:: going get offered attributes from offer received state");
-    //     let offer_attrs: String = get_attributes(handle_cred).unwrap();
-    //     info!(
-    //         "full_credential_test:: obtained offered attributes: {}",
-    //         offer_attrs
-    //     );
-    //     let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
-    //     let offer_attrs_expected: serde_json::Value =
-    //         serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();
-    //     assert_eq!(offer_attrs, offer_attrs_expected);
-
-    //     info!("full_credential_test:: going to send_credential_request");
-    //     send_credential_request(handle_cred, handle_conn)
-    //         .await
-    //         .unwrap();
-    //     assert_eq!(
-    //         HolderState::RequestSet as u32,
-    //         get_state(handle_cred).unwrap()
-    //     );
-
-    //     AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-    //     AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_RESPONSE);
-
-    //     info!("full_credential_test:: going to update_state, should receive credential");
-    //     update_state(handle_cred, None, handle_conn).await.unwrap();
-    //     assert_eq!(
-    //         get_state(handle_cred).unwrap(),
-    //         HolderState::Finished as u32
-    //     );
-
-    //     info!("full_credential_test:: going to get_credential");
-    //     let msg = get_credential(handle_cred).unwrap();
-    //     info!("full_credential_test:: get_credential returned {}", msg);
-    //     let msg_value: serde_json::Value = serde_json::from_str(&msg).unwrap();
-
-    //     info!(
-    //         "full_credential_test:: going to deserialize credential: {:?}",
-    //         msg_value
-    //     );
-    //     let _credential_struct: IssueCredentialV1 =
-    //         serde_json::from_str(msg_value.to_string().as_str()).unwrap();
-
-    //     info!("full_credential_test:: going get offered attributes from final state");
-    //     let offer_attrs: String = get_attributes(handle_cred).unwrap();
-    //     info!(
-    //         "full_credential_test:: obtained offered attributes: {}",
-    //         offer_attrs
-    //     );
-    //     let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
-    //     let offer_attrs_expected: serde_json::Value =
-    //         serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();
-    //     assert_eq!(offer_attrs, offer_attrs_expected);
-    // }
 
     #[tokio::test]
     async fn test_get_attributes_json_attach() {

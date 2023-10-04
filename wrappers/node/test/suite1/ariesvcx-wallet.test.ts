@@ -1,10 +1,10 @@
 import '../module-resolver-helper';
 import { assert } from 'chai';
-import { initVcxTestMode, shouldThrow } from 'helpers/utils';
+import { initVcx, shouldThrow } from 'helpers/utils';
 import { shutdownVcx, VCXCode, Wallet } from 'src';
 
 describe('Wallet:', () => {
-  before(() => initVcxTestMode());
+  before(() => initVcx());
 
   describe('import:', () => {
     it('throws: libindy error', async () => {
