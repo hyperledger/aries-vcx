@@ -1,5 +1,5 @@
 /// Aries Agent TUI
-use mediator::{agent::AgentMaker, tui};
+use mediator::{agent::AgentMaker, routes::tui};
 
 #[tokio::main]
 async fn main() {

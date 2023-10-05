@@ -16,6 +16,7 @@ use crate::agent::Agent;
 type ArcAgent = Arc<Agent>;
 
 pub mod client;
+pub mod tui;
 
 pub fn unhandled_aries(message: impl Debug) -> String {
     format!("Don't know how to handle this message type {:#?}", message)
