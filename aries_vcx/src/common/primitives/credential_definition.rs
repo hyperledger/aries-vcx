@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,
@@ -219,7 +217,7 @@ impl CredentialDef {
         self.source_id = source_id;
     }
 
-    pub async fn update_state(&mut self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<u32> {
+    pub async fn update_state(&mut self, ledger: &impl AnoncredsLedgerRead) -> VcxResult<u32> {
         if (ledger.get_cred_def(&self.id, None).await).is_ok() {
             self.state = PublicEntityStateType::Published
         }

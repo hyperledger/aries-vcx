@@ -11,12 +11,6 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 doctest = false
 
-[features]
-default = ["anoncreds_credx"]
-
-anoncreds_credx = ["libvcx_core/anoncreds_credx"]
-anoncreds_vdrtools = ["libvcx_core/anoncreds_vdrtools"]
-
 [dependencies]
 libvcx_core = { path = "../../libvcx_core"  }
 wallet_migrator = { path = "../../wallet_migrator" }

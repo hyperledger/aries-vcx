@@ -17,7 +17,7 @@ use crate::{
     api_vcx::{
         api_global::{
             agency_client::get_main_agency_client,
-            profile::{get_main_indy_ledger_read, get_main_wallet},
+            profile::{get_main_ledger_read, get_main_wallet},
         },
         api_handle::{
             connection, mediated_connection::CONNECTION_MAP as MEDIATED_CONS_MAP,
@@ -181,7 +181,7 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
     let connections = conn_map.values().collect();
 
     if let Some(connection) = oob
-        .connection_exists(&get_main_indy_ledger_read()?, &connections)
+        .connection_exists(get_main_ledger_read()?.as_ref(), &connections)
         .await?
     {
         if let Some((&handle, _)) = conn_map.iter().find(|(_, conn)| *conn == connection) {
@@ -208,7 +208,7 @@ pub async fn nonmediated_connection_exists(
         handle,
         conn_handles
     );
-    let indy_ledger = get_main_indy_ledger_read()?;
+    let indy_ledger = get_main_ledger_read()?;
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
 
     let filter_closure = |h: &u32| {
@@ -219,7 +219,7 @@ pub async fn nonmediated_connection_exists(
     let connections: HashMap<_, _> = conn_handles.iter().filter_map(filter_closure).collect();
 
     match oob
-        .nonmediated_connection_exists::<_, &u32>(&indy_ledger, &connections)
+        .nonmediated_connection_exists::<_, &u32>(indy_ledger.as_ref(), &connections)
         .await
     {
         None => Ok((0, false)),
@@ -231,11 +231,16 @@ pub async fn build_connection(handle: u32) -> LibvcxResult<String> {
     trace!("build_connection >>> handle: {}", handle);
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
     let invitation = AnyInvitation::Oob(oob.oob.clone());
-    let ddo = into_did_doc(&get_main_indy_ledger_read()?, &invitation).await?;
-    oob.build_connection(&get_main_wallet()?, &get_main_agency_client()?, ddo, false)
-        .await?
-        .to_string()
-        .map_err(|err| err.into())
+    let ddo = into_did_doc(get_main_ledger_read()?.as_ref(), &invitation).await?;
+    oob.build_connection(
+        get_main_wallet()?.as_ref(),
+        &get_main_agency_client()?,
+        ddo,
+        false,
+    )
+    .await?
+    .to_string()
+    .map_err(|err| err.into())
 }
 
 pub fn get_thread_id_sender(handle: u32) -> LibvcxResult<String> {

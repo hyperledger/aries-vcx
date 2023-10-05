@@ -242,10 +242,12 @@ pub trait ToBaseAgencyClientWallet {
     fn to_base_agency_client_wallet(&self) -> Arc<dyn BaseAgencyClientWallet>;
 }
 
-impl ToBaseAgencyClientWallet for Arc<dyn BaseWallet> {
+impl<T> ToBaseAgencyClientWallet for Arc<T>
+where
+    T: BaseWallet + 'static,
+{
     fn to_base_agency_client_wallet(&self) -> Arc<dyn BaseAgencyClientWallet> {
-        Arc::new(BaseWalletAgencyClientWallet {
-            inner: Arc::clone(self),
-        })
+        let x = self.clone();
+        Arc::new(BaseWalletAgencyClientWallet { inner: x })
     }
 }

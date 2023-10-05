@@ -189,7 +189,7 @@ pub async fn build_credential_offer_msg_v2(
     };
     credential
         .build_credential_offer_msg(
-            &get_main_anoncreds()?,
+            get_main_anoncreds()?.as_ref(),
             offer_info.clone(),
             comment.map(|s| s.to_string()),
         )
@@ -224,7 +224,7 @@ pub async fn send_credential_offer_nonmediated(
     let wallet = get_main_wallet()?;
 
     let send_message: SendClosure = Box::new(|msg: AriesMessage| {
-        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
+        Box::pin(async move { con.send_message(wallet.as_ref(), &msg, &HttpClient).await })
     });
     let credential_offer = credential.get_credential_offer_msg()?;
     send_message(credential_offer).await?;
@@ -235,7 +235,9 @@ pub async fn send_credential_offer_nonmediated(
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    credential.build_credential(&get_main_anoncreds()?).await?;
+    credential
+        .build_credential(get_main_anoncreds()?.as_ref())
+        .await?;
     match credential.get_state() {
         IssuerState::Failed => {
             let problem_report = credential.get_problem_report()?;
@@ -256,9 +258,11 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
     let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
+        Box::pin(async move { con.send_message(wallet.as_ref(), &msg, &HttpClient).await })
     });
-    credential.build_credential(&get_main_anoncreds()?).await?;
+    credential
+        .build_credential(get_main_anoncreds()?.as_ref())
+        .await?;
     match credential.get_state() {
         IssuerState::Failed => {
             let problem_report = credential.get_problem_report()?;
@@ -277,7 +281,7 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
 pub async fn revoke_credential_local(handle: u32) -> LibvcxResult<()> {
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     credential
-        .revoke_credential_local(&get_main_anoncreds()?)
+        .revoke_credential_local(get_main_anoncreds()?.as_ref())
         .await
         .map_err(|err| err.into())
 }
