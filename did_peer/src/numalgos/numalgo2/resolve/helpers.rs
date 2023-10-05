@@ -159,7 +159,7 @@ fn build_service_aip1(
         service.service_endpoint().parse()?,
         ExtraFieldsSov::AIP1(ExtraFieldsAIP1::default()),
     )
-    .add_service_type(service_type.to_string())?
+    .add_service_type(service_type)?
     .build())
 }
 
@@ -174,7 +174,7 @@ fn build_service_didcommv2(
     let extra = ExtraFieldsSov::DIDCommV2(extra_builder.build());
     Ok(
         Service::<ExtraFieldsSov>::builder(id, service.service_endpoint().parse()?, extra)
-            .add_service_type(service_type.to_string())?
+            .add_service_type(service_type)?
             .build(),
     )
 }
@@ -247,7 +247,7 @@ mod tests {
             .parse()
             .unwrap();
         let mut index = 0;
-        let ddo_builder = DidDocumentBuilder::<ExtraFieldsSov>::new(did.clone());
+        let ddo_builder = DidDocumentBuilder::<ExtraFieldsSov>::new(did);
         let built_ddo =
             process_service_element(purposeless_service_element, ddo_builder, &mut index)
                 .unwrap()
@@ -272,7 +272,7 @@ mod tests {
             .parse()
             .unwrap();
         let mut index = 0;
-        let ddo_builder = DidDocumentBuilder::<ExtraFieldsSov>::new(did.clone());
+        let ddo_builder = DidDocumentBuilder::<ExtraFieldsSov>::new(did);
         let built_ddo =
             process_service_element(purposeless_service_element, ddo_builder, &mut index)
                 .unwrap()

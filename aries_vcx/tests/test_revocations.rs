@@ -8,6 +8,7 @@ pub mod utils;
 use std::{thread, time::Duration};
 
 use aries_vcx::{
+    core::profile::Profile,
     protocols::proof_presentation::verifier::{
         state_machine::VerifierState, verification_status::PresentationVerificationStatus,
     },
@@ -39,10 +40,10 @@ async fn test_agency_pool_basic_revocation() {
             issue_address_credential(&mut consumer, &mut institution).await;
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         assert!(!issuer
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
 
@@ -50,13 +51,13 @@ async fn test_agency_pool_basic_revocation() {
         revoke_credential_and_publish_accumulator(&mut institution, &issuer, &rev_reg).await;
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let mut consumer = consumer.migrate().await;
 
         tokio::time::sleep(Duration::from_millis(1000)).await;
         let time_after_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
 
         assert!(issuer
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
 
@@ -87,8 +88,8 @@ async fn test_agency_pool_basic_revocation() {
 
         verifier
             .verify_presentation(
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
+                institution.profile.ledger_read(),
+                institution.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -113,12 +114,12 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
             issue_address_credential(&mut consumer, &mut institution).await;
 
         assert!(!issuer
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         tokio::time::sleep(Duration::from_millis(1000)).await;
         let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
@@ -128,7 +129,7 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
         tokio::time::sleep(Duration::from_millis(1000)).await;
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let mut consumer = consumer.migrate().await;
 
         let from = time_before_revocation - 100;
         let to = time_before_revocation;
@@ -159,8 +160,8 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
 
         verifier
             .verify_presentation(
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
+                institution.profile.ledger_read(),
+                institution.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -185,11 +186,11 @@ async fn test_agency_pool_local_revocation() {
             issue_address_credential(&mut consumer, &mut institution).await;
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         revoke_credential_local(&mut institution, &issuer, &rev_reg.rev_reg_id).await;
         assert!(!issuer
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
 
@@ -207,7 +208,7 @@ async fn test_agency_pool_local_revocation() {
         );
 
         assert!(!issuer
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
 
@@ -227,7 +228,7 @@ async fn test_agency_pool_local_revocation() {
         );
 
         assert!(issuer
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
     })
@@ -261,7 +262,7 @@ async fn test_agency_batch_revocation() {
         .await;
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         let issuer_credential2 = exchange_credential(
             &mut consumer2,
@@ -274,7 +275,7 @@ async fn test_agency_batch_revocation() {
         .await;
 
         #[cfg(feature = "migration")]
-        consumer1.migrate().await;
+        let mut consumer1 = consumer1.migrate().await;
 
         let issuer_credential3 = exchange_credential(
             &mut consumer3,
@@ -289,23 +290,23 @@ async fn test_agency_batch_revocation() {
         revoke_credential_local(&mut institution, &issuer_credential1, &rev_reg.rev_reg_id).await;
         revoke_credential_local(&mut institution, &issuer_credential2, &rev_reg.rev_reg_id).await;
         assert!(!issuer_credential1
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
         assert!(!issuer_credential3
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
 
         #[cfg(feature = "migration")]
-        consumer2.migrate().await;
+        let mut consumer2 = consumer2.migrate().await;
 
         #[cfg(feature = "migration")]
-        consumer3.migrate().await;
+        let mut consumer3 = consumer3.migrate().await;
 
         // Revoke two locally and verify their are all still valid
         let verifier_handler = exchange_proof(
@@ -350,15 +351,15 @@ async fn test_agency_batch_revocation() {
         tokio::time::sleep(Duration::from_millis(1000)).await;
 
         assert!(issuer_credential1
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
         assert!(issuer_credential2
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
         assert!(!issuer_credential3
-            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
 
@@ -404,6 +405,7 @@ async fn test_agency_batch_revocation() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
     SetupPoolDirectory::run(|setup| async move {
         let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
@@ -424,7 +426,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         .await;
 
         #[cfg(feature = "migration")]
-        issuer.migrate().await;
+        let mut issuer = issuer.migrate().await;
 
         let credential_data2 = credential_data_address_2().to_string();
         let issuer_credential2 = exchange_credential(
@@ -438,16 +440,16 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         .await;
 
         assert!(!issuer_credential1
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
 
         #[cfg(feature = "migration")]
-        verifier.migrate().await;
+        let mut verifier = verifier.migrate().await;
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg).await;
 
@@ -467,8 +469,8 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         .await;
         proof_verifier
             .verify_presentation(
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
+                verifier.profile.ledger_read(),
+                verifier.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -495,12 +497,12 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         .await;
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let _consumer = consumer.migrate().await;
 
         proof_verifier
             .verify_presentation(
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
+                verifier.profile.ledger_read(),
+                verifier.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -511,11 +513,11 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         );
 
         assert!(issuer_credential1
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
     })
@@ -524,6 +526,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
     SetupPoolDirectory::run(|setup| async move {
         let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
@@ -544,7 +547,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         .await;
 
         #[cfg(feature = "migration")]
-        issuer.migrate().await;
+        let mut issuer = issuer.migrate().await;
 
         let credential_data2 = credential_data_address_2().to_string();
         let issuer_credential2 = exchange_credential(
@@ -558,16 +561,16 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         .await;
 
         assert!(!issuer_credential1
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
 
         #[cfg(feature = "migration")]
-        verifier.migrate().await;
+        let mut verifier = verifier.migrate().await;
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg).await;
 
@@ -586,8 +589,8 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         .await;
         proof_verifier
             .verify_presentation(
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
+                verifier.profile.ledger_read(),
+                verifier.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -613,12 +616,12 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         .await;
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let _consumer = consumer.migrate().await;
 
         proof_verifier
             .verify_presentation(
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
+                verifier.profile.ledger_read(),
+                verifier.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -629,11 +632,11 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         );
 
         assert!(!issuer_credential1
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         assert!(issuer_credential2
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
     })
@@ -662,7 +665,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
         .await;
 
         #[cfg(feature = "migration")]
-        issuer.migrate().await;
+        let mut issuer = issuer.migrate().await;
 
         let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
         let credential_data2 = credential_data_address_2().to_string();
@@ -691,8 +694,8 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
         .await;
         proof_verifier
             .verify_presentation(
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
+                verifier.profile.ledger_read(),
+                verifier.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -704,7 +707,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
         );
 
         #[cfg(feature = "migration")]
-        verifier.migrate().await;
+        let mut verifier = verifier.migrate().await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -715,7 +718,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
         .await;
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let mut consumer = consumer.migrate().await;
 
         let presentation = prover_select_credentials_and_send_proof(
             &mut consumer,
@@ -725,8 +728,8 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
         .await;
         proof_verifier
             .verify_presentation(
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
+                verifier.profile.ledger_read(),
+                verifier.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -738,11 +741,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
         );
 
         assert!(!issuer_credential1
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
     })
@@ -751,6 +754,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
     SetupPoolDirectory::run(|setup| async move {
         let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
@@ -771,7 +775,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         .await;
 
         #[cfg(feature = "migration")]
-        issuer.migrate().await;
+        let mut issuer = issuer.migrate().await;
 
         let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
         let credential_data2 = credential_data_address_2().to_string();
@@ -786,18 +790,18 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         .await;
 
         assert!(!issuer_credential1
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg).await;
 
         #[cfg(feature = "migration")]
-        verifier.migrate().await;
+        let mut verifier = verifier.migrate().await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -814,8 +818,8 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         .await;
         proof_verifier
             .verify_presentation(
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
+                verifier.profile.ledger_read(),
+                verifier.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -841,12 +845,12 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         .await;
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let _consumer = consumer.migrate().await;
 
         proof_verifier
             .verify_presentation(
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
+                verifier.profile.ledger_read(),
+                verifier.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -857,11 +861,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         );
 
         assert!(issuer_credential1
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
     })
@@ -890,7 +894,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         .await;
 
         #[cfg(feature = "migration")]
-        issuer.migrate().await;
+        let mut issuer = issuer.migrate().await;
 
         let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
         let credential_data2 = credential_data_address_2().to_string();
@@ -905,11 +909,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         .await;
 
         assert!(!issuer_credential1
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
 
@@ -931,12 +935,12 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         .await;
 
         #[cfg(feature = "migration")]
-        verifier.migrate().await;
+        let mut verifier = verifier.migrate().await;
 
         proof_verifier
             .verify_presentation(
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
+                verifier.profile.ledger_read(),
+                verifier.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -962,12 +966,12 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         .await;
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let _consumer = consumer.migrate().await;
 
         proof_verifier
             .verify_presentation(
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
+                verifier.profile.ledger_read(),
+                verifier.profile.anoncreds(),
                 presentation,
             )
             .await
@@ -979,11 +983,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         );
 
         assert!(!issuer_credential1
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         assert!(issuer_credential2
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
     })
@@ -1011,7 +1015,7 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
         .await;
 
         assert!(!issuer_credential1
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         revoke_credential_local(&mut issuer, &issuer_credential1, &rev_reg.rev_reg_id).await;
@@ -1027,15 +1031,15 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
         .await;
 
         assert!(!issuer_credential2
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
 
         #[cfg(feature = "migration")]
-        issuer.migrate().await;
+        let mut issuer = issuer.migrate().await;
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let mut consumer = consumer.migrate().await;
 
         revoke_credential_local(&mut issuer, &issuer_credential2, &rev_reg.rev_reg_id).await;
 
@@ -1053,15 +1057,15 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
         thread::sleep(Duration::from_millis(100));
 
         assert!(issuer_credential1
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         assert!(issuer_credential2
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
         assert!(issuer_credential3
-            .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+            .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
     })

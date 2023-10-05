@@ -1,6 +1,6 @@
 #![allow(clippy::unwrap_used)]
 
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -27,33 +27,30 @@ use crate::{
 };
 
 pub async fn create_and_write_test_schema(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
-    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+    anoncreds: &impl BaseAnonCreds,
+    ledger_write: &impl AnoncredsLedgerWrite,
     submitter_did: &str,
     attr_list: &str,
 ) -> Schema {
-    let (schema_id, schema_json) = anoncreds
-        .issuer_create_schema(
-            submitter_did,
-            &generate_random_schema_name(),
-            &generate_random_schema_version(),
-            attr_list,
-        )
-        .await
-        .unwrap();
-
-    ledger_write
-        .publish_schema(&schema_json, submitter_did, None)
-        .await
-        .unwrap();
-    tokio::time::sleep(Duration::from_millis(1000)).await;
-    Schema::create_from_ledger_json(&schema_json, "", &schema_id).unwrap()
+    let schema = Schema::create(
+        anoncreds,
+        "source_id",
+        submitter_did,
+        &generate_random_schema_name(),
+        &generate_random_schema_version(),
+        &serde_json::from_str::<Vec<String>>(attr_list).unwrap(),
+    )
+    .await
+    .unwrap();
+    let schema = schema.publish(ledger_write).await.unwrap();
+    std::thread::sleep(Duration::from_millis(500));
+    schema
 }
 
 pub async fn create_and_write_test_cred_def(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
-    ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+    anoncreds: &impl BaseAnonCreds,
+    ledger_read: &impl AnoncredsLedgerRead,
+    ledger_write: &impl AnoncredsLedgerWrite,
     issuer_did: &str,
     schema_id: &str,
     revokable: bool,
@@ -77,9 +74,9 @@ pub async fn create_and_write_test_cred_def(
     .unwrap()
 }
 
-pub async fn create_and_write_test_rev_reg(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
-    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+pub async fn create_and_publish_test_rev_reg(
+    anoncreds: &impl BaseAnonCreds,
+    ledger_write: &impl AnoncredsLedgerWrite,
     issuer_did: &str,
     cred_def_id: &str,
 ) -> RevocationRegistry {
@@ -96,8 +93,8 @@ pub async fn create_and_write_test_rev_reg(
 }
 
 pub async fn create_and_write_credential(
-    anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
-    anoncreds_holder: &Arc<dyn BaseAnonCreds>,
+    anoncreds_issuer: &impl BaseAnonCreds,
+    anoncreds_holder: &impl BaseAnonCreds,
     institution_did: &str,
     cred_def: &CredentialDef,
     rev_reg: Option<&RevocationRegistry>,

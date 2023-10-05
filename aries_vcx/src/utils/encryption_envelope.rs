@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
@@ -10,15 +8,17 @@ use messages::{
 };
 use uuid::Uuid;
 
-use crate::{errors::error::prelude::*, global::settings, utils::constants};
+use crate::{errors::error::prelude::*, utils::constants};
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
 
 impl EncryptionEnvelope {
+    /// Create an Encryption Envelope from a plaintext AriesMessage encoded as sequence of bytes.
+    /// If did_doc includes routing_keys, then also wrap in appropriate layers of forward message.
     pub async fn create(
-        wallet: &Arc<dyn BaseWallet>,
-        message: &AriesMessage,
+        wallet: &impl BaseWallet,
+        message: &[u8],
         pw_verkey: Option<&str>,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<EncryptionEnvelope> {
@@ -29,10 +29,6 @@ impl EncryptionEnvelope {
             did_doc
         );
 
-        if settings::indy_mocks_enabled() {
-            return Ok(EncryptionEnvelope(vec![]));
-        }
-
         EncryptionEnvelope::encrypt_for_pairwise(wallet, message, pw_verkey, did_doc)
             .and_then(|message| async move {
                 EncryptionEnvelope::wrap_into_forward_messages(wallet, message, did_doc).await
@@ -42,13 +38,11 @@ impl EncryptionEnvelope {
     }
 
     async fn encrypt_for_pairwise(
-        wallet: &Arc<dyn BaseWallet>,
-        message: &AriesMessage,
+        wallet: &impl BaseWallet,
+        message: &[u8],
         pw_verkey: Option<&str>,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<Vec<u8>> {
-        let message = json!(message).to_string();
-
         let receiver_keys = json!(did_doc.recipient_keys()?).to_string();
 
         debug!(
@@ -57,13 +51,13 @@ impl EncryptionEnvelope {
         );
 
         wallet
-            .pack_message(pw_verkey, &receiver_keys, message.as_bytes())
+            .pack_message(pw_verkey, &receiver_keys, message)
             .await
             .map_err(|err| err.into())
     }
 
     async fn wrap_into_forward_messages(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         mut message: Vec<u8>,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<Vec<u8>> {
@@ -88,7 +82,7 @@ impl EncryptionEnvelope {
     }
 
     async fn wrap_into_forward(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         message: Vec<u8>,
         to: &str,
         routing_key: &str,
@@ -113,7 +107,7 @@ impl EncryptionEnvelope {
     }
 
     async fn _unpack_a2a_message(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         payload: Vec<u8>,
     ) -> VcxResult<(String, Option<String>)> {
         trace!(
@@ -132,7 +126,7 @@ impl EncryptionEnvelope {
 
     // todo: we should use auth_unpack wherever possible
     pub async fn anon_unpack(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         payload: Vec<u8>,
     ) -> VcxResult<(AriesMessage, Option<String>)> {
         trace!(
@@ -158,7 +152,7 @@ impl EncryptionEnvelope {
     }
 
     pub async fn auth_unpack(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         payload: Vec<u8>,
         expected_vk: &str,
     ) -> VcxResult<AriesMessage> {

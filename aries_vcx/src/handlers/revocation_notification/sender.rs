@@ -25,7 +25,7 @@ impl RevocationNotificationSender {
     pub async fn send_revocation_notification(
         self,
         config: SenderConfig,
-        send_message: SendClosure,
+        send_message: SendClosure<'_>,
     ) -> VcxResult<Self> {
         let sender_sm = self.sender_sm.send(config, send_message).await?;
         Ok(Self { sender_sm })

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use aries_vcx::{
     common::{
@@ -7,6 +7,7 @@ use aries_vcx::{
         },
         proofs::{proof_request::PresentationRequestData, proof_request_internal::AttrInfo},
     },
+    core::profile::Profile,
     handlers::{
         issuance::issuer::Issuer,
         proof_presentation::{
@@ -24,7 +25,9 @@ use aries_vcx::{
     },
     utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL},
 };
-use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
+use aries_vcx_core::ledger::{
+    base_ledger::AnoncredsLedgerRead, indy::pool::test_utils::get_temp_dir_path,
+};
 use messages::{
     msg_fields::protocols::{
         present_proof::{
@@ -54,15 +57,15 @@ pub async fn create_proof_proposal(prover: &mut Prover, cred_def_id: &str) -> Pr
     proposal
 }
 
-pub async fn accept_proof_proposal(
-    faber: &mut TestAgent,
+pub async fn accept_proof_proposal<P: Profile>(
+    faber: &mut TestAgent<P>,
     verifier: &mut Verifier,
     presentation_proposal: ProposePresentation,
 ) -> RequestPresentation {
     verifier
         .process_aries_msg(
-            &faber.profile.inject_anoncreds_ledger_read(),
-            &faber.profile.inject_anoncreds(),
+            faber.profile.ledger_read(),
+            faber.profile.anoncreds(),
             presentation_proposal.clone().into(),
         )
         .await
@@ -82,7 +85,7 @@ pub async fn accept_proof_proposal(
         })
         .collect();
     let presentation_request_data =
-        PresentationRequestData::create(&faber.profile.inject_anoncreds(), "request-1")
+        PresentationRequestData::create(faber.profile.anoncreds(), "request-1")
             .await
             .unwrap()
             .set_requested_attributes_as_vec(attrs)
@@ -113,25 +116,22 @@ pub async fn receive_proof_proposal_rejection(prover: &mut Prover, rejection: Pr
     assert_eq!(prover.get_state(), ProverState::Failed);
 }
 
-pub async fn create_proof_request_data(
-    faber: &mut TestAgent,
+pub async fn create_proof_request_data<P: Profile>(
+    faber: &mut TestAgent<P>,
     requested_attrs: &str,
     requested_preds: &str,
     revocation_interval: &str,
     request_name: Option<&str>,
 ) -> PresentationRequestData {
-    PresentationRequestData::create(
-        &faber.profile.inject_anoncreds(),
-        request_name.unwrap_or("name"),
-    )
-    .await
-    .unwrap()
-    .set_requested_attributes_as_string(requested_attrs.to_string())
-    .unwrap()
-    .set_requested_predicates_as_string(requested_preds.to_string())
-    .unwrap()
-    .set_not_revoked_interval(revocation_interval.to_string())
-    .unwrap()
+    PresentationRequestData::create(faber.profile.anoncreds(), request_name.unwrap_or("name"))
+        .await
+        .unwrap()
+        .set_requested_attributes_as_string(requested_attrs.to_string())
+        .unwrap()
+        .set_requested_predicates_as_string(requested_preds.to_string())
+        .unwrap()
+        .set_not_revoked_interval(revocation_interval.to_string())
+        .unwrap()
 }
 
 pub async fn create_prover_from_request(presentation_request: RequestPresentation) -> Prover {
@@ -147,8 +147,8 @@ pub async fn create_verifier_from_request_data(
     verifier
 }
 
-pub async fn generate_and_send_proof(
-    alice: &mut TestAgent,
+pub async fn generate_and_send_proof<P: Profile>(
+    alice: &mut TestAgent<P>,
     prover: &mut Prover,
     selected_credentials: SelectedCredentials,
 ) -> Option<Presentation> {
@@ -159,8 +159,8 @@ pub async fn generate_and_send_proof(
     );
     prover
         .generate_presentation(
-            &alice.profile.inject_anoncreds_ledger_read(),
-            &alice.profile.inject_anoncreds(),
+            alice.profile.ledger_read(),
+            alice.profile.anoncreds(),
             selected_credentials,
             HashMap::new(),
         )
@@ -182,15 +182,15 @@ pub async fn generate_and_send_proof(
     }
 }
 
-pub async fn verify_proof(
-    faber: &mut TestAgent,
+pub async fn verify_proof<P: Profile>(
+    faber: &mut TestAgent<P>,
     verifier: &mut Verifier,
     presentation: Presentation,
 ) -> AckPresentation {
     let msg = verifier
         .verify_presentation(
-            &faber.profile.inject_anoncreds_ledger_read(),
-            &faber.profile.inject_anoncreds(),
+            faber.profile.ledger_read(),
+            faber.profile.anoncreds(),
             presentation,
         )
         .await
@@ -208,8 +208,8 @@ pub async fn verify_proof(
     msg
 }
 
-pub async fn revoke_credential_and_publish_accumulator(
-    faber: &mut TestAgent,
+pub async fn revoke_credential_and_publish_accumulator<P: Profile>(
+    faber: &mut TestAgent<P>,
     issuer_credential: &Issuer,
     rev_reg: &RevocationRegistry,
 ) {
@@ -217,27 +217,27 @@ pub async fn revoke_credential_and_publish_accumulator(
 
     rev_reg
         .publish_local_revocations(
-            &faber.profile.inject_anoncreds(),
-            &faber.profile.inject_anoncreds_ledger_write(),
+            faber.profile.anoncreds(),
+            faber.profile.ledger_write(),
             &faber.institution_did,
         )
         .await
         .unwrap();
 }
 
-pub async fn revoke_credential_local(
-    faber: &mut TestAgent,
+pub async fn revoke_credential_local<P: Profile>(
+    faber: &mut TestAgent<P>,
     issuer_credential: &Issuer,
     rev_reg_id: &str,
 ) {
-    let ledger = Arc::clone(&faber.profile).inject_anoncreds_ledger_read();
+    let ledger = faber.profile.ledger_read();
     let (_, delta, timestamp) = ledger
         .get_rev_reg_delta_json(rev_reg_id, None, None)
         .await
         .unwrap();
 
     issuer_credential
-        .revoke_credential_local(&faber.profile.inject_anoncreds())
+        .revoke_credential_local(faber.profile.anoncreds())
         .await
         .unwrap();
 
@@ -250,13 +250,13 @@ pub async fn revoke_credential_local(
                                            // cache
 }
 
-pub async fn rotate_rev_reg(
-    faber: &mut TestAgent,
+pub async fn rotate_rev_reg<P: Profile>(
+    faber: &mut TestAgent<P>,
     credential_def: &CredentialDef,
     rev_reg: &RevocationRegistry,
 ) -> RevocationRegistry {
     let mut rev_reg = RevocationRegistry::create(
-        &faber.profile.inject_anoncreds(),
+        faber.profile.anoncreds(),
         &faber.institution_did,
         &credential_def.get_cred_def_id(),
         &rev_reg.get_tails_dir(),
@@ -266,28 +266,28 @@ pub async fn rotate_rev_reg(
     .await
     .unwrap();
     rev_reg
-        .publish_revocation_primitives(
-            &faber.profile.inject_anoncreds_ledger_write(),
-            TEST_TAILS_URL,
-        )
+        .publish_revocation_primitives(faber.profile.ledger_write(), TEST_TAILS_URL)
         .await
         .unwrap();
     rev_reg
 }
 
-pub async fn publish_revocation(institution: &mut TestAgent, rev_reg: &RevocationRegistry) {
+pub async fn publish_revocation<P: Profile>(
+    institution: &mut TestAgent<P>,
+    rev_reg: &RevocationRegistry,
+) {
     rev_reg
         .publish_local_revocations(
-            &institution.profile.inject_anoncreds(),
-            &institution.profile.inject_anoncreds_ledger_write(),
+            institution.profile.anoncreds(),
+            institution.profile.ledger_write(),
             &institution.institution_did,
         )
         .await
         .unwrap();
 }
 
-pub async fn verifier_create_proof_and_send_request(
-    institution: &mut TestAgent,
+pub async fn verifier_create_proof_and_send_request<P: Profile>(
+    institution: &mut TestAgent<P>,
     schema_id: &str,
     cred_def_id: &str,
     request_name: Option<&str>,
@@ -310,9 +310,9 @@ pub async fn verifier_create_proof_and_send_request(
     create_verifier_from_request_data(presentation_request_data).await
 }
 
-pub async fn prover_select_credentials(
+pub async fn prover_select_credentials<P: Profile>(
     prover: &mut Prover,
-    alice: &mut TestAgent,
+    alice: &mut TestAgent<P>,
     presentation_request: RequestPresentation,
     preselected_credentials: Option<&str>,
 ) -> SelectedCredentials {
@@ -322,7 +322,7 @@ pub async fn prover_select_credentials(
         .unwrap();
     assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
     let retrieved_credentials = prover
-        .retrieve_credentials(&alice.profile.inject_anoncreds())
+        .retrieve_credentials(alice.profile.anoncreds())
         .await
         .unwrap();
     info!("prover_select_credentials >> retrieved_credentials: {retrieved_credentials:?}");
@@ -341,8 +341,8 @@ pub async fn prover_select_credentials(
     }
 }
 
-pub async fn prover_select_credentials_and_send_proof(
-    alice: &mut TestAgent,
+pub async fn prover_select_credentials_and_send_proof<P: Profile>(
+    alice: &mut TestAgent<P>,
     presentation_request: RequestPresentation,
     preselected_credentials: Option<&str>,
 ) -> Presentation {
@@ -432,9 +432,9 @@ pub fn match_preselected_credentials(
     selected_credentials
 }
 
-pub async fn exchange_proof(
-    institution: &mut TestAgent,
-    consumer: &mut TestAgent,
+pub async fn exchange_proof<P1: Profile, P2: Profile>(
+    institution: &mut TestAgent<P1>,
+    consumer: &mut TestAgent<P2>,
     schema_id: &str,
     cred_def_id: &str,
     request_name: Option<&str>,
@@ -451,8 +451,8 @@ pub async fn exchange_proof(
 
     verifier
         .verify_presentation(
-            &institution.profile.inject_anoncreds_ledger_read(),
-            &institution.profile.inject_anoncreds(),
+            institution.profile.ledger_read(),
+            institution.profile.anoncreds(),
             presentation,
         )
         .await

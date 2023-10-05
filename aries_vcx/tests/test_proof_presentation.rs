@@ -1,3 +1,5 @@
+#![allow(clippy::diverging_sub_expression)]
+
 #[macro_use]
 extern crate log;
 #[macro_use]
@@ -9,8 +11,8 @@ use aries_vcx::{
     common::{
         proofs::proof_request::PresentationRequestData,
         test_utils::{
-            create_and_write_credential, create_and_write_test_cred_def,
-            create_and_write_test_rev_reg, create_and_write_test_schema,
+            create_and_publish_test_rev_reg, create_and_write_credential,
+            create_and_write_test_cred_def, create_and_write_test_schema,
         },
     },
     handlers::proof_presentation::{prover::Prover, verifier::Verifier},
@@ -20,7 +22,8 @@ use aries_vcx::{
             state_machine::VerifierState, verification_status::PresentationVerificationStatus,
         },
     },
-    utils::devsetup::{SetupProfile, *},
+    run_setup,
+    utils::devsetup::*,
 };
 use messages::{msg_fields::protocols::present_proof::PresentProof, AriesMessage};
 
@@ -38,33 +41,33 @@ use crate::utils::{
 #[tokio::test]
 #[ignore]
 async fn test_agency_pool_generate_proof_with_predicates() {
-    SetupProfile::run(|mut setup| async move {
+    run_setup!(|setup| async move {
         let schema = create_and_write_test_schema(
-            &setup.profile.inject_anoncreds(),
-            &setup.profile.inject_anoncreds_ledger_write(),
+            setup.profile.anoncreds(),
+            setup.profile.ledger_write(),
             &setup.institution_did,
             aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS,
         )
         .await;
         let cred_def = create_and_write_test_cred_def(
-            &setup.profile.inject_anoncreds(),
-            &setup.profile.inject_anoncreds_ledger_read(),
-            &setup.profile.inject_anoncreds_ledger_write(),
+            setup.profile.anoncreds(),
+            setup.profile.ledger_read(),
+            setup.profile.ledger_write(),
             &setup.institution_did,
             &schema.schema_id,
             true,
         )
         .await;
-        let rev_reg = create_and_write_test_rev_reg(
-            &setup.profile.inject_anoncreds(),
-            &setup.profile.inject_anoncreds_ledger_write(),
+        let rev_reg = create_and_publish_test_rev_reg(
+            setup.profile.anoncreds(),
+            setup.profile.ledger_write(),
             &setup.institution_did,
             &cred_def.get_cred_def_id(),
         )
         .await;
         let _cred_id = create_and_write_credential(
-            &setup.profile.inject_anoncreds(),
-            &setup.profile.inject_anoncreds(),
+            setup.profile.anoncreds(),
+            setup.profile.anoncreds(),
             &setup.institution_did,
             &cred_def,
             Some(&rev_reg),
@@ -109,10 +112,10 @@ async fn test_agency_pool_generate_proof_with_predicates() {
         let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         #[cfg(feature = "migration")]
-        setup.migrate().await;
+        let setup = setup.migrate().await;
 
         let all_creds = proof
-            .retrieve_credentials(&setup.profile.inject_anoncreds())
+            .retrieve_credentials(setup.profile.anoncreds())
             .await
             .unwrap();
         let selected_credentials: serde_json::Value = json!({
@@ -136,8 +139,8 @@ async fn test_agency_pool_generate_proof_with_predicates() {
         });
         proof
             .generate_presentation(
-                &setup.profile.inject_anoncreds_ledger_read(),
-                &setup.profile.inject_anoncreds(),
+                setup.profile.ledger_read(),
+                setup.profile.anoncreds(),
                 serde_json::from_value(selected_credentials).unwrap(),
                 serde_json::from_value(self_attested).unwrap(),
             )
@@ -147,8 +150,8 @@ async fn test_agency_pool_generate_proof_with_predicates() {
 
         let final_message = verifier
             .verify_presentation(
-                &setup.profile.inject_anoncreds_ledger_read(),
-                &setup.profile.inject_anoncreds(),
+                setup.profile.ledger_read(),
+                setup.profile.anoncreds(),
                 proof.get_presentation_msg().unwrap(),
             )
             .await
@@ -169,6 +172,7 @@ async fn test_agency_pool_generate_proof_with_predicates() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_presentation_via_proposal() {
     SetupPoolDirectory::run(|setup| async move {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
@@ -182,7 +186,7 @@ async fn test_agency_pool_presentation_via_proposal() {
         let tails_dir = rev_reg.get_tails_dir();
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         exchange_credential_with_proposal(
             &mut consumer,
@@ -202,7 +206,7 @@ async fn test_agency_pool_presentation_via_proposal() {
             accept_proof_proposal(&mut institution, &mut verifier, presentation_proposal).await;
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let mut consumer = consumer.migrate().await;
 
         let selected_credentials =
             prover_select_credentials(&mut prover, &mut consumer, presentation_request, None).await;
@@ -217,6 +221,7 @@ async fn test_agency_pool_presentation_via_proposal() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_presentation_via_proposal_with_rejection() {
     SetupPoolDirectory::run(|setup| async move {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
@@ -230,7 +235,7 @@ async fn test_agency_pool_presentation_via_proposal_with_rejection() {
         let tails_dir = rev_reg.get_tails_dir();
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         exchange_credential_with_proposal(
             &mut consumer,
@@ -253,6 +258,7 @@ async fn test_agency_pool_presentation_via_proposal_with_rejection() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
     SetupPoolDirectory::run(|setup| async move {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
@@ -266,7 +272,7 @@ async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         let tails_dir = rev_reg.get_tails_dir();
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         exchange_credential_with_proposal(
             &mut consumer,
@@ -282,7 +288,7 @@ async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         let mut verifier = Verifier::create("1").unwrap();
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let mut consumer = consumer.migrate().await;
 
         let presentation_proposal =
             create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;

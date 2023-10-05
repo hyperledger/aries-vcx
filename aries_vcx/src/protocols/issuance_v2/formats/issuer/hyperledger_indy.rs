@@ -1,4 +1,4 @@
-use std::{collections::HashMap, marker::PhantomData, sync::Arc};
+use std::{collections::HashMap, marker::PhantomData};
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use async_trait::async_trait;
@@ -30,12 +30,16 @@ use crate::{
 ///
 /// https://github.com/hyperledger/aries-rfcs/blob/b3a3942ef052039e73cd23d847f42947f8287da2/features/0592-indy-attachments/README.md
 
-pub struct HyperledgerIndyIssuerCredentialIssuanceFormat<'a> {
+pub struct HyperledgerIndyIssuerCredentialIssuanceFormat<'a, A>
+where
+    A: BaseAnonCreds,
+{
     _marker: &'a PhantomData<()>,
+    _anoncreds: PhantomData<A>,
 }
 
-pub struct HyperledgerIndyCreateOfferInput<'a> {
-    pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
+pub struct HyperledgerIndyCreateOfferInput<'a, A> {
+    pub anoncreds: &'a A,
     pub cred_def_id: String,
 }
 
@@ -44,8 +48,8 @@ pub struct HyperledgerIndyCreatedOfferMetadata {
     pub offer_json: String,
 }
 
-pub struct HyperledgerIndyCreateCredentialInput<'a> {
-    pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
+pub struct HyperledgerIndyCreateCredentialInput<'a, A> {
+    pub anoncreds: &'a A,
     pub credential_attributes: HashMap<String, String>,
     pub revocation_info: Option<HyperledgerIndyCreateCredentialRevocationInfoInput>,
 }
@@ -62,13 +66,16 @@ pub struct HyperledgerIndyCreatedCredentialMetadata {
 }
 
 #[async_trait]
-impl<'a> IssuerCredentialIssuanceFormat for HyperledgerIndyIssuerCredentialIssuanceFormat<'a> {
+impl<'a, A> IssuerCredentialIssuanceFormat for HyperledgerIndyIssuerCredentialIssuanceFormat<'a, A>
+where
+    A: BaseAnonCreds + 'a,
+{
     type ProposalDetails = HyperledgerIndyCredentialFilter;
 
-    type CreateOfferInput = HyperledgerIndyCreateOfferInput<'a>;
+    type CreateOfferInput = HyperledgerIndyCreateOfferInput<'a, A>;
     type CreatedOfferMetadata = HyperledgerIndyCreatedOfferMetadata;
 
-    type CreateCredentialInput = HyperledgerIndyCreateCredentialInput<'a>;
+    type CreateCredentialInput = HyperledgerIndyCreateCredentialInput<'a, A>;
     type CreatedCredentialMetadata = HyperledgerIndyCreatedCredentialMetadata;
 
     fn supports_request_independent_of_offer() -> bool {
@@ -100,7 +107,7 @@ impl<'a> IssuerCredentialIssuanceFormat for HyperledgerIndyIssuerCredentialIssua
     }
 
     async fn create_offer_attachment_content(
-        data: &HyperledgerIndyCreateOfferInput,
+        data: &HyperledgerIndyCreateOfferInput<A>,
     ) -> VcxResult<(Vec<u8>, HyperledgerIndyCreatedOfferMetadata)> {
         let cred_offer = data
             .anoncreds
@@ -118,7 +125,7 @@ impl<'a> IssuerCredentialIssuanceFormat for HyperledgerIndyIssuerCredentialIssua
     async fn create_credential_attachment_content(
         offer_metadata: &HyperledgerIndyCreatedOfferMetadata,
         request_message: &RequestCredentialV2,
-        data: &HyperledgerIndyCreateCredentialInput,
+        data: &HyperledgerIndyCreateCredentialInput<A>,
     ) -> VcxResult<(Vec<u8>, HyperledgerIndyCreatedCredentialMetadata)> {
         let offer = &offer_metadata.offer_json;
 

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     common::proofs::proof_request::PresentationRequestData,
-    core::profile::profile::Profile,
+    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
     handlers::proof_presentation::verifier::Verifier,
     messages::{
         msg_fields::protocols::present_proof::{
@@ -41,13 +41,16 @@ impl VerifierWrapper {
 }
 
 pub struct ServiceVerifier {
-    profile: Arc<dyn Profile>,
+    profile: Arc<VdrtoolsProfile>,
     verifiers: ObjectCache<VerifierWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceVerifier {
-    pub fn new(profile: Arc<dyn Profile>, service_connections: Arc<ServiceConnections>) -> Self {
+    pub fn new(
+        profile: Arc<VdrtoolsProfile>,
+        service_connections: Arc<ServiceConnections>,
+    ) -> Self {
         Self {
             profile,
             service_connections,
@@ -68,10 +71,10 @@ impl ServiceVerifier {
             Verifier::create_from_request("".to_string(), &request)?
         };
 
-        let wallet = self.profile.inject_wallet();
+        let wallet = self.profile.wallet();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
         });
 
         let message = verifier.mark_presentation_request_sent()?;
@@ -100,16 +103,16 @@ impl ServiceVerifier {
             connection_id,
         } = self.verifiers.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        let wallet = self.profile.inject_wallet();
+        let wallet = self.profile.wallet();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
         });
 
         let message = verifier
             .verify_presentation(
-                &self.profile.inject_anoncreds_ledger_read(),
-                &self.profile.inject_anoncreds(),
+                self.profile.ledger_read(),
+                self.profile.anoncreds(),
                 presentation,
             )
             .await?;

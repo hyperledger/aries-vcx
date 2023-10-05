@@ -63,9 +63,9 @@ export class RevocationRegistry extends VcxBase<IRevocationRegistryData> {
     }
   }
 
-  public async publishRevocations(): Promise<void> {
+  public async publishRevocations(submittderDid: string): Promise<void> {
     try {
-      await ffi.revocationRegistryPublishRevocations(this.handle);
+      await ffi.revocationRegistryPublishRevocations(this.handle, submittderDid);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

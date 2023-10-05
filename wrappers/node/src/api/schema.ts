@@ -70,10 +70,11 @@ export class Schema extends VcxBase<ISchemaSerializedData> {
     return this._name;
   }
 
-  public static async create({ data, sourceId }: ISchemaCreateData): Promise<Schema> {
+  public static async create({ data, sourceId }: ISchemaCreateData, issuerDid: string): Promise<Schema> {
     try {
       const schema = new Schema({ name: data.name, schemaId: '', schemaAttrs: data });
       const handle = await ffi.schemaCreate(
+        issuerDid,
         sourceId,
         schema._name,
         data.version,

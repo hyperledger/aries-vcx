@@ -8,6 +8,7 @@ use aries_vcx::{
 };
 use serde_json;
 
+use super::mediated_connection::send_message;
 use crate::{
     api_vcx::{
         api_global::profile::{get_main_anoncreds, get_main_wallet},
@@ -207,9 +208,8 @@ pub async fn send_credential_offer_v2(
     connection_handle: u32,
 ) -> LibvcxResult<()> {
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
-    let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
     let credential_offer = credential.get_credential_offer_msg()?;
-    send_closure(credential_offer).await?;
+    send_message(connection_handle, credential_offer).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
     Ok(())
 }
@@ -236,15 +236,14 @@ pub async fn send_credential_offer_nonmediated(
 pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     credential.build_credential(&get_main_anoncreds()?).await?;
-    let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
     match credential.get_state() {
         IssuerState::Failed => {
             let problem_report = credential.get_problem_report()?;
-            send_closure(problem_report.into()).await?;
+            send_message(connection_handle, problem_report.into()).await?;
         }
         _ => {
             let msg_issue_credential = credential.get_msg_issue_credential()?;
-            send_closure(msg_issue_credential.into()).await?;
+            send_message(connection_handle, msg_issue_credential.into()).await?;
         }
     }
     let state: u32 = credential.get_state().into();
@@ -308,21 +307,9 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod tests {
-    use aries_vcx::utils::{
-        constants::V3_OBJECT_SERIALIZE_VERSION,
-        devsetup::SetupMocks,
-        mockdata::{
-            mockdata_credex::ARIES_CREDENTIAL_REQUEST,
-            mockdata_mediated_connection::ARIES_CONNECTION_ACK,
-        },
-    };
+    use aries_vcx::utils::{constants::V3_OBJECT_SERIALIZE_VERSION, devsetup::SetupMocks};
 
     use super::*;
-    #[cfg(test)]
-    use crate::api_vcx::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
-    #[cfg(test)]
-    use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
-    use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
     fn _issuer_credential_create() -> u32 {
         issuer_credential_create("1".to_string()).unwrap()
@@ -361,27 +348,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    async fn test_send_credential_offer() {
-        let _setup = SetupMocks::init();
-
-        let connection_handle = build_test_connection_inviter_requested().await;
-
-        let credential_handle = _issuer_credential_create();
-
-        let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        build_credential_offer_msg_v2(credential_handle, cred_def_handle, 123, _cred_json(), None)
-            .await
-            .unwrap();
-        send_credential_offer_v2(credential_handle, connection_handle)
-            .await
-            .unwrap();
-        assert_eq!(
-            get_state(credential_handle).unwrap(),
-            u32::from(IssuerState::OfferSet)
-        );
-    }
-
-    #[tokio::test]
     async fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -398,64 +364,6 @@ pub mod tests {
 
         let new_string = to_string(new_handle).unwrap();
         assert_eq!(new_string, string);
-    }
-
-    #[tokio::test]
-    async fn test_update_state_with_message() {
-        let _setup = SetupMocks::init();
-
-        let connection_handle = build_test_connection_inviter_requested().await;
-        let credential_handle = _issuer_credential_create();
-        let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
-            .await
-            .unwrap();
-        send_credential_offer_v2(credential_handle, connection_handle)
-            .await
-            .unwrap();
-        assert_eq!(
-            get_state(credential_handle).unwrap(),
-            u32::from(IssuerState::OfferSet)
-        );
-
-        update_state(
-            credential_handle,
-            Some(ARIES_CREDENTIAL_REQUEST),
-            connection_handle,
-        )
-        .await
-        .unwrap();
-        assert_eq!(
-            get_state(credential_handle).unwrap(),
-            u32::from(IssuerState::RequestReceived)
-        );
-    }
-
-    #[tokio::test]
-    async fn test_update_state_with_bad_message() {
-        let _setup = SetupMocks::init();
-
-        let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_cred = _issuer_credential_create();
-        let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        build_credential_offer_msg_v2(handle_cred, cred_def_handle, 1234, _cred_json(), None)
-            .await
-            .unwrap();
-        send_credential_offer_v2(handle_cred, handle_conn)
-            .await
-            .unwrap();
-        assert_eq!(
-            get_state(handle_cred).unwrap(),
-            u32::from(IssuerState::OfferSet)
-        );
-
-        // try to update state with nonsense message
-        let result = update_state(handle_cred, Some(ARIES_CONNECTION_ACK), handle_conn).await;
-        assert!(result.is_ok()); // todo: maybe we should rather return error if update_state doesn't progress state
-        assert_eq!(
-            get_state(handle_cred).unwrap(),
-            u32::from(IssuerState::OfferSet)
-        );
     }
 
     #[tokio::test]

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use messages::{
     msg_fields::protocols::{
         cred_issuance::{v1::CredentialIssuanceV1, CredentialIssuance},
@@ -122,14 +124,16 @@ impl OutOfBandSender {
         self.oob.clone().into()
     }
 
-    pub fn to_string(&self) -> String {
-        json!(AriesMessage::from(self.oob.clone())).to_string()
-    }
-
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
         Ok(Self {
             oob: serde_json::from_str(oob_data)?,
         })
+    }
+}
+
+impl Display for OutOfBandSender {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", json!(AriesMessage::from(self.oob.clone())))
     }
 }
 

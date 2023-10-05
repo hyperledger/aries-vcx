@@ -93,35 +93,18 @@ pub async fn provision_cloud_agent(
 pub mod tests {
     use aries_vcx::{
         agency_client::{
-            configuration::AgentProvisionConfig, messages::update_message::UIDsByConn,
-            testing::mocking::AgencyMockDecrypted, MessageStatusCode,
+            messages::update_message::UIDsByConn, testing::mocking::AgencyMockDecrypted,
+            MessageStatusCode,
         },
         utils::{constants, devsetup::SetupMocks},
     };
 
-    use crate::api_vcx::api_global::agency_client::{
-        agency_update_messages, provision_cloud_agent, update_webhook_url,
-    };
+    use crate::api_vcx::api_global::agency_client::{agency_update_messages, update_webhook_url};
 
     #[tokio::test]
     async fn test_update_institution_webhook() {
         let _setup = SetupMocks::init();
         update_webhook_url("https://example.com").await.unwrap();
-    }
-
-    #[tokio::test]
-    async fn test_provision_cloud_agent() {
-        let _setup = SetupMocks::init();
-
-        let config = AgentProvisionConfig {
-            agency_did: "Ab8TvZa3Q19VNkQVzAWVL7".into(),
-            agency_verkey: "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf".into(),
-            agency_endpoint: "https://enym-eagency.pdev.evernym.com"
-                .parse()
-                .expect("valid url"),
-            agent_seed: None,
-        };
-        provision_cloud_agent(&config).await.unwrap();
     }
 
     #[tokio::test]

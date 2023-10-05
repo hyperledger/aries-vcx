@@ -2,7 +2,7 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    fs,
+    fmt, fs,
     io::BufReader,
     path::PathBuf,
     sync::{Arc, Mutex},
@@ -18,7 +18,7 @@ use indy_utils::{
     crypto::chacha20poly1305_ietf::{self, Key as MasterKey},
     secret,
 };
-use log::{debug, trace};
+use log::{error, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as SValue;
 
@@ -43,6 +43,14 @@ pub mod language;
 mod cache;
 mod export_import;
 mod wallet;
+
+#[derive(Debug)]
+pub struct MigrationResult {
+    migrated: u32,
+    skipped: u32,
+    duplicated: u32,
+    failed: u32,
+}
 
 pub struct WalletService {
     storage_types: Mutex<HashMap<String, Arc<dyn WalletStorageType>>>,
@@ -354,7 +362,7 @@ impl WalletService {
     ) -> IndyResult<()> {
         let wallet = self.get_wallet(wallet_handle).await?;
         wallet
-            .add(type_, name, value, tags)
+            .add(type_, name, value, tags, true)
             .await
             .map_err(|err| WalletService::_map_wallet_storage_error(err, type_, name))
     }
@@ -706,7 +714,7 @@ impl WalletService {
         old_wh: WalletHandle,
         new_wh: WalletHandle,
         mut migrate_fn: impl FnMut(Record) -> Result<Option<Record>, E>,
-    ) -> IndyResult<()>
+    ) -> IndyResult<MigrationResult>
     where
         E: std::fmt::Display,
     {
@@ -714,50 +722,113 @@ impl WalletService {
         let new_wallet = self.get_wallet(new_wh).await?;
 
         let mut records = old_wallet.get_all().await?;
-        let mut num_records = 0;
+        let total = records.get_total_count()?;
+        info!("Migrating {total:?} records");
+        let mut num_record = 0;
+        let mut migration_result = MigrationResult {
+            migrated: 0,
+            skipped: 0,
+            duplicated: 0,
+            failed: 0,
+        };
 
-        while let Some(WalletRecord {
-            type_,
-            id,
-            value,
-            tags,
-        }) = records.next().await?
-        {
-            num_records += 1;
-            let record = Record {
-                type_: type_.ok_or_else(|| {
-                    err_msg(
-                        IndyErrorKind::InvalidState,
-                        "No type fetched for exported record",
-                    )
-                })?,
-                id,
-                value: value.ok_or_else(|| {
-                    err_msg(
-                        IndyErrorKind::InvalidState,
-                        "No value fetched for exported record",
-                    )
-                })?,
-                tags: tags.ok_or_else(|| {
-                    err_msg(
-                        IndyErrorKind::InvalidState,
-                        "No tags fetched for exported record",
-                    )
-                })?,
+        while let Some(source_record) = records.next().await? {
+            num_record += 1;
+            if num_record % 1000 == 1 {
+                warn!(
+                    "Migrating wallet record number {num_record} / {total:?}, intermediary \
+                     migration result: ${migration_result:?}"
+                );
+            }
+            trace!("Migrating record: {:?}", source_record);
+            let unwrapped_type_ = match &source_record.type_ {
+                None => {
+                    warn!(
+                        "Skipping item missing 'type' field, record ({num_record}): \
+                         {source_record:?}"
+                    );
+                    migration_result.skipped += 1;
+                    continue;
+                }
+                Some(type_) => type_.clone(),
+            };
+            let unwrapped_value = match &source_record.value {
+                None => {
+                    warn!(
+                        "Skipping item missing 'value' field, record ({num_record}): \
+                         {source_record:?}"
+                    );
+                    migration_result.skipped += 1;
+                    continue;
+                }
+                Some(value) => value.clone(),
+            };
+            let unwrapped_tags = match &source_record.tags {
+                None => HashMap::new(),
+                Some(tags) => tags.clone(),
             };
 
-            if let Some(record) = migrate_fn(record)
-                .map_err(|e| IndyError::from_msg(IndyErrorKind::InvalidStructure, e.to_string()))?
+            let record = Record {
+                type_: unwrapped_type_,
+                id: source_record.id.clone(),
+                value: unwrapped_value,
+                tags: unwrapped_tags,
+            };
+
+            let migrated_record = match migrate_fn(record) {
+                Ok(record) => match record {
+                    None => {
+                        warn!("Skipping non-migratable record ({num_record}): {source_record:?}");
+                        migration_result.skipped += 1;
+                        continue;
+                    }
+                    Some(record) => record,
+                },
+                Err(err) => {
+                    warn!(
+                        "Skipping item due failed item migration, record ({num_record}): \
+                         {source_record:?}, err: {err}"
+                    );
+                    migration_result.failed += 1;
+                    continue;
+                }
+            };
+
+            match new_wallet
+                .add(
+                    &migrated_record.type_,
+                    &migrated_record.id,
+                    &migrated_record.value,
+                    &migrated_record.tags,
+                    false,
+                )
+                .await
             {
-                new_wallet
-                    .add(&record.type_, &record.id, &record.value, &record.tags)
-                    .await?;
+                Err(err) => match err.kind() {
+                    IndyErrorKind::WalletItemAlreadyExists => {
+                        trace!(
+                            "Record type: {migrated_record:?} already exists in destination \
+                             wallet, skipping"
+                        );
+                        migration_result.duplicated += 1;
+                        continue;
+                    }
+                    _ => {
+                        error!(
+                            "Error adding record {migrated_record:?} to destination wallet: \
+                             {err:?}"
+                        );
+                        migration_result.failed += 1;
+                        return Err(err);
+                    }
+                },
+                Ok(()) => {
+                    migration_result.migrated += 1;
+                }
             }
         }
-
-        debug!("{num_records} records have been migrated!");
-
-        Ok(())
+        warn!("Migration of total {total:?} records completed, result: ${migration_result:?}");
+        Ok(migration_result)
     }
 
     pub async fn export_wallet(
@@ -1068,13 +1139,24 @@ pub struct MetadataRaw {
     pub keys: Vec<u8>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WalletRecord {
     #[serde(rename = "type")]
     type_: Option<String>,
     id: String,
     value: Option<String>,
     tags: Option<Tags>,
+}
+
+impl fmt::Debug for WalletRecord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("WalletRecord")
+            .field("type_", &self.type_)
+            .field("id", &self.id)
+            .field("value", &self.value.as_ref().map(|_| "******"))
+            .field("tags", &self.tags)
+            .finish()
+    }
 }
 
 impl Ord for WalletRecord {

@@ -1,4 +1,4 @@
-use std::{clone::Clone, str::FromStr, sync::Arc};
+use std::{clone::Clone, fmt::Display, str::FromStr};
 
 use agency_client::agency_client::AgencyClient;
 use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
@@ -63,7 +63,7 @@ impl OutOfBandReceiver {
 
     pub async fn connection_exists<'a>(
         &self,
-        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        indy_ledger: &impl IndyLedgerRead,
         connections: &'a Vec<&'a MediatedConnection>,
     ) -> VcxResult<Option<&'a MediatedConnection>> {
         trace!("OutOfBandReceiver::connection_exists >>>");
@@ -89,7 +89,7 @@ impl OutOfBandReceiver {
 
     pub async fn nonmediated_connection_exists<'a, I, T>(
         &self,
-        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        indy_ledger: &impl IndyLedgerRead,
         connections: I,
     ) -> Option<T>
     where
@@ -109,7 +109,7 @@ impl OutOfBandReceiver {
     }
 
     async fn connection_matches_service(
-        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        indy_ledger: &impl IndyLedgerRead,
         connection: &GenericConnection,
         service: &OobService,
     ) -> bool {
@@ -120,7 +120,7 @@ impl OutOfBandReceiver {
     }
 
     async fn did_doc_matches_service(
-        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        indy_ledger: &impl IndyLedgerRead,
         service: &OobService,
         did_doc: &AriesDidDoc,
     ) -> bool {
@@ -139,7 +139,7 @@ impl OutOfBandReceiver {
     }
 
     async fn did_doc_matches_resolved_service(
-        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        indy_ledger: &impl IndyLedgerRead,
         service: &OobService,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<bool> {
@@ -299,7 +299,7 @@ impl OutOfBandReceiver {
 
     pub async fn build_connection(
         &self,
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         agency_client: &AgencyClient,
         did_doc: AriesDidDoc,
         autohop_enabled: bool,
@@ -323,13 +323,15 @@ impl OutOfBandReceiver {
         self.oob.clone().into()
     }
 
-    pub fn to_string(&self) -> String {
-        json!(AriesMessage::from(self.oob.clone())).to_string()
-    }
-
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
         Ok(Self {
             oob: serde_json::from_str(oob_data)?,
         })
+    }
+}
+
+impl Display for OutOfBandReceiver {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", json!(AriesMessage::from(self.oob.clone())))
     }
 }

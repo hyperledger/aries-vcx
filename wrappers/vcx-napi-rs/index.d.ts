@@ -46,7 +46,7 @@ export function credentialGetTailsLocation(handle: number): string
 export function credentialGetTailsHash(handle: number): string
 export function credentialGetRevRegId(handle: number): string
 export function credentialGetThreadId(handle: number): string
-export function credentialdefCreateV2(sourceId: string, schemaId: string, tag: string, supportRevocation: boolean): Promise<number>
+export function credentialdefCreateV2(issuerDid: string, sourceId: string, schemaId: string, tag: string, supportRevocation: boolean): Promise<number>
 export function credentialdefPublish(handle: number): Promise<void>
 export function credentialdefDeserialize(serialized: string): number
 export function credentialdefRelease(handle: number): void
@@ -166,7 +166,7 @@ export function proofGetThreadId(handle: number): string
 export function markPresentationRequestMsgSent(handle: number): void
 export function revocationRegistryCreate(config: string): Promise<number>
 export function revocationRegistryPublish(handle: number, tailsUrl: string): Promise<number>
-export function revocationRegistryPublishRevocations(handle: number): Promise<void>
+export function revocationRegistryPublishRevocations(handle: number, submitterDid: string): Promise<void>
 export function revocationRegistryGetRevRegId(handle: number): string
 export function revocationRegistryGetTailsHash(handle: number): string
 export function revocationRegistrySerialize(handle: number): string
@@ -174,14 +174,13 @@ export function revocationRegistryDeserialize(data: string): number
 export function revocationRegistryRelease(handle: number): void
 export function schemaGetAttributes(sourceId: string, schemaId: string): void
 export function schemaPrepareForEndorser(): void
-export function schemaCreate(sourceId: string, name: string, version: string, data: string): Promise<number>
+export function schemaCreate(issuerDid: string, sourceId: string, name: string, version: string, data: string): Promise<number>
 export function schemaGetSchemaId(handleSchema: number): string
 export function schemaDeserialize(serialized: string): number
 export function schemaSerialize(handleSchema: number): string
 export function schemaRelease(handleSchema: number): void
 export function schemaUpdateState(handleSchema: number): Promise<number>
 export function schemaGetState(handleSchema: number): number
-export function enableMocks(): void
 export function trustpingBuildResponseMsg(ping: string): string
 export function trustpingBuildPing(requestResponse: boolean, comment?: string | undefined | null): string
 export function shutdown(deleteAll?: boolean | undefined | null): void
@@ -189,7 +188,6 @@ export function getVersion(): string
 export function walletOpenAsMain(walletConfig: string): Promise<number>
 export function walletCreateMain(walletConfig: string): Promise<void>
 export function walletCloseMain(): Promise<void>
-export function vcxInitIssuerConfig(config: string): Promise<void>
 export function configureIssuerWallet(enterpriseSeed: string): Promise<string>
 export function unpack(data: Buffer): Promise<string>
 export function createAndStoreDid(seed?: string | undefined | null): Promise<string>

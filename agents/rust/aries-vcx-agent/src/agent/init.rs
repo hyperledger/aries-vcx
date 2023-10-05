@@ -1,17 +1,12 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::{
-        ledger::{build_ledger_components, VcxPoolConfig},
-        profile::Profile,
-        vdrtools_profile::VdrtoolsProfile,
-    },
-    global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS},
+    core::profile::{ledger::VcxPoolConfig, vdrtools_profile::VdrtoolsProfile, Profile},
+    global::settings::DEFAULT_LINK_SECRET_ALIAS,
 };
 use aries_vcx_core::{
-    ledger::base_ledger::{
-        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
-    },
+    self,
+    anoncreds::base_anoncreds::BaseAnonCreds,
     wallet::indy::{
         wallet::{create_and_open_wallet, wallet_configure_issuer},
         IndySdkWallet, WalletConfig,
@@ -68,7 +63,7 @@ impl Agent {
         let config_issuer = wallet_configure_issuer(wallet_handle, &init_config.enterprise_seed)
             .await
             .unwrap();
-        init_issuer_config(&config_issuer.institution_did).unwrap();
+
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
 
         let pool_config = VcxPoolConfig {
@@ -76,22 +71,10 @@ impl Agent {
             indy_vdr_config: None,
             response_cache_config: None,
         };
-        let (ledger_read, ledger_write) =
-            build_ledger_components(wallet.clone(), pool_config).unwrap();
-        let anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
-        let anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
-        let indy_ledger_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
-        let indy_ledger_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
 
-        let indy_profile = VdrtoolsProfile::init(
-            wallet,
-            anoncreds_ledger_read,
-            anoncreds_ledger_write,
-            indy_ledger_read,
-            indy_ledger_write,
-        );
-        let profile: Arc<dyn Profile> = Arc::new(indy_profile);
-        let anoncreds = profile.inject_anoncreds();
+        let indy_profile = VdrtoolsProfile::init(wallet, pool_config).unwrap();
+        let profile = Arc::new(indy_profile);
+        let anoncreds = profile.anoncreds();
         anoncreds
             .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
             .await

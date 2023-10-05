@@ -107,7 +107,7 @@ impl HolderSM {
     pub fn new(source_id: String) -> Self {
         HolderSM {
             thread_id: Uuid::new_v4().to_string(),
-            state: HolderFullState::Initial(InitialHolderState::new()),
+            state: HolderFullState::Initial(InitialHolderState),
             source_id,
         }
     }
@@ -205,8 +205,8 @@ impl HolderSM {
 
     pub async fn prepare_credential_request<'a>(
         self,
-        ledger: &'a Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &'a Arc<dyn BaseAnonCreds>,
+        ledger: &'a impl AnoncredsLedgerRead,
+        anoncreds: &'a impl BaseAnonCreds,
         my_pw_did: String,
     ) -> VcxResult<Self> {
         trace!("HolderSM::prepare_credential_request >>");
@@ -264,8 +264,8 @@ impl HolderSM {
 
     pub async fn receive_credential<'a>(
         self,
-        ledger: &'a Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &'a Arc<dyn BaseAnonCreds>,
+        ledger: &'a impl AnoncredsLedgerRead,
+        anoncreds: &'a impl BaseAnonCreds,
         credential: IssueCredentialV1,
     ) -> VcxResult<Self> {
         trace!("HolderSM::receive_credential >>");
@@ -422,7 +422,7 @@ impl HolderSM {
         Ok(self.thread_id.clone())
     }
 
-    pub async fn is_revokable(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
+    pub async fn is_revokable(&self, ledger: &impl AnoncredsLedgerRead) -> VcxResult<bool> {
         match self.state {
             HolderFullState::Initial(ref state) => state.is_revokable(),
             HolderFullState::ProposalSet(ref state) => state.is_revokable(ledger).await,
@@ -434,8 +434,8 @@ impl HolderSM {
 
     pub async fn is_revoked(
         &self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        ledger: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
     ) -> VcxResult<bool> {
         if self.is_revokable(ledger).await? {
             let rev_reg_id = self.get_rev_reg_id()?;
@@ -532,8 +532,8 @@ pub fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<S
 }
 
 async fn _store_credential(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
-    anoncreds: &Arc<dyn BaseAnonCreds>,
+    ledger: &impl AnoncredsLedgerRead,
+    anoncreds: &impl BaseAnonCreds,
     credential: &IssueCredentialV1,
     req_meta: &str,
     cred_def_json: &str,
@@ -568,8 +568,8 @@ async fn _store_credential(
 }
 
 pub async fn create_anoncreds_credential_request(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
-    anoncreds: &Arc<dyn BaseAnonCreds>,
+    ledger: &impl AnoncredsLedgerRead,
+    anoncreds: &impl BaseAnonCreds,
     cred_def_id: &str,
     prover_did: &str,
     cred_offer: &str,
@@ -586,8 +586,8 @@ pub async fn create_anoncreds_credential_request(
 }
 
 async fn build_credential_request_msg(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
-    anoncreds: &Arc<dyn BaseAnonCreds>,
+    ledger: &impl AnoncredsLedgerRead,
+    anoncreds: &impl BaseAnonCreds,
     thread_id: String,
     my_pw_did: String,
     offer: &OfferCredentialV1,

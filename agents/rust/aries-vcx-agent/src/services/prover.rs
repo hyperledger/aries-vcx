@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use aries_vcx::{
-    core::profile::profile::Profile,
+    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
     handlers::{
         proof_presentation::{prover::Prover, types::SelectedCredentials},
         util::PresentationProposalData,
@@ -39,13 +39,16 @@ impl ProverWrapper {
 }
 
 pub struct ServiceProver {
-    profile: Arc<dyn Profile>,
+    profile: Arc<VdrtoolsProfile>,
     provers: ObjectCache<ProverWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceProver {
-    pub fn new(profile: Arc<dyn Profile>, service_connections: Arc<ServiceConnections>) -> Self {
+    pub fn new(
+        profile: Arc<VdrtoolsProfile>,
+        service_connections: Arc<ServiceConnections>,
+    ) -> Self {
         Self {
             profile,
             service_connections,
@@ -69,7 +72,7 @@ impl ServiceProver {
         tails_dir: Option<&str>,
     ) -> AgentResult<SelectedCredentials> {
         let credentials = prover
-            .retrieve_credentials(&self.profile.inject_anoncreds())
+            .retrieve_credentials(self.profile.anoncreds())
             .await?;
 
         let mut res_credentials = SelectedCredentials::default();
@@ -106,10 +109,10 @@ impl ServiceProver {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut prover = Prover::create("")?;
 
-        let wallet = self.profile.inject_wallet();
+        let wallet = self.profile.wallet();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
         });
 
         let proposal = prover.build_presentation_proposal(proposal).await?;
@@ -142,17 +145,17 @@ impl ServiceProver {
             .await?;
         prover
             .generate_presentation(
-                &self.profile.inject_anoncreds_ledger_read(),
-                &self.profile.inject_anoncreds(),
+                self.profile.ledger_read(),
+                self.profile.anoncreds(),
                 credentials,
                 HashMap::new(),
             )
             .await?;
 
-        let wallet = self.profile.inject_wallet();
+        let wallet = self.profile.wallet();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
         });
 
         let message = prover.mark_presentation_sent()?;

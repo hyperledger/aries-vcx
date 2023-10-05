@@ -8,11 +8,7 @@ use aries_vcx_core::{
 use super::credential_definition::PublicEntityStateType;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    global::settings,
-    utils::{
-        constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON},
-        serialization::ObjectWithVersion,
-    },
+    utils::{constants::DEFAULT_SERIALIZE_VERSION, serialization::ObjectWithVersion},
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -40,7 +36,7 @@ pub struct Schema {
 
 impl Schema {
     pub async fn create(
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        anoncreds: &impl BaseAnonCreds,
         source_id: &str,
         submitter_did: &str,
         name: &str,
@@ -54,19 +50,6 @@ impl Schema {
             version,
             data
         );
-
-        if settings::indy_mocks_enabled() {
-            return Ok(Self {
-                source_id: source_id.to_string(),
-                version: version.to_string(),
-                submitter_did: submitter_did.to_string(),
-                schema_id: SCHEMA_ID.to_string(),
-                schema_json: SCHEMA_JSON.to_string(),
-                name: name.to_string(),
-                state: PublicEntityStateType::Built,
-                ..Self::default()
-            });
-        }
 
         let data_str = serde_json::to_string(data).map_err(|err| {
             AriesVcxError::from_msg(
@@ -91,46 +74,15 @@ impl Schema {
         })
     }
 
-    pub fn create_from_ledger_json(
-        schema_json: &str,
-        source_id: &str,
-        schema_id: &str,
-    ) -> VcxResult<Self> {
-        let schema_data: SchemaData = serde_json::from_str(schema_json).map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Cannot deserialize schema: {}", err),
-            )
-        })?;
-
-        Ok(Self {
-            source_id: source_id.to_string(),
-            schema_id: schema_id.to_string(),
-            schema_json: schema_json.to_string(),
-            name: schema_data.name,
-            version: schema_data.version,
-            data: schema_data.attr_names,
-            submitter_did: "".to_string(),
-            state: PublicEntityStateType::Published,
-        })
+    pub async fn submitter_did(&self) -> String {
+        self.submitter_did.clone()
     }
 
-    pub async fn publish(
-        self,
-        ledger: &Arc<dyn AnoncredsLedgerWrite>,
-        endorser_did: Option<String>,
-    ) -> VcxResult<Self> {
+    pub async fn publish(self, ledger: &impl AnoncredsLedgerWrite) -> VcxResult<Self> {
         trace!("Schema::publish >>>");
 
-        if settings::indy_mocks_enabled() {
-            return Ok(Self {
-                state: PublicEntityStateType::Published,
-                ..self
-            });
-        }
-
         ledger
-            .publish_schema(&self.schema_json, &self.submitter_did, endorser_did)
+            .publish_schema(&self.schema_json, &self.submitter_did, None)
             .await?;
 
         Ok(Self {

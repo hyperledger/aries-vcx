@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
+    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
     global::settings::WALLET_KDF_RAW,
     utils::devsetup::{dev_build_profile_modular, SetupProfile},
 };
@@ -15,28 +16,52 @@ use crate::utils::test_agent::TestAgent;
 
 #[async_trait]
 pub trait Migratable {
-    async fn migrate(&mut self);
+    type Output;
+
+    async fn migrate(mut self) -> Self::Output;
 }
 
 #[async_trait]
-impl Migratable for SetupProfile {
-    async fn migrate(&mut self) {
+impl<P> Migratable for SetupProfile<P>
+where
+    P: Profile,
+{
+    type Output = SetupProfile<ModularLibsProfile>;
+
+    async fn migrate(mut self) -> Self::Output {
         info!("SetupProfile::migrate >>>");
         let old_wh = self.profile.wallet_handle().unwrap();
         let new_wh = migrate_to_new_wallet(old_wh).await;
         let wallet = Arc::new(IndySdkWallet::new(new_wh));
-        self.profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet);
+        let profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet);
+
+        SetupProfile {
+            institution_did: self.institution_did,
+            profile,
+            genesis_file_path: self.genesis_file_path,
+        }
     }
 }
 
 #[async_trait]
-impl Migratable for TestAgent {
-    async fn migrate(&mut self) {
+impl<P> Migratable for TestAgent<P>
+where
+    P: Profile,
+{
+    type Output = TestAgent<ModularLibsProfile>;
+
+    async fn migrate(mut self) -> Self::Output {
         info!("Faber::migrate >>>");
         let old_wh = self.profile.wallet_handle().unwrap();
         let new_wh = migrate_to_new_wallet(old_wh).await;
         let wallet = Arc::new(IndySdkWallet::new(new_wh));
-        self.profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet.clone());
+        let profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet);
+
+        TestAgent {
+            profile,
+            institution_did: self.institution_did,
+            genesis_file_path: self.genesis_file_path,
+        }
     }
 }
 

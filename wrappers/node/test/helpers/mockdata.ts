@@ -1,3 +1,5 @@
+export const ARIES_ISSUER_DID = "2hoqvcwupRTUNkXn6ArYzs";
+
 export const ARIES_PING = {
   '@type': 'https://didcomm.org/trust_ping/1.0/ping',
   '@id': '518be002-de8e-456e-b3d5-8fe472477a86',

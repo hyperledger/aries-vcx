@@ -15,12 +15,13 @@ fn schema_prepare_for_endorser() -> napi::Result<()> {
 
 #[napi]
 async fn schema_create(
+    issuer_did: String,
     source_id: String,
     name: String,
     version: String,
     data: String,
 ) -> napi::Result<u32> {
-    schema::create_and_publish_schema(&source_id, name, version, data)
+    schema::create_and_publish_schema(&issuer_did, &source_id, name, version, data)
         .await
         .map_err(to_napi_err)
 }

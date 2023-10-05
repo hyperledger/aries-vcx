@@ -4,10 +4,9 @@ use vdrtools::{Locator, SearchHandle};
 use crate::{
     anoncreds::indy::general::{blob_storage_open_reader, close_search_handle},
     errors::error::{prelude::*, VcxCoreResult},
-    global::{mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request, settings},
+    global::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request,
     indy::utils::parse_and_validate,
-    utils,
-    utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES, REV_STATE_JSON},
+    utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES},
     WalletHandle,
 };
 
@@ -18,10 +17,6 @@ pub async fn libindy_prover_create_revocation_state(
     timestamp: u64,
     cred_rev_id: &str,
 ) -> VcxCoreResult<String> {
-    if settings::indy_mocks_enabled() {
-        return Ok(REV_STATE_JSON.to_string());
-    }
-
     let blob_handle = blob_storage_open_reader(tails_file_path).await?;
 
     let res = Locator::instance()
@@ -47,10 +42,6 @@ pub async fn libindy_prover_create_proof(
     credential_defs_json: &str,
     revoc_states_json: Option<&str>,
 ) -> VcxCoreResult<String> {
-    if settings::indy_mocks_enabled() {
-        return Ok(utils::constants::PROOF_JSON.to_owned());
-    }
-
     let revoc_states_json = revoc_states_json.unwrap_or("{}");
 
     let res = Locator::instance()

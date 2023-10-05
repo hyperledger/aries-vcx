@@ -230,7 +230,7 @@ mod tests {
 
         let vm =
             VerificationMethod::builder(id.clone(), controller.clone(), verification_method_type)
-                .add_public_key_multibase(public_key_multibase.clone())
+                .add_public_key_multibase(public_key_multibase)
                 .build();
 
         assert_eq!(vm.id(), &id);
@@ -255,7 +255,7 @@ mod tests {
 
         let vm =
             VerificationMethod::builder(id.clone(), controller.clone(), verification_method_type)
-                .add_public_key_multibase(public_key_multibase.clone())
+                .add_public_key_multibase(public_key_multibase)
                 .build();
 
         assert_eq!(vm.id(), &id);
@@ -298,10 +298,9 @@ mod tests {
         let verification_method_type = create_valid_verification_key_type();
         let public_key_multibase_expected = create_valid_multibase();
 
-        let vm =
-            VerificationMethod::builder(id.clone(), controller.clone(), verification_method_type)
-                .add_public_key_multibase(public_key_multibase_expected.clone())
-                .build();
+        let vm = VerificationMethod::builder(id, controller, verification_method_type)
+            .add_public_key_multibase(public_key_multibase_expected.clone())
+            .build();
 
         match vm.public_key_field() {
             PublicKeyField::Multibase {

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -9,9 +7,8 @@ use messages::msg_fields::protocols::{
 };
 
 use crate::{
-    common::proofs::verifier::verifier::validate_indy_proof,
+    common::proofs::verifier::validate_indy_proof,
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    global::settings,
     handlers::util::{get_attach_as_string, matches_thread_id, Status},
     protocols::proof_presentation::verifier::{
         states::finished::FinishedState, verification_status::PresentationVerificationStatus,
@@ -26,12 +23,12 @@ pub struct PresentationRequestSentState {
 impl PresentationRequestSentState {
     pub async fn verify_presentation(
         &self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        ledger: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
         presentation: &Presentation,
         thread_id: &str,
     ) -> VcxResult<()> {
-        if !settings::indy_mocks_enabled() && !matches_thread_id!(presentation, thread_id) {
+        if !matches_thread_id!(presentation, thread_id) {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
                 format!(

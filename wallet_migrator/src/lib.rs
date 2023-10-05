@@ -22,7 +22,7 @@ pub async fn migrate_wallet<E>(
 where
     E: Display,
 {
-    info!("Starting wallet migration...");
+    info!("Starting wallet migration");
 
     if src_wallet_handle == dest_wallet_handle {
         error!("Equal wallet handles: {src_wallet_handle:?} {dest_wallet_handle:?}");
@@ -40,8 +40,8 @@ where
         .await?;
 
     info!(
-        "Migration from wallet with handle {src_wallet_handle:?} to wallet with handle \
-         {dest_wallet_handle:?} finished successfully!"
+        "Completed migration from wallet with handle {src_wallet_handle:?} to wallet with handle \
+         {dest_wallet_handle:?}"
     );
 
     Ok(())

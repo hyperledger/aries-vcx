@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::marker::PhantomData;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
@@ -33,8 +33,14 @@ use crate::{
 /// This is done in accordance to the Aries RFC 0592 Spec:
 ///
 /// https://github.com/hyperledger/aries-rfcs/blob/b3a3942ef052039e73cd23d847f42947f8287da2/features/0592-indy-attachments/README.md
-pub struct HyperledgerIndyHolderCredentialIssuanceFormat<'a> {
+pub struct HyperledgerIndyHolderCredentialIssuanceFormat<'a, R, A>
+where
+    R: AnoncredsLedgerRead,
+    A: BaseAnonCreds,
+{
     _data: &'a PhantomData<()>,
+    _ledger_read: PhantomData<R>,
+    _anoncreds: PhantomData<A>,
 }
 
 pub struct HyperledgerIndyCreateProposalInput {
@@ -66,10 +72,14 @@ pub struct HyperledgerIndyOfferDetails {
     pub cred_def_id: String,
 }
 
-pub struct HyperledgerIndyCreateRequestInput<'a> {
+pub struct HyperledgerIndyCreateRequestInput<'a, R, A>
+where
+    R: AnoncredsLedgerRead,
+    A: BaseAnonCreds,
+{
     pub my_pairwise_did: String,
-    pub ledger: &'a Arc<dyn AnoncredsLedgerRead>,
-    pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
+    pub ledger: &'a R,
+    pub anoncreds: &'a A,
 }
 
 #[derive(Clone, Debug)]
@@ -78,9 +88,13 @@ pub struct HyperledgerIndyCreatedRequestMetadata {
     credential_def_json: String,
 }
 
-pub struct HyperledgerIndyStoreCredentialInput<'a> {
-    pub ledger: &'a Arc<dyn AnoncredsLedgerRead>,
-    pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
+pub struct HyperledgerIndyStoreCredentialInput<'a, R, A>
+where
+    R: AnoncredsLedgerRead,
+    A: BaseAnonCreds,
+{
+    pub ledger: &'a R,
+    pub anoncreds: &'a A,
 }
 
 #[derive(Clone, Debug)]
@@ -89,15 +103,20 @@ pub struct HyperledgerIndyStoredCredentialMetadata {
 }
 
 #[async_trait]
-impl<'a> HolderCredentialIssuanceFormat for HyperledgerIndyHolderCredentialIssuanceFormat<'a> {
+impl<'a, R, A> HolderCredentialIssuanceFormat
+    for HyperledgerIndyHolderCredentialIssuanceFormat<'a, R, A>
+where
+    R: AnoncredsLedgerRead + 'a,
+    A: BaseAnonCreds + 'a,
+{
     type CreateProposalInput = HyperledgerIndyCreateProposalInput;
 
     type OfferDetails = HyperledgerIndyOfferDetails;
 
-    type CreateRequestInput = HyperledgerIndyCreateRequestInput<'a>;
+    type CreateRequestInput = HyperledgerIndyCreateRequestInput<'a, R, A>;
     type CreatedRequestMetadata = HyperledgerIndyCreatedRequestMetadata;
 
-    type StoreCredentialInput = HyperledgerIndyStoreCredentialInput<'a>;
+    type StoreCredentialInput = HyperledgerIndyStoreCredentialInput<'a, R, A>;
     type StoredCredentialMetadata = HyperledgerIndyStoredCredentialMetadata;
 
     fn supports_request_independent_of_offer() -> bool {
@@ -137,7 +156,7 @@ impl<'a> HolderCredentialIssuanceFormat for HyperledgerIndyHolderCredentialIssua
 
     async fn create_request_attachment_content(
         offer_message: &OfferCredentialV2,
-        data: &HyperledgerIndyCreateRequestInput,
+        data: &Self::CreateRequestInput,
     ) -> VcxResult<(Vec<u8>, HyperledgerIndyCreatedRequestMetadata)> {
         let offer_bytes = Self::extract_offer_attachment_content(&offer_message)?;
         let offer_payload = String::from_utf8(offer_bytes).map_err(|_| {
@@ -182,7 +201,7 @@ impl<'a> HolderCredentialIssuanceFormat for HyperledgerIndyHolderCredentialIssua
 
     async fn process_and_store_credential(
         issue_credential_message: &IssueCredentialV2,
-        user_input: &HyperledgerIndyStoreCredentialInput,
+        user_input: &HyperledgerIndyStoreCredentialInput<R, A>,
         request_metadata: &HyperledgerIndyCreatedRequestMetadata,
     ) -> VcxResult<HyperledgerIndyStoredCredentialMetadata> {
         let cred_bytes = Self::extract_credential_attachment_content(&issue_credential_message)?;

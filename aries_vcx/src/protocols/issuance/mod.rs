@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 
 use crate::errors::error::prelude::*;
@@ -8,7 +6,7 @@ pub mod holder;
 pub mod issuer;
 
 pub async fn is_cred_def_revokable(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    ledger: &impl AnoncredsLedgerRead,
     cred_def_id: &str,
 ) -> VcxResult<bool> {
     let cred_def_json = ledger

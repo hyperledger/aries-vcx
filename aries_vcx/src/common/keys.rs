@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::{
     ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite},
     wallet::base_wallet::BaseWallet,
@@ -9,8 +7,8 @@ use serde_json::Value;
 use crate::errors::error::prelude::*;
 
 pub async fn rotate_verkey_apply(
-    wallet: &Arc<dyn BaseWallet>,
-    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    wallet: &impl BaseWallet,
+    indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
     temp_vk: &str,
 ) -> VcxResult<()> {
@@ -51,8 +49,8 @@ pub async fn rotate_verkey_apply(
 }
 
 pub async fn rotate_verkey(
-    wallet: &Arc<dyn BaseWallet>,
-    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    wallet: &impl BaseWallet,
+    indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
 ) -> VcxResult<()> {
     let trustee_temp_verkey = wallet.replace_did_keys_start(did).await?;
@@ -60,7 +58,7 @@ pub async fn rotate_verkey(
 }
 
 pub async fn get_verkey_from_ledger(
-    indy_ledger: &Arc<dyn IndyLedgerRead>,
+    indy_ledger: &impl IndyLedgerRead,
     did: &str,
 ) -> VcxResult<String> {
     let nym_response: String = indy_ledger.get_nym(did).await?;

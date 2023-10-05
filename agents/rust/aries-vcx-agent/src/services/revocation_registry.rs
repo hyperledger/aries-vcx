@@ -4,7 +4,8 @@ use std::{
 };
 
 use aries_vcx::{
-    common::primitives::revocation_registry::RevocationRegistry, core::profile::profile::Profile,
+    common::primitives::revocation_registry::RevocationRegistry,
+    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
 };
 
 use crate::{
@@ -13,13 +14,13 @@ use crate::{
 };
 
 pub struct ServiceRevocationRegistries {
-    profile: Arc<dyn Profile>,
+    profile: Arc<VdrtoolsProfile>,
     issuer_did: String,
     rev_regs: ObjectCache<RevocationRegistry>,
 }
 
 impl ServiceRevocationRegistries {
-    pub fn new(profile: Arc<dyn Profile>, issuer_did: String) -> Self {
+    pub fn new(profile: Arc<VdrtoolsProfile>, issuer_did: String) -> Self {
         Self {
             profile,
             issuer_did,
@@ -39,7 +40,7 @@ impl ServiceRevocationRegistries {
 
     pub async fn create_rev_reg(&self, cred_def_id: &str, max_creds: u32) -> AgentResult<String> {
         let rev_reg = RevocationRegistry::create(
-            &self.profile.inject_anoncreds(),
+            self.profile.anoncreds(),
             &self.issuer_did,
             cred_def_id,
             "/tmp",
@@ -66,7 +67,7 @@ impl ServiceRevocationRegistries {
     pub async fn publish_rev_reg(&self, thread_id: &str, tails_url: &str) -> AgentResult<()> {
         let mut rev_reg = self.rev_regs.get(thread_id)?;
         rev_reg
-            .publish_revocation_primitives(&self.profile.inject_anoncreds_ledger_write(), tails_url)
+            .publish_revocation_primitives(self.profile.ledger_write(), tails_url)
             .await?;
         self.rev_regs.insert(thread_id, rev_reg)?;
         Ok(())
@@ -75,7 +76,7 @@ impl ServiceRevocationRegistries {
     pub async fn revoke_credential_locally(&self, id: &str, cred_rev_id: &str) -> AgentResult<()> {
         let rev_reg = self.rev_regs.get(id)?;
         rev_reg
-            .revoke_credential_local(&self.profile.inject_anoncreds(), cred_rev_id)
+            .revoke_credential_local(self.profile.anoncreds(), cred_rev_id)
             .await?;
         Ok(())
     }
@@ -84,8 +85,8 @@ impl ServiceRevocationRegistries {
         let rev_reg = self.rev_regs.get(id)?;
         rev_reg
             .publish_local_revocations(
-                &self.profile.inject_anoncreds(),
-                &self.profile.inject_anoncreds_ledger_write(),
+                self.profile.anoncreds(),
+                self.profile.ledger_write(),
                 &self.issuer_did,
             )
             .await?;

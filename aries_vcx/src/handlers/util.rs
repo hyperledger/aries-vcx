@@ -56,7 +56,7 @@ macro_rules! get_attach_as_string {
         };
 
         let Some(messages::decorators::attachment::AttachmentType::Base64(encoded_attach)) = __attach else { return err_fn($attachments.get(0)); };
-        let Ok(bytes) = base64::decode(encoded_attach) else { return err_fn($attachments.get(0)); };
+        let Ok(bytes) = base64::decode(&encoded_attach) else { return err_fn($attachments.get(0)); };
         let Ok(attach_string) = String::from_utf8(bytes) else { return err_fn($attachments.get(0)); };
 
         attach_string
@@ -117,11 +117,6 @@ pub fn get_attachment_with_id<'a>(
 }
 
 pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()> {
-    // todo: ultimately remove this - improve tests
-    // libvcx_core unit tests are passing in hardcoded message which have mismatching thid
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
     let is_match = match message {
         AriesMessage::BasicMessage(msg) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::Connection(Connection::Invitation(msg)) => msg.id == thread_id,

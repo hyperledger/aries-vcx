@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -28,7 +28,7 @@ pub struct CredInfoProver {
 }
 
 pub async fn build_schemas_json_prover(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    ledger: &impl AnoncredsLedgerRead,
     credentials_identifiers: &Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
@@ -60,7 +60,7 @@ pub async fn build_schemas_json_prover(
 }
 
 pub async fn build_cred_defs_json_prover(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    ledger: &impl AnoncredsLedgerRead,
     credentials_identifiers: &Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
@@ -148,8 +148,8 @@ fn _get_revocation_interval(
 }
 
 pub async fn build_rev_states_json(
-    ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-    anoncreds: &Arc<dyn BaseAnonCreds>,
+    ledger_read: &impl AnoncredsLedgerRead,
+    anoncreds: &impl BaseAnonCreds,
     credentials_identifiers: &mut Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
@@ -281,21 +281,18 @@ pub mod pool_tests {
 
     use crate::{
         common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver},
-        utils::{
-            constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
-            devsetup::SetupProfile,
-        },
+        utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
     };
 
     #[tokio::test]
     #[ignore]
     async fn test_pool_build_rev_states_json_empty() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             // empty vector
             assert_eq!(
                 build_rev_states_json(
-                    &setup.profile.inject_anoncreds_ledger_read(),
-                    &setup.profile.inject_anoncreds(),
+                    setup.profile.ledger_read(),
+                    setup.profile.anoncreds(),
                     Vec::new().as_mut()
                 )
                 .await
@@ -318,8 +315,8 @@ pub mod pool_tests {
             };
             assert_eq!(
                 build_rev_states_json(
-                    &setup.profile.inject_anoncreds_ledger_read(),
-                    &setup.profile.inject_anoncreds(),
+                    setup.profile.ledger_read(),
+                    setup.profile.anoncreds(),
                     vec![cred1].as_mut()
                 )
                 .await
@@ -394,7 +391,7 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let ledger_read = MockLedger;
         let credential_def = build_cred_defs_json_prover(&ledger_read, &creds)
             .await
             .unwrap();
@@ -407,7 +404,7 @@ pub mod unit_tests {
     async fn test_find_schemas() {
         let _setup = SetupMocks::init();
 
-        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let ledger_read = MockLedger;
         assert_eq!(
             build_schemas_json_prover(&ledger_read, &Vec::new())
                 .await
@@ -441,7 +438,7 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let ledger_read = MockLedger;
         let schemas = build_schemas_json_prover(&ledger_read, &creds)
             .await
             .unwrap();
@@ -717,8 +714,8 @@ pub mod unit_tests {
             revealed: None,
         };
         let mut cred_info = vec![cred1];
-        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
-        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let anoncreds = MockAnoncreds;
+        let ledger_read = MockLedger;
         let states = build_rev_states_json(&ledger_read, &anoncreds, cred_info.as_mut())
             .await
             .unwrap();

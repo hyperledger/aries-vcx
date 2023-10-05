@@ -114,7 +114,7 @@ impl DidDocumentSovBuilder {
     }
 
     pub fn add_service(mut self, service: ServiceSov) -> Self {
-        self.services.push(service.clone());
+        self.services.push(service);
         self
     }
 

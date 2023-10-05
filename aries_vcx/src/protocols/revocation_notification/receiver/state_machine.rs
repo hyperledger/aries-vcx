@@ -39,7 +39,7 @@ pub enum ReceiverFullState {
 impl RevocationNotificationReceiverSM {
     pub fn create(rev_reg_id: String, cred_rev_id: String) -> Self {
         Self {
-            state: ReceiverFullState::Initial(InitialState::new()),
+            state: ReceiverFullState::Initial(InitialState),
             rev_reg_id,
             cred_rev_id,
         }
@@ -70,7 +70,7 @@ impl RevocationNotificationReceiverSM {
     pub async fn handle_revocation_notification(
         self,
         notification: Revoke,
-        send_message: SendClosure,
+        send_message: SendClosure<'_>,
     ) -> VcxResult<Self> {
         let state = match self.state {
             ReceiverFullState::Initial(_) => {
@@ -129,7 +129,7 @@ impl RevocationNotificationReceiverSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn send_ack(self, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn send_ack(self, send_message: SendClosure<'_>) -> VcxResult<Self> {
         let state = match self.state {
             ReceiverFullState::NotificationReceived(_) | ReceiverFullState::Finished(_) => {
                 let notification = self.get_notification()?;
@@ -250,7 +250,7 @@ pub mod test_utils {
         RevocationNotificationReceiverSM::create(_rev_reg_id(), _cred_rev_id())
     }
 
-    pub fn _send_message_but_fail() -> SendClosure {
+    pub fn _send_message_but_fail() -> SendClosure<'static> {
         Box::new(|_: AriesMessage| {
             Box::pin(async {
                 Err(AriesVcxError::from_msg(

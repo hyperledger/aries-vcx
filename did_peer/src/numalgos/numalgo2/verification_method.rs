@@ -80,7 +80,7 @@ fn build_verification_methods_from_bls_multikey(
 
     let vm1 = add_public_key_to_builder(
         VerificationMethod::builder(
-            id1.to_owned(),
+            id1,
             did.to_owned(),
             VerificationMethodType::Bls12381G1Key2020,
         ),

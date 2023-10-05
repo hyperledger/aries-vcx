@@ -90,11 +90,11 @@ async fn build_components_ledger(
         None => PoolConfig::default(),
         Some(cfg) => cfg.clone(),
     };
-    let ledger_pool = Arc::new(IndyVdrLedgerPool::new(
+    let ledger_pool = IndyVdrLedgerPool::new(
         libvcx_pool_config.genesis_path.clone(),
         indy_vdr_config,
         libvcx_pool_config.exclude_nodes.clone().unwrap_or_default(),
-    )?);
+    )?;
     let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
 
     let cache_config = match &libvcx_pool_config.cache_config {
@@ -115,9 +115,9 @@ async fn build_components_ledger(
     ));
     let taa_configurator: Arc<dyn TaaConfigurator> = ledger_write.clone();
     let anoncreds_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
-    let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
+    let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write;
     let anoncreds_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
-    let indy_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
+    let indy_read: Arc<dyn IndyLedgerRead> = ledger_read;
     Ok((
         anoncreds_read,
         anoncreds_write,
@@ -197,7 +197,7 @@ pub mod tests {
         aries_vcx_core::ledger::indy::pool::test_utils::{
             create_testpool_genesis_txn_file, get_temp_file_path,
         },
-        global::settings::{set_config_value, CONFIG_GENESIS_PATH, DEFAULT_GENESIS_PATH},
+        global::settings::DEFAULT_GENESIS_PATH,
         utils::{
             constants::POOL1_TXN,
             devsetup::{SetupDefaults, SetupEmpty, TempFile},
@@ -284,9 +284,8 @@ pub mod tests {
         let _setup = SetupEmpty::init();
         _create_and_open_wallet().await.unwrap();
 
-        let genesis_transactions =
+        let _genesis_transactions =
             TempFile::create_with_data(POOL1_TXN, "{ \"invalid\": \"genesis\" }");
-        set_config_value(CONFIG_GENESIS_PATH, &genesis_transactions.path).unwrap();
 
         // todo: indy-vdr panics if the file is invalid, see:
         // indy-vdr-0.3.4/src/pool/runner.rs:44:22

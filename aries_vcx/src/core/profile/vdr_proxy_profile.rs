@@ -1,12 +1,9 @@
 use std::{sync::Arc, time::Duration};
 
 use aries_vcx_core::{
-    anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
+    anoncreds::indy_anoncreds::IndySdkAnonCreds,
     ledger::{
-        base_ledger::{
-            AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
-            TaaConfigurator, TxnAuthrAgrmtOptions,
-        },
+        base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions},
         indy_vdr_ledger::{
             IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite,
             IndyVdrLedgerWriteConfig, ProtocolVersion,
@@ -15,32 +12,25 @@ use aries_vcx_core::{
         request_submitter::vdr_proxy::VdrProxySubmitter,
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
     },
-    wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
+    wallet::indy::IndySdkWallet,
     ResponseParser, VdrProxyClient,
 };
 use async_trait::async_trait;
 
-use super::{prepare_taa_options, profile::Profile};
+use super::{prepare_taa_options, Profile};
 use crate::errors::error::VcxResult;
 
 #[derive(Debug)]
 pub struct VdrProxyProfile {
-    wallet: Arc<dyn BaseWallet>,
-    anoncreds: Arc<dyn BaseAnonCreds>,
-
-    // ledger reads
-    anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead>,
-    indy_ledger_read: Arc<dyn IndyLedgerRead>,
-
-    // ledger writes
-    anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite>,
-    indy_ledger_write: Arc<dyn IndyLedgerWrite>,
-    taa_configurator: Arc<dyn TaaConfigurator>,
+    wallet: Arc<IndySdkWallet>,
+    anoncreds: IndySdkAnonCreds,
+    indy_ledger_read: Arc<IndyVdrLedgerRead<VdrProxySubmitter, InMemoryResponseCacher>>,
+    indy_ledger_write: IndyVdrLedgerWrite<VdrProxySubmitter, BaseWalletRequestSigner>,
 }
 
 impl VdrProxyProfile {
     pub async fn init(wallet: Arc<IndySdkWallet>, client: VdrProxyClient) -> VcxResult<Self> {
-        let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet.wallet_handle));
+        let anoncreds = IndySdkAnonCreds::new(wallet.wallet_handle);
         let request_signer = Arc::new(BaseWalletRequestSigner::new(wallet.clone()));
         let request_submitter = Arc::new(VdrProxySubmitter::new(Arc::new(client)));
         let response_parser = Arc::new(ResponseParser);
@@ -64,48 +54,42 @@ impl VdrProxyProfile {
             taa_options: prepare_taa_options(ledger_read.clone()).await?,
             protocol_version: ProtocolVersion::node_1_4(),
         };
-        let ledger_write = Arc::new(IndyVdrLedgerWrite::new(config_write));
+        let ledger_write = IndyVdrLedgerWrite::new(config_write);
 
         Ok(VdrProxyProfile {
             wallet,
             anoncreds,
-            anoncreds_ledger_read: ledger_read.clone(),
-            anoncreds_ledger_write: ledger_write.clone(),
             indy_ledger_read: ledger_read,
-            indy_ledger_write: ledger_write.clone(),
-            taa_configurator: ledger_write,
+            indy_ledger_write: ledger_write,
         })
     }
 }
 
 #[async_trait]
 impl Profile for VdrProxyProfile {
-    fn inject_indy_ledger_read(&self) -> Arc<dyn IndyLedgerRead> {
-        Arc::clone(&self.indy_ledger_read)
+    type LedgerRead = IndyVdrLedgerRead<VdrProxySubmitter, InMemoryResponseCacher>;
+    type LedgerWrite = IndyVdrLedgerWrite<VdrProxySubmitter, BaseWalletRequestSigner>;
+    type Anoncreds = IndySdkAnonCreds;
+    type Wallet = IndySdkWallet;
+
+    fn ledger_read(&self) -> &Self::LedgerRead {
+        &self.indy_ledger_read
     }
 
-    fn inject_indy_ledger_write(&self) -> Arc<dyn IndyLedgerWrite> {
-        Arc::clone(&self.indy_ledger_write)
+    fn ledger_write(&self) -> &Self::LedgerWrite {
+        &self.indy_ledger_write
     }
 
-    fn inject_anoncreds(&self) -> Arc<dyn BaseAnonCreds> {
-        Arc::clone(&self.anoncreds)
+    fn anoncreds(&self) -> &Self::Anoncreds {
+        &self.anoncreds
     }
 
-    fn inject_anoncreds_ledger_read(&self) -> Arc<dyn AnoncredsLedgerRead> {
-        Arc::clone(&self.anoncreds_ledger_read)
-    }
-
-    fn inject_anoncreds_ledger_write(&self) -> Arc<dyn AnoncredsLedgerWrite> {
-        Arc::clone(&self.anoncreds_ledger_write)
-    }
-
-    fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
-        Arc::clone(&self.wallet)
+    fn wallet(&self) -> &Self::Wallet {
+        &self.wallet
     }
 
     fn update_taa_configuration(&self, taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
-        self.taa_configurator
+        self.ledger_write()
             .set_txn_author_agreement_options(taa_options)
             .map_err(|e| e.into())
     }

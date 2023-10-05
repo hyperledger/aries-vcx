@@ -8,7 +8,7 @@ const { getAliceSchemaAttrs, getFaberCredDefName } = require('./data')
 const sleep = require('sleep-promise')
 const assert = require('assert')
 
-module.exports.createFaber = async function createFaber (serviceEndpoint = 'http://localhost:5400') {
+module.exports.createFaber = async function createFaber(serviceEndpoint = 'http://localhost:5400') {
   const agentName = `faber-${Math.floor(new Date() / 1000)}`
   const connectionId = 'connection-faber-to-alice'
   const issuerCredId = 'credential-for-alice'
@@ -34,7 +34,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
   await vcxAgent.agentInitVcx()
   await vcxAgent.agentShutdownVcx()
 
-  async function createInvite () {
+  async function createInvite() {
     logger.info('Faber is going to generate invite')
     await vcxAgent.agentInitVcx()
 
@@ -48,7 +48,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return invite
   }
 
-  async function createPublicInvite () {
+  async function createPublicInvite() {
     logger.info('Faber is going to generate public invite')
     await vcxAgent.agentInitVcx()
 
@@ -62,7 +62,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return publicInvitation
   }
 
-  async function publishService (endpoint) {
+  async function publishService(endpoint) {
     logger.info('Faber is going to write nonmediated service on the ledger')
     await vcxAgent.agentInitVcx()
 
@@ -76,7 +76,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return pwInfo
   }
 
-  async function readServiceFromLedger () {
+  async function readServiceFromLedger() {
     logger.info('Faber is going to read service from the ledger')
     await vcxAgent.agentInitVcx()
 
@@ -87,7 +87,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return service
   }
 
-  async function unpackMsg (encryptedMsg) {
+  async function unpackMsg(encryptedMsg) {
     assert(encryptedMsg)
     logger.info(`Faber is going to unpack message of length ${encryptedMsg.length}`)
     await vcxAgent.agentInitVcx()
@@ -100,7 +100,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return { message, senderVerkey }
   }
 
-  async function createOobMessageWithDid (wrappedMessage) {
+  async function createOobMessageWithDid(wrappedMessage) {
     logger.info('Faber is going to generate out of band message')
     await vcxAgent.agentInitVcx()
 
@@ -112,7 +112,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return oobMsg
   }
 
-  async function createOobCredOffer () {
+  async function createOobCredOffer() {
     await vcxAgent.agentInitVcx()
     const schemaAttrs = getAliceSchemaAttrs()
     const credOfferMsg = await vcxAgent.serviceCredIssuer.buildOfferAndMarkAsSent(issuerCredId, credDefId, revRegId, schemaAttrs)
@@ -120,11 +120,11 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return await createOobMessageWithDid(credOfferMsg)
   }
 
-  function getFaberDid () {
+  function getFaberDid() {
     return vcxAgent.getInstitutionDid()
   }
 
-  async function createOobProofRequest (proofData) {
+  async function createOobProofRequest(proofData) {
     await vcxAgent.agentInitVcx()
 
     // todo: address
@@ -135,7 +135,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return await createOobMessageWithDid(presentationRequestMsg)
   }
 
-  async function sendConnectionResponse () {
+  async function sendConnectionResponse() {
     logger.info('Faber is going to generate invite')
     await vcxAgent.agentInitVcx()
 
@@ -144,7 +144,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function updateConnection (expectedNextState) {
+  async function updateConnection(expectedNextState) {
     logger.info(`Faber is going to update connection, expecting new state of ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
 
@@ -153,7 +153,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function handleMessage (ariesMsg) {
+  async function handleMessage(ariesMsg) {
     logger.info('Faber is going to try handle incoming messages')
     await vcxAgent.agentInitVcx()
 
@@ -162,16 +162,18 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function buildLedgerPrimitives (revocationDetails) {
+  async function buildLedgerPrimitives(revocationDetails) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber writing schema on ledger')
-    const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
+    const issuerDid = vcxAgent.getInstitutionDid()
+    const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData(), issuerDid)
     await sleep(500)
 
     logger.info('Faber writing credential definition on ledger')
     const supportRevocation = !!revocationDetails
     await vcxAgent.serviceLedgerCredDef.createCredentialDefinitionV2(
+      issuerDid,
       schemaId,
       getFaberCredDefName(),
       supportRevocation
@@ -186,7 +188,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function rotateRevReg (tailsDir, maxCreds) {
+  async function rotateRevReg(tailsDir, maxCreds) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber rotating revocation registry')
@@ -197,7 +199,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function sendCredentialOffer () {
+  async function sendCredentialOffer() {
     await vcxAgent.agentInitVcx()
 
     logger.info('Issuer sending credential offer')
@@ -207,7 +209,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
 
     await vcxAgent.agentShutdownVcx()
   }
-  async function updateStateCredential (expectedState) {
+  async function updateStateCredential(expectedState) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Issuer updating state of credential with connection')
@@ -216,7 +218,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function sendCredential () {
+  async function sendCredential() {
     await vcxAgent.agentInitVcx()
 
     logger.info('Issuer sending credential')
@@ -227,14 +229,15 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function revokeCredential () {
+  async function revokeCredential() {
     await vcxAgent.agentInitVcx()
     await vcxAgent.serviceCredIssuer.revokeCredentialLocal(issuerCredId)
-    await vcxAgent.serviceLedgerRevReg.publishRevocations(revRegId)
+    const issuerDid = vcxAgent.getInstitutionDid()
+    await vcxAgent.serviceLedgerRevReg.publishRevocations(revRegId, issuerDid)
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function receiveCredentialAck () {
+  async function receiveCredentialAck() {
     await vcxAgent.agentInitVcx()
 
     logger.info('Issuer waiting for credential ack')
@@ -244,7 +247,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function requestProofFromAlice (proofData) {
+  async function requestProofFromAlice(proofData) {
     logger.info('Faber going to request proof from Alice')
     await vcxAgent.agentInitVcx()
     logger.info(`Faber is creating proof ${proofId}`)
@@ -256,7 +259,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return proofRequestMessage
   }
 
-  async function updateStateVerifierProof (expectedNextState) {
+  async function updateStateVerifierProof(expectedNextState) {
     logger.info(`Verifier updating state of proof, expecting it to be in state ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
 
@@ -265,7 +268,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function verifySignature (dataBase64, signatureBase64) {
+  async function verifySignature(dataBase64, signatureBase64) {
     logger.debug(`Faber is going to verify signed data. Data=${dataBase64} signature=${signatureBase64}`)
     await vcxAgent.agentInitVcx()
 
@@ -275,7 +278,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return isValid
   }
 
-  async function downloadReceivedMessages () {
+  async function downloadReceivedMessages() {
     logger.info('Faber is going to download messages using getMessages')
     await vcxAgent.agentInitVcx()
     const agencyMessages = await vcxAgent.serviceConnections.getMessages(connectionId, ['MS-103'])
@@ -283,7 +286,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return agencyMessages
   }
 
-  async function createNonmediatedConnectionWithInvite () {
+  async function createNonmediatedConnectionWithInvite() {
     logger.info('Faber is going to create a connection with invite')
 
     await vcxAgent.agentInitVcx()
@@ -294,7 +297,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return invite
   }
 
-  async function nonmediatedConnectionProcessRequest (request) {
+  async function nonmediatedConnectionProcessRequest(request) {
     logger.info('Faber is going to process a connection request')
 
     await vcxAgent.agentInitVcx()
@@ -305,7 +308,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function createNonmediatedConnectionFromRequest (request, pwInfo) {
+  async function createNonmediatedConnectionFromRequest(request, pwInfo) {
     logger.info(`Faber is going to create a connection from a request: ${request}`)
 
     await vcxAgent.agentInitVcx()
@@ -315,7 +318,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function nonmediatedConnectionProcessAck (ack) {
+  async function nonmediatedConnectionProcessAck(ack) {
     logger.info(`Faber is processing ack: ${ack}`)
 
     await vcxAgent.agentInitVcx()
@@ -325,7 +328,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function createConnectionFromReceivedRequestV2 (pwInfo, request) {
+  async function createConnectionFromReceivedRequestV2(pwInfo, request) {
     logger.info(`Faber is going to create a connection from a request: ${request}, using pwInfo: ${JSON.stringify(pwInfo)}`)
 
     await vcxAgent.agentInitVcx()
@@ -335,19 +338,19 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function updateMessageStatus (uids) {
+  async function updateMessageStatus(uids) {
     await vcxAgent.agentInitVcx()
     await vcxAgent.serviceConnections.updateMessagesStatus(connectionId, uids)
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function updateAllReceivedMessages () {
+  async function updateAllReceivedMessages() {
     await vcxAgent.agentInitVcx()
     await vcxAgent.serviceConnections.updateAllReceivedMessages(connectionId)
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function downloadReceivedMessagesV2 () {
+  async function downloadReceivedMessagesV2() {
     logger.info('Faber is going to download messages using getMessagesV2')
     await vcxAgent.agentInitVcx()
     const agencyMessages = await vcxAgent.serviceConnections.getMessagesV2(connectionId, ['MS-103'])
@@ -355,7 +358,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return agencyMessages
   }
 
-  async function getCredentialRevRegId () {
+  async function getCredentialRevRegId() {
     logger.info(`Faber is going to obtain rev reg id for cred id ${issuerCredId}`)
     await vcxAgent.agentInitVcx()
     const revRegId = await vcxAgent.serviceCredIssuer.getRevRegId(issuerCredId)
@@ -364,7 +367,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return revRegId
   }
 
-  async function getTailsFile () {
+  async function getTailsFile() {
     logger.info(`Faber is going to obtain tails file for rev reg id ${revRegId}`)
     await vcxAgent.agentInitVcx()
     const tailsFile = await vcxAgent.serviceLedgerCredDef.getTailsFile(issuerCredId)
@@ -373,7 +376,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return tailsFile
   }
 
-  async function getTailsHash () {
+  async function getTailsHash() {
     logger.info(`Faber is going to obtain tails hash for rev reg id ${revRegId}`)
     await vcxAgent.agentInitVcx()
     const tailsHash = await vcxAgent.serviceLedgerRevReg.getTailsHash(revRegId)
@@ -382,14 +385,14 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return tailsHash
   }
 
-  async function sendMessage (message) {
+  async function sendMessage(message) {
     logger.info('Faber is going to send message')
     await vcxAgent.agentInitVcx()
     await vcxAgent.serviceConnections.sendMessage(connectionId, message)
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function nonmediatedConnectionSendMessage (message) {
+  async function nonmediatedConnectionSendMessage(message) {
     logger.info('Faber is going to send message')
     await vcxAgent.agentInitVcx()
 
@@ -398,7 +401,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function getPresentationInfo () {
+  async function getPresentationInfo() {
     logger.info('Faber is gather info about received presentation')
     await vcxAgent.agentInitVcx()
     const presentationMsg = await vcxAgent.serviceVerifier.getPresentationMsg(proofId)

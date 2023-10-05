@@ -2,29 +2,25 @@
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod integration_tests {
-    use std::sync::Arc;
-
     use aries_vcx_core::{
-        errors::error::AriesVcxCoreErrorKind, ledger::indy::pool::test_utils::get_temp_dir_path,
+        errors::error::AriesVcxCoreErrorKind,
+        ledger::{base_ledger::AnoncredsLedgerRead, indy::pool::test_utils::get_temp_dir_path},
     };
 
-    use crate::{
-        common::{
-            credentials::get_cred_rev_id,
-            test_utils::{
-                create_and_write_credential, create_and_write_test_cred_def,
-                create_and_write_test_rev_reg, create_and_write_test_schema,
-            },
+    use crate::common::{
+        credentials::get_cred_rev_id,
+        test_utils::{
+            create_and_publish_test_rev_reg, create_and_write_credential,
+            create_and_write_test_cred_def, create_and_write_test_schema,
         },
-        utils::devsetup::SetupProfile,
     };
 
     #[tokio::test]
     #[ignore]
     async fn test_pool_returns_error_if_proof_request_is_malformed() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let proof_req = "{";
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
+            let anoncreds = setup.profile.anoncreds();
             let result = anoncreds
                 .prover_get_credentials_for_proof_req(proof_req)
                 .await;
@@ -39,7 +35,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_prover_get_credentials() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let proof_req = json!({
                "nonce":"123432421212",
                "name":"proof_req_1",
@@ -56,7 +52,7 @@ pub mod integration_tests {
             })
             .to_string();
 
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
+            let anoncreds = setup.profile.anoncreds();
             let _result = anoncreds
                 .prover_get_credentials_for_proof_req(&proof_req)
                 .await
@@ -78,7 +74,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_proof_req_attribute_names() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let proof_req = json!({
                "nonce":"123432421212",
                "name":"proof_req_1",
@@ -101,7 +97,7 @@ pub mod integration_tests {
             })
             .to_string();
 
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
+            let anoncreds = setup.profile.anoncreds();
             let _result = anoncreds
                 .prover_get_credentials_for_proof_req(&proof_req)
                 .await
@@ -113,43 +109,43 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_revoke_credential() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let schema = create_and_write_test_schema(
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_write(),
+                setup.profile.anoncreds(),
+                setup.profile.ledger_write(),
                 &setup.institution_did,
                 crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
             )
             .await;
             let cred_def = create_and_write_test_cred_def(
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_read(),
-                &setup.profile.inject_anoncreds_ledger_write(),
+                setup.profile.anoncreds(),
+                setup.profile.ledger_read(),
+                setup.profile.ledger_write(),
                 &setup.institution_did,
                 &schema.schema_id,
                 true,
             )
             .await;
-            let rev_reg = create_and_write_test_rev_reg(
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_write(),
+            let rev_reg = create_and_publish_test_rev_reg(
+                setup.profile.anoncreds(),
+                setup.profile.ledger_write(),
                 &setup.institution_did,
                 &cred_def.get_cred_def_id(),
             )
             .await;
             let cred_id = create_and_write_credential(
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds(),
+                setup.profile.anoncreds(),
+                setup.profile.anoncreds(),
                 &setup.institution_did,
                 &cred_def,
                 Some(&rev_reg),
             )
             .await;
-            let cred_rev_id = get_cred_rev_id(&setup.profile.inject_anoncreds(), &cred_id)
+            let cred_rev_id = get_cred_rev_id(setup.profile.anoncreds(), &cred_id)
                 .await
                 .unwrap();
 
-            let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+            let ledger = setup.profile.ledger_read();
 
             let (_, first_rev_reg_delta, first_timestamp) = ledger
                 .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
@@ -164,7 +160,7 @@ pub mod integration_tests {
             assert_eq!(first_rev_reg_delta, test_same_delta);
             assert_eq!(first_timestamp, test_same_timestamp);
 
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
+            let anoncreds = setup.profile.anoncreds();
 
             anoncreds
                 .revoke_credential_local(
@@ -177,8 +173,8 @@ pub mod integration_tests {
 
             rev_reg
                 .publish_local_revocations(
-                    &setup.profile.inject_anoncreds(),
-                    &setup.profile.inject_anoncreds_ledger_write(),
+                    setup.profile.anoncreds(),
+                    setup.profile.ledger_write(),
                     &setup.institution_did,
                 )
                 .await

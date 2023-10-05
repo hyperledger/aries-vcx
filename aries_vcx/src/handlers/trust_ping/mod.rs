@@ -36,7 +36,7 @@ impl TrustPingSender {
             .unwrap_or(self.ping.id.as_str())
     }
 
-    pub async fn send_ping(&mut self, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn send_ping(&mut self, send_message: SendClosure<'_>) -> VcxResult<()> {
         if self.ping_sent {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -79,7 +79,7 @@ mod unit_tests {
         utils::devsetup::SetupMocks,
     };
 
-    pub fn _send_message() -> SendClosure {
+    pub fn _send_message() -> SendClosure<'static> {
         Box::new(|_: AriesMessage| Box::pin(async { VcxResult::Ok(()) }))
     }
 

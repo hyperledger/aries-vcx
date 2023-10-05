@@ -1,6 +1,6 @@
 use vdrtools::{Locator, SearchHandle, WalletHandle};
 
-use crate::{errors::error::VcxCoreResult, global::settings};
+use crate::errors::error::VcxCoreResult;
 
 pub(crate) async fn add_wallet_record(
     wallet_handle: WalletHandle,
@@ -16,10 +16,6 @@ pub(crate) async fn add_wallet_record(
         secret!(&value),
         secret!(&tags)
     );
-
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
 
     Locator::instance()
         .non_secret_controller
@@ -48,12 +44,6 @@ pub(crate) async fn get_wallet_record(
         options
     );
 
-    if settings::indy_mocks_enabled() {
-        return Ok(
-            r#"{"id":"123","type":"record type","value":"record value","tags":null}"#.to_string(),
-        );
-    }
-
     let res = Locator::instance()
         .non_secret_controller
         .get_record(wallet_handle, xtype.into(), id.into(), options.into())
@@ -72,10 +62,6 @@ pub async fn delete_wallet_record(
         secret!(&xtype),
         secret!(&id)
     );
-
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
 
     Locator::instance()
         .non_secret_controller
@@ -98,10 +84,6 @@ pub(crate) async fn update_wallet_record_value(
         secret!(&value)
     );
 
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
-
     Locator::instance()
         .non_secret_controller
         .update_record_value(wallet_handle, xtype.into(), id.into(), value.into())
@@ -122,10 +104,6 @@ pub(crate) async fn add_wallet_record_tags(
         secret!(&id),
         secret!(&tags)
     );
-
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
 
     Locator::instance()
         .non_secret_controller
@@ -153,10 +131,6 @@ pub(crate) async fn update_wallet_record_tags(
         secret!(&tags)
     );
 
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
-
     Locator::instance()
         .non_secret_controller
         .update_record_tags(
@@ -183,10 +157,6 @@ pub(crate) async fn delete_wallet_record_tags(
         secret!(&tag_names)
     );
 
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
-
     Locator::instance()
         .non_secret_controller
         .delete_record_tags(wallet_handle, xtype.into(), id.into(), tag_names.into())
@@ -209,10 +179,6 @@ pub async fn open_search_wallet(
         options
     );
 
-    if settings::indy_mocks_enabled() {
-        return Ok(SearchHandle(1));
-    }
-
     let res = Locator::instance()
         .non_secret_controller
         .open_search(wallet_handle, xtype.into(), query.into(), options.into())
@@ -233,10 +199,6 @@ pub async fn fetch_next_records_wallet(
         count
     );
 
-    if settings::indy_mocks_enabled() {
-        return Ok(String::from("{}"));
-    }
-
     let res = Locator::instance()
         .non_secret_controller
         .fetch_search_next_records(wallet_handle, search_handle, count)
@@ -248,10 +210,6 @@ pub async fn fetch_next_records_wallet(
 // TODO - FUTURE - revert to pub(crate) after libvcx dependency is fixed
 pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxCoreResult<()> {
     trace!("close_search >>> search_handle: {:?}", search_handle);
-
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
 
     Locator::instance()
         .non_secret_controller

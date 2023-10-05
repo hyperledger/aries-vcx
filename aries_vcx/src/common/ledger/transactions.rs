@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use aries_vcx_core::{
     ledger::{
@@ -18,7 +18,6 @@ use serde_json::Value;
 use crate::{
     common::{keys::get_verkey_from_ledger, ledger::service_didsov::EndpointDidSov},
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    global::settings,
     handlers::util::AnyInvitation,
 };
 
@@ -75,7 +74,7 @@ const DID_KEY_PREFIX: &str = "did:key:";
 const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
 pub async fn resolve_service(
-    indy_ledger: &Arc<dyn IndyLedgerRead>,
+    indy_ledger: &impl IndyLedgerRead,
     service: &OobService,
 ) -> VcxResult<AriesService> {
     match service {
@@ -85,8 +84,8 @@ pub async fn resolve_service(
 }
 
 pub async fn add_new_did(
-    wallet: &Arc<dyn BaseWallet>,
-    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    wallet: &impl BaseWallet,
+    indy_ledger_write: &impl IndyLedgerWrite,
     submitter_did: &str,
     role: Option<&str>,
 ) -> VcxResult<(String, String)> {
@@ -101,7 +100,7 @@ pub async fn add_new_did(
 }
 
 pub async fn into_did_doc(
-    indy_ledger: &Arc<dyn IndyLedgerRead>,
+    indy_ledger: &impl IndyLedgerRead,
     invitation: &AnyInvitation,
 ) -> VcxResult<AriesDidDoc> {
     let mut did_doc: AriesDidDoc = AriesDidDoc::default();
@@ -235,10 +234,7 @@ fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
     Ok(result)
 }
 
-pub async fn get_service(
-    ledger: &Arc<dyn IndyLedgerRead>,
-    did: &String,
-) -> VcxResult<AriesService> {
+pub async fn get_service(ledger: &impl IndyLedgerRead, did: &String) -> VcxResult<AriesService> {
     let did_raw = did.to_string();
     let did_raw = match did_raw.rsplit_once(':') {
         None => did_raw,
@@ -260,7 +256,7 @@ pub async fn get_service(
 }
 
 pub async fn parse_legacy_endpoint_attrib(
-    indy_ledger: &Arc<dyn IndyLedgerRead>,
+    indy_ledger: &impl IndyLedgerRead,
     did_raw: &str,
 ) -> VcxResult<AriesService> {
     let attr_resp = indy_ledger.get_attr(did_raw, "service").await?;
@@ -288,7 +284,7 @@ pub async fn parse_legacy_endpoint_attrib(
 }
 
 pub async fn write_endorser_did(
-    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    indy_ledger_write: &impl IndyLedgerWrite,
     submitter_did: &str,
     target_did: &str,
     target_vk: &str,
@@ -308,7 +304,7 @@ pub async fn write_endorser_did(
 }
 
 pub async fn write_endpoint_legacy(
-    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
     service: &AriesService,
 ) -> VcxResult<String> {
@@ -319,7 +315,7 @@ pub async fn write_endpoint_legacy(
 }
 
 pub async fn write_endpoint(
-    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
     service: &EndpointDidSov,
 ) -> VcxResult<String> {
@@ -330,7 +326,7 @@ pub async fn write_endpoint(
 }
 
 pub async fn add_attr(
-    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
     attr: &str,
 ) -> VcxResult<()> {
@@ -339,7 +335,7 @@ pub async fn add_attr(
 }
 
 pub async fn get_attr(
-    ledger: &Arc<dyn IndyLedgerRead>,
+    ledger: &impl IndyLedgerRead,
     did: &str,
     attr_name: &str,
 ) -> VcxResult<String> {
@@ -353,7 +349,7 @@ pub async fn get_attr(
 }
 
 pub async fn clear_attr(
-    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
     attr_name: &str,
 ) -> VcxResult<String> {
@@ -364,9 +360,6 @@ pub async fn clear_attr(
 }
 
 fn check_response(response: &str) -> VcxResult<()> {
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
     match parse_response(response)? {
         Response::Reply(_) => Ok(()),
         Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxError::from_msg(
