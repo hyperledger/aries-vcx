@@ -7,10 +7,6 @@ use std::{
 use aries_vcx::{
     aries_vcx_core::{
         ledger::{
-            base_ledger::{
-                AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
-                TaaConfigurator,
-            },
             request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
             response_cacher::in_memory::{
                 InMemoryResponseCacherConfig, InMemoryResponseCacherConfigBuilder,
@@ -21,29 +17,29 @@ use aries_vcx::{
     },
     core::profile::ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write},
 };
+use aries_vcx_core::ledger::{
+    indy_vdr_ledger::{IndyVdrLedgerRead, IndyVdrLedgerWrite},
+    request_signer::base_wallet::BaseWalletRequestSigner,
+    response_cacher::in_memory::InMemoryResponseCacher,
+};
 
 use crate::{
     api_vcx::api_global::profile::get_main_wallet,
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
 
-lazy_static! {
-    pub static ref GLOBAL_LEDGER_ANONCREDS_READ: RwLock<Option<Arc<dyn AnoncredsLedgerRead>>> =
-        RwLock::new(None);
-    pub static ref GLOBAL_LEDGER_ANONCREDS_WRITE: RwLock<Option<Arc<dyn AnoncredsLedgerWrite>>> =
-        RwLock::new(None);
-    pub static ref GLOBAL_LEDGER_INDY_READ: RwLock<Option<Arc<dyn IndyLedgerRead>>> =
-        RwLock::new(None);
-    pub static ref GLOBAL_LEDGER_INDY_WRITE: RwLock<Option<Arc<dyn IndyLedgerWrite>>> =
-        RwLock::new(None);
-    pub static ref GLOBAL_TAA_CONFIGURATOR: RwLock<Option<Arc<dyn TaaConfigurator>>> =
-        RwLock::new(None);
-}
+pub static GLOBAL_LEDGER_INDY_READ: RwLock<
+    Option<Arc<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>>>,
+> = RwLock::new(None);
+pub static GLOBAL_LEDGER_INDY_WRITE: RwLock<
+    Option<Arc<IndyVdrLedgerWrite<IndyVdrSubmitter, BaseWalletRequestSigner>>>,
+> = RwLock::new(None);
 
 pub fn is_main_pool_open() -> bool {
-    false
-    // todo: implement this, based on whether ledger read is Some or None
-    // global_profile.inject_anoncreds_ledger_read()
+    GLOBAL_LEDGER_INDY_READ
+        .read()
+        .map(|v| v.is_some())
+        .unwrap_or_default()
 }
 
 // todo : enable opting out of caching completely be specifying 0 capacity
@@ -76,15 +72,12 @@ impl TryFrom<LibvcxInMemoryResponseCacherConfig> for InMemoryResponseCacherConfi
     }
 }
 
-async fn build_components_ledger(
+fn build_components_ledger(
     base_wallet: Arc<dyn BaseWallet>,
     libvcx_pool_config: &LibvcxLedgerConfig,
 ) -> LibvcxResult<(
-    Arc<dyn AnoncredsLedgerRead>,
-    Arc<dyn AnoncredsLedgerWrite>,
-    Arc<dyn IndyLedgerRead>,
-    Arc<dyn IndyLedgerWrite>,
-    Arc<dyn TaaConfigurator>,
+    IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>,
+    IndyVdrLedgerWrite<IndyVdrSubmitter, BaseWalletRequestSigner>,
 )> {
     let indy_vdr_config = match &libvcx_pool_config.pool_config {
         None => PoolConfig::default(),
@@ -104,58 +97,28 @@ async fn build_components_ledger(
             .build(),
         Some(cfg) => cfg.clone().try_into()?,
     };
-    let ledger_read = Arc::new(indyvdr_build_ledger_read(
-        request_submitter.clone(),
-        cache_config,
-    )?);
-    let ledger_write = Arc::new(indyvdr_build_ledger_write(
-        base_wallet,
-        request_submitter,
-        None,
-    ));
-    let taa_configurator: Arc<dyn TaaConfigurator> = ledger_write.clone();
-    let anoncreds_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
-    let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write;
-    let anoncreds_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
-    let indy_read: Arc<dyn IndyLedgerRead> = ledger_read;
-    Ok((
-        anoncreds_read,
-        anoncreds_write,
-        indy_read,
-        indy_write,
-        taa_configurator,
-    ))
+    let ledger_read = indyvdr_build_ledger_read(request_submitter.clone(), cache_config)?;
+    let ledger_write = indyvdr_build_ledger_write(base_wallet, request_submitter, None);
+
+    Ok((ledger_read, ledger_write))
 }
 
 pub fn reset_ledger_components() -> LibvcxResult<()> {
-    let mut anoncreds_read = GLOBAL_LEDGER_ANONCREDS_READ.write()?;
-    *anoncreds_read = None;
-    let mut anoncreds_write = GLOBAL_LEDGER_ANONCREDS_WRITE.write()?;
-    *anoncreds_write = None;
     let mut indy_read = GLOBAL_LEDGER_INDY_READ.write()?;
     *indy_read = None;
     let mut indy_write = GLOBAL_LEDGER_INDY_WRITE.write()?;
     *indy_write = None;
-    let mut taa_configurator = GLOBAL_TAA_CONFIGURATOR.write()?;
-    *taa_configurator = None;
     Ok(())
 }
 
 pub async fn setup_ledger_components(config: &LibvcxLedgerConfig) -> LibvcxResult<()> {
     let base_wallet = get_main_wallet()?;
 
-    let (anoncreds_read, anoncreds_write, indy_read, indy_write, taa_configurator) =
-        build_components_ledger(base_wallet, config).await?;
-    let mut anoncreds_read_guard = GLOBAL_LEDGER_ANONCREDS_READ.write()?;
-    *anoncreds_read_guard = Some(anoncreds_read.clone());
-    let mut anoncreds_write_guard = GLOBAL_LEDGER_ANONCREDS_WRITE.write()?;
-    *anoncreds_write_guard = Some(anoncreds_write.clone());
+    let (ledger_read, ledger_write) = build_components_ledger(base_wallet, config)?;
     let mut indy_read_guard = GLOBAL_LEDGER_INDY_READ.write()?;
-    *indy_read_guard = Some(indy_read.clone());
+    *indy_read_guard = Some(Arc::new(ledger_read));
     let mut indy_write_guard = GLOBAL_LEDGER_INDY_WRITE.write()?;
-    *indy_write_guard = Some(indy_write.clone());
-    let mut indy_taa_configurator = GLOBAL_TAA_CONFIGURATOR.write()?;
-    *indy_taa_configurator = Some(taa_configurator.clone());
+    *indy_write_guard = Some(Arc::new(ledger_write));
     Ok(())
 }
 
@@ -208,7 +171,7 @@ pub mod tests {
     use crate::{
         api_vcx::api_global::{
             pool::{close_main_pool, open_main_pool, reset_ledger_components, LibvcxLedgerConfig},
-            profile::get_main_anoncreds_ledger_read,
+            profile::get_main_ledger_read,
             wallet::{close_main_wallet, test_utils::_create_and_open_wallet},
         },
         errors::error::LibvcxErrorKind,
@@ -290,7 +253,7 @@ pub mod tests {
         // todo: indy-vdr panics if the file is invalid, see:
         // indy-vdr-0.3.4/src/pool/runner.rs:44:22
         assert_eq!(
-            get_main_anoncreds_ledger_read().unwrap_err().kind(),
+            get_main_ledger_read().unwrap_err().kind(),
             LibvcxErrorKind::NotReady
         );
 
@@ -315,7 +278,7 @@ pub mod tests {
             LibvcxErrorKind::IOError
         );
         assert_eq!(
-            get_main_anoncreds_ledger_read().unwrap_err().kind(),
+            get_main_ledger_read().unwrap_err().kind(),
             LibvcxErrorKind::NotReady
         );
         close_main_wallet().await.unwrap();

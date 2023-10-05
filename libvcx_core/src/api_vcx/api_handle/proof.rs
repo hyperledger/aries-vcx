@@ -13,9 +13,7 @@ use serde_json;
 
 use crate::{
     api_vcx::{
-        api_global::profile::{
-            get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_wallet,
-        },
+        api_global::profile::{get_main_anoncreds, get_main_ledger_read, get_main_wallet},
         api_handle::{
             connection,
             connection::HttpClient,
@@ -44,11 +42,12 @@ pub async fn create_proof(
     revocation_details: String,
     name: String,
 ) -> LibvcxResult<u32> {
-    let presentation_request = PresentationRequestData::create(&get_main_anoncreds()?, &name)
-        .await?
-        .set_requested_attributes_as_string(requested_attrs)?
-        .set_requested_predicates_as_string(requested_predicates)?
-        .set_not_revoked_interval(revocation_details)?;
+    let presentation_request =
+        PresentationRequestData::create(get_main_anoncreds()?.as_ref(), &name)
+            .await?
+            .set_requested_attributes_as_string(requested_attrs)?
+            .set_requested_predicates_as_string(requested_predicates)?
+            .set_not_revoked_interval(revocation_details)?;
     let verifier = Verifier::create_from_request(source_id, &presentation_request)?;
     PROOF_MAP.add(verifier)
 }
@@ -89,8 +88,8 @@ pub async fn update_state(
         );
         if let Some(message) = proof
             .process_aries_msg(
-                &get_main_anoncreds_ledger_read()?,
-                &get_main_anoncreds()?,
+                get_main_ledger_read()?.as_ref(),
+                get_main_anoncreds()?.as_ref(),
                 message,
             )
             .await?
@@ -103,8 +102,8 @@ pub async fn update_state(
         if let Some((uid, message)) = verifier_find_message_to_handle(&proof, messages) {
             if let Some(message) = proof
                 .process_aries_msg(
-                    &get_main_anoncreds_ledger_read()?,
-                    &get_main_anoncreds()?,
+                    get_main_ledger_read()?.as_ref(),
+                    get_main_anoncreds()?.as_ref(),
                     message,
                 )
                 .await?
@@ -139,7 +138,7 @@ pub async fn update_state_nonmediated(
     let wallet = get_main_wallet()?;
 
     let send_message: SendClosure = Box::new(|msg: AriesMessage| {
-        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
+        Box::pin(async move { con.send_message(wallet.as_ref(), &msg, &HttpClient).await })
     });
 
     let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -153,8 +152,8 @@ pub async fn update_state_nonmediated(
     })?;
     if let Some(message) = proof
         .process_aries_msg(
-            &get_main_anoncreds_ledger_read()?,
-            &get_main_anoncreds()?,
+            get_main_ledger_read()?.as_ref(),
+            get_main_anoncreds()?.as_ref(),
             message,
         )
         .await?
@@ -226,7 +225,7 @@ pub async fn send_proof_request_nonmediated(
     let wallet = get_main_wallet()?;
 
     let send_message: SendClosure = Box::new(|msg: AriesMessage| {
-        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
+        Box::pin(async move { con.send_message(wallet.as_ref(), &msg, &HttpClient).await })
     });
 
     let message = proof.mark_presentation_request_sent()?;

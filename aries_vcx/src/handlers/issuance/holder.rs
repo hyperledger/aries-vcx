@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -215,7 +213,7 @@ impl Holder {
         self.holder_sm.is_revoked(ledger, anoncreds).await
     }
 
-    pub async fn delete_credential(&self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<()> {
+    pub async fn delete_credential(&self, anoncreds: &impl BaseAnonCreds) -> VcxResult<()> {
         self.holder_sm.delete_credential(anoncreds).await
     }
 

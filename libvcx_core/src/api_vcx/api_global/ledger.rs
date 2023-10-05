@@ -10,13 +10,13 @@ use aries_vcx::{
         },
     },
 };
+use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
 use diddoc_legacy::aries::service::AriesService;
 use url::Url;
 
+use super::profile::{get_main_ledger_read, get_main_ledger_write, update_taa_configuration};
 use crate::{
-    api_vcx::api_global::profile::{
-        get_main_indy_ledger_read, get_main_indy_ledger_write, get_main_profile, get_main_wallet,
-    },
+    api_vcx::api_global::profile::get_main_wallet,
     errors::{
         error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
         mapping_from_ariesvcx::map_ariesvcx_result,
@@ -25,12 +25,12 @@ use crate::{
 };
 
 pub async fn endorse_transaction(transaction: &str, endorser_did: &str) -> LibvcxResult<()> {
-    let ledger = get_main_indy_ledger_write()?;
+    let ledger = get_main_ledger_write()?;
     map_ariesvcx_core_result(ledger.endorse_transaction(endorser_did, transaction).await)
 }
 
 pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> LibvcxResult<String> {
-    let ledger = get_main_indy_ledger_read()?;
+    let ledger = get_main_ledger_read()?;
     map_ariesvcx_core_result(
         ledger
             .get_ledger_txn(seq_no, submitter_did.as_deref())
@@ -40,8 +40,8 @@ pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> Libvc
 
 pub async fn rotate_verkey(did: &str) -> LibvcxResult<()> {
     let result = aries_vcx::common::keys::rotate_verkey(
-        &get_main_wallet()?,
-        &get_main_indy_ledger_write()?,
+        get_main_wallet()?.as_ref(),
+        get_main_ledger_write()?.as_ref(),
         did,
     )
     .await;
@@ -49,8 +49,10 @@ pub async fn rotate_verkey(did: &str) -> LibvcxResult<()> {
 }
 
 pub async fn get_verkey_from_ledger(did: &str) -> LibvcxResult<String> {
-    let indy_ledger = get_main_indy_ledger_read()?;
-    map_ariesvcx_result(aries_vcx::common::keys::get_verkey_from_ledger(&indy_ledger, did).await)
+    let indy_ledger = get_main_ledger_read()?;
+    map_ariesvcx_result(
+        aries_vcx::common::keys::get_verkey_from_ledger(indy_ledger.as_ref(), did).await,
+    )
 }
 
 pub async fn ledger_write_endpoint_legacy(
@@ -66,7 +68,7 @@ pub async fn ledger_write_endpoint_legacy(
             })?)
             .set_recipient_keys(recipient_keys)
             .set_routing_keys(routing_keys);
-    write_endpoint_legacy(&get_main_indy_ledger_write()?, target_did, &service).await?;
+    write_endpoint_legacy(get_main_ledger_write()?.as_ref(), target_did, &service).await?;
     Ok(service)
 }
 
@@ -85,21 +87,21 @@ pub async fn ledger_write_endpoint(
                 DidSovServiceType::DidCommunication,
             ]))
             .set_routing_keys(Some(routing_keys));
-    write_endpoint(&get_main_indy_ledger_write()?, target_did, &service).await?;
+    write_endpoint(get_main_ledger_write()?.as_ref(), target_did, &service).await?;
     Ok(service)
 }
 
 pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> {
     let target_did = target_did.to_owned();
-    map_ariesvcx_result(get_service(&get_main_indy_ledger_read()?, &target_did).await)
+    map_ariesvcx_result(get_service(get_main_ledger_read()?.as_ref(), &target_did).await)
 }
 
 pub async fn ledger_get_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
-    map_ariesvcx_result(get_attr(&get_main_indy_ledger_read()?, target_did, attr).await)
+    map_ariesvcx_result(get_attr(get_main_ledger_read()?.as_ref(), target_did, attr).await)
 }
 
 pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
-    map_ariesvcx_result(clear_attr(&get_main_indy_ledger_write()?, target_did, attr).await)
+    map_ariesvcx_result(clear_attr(get_main_ledger_write()?.as_ref(), target_did, attr).await)
 }
 
 pub async fn ledger_write_endorser_did(
@@ -110,7 +112,7 @@ pub async fn ledger_write_endorser_did(
 ) -> LibvcxResult<String> {
     map_ariesvcx_result(
         write_endorser_did(
-            &get_main_indy_ledger_write()?,
+            get_main_ledger_write()?.as_ref(),
             submitter_did,
             target_did,
             target_vk,
@@ -121,7 +123,8 @@ pub async fn ledger_write_endorser_did(
 }
 
 pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {
-    get_main_indy_ledger_read()?
+    get_main_ledger_read()?
+        .as_ref()
         .get_txn_author_agreement()
         .await?
         .ok_or_else(|| {
@@ -142,11 +145,11 @@ pub fn set_taa_configuration(
         version,
         mechanism: acceptance_mechanism,
     };
-    get_main_profile().update_taa_configuration(taa_options)
+    update_taa_configuration(taa_options)
 }
 
 pub fn get_taa_configuration() -> LibvcxResult<Option<TxnAuthrAgrmtOptions>> {
-    get_main_profile().get_taa_configuration()
+    super::profile::get_taa_configuration()
 }
 
 #[cfg(test)]

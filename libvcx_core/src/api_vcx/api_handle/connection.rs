@@ -15,7 +15,7 @@ use rand::Rng;
 use url::Url;
 
 use crate::{
-    api_vcx::api_global::profile::{get_main_indy_ledger_read, get_main_wallet},
+    api_vcx::api_global::profile::{get_main_ledger_read, get_main_wallet},
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
 
@@ -138,14 +138,14 @@ where
 // ----------------------------- CONSTRUCTORS ------------------------------------
 pub async fn create_inviter(pw_info: Option<PairwiseInfo>) -> LibvcxResult<u32> {
     trace!("create_inviter >>>");
-    let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&get_main_wallet()?).await?);
+    let pw_info = pw_info.unwrap_or(PairwiseInfo::create(get_main_wallet()?.as_ref()).await?);
     let con = InviterConnection::new_inviter("".to_owned(), pw_info);
     add_connection(con)
 }
 
 pub async fn create_invitee(_invitation: &str) -> LibvcxResult<u32> {
     trace!("create_invitee >>>");
-    let pairwise_info = PairwiseInfo::create(&get_main_wallet()?).await?;
+    let pairwise_info = PairwiseInfo::create(get_main_wallet()?.as_ref()).await?;
     let con = InviteeConnection::new_invitee("".to_owned(), pairwise_info);
     add_connection(con)
 }
@@ -236,10 +236,10 @@ pub fn get_invitation(handle: u32) -> LibvcxResult<String> {
 pub async fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<()> {
     trace!("process_invite >>>");
 
-    let ledger = get_main_indy_ledger_read()?;
+    let ledger = get_main_ledger_read()?;
     let invitation = deserialize(invitation)?;
     let con = get_cloned_connection(&handle)?
-        .accept_invitation(&ledger, invitation)
+        .accept_invitation(ledger.as_ref(), invitation)
         .await?;
 
     insert_connection(handle, con)
@@ -282,7 +282,7 @@ pub async fn process_request(
 
     let con = con
         .handle_request(
-            &wallet,
+            wallet.as_ref(),
             request,
             Url::from_str(&service_endpoint).map_err(|err| {
                 LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string())
@@ -299,7 +299,9 @@ pub async fn process_response(handle: u32, response: &str) -> LibvcxResult<()> {
 
     let con = get_cloned_connection(&handle)?;
     let response = deserialize(response)?;
-    let con = con.handle_response(&get_main_wallet()?, response).await?;
+    let con = con
+        .handle_response(get_main_wallet()?.as_ref(), response)
+        .await?;
 
     insert_connection(handle, con)
 }
@@ -338,7 +340,7 @@ pub async fn send_response(handle: u32) -> LibvcxResult<()> {
 
     let con = get_cloned_connection(&handle)?;
     let response = con.get_connection_response_msg();
-    con.send_message(&get_main_wallet()?, &response.into(), &HttpClient)
+    con.send_message(get_main_wallet()?.as_ref(), &response.into(), &HttpClient)
         .await?;
     insert_connection(handle, con)
 }
@@ -355,7 +357,7 @@ pub async fn send_request(
         .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?;
     let con = con.prepare_request(url, routing_keys).await?;
     let request = con.get_request().clone();
-    con.send_message(&get_main_wallet()?, &request.into(), &HttpClient)
+    con.send_message(get_main_wallet()?.as_ref(), &request.into(), &HttpClient)
         .await?;
 
     insert_connection(handle, con)
@@ -365,8 +367,12 @@ pub async fn send_ack(handle: u32) -> LibvcxResult<()> {
     trace!("send_ack >>>");
 
     let con = get_cloned_connection(&handle)?;
-    con.send_message(&get_main_wallet()?, &con.get_ack().into(), &HttpClient)
-        .await?;
+    con.send_message(
+        get_main_wallet()?.as_ref(),
+        &con.get_ack().into(),
+        &HttpClient,
+    )
+    .await?;
     Ok(())
 }
 
@@ -375,7 +381,7 @@ pub async fn send_generic_message(handle: u32, content: String) -> LibvcxResult<
 
     let message = serde_json::from_str(&content)?;
     let con = get_cloned_generic_connection(&handle)?;
-    con.send_message(&get_main_wallet()?, &message, &HttpClient)
+    con.send_message(get_main_wallet()?.as_ref(), &message, &HttpClient)
         .await?;
     Ok(())
 }
