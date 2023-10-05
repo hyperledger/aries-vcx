@@ -93,4 +93,8 @@ impl Agent {
             .await?;
         Ok(())
     }
+
+    pub async fn list_contacts(&self) -> Result<Vec<(String, String)>, String> {
+        self.persistence.list_accounts().await
+    }
 }
