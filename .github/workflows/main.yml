@@ -260,12 +260,6 @@ jobs:
   test-unit-workspace:
     needs: workflow-setup
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        features: [
-          "anoncreds_vdrtools",
-          "anoncreds_credx",
-        ]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -275,7 +269,7 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
           skip-docker-setup: true
       - name: "Run workspace unit tests"
-        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --features ${{ matrix.features }}
+        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator
 
   test-integration-aries-vcx:
     needs: workflow-setup
@@ -360,12 +354,6 @@ jobs:
     needs: workflow-setup
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        features: [
-          "anoncreds_vdrtools",
-          "anoncreds_credx"
-        ]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -375,7 +363,7 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run libvcx_core integration tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --features ${{ matrix.features }} --manifest-path="libvcx_core/Cargo.toml" -- --include-ignored;
+          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx_core/Cargo.toml" -- --include-ignored;
 
   test-integration-did-crate:
     needs: workflow-setup
