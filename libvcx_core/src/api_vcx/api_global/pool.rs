@@ -25,7 +25,7 @@ use aries_vcx_core::ledger::{
 
 use crate::{
     api_vcx::api_global::profile::get_main_wallet,
-    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+    errors::error::{LibvcxError, LibvcxResult},
 };
 
 pub static GLOBAL_LEDGER_INDY_READ: RwLock<
@@ -124,11 +124,7 @@ pub async fn setup_ledger_components(config: &LibvcxLedgerConfig) -> LibvcxResul
 
 pub async fn open_main_pool(config: &LibvcxLedgerConfig) -> LibvcxResult<()> {
     if is_main_pool_open() {
-        error!("open_main_pool >> Pool connection is already open.");
-        return Err(LibvcxError::from_msg(
-            LibvcxErrorKind::AlreadyInitialized,
-            "Pool connection is already open.",
-        ));
+        return Ok(());
     }
 
     trace!(
