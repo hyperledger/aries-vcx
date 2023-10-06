@@ -118,7 +118,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        backend: ["modular_libs", "vdr_proxy_ledger"]
+        backend: ["credx,vdrtools_wallet", "vdr_proxy_ledger"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -141,7 +141,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        backend: ["modular_libs", "vdr_proxy_ledger"]
+        backend: ["credx,vdrtools_wallet", "vdr_proxy_ledger"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -237,7 +237,7 @@ jobs:
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'modular_libs' -- --ignored;
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx  -- --ignored;
 
           mkdir -p /tmp/artifacts/coverage
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov

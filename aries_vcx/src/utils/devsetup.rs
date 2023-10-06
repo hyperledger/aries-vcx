@@ -18,12 +18,12 @@ use aries_vcx_core::{
 };
 use chrono::{DateTime, Duration, Utc};
 
-#[cfg(feature = "modular_libs")]
+#[cfg(all(feature = "credx", feature = "vdrtools_wallet"))]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 #[cfg(feature = "vdr_proxy_ledger")]
 use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
 use crate::{
-    core::profile::{ledger::VcxPoolConfig, Profile},
+    core::profile::Profile,
     global::settings,
     utils::{constants::POOL1_TXN, file::write_file, test_logger::LibvcxDefaultLogger},
 };
@@ -126,13 +126,13 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
     (did, wallet_handle)
 }
 
-#[cfg(feature = "modular_libs")]
+#[cfg(all(feature = "credx", feature = "vdrtools_wallet"))]
 pub fn dev_build_profile_modular(
     genesis_file_path: String,
     wallet: Arc<IndySdkWallet>,
 ) -> ModularLibsProfile {
     info!("dev_build_profile_modular >>");
-    let vcx_pool_config = VcxPoolConfig {
+    let vcx_pool_config = crate::core::profile::ledger::VcxPoolConfig {
         genesis_file_path,
         indy_vdr_config: None,
         response_cache_config: None,
@@ -167,11 +167,21 @@ pub async fn dev_build_featured_profile(
         dev_build_profile_vdr_proxy_ledger(wallet).await
     };
 
-    #[cfg(not(feature = "vdr_proxy_ledger"))]
+    #[cfg(all(
+        feature = "credx",
+        feature = "vdrtools_wallet",
+        not(feature = "vdr_proxy_ledger")
+    ))]
     return {
         info!("SetupProfile >> using modular profile");
         dev_build_profile_modular(genesis_file_path, wallet)
     };
+
+    #[cfg(not(any(
+        all(feature = "credx", feature = "vdrtools_wallet"),
+        feature = "vdr_proxy_ledger"
+    )))]
+    super::mockdata::profile::mock_profile::MockProfile
 }
 
 #[macro_export]

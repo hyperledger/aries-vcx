@@ -1,3 +1,3 @@
 pub mod base_anoncreds;
-#[cfg(feature = "modular_libs")]
+#[cfg(feature = "credx")]
 pub mod credx_anoncreds;

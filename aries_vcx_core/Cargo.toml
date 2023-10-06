@@ -7,8 +7,8 @@ edition = "2021"
 ########################## DEP FLAGS ################################
 vdrtools_wallet = ["dep:libvdrtools", "dep:indy-api-types"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
-modular_libs = ["dep:indy-credx"]
-vdr_proxy_ledger = ["modular_libs", "dep:indy-vdr-proxy-client"]
+credx = ["dep:indy-credx"]
+vdr_proxy_ledger = ["credx", "dep:indy-vdr-proxy-client"]
 # Feature flag to allow legacy proof verification
 legacy_proof = []
 

@@ -272,7 +272,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
 }
 
 // todo: credx implementation does not support checking credential value in respect to predicate
-#[cfg(not(feature = "modular_libs"))]
+#[cfg(not(feature = "credx"))]
 #[tokio::test]
 #[ignore]
 #[allow(unused_mut)]

@@ -1,6 +1,6 @@
 pub mod error;
 mod mapping_agency_client;
-#[cfg(feature = "modular_libs")]
+#[cfg(feature = "credx")]
 mod mapping_credx;
 #[cfg(feature = "vdrtools_wallet")]
 mod mapping_indy_api_types;

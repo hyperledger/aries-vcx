@@ -70,7 +70,6 @@ pub mod integration_tests {
         .await;
     }
 
-    // #[cfg(feature = "modular_libs")]
     #[tokio::test]
     #[ignore]
     async fn test_pool_proof_req_attribute_names() {

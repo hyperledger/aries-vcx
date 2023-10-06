@@ -1,5 +1,5 @@
 pub mod ledger;
-#[cfg(feature = "modular_libs")]
+#[cfg(all(feature = "credx", feature = "vdrtools_wallet"))]
 pub mod modular_libs_profile;
 #[cfg(feature = "vdr_proxy_ledger")]
 pub mod vdr_proxy_profile;
