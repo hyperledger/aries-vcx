@@ -53,7 +53,9 @@ pub async fn handle_aries<T: BaseWallet + 'static>(
     let packed_json = serde_json::from_slice(&packed_message_bytes[..]).unwrap();
     Ok(Json(packed_json))
 }
-pub async fn oob_invite_qr<T: BaseWallet + 'static>(State(agent): State<ArcAgent<T>>) -> Html<String> {
+pub async fn oob_invite_qr<T: BaseWallet + 'static>(
+    State(agent): State<ArcAgent<T>>,
+) -> Html<String> {
     let oob = agent.get_oob_invite().unwrap();
     let oob_string = serde_json::to_string_pretty(&oob).unwrap();
     let qr = fast_qr::QRBuilder::new(oob_string.clone()).build().unwrap();

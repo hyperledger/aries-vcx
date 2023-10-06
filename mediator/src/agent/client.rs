@@ -1,5 +1,4 @@
 // use aries_vcx::protocols::connection::initiation_type::Invitee;
-use aries_vcx::protocols::connection::invitee::states::initial::Initial as ClientInit;
 // use aries_vcx::protocols::connection::invitee::states::invited::Invited;
 use aries_vcx::protocols::connection::invitee::states::requested::Requested as ClientRequestSent;
 // use aries_vcx::protocols::oob;
@@ -7,12 +6,15 @@ use aries_vcx::utils::mockdata::profile::mock_ledger::MockLedger;
 use aries_vcx::{
     handlers::util::AnyInvitation,
     protocols::{
-        connection::invitee::{states::completed::Completed, InviteeConnection},
+        connection::invitee::{
+            states::{completed::Completed, initial::Initial as ClientInit},
+            InviteeConnection,
+        },
         mediated_connection::pairwise_info::PairwiseInfo,
     },
     utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx_core::wallet::base_wallet:: BaseWallet;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::{
     msg_fields::protocols::{
         connection::{response::Response, Connection},
@@ -38,7 +40,7 @@ impl<T: BaseWallet + 'static> Agent<T> {
             .await
             .unwrap();
 
-        let mock_ledger =  MockLedger {}; // not good. will be dealt later. (can see brutish attempt above)
+        let mock_ledger = MockLedger {}; // not good. will be dealt later. (can see brutish attempt above)
         let client_conn = InviteeConnection::<ClientInit>::new_invitee(
             "foo".into(),
             PairwiseInfo { pw_did, pw_vk },

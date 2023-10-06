@@ -18,7 +18,7 @@ use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBI
 
 use crate::{agent::Agent, routes::client::handle_register};
 
-pub async fn init_tui<T: BaseWallet +  'static>(agent: Agent<T>) {
+pub async fn init_tui<T: BaseWallet + 'static>(agent: Agent<T>) {
     let mut cursive = Cursive::new();
     cursive.add_global_callback(Key::Esc, |s| s.quit());
     cursive.set_user_data(Arc::new(agent));
@@ -40,7 +40,7 @@ pub fn endpoints_ui<T: BaseWallet + 'static>() -> Panel<LinearLayout> {
         // Match ui generators for available endpoints
         let view = match endpoint {
             "/client/register" => client_register_ui::<T>(),
-            "/client/contacts" =>  contact_selector_ui::<T>(s),
+            "/client/contacts" => contact_selector_ui::<T>(s),
             _ => dummy_ui(),
         };
         // Replace previously exposed ui
@@ -99,13 +99,8 @@ pub fn client_register_connect_cb<T: BaseWallet + 'static>(s: &mut Cursive) {
     let agent: &mut Arc<Agent<T>> = s.user_data().expect("Userdata should contain Agent");
 
     output.set_content(format!("{:#?}", oob_invite));
-    match block_on(handle_register(
-        State(agent.to_owned()),
-        Json(oob_invite),
-    )) {
-        Ok(Json(res_json)) => {
-            output.set_content(serde_json::to_string_pretty(&res_json).unwrap())
-        }
+    match block_on(handle_register(State(agent.to_owned()), Json(oob_invite))) {
+        Ok(Json(res_json)) => output.set_content(serde_json::to_string_pretty(&res_json).unwrap()),
         Err(err) => output.set_content(err),
     };
 }
@@ -126,11 +121,13 @@ fn make_standard(view: impl View, orientation: Orientation) -> Panel<LinearLayou
 pub fn contact_selector_ui<T: BaseWallet + 'static>(s: &mut Cursive) -> Panel<LinearLayout> {
     let mut contact_selector = SelectView::new();
     // Set available contacts
-    let agent: &mut Arc<Agent<T>> = s.user_data().expect("cursive must be initialised with state arc agent ");
+    let agent: &mut Arc<Agent<T>> = s
+        .user_data()
+        .expect("cursive must be initialised with state arc agent ");
     let contact_list_maybe = block_on(agent.list_contacts());
     let contact_list = contact_list_maybe.unwrap_or_default();
     for (acc_name, auth_pubkey) in contact_list.iter() {
-            contact_selector.add_item(acc_name.clone(), auth_pubkey.clone())
+        contact_selector.add_item(acc_name.clone(), auth_pubkey.clone())
     }
     make_standard(contact_selector, Orientation::Vertical).title("Select contact")
 }

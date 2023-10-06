@@ -43,7 +43,9 @@ pub struct AgentMaker<T: BaseWallet> {
 }
 /// Constructors
 impl AgentMaker<IndySdkWallet> {
-    pub async fn new_from_wallet_config(config: WalletConfig) -> Result<Agent<IndySdkWallet>, AriesVcxCoreError> {
+    pub async fn new_from_wallet_config(
+        config: WalletConfig,
+    ) -> Result<Agent<IndySdkWallet>, AriesVcxCoreError> {
         let wallet_handle: WalletHandle = create_and_open_wallet(&config).await?;
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
         info!("Connecting to persistence layer");
