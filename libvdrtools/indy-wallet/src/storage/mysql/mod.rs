@@ -122,12 +122,12 @@ impl MySqlStorageType {
             return Ok(connection.clone());
         }
 
-        let mut my_sql_connect_options = MySqlConnectOptions::new()
+        let my_sql_connect_options = MySqlConnectOptions::new()
             .host(host_addr)
             .database(&config.db_name)
             .username(&credentials.user)
-            .password(&credentials.pass);
-        my_sql_connect_options.log_statements(LevelFilter::Debug);
+            .password(&credentials.pass)
+            .log_statements(LevelFilter::Debug);
 
         let connection = MySqlPoolOptions::default()
             .max_connections(config.connection_limit)
@@ -200,7 +200,7 @@ impl WalletStorage for MySqlStorage {
         .bind(self.wallet_id)
         .bind(&base64::encode(type_))
         .bind(&base64::encode(id))
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await?;
 
         let value = if let Some(value) = value {
@@ -272,7 +272,7 @@ impl WalletStorage for MySqlStorage {
         .bind(&value.to_bytes())
         .bind(&_tags_to_json(tags)?)
         .bind(self.wallet_id)
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;
@@ -295,7 +295,7 @@ impl WalletStorage for MySqlStorage {
         .bind(&base64::encode(type_))
         .bind(&base64::encode(id))
         .bind(self.wallet_id)
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?
         .rows_affected();
 
@@ -342,7 +342,7 @@ impl WalletStorage for MySqlStorage {
         .bind(&base64::encode(type_))
         .bind(&base64::encode(id))
         .bind(self.wallet_id)
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?
         .rows_affected();
 
@@ -378,7 +378,7 @@ impl WalletStorage for MySqlStorage {
         .bind(&base64::encode(type_))
         .bind(&base64::encode(id))
         .bind(self.wallet_id)
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?
         .rows_affected();
 
@@ -425,7 +425,7 @@ impl WalletStorage for MySqlStorage {
         .bind(&base64::encode(type_))
         .bind(&base64::encode(id))
         .bind(self.wallet_id)
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?
         .rows_affected();
 
@@ -483,7 +483,7 @@ impl WalletStorage for MySqlStorage {
         .bind(&base64::encode(type_))
         .bind(&base64::encode(id))
         .bind(self.wallet_id)
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?
         .rows_affected();
 
@@ -514,7 +514,7 @@ impl WalletStorage for MySqlStorage {
             "#,
         )
         .bind(self.wallet_id)
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await?;
 
         base64::decode(&metadata)
@@ -532,7 +532,7 @@ impl WalletStorage for MySqlStorage {
         )
         .bind(base64::encode(metadata))
         .bind(self.wallet_id)
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;
@@ -611,7 +611,7 @@ impl WalletStorage for MySqlStorage {
                 }
             }
 
-            let (total_count,) = query.fetch_one(&mut conn).await?;
+            let (total_count,) = query.fetch_one(&mut *conn).await?;
             Some(total_count as usize)
         } else {
             None
@@ -750,7 +750,7 @@ impl WalletStorageType for MySqlStorageType {
             "#,
         )
         .bind(id)
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await;
 
         let rows_affected = res?.rows_affected();
@@ -826,11 +826,11 @@ impl WalletStorageType for MySqlStorageType {
                 "Absent credentials json",
             ))?;
 
-        let mut my_sql_connect_options = MySqlConnectOptions::new()
+        let my_sql_connect_options = MySqlConnectOptions::new()
             .host(&config.write_host)
             .username(&credentials.user)
-            .password(&credentials.pass);
-        my_sql_connect_options.log_statements(LevelFilter::Debug);
+            .password(&credentials.pass)
+            .log_statements(LevelFilter::Debug);
 
         let mut pool = MySqlPoolOptions::default()
             .max_connections(1)
@@ -848,7 +848,7 @@ impl WalletStorageType for MySqlStorageType {
             "CREATE DATABASE IF NOT EXISTS `{}`;",
             config.db_name
         ))
-        .execute(&mut con)
+        .execute(&mut *con)
         .await?;
 
         // Replace the previous single use pool
@@ -868,7 +868,7 @@ impl WalletStorageType for MySqlStorageType {
             PRIMARY KEY (`wallet_id`, `type`, `name`)
             );"#,
         )
-        .execute(&mut con)
+        .execute(&mut *con)
         .await?;
 
         sqlx::query(
@@ -880,7 +880,7 @@ impl WalletStorageType for MySqlStorageType {
             PRIMARY KEY (`id`)
             );"#,
         )
-        .execute(&mut con)
+        .execute(&mut *con)
         .await?;
 
         let mut tx = pool.begin().await?;
@@ -893,7 +893,7 @@ impl WalletStorageType for MySqlStorageType {
         )
         .bind(id)
         .bind(base64::encode(metadata))
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await;
 
         match res {

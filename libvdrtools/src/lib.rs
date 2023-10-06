@@ -7,10 +7,6 @@ extern crate num_traits;
 extern crate serde_derive;
 
 #[macro_use]
-extern crate serde_json;
-
-#[allow(unused_imports)]
-#[macro_use]
 extern crate indy_utils;
 
 pub use indy_api_types as types;

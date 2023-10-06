@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt};
 
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::Value;
+use serde_json::{json, Value};
 use ursa::cl::Nonce;
 
 use super::{

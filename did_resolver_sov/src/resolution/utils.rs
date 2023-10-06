@@ -50,7 +50,7 @@ fn get_txn_time_from_response(resp: &str) -> Result<i64, DidSovError> {
 
 fn unix_to_datetime(posix_timestamp: i64) -> Option<DateTime<Utc>> {
     NaiveDateTime::from_timestamp_opt(posix_timestamp, 0)
-        .map(|date_time| DateTime::<Utc>::from_utc(date_time, Utc))
+        .map(|date_time| DateTime::<Utc>::from_naive_utc_and_offset(date_time, Utc))
 }
 
 pub(super) fn is_valid_sovrin_did_id(id: &str) -> bool {

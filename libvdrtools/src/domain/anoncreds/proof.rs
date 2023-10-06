@@ -62,6 +62,8 @@ pub struct Identifier {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+
     use super::*;
 
     #[test]
