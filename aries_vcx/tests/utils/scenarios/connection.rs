@@ -1,5 +1,5 @@
 use aries_vcx::{
-    common::ledger::transactions::into_did_doc,
+    common::ledger::transactions::invitation_to_diddoc,
     errors::error::VcxResult,
     handlers::{out_of_band::sender::OutOfBandSender, util::AnyInvitation},
     protocols::{
@@ -68,7 +68,7 @@ async fn establish_connection_from_invite(
     let request = invitee.get_request().clone();
 
     let inviter = Connection::new_inviter("".to_owned(), inviter_pairwise_info)
-        .into_invited(invitation.id())
+        .into_invited_by_request(&request)
         .handle_request(
             &faber.wallet,
             request,
@@ -114,7 +114,9 @@ pub async fn create_connections_via_oob_invite(
         )))
         .unwrap();
     let invitation = AnyInvitation::Oob(oob_sender.oob.clone());
-    let ddo = into_did_doc(&alice.ledger_read, &invitation).await.unwrap();
+    let ddo = invitation_to_diddoc(&alice.ledger_read, &invitation)
+        .await
+        .unwrap();
     // TODO: Create a key and write on ledger instead
     let inviter_pairwise_info = PairwiseInfo {
         pw_did: ddo.clone().id,
@@ -148,7 +150,7 @@ pub async fn create_connections_via_public_invite(
             .content(content)
             .build(),
     );
-    let ddo = into_did_doc(&alice.ledger_read, &public_invite)
+    let ddo = invitation_to_diddoc(&alice.ledger_read, &public_invite)
         .await
         .unwrap();
     // TODO: Create a key and write on ledger instead

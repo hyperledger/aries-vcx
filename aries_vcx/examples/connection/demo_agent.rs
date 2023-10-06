@@ -1,4 +1,4 @@
-use std::{fmt::Debug, sync::Arc};
+use std::fmt::Debug;
 
 use aries_vcx::{
     handlers::{out_of_band::sender::OutOfBandSender, util::AnyInvitation},
@@ -15,14 +15,11 @@ use aries_vcx::{
         trait_bounds::TheirDidDoc,
         Connection,
     },
-    utils::{encryption_envelope::EncryptionEnvelope, mockdata::profile::mock_ledger::MockLedger},
+    utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx_core::{
-    ledger::base_ledger::IndyLedgerRead,
-    wallet::{
-        base_wallet::BaseWallet,
-        indy::{wallet::create_and_open_wallet, IndySdkWallet, WalletConfig},
-    },
+use aries_vcx_core::wallet::{
+    base_wallet::BaseWallet,
+    indy::{wallet::create_and_open_wallet, IndySdkWallet, WalletConfig},
 };
 use diddoc_legacy::aries::service::AriesService;
 use messages::{
@@ -34,6 +31,7 @@ use messages::{
     AriesMessage,
 };
 use serde::Deserialize;
+use test_utils::mockdata::mock_ledger::MockLedger;
 use tokio::sync::mpsc::{Receiver, Sender};
 use url::Url;
 
@@ -42,7 +40,7 @@ use crate::mpsc_registry::MpscRegistry;
 pub struct DemoAgent {
     channels_didcomm: MpscRegistry<EncryptionEnvelope>,
     channels_invitations: MpscRegistry<Invitation>,
-    wallet: Arc<dyn BaseWallet>,
+    wallet: IndySdkWallet,
     endpoint_url: Url,
     name: String,
     log_color: String,
@@ -96,7 +94,7 @@ impl DemoAgent {
             channels_didcomm: MpscRegistry::default(),
             channels_invitations: MpscRegistry::default(),
             name,
-            wallet: Arc::new(wallet),
+            wallet,
             endpoint_url,
             log_color,
         }
@@ -106,11 +104,8 @@ impl DemoAgent {
         self.name.clone()
     }
 
-    // the reason why we return in Arc is because we don't want fail send if receiver has been
-    // dropped somewhere That simulates reality. Just because we send didcomm message, doesn't
-    // mean someone is going to be waiting for it and read it
     pub async fn register_didcomm_channel(
-        &self,
+        &mut self,
         transport_id: String,
         didcomm_sender: Sender<EncryptionEnvelope>,
         didcomm_receiver: Receiver<EncryptionEnvelope>,
@@ -124,7 +119,7 @@ impl DemoAgent {
     }
 
     pub async fn register_invitation_receiver(
-        &self,
+        &mut self,
         transport_id: String,
         invitation_receiver: Receiver<Invitation>,
     ) {
@@ -134,7 +129,7 @@ impl DemoAgent {
     }
 
     pub async fn register_invitation_sender(
-        &self,
+        &mut self,
         transport_id: String,
         invitation_sender: Sender<Invitation>,
     ) {
@@ -148,7 +143,7 @@ impl DemoAgent {
     for the respective agent is received, it attempts to decrypt the message and deserialize into
     expected type T.
      */
-    pub async fn wait_for_didcomm_message<T>(&self, transport_id: &str) -> Result<T, String>
+    pub async fn wait_for_didcomm_message<T>(&mut self, transport_id: &str) -> Result<T, String>
     where
         T: for<'de> Deserialize<'de>,
         T: Debug,
@@ -171,7 +166,7 @@ impl DemoAgent {
         Ok(payload_msg)
     }
 
-    pub async fn wait_for_invitation_message(&self, transport_id: &str) -> Invitation {
+    pub async fn wait_for_invitation_message(&mut self, transport_id: &str) -> Invitation {
         info!(
             "{}Agent[{}] is waiting for Invitation message",
             self.log_color, self.name
@@ -234,10 +229,9 @@ impl DemoAgent {
             "{}Agent[{}] in role of invitee generated pairwise key {pw_vk}",
             self.log_color, self.name
         );
-        let mock_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {}); // cause we know we want call ledger *eew...*
         let invitee_invited =
             InviteeConnection::<Initial>::new_invitee("foo".into(), PairwiseInfo { pw_did, pw_vk })
-                .accept_invitation(&mock_ledger, AnyInvitation::Oob(msg_oob_invitation))
+                .accept_invitation(&MockLedger {}, AnyInvitation::Oob(msg_oob_invitation))
                 .await
                 .unwrap();
 
@@ -266,18 +260,8 @@ impl DemoAgent {
         msg_request: Request,
         faber_invite_info: PairwiseInfo,
     ) -> (InviterConnection<InviterRequested>, EncryptionEnvelope) {
-        // todo: It's wierd that consumer needs to have knowledge how to provide thid in
-        // into_invited(..)       That should be encapsulated in the message processing code
-        // / state machine
         let inviter_invited = InviterConnection::new_inviter("".to_owned(), faber_invite_info)
-            .into_invited(
-                msg_request
-                    .decorators
-                    .thread
-                    .as_ref()
-                    .map(|t| t.thid.as_str())
-                    .unwrap_or(msg_request.id.as_str()),
-            );
+            .into_invited_by_request(&msg_request);
         let inviter_requested = inviter_invited
             .handle_request(&self.wallet, msg_request, self.endpoint_url.clone(), vec![])
             .await
@@ -305,7 +289,7 @@ impl DemoAgent {
         response: Response,
     ) -> InviteeConnection<Completed> {
         let invitee_complete = invitee_requested
-            .handle_response(&self.wallet.clone(), response)
+            .handle_response(&self.wallet, response)
             .await
             .unwrap();
         info!(

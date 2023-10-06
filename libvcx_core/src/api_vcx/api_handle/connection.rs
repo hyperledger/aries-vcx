@@ -260,14 +260,7 @@ pub async fn process_request(
     let con = match con.state() {
         ThinState::Inviter(State::Initial) => {
             Connection::try_from(con).map_err(From::from).map(|c| {
-                c.into_invited(
-                    request
-                        .decorators
-                        .thread
-                        .as_ref()
-                        .map(|t| t.thid.as_str())
-                        .unwrap_or(request.id.as_str()),
-                )
+                c.into_invited_by_request(&request)
             })
         }
         ThinState::Inviter(State::Invited) => Connection::try_from(con).map_err(From::from),

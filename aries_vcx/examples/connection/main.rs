@@ -19,11 +19,19 @@ use url::Url;
 
 use crate::demo_agent::{build_basic_message, DemoAgent, COLOR_GREEN, COLOR_YELLOW};
 
-pub mod demo_agent;
-pub mod mpsc_registry;
+mod demo_agent;
+mod mpsc_registry;
 
 static ALICE: &str = "alice";
 static FABER: &str = "faber";
+
+#[tokio::main]
+async fn main() {
+    let (mut alice, mut faber) = init().await;
+    let transport_id = setup_transport_channels(&mut alice, &mut faber).await;
+    workflow_connection_by_role(alice, faber, transport_id).await;
+    exit(0);
+}
 
 async fn init() -> (DemoAgent, DemoAgent) {
     env_logger::init();
@@ -38,7 +46,7 @@ async fn init() -> (DemoAgent, DemoAgent) {
     (agent_alice, agent_faber)
 }
 
-async fn setup_transport_channels(alice: &DemoAgent, faber: &DemoAgent) -> String {
+async fn setup_transport_channels(alice: &mut DemoAgent, faber: &mut DemoAgent) -> String {
     let transport_id = format!("relation_{}_{}", alice.get_name(), faber.get_name());
     // This simulates trusted communication channel, over which Faber send Alice an invitation
     // In real setting, the equivalent could be scanning a QR code on trustworthy https:// website of Faber company
@@ -84,7 +92,7 @@ async fn workflow_connection_by_role(alice: DemoAgent, faber: DemoAgent, transpo
     res.1.unwrap();
 }
 
-async fn workflow_invitee(alice: DemoAgent, transport_id: &str) {
+async fn workflow_invitee(mut alice: DemoAgent, transport_id: &str) {
     let msg_oob_invitation: Invitation = alice.wait_for_invitation_message(transport_id).await;
     info!("****** Alice receives connection invitation via a trusted channel ******");
     let (invitee_requested, msg_connection_request) =
@@ -123,7 +131,7 @@ async fn workflow_invitee(alice: DemoAgent, transport_id: &str) {
     info!("Alice received message {msg_any:?}");
 }
 
-async fn workflow_inviter(faber: DemoAgent, transport_id: &str) {
+async fn workflow_inviter(mut faber: DemoAgent, transport_id: &str) {
     info!("****** Faber is preparing connection invitation to pass to Alice ****** ");
     let (msg_oob_invitation, faber_invite_info) = faber.prepare_invitation().await;
     faber
@@ -159,12 +167,4 @@ async fn workflow_inviter(faber: DemoAgent, transport_id: &str) {
         )
         .await;
     faber.send_didcomm_message(transport_id, msg_hello).await;
-}
-
-#[tokio::main]
-async fn main() {
-    let (alice, faber) = init().await;
-    let transport_id = setup_transport_channels(&alice, &faber).await;
-    workflow_connection_by_role(alice, faber, transport_id).await;
-    exit(0);
 }

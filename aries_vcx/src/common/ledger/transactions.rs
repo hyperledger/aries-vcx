@@ -99,7 +99,7 @@ pub async fn add_new_did(
     Ok((did, verkey))
 }
 
-pub async fn into_did_doc(
+pub async fn invitation_to_diddoc(
     indy_ledger: &impl IndyLedgerRead,
     invitation: &AnyInvitation,
 ) -> VcxResult<AriesDidDoc> {

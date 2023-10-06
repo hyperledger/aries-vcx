@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use aries_vcx::{
-    common::ledger::transactions::into_did_doc,
+    common::ledger::transactions::invitation_to_diddoc,
     handlers::{
         out_of_band::{receiver::OutOfBandReceiver, sender::OutOfBandSender},
         util::AnyInvitation,
@@ -231,7 +231,7 @@ pub async fn build_connection(handle: u32) -> LibvcxResult<String> {
     trace!("build_connection >>> handle: {}", handle);
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
     let invitation = AnyInvitation::Oob(oob.oob.clone());
-    let ddo = into_did_doc(get_main_ledger_read()?.as_ref(), &invitation).await?;
+    let ddo = invitation_to_diddoc(get_main_ledger_read()?.as_ref(), &invitation).await?;
     oob.build_connection(
         get_main_wallet()?.as_ref(),
         &get_main_agency_client()?,

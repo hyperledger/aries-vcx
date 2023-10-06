@@ -26,7 +26,9 @@ use super::{
     Connection,
 };
 use crate::{
-    common::{ledger::transactions::into_did_doc, signing::decode_signed_connection_response},
+    common::{
+        ledger::transactions::invitation_to_diddoc, signing::decode_signed_connection_response,
+    },
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     handlers::util::{matches_thread_id, AnyInvitation},
     protocols::connection::trait_bounds::ThreadId,
@@ -61,7 +63,7 @@ impl InviteeConnection<Initial> {
             &invitation
         );
 
-        let did_doc = into_did_doc(indy_ledger, &invitation).await?;
+        let did_doc = invitation_to_diddoc(indy_ledger, &invitation).await?;
         let state = Invited::new(did_doc, invitation);
 
         // Convert to `InvitedState`

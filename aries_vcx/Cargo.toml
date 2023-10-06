@@ -63,3 +63,6 @@ libvcx_logger = { path = "../tools/libvcx_logger" }
 wallet_migrator = { path = "../wallet_migrator" }
 async-channel = "1.7.1"
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }
+# used by /examples
+simple_message_relay = { path = "../tools/simple_message_relay" }
+diddoc_legacy = { path = "../diddoc_legacy" }

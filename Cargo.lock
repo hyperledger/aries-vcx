@@ -347,6 +347,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "shared_vcx",
+ "simple_message_relay",
  "strum 0.25.0",
  "strum_macros 0.25.2",
  "test_utils",
@@ -1339,27 +1340,6 @@ checksum = "8fdf3fce3ce863539ec1d7fd1b6dcc3c645663376b43ed376bbf887733e4f772"
 dependencies = [
  "data-encoding",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "demo"
-version = "0.59.0"
-dependencies = [
- "aries-vcx",
- "aries_vcx_core",
- "async-trait",
- "diddoc_legacy",
- "env_logger 0.9.3",
- "log",
- "messages",
- "serde",
- "serde_derive",
- "serde_json",
- "simple_message_relay",
- "thiserror",
- "tokio",
- "url",
- "uuid 1.4.1",
 ]
 
 [[package]]

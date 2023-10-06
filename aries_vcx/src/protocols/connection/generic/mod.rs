@@ -466,9 +466,14 @@ mod connection_serde_tests {
     }
 
     async fn make_inviter_invited() -> InviterConnection<InviterInvited> {
+        let connection_request = Request::builder()
+            .id(Uuid::new_v4().to_string())
+            .content(RequestContent::default())
+            .decorators(RequestDecorators::default())
+            .build();
         make_inviter_initial()
             .await
-            .into_invited(&String::default())
+            .into_invited_by_request(&connection_request)
     }
 
     async fn make_inviter_requested() -> InviterConnection<InviterRequested> {
