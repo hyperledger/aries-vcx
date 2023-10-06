@@ -33,11 +33,13 @@ pub fn endpoints_ui() -> Panel<LinearLayout> {
     let mut endpoint_selector = SelectView::new();
     // Set available endpoints
     endpoint_selector.add_item_str("/client/register");
+    endpoint_selector.add_item_str("/client/trustping");
 
     endpoint_selector.set_on_submit(|s, endpoint: &str| {
         // Match ui generators for available endpoints
         let view = match endpoint {
             "/client/register" => client_register_ui(),
+            "/client/contacts" =>  contact_selector_ui(s),
             _ => dummy_ui(),
         };
         // Replace previously exposed ui
@@ -114,4 +116,20 @@ fn dummy_ui() -> Panel<LinearLayout> {
 
 fn make_standard(view: impl View, orientation: Orientation) -> Panel<LinearLayout> {
     Panel::new(LinearLayout::new(orientation).child(view))
+}
+
+// fn client_trustping_ui(s: &mut Cursive) -> Panel<LinearLayout> {
+//     contact_selector_ui(s)
+// }
+
+pub fn contact_selector_ui(s: &mut Cursive) -> Panel<LinearLayout> {
+    let mut contact_selector = SelectView::new();
+    // Set available contacts
+    let agent: &mut Arc<Agent> = s.user_data().expect("cursive must be initialised with state arc agent ");
+    let contact_list_maybe = futures::executor::block_on(agent.list_contacts());
+    let contact_list = contact_list_maybe.unwrap_or_default();
+    for (acc_name, auth_pubkey) in contact_list.iter() {
+            contact_selector.add_item(acc_name.clone(), auth_pubkey.clone())
+    }
+    make_standard(contact_selector, Orientation::Vertical).title("Select contact")
 }
