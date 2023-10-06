@@ -28,13 +28,13 @@ mod services;
 
 use std::sync::Arc;
 
-pub use controllers::CredentialDefinitionId;
 pub use domain::{
     anoncreds::{
         credential::{AttributeValues, Credential, CredentialValues},
         credential_definition::{
             CredentialDefinition, CredentialDefinitionCorrectnessProof, CredentialDefinitionData,
-            CredentialDefinitionPrivateKey, CredentialDefinitionV1, SignatureType,
+            CredentialDefinitionId, CredentialDefinitionPrivateKey, CredentialDefinitionV1,
+            SignatureType,
         },
         credential_offer::CredentialOffer,
         credential_request::{CredentialRequest, CredentialRequestMetadata},
@@ -62,7 +62,6 @@ pub use indy_api_types::{
 };
 pub use indy_wallet::WalletRecord;
 use lazy_static::lazy_static;
-pub use services::AnoncredsHelpers;
 
 use crate::{
     controllers::{CryptoController, DidController, NonSecretsController, WalletController},
