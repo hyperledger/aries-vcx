@@ -12,6 +12,7 @@ use log;
 #[cfg(feature = "casting_errors_wallet")]
 use sqlx;
 use thiserror::Error as ThisError;
+use ursa::errors::{UrsaCryptoError, UrsaCryptoErrorKind};
 #[cfg(feature = "casting_errors_misc")]
 use ursa::errors::{UrsaCryptoError, UrsaCryptoErrorKind};
 
@@ -245,7 +246,6 @@ impl From<log::SetLoggerError> for IndyError {
     }
 }
 
-#[cfg(feature = "casting_errors_misc")]
 impl From<UrsaCryptoError> for IndyError {
     fn from(err: UrsaCryptoError) -> Self {
         match err.kind() {
@@ -275,7 +275,6 @@ impl From<UrsaCryptoError> for IndyError {
     }
 }
 
-#[cfg(feature = "casting_errors_misc")]
 impl From<bs58::decode::Error> for IndyError {
     fn from(_err: bs58::decode::Error) -> Self {
         IndyError::from_msg(
@@ -285,7 +284,6 @@ impl From<bs58::decode::Error> for IndyError {
     }
 }
 
-#[cfg(feature = "casting_errors_misc")]
 impl From<openssl::error::ErrorStack> for IndyError {
     fn from(err: openssl::error::ErrorStack) -> IndyError {
         // TODO: FIXME: Analyze ErrorStack and split invalid structure errors from other errors
@@ -293,7 +291,6 @@ impl From<openssl::error::ErrorStack> for IndyError {
     }
 }
 
-#[cfg(feature = "casting_errors_wallet")]
 impl From<sqlx::Error> for IndyError {
     fn from(err: sqlx::Error) -> IndyError {
         match &err {

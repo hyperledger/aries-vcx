@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     iter::FromIterator,
+    num::NonZeroUsize,
     sync::{
         atomic::{AtomicUsize, Ordering},
         Mutex, RwLock,
@@ -42,7 +43,9 @@ impl WalletCache {
         match config {
             Some(cache_config) if cache_config.size > 0 && !cache_config.entities.is_empty() => {
                 let cache = match cache_config.algorithm {
-                    CachingAlgorithm::LRU => LruCache::new(cache_config.size),
+                    CachingAlgorithm::LRU => {
+                        LruCache::new(NonZeroUsize::new(cache_config.size).unwrap())
+                    }
                 };
                 WalletCache {
                     cache: Some(Mutex::new(Box::new(cache))),

@@ -24,6 +24,7 @@ use aries_vcx::{
     run_setup,
     utils::constants::DEFAULT_SCHEMA_ATTRS,
 };
+use base64::{engine::general_purpose, Engine};
 use messages::{
     decorators::attachment::{Attachment, AttachmentData, AttachmentType},
     misc::MimeType,
@@ -49,7 +50,9 @@ async fn test_agency_pool_retrieve_credentials_empty() {
         let pres_req_data: PresentationRequestData =
             serde_json::from_str(&req.to_string()).unwrap();
 
-        let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+        let attach_type = AttachmentType::Base64(
+            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
+        );
         let attach_data = AttachmentData::builder().content(attach_type).build();
         let attach = Attachment::builder()
             .data(attach_data)
@@ -84,7 +87,9 @@ async fn test_agency_pool_retrieve_credentials_empty() {
         let pres_req_data: PresentationRequestData =
             serde_json::from_str(&req.to_string()).unwrap();
 
-        let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+        let attach_type = AttachmentType::Base64(
+            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
+        );
         let attach_data = AttachmentData::builder().content(attach_type).build();
         let attach = Attachment::builder()
             .data(attach_data)
@@ -170,7 +175,9 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             serde_json::from_str(&req.to_string()).unwrap();
         let id = "test_id".to_owned();
 
-        let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+        let attach_type = AttachmentType::Base64(
+            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
+        );
         let attach_data = AttachmentData::builder().content(attach_type).build();
         let attach = Attachment::builder()
             .data(attach_data)
@@ -206,7 +213,9 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             serde_json::from_str(&req.to_string()).unwrap();
         let id = "test_id".to_owned();
 
-        let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+        let attach_type = AttachmentType::Base64(
+            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
+        );
         let attach_data = AttachmentData::builder().content(attach_type).build();
         let attach = Attachment::builder()
             .data(attach_data)
@@ -240,7 +249,9 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             serde_json::from_str(&req.to_string()).unwrap();
         let id = "test_id".to_owned();
 
-        let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+        let attach_type = AttachmentType::Base64(
+            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
+        );
         let attach_data = AttachmentData::builder().content(attach_type).build();
         let attach = Attachment::builder()
             .data(attach_data)

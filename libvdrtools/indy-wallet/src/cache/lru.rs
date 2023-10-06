@@ -1,3 +1,5 @@
+use std::num::NonZeroUsize;
+
 use lru::LruCache as InnerCache;
 
 use crate::cache::{
@@ -10,7 +12,7 @@ pub struct LruCache {
 }
 
 impl LruCache {
-    pub fn new(size: usize) -> LruCache {
+    pub fn new(size: NonZeroUsize) -> LruCache {
         LruCache {
             inner: InnerCache::new(size),
         }
@@ -43,6 +45,6 @@ impl Cache for LruCache {
     }
 
     fn cap(&self) -> usize {
-        self.inner.cap()
+        self.inner.cap().into()
     }
 }
