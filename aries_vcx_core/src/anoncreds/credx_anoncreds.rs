@@ -19,19 +19,20 @@ use credx::{
 };
 use indy_credx as credx;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 use uuid::Uuid;
 
 use super::base_anoncreds::BaseAnonCreds;
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{
+        async_fn_iterator::AsyncFnIterator,
         constants::ATTRS,
         json::{AsTypeOrDeserializationError, TryGetIndex},
     },
     wallet::{
         base_wallet::{AsyncFnIteratorCollect, BaseWallet},
-        indy::IndySdkWallet,
+        structs_io::UnpackMessageOutput,
     },
 };
 
@@ -59,14 +60,144 @@ pub struct RevocationRegistryInfo {
     pub used_ids: HashSet<u32>,
 }
 
+/// Adapter used so that credx does not depend strictly on the vdrtools-wallet
+/// Will get removed when the wallet and anoncreds interfaces are de-coupled.
+#[derive(Debug)]
+struct WalletAdapter(Arc<dyn BaseWallet>);
+
+#[async_trait]
+impl BaseWallet for WalletAdapter {
+    #[cfg(feature = "vdrtools_wallet")]
+    fn get_wallet_handle(&self) -> indy_api_types::WalletHandle {
+        self.0.get_wallet_handle()
+    }
+
+    async fn create_and_store_my_did(
+        &self,
+        seed: Option<&str>,
+        kdf_method_name: Option<&str>,
+    ) -> VcxCoreResult<(String, String)> {
+        self.0.create_and_store_my_did(seed, kdf_method_name).await
+    }
+
+    async fn key_for_local_did(&self, did: &str) -> VcxCoreResult<String> {
+        self.0.key_for_local_did(did).await
+    }
+
+    async fn replace_did_keys_start(&self, target_did: &str) -> VcxCoreResult<String> {
+        self.0.replace_did_keys_start(target_did).await
+    }
+
+    async fn replace_did_keys_apply(&self, target_did: &str) -> VcxCoreResult<()> {
+        self.0.replace_did_keys_apply(target_did).await
+    }
+
+    async fn add_wallet_record(
+        &self,
+        xtype: &str,
+        id: &str,
+        value: &str,
+        tags: Option<HashMap<String, String>>,
+    ) -> VcxCoreResult<()> {
+        self.0.add_wallet_record(xtype, id, value, tags).await
+    }
+
+    async fn get_wallet_record(
+        &self,
+        xtype: &str,
+        id: &str,
+        options: &str,
+    ) -> VcxCoreResult<String> {
+        self.0.get_wallet_record(xtype, id, options).await
+    }
+
+    async fn get_wallet_record_value(&self, xtype: &str, id: &str) -> VcxCoreResult<String> {
+        self.0.get_wallet_record_value(xtype, id).await
+    }
+
+    async fn delete_wallet_record(&self, xtype: &str, id: &str) -> VcxCoreResult<()> {
+        self.0.delete_wallet_record(xtype, id).await
+    }
+
+    async fn update_wallet_record_value(
+        &self,
+        xtype: &str,
+        id: &str,
+        value: &str,
+    ) -> VcxCoreResult<()> {
+        self.0.update_wallet_record_value(xtype, id, value).await
+    }
+
+    async fn add_wallet_record_tags(
+        &self,
+        xtype: &str,
+        id: &str,
+        tags: HashMap<String, String>,
+    ) -> VcxCoreResult<()> {
+        self.0.add_wallet_record_tags(xtype, id, tags).await
+    }
+
+    async fn update_wallet_record_tags(
+        &self,
+        xtype: &str,
+        id: &str,
+        tags: HashMap<String, String>,
+    ) -> VcxCoreResult<()> {
+        self.0.update_wallet_record_tags(xtype, id, tags).await
+    }
+
+    async fn delete_wallet_record_tags(
+        &self,
+        xtype: &str,
+        id: &str,
+        tag_names: &str,
+    ) -> VcxCoreResult<()> {
+        self.0.delete_wallet_record_tags(xtype, id, tag_names).await
+    }
+
+    async fn iterate_wallet_records(
+        &self,
+        xtype: &str,
+        query: &str,
+        options: &str,
+    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>>> {
+        self.0.iterate_wallet_records(xtype, query, options).await
+    }
+
+    // ---- crypto
+
+    async fn sign(&self, my_vk: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
+        self.0.sign(my_vk, msg).await
+    }
+
+    async fn verify(&self, vk: &str, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
+        self.0.verify(vk, msg, signature).await
+    }
+
+    async fn pack_message(
+        &self,
+        sender_vk: Option<&str>,
+        receiver_keys: &str,
+        msg: &[u8],
+    ) -> VcxCoreResult<Vec<u8>> {
+        self.0.pack_message(sender_vk, receiver_keys, msg).await
+    }
+
+    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {
+        self.0.unpack_message(msg).await
+    }
+}
+
 #[derive(Debug)]
 pub struct IndyCredxAnonCreds {
-    wallet: Arc<IndySdkWallet>,
+    wallet: WalletAdapter,
 }
 
 impl IndyCredxAnonCreds {
-    pub fn new(wallet: Arc<IndySdkWallet>) -> Self {
-        IndyCredxAnonCreds { wallet }
+    pub fn new(wallet: Arc<dyn BaseWallet>) -> Self {
+        IndyCredxAnonCreds {
+            wallet: WalletAdapter(wallet),
+        }
     }
 
     async fn get_wallet_record_value<T>(&self, category: &str, id: &str) -> VcxCoreResult<T>
