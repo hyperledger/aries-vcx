@@ -44,7 +44,6 @@ pub use domain::{
             RevocationRegistryId, RevocationRegistryInfo,
         },
         revocation_registry_delta::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
-        revocation_state::RevocationStates,
         schema::{AttributeNames, Schema, SchemaId, SchemaV1},
     },
     crypto::{
