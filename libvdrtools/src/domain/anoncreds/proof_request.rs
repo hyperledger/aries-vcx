@@ -36,7 +36,7 @@ pub enum ProofRequestsVersion {
 }
 
 impl ProofRequest {
-    pub fn value<'a>(&'a self) -> &'a ProofRequestPayload {
+    pub fn value(&self) -> &ProofRequestPayload {
         match self {
             ProofRequest::ProofRequestV1(proof_req) => proof_req,
             ProofRequest::ProofRequestV2(proof_req) => proof_req,
@@ -65,7 +65,7 @@ impl<'de> Deserialize<'de> for ProofRequest {
         let v = Value::deserialize(deserializer)?;
 
         let helper = Helper::deserialize(&v).map_err(de::Error::custom)?;
-        let nonce_cleaned = helper.nonce.replace(" ", "").replace("_", "");
+        let nonce_cleaned = helper.nonce.replace([' ', '_'], "");
 
         let proof_req = match helper.ver {
             Some(version) => match version.as_ref() {
@@ -204,13 +204,13 @@ impl ProofRequest {
                 requested_attribute.restrictions = requested_attribute
                     .restrictions
                     .as_mut()
-                    .map(|ref mut restrictions| _convert_query_to_unqualified(&restrictions));
+                    .map(|ref mut restrictions| _convert_query_to_unqualified(restrictions));
             }
             for (_, requested_predicate) in proof_request.requested_predicates.iter_mut() {
                 requested_predicate.restrictions = requested_predicate
                     .restrictions
                     .as_mut()
-                    .map(|ref mut restrictions| _convert_query_to_unqualified(&restrictions));
+                    .map(|ref mut restrictions| _convert_query_to_unqualified(restrictions));
             }
         };
 
@@ -247,13 +247,13 @@ fn _convert_query_to_unqualified(query: &Query) -> Query {
         Query::And(ref queries) => Query::And(
             queries
                 .iter()
-                .map(|query| _convert_query_to_unqualified(query))
+                .map(_convert_query_to_unqualified)
                 .collect::<Vec<Query>>(),
         ),
         Query::Or(ref queries) => Query::Or(
             queries
                 .iter()
-                .map(|query| _convert_query_to_unqualified(query))
+                .map(_convert_query_to_unqualified)
                 .collect::<Vec<Query>>(),
         ),
         Query::Not(ref query) => _convert_query_to_unqualified(query),

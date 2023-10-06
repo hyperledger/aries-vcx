@@ -61,6 +61,7 @@ pub struct PoolUpgradeOperation {
     pub package: Option<String>,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl PoolUpgradeOperation {
     pub fn new(
         name: &str,

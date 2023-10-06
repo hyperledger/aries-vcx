@@ -424,7 +424,7 @@ impl WalletController {
 
         let seed = config
             .as_ref()
-            .and_then(|config| config.seed.as_ref().map(String::as_str));
+            .and_then(|config| config.seed.as_deref());
 
         let key = match self.crypto_service.convert_seed(seed)? {
             Some(seed) => randombytes::randombytes_deterministic(

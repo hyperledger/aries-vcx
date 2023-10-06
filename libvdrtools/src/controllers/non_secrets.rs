@@ -62,7 +62,7 @@ impl NonSecretsController {
                 &type_,
                 &id,
                 &value,
-                &tags.unwrap_or_else(|| Tags::new()),
+                &tags.unwrap_or_default(),
             )
             .await?;
 

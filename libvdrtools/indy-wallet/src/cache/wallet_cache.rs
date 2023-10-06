@@ -10,7 +10,7 @@ use std::{
 use indy_api_types::domain::wallet::{CacheConfig, CachingAlgorithm};
 
 use crate::{
-    cache::{cache::Cache, lru::LruCache},
+    cache::{Cache, lru::LruCache},
     storage::{
         StorageRecord, Tag,
         Tag::{Encrypted, PlainText},

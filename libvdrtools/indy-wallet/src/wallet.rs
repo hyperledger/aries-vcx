@@ -474,7 +474,7 @@ impl Wallet {
         Ok(WalletIterator::new(all_items, self.keys.clone()))
     }
 
-    pub fn get_id<'a>(&'a self) -> &'a str {
+    pub fn get_id(&self) -> &str {
         &self.id
     }
 }

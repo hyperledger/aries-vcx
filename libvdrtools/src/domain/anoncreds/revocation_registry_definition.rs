@@ -204,15 +204,12 @@ impl RevocationRegistryId {
             return Some(parts);
         }
 
-        match QUALIFIED_REV_REG_ID.captures(&self.0) {
-            Some(caps) => Some((
+        QUALIFIED_REV_REG_ID.captures(&self.0).map(|caps| (
                 DidValue(caps["did"].to_string()),
                 CredentialDefinitionId(caps["cred_def_id"].to_string()),
                 caps["rev_reg_type"].to_string(),
                 caps["tag"].to_string(),
-            )),
-            None => None,
-        }
+            ))
     }
 
     pub fn to_unqualified(&self) -> RevocationRegistryId {

@@ -59,10 +59,9 @@ pub fn schemas_map_to_schemas_v1_map(schemas: Schemas) -> HashMap<SchemaId, Sche
         .collect()
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct AttributeNames(pub HashSet<String>);
 
-#[allow(dead_code)]
 impl AttributeNames {
     pub fn new() -> Self {
         AttributeNames(HashSet::new())
@@ -75,9 +74,9 @@ impl From<HashSet<String>> for AttributeNames {
     }
 }
 
-impl Into<HashSet<String>> for AttributeNames {
-    fn into(self) -> HashSet<String> {
-        self.0
+impl From<AttributeNames> for HashSet<String> {
+    fn from(value: AttributeNames) -> HashSet<String> {
+        value.0
     }
 }
 

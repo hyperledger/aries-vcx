@@ -400,7 +400,7 @@ impl DidController {
                     "No value for DID record",
                 ))
                 .and_then(|tags_json| {
-                    serde_json::from_str(&tags_json).to_indy(
+                    serde_json::from_str(tags_json).to_indy(
                         IndyErrorKind::InvalidState,
                         format!("Cannot deserialize Did {:?}", did_id),
                     )
@@ -419,7 +419,7 @@ impl DidController {
                     "No value for DID record",
                 ))
                 .and_then(|tags_json| {
-                    serde_json::from_str(&tags_json).to_indy(
+                    serde_json::from_str(tags_json).to_indy(
                         IndyErrorKind::InvalidState,
                         format!("Cannot deserialize Did {:?}", did_id),
                     )
@@ -435,7 +435,7 @@ impl DidController {
                 .get_value()
                 .ok_or_else(|| err_msg(IndyErrorKind::InvalidState, "No value for DID record"))
                 .and_then(|tags_json| {
-                    serde_json::from_str(&tags_json).to_indy(
+                    serde_json::from_str(tags_json).to_indy(
                         IndyErrorKind::InvalidState,
                         format!("Cannot deserialize Did {:?}", did_id),
                     )
@@ -447,8 +447,8 @@ impl DidController {
             let did_with_meta = DidWithMeta {
                 did: did.did,
                 verkey: did.verkey,
-                temp_verkey: temp_verkey,
-                metadata: metadata,
+                temp_verkey,
+                metadata,
             };
 
             dids.push(did_with_meta);
@@ -771,7 +771,7 @@ impl DidController {
                 .get_value()
                 .ok_or_else(|| err_msg(IndyErrorKind::InvalidState, "No value for Pairwise record"))
                 .and_then(|pairwise_json| {
-                    serde_json::from_str(&pairwise_json).map_err(|err| {
+                    serde_json::from_str(pairwise_json).map_err(|err| {
                         IndyError::from_msg(
                             IndyErrorKind::InvalidState,
                             format!("Cannot deserialize Pairwise {:?}", err),

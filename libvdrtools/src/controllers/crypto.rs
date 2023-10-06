@@ -110,7 +110,7 @@ impl CryptoController {
 
         let key: Key = self
             .wallet_service
-            .get_indy_object(wallet_handle, &my_vk, &RecordOptions::id_value())
+            .get_indy_object(wallet_handle, my_vk, &RecordOptions::id_value())
             .await?;
 
         let res = self.crypto_service.sign(&key, msg).await?;
@@ -296,7 +296,7 @@ impl CryptoController {
             });
         } // end for-loop
 
-        Ok(self._base64_encode_protected(encrypted_recipients_struct, false)?)
+        self._base64_encode_protected(encrypted_recipients_struct, false)
     }
 
     async fn _prepare_protected_authcrypt(
@@ -337,7 +337,7 @@ impl CryptoController {
             });
         } // end for-loop
 
-        Ok(self._base64_encode_protected(encrypted_recipients_struct, true)?)
+        self._base64_encode_protected(encrypted_recipients_struct, true)
     }
 
     fn _base64_encode_protected(

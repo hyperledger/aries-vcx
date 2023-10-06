@@ -258,8 +258,8 @@ impl WalletStorage for SQLiteStorage {
             sqlx::query("UPDATE items SET value = ?1, key = ?2 WHERE type = ?3 AND name = ?4")
                 .bind(&value.data)
                 .bind(&value.key)
-                .bind(&type_)
-                .bind(&id)
+                .bind(type_)
+                .bind(id)
                 .execute(&mut tx)
                 .await?
                 .rows_affected();
@@ -327,7 +327,7 @@ impl WalletStorage for SQLiteStorage {
         let (item_id,): (i64,) =
             sqlx::query_as("SELECT id FROM items WHERE type = ?1 AND name = ?2")
                 .bind(type_)
-                .bind(&id)
+                .bind(id)
                 .fetch_one(&mut tx)
                 .await?;
 

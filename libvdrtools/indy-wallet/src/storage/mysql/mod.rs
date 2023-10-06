@@ -271,7 +271,7 @@ impl WalletStorage for MySqlStorage {
         .bind(&base64::encode(id))
         .bind(&value.to_bytes())
         .bind(&_tags_to_json(tags)?)
-        .bind(&self.wallet_id)
+        .bind(self.wallet_id)
         .execute(&mut tx)
         .await?;
 
@@ -294,7 +294,7 @@ impl WalletStorage for MySqlStorage {
         .bind(&value.to_bytes())
         .bind(&base64::encode(type_))
         .bind(&base64::encode(id))
-        .bind(&self.wallet_id)
+        .bind(self.wallet_id)
         .execute(&mut tx)
         .await?
         .rows_affected();
@@ -341,7 +341,7 @@ impl WalletStorage for MySqlStorage {
         ))
         .bind(&base64::encode(type_))
         .bind(&base64::encode(id))
-        .bind(&self.wallet_id)
+        .bind(self.wallet_id)
         .execute(&mut tx)
         .await?
         .rows_affected();
@@ -377,7 +377,7 @@ impl WalletStorage for MySqlStorage {
         .bind(&_tags_to_json(tags)?)
         .bind(&base64::encode(type_))
         .bind(&base64::encode(id))
-        .bind(&self.wallet_id)
+        .bind(self.wallet_id)
         .execute(&mut tx)
         .await?
         .rows_affected();
@@ -424,7 +424,7 @@ impl WalletStorage for MySqlStorage {
         ))
         .bind(&base64::encode(type_))
         .bind(&base64::encode(id))
-        .bind(&self.wallet_id)
+        .bind(self.wallet_id)
         .execute(&mut tx)
         .await?
         .rows_affected();
@@ -482,7 +482,7 @@ impl WalletStorage for MySqlStorage {
         )
         .bind(&base64::encode(type_))
         .bind(&base64::encode(id))
-        .bind(&self.wallet_id)
+        .bind(self.wallet_id)
         .execute(&mut tx)
         .await?
         .rows_affected();
@@ -513,7 +513,7 @@ impl WalletStorage for MySqlStorage {
             WHERE id = ?
             "#,
         )
-        .bind(&self.wallet_id)
+        .bind(self.wallet_id)
         .fetch_one(&mut conn)
         .await?;
 
@@ -531,7 +531,7 @@ impl WalletStorage for MySqlStorage {
             "#,
         )
         .bind(base64::encode(metadata))
-        .bind(&self.wallet_id)
+        .bind(self.wallet_id)
         .execute(&mut tx)
         .await?;
 
@@ -2023,11 +2023,11 @@ mod tests {
     }
 
     fn _metadata() -> Vec<u8> {
-        return vec![
+        vec![
             1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5,
             6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2,
             3, 4, 5, 6, 7, 8,
-        ];
+        ]
     }
 
     fn _type(i: u8) -> Vec<u8> {
@@ -2131,10 +2131,10 @@ mod tests {
     }
 
     fn _tags() -> Vec<Tag> {
-        let mut tags: Vec<Tag> = Vec::new();
-        tags.push(Tag::Encrypted(vec![1, 5, 8], vec![3, 5, 6]));
-        tags.push(Tag::PlainText(vec![1, 5, 8, 1], "Plain value".to_string()));
-        tags
+        vec![
+            Tag::Encrypted(vec![1, 5, 8], vec![3, 5, 6]),
+            Tag::PlainText(vec![1, 5, 8, 1], "Plain value".to_string()),
+        ]
     }
 
     fn _new_tags() -> Vec<Tag> {

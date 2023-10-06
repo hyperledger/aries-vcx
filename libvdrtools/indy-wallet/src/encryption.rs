@@ -49,11 +49,11 @@ impl KeyDerivationData {
             (KeyDerivationMethod::RAW, &Metadata::MetadataRaw(_)) => {
                 KeyDerivationData::Raw(passphrase)
             }
-            (KeyDerivationMethod::ARGON2I_INT, &Metadata::MetadataArgon(ref metadata)) => {
+            (KeyDerivationMethod::ARGON2I_INT, Metadata::MetadataArgon(metadata)) => {
                 let master_key_salt = master_key_salt_from_slice(&metadata.master_key_salt)?;
                 KeyDerivationData::Argon2iInt(passphrase, master_key_salt)
             }
-            (KeyDerivationMethod::ARGON2I_MOD, &Metadata::MetadataArgon(ref metadata)) => {
+            (KeyDerivationMethod::ARGON2I_MOD, Metadata::MetadataArgon(metadata)) => {
                 let master_key_salt = master_key_salt_from_slice(&metadata.master_key_salt)?;
                 KeyDerivationData::Argon2iMod(passphrase, master_key_salt)
             }

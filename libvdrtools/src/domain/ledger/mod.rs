@@ -1,6 +1,5 @@
 pub mod attrib;
 pub mod auth_rule;
-pub mod author_agreement;
 pub mod constants;
 pub mod cred_def;
 pub mod ddo;
@@ -13,4 +12,3 @@ pub mod rev_reg;
 pub mod rev_reg_def;
 pub mod schema;
 pub mod txn;
-pub mod validator_info;

@@ -10,7 +10,7 @@ pub struct CredentialAttrTagPolicy {
 impl CredentialAttrTagPolicy {
     pub fn is_taggable(&self, attr_name: &str) -> bool {
         self.taggable
-            .contains(&attr_name.to_string().replace(" ", "").to_lowercase())
+            .contains(&attr_name.to_string().replace(' ', "").to_lowercase())
     }
 }
 
@@ -19,7 +19,7 @@ impl From<Vec<String>> for CredentialAttrTagPolicy {
         CredentialAttrTagPolicy {
             taggable: taggables
                 .into_iter()
-                .map(|a| a.replace(" ", "").to_lowercase())
+                .map(|a| a.replace(' ', "").to_lowercase())
                 .collect(),
         }
     }

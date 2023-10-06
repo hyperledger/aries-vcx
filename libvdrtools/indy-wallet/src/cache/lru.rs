@@ -1,8 +1,8 @@
 use lru::LruCache as InnerCache;
 
 use crate::cache::{
-    cache::Cache,
     wallet_cache::{WalletCacheKey, WalletCacheValue},
+    Cache,
 };
 
 pub struct LruCache {

@@ -49,7 +49,7 @@ impl DidValue {
             (Some(ledger_type_), Some(method_)) => {
                 Ok(DidValue(did.to_string()).set_ledger_and_method(ledger_type_, method_))
             }
-            (None, Some(method_)) => Ok(DidValue(did.to_string()).set_method(&method_)),
+            (None, Some(method_)) => Ok(DidValue(did.to_string()).set_method(method_)),
             (None, None) => Ok(DidValue(did.to_string())),
             (Some(_), None) => Err(IndyError::from_msg(
                 IndyErrorKind::InvalidStructure,
@@ -63,7 +63,7 @@ impl DidValue {
     }
 
     pub fn qualify(&self, method: &str) -> DidValue {
-        self.set_method(&method)
+        self.set_method(method)
     }
 
     pub fn to_unqualified(&self) -> DidValue {

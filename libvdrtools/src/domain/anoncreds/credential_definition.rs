@@ -34,18 +34,10 @@ impl SignatureType {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CredentialDefinitionConfig {
     #[serde(default)]
     pub support_revocation: bool,
-}
-
-impl Default for CredentialDefinitionConfig {
-    fn default() -> Self {
-        CredentialDefinitionConfig {
-            support_revocation: false,
-        }
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
