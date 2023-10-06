@@ -148,10 +148,7 @@ fn neq_to_sql<'a>(
     arguments: &mut Vec<ToSQL<'a>>,
 ) -> IndyResult<String> {
     match (name, value) {
-        (
-            TagName::PlainTagName(ref queried_name),
-            TargetValue::Unencrypted(ref queried_value),
-        ) => {
+        (TagName::PlainTagName(ref queried_name), TargetValue::Unencrypted(ref queried_value)) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
             Ok(
@@ -183,10 +180,7 @@ fn gt_to_sql<'a>(
     arguments: &mut Vec<ToSQL<'a>>,
 ) -> IndyResult<String> {
     match (name, value) {
-        (
-            TagName::PlainTagName(ref queried_name),
-            TargetValue::Unencrypted(ref queried_value),
-        ) => {
+        (TagName::PlainTagName(ref queried_name), TargetValue::Unencrypted(ref queried_value)) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
             Ok(
@@ -207,10 +201,7 @@ fn gte_to_sql<'a>(
     arguments: &mut Vec<ToSQL<'a>>,
 ) -> IndyResult<String> {
     match (name, value) {
-        (
-            TagName::PlainTagName(ref queried_name),
-            TargetValue::Unencrypted(ref queried_value),
-        ) => {
+        (TagName::PlainTagName(ref queried_name), TargetValue::Unencrypted(ref queried_value)) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
             Ok(
@@ -231,10 +222,7 @@ fn lt_to_sql<'a>(
     arguments: &mut Vec<ToSQL<'a>>,
 ) -> IndyResult<String> {
     match (name, value) {
-        (
-            TagName::PlainTagName(ref queried_name),
-            TargetValue::Unencrypted(ref queried_value),
-        ) => {
+        (TagName::PlainTagName(ref queried_name), TargetValue::Unencrypted(ref queried_value)) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
             Ok(
@@ -255,10 +243,7 @@ fn lte_to_sql<'a>(
     arguments: &mut Vec<ToSQL<'a>>,
 ) -> IndyResult<String> {
     match (name, value) {
-        (
-            TagName::PlainTagName(ref queried_name),
-            TargetValue::Unencrypted(ref queried_value),
-        ) => {
+        (TagName::PlainTagName(ref queried_name), TargetValue::Unencrypted(ref queried_value)) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
             Ok(
@@ -279,10 +264,7 @@ fn like_to_sql<'a>(
     arguments: &mut Vec<ToSQL<'a>>,
 ) -> IndyResult<String> {
     match (name, value) {
-        (
-            TagName::PlainTagName(ref queried_name),
-            TargetValue::Unencrypted(ref queried_value),
-        ) => {
+        (TagName::PlainTagName(ref queried_name), TargetValue::Unencrypted(ref queried_value)) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
             Ok(

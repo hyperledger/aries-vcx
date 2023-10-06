@@ -5,7 +5,7 @@ use std::{
 
 use aries_vcx::{
     common::primitives::revocation_registry::RevocationRegistry,
-    core::profile::{Profile, modular_libs_profile::ModularLibsProfile},
+    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
 };
 
 use crate::{

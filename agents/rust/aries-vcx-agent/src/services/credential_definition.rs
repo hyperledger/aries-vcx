@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
     common::primitives::credential_definition::{CredentialDef, CredentialDefConfig},
-    core::profile::{Profile, modular_libs_profile::ModularLibsProfile},
+    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
 };
 
 use crate::{

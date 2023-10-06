@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::{ Profile, modular_libs_profile::ModularLibsProfile},
+    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
     handlers::{issuance::issuer::Issuer, util::OfferInfo},
     messages::{
         msg_fields::protocols::cred_issuance::v1::{
