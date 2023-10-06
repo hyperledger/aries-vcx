@@ -53,8 +53,8 @@ fn build_component_base_wallet(wallet_handle: WalletHandle) -> Arc<IndySdkWallet
 
 #[allow(unreachable_code)]
 #[allow(clippy::needless_return)]
-fn build_component_anoncreds(base_wallet: Arc<dyn BaseWallet>) -> Arc<IndyCredxAnonCreds> {
-    Arc::new(IndyCredxAnonCreds::new(Arc::clone(&base_wallet)))
+fn build_component_anoncreds(base_wallet: Arc<IndySdkWallet>) -> Arc<IndyCredxAnonCreds> {
+    Arc::new(IndyCredxAnonCreds::new(base_wallet.clone()))
 }
 
 fn setup_global_wallet(wallet_handle: WalletHandle) -> LibvcxResult<()> {

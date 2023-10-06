@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
     common::primitives::credential_schema::Schema,
-    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
+    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
 };
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 
@@ -12,13 +12,13 @@ use crate::{
 };
 
 pub struct ServiceSchemas {
-    profile: Arc<VdrtoolsProfile>,
+    profile: Arc<ModularLibsProfile>,
     issuer_did: String,
     schemas: ObjectCache<Schema>,
 }
 
 impl ServiceSchemas {
-    pub fn new(profile: Arc<VdrtoolsProfile>, issuer_did: String) -> Self {
+    pub fn new(profile: Arc<ModularLibsProfile>, issuer_did: String) -> Self {
         Self {
             profile,
             issuer_did,

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use aries_vcx::{
-    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
+    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
     handlers::{
         proof_presentation::{prover::Prover, types::SelectedCredentials},
         util::PresentationProposalData,
@@ -39,14 +39,14 @@ impl ProverWrapper {
 }
 
 pub struct ServiceProver {
-    profile: Arc<VdrtoolsProfile>,
+    profile: Arc<ModularLibsProfile>,
     provers: ObjectCache<ProverWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceProver {
     pub fn new(
-        profile: Arc<VdrtoolsProfile>,
+        profile: Arc<ModularLibsProfile>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {

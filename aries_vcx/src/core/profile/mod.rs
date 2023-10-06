@@ -3,8 +3,6 @@ pub mod ledger;
 pub mod modular_libs_profile;
 #[cfg(feature = "vdr_proxy_ledger")]
 pub mod vdr_proxy_profile;
-#[cfg(feature = "vdrtools")]
-pub mod vdrtools_profile;
 
 use std::sync::Arc;
 

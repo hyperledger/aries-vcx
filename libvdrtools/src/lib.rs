@@ -65,15 +65,8 @@ use lazy_static::lazy_static;
 pub use services::AnoncredsHelpers;
 
 use crate::{
-    controllers::{
-        BlobStorageController, ConfigController, CryptoController, DidController, IssuerController,
-        NonSecretsController, PairwiseController, ProverController, VerifierController,
-        WalletController,
-    },
-    services::{
-        BlobStorageService, CryptoService, IssuerService, ProverService, VerifierService,
-        WalletService,
-    },
+    controllers::{CryptoController, DidController, NonSecretsController, WalletController},
+    services::{CryptoService, WalletService},
 };
 
 // Global (lazy inited) instance of Locator
@@ -82,15 +75,9 @@ lazy_static! {
 }
 
 pub struct Locator {
-    pub issuer_controller: IssuerController,
-    pub prover_controller: ProverController,
-    pub verifier_controller: VerifierController,
     pub crypto_controller: CryptoController,
-    pub config_controller: ConfigController,
     pub did_controller: DidController,
     pub wallet_controller: WalletController,
-    pub pairwise_controller: PairwiseController,
-    pub blob_storage_controller: BlobStorageController,
     pub non_secret_controller: NonSecretsController,
 }
 
@@ -102,53 +89,22 @@ impl Locator {
     fn new() -> Locator {
         info!("new >");
 
-        let issuer_service = Arc::new(IssuerService::new());
-        let prover_service = Arc::new(ProverService::new());
-        let verifier_service = Arc::new(VerifierService::new());
-        let blob_storage_service = Arc::new(BlobStorageService::new());
         let crypto_service = Arc::new(CryptoService::new());
         let wallet_service = Arc::new(WalletService::new());
 
-        let issuer_controller = IssuerController::new(
-            issuer_service,
-            blob_storage_service.clone(),
-            wallet_service.clone(),
-            crypto_service.clone(),
-        );
-
-        let prover_controller = ProverController::new(
-            prover_service,
-            wallet_service.clone(),
-            crypto_service.clone(),
-            blob_storage_service.clone(),
-        );
-
-        let verifier_controller = VerifierController::new(verifier_service);
-
         let crypto_controller =
             CryptoController::new(wallet_service.clone(), crypto_service.clone());
-
-        let config_controller = ConfigController::new();
 
         let did_controller = DidController::new(wallet_service.clone(), crypto_service.clone());
 
         let wallet_controller =
             WalletController::new(wallet_service.clone(), crypto_service.clone());
-
-        let pairwise_controller = PairwiseController::new(wallet_service.clone());
-        let blob_storage_controller = BlobStorageController::new(blob_storage_service.clone());
         let non_secret_controller = NonSecretsController::new(wallet_service.clone());
 
         let res = Locator {
-            issuer_controller,
-            prover_controller,
-            verifier_controller,
             crypto_controller,
-            config_controller,
             did_controller,
             wallet_controller,
-            pairwise_controller,
-            blob_storage_controller,
             non_secret_controller,
         };
 

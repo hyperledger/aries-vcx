@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::{ledger::VcxPoolConfig, vdrtools_profile::VdrtoolsProfile, Profile},
+    core::profile::{ledger::VcxPoolConfig, modular_libs_profile::ModularLibsProfile, Profile},
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
 };
 use aries_vcx_core::{
@@ -72,7 +72,7 @@ impl Agent {
             response_cache_config: None,
         };
 
-        let indy_profile = VdrtoolsProfile::init(wallet, pool_config).unwrap();
+        let indy_profile = ModularLibsProfile::init(wallet, pool_config).unwrap();
         let profile = Arc::new(indy_profile);
         let anoncreds = profile.anoncreds();
         anoncreds

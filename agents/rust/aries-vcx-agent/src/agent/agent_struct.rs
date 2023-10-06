@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
+use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
 
 use crate::{
     agent::agent_config::AgentConfig,
@@ -14,7 +14,7 @@ use crate::{
 
 #[derive(Clone)]
 pub struct Agent {
-    pub(super) profile: Arc<VdrtoolsProfile>,
+    pub(super) profile: Arc<ModularLibsProfile>,
     pub(super) config: AgentConfig,
     pub(super) connections: Arc<ServiceConnections>,
     pub(super) schemas: Arc<ServiceSchemas>,
@@ -27,7 +27,7 @@ pub struct Agent {
 }
 
 impl Agent {
-    pub fn profile(&self) -> &VdrtoolsProfile {
+    pub fn profile(&self) -> &ModularLibsProfile {
         &self.profile
     }
 

@@ -29,7 +29,10 @@ use crate::{
         constants::ATTRS,
         json::{AsTypeOrDeserializationError, TryGetIndex},
     },
-    wallet::base_wallet::{AsyncFnIteratorCollect, BaseWallet},
+    wallet::{
+        base_wallet::{AsyncFnIteratorCollect, BaseWallet},
+        indy::IndySdkWallet,
+    },
 };
 
 pub const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
@@ -58,11 +61,11 @@ pub struct RevocationRegistryInfo {
 
 #[derive(Debug)]
 pub struct IndyCredxAnonCreds {
-    wallet: Arc<dyn BaseWallet>,
+    wallet: Arc<IndySdkWallet>,
 }
 
 impl IndyCredxAnonCreds {
-    pub fn new(wallet: Arc<dyn BaseWallet>) -> Self {
+    pub fn new(wallet: Arc<IndySdkWallet>) -> Self {
         IndyCredxAnonCreds { wallet }
     }
 

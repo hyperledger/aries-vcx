@@ -22,8 +22,6 @@ use chrono::{DateTime, Duration, Utc};
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 #[cfg(feature = "vdr_proxy_ledger")]
 use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
-#[cfg(feature = "vdrtools")]
-use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::{
     core::profile::{ledger::VcxPoolConfig, Profile},
     global::settings,
@@ -128,20 +126,6 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
     (did, wallet_handle)
 }
 
-#[cfg(feature = "vdrtools")]
-pub fn dev_build_profile_vdrtools(
-    genesis_file_path: String,
-    wallet: Arc<IndySdkWallet>,
-) -> VdrtoolsProfile {
-    info!("dev_build_profile_vdrtools >>");
-    let vcx_pool_config = VcxPoolConfig {
-        genesis_file_path,
-        indy_vdr_config: None,
-        response_cache_config: None,
-    };
-    VdrtoolsProfile::init(wallet, vcx_pool_config).unwrap()
-}
-
 #[cfg(feature = "modular_libs")]
 pub fn dev_build_profile_modular(
     genesis_file_path: String,
@@ -177,28 +161,16 @@ pub async fn dev_build_featured_profile(
     genesis_file_path: String,
     wallet: Arc<IndySdkWallet>,
 ) -> impl Profile {
-    // In case of migration test setup, we are starting with vdrtools, then we migrate
-    #[cfg(all(feature = "modular_libs", not(feature = "migration")))]
-    return {
-        info!("SetupProfile >> using modular profile");
-        dev_build_profile_modular(genesis_file_path, wallet)
-    };
-    #[cfg(all(feature = "vdr_proxy_ledger", not(feature = "migration")))]
+    #[cfg(feature = "vdr_proxy_ledger")]
     return {
         info!("SetupProfile >> using vdr proxy profile");
         dev_build_profile_vdr_proxy_ledger(wallet).await
     };
-    #[cfg(any(
-        all(
-            feature = "vdrtools",
-            not(feature = "vdr_proxy_ledger"),
-            not(feature = "modular_libs")
-        ),
-        feature = "migration"
-    ))]
+
+    #[cfg(not(feature = "vdr_proxy_ledger"))]
     return {
-        info!("SetupProfile >> using indy profile");
-        dev_build_profile_vdrtools(genesis_file_path, wallet)
+        info!("SetupProfile >> using modular profile");
+        dev_build_profile_modular(genesis_file_path, wallet)
     };
 }
 

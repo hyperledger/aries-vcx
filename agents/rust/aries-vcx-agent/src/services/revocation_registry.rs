@@ -5,7 +5,7 @@ use std::{
 
 use aries_vcx::{
     common::primitives::revocation_registry::RevocationRegistry,
-    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
+    core::profile::{Profile, modular_libs_profile::ModularLibsProfile},
 };
 
 use crate::{
@@ -14,13 +14,13 @@ use crate::{
 };
 
 pub struct ServiceRevocationRegistries {
-    profile: Arc<VdrtoolsProfile>,
+    profile: Arc<ModularLibsProfile>,
     issuer_did: String,
     rev_regs: ObjectCache<RevocationRegistry>,
 }
 
 impl ServiceRevocationRegistries {
-    pub fn new(profile: Arc<VdrtoolsProfile>, issuer_did: String) -> Self {
+    pub fn new(profile: Arc<ModularLibsProfile>, issuer_did: String) -> Self {
         Self {
             profile,
             issuer_did,

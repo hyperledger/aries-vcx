@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     common::proofs::proof_request::PresentationRequestData,
-    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
+    core::profile::{ Profile, modular_libs_profile::ModularLibsProfile},
     handlers::proof_presentation::verifier::Verifier,
     messages::{
         msg_fields::protocols::present_proof::{
@@ -41,14 +41,14 @@ impl VerifierWrapper {
 }
 
 pub struct ServiceVerifier {
-    profile: Arc<VdrtoolsProfile>,
+    profile: Arc<ModularLibsProfile>,
     verifiers: ObjectCache<VerifierWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceVerifier {
     pub fn new(
-        profile: Arc<VdrtoolsProfile>,
+        profile: Arc<ModularLibsProfile>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
