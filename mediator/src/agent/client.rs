@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 // use aries_vcx::protocols::connection::initiation_type::Invitee;
 use aries_vcx::protocols::connection::invitee::states::initial::Initial as ClientInit;
 // use aries_vcx::protocols::connection::invitee::states::invited::Invited;
@@ -14,7 +12,7 @@ use aries_vcx::{
     },
     utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
+use aries_vcx_core::wallet::base_wallet:: BaseWallet;
 use messages::{
     msg_fields::protocols::{
         connection::{response::Response, Connection},
@@ -27,7 +25,7 @@ use messages::{
 use super::Agent;
 use crate::utils::prelude::*;
 // client role utilities
-impl Agent {
+impl<T: BaseWallet + 'static> Agent<T> {
     /// Starts a new connection object and tries to create request to the specified OOB invite
     /// endpoint
     pub async fn gen_client_connect_req(
@@ -40,7 +38,7 @@ impl Agent {
             .await
             .unwrap();
 
-        let mock_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {}); // not good. will be dealt later. (can see brutish attempt above)
+        let mock_ledger =  MockLedger {}; // not good. will be dealt later. (can see brutish attempt above)
         let client_conn = InviteeConnection::<ClientInit>::new_invitee(
             "foo".into(),
             PairwiseInfo { pw_did, pw_vk },
@@ -64,7 +62,7 @@ impl Agent {
         // encrypt/pack connection request
         let EncryptionEnvelope(packed_aries_msg_bytes) = client_conn
             .encrypt_message(
-                &self.wallet,
+                self.wallet.as_ref(),
                 &AriesMessage::Connection(Connection::Request(req_msg.clone())),
             )
             .await
@@ -79,7 +77,7 @@ impl Agent {
         response: Response,
     ) -> Result<InviteeConnection<Completed>, String> {
         state
-            .handle_response(&self.get_wallet_ref(), response)
+            .handle_response(self.wallet.as_ref(), response)
             .await
             .map_err(|err| err.to_string())
     }

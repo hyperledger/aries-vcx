@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use axum::{extract::State, Json};
 use cursive::{
     direction::Orientation,
@@ -17,19 +18,19 @@ use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBI
 
 use crate::{agent::Agent, routes::client::handle_register};
 
-pub async fn init_tui(agent: Agent) {
+pub async fn init_tui<T: BaseWallet +  'static>(agent: Agent<T>) {
     let mut cursive = Cursive::new();
     cursive.add_global_callback(Key::Esc, |s| s.quit());
     cursive.set_user_data(Arc::new(agent));
 
     let mut main = LinearLayout::horizontal().with_name("main");
-    let endpoint_selector = endpoints_ui();
+    let endpoint_selector = endpoints_ui::<T>();
     main.get_mut().add_child(endpoint_selector);
     cursive.add_layer(main);
     cursive.run()
 }
 
-pub fn endpoints_ui() -> Panel<LinearLayout> {
+pub fn endpoints_ui<T: BaseWallet + 'static>() -> Panel<LinearLayout> {
     let mut endpoint_selector = SelectView::new();
     // Set available endpoints
     endpoint_selector.add_item_str("/client/register");
@@ -38,8 +39,8 @@ pub fn endpoints_ui() -> Panel<LinearLayout> {
     endpoint_selector.set_on_submit(|s, endpoint: &str| {
         // Match ui generators for available endpoints
         let view = match endpoint {
-            "/client/register" => client_register_ui(),
-            "/client/contacts" =>  contact_selector_ui(s),
+            "/client/register" => client_register_ui::<T>(),
+            "/client/contacts" =>  contact_selector_ui::<T>(s),
             _ => dummy_ui(),
         };
         // Replace previously exposed ui
@@ -52,7 +53,7 @@ pub fn endpoints_ui() -> Panel<LinearLayout> {
     make_standard(endpoint_selector, Orientation::Vertical).title("Select endpoint")
 }
 
-pub fn client_register_ui() -> Panel<LinearLayout> {
+pub fn client_register_ui<T: BaseWallet + 'static>() -> Panel<LinearLayout> {
     let input = TextArea::new().with_name("oob_text_area");
     let input = ResizedView::new(
         SizeConstraint::AtLeast(20),
@@ -65,7 +66,7 @@ pub fn client_register_ui() -> Panel<LinearLayout> {
                 .unwrap()
                 .set_content("");
         })
-        .button("Connect", client_register_connect_cb)
+        .button("Connect", client_register_connect_cb::<T>)
         .title("OOB Invite");
     let input = Panel::new(input);
 
@@ -81,7 +82,7 @@ pub fn client_register_ui() -> Panel<LinearLayout> {
     make_standard(ui, Orientation::Horizontal).title("Register client using Out Of Band Invitation")
 }
 
-pub fn client_register_connect_cb(s: &mut Cursive) {
+pub fn client_register_connect_cb<T: BaseWallet + 'static>(s: &mut Cursive) {
     let oob_text_area = s.find_name::<TextArea>("oob_text_area").unwrap();
     let mut output = s.find_name::<TextView>("client_register_result").unwrap();
     let oob_text = oob_text_area.get_content();
@@ -95,18 +96,18 @@ pub fn client_register_connect_cb(s: &mut Cursive) {
         }
     };
     info!("{:#?}", oob_invite);
-    s.with_user_data(|arc_agent: &mut Arc<Agent>| {
-        output.set_content(format!("{:#?}", oob_invite));
-        match block_on(handle_register(
-            State(arc_agent.to_owned()),
-            Json(oob_invite),
-        )) {
-            Ok(Json(res_json)) => {
-                output.set_content(serde_json::to_string_pretty(&res_json).unwrap())
-            }
-            Err(err) => output.set_content(err),
-        };
-    });
+    let agent: &mut Arc<Agent<T>> = s.user_data().expect("Userdata should contain Agent");
+
+    output.set_content(format!("{:#?}", oob_invite));
+    match block_on(handle_register(
+        State(agent.to_owned()),
+        Json(oob_invite),
+    )) {
+        Ok(Json(res_json)) => {
+            output.set_content(serde_json::to_string_pretty(&res_json).unwrap())
+        }
+        Err(err) => output.set_content(err),
+    };
 }
 
 fn dummy_ui() -> Panel<LinearLayout> {
@@ -122,11 +123,11 @@ fn make_standard(view: impl View, orientation: Orientation) -> Panel<LinearLayou
 //     contact_selector_ui(s)
 // }
 
-pub fn contact_selector_ui(s: &mut Cursive) -> Panel<LinearLayout> {
+pub fn contact_selector_ui<T: BaseWallet + 'static>(s: &mut Cursive) -> Panel<LinearLayout> {
     let mut contact_selector = SelectView::new();
     // Set available contacts
-    let agent: &mut Arc<Agent> = s.user_data().expect("cursive must be initialised with state arc agent ");
-    let contact_list_maybe = futures::executor::block_on(agent.list_contacts());
+    let agent: &mut Arc<Agent<T>> = s.user_data().expect("cursive must be initialised with state arc agent ");
+    let contact_list_maybe = block_on(agent.list_contacts());
     let contact_list = contact_list_maybe.unwrap_or_default();
     for (acc_name, auth_pubkey) in contact_list.iter() {
             contact_selector.add_item(acc_name.clone(), auth_pubkey.clone())

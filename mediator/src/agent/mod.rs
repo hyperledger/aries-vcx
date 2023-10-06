@@ -32,8 +32,8 @@ pub mod utils;
 pub mod client;
 
 #[derive(Clone)]
-pub struct Agent {
-    wallet: Arc<dyn BaseWallet>,
+pub struct Agent<T: BaseWallet> {
+    wallet: Arc<T>,
     persistence: Arc<dyn MediatorPersistence>,
     service: Option<AriesService>,
 }
@@ -43,7 +43,7 @@ pub struct AgentMaker<T: BaseWallet> {
 }
 /// Constructors
 impl AgentMaker<IndySdkWallet> {
-    pub async fn new_from_wallet_config(config: WalletConfig) -> Result<Agent, AriesVcxCoreError> {
+    pub async fn new_from_wallet_config(config: WalletConfig) -> Result<Agent<IndySdkWallet>, AriesVcxCoreError> {
         let wallet_handle: WalletHandle = create_and_open_wallet(&config).await?;
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
         info!("Connecting to persistence layer");
@@ -54,7 +54,7 @@ impl AgentMaker<IndySdkWallet> {
             service: None,
         })
     }
-    pub async fn new_demo_agent() -> Result<Agent, AriesVcxCoreError> {
+    pub async fn new_demo_agent() -> Result<Agent<IndySdkWallet>, AriesVcxCoreError> {
         let config = WalletConfig {
             wallet_name: uuid::Uuid::new_v4().to_string(),
             wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
@@ -70,7 +70,7 @@ impl AgentMaker<IndySdkWallet> {
 }
 
 // Utils
-impl Agent {
+impl<T: BaseWallet + 'static> Agent<T> {
     pub fn get_wallet_ref(&self) -> Arc<dyn BaseWallet> {
         self.wallet.clone()
     }
@@ -151,7 +151,7 @@ impl Agent {
             .to_owned();
 
         let response: Response = utils::build_response_content(
-            &self.wallet,
+            self.wallet.as_ref(),
             thread_id,
             old_vk.clone(),
             did,
@@ -164,7 +164,7 @@ impl Agent {
         let aries_response = AriesMessage::Connection(Connection::Response(response));
         let their_diddoc = request.content.connection.did_doc;
         let packed_response_envelope = EncryptionEnvelope::create(
-            &self.get_wallet_ref(),
+            self.wallet.as_ref(),
             &json!(aries_response).to_string().as_bytes(),
             Some(&old_vk),
             &their_diddoc,

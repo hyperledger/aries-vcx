@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx::{
     common::signing::sign_connection_response, errors::error::VcxResult, transport::Transport,
 };
@@ -21,7 +19,7 @@ use uuid::Uuid;
 use crate::utils::structs::VeriKey;
 
 pub async fn build_response_content(
-    wallet: &Arc<dyn BaseWallet>,
+    wallet: &impl BaseWallet,
     thread_id: String,
     old_recipient_vk: VeriKey,
     new_recipient_did: String,

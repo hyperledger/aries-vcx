@@ -1,6 +1,7 @@
 use std::{fmt::Debug, sync::Arc};
 
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use axum::{
     body::Bytes,
     extract::State,
@@ -13,7 +14,7 @@ use messages::{msg_fields::protocols::connection::Connection, AriesMessage};
 use serde_json::Value;
 
 use crate::agent::Agent;
-type ArcAgent = Arc<Agent>;
+type ArcAgent<T> = Arc<Agent<T>>;
 
 pub mod client;
 pub mod tui;
@@ -21,8 +22,8 @@ pub mod tui;
 pub fn unhandled_aries(message: impl Debug) -> String {
     format!("Don't know how to handle this message type {:#?}", message)
 }
-pub async fn handle_aries_connection(
-    agent: ArcAgent,
+pub async fn handle_aries_connection<T: BaseWallet + 'static>(
+    agent: ArcAgent<T>,
     connection: Connection,
 ) -> Result<EncryptionEnvelope, String> {
     match connection {
@@ -35,8 +36,8 @@ pub async fn handle_aries_connection(
         _ => Err(unhandled_aries(connection)),
     }
 }
-pub async fn handle_aries(
-    State(agent): State<ArcAgent>,
+pub async fn handle_aries<T: BaseWallet + 'static>(
+    State(agent): State<ArcAgent<T>>,
     didcomm_msg: Bytes,
 ) -> Result<Json<Value>, String> {
     info!("processing message {:?}", &didcomm_msg);
@@ -52,7 +53,7 @@ pub async fn handle_aries(
     let packed_json = serde_json::from_slice(&packed_message_bytes[..]).unwrap();
     Ok(Json(packed_json))
 }
-pub async fn oob_invite_qr(State(agent): State<ArcAgent>) -> Html<String> {
+pub async fn oob_invite_qr<T: BaseWallet + 'static>(State(agent): State<ArcAgent<T>>) -> Html<String> {
     let oob = agent.get_oob_invite().unwrap();
     let oob_string = serde_json::to_string_pretty(&oob).unwrap();
     let qr = fast_qr::QRBuilder::new(oob_string.clone()).build().unwrap();
@@ -73,7 +74,7 @@ pub async fn readme() -> Html<String> {
     Html("<p>Please refer to the API section of <a>readme</a> for usage. Thanks. </p>".into())
 }
 
-pub async fn build_router(agent: Agent) -> Router {
+pub async fn build_router<T: BaseWallet + 'static>(agent: Agent<T>) -> Router {
     Router::default()
         .route("/", get(readme))
         .route("/register", get(oob_invite_qr))
