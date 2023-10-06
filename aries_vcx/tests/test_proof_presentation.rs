@@ -27,8 +27,6 @@ use aries_vcx::{
 };
 use messages::{msg_fields::protocols::present_proof::PresentProof, AriesMessage};
 
-#[cfg(feature = "migration")]
-use crate::utils::migration::Migratable;
 use crate::utils::{
     scenarios::{
         accept_proof_proposal, create_address_schema_creddef_revreg, create_proof_proposal,
@@ -111,9 +109,6 @@ async fn test_agency_pool_generate_proof_with_predicates() {
 
         let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-        #[cfg(feature = "migration")]
-        let setup = setup.migrate().await;
-
         let all_creds = proof
             .retrieve_credentials(setup.profile.anoncreds())
             .await
@@ -185,9 +180,6 @@ async fn test_agency_pool_presentation_via_proposal() {
         .await;
         let tails_dir = rev_reg.get_tails_dir();
 
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
-
         exchange_credential_with_proposal(
             &mut consumer,
             &mut institution,
@@ -204,9 +196,6 @@ async fn test_agency_pool_presentation_via_proposal() {
             create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;
         let presentation_request =
             accept_proof_proposal(&mut institution, &mut verifier, presentation_proposal).await;
-
-        #[cfg(feature = "migration")]
-        let mut consumer = consumer.migrate().await;
 
         let selected_credentials =
             prover_select_credentials(&mut prover, &mut consumer, presentation_request, None).await;
@@ -233,9 +222,6 @@ async fn test_agency_pool_presentation_via_proposal_with_rejection() {
         )
         .await;
         let tails_dir = rev_reg.get_tails_dir();
-
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
 
         exchange_credential_with_proposal(
             &mut consumer,
@@ -271,9 +257,6 @@ async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         .await;
         let tails_dir = rev_reg.get_tails_dir();
 
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
-
         exchange_credential_with_proposal(
             &mut consumer,
             &mut institution,
@@ -286,9 +269,6 @@ async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         .await;
         let mut prover = Prover::create("1").unwrap();
         let mut verifier = Verifier::create("1").unwrap();
-
-        #[cfg(feature = "migration")]
-        let mut consumer = consumer.migrate().await;
 
         let presentation_proposal =
             create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;

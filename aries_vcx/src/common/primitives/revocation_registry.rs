@@ -316,6 +316,3 @@ pub async fn generate_rev_reg(
 
     Ok((rev_reg_id, rev_reg_def, rev_reg_entry_json))
 }
-
-// consider impl revoke_credential_local in a generic (non-vdrtools) fashion
-// consider impl publish_local_revocations in a generic (non-vdrtools) fashion

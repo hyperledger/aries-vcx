@@ -5,8 +5,6 @@ edition = "2021"
 
 [features]
 ########################## DEP FLAGS ################################
-# Feature flag to include the libvdrtools dependency
-vdrtools_anoncreds = ["dep:libvdrtools", "dep:indy-api-types"]
 vdrtools_wallet = ["dep:libvdrtools", "dep:indy-api-types"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 modular_libs = ["dep:indy-credx"]

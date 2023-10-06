@@ -47,8 +47,6 @@ use aries_vcx_core::{
 };
 use diddoc_legacy::aries::service::AriesService;
 
-#[cfg(feature = "migration")]
-use crate::utils::migration::Migratable;
 use crate::utils::{
     scenarios::attr_names_address_list,
     test_agent::{create_test_agent, create_test_agent_trustee},
@@ -406,9 +404,6 @@ async fn test_agency_pool_get_credential_def() {
             DEFAULT_SCHEMA_ATTRS,
         )
         .await;
-
-        #[cfg(feature = "migration")]
-        let setup = setup.migrate().await;
 
         let ledger = setup.profile.ledger_read();
         let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();

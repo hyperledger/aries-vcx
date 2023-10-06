@@ -32,9 +32,6 @@ use messages::{
     },
 };
 
-#[cfg(feature = "migration")]
-use crate::utils::migration::Migratable;
-
 #[tokio::test]
 #[ignore]
 // TODO: This should be a unit test
@@ -71,9 +68,6 @@ async fn test_agency_pool_retrieve_credentials_empty() {
             .content(content)
             .build();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
-
-        #[cfg(feature = "migration")]
-        let setup = setup.migrate().await;
 
         let retrieved_creds = proof
             .retrieve_credentials(setup.profile.anoncreds())
@@ -224,9 +218,6 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .request_presentations_attach(vec![attach])
             .build();
 
-        #[cfg(feature = "migration")]
-        let setup = setup.migrate().await;
-
         let proof_req = RequestPresentation::builder()
             .id(id)
             .content(content)
@@ -303,9 +294,6 @@ async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
 
         issue_address_credential(&mut consumer, &mut institution).await;
 
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
-
         let requested_preds_string = serde_json::to_string(&json!([{
             "name": "zip",
             "p_type": ">=",
@@ -317,9 +305,6 @@ async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
             create_proof_request_data(&mut institution, "[]", &requested_preds_string, "{}", None)
                 .await;
         let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
-
-        #[cfg(feature = "migration")]
-        let mut consumer = consumer.migrate().await;
 
         let presentation_request = verifier.get_presentation_request_msg().unwrap();
         let mut prover = create_prover_from_request(presentation_request.clone()).await;

@@ -118,7 +118,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        backend: ["vdrtools", "modular_libs", "vdr_proxy_ledger"]
+        backend: ["modular_libs", "vdr_proxy_ledger"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -141,7 +141,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        backend: ["vdrtools_anoncreds", "modular_libs", "vdr_proxy_ledger"]
+        backend: ["modular_libs", "vdr_proxy_ledger"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -274,12 +274,6 @@ jobs:
   test-integration-aries-vcx:
     needs: workflow-setup
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        features: [
-          "vdrtools",
-          "modular_libs"
-        ]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -288,7 +282,7 @@ jobs:
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run aries-vcx integration tests"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" --features ${{ matrix.features }} -- --ignored;
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -- --ignored;
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
