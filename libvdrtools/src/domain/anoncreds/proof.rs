@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use indy_api_types::validation::Validatable;
 use ursa::cl::Proof as CryptoProof;
 
 use super::{
@@ -72,8 +71,6 @@ pub struct Identifier {
     pub rev_reg_id: Option<RevocationRegistryId>,
     pub timestamp: Option<u64>,
 }
-
-impl Validatable for Proof {}
 
 #[cfg(test)]
 mod tests {

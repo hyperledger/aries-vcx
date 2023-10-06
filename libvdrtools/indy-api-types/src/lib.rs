@@ -47,8 +47,6 @@ pub mod domain;
 pub mod errors;
 pub use errors::IndyError;
 
-pub mod validation;
-
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[repr(i32)]
 pub enum ErrorCode {

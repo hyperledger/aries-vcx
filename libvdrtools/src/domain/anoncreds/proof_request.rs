@@ -1,6 +1,5 @@
 use std::{collections::HashMap, fmt};
 
-use indy_api_types::validation::Validatable;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 use ursa::cl::Nonce;
@@ -196,65 +195,6 @@ pub struct RequestedAttributeInfo {
 pub struct RequestedPredicateInfo {
     pub predicate_referent: String,
     pub predicate_info: PredicateInfo,
-}
-
-impl Validatable for ProofRequest {
-    fn validate(&self) -> Result<(), String> {
-        let value = self.value();
-        let version = self.version();
-
-        if value.requested_attributes.is_empty() && value.requested_predicates.is_empty() {
-            return Err(String::from(
-                "Proof Request validation failed: both `requested_attributes` and \
-                 `requested_predicates` are empty",
-            ));
-        }
-
-        for (_, requested_attribute) in value.requested_attributes.iter() {
-            let has_name = !requested_attribute
-                .name
-                .as_ref()
-                .map(String::is_empty)
-                .unwrap_or(true);
-            let has_names = !requested_attribute
-                .names
-                .as_ref()
-                .map(Vec::is_empty)
-                .unwrap_or(true);
-            if !has_name && !has_names {
-                return Err(format!(
-                    "Proof Request validation failed: there is empty requested attribute: {:?}",
-                    requested_attribute
-                ));
-            }
-
-            if has_name && has_names {
-                return Err(format!(
-                    "Proof request validation failed: there is a requested attribute with both \
-                     name and names: {:?}",
-                    requested_attribute
-                ));
-            }
-
-            if let Some(ref restrictions) = requested_attribute.restrictions {
-                _process_operator(&restrictions, &version)?;
-            }
-        }
-
-        for (_, requested_predicate) in value.requested_predicates.iter() {
-            if requested_predicate.name.is_empty() {
-                return Err(format!(
-                    "Proof Request validation failed: there is empty requested attribute: {:?}",
-                    requested_predicate
-                ));
-            }
-            if let Some(ref restrictions) = requested_predicate.restrictions {
-                _process_operator(&restrictions, &version)?;
-            }
-        }
-
-        Ok(())
-    }
 }
 
 impl ProofRequest {

@@ -1,9 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use indy_api_types::{
-    errors::{err_msg, IndyErrorKind, IndyResult},
-    validation::Validatable,
-};
+use indy_api_types::errors::{err_msg, IndyErrorKind, IndyResult};
 use lazy_static::lazy_static;
 use regex::Regex;
 use ursa::cl::{RevocationKeyPrivate, RevocationKeyPublic};
@@ -232,40 +229,6 @@ impl RevocationRegistryId {
     }
 }
 
-impl Validatable for RevocationRegistryConfig {
-    fn validate(&self) -> Result<(), String> {
-        if let Some(num_) = self.max_cred_num {
-            if num_ == 0 {
-                return Err(String::from(
-                    "RevocationRegistryConfig validation failed: `max_cred_num` must be greater \
-                     than 0",
-                ));
-            }
-        }
-        Ok(())
-    }
-}
-
-impl Validatable for RevocationRegistryId {
-    fn validate(&self) -> Result<(), String> {
-        self.parts().ok_or(format!(
-            "Revocation Registry Id validation failed: {:?}, doesn't match pattern",
-            self.0
-        ))?;
-        Ok(())
-    }
-}
-
-impl Validatable for RevocationRegistryDefinition {
-    fn validate(&self) -> Result<(), String> {
-        match self {
-            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(revoc_reg_def) => {
-                revoc_reg_def.id.validate()?;
-            }
-        }
-        Ok(())
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -357,20 +320,6 @@ mod tests {
             assert_eq!(_cred_def_id_qualified(), cred_def_id);
             assert_eq!(_rev_reg_type(), rev_reg_type);
             assert_eq!(_tag(), tag);
-        }
-    }
-
-    mod validate {
-        use super::*;
-
-        #[test]
-        fn test_validate_rev_reg_id_as_unqualified() {
-            _rev_reg_id_unqualified().validate().unwrap();
-        }
-
-        #[test]
-        fn test_validate_rev_reg_id_as_fully_qualified() {
-            _rev_reg_id_qualified().validate().unwrap();
         }
     }
 }

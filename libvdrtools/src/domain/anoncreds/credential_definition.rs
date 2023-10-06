@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use indy_api_types::{
     errors::{IndyErrorKind, IndyResult},
-    validation::Validatable,
     IndyError,
 };
 use ursa::cl::{
@@ -124,18 +123,6 @@ pub struct CredentialDefinitionPrivateKey {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CredentialDefinitionCorrectnessProof {
     pub value: CredentialKeyCorrectnessProof,
-}
-
-impl Validatable for CredentialDefinition {
-    fn validate(&self) -> Result<(), String> {
-        match self {
-            CredentialDefinition::CredentialDefinitionV1(cred_def) => {
-                cred_def.id.validate()?;
-                cred_def.schema_id.validate()?;
-                Ok(())
-            }
-        }
-    }
 }
 
 qualifiable_type!(CredentialDefinitionId);
@@ -303,18 +290,6 @@ impl CredentialDefinitionId {
     }
 }
 
-impl Validatable for CredentialDefinitionId {
-    fn validate(&self) -> Result<(), String> {
-        self.parts().ok_or(format!(
-            "Credential Definition Id validation failed: {:?}, doesn't match pattern",
-            self.0
-        ))?;
-        Ok(())
-    }
-}
-
-impl Validatable for CredentialDefinitionConfig {}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -477,41 +452,6 @@ mod tests {
             assert_eq!(_signature_type(), signature_type);
             assert_eq!(_schema_id_seq_no(), schema_id);
             assert_eq!(_tag(), tag);
-        }
-    }
-
-    mod validate {
-        use super::*;
-
-        #[test]
-        fn test_validate_cred_def_id_as_unqualified() {
-            _cred_def_id_unqualified().validate().unwrap();
-        }
-
-        #[test]
-        fn test_validate_cred_def_id_as_unqualified_without_tag() {
-            _cred_def_id_unqualified_without_tag().validate().unwrap();
-        }
-
-        #[test]
-        fn test_validate_cred_def_id_as_unqualified_with_schema_as_seq_no() {
-            _cred_def_id_unqualified_with_schema_as_seq_no()
-                .validate()
-                .unwrap();
-        }
-
-        #[test]
-        fn test_validate_cred_def_id_as_unqualified_with_schema_as_seq_no_without_tag() {
-            _cred_def_id_unqualified_with_schema_as_seq_no_without_tag()
-                .validate()
-                .unwrap();
-        }
-
-        #[test]
-        fn test_validate_cred_def_id_as_fully_qualified_with_schema_as_seq_no() {
-            _cred_def_id_qualified_with_schema_as_seq_no()
-                .validate()
-                .unwrap();
         }
     }
 }

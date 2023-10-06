@@ -1,4 +1,3 @@
-use indy_api_types::validation::Validatable;
 use ursa::cl::RevocationRegistryDelta as RegistryDelta;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -21,5 +20,3 @@ impl From<RevocationRegistryDelta> for RevocationRegistryDeltaV1 {
         }
     }
 }
-
-impl Validatable for RevocationRegistryDelta {}
