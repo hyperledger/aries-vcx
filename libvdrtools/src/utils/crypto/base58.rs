@@ -3,8 +3,8 @@ use bs58::{decode, decode::Result, encode};
 pub trait ToBase58 {
     fn to_base58(&self) -> String;
 }
-pub trait FromBase58 {
-    fn from_base58(&self) -> Result<Vec<u8>>;
+pub trait DecodeBase58 {
+    fn decode_base58(self) -> Result<Vec<u8>>;
 }
 
 impl ToBase58 for [u8] {
@@ -13,14 +13,14 @@ impl ToBase58 for [u8] {
     }
 }
 
-impl FromBase58 for [u8] {
-    fn from_base58(&self) -> Result<Vec<u8>> {
+impl DecodeBase58 for &[u8] {
+    fn decode_base58(self) -> Result<Vec<u8>> {
         decode(self).into_vec()
     }
 }
 
-impl FromBase58 for str {
-    fn from_base58(&self) -> Result<Vec<u8>> {
+impl DecodeBase58 for &str {
+    fn decode_base58(self) -> Result<Vec<u8>> {
         decode(self.as_bytes()).into_vec()
     }
 }

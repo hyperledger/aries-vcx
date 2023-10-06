@@ -43,7 +43,7 @@ fn _serialize_signature(
                     let mut ctx = Hash::new_context()?;
 
                     ctx.update(
-                        &value
+                        value
                             .as_str()
                             .ok_or_else(|| {
                                 IndyError::from_msg(

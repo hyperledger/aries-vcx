@@ -17,7 +17,7 @@ use crate::{
         key::{Key, KeyInfo},
     },
     utils::crypto::{
-        base58::{FromBase58, ToBase58},
+        base58::{DecodeBase58, ToBase58},
         verkey_builder::{build_full_verkey, split_verkey, verkey_get_cryptoname},
     },
 };
@@ -95,9 +95,7 @@ impl CryptoService {
         trace!("create_key > key_info {:?}", secret!(key_info));
 
         let crypto_type_name = key_info
-            .crypto_type
-            .as_ref()
-            .map(String::as_str)
+            .crypto_type.as_deref()
             .unwrap_or(DEFAULT_CRYPTO_TYPE);
 
         let crypto_types = self.crypto_types.read().await;
@@ -224,7 +222,7 @@ impl CryptoService {
         })?;
 
         let my_sk = ed25519_sign::SecretKey::from_slice(
-            &my_key.signkey.as_str().from_base58()?.as_slice(),
+            &my_key.signkey.as_str().decode_base58()?.as_slice(),
         )?;
 
         let signature = crypto_type.sign(&my_sk, doc)?[..].to_vec();
@@ -261,7 +259,7 @@ impl CryptoService {
             )
         })?;
 
-        let their_vk = ed25519_sign::PublicKey::from_slice(&their_vk.from_base58()?)?;
+        let their_vk = ed25519_sign::PublicKey::from_slice(&their_vk.decode_base58()?)?;
         let signature = ed25519_sign::Signature::from_slice(&signature)?;
 
         let valid = crypto_type.verify(&their_vk, msg, &signature)?;
@@ -311,10 +309,11 @@ impl CryptoService {
             )
         })?;
 
-        let my_sk =
-            ed25519_sign::SecretKey::from_slice(my_key.signkey.as_str().from_base58()?.as_slice())?;
+        let my_sk = ed25519_sign::SecretKey::from_slice(
+            my_key.signkey.as_str().decode_base58()?.as_slice(),
+        )?;
 
-        let their_vk = ed25519_sign::PublicKey::from_slice(their_vk.from_base58()?.as_slice())?;
+        let their_vk = ed25519_sign::PublicKey::from_slice(their_vk.decode_base58()?.as_slice())?;
         let nonce = crypto_type.gen_nonce();
 
         let encrypted_doc = crypto_type.crypto_box(&my_sk, &their_vk, doc, &nonce)?;
@@ -366,8 +365,9 @@ impl CryptoService {
             )
         })?;
 
-        let my_sk = ed25519_sign::SecretKey::from_slice(&my_key.signkey.from_base58()?.as_slice())?;
-        let their_vk = ed25519_sign::PublicKey::from_slice(their_vk.from_base58()?.as_slice())?;
+        let my_sk =
+            ed25519_sign::SecretKey::from_slice(&my_key.signkey.decode_base58()?.as_slice())?;
+        let their_vk = ed25519_sign::PublicKey::from_slice(their_vk.decode_base58()?.as_slice())?;
         let nonce = ed25519_box::Nonce::from_slice(&nonce)?;
 
         let decrypted_doc = crypto_type.crypto_box_open(&my_sk, &their_vk, &doc, &nonce)?;
@@ -393,7 +393,7 @@ impl CryptoService {
             )
         })?;
 
-        let their_vk = ed25519_sign::PublicKey::from_slice(their_vk.from_base58()?.as_slice())?;
+        let their_vk = ed25519_sign::PublicKey::from_slice(their_vk.decode_base58()?.as_slice())?;
         let encrypted_doc = crypto_type.crypto_box_seal(&their_vk, doc)?;
 
         let res = Ok(encrypted_doc);
@@ -422,10 +422,11 @@ impl CryptoService {
             )
         })?;
 
-        let my_vk = ed25519_sign::PublicKey::from_slice(my_vk.from_base58()?.as_slice())?;
+        let my_vk = ed25519_sign::PublicKey::from_slice(my_vk.decode_base58()?.as_slice())?;
 
-        let my_sk =
-            ed25519_sign::SecretKey::from_slice(my_key.signkey.as_str().from_base58()?.as_slice())?;
+        let my_sk = ed25519_sign::SecretKey::from_slice(
+            my_key.signkey.as_str().decode_base58()?.as_slice(),
+        )?;
 
         let decrypted_doc = crypto_type.crypto_box_seal_open(&my_vk, &my_sk, doc)?;
 
@@ -508,9 +509,9 @@ impl CryptoService {
         })?;
 
         if vk.starts_with('~') {
-            let _ = vk[1..].from_base58()?; // TODO: proper validate abbreviated verkey
+            let _ = vk[1..].decode_base58()?; // TODO: proper validate abbreviated verkey
         } else {
-            let vk = ed25519_sign::PublicKey::from_slice(vk.from_base58()?.as_slice())?;
+            let vk = ed25519_sign::PublicKey::from_slice(vk.decode_base58()?.as_slice())?;
             crypto_type.validate_key(&vk)?;
         };
 

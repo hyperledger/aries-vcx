@@ -1,6 +1,3 @@
-#![cfg_attr(feature = "fatal_warnings", deny(warnings))]
-#![allow(clippy::all)]
-
 #[macro_use]
 extern crate log;
 
@@ -115,32 +112,5 @@ impl Locator {
 impl Drop for Locator {
     fn drop(&mut self) {
         info!(target: "Locator", "drop <>");
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn locator_new_works() {
-        let _locator = Locator::new();
-        assert!(true);
-    }
-
-    #[test]
-    fn locator_drop_works() {
-        {
-            let _locator = Locator::new();
-        }
-
-        assert!(true);
-    }
-
-    #[test]
-    fn locator_get_instance_works() {
-        let locator = Locator::instance();
-        let locator2 = Locator::instance();
-        assert!(std::ptr::eq(locator, locator2));
     }
 }

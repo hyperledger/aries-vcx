@@ -20,7 +20,7 @@ use crate::{
         pairwise::Pairwise,
     },
     services::CryptoService,
-    utils::crypto::base58::{FromBase58, ToBase58},
+    utils::crypto::base58::{DecodeBase58, ToBase58},
 };
 
 pub struct DidController {
@@ -666,8 +666,8 @@ impl DidController {
             return res;
         }
 
-        let did = &did.to_unqualified().0.from_base58()?;
-        let dverkey = &verkey.from_base58()?;
+        let did = &did.to_unqualified().0.decode_base58()?;
+        let dverkey = &verkey.decode_base58()?;
 
         let (first_part, second_part) = dverkey.split_at(16);
 

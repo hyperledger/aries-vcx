@@ -49,7 +49,7 @@ pub fn method(entity: &str) -> Option<String> {
 }
 
 pub fn is_fully_qualified(entity: &str) -> bool {
-    REGEX.is_match(&entity)
+    REGEX.is_match(entity)
 }
 
 macro_rules! qualifiable_type (($newtype:ident) => (

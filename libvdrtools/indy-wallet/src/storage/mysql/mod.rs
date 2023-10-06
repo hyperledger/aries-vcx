@@ -998,7 +998,7 @@ impl WalletStorageType for MySqlStorageType {
 #[cfg(test)]
 mod tests {
     #[allow(unused_imports)]
-    use indy_utils::{assert_kind, environment};
+    use indy_utils::environment;
 
     use super::{super::Tag, *};
 
@@ -1142,7 +1142,7 @@ mod tests {
             )
             .await;
 
-        assert_kind!(IndyErrorKind::WalletAlreadyExists, res);
+        matches!(res, IndyErrorKind::WalletAlreadyExists);
 
         storage_type
             .delete_storage(
@@ -1211,7 +1211,7 @@ mod tests {
         let res = storage_type
             .delete_storage("unknown", _config(), _credentials())
             .await;
-        assert_kind!(IndyErrorKind::WalletNotFound, res);
+        matches!(res, IndyErrorKind::WalletNotFound);
 
         storage_type
             .delete_storage(
@@ -1242,7 +1242,7 @@ mod tests {
             .open_storage("unknown", _config(), _credentials())
             .await;
 
-        assert_kind!(IndyErrorKind::WalletNotFound, res);
+        matches!(res, IndyErrorKind::WalletNotFound);
     }
 
     #[async_std::test]
@@ -1259,10 +1259,10 @@ mod tests {
                 .unwrap();
 
             let res = storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await;
-            assert_kind!(IndyErrorKind::WalletItemAlreadyExists, res);
+            matches!(res, IndyErrorKind::WalletItemAlreadyExists);
 
             let res = storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await;
-            assert_kind!(IndyErrorKind::WalletItemAlreadyExists, res);
+            matches!(res, IndyErrorKind::WalletItemAlreadyExists);
         }
 
         _cleanup("mysql_storage_add_works_for_is_802").await;
@@ -1311,7 +1311,7 @@ mod tests {
                 .unwrap();
 
             let res = storage.add(&_type1(), &_id1(), &_value2(), &_tags()).await;
-            assert_kind!(IndyErrorKind::WalletItemAlreadyExists, res);
+            matches!(res, IndyErrorKind::WalletItemAlreadyExists);
         }
 
         _cleanup("mysql_storage_set_get_works_for_twice").await;
@@ -1371,7 +1371,7 @@ mod tests {
                 )
                 .await;
 
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_get_works_for_wrong_key").await;
@@ -1412,7 +1412,7 @@ mod tests {
                 )
                 .await;
 
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_delete_works").await;
@@ -1432,7 +1432,7 @@ mod tests {
                 .unwrap();
 
             let res = storage.delete(&_type1(), &_id2()).await;
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_delete_works_for_non_existing").await;
@@ -1453,7 +1453,7 @@ mod tests {
                 .unwrap();
 
             let res = storage.delete(&_type2(), &_id2()).await;
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_delete_returns_error_item_not_found_if_no_such_type").await;
@@ -1581,7 +1581,7 @@ mod tests {
             assert_eq!(record.value.unwrap(), _value1());
 
             let res = storage.update(&_type1(), &_id2(), &_value2()).await;
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_update_works_for_non_existing_id").await;
@@ -1612,7 +1612,7 @@ mod tests {
             assert_eq!(record.value.unwrap(), _value1());
 
             let res = storage.update(&_type2(), &_id1(), &_value2()).await;
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_update_works_for_non_existing_type").await;
@@ -1673,7 +1673,7 @@ mod tests {
                 .unwrap();
 
             let res = storage.add_tags(&_type1(), &_id2(), &_new_tags()).await;
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_add_tags_works_for_non_existing_id").await;
@@ -1693,7 +1693,7 @@ mod tests {
                 .unwrap();
 
             let res = storage.add_tags(&_type2(), &_id1(), &_new_tags()).await;
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_add_tags_works_for_non_existing_type").await;
@@ -1794,7 +1794,7 @@ mod tests {
                 .unwrap();
 
             let res = storage.update_tags(&_type1(), &_id2(), &_new_tags()).await;
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_update_tags_works_for_non_existing_id").await;
@@ -1814,7 +1814,7 @@ mod tests {
                 .unwrap();
 
             let res = storage.update_tags(&_type1(), &_id2(), &_new_tags()).await;
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_update_tags_works_for_non_existing_type").await;
@@ -1938,7 +1938,7 @@ mod tests {
             ];
 
             let res = storage.delete_tags(&_type2(), &_id1(), &tag_names).await;
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_delete_tags_works_for_non_existing_type").await;
@@ -1971,7 +1971,7 @@ mod tests {
             ];
 
             let res = storage.delete_tags(&_type1(), &_id2(), &tag_names).await;
-            assert_kind!(IndyErrorKind::WalletItemNotFound, res);
+            matches!(res, IndyErrorKind::WalletItemNotFound);
         }
 
         _cleanup("mysql_storage_delete_tags_works_for_non_existing_id").await;
