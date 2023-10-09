@@ -1,5 +1,3 @@
-// use std::error::Error;
-
 pub use log::{debug, error, info};
 
 // Generic Wrapper struct for newtype pattern

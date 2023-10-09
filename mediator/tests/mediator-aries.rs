@@ -10,7 +10,7 @@ const ENDPOINT_ROOT: &str = "http://localhost:8005";
 
 struct TestSetupAries;
 impl OneTimeInit for TestSetupAries {
-    fn one_time_setup_code(&self) -> () {
+    fn one_time_setup_code(&self) {
         fn setup_logging() {
             let env = env_logger::Env::default().default_filter_or("info");
             env_logger::init_from_env(env);

@@ -12,7 +12,7 @@ pub mod test_setup {
             INIT.call_once(|| self.one_time_setup_code());
         }
         // your custom initialization code goes here
-        fn one_time_setup_code(&self) -> ();
+        fn one_time_setup_code(&self);
     }
 }
 
