@@ -13,7 +13,6 @@ use super::{
     super::{
         anoncreds::{schema::SchemaId, DELIMITER},
         crypto::did::DidValue,
-        ledger::request::ProtocolVersion,
     },
     indy_identifiers,
 };
@@ -142,35 +141,24 @@ impl CredentialDefinitionId {
                 "Unsupported DID method",
             )),
             None => {
-                let id = if ProtocolVersion::is_node_1_3() {
-                    CredentialDefinitionId(format!(
-                        "{}{}{}{}{}{}{}",
-                        did.0,
-                        DELIMITER,
-                        Self::MARKER,
-                        DELIMITER,
-                        signature_type,
-                        DELIMITER,
-                        schema_id.0
-                    ))
+                let tag = if tag.is_empty() {
+                    "".to_owned()
                 } else {
-                    let tag = if tag.is_empty() {
-                        "".to_owned()
-                    } else {
-                        format!("{}{}", DELIMITER, tag)
-                    };
-                    CredentialDefinitionId(format!(
-                        "{}{}{}{}{}{}{}{}",
-                        did.0,
-                        DELIMITER,
-                        Self::MARKER,
-                        DELIMITER,
-                        signature_type,
-                        DELIMITER,
-                        schema_id.0,
-                        tag
-                    ))
+                    format!("{}{}", DELIMITER, tag)
                 };
+
+                let id = CredentialDefinitionId(format!(
+                    "{}{}{}{}{}{}{}{}",
+                    did.0,
+                    DELIMITER,
+                    Self::MARKER,
+                    DELIMITER,
+                    signature_type,
+                    DELIMITER,
+                    schema_id.0,
+                    tag
+                ));
+
                 Ok(id)
             }
         }

@@ -2597,9 +2597,7 @@ dependencies = [
  "async-std",
  "async-trait",
  "bs58 0.5.0",
- "byteorder",
  "dirs",
- "etcommon-rlp",
  "failure",
  "futures",
  "hex",
@@ -2610,19 +2608,11 @@ dependencies = [
  "libc",
  "log",
  "log-derive",
- "num-derive",
- "num-traits",
- "rand 0.8.5",
  "regex",
- "rmp-serde",
  "serde",
  "serde_derive",
  "serde_json",
- "sha2",
- "sha3",
- "time 0.3.20",
  "ursa",
- "uuid 1.4.1",
  "zeroize",
 ]
 
@@ -2955,17 +2945,6 @@ dependencies = [
  "rand 0.8.5",
  "smallvec",
  "zeroize",
-]
-
-[[package]]
-name = "num-derive"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e6a0fd4f737c707bd9086cc16c925f294943eb62eb71499e9fd4cf71f8b9f4e"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.38",
 ]
 
 [[package]]

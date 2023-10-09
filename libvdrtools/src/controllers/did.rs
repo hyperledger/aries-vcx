@@ -4,20 +4,12 @@ use indy_api_types::{errors::prelude::*, WalletHandle};
 use indy_wallet::{RecordOptions, SearchOptions, WalletService};
 
 use crate::{
-    domain::{
-        crypto::{
-            did::{
-                Did, DidMetadata, DidMethod, DidValue, DidWithMeta, MyDidInfo, TemporaryDid,
-                TheirDid, TheirDidInfo,
-            },
-            key::KeyInfo,
+    domain::crypto::{
+        did::{
+            Did, DidMetadata, DidValue, DidWithMeta, MyDidInfo, TemporaryDid, TheirDid,
+            TheirDidInfo,
         },
-        ledger::{
-            attrib::{AttribData, Endpoint, GetAttrReplyResult},
-            did::{GetNymReplyResult, GetNymResultDataV0},
-            response::Reply,
-        },
-        pairwise::Pairwise,
+        key::KeyInfo,
     },
     services::CryptoService,
     utils::crypto::base58::{DecodeBase58, ToBase58},
@@ -519,49 +511,6 @@ impl DidController {
         res
     }
 
-    /// Set/replaces endpoint information for the given DID.
-    ///
-    /// #Params
-
-    /// wallet_handle: Wallet handle (created by open_wallet).
-    /// did - The DID to resolve endpoint.
-    /// address -  The DIDs endpoint address. indy-node and indy-plenum restrict this to
-    /// ip_address:port transport_key - The DIDs transport key (ver key, key id).
-    ///
-    /// #Returns
-    ///
-    /// #Errors
-    /// Common*
-    /// Wallet*
-    /// Crypto*
-    pub async fn set_endpoint_for_did(
-        &self,
-        wallet_handle: WalletHandle,
-        did: DidValue,
-        endpoint: Endpoint,
-    ) -> IndyResult<()> {
-        trace!(
-            "set_endpoint_for_did > wallet_handle {:?} did {:?} endpoint {:?}",
-            wallet_handle,
-            did,
-            endpoint
-        );
-
-        self.crypto_service.validate_did(&did)?;
-
-        if let Some(ref transport_key) = endpoint.verkey {
-            self.crypto_service.validate_key(transport_key).await?;
-        }
-
-        self.wallet_service
-            .upsert_indy_object(wallet_handle, &did.0, &endpoint)
-            .await?;
-
-        let res = Ok(());
-        trace!("set_endpoint_for_did < {:?}", res);
-        res
-    }
-
     /// Saves/replaces the meta information for the giving DID in the wallet.
     ///
     /// #Params
@@ -682,175 +631,6 @@ impl DidController {
         res
     }
 
-    /// Update DID stored in the wallet to make fully qualified, or to do other DID maintenance.
-    ///     - If the DID has no method, a method will be appended (prepend did:peer to a legacy did)
-    ///     - If the DID has a method, a method will be updated (migrate did:peer to did:peer-new)
-    ///
-    /// Update DID related entities stored in the wallet.
-    ///
-    /// #Params
-
-    /// wallet_handle: Wallet handle (created by open_wallet).
-    /// did: target DID stored in the wallet.
-    /// method: method to apply to the DID.
-    ///
-    /// #Returns
-    /// did: fully qualified form of did
-    ///
-    /// #Errors
-    /// Common*
-    /// Wallet*
-    /// Crypto*
-    pub async fn qualify_did(
-        &self,
-        wallet_handle: WalletHandle,
-        did: DidValue,
-        method: DidMethod,
-    ) -> IndyResult<String> {
-        trace!(
-            "qualify_did > wallet_handle {:?} curr_did {:?} method {:?}",
-            wallet_handle,
-            did,
-            method
-        );
-
-        self.crypto_service.validate_did(&did)?;
-
-        let mut curr_did: Did = self
-            .wallet_service
-            .get_indy_object::<Did>(wallet_handle, &did.0, &RecordOptions::id_value())
-            .await?;
-
-        curr_did.did = DidValue::new(&did.to_short().0, None, Some(&method.0))?;
-
-        self.wallet_service
-            .delete_indy_record::<Did>(wallet_handle, &did.0)
-            .await?;
-
-        self.wallet_service
-            .add_indy_object(wallet_handle, &curr_did.did.0, &curr_did, &HashMap::new())
-            .await?;
-
-        // move temporary Did
-        if let Ok(mut temp_did) = self
-            .wallet_service
-            .get_indy_object::<TemporaryDid>(wallet_handle, &did.0, &RecordOptions::id_value())
-            .await
-        {
-            temp_did.did = curr_did.did.clone();
-
-            self.wallet_service
-                .delete_indy_record::<TemporaryDid>(wallet_handle, &did.0)
-                .await?;
-
-            self.wallet_service
-                .add_indy_object(wallet_handle, &curr_did.did.0, &temp_did, &HashMap::new())
-                .await?;
-        }
-
-        // move metadata
-        self._update_dependent_entity_reference::<DidMetadata>(
-            wallet_handle,
-            &did.0,
-            &curr_did.did.0,
-        )
-        .await?;
-
-        // move endpoint
-        self._update_dependent_entity_reference::<Endpoint>(wallet_handle, &did.0, &curr_did.did.0)
-            .await?;
-
-        // move all pairwise
-        let mut pairwise_search = self
-            .wallet_service
-            .search_indy_records::<Pairwise>(wallet_handle, "{}", &RecordOptions::id_value())
-            .await?;
-
-        while let Some(pairwise_record) = pairwise_search.fetch_next_record().await? {
-            let mut pairwise: Pairwise = pairwise_record
-                .get_value()
-                .ok_or_else(|| err_msg(IndyErrorKind::InvalidState, "No value for Pairwise record"))
-                .and_then(|pairwise_json| {
-                    serde_json::from_str(pairwise_json).map_err(|err| {
-                        IndyError::from_msg(
-                            IndyErrorKind::InvalidState,
-                            format!("Cannot deserialize Pairwise {:?}", err),
-                        )
-                    })
-                })?;
-
-            if pairwise.my_did.eq(&did) {
-                pairwise.my_did = curr_did.did.clone();
-
-                self.wallet_service
-                    .update_indy_object(wallet_handle, &pairwise.their_did.0, &pairwise)
-                    .await?;
-            }
-        }
-
-        let res = Ok(curr_did.did.0);
-        trace!("qualify_did < {:?}", res);
-        res
-    }
-
-    pub async fn get_nym_ack_process_and_store_their_did(
-        &self,
-        wallet_handle: WalletHandle,
-        did: DidValue,
-        get_nym_reply_result: IndyResult<String>,
-    ) -> IndyResult<TheirDid> {
-        trace!(
-            "get_nym_ack_process_and_store_their_did > wallet_handle {:?} get_nym_reply_result \
-             {:?}",
-            wallet_handle,
-            get_nym_reply_result
-        );
-
-        let get_nym_reply = get_nym_reply_result?;
-
-        let get_nym_response: Reply<GetNymReplyResult> = serde_json::from_str(&get_nym_reply)
-            .to_indy(
-                IndyErrorKind::InvalidState,
-                "Invalid GetNymReplyResult json",
-            )?;
-
-        let their_did_info = match get_nym_response.result() {
-            GetNymReplyResult::GetNymReplyResultV0(res) => {
-                if let Some(data) = &res.data {
-                    let gen_nym_result_data: GetNymResultDataV0 = serde_json::from_str(data)
-                        .to_indy(IndyErrorKind::InvalidState, "Invalid GetNymResultData json")?;
-
-                    TheirDidInfo::new(
-                        gen_nym_result_data.dest.qualify(did.get_method()),
-                        gen_nym_result_data.verkey,
-                    )
-                } else {
-                    return Err(err_msg(
-                        IndyErrorKind::WalletItemNotFound,
-                        "Their DID isn't found on the ledger",
-                    )); //TODO FIXME use separate error
-                }
-            }
-            GetNymReplyResult::GetNymReplyResultV1(res) => TheirDidInfo::new(
-                res.txn.data.did.qualify(did.get_method()),
-                res.txn.data.verkey,
-            ),
-        };
-
-        let their_did = self
-            .crypto_service
-            .create_their_did(&their_did_info)
-            .await?;
-
-        self.wallet_service
-            .add_indy_object(wallet_handle, &their_did.did.0, &their_did, &HashMap::new())
-            .await?;
-
-        trace!("get_nym_ack_process_and_store_their_did <<<");
-
-        Ok(their_did)
-    }
-
     async fn _update_dependent_entity_reference<T>(
         &self,
         wallet_handle: WalletHandle,
@@ -874,50 +654,6 @@ impl DidController {
         }
 
         Ok(())
-    }
-
-    async fn _get_attrib_ack_process_store_endpoint_to_wallet(
-        &self,
-        wallet_handle: WalletHandle,
-        get_attrib_reply_result: IndyResult<String>,
-    ) -> IndyResult<Endpoint> {
-        trace!(
-            "_get_attrib_ack_process_store_endpoint_to_wallet > wallet_handle {:?} \
-             get_attrib_reply_result {:?}",
-            wallet_handle,
-            get_attrib_reply_result
-        );
-
-        let get_attrib_reply = get_attrib_reply_result?;
-
-        let get_attrib_reply: Reply<GetAttrReplyResult> = serde_json::from_str(&get_attrib_reply)
-            .to_indy(
-            IndyErrorKind::InvalidState,
-            "Invalid GetAttrReplyResult json",
-        )?;
-
-        let (raw, did) = match get_attrib_reply.result() {
-            GetAttrReplyResult::GetAttrReplyResultV0(res) => (res.data, res.dest),
-            GetAttrReplyResult::GetAttrReplyResultV1(res) => (res.txn.data.raw, res.txn.data.did),
-        };
-
-        let attrib_data: AttribData = serde_json::from_str(&raw)
-            .to_indy(IndyErrorKind::InvalidState, "Invalid GetAttReply json")?;
-
-        let endpoint = Endpoint::new(attrib_data.endpoint.ha, attrib_data.endpoint.verkey);
-
-        self.wallet_service
-            .add_indy_object(wallet_handle, &did.0, &endpoint, &HashMap::new())
-            .await?;
-
-        let res = Ok(endpoint);
-
-        trace!(
-            "_get_attrib_ack_process_store_endpoint_to_wallet < {:?}",
-            res
-        );
-
-        res
     }
 
     async fn _wallet_get_my_did(
