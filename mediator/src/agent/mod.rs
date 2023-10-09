@@ -167,7 +167,7 @@ impl<T: BaseWallet + 'static> Agent<T> {
         let their_diddoc = request.content.connection.did_doc;
         let packed_response_envelope = EncryptionEnvelope::create(
             self.wallet.as_ref(),
-            &json!(aries_response).to_string().as_bytes(),
+            json!(aries_response).to_string().as_bytes(),
             Some(&old_vk),
             &their_diddoc,
         )
@@ -188,7 +188,7 @@ impl<T: BaseWallet + 'static> Agent<T> {
         did_doc: &AriesDidDoc,
     ) -> Result<(), String> {
         self.persistence
-            .create_account(&their_vk, our_vk, &json!(did_doc).to_string())
+            .create_account(their_vk, our_vk, &json!(did_doc).to_string())
             .await?;
         Ok(())
     }

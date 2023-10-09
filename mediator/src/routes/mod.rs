@@ -5,7 +5,8 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use axum::{
     body::Bytes,
     extract::State,
-    response::Html,
+    http::header::{HeaderMap, ACCEPT},
+    response::{Html, IntoResponse, Response},
     routing::{get, post},
     Json, Router,
 };
@@ -53,23 +54,41 @@ pub async fn handle_aries<T: BaseWallet + 'static>(
     let packed_json = serde_json::from_slice(&packed_message_bytes[..]).unwrap();
     Ok(Json(packed_json))
 }
-pub async fn oob_invite_qr<T: BaseWallet + 'static>(
-    State(agent): State<ArcAgent<T>>,
-) -> Html<String> {
+pub async fn oob_invite_qr(
+    headers: HeaderMap,
+    State(agent): State<ArcAgent<impl BaseWallet + 'static>>,
+) -> Response {
+    let Json(oob_json) = oob_invite_json(State(agent)).await;
+    let preferred_mimetype = headers
+        .get(ACCEPT)
+        .map(|s| s.to_str().unwrap_or_default())
+        .unwrap_or_default();
+    match preferred_mimetype {
+        "application/json" => Json(oob_json).into_response(),
+        _ => {
+            let oob_string = serde_json::to_string_pretty(&oob_json).unwrap();
+            let qr = fast_qr::QRBuilder::new(oob_string.clone()).build().unwrap();
+            let oob_qr_svg = fast_qr::convert::svg::SvgBuilder::default().to_str(&qr);
+            Html(format!(
+                "<style>
+                        svg {{
+                            width: 50%;
+                            height: 50%;
+                        }}
+                    </style>
+                    {oob_qr_svg} <br>
+                    <pre>{oob_string}</pre>"
+            ))
+            .into_response()
+        }
+    }
+}
+
+pub async fn oob_invite_json(
+    State(agent): State<ArcAgent<impl BaseWallet + 'static>>,
+) -> Json<Value> {
     let oob = agent.get_oob_invite().unwrap();
-    let oob_string = serde_json::to_string_pretty(&oob).unwrap();
-    let qr = fast_qr::QRBuilder::new(oob_string.clone()).build().unwrap();
-    let oob_qr_svg = fast_qr::convert::svg::SvgBuilder::default().to_str(&qr);
-    Html(format!(
-        "<style>
-            svg {{
-                width: 50%;
-                height: 50%;
-            }}
-        </style>
-        {oob_qr_svg} <br>
-        <pre>{oob_string}</pre>"
-    ))
+    Json(serde_json::to_value(oob).unwrap())
 }
 
 pub async fn readme() -> Html<String> {
@@ -80,6 +99,7 @@ pub async fn build_router<T: BaseWallet + 'static>(agent: Agent<T>) -> Router {
     Router::default()
         .route("/", get(readme))
         .route("/register", get(oob_invite_qr))
+        .route("/register.json", get(oob_invite_json))
         .route("/aries", get(handle_aries).post(handle_aries))
         .layer(tower_http::catch_panic::CatchPanicLayer::new())
         .with_state(Arc::new(agent))

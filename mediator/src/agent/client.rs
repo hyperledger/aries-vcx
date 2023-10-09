@@ -1,13 +1,15 @@
 // use aries_vcx::protocols::connection::initiation_type::Invitee;
 // use aries_vcx::protocols::connection::invitee::states::invited::Invited;
-use aries_vcx::protocols::connection::invitee::states::requested::Requested as ClientRequestSent;
 // use aries_vcx::protocols::oob;
 use aries_vcx::utils::mockdata::profile::mock_ledger::MockLedger;
 use aries_vcx::{
     handlers::util::AnyInvitation,
     protocols::{
         connection::invitee::{
-            states::{completed::Completed, initial::Initial as ClientInit},
+            states::{
+                completed::Completed, initial::Initial as ClientInit,
+                requested::Requested as ClientRequestSent,
+            },
             InviteeConnection,
         },
         mediated_connection::pairwise_info::PairwiseInfo,
@@ -89,7 +91,7 @@ impl<T: BaseWallet + 'static> Agent<T> {
     ) -> Result<(), String> {
         let their_vk = state.remote_vk().map_err(|e| e.to_string())?;
         let our_vk = &state.pairwise_info().pw_vk;
-        self.create_account(&their_vk, &our_vk, state.their_did_doc())
+        self.create_account(&their_vk, our_vk, state.their_did_doc())
             .await?;
         Ok(())
     }
