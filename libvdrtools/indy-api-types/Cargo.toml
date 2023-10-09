@@ -14,8 +14,6 @@ libc = "0.2.148"
 serde = "1.0.99"
 serde_json = "1.0.40"
 serde_derive = "1.0.99"
-zeroize = "1.6.0"
-aes = "0.8.3"
 openssl = { version = "0.10" }
 bs58 = "0.5.0"
 sqlx = { version = "0.7.1", features = [ "sqlite", "mysql", "runtime-tokio-rustls" ] }
