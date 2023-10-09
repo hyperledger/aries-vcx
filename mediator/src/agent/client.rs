@@ -1,7 +1,6 @@
 // use aries_vcx::protocols::connection::initiation_type::Invitee;
 // use aries_vcx::protocols::connection::invitee::states::invited::Invited;
 // use aries_vcx::protocols::oob;
-use aries_vcx::utils::mockdata::profile::mock_ledger::MockLedger;
 use aries_vcx::{
     handlers::util::AnyInvitation,
     protocols::{
@@ -14,7 +13,7 @@ use aries_vcx::{
         },
         mediated_connection::pairwise_info::PairwiseInfo,
     },
-    utils::encryption_envelope::EncryptionEnvelope,
+    utils::{encryption_envelope::EncryptionEnvelope, mockdata::profile::mock_ledger::MockLedger},
 };
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::{
@@ -25,9 +24,10 @@ use messages::{
     AriesMessage,
 };
 
+// use super::transports::AriesTransport;
 // use diddoc_legacy::aries::service::AriesService;
-use super::Agent;
-use crate::utils::prelude::*;
+use super::{transports::AriesTransport, Agent};
+use crate::{agent::utils::oob2did, utils::prelude::*};
 // client role utilities
 impl<T: BaseWallet + 'static> Agent<T> {
     /// Starts a new connection object and tries to create request to the specified OOB invite
@@ -98,5 +98,54 @@ impl<T: BaseWallet + 'static> Agent<T> {
 
     pub async fn list_contacts(&self) -> Result<Vec<(String, String)>, String> {
         self.persistence.list_accounts().await
+    }
+
+    pub async fn establish_connection(
+        &self,
+        oob_invite: OOBInvitation,
+        aries_transport: &mut impl AriesTransport,
+    ) -> Result<InviteeConnection<Completed>, anyhow::Error> {
+        let (state, EncryptionEnvelope(packed_aries_msg_bytes)) = self
+            .gen_client_connect_req(oob_invite.clone())
+            .await
+            .map_err(|err| GenericStringError { msg: err })?;
+        let packed_aries_msg_json = serde_json::from_slice(&packed_aries_msg_bytes)?;
+        info!(
+            "Sending Connection Request Envelope: {},",
+            serde_json::to_string_pretty(&packed_aries_msg_json).unwrap()
+        );
+        aries_transport
+            .push_aries_envelope(packed_aries_msg_json, oob2did(oob_invite))
+            .await?;
+        let response_envelope = aries_transport.pop_aries_envelope()?;
+        info!(
+            "Received Response envelope {:#?}, unpacking",
+            serde_json::to_string_pretty(&response_envelope).unwrap()
+        );
+        let response_envelope_bytes = serde_json::to_vec(&response_envelope)?;
+        let response_unpacked = self
+            .unpack_didcomm(&response_envelope_bytes)
+            .await
+            .map_err(|err| GenericStringError { msg: err })?;
+        let response_message: AriesMessage = serde_json::from_str(&response_unpacked.message)?;
+        let AriesMessage::Connection(Connection::Response(connection_response)) = response_message
+        else {
+            return Err(GenericStringError {
+                msg: format!("Expected connection response, got {:?}", response_message),
+            }
+            .into());
+        };
+        let state = self
+            .handle_response(state, connection_response)
+            .await
+            .map_err(|err| GenericStringError { msg: err })?;
+        info!(
+            "Completed Connection {:?}, saving as contact",
+            serde_json::to_value(&state).unwrap()
+        );
+        self.save_completed_as_contact(&state)
+            .await
+            .map_err(|err| GenericStringError { msg: err })?;
+        Ok(state)
     }
 }

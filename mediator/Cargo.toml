@@ -11,6 +11,7 @@ edition = "2021"
 anyhow = "1.0.75"
 aries-vcx = { path = "../aries_vcx" }
 aries_vcx_core = { path = "../aries_vcx_core", features = ["vdrtools_wallet", "vdrtools_anoncreds"] }
+async-trait = "0.1.73"
 axum = "0.6"
 axum-macros = "0.3.8"
 cursive = { version = "0.20.0", features = ["crossterm-backend"] }

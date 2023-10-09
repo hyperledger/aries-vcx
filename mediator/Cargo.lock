@@ -2507,6 +2507,7 @@ dependencies = [
  "anyhow",
  "aries-vcx",
  "aries_vcx_core",
+ "async-trait",
  "axum",
  "axum-macros",
  "cursive",

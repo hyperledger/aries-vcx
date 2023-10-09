@@ -27,6 +27,7 @@ use xum_test_server::storage::{get_persistence, MediatorPersistence};
 
 use crate::utils::{prelude::*, structs::VeriKey};
 
+pub mod transports;
 pub mod utils;
 // #[cfg(test)]
 pub mod client;
