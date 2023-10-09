@@ -12,11 +12,11 @@ pub fn decode(doc: &str) -> Result<Vec<u8>, IndyError> {
 }
 
 pub fn encode_urlsafe(doc: &[u8]) -> String {
-    general_purpose::URL_SAFE_NO_PAD.encode(doc)
+    general_purpose::URL_SAFE.encode(doc)
 }
 
 pub fn decode_urlsafe(doc: &str) -> Result<Vec<u8>, IndyError> {
-    general_purpose::URL_SAFE_NO_PAD.decode(doc).map_err(|e| {
+    general_purpose::URL_SAFE.decode(doc).map_err(|e| {
         e.to_indy(
             IndyErrorKind::InvalidStructure,
             "Invalid base64URL_SAFE sequence",
