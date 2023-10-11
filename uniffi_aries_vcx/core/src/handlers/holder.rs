@@ -69,16 +69,13 @@ impl Holder {
         anoncreds: &impl BaseAnonCreds,
         my_pw_did: String,
     ) -> VcxUniFFIResult<()> {
-        // FIXME: remove .unwrap()
         block_on(async {
             self.handler
-                .lock()
-                .unwrap()
+                .lock()?
                 .prepare_credential_request(ledger, anoncreds, my_pw_did)
-                .await
-                .unwrap();
-        });
-        Ok(())
+                .await?;
+            Ok(())
+        })
     }
 
     pub fn get_msg_credential_request(&self) -> VcxUniFFIResult<RequestCredentialV1> {
