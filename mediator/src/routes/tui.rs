@@ -54,7 +54,8 @@ pub fn endpoints_ui<T: BaseWallet + 'static, P: MediatorPersistence>() -> Panel<
     make_standard(endpoint_selector, Orientation::Vertical).title("Select endpoint")
 }
 
-pub fn client_register_ui<T: BaseWallet + 'static, P: MediatorPersistence>() -> Panel<LinearLayout> {
+pub fn client_register_ui<T: BaseWallet + 'static, P: MediatorPersistence>() -> Panel<LinearLayout>
+{
     let input = TextArea::new().with_name("oob_text_area");
     let input = ResizedView::new(
         SizeConstraint::AtLeast(20),
@@ -83,7 +84,9 @@ pub fn client_register_ui<T: BaseWallet + 'static, P: MediatorPersistence>() -> 
     make_standard(ui, Orientation::Horizontal).title("Register client using Out Of Band Invitation")
 }
 
-pub fn client_register_connect_cb<T: BaseWallet + 'static, P: MediatorPersistence>(s: &mut Cursive) {
+pub fn client_register_connect_cb<T: BaseWallet + 'static, P: MediatorPersistence>(
+    s: &mut Cursive,
+) {
     let oob_text_area = s.find_name::<TextArea>("oob_text_area").unwrap();
     let mut output = s.find_name::<TextView>("client_register_result").unwrap();
     let oob_text = oob_text_area.get_content();
@@ -119,7 +122,9 @@ fn make_standard(view: impl View, orientation: Orientation) -> Panel<LinearLayou
 //     contact_selector_ui(s)
 // }
 
-pub fn contact_selector_ui<T: BaseWallet + 'static, P: MediatorPersistence>(s: &mut Cursive) -> Panel<LinearLayout> {
+pub fn contact_selector_ui<T: BaseWallet + 'static, P: MediatorPersistence>(
+    s: &mut Cursive,
+) -> Panel<LinearLayout> {
     let mut contact_selector = SelectView::new();
     // Set available contacts
     let agent: &mut Arc<Agent<T, P>> = s

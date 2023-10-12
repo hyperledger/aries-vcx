@@ -15,7 +15,10 @@ use messages::{msg_fields::protocols::connection::Connection, AriesMessage};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use xum_test_server::{
-    didcomm_types::{mediator_coord_structs::{MediatorCoordMsgEnum, MediateGrantData}, PickupMsgEnum},
+    didcomm_types::{
+        mediator_coord_structs::{MediateGrantData, MediatorCoordMsgEnum},
+        PickupMsgEnum,
+    },
     routes::pickup::handle_pickup,
     storage::MediatorPersistence,
 };
@@ -56,19 +59,23 @@ pub async fn handle_mediation_coord(
     auth_pubkey: &str,
 ) -> Result<MediatorCoordMsgEnum, String> {
     if let MediatorCoordMsgEnum::MediateRequest = coord_msg {
-        let service = agent.get_service_ref().ok_or("Mediation agent must have service defined.")?;
+        let service = agent
+            .get_service_ref()
+            .ok_or("Mediation agent must have service defined.")?;
         let mut routing_keys = Vec::new();
         routing_keys.extend_from_slice(&service.routing_keys);
-        routing_keys.push(service.recipient_keys.first().expect(
-            "Service must have recipient key"
-        ).to_owned());
-        let coord_response = MediatorCoordMsgEnum::MediateGrant(
-            MediateGrantData{
-                endpoint: service.service_endpoint.to_string(),
-                routing_keys
-            }
+        routing_keys.push(
+            service
+                .recipient_keys
+                .first()
+                .expect("Service must have recipient key")
+                .to_owned(),
         );
-        return Ok(coord_response)
+        let coord_response = MediatorCoordMsgEnum::MediateGrant(MediateGrantData {
+            endpoint: service.service_endpoint.to_string(),
+            routing_keys,
+        });
+        return Ok(coord_response);
     };
     let Json(coord_response) = xum_test_server::routes::coordination::handle_coord_authenticated(
         State(agent.get_persistence_ref()),
@@ -122,8 +129,8 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
         //             .ok_or("Can't register anon aries peer")?,
         //         did_doc,
         //         &unpacked.recipient_verkey,
-        //         xum_test_server::didcomm_types::mediator_coord_structs::MediateGrantData{ endpoint: service_endpoint.into(), routing_keys},
-        //     );
+        //         xum_test_server::didcomm_types::mediator_coord_structs::MediateGrantData{
+        // endpoint: service_endpoint.into(), routing_keys},     );
         //     todo!()
         } else {
             let (account_name, our_signing_key, their_diddoc) =
@@ -137,9 +144,13 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
                     _ => Err(unhandled_aries(aries_message))?,
                 },
                 GeneralAriesMessage::XumCoord(coord_message) => {
-                    let coord_response = handle_mediation_coord(&agent, coord_message, &auth_pubkey).await?;
-                    let aries_response = serde_json::to_vec(&coord_response).map_err(string_from_std_error)?;
-                    agent.pack_didcomm(&aries_response, &our_signing_key, &their_diddoc).await?
+                    let coord_response =
+                        handle_mediation_coord(&agent, coord_message, &auth_pubkey).await?;
+                    let aries_response =
+                        serde_json::to_vec(&coord_response).map_err(string_from_std_error)?;
+                    agent
+                        .pack_didcomm(&aries_response, &our_signing_key, &their_diddoc)
+                        .await?
                 }
                 GeneralAriesMessage::XumPickup(pickup_message) => {
                     handle_pickup_protocol(agent, pickup_message).await?;

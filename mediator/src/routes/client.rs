@@ -26,7 +26,9 @@ pub async fn handle_register(
     })))
 }
 
-pub async fn build_client_router<T: BaseWallet + 'static, P: MediatorPersistence>(agent: Agent<T, P>) -> Router {
+pub async fn build_client_router<T: BaseWallet + 'static, P: MediatorPersistence>(
+    agent: Agent<T, P>,
+) -> Router {
     Router::default()
         .route("/client/register", post(handle_register))
         .layer(tower_http::catch_panic::CatchPanicLayer::new())

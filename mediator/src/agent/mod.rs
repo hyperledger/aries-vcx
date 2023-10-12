@@ -151,7 +151,10 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         let EncryptionEnvelope(packed_message) =
             self.pack_didcomm(&message, &our_vk, their_diddoc).await?;
         let packed_json = serde_json::from_slice(&packed_message).map_err(string_from_std_error)?;
-        info!("Packed: {:?}, sending", serde_json::to_string(&packed_json).unwrap());
+        info!(
+            "Packed: {:?}, sending",
+            serde_json::to_string(&packed_json).unwrap()
+        );
         aries_transport
             .push_aries_envelope(packed_json, their_diddoc)
             .await
@@ -243,15 +246,14 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         Ok(())
     }
 }
- mod test{
+mod test {
     use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
     use log::info;
     use serde_json::Value;
     use xum_test_server::routes::json;
 
-    use crate::agent::utils::oob2did;
-
     use super::AgentMaker;
+    use crate::agent::utils::oob2did;
 
     #[tokio::test]
     pub async fn test_pack_unpack() {
@@ -259,20 +261,21 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         let message_bytes = serde_json::to_vec(&message).unwrap();
         let mut agent = AgentMaker::new_demo_agent().await.unwrap();
         agent
-        .init_service(
-            vec![],
-            format!("http://127.0.0.1:8005/aries").parse().unwrap(),
-        )
-        .await
-        .unwrap();
+            .init_service(
+                vec![],
+                format!("http://127.0.0.1:8005/aries").parse().unwrap(),
+            )
+            .await
+            .unwrap();
         let their_diddoc = oob2did(agent.get_oob_invite().unwrap());
         let our_service = agent.service.as_ref().unwrap();
         let our_vk = our_service.recipient_keys.first().unwrap();
-        let EncryptionEnvelope(packed) = agent.pack_didcomm(&message_bytes, our_vk, &their_diddoc).await.unwrap();
+        let EncryptionEnvelope(packed) = agent
+            .pack_didcomm(&message_bytes, our_vk, &their_diddoc)
+            .await
+            .unwrap();
         let unpacked = agent.unpack_didcomm(&packed).await.unwrap();
         info!("{:?}", unpacked);
         print!("{:?}", unpacked);
     }
-
-
- }
+}
