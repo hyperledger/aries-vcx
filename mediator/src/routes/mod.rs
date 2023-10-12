@@ -139,7 +139,9 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
                 .expect("Sender key authenticated above, so it must be present..");
             info!("Processing message for {:?}", account_name);
             match aries_message {
-                GeneralAriesMessage::AriesVCXSupported(aries_message) => Err(unhandled_aries(aries_message))?,
+                GeneralAriesMessage::AriesVCXSupported(aries_message) => {
+                    Err(unhandled_aries(aries_message))?
+                }
                 GeneralAriesMessage::XumCoord(coord_message) => {
                     let coord_response =
                         handle_mediation_coord(&agent, coord_message, &auth_pubkey).await?;
