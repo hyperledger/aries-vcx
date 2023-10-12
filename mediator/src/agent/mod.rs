@@ -149,7 +149,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         aries_transport: &mut impl AriesTransport,
     ) -> Result<(), String> {
         let EncryptionEnvelope(packed_message) =
-            self.pack_didcomm(&message, &our_vk, their_diddoc).await?;
+            self.pack_didcomm(message, our_vk, their_diddoc).await?;
         let packed_json = serde_json::from_slice(&packed_message).map_err(string_from_std_error)?;
         info!(
             "Packed: {:?}, sending",
@@ -246,11 +246,12 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         Ok(())
     }
 }
+
+#[cfg(test)]
 mod test {
     use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
     use log::info;
     use serde_json::Value;
-    use xum_test_server::routes::json;
 
     use super::AgentMaker;
     use crate::agent::utils::oob2did;

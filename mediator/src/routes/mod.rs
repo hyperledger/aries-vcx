@@ -19,7 +19,6 @@ use xum_test_server::{
         mediator_coord_structs::{MediateGrantData, MediatorCoordMsgEnum},
         PickupMsgEnum,
     },
-    routes::pickup::handle_pickup,
     storage::MediatorPersistence,
 };
 
@@ -95,8 +94,8 @@ pub async fn handle_mediation_coord(
 }
 
 pub async fn handle_pickup_protocol(
-    agent: ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>,
-    pickup_msg: PickupMsgEnum,
+    _agent: ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>,
+    _pickup_msg: PickupMsgEnum,
 ) -> Result<EncryptionEnvelope, String> {
     todo!()
 }
@@ -140,9 +139,7 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
                 .expect("Sender key authenticated above, so it must be present..");
             info!("Processing message for {:?}", account_name);
             match aries_message {
-                GeneralAriesMessage::AriesVCXSupported(aries_message) => match aries_message {
-                    _ => Err(unhandled_aries(aries_message))?,
-                },
+                GeneralAriesMessage::AriesVCXSupported(aries_message) => Err(unhandled_aries(aries_message))?,
                 GeneralAriesMessage::XumCoord(coord_message) => {
                     let coord_response =
                         handle_mediation_coord(&agent, coord_message, &auth_pubkey).await?;

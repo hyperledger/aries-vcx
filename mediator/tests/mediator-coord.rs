@@ -1,21 +1,8 @@
 mod common;
 use std::collections::VecDeque;
 
-use aries_vcx::{
-    handlers::util::AnyInvitation,
-    protocols::{
-        connection::invitee::{
-            states::{
-                completed::Completed, initial::Initial as ClientInit,
-                requested::Requested as ClientRequestSent,
-            },
-            InviteeConnection,
-        },
-        mediated_connection::pairwise_info::PairwiseInfo,
-    },
-    utils::{encryption_envelope::EncryptionEnvelope, mockdata::profile::mock_ledger::MockLedger},
-};
-use aries_vcx_core::wallet::{base_wallet::BaseWallet, indy::IndySdkWallet};
+use aries_vcx::protocols::connection::invitee::{states::completed::Completed, InviteeConnection};
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use common::{prelude::*, test_setup::OneTimeInit};
 use mediator::{
     agent::{
@@ -24,15 +11,8 @@ use mediator::{
     },
     utils::{structs::VeriKey, GenericStringError},
 };
-use messages::{
-    msg_fields::protocols::{
-        connection::{request::Request, response::Response, Connection},
-        out_of_band::invitation::Invitation as OOBInvitation,
-    },
-    AriesMessage,
-};
+use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
-use sqlx::MySqlPool;
 use xum_test_server::{
     didcomm_types::mediator_coord_structs::MediatorCoordMsgEnum, storage::MediatorPersistence,
 };
