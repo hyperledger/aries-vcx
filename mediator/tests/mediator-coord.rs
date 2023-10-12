@@ -105,9 +105,10 @@ async fn test_mediate_grant() -> Result<()> {
     let message_bytes = serde_json::to_vec(&message)?;
     // info!("Message: {:?}", serde_json::to_string(&message).unwrap());
     // info!("Sending: {:?}", message_bytes);
-    // let EncryptionEnvelope(packed) = agent.pack_didcomm(&message_bytes, &our_verikey, &their_diddoc).await.unwrap();
-    // let packed_val =  serde_json::from_slice::<serde_json::Value>(&packed).unwrap();
-    // info!("Packed: {:?}", serde_json::to_string(&packed_val).unwrap());
+    // let EncryptionEnvelope(packed) = agent.pack_didcomm(&message_bytes, &our_verikey,
+    // &their_diddoc).await.unwrap(); let packed_val =
+    // serde_json::from_slice::<serde_json::Value>(&packed).unwrap(); info!("Packed: {:?}",
+    // serde_json::to_string(&packed_val).unwrap());
     agent
         .pack_and_send_didcomm(
             &message_bytes,
@@ -120,8 +121,22 @@ async fn test_mediate_grant() -> Result<()> {
     // let k = aries_transport.push_aries_envelope(packed_val, their_diddoc).await.unwrap();
     // info!("Pushed: {:?}", k);
     let response = aries_transport.pop_aries_envelope()?;
-    let unpacked_response = agent.unpack_didcomm(&serde_json::to_vec(&response).unwrap()).await.unwrap();
+    let unpacked_response = agent
+        .unpack_didcomm(&serde_json::to_vec(&response).unwrap())
+        .await
+        .unwrap();
     info!("response message: {:?}", unpacked_response.message);
+    if let MediatorCoordMsgEnum::MediateGrant(grant_data) =
+        serde_json::from_str(&unpacked_response.message).unwrap()
+    {
+        info!("Grant Data {:?}", grant_data);
+    } else if let MediatorCoordMsgEnum::MediateDeny(deny_data) =
+        serde_json::from_str(&unpacked_response.message).unwrap()
+    {
+        info!("Deny Data {:?}", deny_data);
+    } else {
+        panic!("Should get response that is of type Mediator Grant / Deny")
+    };
 
     Ok(())
 }
