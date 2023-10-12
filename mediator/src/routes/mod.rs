@@ -57,10 +57,15 @@ pub async fn handle_mediation_coord(
 ) -> Result<MediatorCoordMsgEnum, String> {
     if let MediatorCoordMsgEnum::MediateRequest = coord_msg {
         let service = agent.get_service_ref().ok_or("Mediation agent must have service defined.")?;
+        let mut routing_keys = Vec::new();
+        routing_keys.extend_from_slice(&service.routing_keys);
+        routing_keys.push(service.recipient_keys.first().expect(
+            "Service must have recipient key"
+        ).to_owned());
         let coord_response = MediatorCoordMsgEnum::MediateGrant(
             MediateGrantData{
                 endpoint: service.service_endpoint.to_string(),
-                routing_keys: service.routing_keys.to_owned()
+                routing_keys
             }
         );
         return Ok(coord_response)
