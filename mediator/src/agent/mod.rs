@@ -264,7 +264,7 @@ mod test {
         agent
             .init_service(
                 vec![],
-                format!("http://127.0.0.1:8005/aries").parse().unwrap(),
+                "http://127.0.0.1:8005/aries".to_string().parse().unwrap(),
             )
             .await
             .unwrap();
