@@ -1,0 +1,57 @@
+name: CI mediator
+
+on:
+  push:
+    branches:
+      - main
+      - nain/mediator-client
+  pull_request:
+    branches:
+      - "main"
+
+env:
+  DOCKER_BUILDKIT: 1
+  MAIN_BRANCH: main
+  URL_DOCKER_REGISTRY: ghcr.io
+  DOCKER_IMAGE_AGENCY: ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.6.0
+  DOCKER_IMAGE_POOL: ghcr.io/hyperledger/aries-vcx/indy_pool_localhost:1.15.0
+
+  DOCKER_REPO_LOCAL_VDRPROXY: vdrproxy
+
+  RUST_TOOLCHAIN_VERSON: 1.70.0
+  NODE_VERSION: 18.x
+
+jobs:
+
+  test-integration-mediator:
+    needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    runs-on: ubuntu-22.04
+    services: 
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_DATABASE: mediator-persistence.mysql
+          MYSQL_USER: admin
+          MYSQL_PASSWORD: github.ci.password.no.prod
+          MYSQL_ROOT_PASSWORD: github.ci.password.no.prod
+        ports:
+          - '3326:3306'
+    env:
+      MYSQL_URL: mysql://admin:github.ci.password.no.prod@localhost:3326/mediator-persistence.mysql
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+         with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
+          skip-docker-setup: true
+          skip-vdrproxy-setup: true
+      - name: Install prerequisites (sqlx)
+        run: cargo install sqlx-cli
+      - name: Setup database
+        run: DATABASE_URL=${MYSQL_URL} sqlx migrate run
+      - name: "Run mediator integration tests"
+        run: |
+          RUST_TEST_THREADS=1 cargo test --package mediator;
