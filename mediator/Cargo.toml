@@ -25,7 +25,8 @@ messages = { path = "../messages" }
 reqwest = { version = "0.11.20", features = ["json"] }
 serde = "1.0.188"
 serde_json = "1.0.106"
-sqlx = { version = "0.5.8", git = "https://github.com/jovfer/sqlx", branch = "feature/json_no_preserve_order_v5" }
+sqlx = "0.7"
+# sqlx = { version = "0.5.8", git = "https://github.com/jovfer/sqlx", branch = "feature/json_no_preserve_order_v5" }
 thiserror = "1.0.49"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tower-http = { version = "0.4.4", features = ["catch-panic"] }
