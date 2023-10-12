@@ -8,6 +8,7 @@ members = [
     "libvdrtools",
     "messages_macros",
     "messages",
+    "mediator",
     "shared_vcx",
     "diddoc_legacy",
     "agents/rust/aries-vcx-agent",

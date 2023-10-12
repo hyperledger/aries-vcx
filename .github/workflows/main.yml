@@ -289,7 +289,7 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
           skip-docker-setup: true
       - name: "Run workspace unit tests"
-        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator
+        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --exclude mediator
 
   test-integration-aries-vcx:
     needs: workflow-setup
@@ -401,6 +401,40 @@ jobs:
         run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run demo:revocation)
       - name: "Run integration tests"
         run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run test:integration)
+
+  test-integration-mediator:
+    needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    runs-on: ubuntu-22.04
+    services: 
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_DATABASE: mediator-persistence.mysql
+          MYSQL_USER: admin
+          MYSQL_PASSWORD: github.ci.password.no.prod
+          MYSQL_ROOT_PASSWORD: github.ci.password.no.prod
+        ports:
+          - '3326:3306'
+    env:
+      MYSQL_URL: mysql://admin:github.ci.password.no.prod@localhost:3326/mediator-persistence.mysql
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+         with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
+          skip-docker-setup: true
+          skip-vdrproxy-setup: true
+      - name: Install prerequisites (sqlx)
+        run: cargo install sqlx-cli
+      - name: Setup database
+        run: DATABASE_URL=${MYSQL_URL} sqlx migrate run
+      - name: "Run mediator integration tests"
+        run: |
+          RUST_TEST_THREADS=1 cargo test --package mediator;
+
 
   ##########################################################################################
   ############################   NPMJS PUBLISHING   #######################################
