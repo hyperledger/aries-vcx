@@ -1,6 +1,7 @@
 use std::thread;
 
 use async_trait::async_trait;
+use derive_builder::Builder;
 use futures::executor::block_on;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

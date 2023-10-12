@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use indy_api_types::validation::Validatable;
 use ursa::cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessProof, Witness};
 
 use super::{
@@ -54,39 +53,4 @@ pub struct CredentialValues(pub HashMap<String, AttributeValues>);
 pub struct AttributeValues {
     pub raw: String,
     pub encoded: String,
-}
-
-impl Validatable for CredentialValues {
-    fn validate(&self) -> Result<(), String> {
-        if self.0.is_empty() {
-            return Err(String::from(
-                "CredentialValues validation failed: empty list has been passed",
-            ));
-        }
-
-        Ok(())
-    }
-}
-
-impl Validatable for Credential {
-    fn validate(&self) -> Result<(), String> {
-        self.schema_id.validate()?;
-        self.cred_def_id.validate()?;
-        self.values.validate()?;
-
-        if self.rev_reg_id.is_some() && (self.witness.is_none() || self.rev_reg.is_none()) {
-            return Err(String::from(
-                "Credential validation failed: `witness` and `rev_reg` must be passed for \
-                 revocable Credential",
-            ));
-        }
-
-        if self.values.0.is_empty() {
-            return Err(String::from(
-                "Credential validation failed: `values` is empty",
-            ));
-        }
-
-        Ok(())
-    }
 }

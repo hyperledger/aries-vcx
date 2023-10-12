@@ -1,4 +1,4 @@
-use serde_json;
+use serde_json::{self, json};
 
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},

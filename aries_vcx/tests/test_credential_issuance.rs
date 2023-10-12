@@ -11,8 +11,6 @@ use aries_vcx::{
     utils::devsetup::*,
 };
 
-#[cfg(feature = "migration")]
-use crate::utils::migration::Migratable;
 use crate::utils::{
     scenarios::{
         accept_credential_proposal, accept_offer, create_address_schema_creddef_revreg,
@@ -45,11 +43,6 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
         )
         .await;
 
-        // NOTE: Credx-anoncreds-implementation-generated presentation is not compatible with
-        // vdrtools anoncreds implementation as the presentation fails to deserialize
-        // #[cfg(feature = "migration")]
-        // let mut consumer = consumer.migrate().await;
-
         let verifier = exchange_proof(
             &mut institution,
             &mut consumer,
@@ -62,9 +55,6 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
             verifier.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
-
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
 
         let verifier = exchange_proof(
             &mut institution,
@@ -104,9 +94,6 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
         )
         .await;
 
-        #[cfg(feature = "migration")]
-        let mut issuer = issuer.migrate().await;
-
         let _credential_handle2 = exchange_credential(
             &mut consumer,
             &mut issuer,
@@ -116,9 +103,6 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
             Some("request2"),
         )
         .await;
-
-        #[cfg(feature = "migration")]
-        let mut verifier = verifier.migrate().await;
 
         let verifier_handler = exchange_proof(
             &mut verifier,
@@ -132,9 +116,6 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
             verifier_handler.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
-
-        #[cfg(feature = "migration")]
-        let mut consumer = consumer.migrate().await;
 
         let verifier_handler = exchange_proof(
             &mut verifier,
@@ -165,9 +146,6 @@ async fn test_agency_pool_credential_exchange_via_proposal() {
             &institution.institution_did,
         )
         .await;
-
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
 
         exchange_credential_with_proposal(
             &mut consumer,
@@ -201,9 +179,6 @@ async fn test_agency_pool_credential_exchange_via_proposal_failed() {
             create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
         let mut holder = create_holder_from_proposal(cred_proposal.clone());
         let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
-
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
 
         let cred_offer = accept_credential_proposal(
             &mut institution,
@@ -239,16 +214,10 @@ async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
         )
         .await;
 
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
-
         let cred_proposal =
             create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
         let mut holder = create_holder_from_proposal(cred_proposal.clone());
         let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
-
-        #[cfg(feature = "migration")]
-        let mut consumer = consumer.migrate().await;
 
         let cred_proposal_1 =
             create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");

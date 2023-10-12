@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
     common::primitives::credential_definition::{CredentialDef, CredentialDefConfig},
-    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
+    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
 };
 
 use crate::{
@@ -11,12 +11,12 @@ use crate::{
 };
 
 pub struct ServiceCredentialDefinitions {
-    profile: Arc<VdrtoolsProfile>,
+    profile: Arc<ModularLibsProfile>,
     cred_defs: ObjectCache<CredentialDef>,
 }
 
 impl ServiceCredentialDefinitions {
-    pub fn new(profile: Arc<VdrtoolsProfile>) -> Self {
+    pub fn new(profile: Arc<ModularLibsProfile>) -> Self {
         Self {
             profile,
             cred_defs: ObjectCache::new("cred-defs"),

@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
-    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
+    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
     handlers::util::AnyInvitation,
     messages::msg_fields::protocols::{
         connection::{request::Request, response::Response},
@@ -22,13 +22,13 @@ use crate::{
 pub type ServiceEndpoint = Url;
 
 pub struct ServiceConnections {
-    profile: Arc<VdrtoolsProfile>,
+    profile: Arc<ModularLibsProfile>,
     service_endpoint: ServiceEndpoint,
     connections: Arc<ObjectCache<GenericConnection>>,
 }
 
 impl ServiceConnections {
-    pub fn new(profile: Arc<VdrtoolsProfile>, service_endpoint: ServiceEndpoint) -> Self {
+    pub fn new(profile: Arc<ModularLibsProfile>, service_endpoint: ServiceEndpoint) -> Self {
         Self {
             profile,
             service_endpoint,

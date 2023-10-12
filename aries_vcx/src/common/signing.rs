@@ -1,5 +1,5 @@
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use base64;
+use base64::{self, engine::general_purpose, Engine};
 use messages::msg_fields::protocols::connection::{
     response::{ConnectionSignature, ResponseContent},
     ConnectionData,
@@ -30,8 +30,8 @@ pub async fn sign_connection_response(
     let con_data = json!(con_data).to_string();
     let (signature, sig_data) = get_signature_data(wallet, con_data, key).await?;
 
-    let sig_data = base64::encode_config(&sig_data, base64::URL_SAFE);
-    let signature = base64::encode_config(&signature, base64::URL_SAFE);
+    let sig_data = general_purpose::URL_SAFE.encode(sig_data);
+    let signature = general_purpose::URL_SAFE.encode(signature);
 
     let connection_sig = ConnectionSignature::new(signature, sig_data, key.to_string());
 
@@ -43,27 +43,23 @@ pub async fn decode_signed_connection_response(
     response: ResponseContent,
     their_vk: &str,
 ) -> VcxResult<ConnectionData> {
-    let signature = base64::decode_config(
-        &response.connection_sig.signature.as_bytes(),
-        base64::URL_SAFE,
-    )
-    .map_err(|err| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
-            format!("Cannot decode ConnectionResponse: {:?}", err),
-        )
-    })?;
+    let signature = general_purpose::URL_SAFE
+        .decode(response.connection_sig.signature.as_bytes())
+        .map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot decode ConnectionResponse: {:?}", err),
+            )
+        })?;
 
-    let sig_data = base64::decode_config(
-        &response.connection_sig.sig_data.as_bytes(),
-        base64::URL_SAFE,
-    )
-    .map_err(|err| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
-            format!("Cannot decode ConnectionResponse: {:?}", err),
-        )
-    })?;
+    let sig_data = general_purpose::URL_SAFE
+        .decode(response.connection_sig.sig_data.as_bytes())
+        .map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot decode ConnectionResponse: {:?}", err),
+            )
+        })?;
 
     if !wallet.verify(their_vk, &sig_data, &signature).await? {
         return Err(AriesVcxError::from_msg(

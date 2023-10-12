@@ -47,8 +47,6 @@ use aries_vcx_core::{
 };
 use diddoc_legacy::aries::service::AriesService;
 
-#[cfg(feature = "migration")]
-use crate::utils::migration::Migratable;
 use crate::utils::{
     scenarios::attr_names_address_list,
     test_agent::{create_test_agent, create_test_agent_trustee},
@@ -407,9 +405,6 @@ async fn test_agency_pool_get_credential_def() {
         )
         .await;
 
-        #[cfg(feature = "migration")]
-        let setup = setup.migrate().await;
-
         let ledger = setup.profile.ledger_read();
         let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
 
@@ -445,9 +440,9 @@ async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation() {
         )
         .await;
 
-        #[cfg(feature = "modular_libs")]
+        #[cfg(feature = "credx")]
         assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidState);
-        #[cfg(not(feature = "modular_libs"))]
+        #[cfg(not(feature = "credx"))]
         assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidInput);
     })
     .await;

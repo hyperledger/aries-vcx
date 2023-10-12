@@ -1,8 +1,7 @@
 use std::{collections::HashMap, fmt};
 
-use indy_api_types::validation::Validatable;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::Value;
+use serde_json::{json, Value};
 use ursa::cl::Nonce;
 
 use super::{
@@ -37,7 +36,7 @@ pub enum ProofRequestsVersion {
 }
 
 impl ProofRequest {
-    pub fn value<'a>(&'a self) -> &'a ProofRequestPayload {
+    pub fn value(&self) -> &ProofRequestPayload {
         match self {
             ProofRequest::ProofRequestV1(proof_req) => proof_req,
             ProofRequest::ProofRequestV2(proof_req) => proof_req,
@@ -66,7 +65,7 @@ impl<'de> Deserialize<'de> for ProofRequest {
         let v = Value::deserialize(deserializer)?;
 
         let helper = Helper::deserialize(&v).map_err(de::Error::custom)?;
-        let nonce_cleaned = helper.nonce.replace(" ", "").replace("_", "");
+        let nonce_cleaned = helper.nonce.replace([' ', '_'], "");
 
         let proof_req = match helper.ver {
             Some(version) => match version.as_ref() {
@@ -198,65 +197,6 @@ pub struct RequestedPredicateInfo {
     pub predicate_info: PredicateInfo,
 }
 
-impl Validatable for ProofRequest {
-    fn validate(&self) -> Result<(), String> {
-        let value = self.value();
-        let version = self.version();
-
-        if value.requested_attributes.is_empty() && value.requested_predicates.is_empty() {
-            return Err(String::from(
-                "Proof Request validation failed: both `requested_attributes` and \
-                 `requested_predicates` are empty",
-            ));
-        }
-
-        for (_, requested_attribute) in value.requested_attributes.iter() {
-            let has_name = !requested_attribute
-                .name
-                .as_ref()
-                .map(String::is_empty)
-                .unwrap_or(true);
-            let has_names = !requested_attribute
-                .names
-                .as_ref()
-                .map(Vec::is_empty)
-                .unwrap_or(true);
-            if !has_name && !has_names {
-                return Err(format!(
-                    "Proof Request validation failed: there is empty requested attribute: {:?}",
-                    requested_attribute
-                ));
-            }
-
-            if has_name && has_names {
-                return Err(format!(
-                    "Proof request validation failed: there is a requested attribute with both \
-                     name and names: {:?}",
-                    requested_attribute
-                ));
-            }
-
-            if let Some(ref restrictions) = requested_attribute.restrictions {
-                _process_operator(&restrictions, &version)?;
-            }
-        }
-
-        for (_, requested_predicate) in value.requested_predicates.iter() {
-            if requested_predicate.name.is_empty() {
-                return Err(format!(
-                    "Proof Request validation failed: there is empty requested attribute: {:?}",
-                    requested_predicate
-                ));
-            }
-            if let Some(ref restrictions) = requested_predicate.restrictions {
-                _process_operator(&restrictions, &version)?;
-            }
-        }
-
-        Ok(())
-    }
-}
-
 impl ProofRequest {
     pub fn to_unqualified(self) -> ProofRequest {
         let convert = |proof_request: &mut ProofRequestPayload| {
@@ -264,13 +204,13 @@ impl ProofRequest {
                 requested_attribute.restrictions = requested_attribute
                     .restrictions
                     .as_mut()
-                    .map(|ref mut restrictions| _convert_query_to_unqualified(&restrictions));
+                    .map(|ref mut restrictions| _convert_query_to_unqualified(restrictions));
             }
             for (_, requested_predicate) in proof_request.requested_predicates.iter_mut() {
                 requested_predicate.restrictions = requested_predicate
                     .restrictions
                     .as_mut()
-                    .map(|ref mut restrictions| _convert_query_to_unqualified(&restrictions));
+                    .map(|ref mut restrictions| _convert_query_to_unqualified(restrictions));
             }
         };
 
@@ -307,13 +247,13 @@ fn _convert_query_to_unqualified(query: &Query) -> Query {
         Query::And(ref queries) => Query::And(
             queries
                 .iter()
-                .map(|query| _convert_query_to_unqualified(query))
+                .map(_convert_query_to_unqualified)
                 .collect::<Vec<Query>>(),
         ),
         Query::Or(ref queries) => Query::Or(
             queries
                 .iter()
-                .map(|query| _convert_query_to_unqualified(query))
+                .map(_convert_query_to_unqualified)
                 .collect::<Vec<Query>>(),
         ),
         Query::Not(ref query) => _convert_query_to_unqualified(query),

@@ -422,9 +422,7 @@ impl WalletController {
     pub fn generate_key(&self, config: Option<KeyConfig>) -> IndyResult<String> {
         trace!("generate_key > config: {:?}", secret!(&config));
 
-        let seed = config
-            .as_ref()
-            .and_then(|config| config.seed.as_ref().map(String::as_str));
+        let seed = config.as_ref().and_then(|config| config.seed.as_deref());
 
         let key = match self.crypto_service.convert_seed(seed)? {
             Some(seed) => randombytes::randombytes_deterministic(

@@ -15,8 +15,6 @@ use aries_vcx::{
     utils::devsetup::*,
 };
 
-#[cfg(feature = "migration")]
-use crate::utils::migration::Migratable;
 use crate::utils::{
     scenarios::{
         create_address_schema_creddef_revreg, create_proof_request_data,
@@ -39,9 +37,6 @@ async fn test_agency_pool_basic_revocation() {
         let (schema, cred_def, rev_reg, issuer) =
             issue_address_credential(&mut consumer, &mut institution).await;
 
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
-
         assert!(!issuer
             .is_revoked(institution.profile.ledger_read())
             .await
@@ -49,9 +44,6 @@ async fn test_agency_pool_basic_revocation() {
 
         let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
         revoke_credential_and_publish_accumulator(&mut institution, &issuer, &rev_reg).await;
-
-        #[cfg(feature = "migration")]
-        let mut consumer = consumer.migrate().await;
 
         tokio::time::sleep(Duration::from_millis(1000)).await;
         let time_after_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
@@ -118,18 +110,12 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
             .await
             .unwrap());
 
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
-
         tokio::time::sleep(Duration::from_millis(1000)).await;
         let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
         tokio::time::sleep(Duration::from_millis(1000)).await;
 
         revoke_credential_and_publish_accumulator(&mut institution, &issuer, &rev_reg).await;
         tokio::time::sleep(Duration::from_millis(1000)).await;
-
-        #[cfg(feature = "migration")]
-        let mut consumer = consumer.migrate().await;
 
         let from = time_before_revocation - 100;
         let to = time_before_revocation;
@@ -184,9 +170,6 @@ async fn test_agency_pool_local_revocation() {
 
         let (schema, cred_def, rev_reg, issuer) =
             issue_address_credential(&mut consumer, &mut institution).await;
-
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
 
         revoke_credential_local(&mut institution, &issuer, &rev_reg.rev_reg_id).await;
         assert!(!issuer
@@ -261,9 +244,6 @@ async fn test_agency_batch_revocation() {
         )
         .await;
 
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
-
         let issuer_credential2 = exchange_credential(
             &mut consumer2,
             &mut institution,
@@ -273,9 +253,6 @@ async fn test_agency_batch_revocation() {
             None,
         )
         .await;
-
-        #[cfg(feature = "migration")]
-        let mut consumer1 = consumer1.migrate().await;
 
         let issuer_credential3 = exchange_credential(
             &mut consumer3,
@@ -301,12 +278,6 @@ async fn test_agency_batch_revocation() {
             .is_revoked(institution.profile.ledger_read())
             .await
             .unwrap());
-
-        #[cfg(feature = "migration")]
-        let mut consumer2 = consumer2.migrate().await;
-
-        #[cfg(feature = "migration")]
-        let mut consumer3 = consumer3.migrate().await;
 
         // Revoke two locally and verify their are all still valid
         let verifier_handler = exchange_proof(
@@ -425,9 +396,6 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         )
         .await;
 
-        #[cfg(feature = "migration")]
-        let mut issuer = issuer.migrate().await;
-
         let credential_data2 = credential_data_address_2().to_string();
         let issuer_credential2 = exchange_credential(
             &mut consumer,
@@ -447,9 +415,6 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
             .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
-
-        #[cfg(feature = "migration")]
-        let mut verifier = verifier.migrate().await;
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg).await;
 
@@ -495,9 +460,6 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
             Some(&credential_data2),
         )
         .await;
-
-        #[cfg(feature = "migration")]
-        let _consumer = consumer.migrate().await;
 
         proof_verifier
             .verify_presentation(
@@ -546,9 +508,6 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         )
         .await;
 
-        #[cfg(feature = "migration")]
-        let mut issuer = issuer.migrate().await;
-
         let credential_data2 = credential_data_address_2().to_string();
         let issuer_credential2 = exchange_credential(
             &mut consumer,
@@ -568,9 +527,6 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
             .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
-
-        #[cfg(feature = "migration")]
-        let mut verifier = verifier.migrate().await;
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg).await;
 
@@ -614,9 +570,6 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
             Some(&credential_data2),
         )
         .await;
-
-        #[cfg(feature = "migration")]
-        let _consumer = consumer.migrate().await;
 
         proof_verifier
             .verify_presentation(
@@ -664,9 +617,6 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
         )
         .await;
 
-        #[cfg(feature = "migration")]
-        let mut issuer = issuer.migrate().await;
-
         let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
         let credential_data2 = credential_data_address_2().to_string();
         let issuer_credential2 = exchange_credential(
@@ -706,9 +656,6 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
             PresentationVerificationStatus::Valid
         );
 
-        #[cfg(feature = "migration")]
-        let mut verifier = verifier.migrate().await;
-
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
             &schema.schema_id,
@@ -716,9 +663,6 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
             Some("request2"),
         )
         .await;
-
-        #[cfg(feature = "migration")]
-        let mut consumer = consumer.migrate().await;
 
         let presentation = prover_select_credentials_and_send_proof(
             &mut consumer,
@@ -774,9 +718,6 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         )
         .await;
 
-        #[cfg(feature = "migration")]
-        let mut issuer = issuer.migrate().await;
-
         let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
         let credential_data2 = credential_data_address_2().to_string();
         let issuer_credential2 = exchange_credential(
@@ -799,9 +740,6 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
             .unwrap());
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg).await;
-
-        #[cfg(feature = "migration")]
-        let mut verifier = verifier.migrate().await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -843,9 +781,6 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
             Some(&credential_data2),
         )
         .await;
-
-        #[cfg(feature = "migration")]
-        let _consumer = consumer.migrate().await;
 
         proof_verifier
             .verify_presentation(
@@ -893,9 +828,6 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         )
         .await;
 
-        #[cfg(feature = "migration")]
-        let mut issuer = issuer.migrate().await;
-
         let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
         let credential_data2 = credential_data_address_2().to_string();
         let issuer_credential2 = exchange_credential(
@@ -934,9 +866,6 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         )
         .await;
 
-        #[cfg(feature = "migration")]
-        let mut verifier = verifier.migrate().await;
-
         proof_verifier
             .verify_presentation(
                 verifier.profile.ledger_read(),
@@ -964,9 +893,6 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
             Some(&credential_data2),
         )
         .await;
-
-        #[cfg(feature = "migration")]
-        let _consumer = consumer.migrate().await;
 
         proof_verifier
             .verify_presentation(
@@ -1034,12 +960,6 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
             .is_revoked(issuer.profile.ledger_read())
             .await
             .unwrap());
-
-        #[cfg(feature = "migration")]
-        let mut issuer = issuer.migrate().await;
-
-        #[cfg(feature = "migration")]
-        let mut consumer = consumer.migrate().await;
 
         revoke_credential_local(&mut issuer, &issuer_credential2, &rev_reg.rev_reg_id).await;
 

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use indy_api_types::{
     errors::{IndyErrorKind, IndyResult},
-    validation::Validatable,
     IndyError,
 };
 use ursa::cl::{
@@ -14,7 +13,6 @@ use super::{
     super::{
         anoncreds::{schema::SchemaId, DELIMITER},
         crypto::did::DidValue,
-        ledger::request::ProtocolVersion,
     },
     indy_identifiers,
 };
@@ -35,18 +33,10 @@ impl SignatureType {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CredentialDefinitionConfig {
     #[serde(default)]
     pub support_revocation: bool,
-}
-
-impl Default for CredentialDefinitionConfig {
-    fn default() -> Self {
-        CredentialDefinitionConfig {
-            support_revocation: false,
-        }
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -126,18 +116,6 @@ pub struct CredentialDefinitionCorrectnessProof {
     pub value: CredentialKeyCorrectnessProof,
 }
 
-impl Validatable for CredentialDefinition {
-    fn validate(&self) -> Result<(), String> {
-        match self {
-            CredentialDefinition::CredentialDefinitionV1(cred_def) => {
-                cred_def.id.validate()?;
-                cred_def.schema_id.validate()?;
-                Ok(())
-            }
-        }
-    }
-}
-
 qualifiable_type!(CredentialDefinitionId);
 
 impl CredentialDefinitionId {
@@ -163,35 +141,24 @@ impl CredentialDefinitionId {
                 "Unsupported DID method",
             )),
             None => {
-                let id = if ProtocolVersion::is_node_1_3() {
-                    CredentialDefinitionId(format!(
-                        "{}{}{}{}{}{}{}",
-                        did.0,
-                        DELIMITER,
-                        Self::MARKER,
-                        DELIMITER,
-                        signature_type,
-                        DELIMITER,
-                        schema_id.0
-                    ))
+                let tag = if tag.is_empty() {
+                    "".to_owned()
                 } else {
-                    let tag = if tag.is_empty() {
-                        "".to_owned()
-                    } else {
-                        format!("{}{}", DELIMITER, tag)
-                    };
-                    CredentialDefinitionId(format!(
-                        "{}{}{}{}{}{}{}{}",
-                        did.0,
-                        DELIMITER,
-                        Self::MARKER,
-                        DELIMITER,
-                        signature_type,
-                        DELIMITER,
-                        schema_id.0,
-                        tag
-                    ))
+                    format!("{}{}", DELIMITER, tag)
                 };
+
+                let id = CredentialDefinitionId(format!(
+                    "{}{}{}{}{}{}{}{}",
+                    did.0,
+                    DELIMITER,
+                    Self::MARKER,
+                    DELIMITER,
+                    signature_type,
+                    DELIMITER,
+                    schema_id.0,
+                    tag
+                ));
+
                 Ok(id)
             }
         }
@@ -302,18 +269,6 @@ impl CredentialDefinitionId {
         }
     }
 }
-
-impl Validatable for CredentialDefinitionId {
-    fn validate(&self) -> Result<(), String> {
-        self.parts().ok_or(format!(
-            "Credential Definition Id validation failed: {:?}, doesn't match pattern",
-            self.0
-        ))?;
-        Ok(())
-    }
-}
-
-impl Validatable for CredentialDefinitionConfig {}
 
 #[cfg(test)]
 mod tests {
@@ -477,41 +432,6 @@ mod tests {
             assert_eq!(_signature_type(), signature_type);
             assert_eq!(_schema_id_seq_no(), schema_id);
             assert_eq!(_tag(), tag);
-        }
-    }
-
-    mod validate {
-        use super::*;
-
-        #[test]
-        fn test_validate_cred_def_id_as_unqualified() {
-            _cred_def_id_unqualified().validate().unwrap();
-        }
-
-        #[test]
-        fn test_validate_cred_def_id_as_unqualified_without_tag() {
-            _cred_def_id_unqualified_without_tag().validate().unwrap();
-        }
-
-        #[test]
-        fn test_validate_cred_def_id_as_unqualified_with_schema_as_seq_no() {
-            _cred_def_id_unqualified_with_schema_as_seq_no()
-                .validate()
-                .unwrap();
-        }
-
-        #[test]
-        fn test_validate_cred_def_id_as_unqualified_with_schema_as_seq_no_without_tag() {
-            _cred_def_id_unqualified_with_schema_as_seq_no_without_tag()
-                .validate()
-                .unwrap();
-        }
-
-        #[test]
-        fn test_validate_cred_def_id_as_fully_qualified_with_schema_as_seq_no() {
-            _cred_def_id_qualified_with_schema_as_seq_no()
-                .validate()
-                .unwrap();
         }
     }
 }

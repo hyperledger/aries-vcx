@@ -128,7 +128,7 @@ impl WalletStorage for SQLiteStorage {
             sqlx::query_as("SELECT id, value, key FROM items where type = ?1 AND name = ?2")
                 .bind(type_)
                 .bind(id)
-                .fetch_one(&mut conn)
+                .fetch_one(&mut *conn)
                 .await?;
 
         let value = if options.retrieve_value {
@@ -151,7 +151,7 @@ impl WalletStorage for SQLiteStorage {
                     "SELECT name, value from tags_plaintext where item_id = ?",
                 )
                 .bind(item_id)
-                .fetch_all(&mut conn)
+                .fetch_all(&mut *conn)
                 .await?
                 .drain(..)
                 .map(|r| Tag::PlainText(r.0, r.1)),
@@ -162,7 +162,7 @@ impl WalletStorage for SQLiteStorage {
                     "SELECT name, value from tags_encrypted where item_id = ?",
                 )
                 .bind(item_id)
-                .fetch_all(&mut conn)
+                .fetch_all(&mut *conn)
                 .await?
                 .drain(..)
                 .map(|r| Tag::Encrypted(r.0, r.1)),
@@ -218,7 +218,7 @@ impl WalletStorage for SQLiteStorage {
             .bind(id)
             .bind(&value.data)
             .bind(&value.key)
-            .execute(&mut tx)
+            .execute(&mut *tx)
             .await?
             .last_insert_rowid();
 
@@ -231,7 +231,7 @@ impl WalletStorage for SQLiteStorage {
                     .bind(id)
                     .bind(tag_name)
                     .bind(tag_data)
-                    .execute(&mut tx)
+                    .execute(&mut *tx)
                     .await?
                 }
                 Tag::PlainText(ref tag_name, ref tag_data) => {
@@ -241,7 +241,7 @@ impl WalletStorage for SQLiteStorage {
                     .bind(id)
                     .bind(tag_name)
                     .bind(tag_data)
-                    .execute(&mut tx)
+                    .execute(&mut *tx)
                     .await?
                 }
             };
@@ -258,9 +258,9 @@ impl WalletStorage for SQLiteStorage {
             sqlx::query("UPDATE items SET value = ?1, key = ?2 WHERE type = ?3 AND name = ?4")
                 .bind(&value.data)
                 .bind(&value.key)
-                .bind(&type_)
-                .bind(&id)
-                .execute(&mut tx)
+                .bind(type_)
+                .bind(id)
+                .execute(&mut *tx)
                 .await?
                 .rows_affected();
 
@@ -287,7 +287,7 @@ impl WalletStorage for SQLiteStorage {
             sqlx::query_as("SELECT id FROM items WHERE type = ?1 AND name = ?2")
                 .bind(type_)
                 .bind(id)
-                .fetch_one(&mut tx)
+                .fetch_one(&mut *tx)
                 .await?;
 
         for tag in tags {
@@ -300,7 +300,7 @@ impl WalletStorage for SQLiteStorage {
                     .bind(item_id)
                     .bind(tag_name)
                     .bind(tag_data)
-                    .execute(&mut tx)
+                    .execute(&mut *tx)
                     .await?
                 }
                 Tag::PlainText(ref tag_name, ref tag_data) => {
@@ -311,7 +311,7 @@ impl WalletStorage for SQLiteStorage {
                     .bind(item_id)
                     .bind(tag_name)
                     .bind(tag_data)
-                    .execute(&mut tx)
+                    .execute(&mut *tx)
                     .await?
                 }
             };
@@ -327,18 +327,18 @@ impl WalletStorage for SQLiteStorage {
         let (item_id,): (i64,) =
             sqlx::query_as("SELECT id FROM items WHERE type = ?1 AND name = ?2")
                 .bind(type_)
-                .bind(&id)
-                .fetch_one(&mut tx)
+                .bind(id)
+                .fetch_one(&mut *tx)
                 .await?;
 
         sqlx::query("DELETE FROM tags_encrypted WHERE item_id = ?1")
             .bind(item_id)
-            .execute(&mut tx)
+            .execute(&mut *tx)
             .await?;
 
         sqlx::query("DELETE FROM tags_plaintext WHERE item_id = ?1")
             .bind(item_id)
-            .execute(&mut tx)
+            .execute(&mut *tx)
             .await?;
 
         for tag in tags {
@@ -350,7 +350,7 @@ impl WalletStorage for SQLiteStorage {
                     .bind(item_id)
                     .bind(tag_name)
                     .bind(tag_data)
-                    .execute(&mut tx)
+                    .execute(&mut *tx)
                     .await?
                 }
                 Tag::PlainText(ref tag_name, ref tag_data) => {
@@ -360,7 +360,7 @@ impl WalletStorage for SQLiteStorage {
                     .bind(item_id)
                     .bind(tag_name)
                     .bind(tag_data)
-                    .execute(&mut tx)
+                    .execute(&mut *tx)
                     .await?
                 }
             };
@@ -378,7 +378,7 @@ impl WalletStorage for SQLiteStorage {
             sqlx::query_as("SELECT id FROM items WHERE type = ?1 AND name = ?2")
                 .bind(type_)
                 .bind(id)
-                .fetch_one(&mut tx)
+                .fetch_one(&mut *tx)
                 .await?;
 
         for tag_name in tag_names {
@@ -387,14 +387,14 @@ impl WalletStorage for SQLiteStorage {
                     sqlx::query("DELETE FROM tags_encrypted WHERE item_id = ?1 AND name = ?2")
                         .bind(item_id)
                         .bind(tag_name)
-                        .execute(&mut tx)
+                        .execute(&mut *tx)
                         .await?
                 }
                 TagName::OfPlain(ref tag_name) => {
                     sqlx::query("DELETE FROM tags_plaintext WHERE item_id = ?1 AND name = ?2")
                         .bind(item_id)
                         .bind(tag_name)
-                        .execute(&mut tx)
+                        .execute(&mut *tx)
                         .await?
                 }
             };
@@ -435,7 +435,7 @@ impl WalletStorage for SQLiteStorage {
         let rows_affected = sqlx::query("DELETE FROM items where type = ?1 AND name = ?2")
             .bind(type_)
             .bind(id)
-            .execute(&mut tx)
+            .execute(&mut *tx)
             .await?
             .rows_affected();
 
@@ -459,7 +459,7 @@ impl WalletStorage for SQLiteStorage {
         let mut conn = self.pool.acquire().await?;
 
         let (metadata,): (Vec<u8>,) = sqlx::query_as::<_, (Vec<u8>,)>("SELECT value FROM metadata")
-            .fetch_one(&mut conn)
+            .fetch_one(&mut *conn)
             .await?;
 
         Ok(metadata)
@@ -470,7 +470,7 @@ impl WalletStorage for SQLiteStorage {
 
         sqlx::query("UPDATE metadata SET value = ?1")
             .bind(metadata)
-            .execute(&mut tx)
+            .execute(&mut *tx)
             .await?;
 
         tx.commit().await?;
@@ -485,7 +485,7 @@ impl WalletStorage for SQLiteStorage {
             sqlx::query_as::<_, (i64, Vec<u8>, String)>(
                 "SELECT item_id, name, value from tags_plaintext",
             )
-            .fetch_all(&mut conn)
+            .fetch_all(&mut *conn)
             .await?
             .drain(..)
             .map(|r| (r.0, Tag::PlainText(r.1, r.2))),
@@ -495,7 +495,7 @@ impl WalletStorage for SQLiteStorage {
             sqlx::query_as::<_, (i64, Vec<u8>, Vec<u8>)>(
                 "SELECT item_id, name, value from tags_encrypted",
             )
-            .fetch_all(&mut conn)
+            .fetch_all(&mut *conn)
             .await?
             .drain(..)
             .map(|r| (r.0, Tag::Encrypted(r.1, r.2))),
@@ -510,7 +510,7 @@ impl WalletStorage for SQLiteStorage {
         let records: VecDeque<_> = sqlx::query_as::<_, (i64, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>)>(
             "SELECT id, name, value, key, type FROM items",
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await?
         .drain(..)
         .map(|r| {
@@ -563,7 +563,7 @@ impl WalletStorage for SQLiteStorage {
                 }
             }
 
-            let mut records = query.fetch_all(&mut conn).await?;
+            let mut records = query.fetch_all(&mut *conn).await?;
 
             let mut mtags = if options.retrieve_tags && !records.is_empty() {
                 let mut tags: Vec<(i64, Tag)> = Vec::new();
@@ -590,7 +590,7 @@ impl WalletStorage for SQLiteStorage {
 
                 tags.extend(
                     query
-                        .fetch_all(&mut conn)
+                        .fetch_all(&mut *conn)
                         .await?
                         .drain(..)
                         .map(|r| (r.0, Tag::PlainText(r.1, r.2))),
@@ -613,7 +613,7 @@ impl WalletStorage for SQLiteStorage {
 
                 tags.extend(
                     query
-                        .fetch_all(&mut conn)
+                        .fetch_all(&mut *conn)
                         .await?
                         .drain(..)
                         .map(|r| (r.0, Tag::Encrypted(r.1, r.2))),
@@ -671,7 +671,7 @@ impl WalletStorage for SQLiteStorage {
                 }
             }
 
-            let (total_count,) = query.fetch_one(&mut conn).await?;
+            let (total_count,) = query.fetch_one(&mut *conn).await?;
             Some(total_count as usize)
         } else {
             None
@@ -922,10 +922,10 @@ impl WalletStorageType for SQLiteStorageType {
             ));
         }
 
-        let mut connect_options = SqliteConnectOptions::new()
+        let connect_options = SqliteConnectOptions::new()
             .filename(db_path.as_path())
-            .journal_mode(SqliteJournalMode::Wal);
-        connect_options.disable_statement_logging();
+            .journal_mode(SqliteJournalMode::Wal)
+            .disable_statement_logging();
 
         Ok(Box::new(SQLiteStorage {
             pool: SqlitePoolOptions::default()

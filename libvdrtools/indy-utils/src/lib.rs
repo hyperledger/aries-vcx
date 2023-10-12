@@ -22,9 +22,6 @@ macro_rules! secret {
 pub mod crypto;
 pub mod environment;
 pub mod sequence;
-#[macro_use]
-#[allow(unused_macros)]
-pub mod test;
 pub mod wql;
 
 use indy_api_types::{CommandHandle, SearchHandle, VdrHandle, WalletHandle};

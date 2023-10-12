@@ -1,4 +1,3 @@
-use indy_api_types::validation::Validatable;
 use ursa::cl::{CredentialKeyCorrectnessProof, Nonce};
 
 use super::{credential_definition::CredentialDefinitionId, schema::SchemaId};
@@ -27,13 +26,5 @@ impl CredentialOffer {
             key_correctness_proof: self.key_correctness_proof,
             nonce: self.nonce,
         }
-    }
-}
-
-impl Validatable for CredentialOffer {
-    fn validate(&self) -> Result<(), String> {
-        self.schema_id.validate()?;
-        self.cred_def_id.validate()?;
-        Ok(())
     }
 }

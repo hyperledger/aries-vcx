@@ -2,6 +2,7 @@ use std::{clone::Clone, fmt::Display, str::FromStr};
 
 use agency_client::agency_client::AgencyClient;
 use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
+use base64::{engine::general_purpose, Engine};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     decorators::{attachment::AttachmentType, thread::Thread},
@@ -166,7 +167,7 @@ impl OutOfBandReceiver {
                 ));
             };
 
-            let Ok(bytes) = base64::decode(encoded_attach) else {
+            let Ok(bytes) = general_purpose::STANDARD.decode(encoded_attach) else {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::SerializationError,
                     format!("Attachment is not base 64 encoded JSON: {attach:?}"),

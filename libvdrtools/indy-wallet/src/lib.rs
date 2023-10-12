@@ -1,5 +1,3 @@
-#![allow(clippy::all)]
-
 use std::{
     collections::{HashMap, HashSet},
     fmt, fs,
@@ -52,6 +50,7 @@ pub struct MigrationResult {
     failed: u32,
 }
 
+#[allow(clippy::type_complexity)]
 pub struct WalletService {
     storage_types: Mutex<HashMap<String, Arc<dyn WalletStorageType>>>,
     wallets: Mutex<HashMap<WalletHandle, Arc<Wallet>>>,
@@ -82,6 +81,7 @@ pub struct WalletService {
     cache_hit_metrics: WalletCacheHitMetrics,
 }
 
+#[allow(clippy::new_without_default)]
 impl WalletService {
     pub fn new() -> WalletService {
         let storage_types = {
@@ -976,6 +976,7 @@ impl WalletService {
         self.cache_hit_metrics.get_data()
     }
 
+    #[allow(clippy::type_complexity)]
     fn _get_config_and_cred_for_storage(
         &self,
         config: &Config,

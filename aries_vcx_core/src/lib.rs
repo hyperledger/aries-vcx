@@ -17,20 +17,16 @@ macro_rules! secret {
 #[macro_use]
 extern crate lazy_static;
 
-#[macro_use]
 extern crate serde_json;
 
 #[macro_use]
 extern crate log;
 
-#[macro_use]
 extern crate derive_builder;
 
 pub mod anoncreds;
 pub mod errors;
 pub mod global;
-#[cfg(feature = "vdrtools_anoncreds")]
-pub mod indy;
 pub mod ledger;
 pub mod utils;
 pub mod wallet;
