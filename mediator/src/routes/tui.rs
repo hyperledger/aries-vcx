@@ -15,22 +15,23 @@ use cursive::{
 use futures::executor::block_on;
 use log::info;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
+use xum_test_server::storage::MediatorPersistence;
 
 use crate::{agent::Agent, routes::client::handle_register};
 
-pub async fn init_tui<T: BaseWallet + 'static>(agent: Agent<T>) {
+pub async fn init_tui<T: BaseWallet + 'static, P: MediatorPersistence>(agent: Agent<T, P>) {
     let mut cursive = Cursive::new();
     cursive.add_global_callback(Key::Esc, |s| s.quit());
     cursive.set_user_data(Arc::new(agent));
 
     let mut main = LinearLayout::horizontal().with_name("main");
-    let endpoint_selector = endpoints_ui::<T>();
+    let endpoint_selector = endpoints_ui::<T, P>();
     main.get_mut().add_child(endpoint_selector);
     cursive.add_layer(main);
     cursive.run()
 }
 
-pub fn endpoints_ui<T: BaseWallet + 'static>() -> Panel<LinearLayout> {
+pub fn endpoints_ui<T: BaseWallet + 'static, P: MediatorPersistence>() -> Panel<LinearLayout> {
     let mut endpoint_selector = SelectView::new();
     // Set available endpoints
     endpoint_selector.add_item_str("/client/register");
@@ -39,8 +40,8 @@ pub fn endpoints_ui<T: BaseWallet + 'static>() -> Panel<LinearLayout> {
     endpoint_selector.set_on_submit(|s, endpoint: &str| {
         // Match ui generators for available endpoints
         let view = match endpoint {
-            "/client/register" => client_register_ui::<T>(),
-            "/client/contacts" => contact_selector_ui::<T>(s),
+            "/client/register" => client_register_ui::<T, P>(),
+            "/client/contacts" => contact_selector_ui::<T, P>(s),
             _ => dummy_ui(),
         };
         // Replace previously exposed ui
@@ -53,7 +54,7 @@ pub fn endpoints_ui<T: BaseWallet + 'static>() -> Panel<LinearLayout> {
     make_standard(endpoint_selector, Orientation::Vertical).title("Select endpoint")
 }
 
-pub fn client_register_ui<T: BaseWallet + 'static>() -> Panel<LinearLayout> {
+pub fn client_register_ui<T: BaseWallet + 'static, P: MediatorPersistence>() -> Panel<LinearLayout> {
     let input = TextArea::new().with_name("oob_text_area");
     let input = ResizedView::new(
         SizeConstraint::AtLeast(20),
@@ -66,7 +67,7 @@ pub fn client_register_ui<T: BaseWallet + 'static>() -> Panel<LinearLayout> {
                 .unwrap()
                 .set_content("");
         })
-        .button("Connect", client_register_connect_cb::<T>)
+        .button("Connect", client_register_connect_cb::<T, P>)
         .title("OOB Invite");
     let input = Panel::new(input);
 
@@ -82,7 +83,7 @@ pub fn client_register_ui<T: BaseWallet + 'static>() -> Panel<LinearLayout> {
     make_standard(ui, Orientation::Horizontal).title("Register client using Out Of Band Invitation")
 }
 
-pub fn client_register_connect_cb<T: BaseWallet + 'static>(s: &mut Cursive) {
+pub fn client_register_connect_cb<T: BaseWallet + 'static, P: MediatorPersistence>(s: &mut Cursive) {
     let oob_text_area = s.find_name::<TextArea>("oob_text_area").unwrap();
     let mut output = s.find_name::<TextView>("client_register_result").unwrap();
     let oob_text = oob_text_area.get_content();
@@ -96,7 +97,7 @@ pub fn client_register_connect_cb<T: BaseWallet + 'static>(s: &mut Cursive) {
         }
     };
     info!("{:#?}", oob_invite);
-    let agent: &mut Arc<Agent<T>> = s.user_data().expect("Userdata should contain Agent");
+    let agent: &mut Arc<Agent<T, P>> = s.user_data().expect("Userdata should contain Agent");
 
     output.set_content(format!("{:#?}", oob_invite));
     match block_on(handle_register(State(agent.to_owned()), Json(oob_invite))) {
@@ -118,10 +119,10 @@ fn make_standard(view: impl View, orientation: Orientation) -> Panel<LinearLayou
 //     contact_selector_ui(s)
 // }
 
-pub fn contact_selector_ui<T: BaseWallet + 'static>(s: &mut Cursive) -> Panel<LinearLayout> {
+pub fn contact_selector_ui<T: BaseWallet + 'static, P: MediatorPersistence>(s: &mut Cursive) -> Panel<LinearLayout> {
     let mut contact_selector = SelectView::new();
     // Set available contacts
-    let agent: &mut Arc<Agent<T>> = s
+    let agent: &mut Arc<Agent<T, P>> = s
         .user_data()
         .expect("cursive must be initialised with state arc agent ");
     let contact_list_maybe = block_on(agent.list_contacts());

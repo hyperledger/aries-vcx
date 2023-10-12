@@ -23,13 +23,14 @@ use messages::{
     },
     AriesMessage,
 };
+use xum_test_server::storage::MediatorPersistence;
 
 // use super::transports::AriesTransport;
 // use diddoc_legacy::aries::service::AriesService;
 use super::{transports::AriesTransport, Agent};
 use crate::{agent::utils::oob2did, utils::prelude::*};
 // client role utilities
-impl<T: BaseWallet + 'static> Agent<T> {
+impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
     /// Starts a new connection object and tries to create request to the specified OOB invite
     /// endpoint
     pub async fn gen_client_connect_req(

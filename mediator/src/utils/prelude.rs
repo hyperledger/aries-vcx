@@ -7,9 +7,9 @@ pub use log::{debug, error, info};
 // Generic Result
 // pub type Result_<T> = Result<T, Box<dyn Error>>;
 
-// pub fn string_from_std_error(err: impl std::error::Error) -> String {
-//     err.to_string()
-// }
+pub fn string_from_std_error(err: impl std::error::Error) -> String {
+    err.to_string()
+}
 
 #[derive(thiserror::Error, Debug)]
 #[error("{msg}")]

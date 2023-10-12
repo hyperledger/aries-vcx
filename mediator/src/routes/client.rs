@@ -3,12 +3,13 @@ use std::collections::VecDeque;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use serde_json::json;
+use xum_test_server::storage::MediatorPersistence;
 
 use super::*;
 use crate::agent::transports::AriesReqwest;
 
 pub async fn handle_register(
-    State(agent): State<ArcAgent<impl BaseWallet + 'static>>,
+    State(agent): State<ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>>,
     Json(oob_invite): Json<OOBInvitation>,
 ) -> Result<Json<Value>, String> {
     let mut aries_transport = AriesReqwest {
@@ -25,7 +26,7 @@ pub async fn handle_register(
     })))
 }
 
-pub async fn build_client_router<T: BaseWallet + 'static>(agent: Agent<T>) -> Router {
+pub async fn build_client_router<T: BaseWallet + 'static, P: MediatorPersistence>(agent: Agent<T, P>) -> Router {
     Router::default()
         .route("/client/register", post(handle_register))
         .layer(tower_http::catch_panic::CatchPanicLayer::new())

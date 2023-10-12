@@ -10,7 +10,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 aries-vcx = { path = "../aries_vcx" }
-aries_vcx_core = { path = "../aries_vcx_core", features = ["vdrtools_wallet", "vdrtools_anoncreds"] }
+aries_vcx_core = { path = "../aries_vcx_core", features = ["vdrtools_wallet"] }
 async-trait = "0.1.73"
 axum = "0.6"
 axum-macros = "0.3.8"
@@ -20,19 +20,18 @@ dotenvy = "0.15"
 env_logger = "0.10.0"
 fast_qr = { version = "0.10.2", features = ["svg"] }
 futures = "0.3.28"
-libvdrtools = { path = "../libvdrtools" } # vdrtools
 log = "0.4.20"
 messages = { path = "../messages" }
 reqwest = { version = "0.11.20", features = ["json"] }
 serde = "1.0.188"
 serde_json = "1.0.106"
+sqlx = { version = "0.5.8", git = "https://github.com/jovfer/sqlx", branch = "feature/json_no_preserve_order_v5" }
 thiserror = "1.0.49"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tower-http = { version = "0.4.4", features = ["catch-panic"] }
 url = "2.4.1"
 uuid = "1.4.1"
-xum-test-server = { git = "https://github.com/nain-F49FF806/axum-test-server.git", branch = "aries-vcx-mediator-integration" }
+xum-test-server = { git = "https://github.com/nain-F49FF806/axum-test-server.git", branch = "aries-vcx-mediator-integration", version = "*"}
 
 [dev-dependencies]
-anyhow = "1.0.75"
 reqwest = { version = "0.11.20", features = ["blocking"] }

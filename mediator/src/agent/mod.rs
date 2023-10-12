@@ -33,9 +33,9 @@ pub mod utils;
 pub mod client;
 
 #[derive(Clone)]
-pub struct Agent<T: BaseWallet> {
+pub struct Agent<T: BaseWallet, P: MediatorPersistence> {
     wallet: Arc<T>,
-    persistence: Arc<dyn MediatorPersistence>,
+    persistence: Arc<P>,
     service: Option<AriesService>,
 }
 
@@ -46,7 +46,7 @@ pub struct AgentMaker<T: BaseWallet> {
 impl AgentMaker<IndySdkWallet> {
     pub async fn new_from_wallet_config(
         config: WalletConfig,
-    ) -> Result<Agent<IndySdkWallet>, AriesVcxCoreError> {
+    ) -> Result<Agent<IndySdkWallet, sqlx::MySqlPool>, AriesVcxCoreError> {
         let wallet_handle: WalletHandle = create_and_open_wallet(&config).await?;
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
         info!("Connecting to persistence layer");
@@ -57,7 +57,8 @@ impl AgentMaker<IndySdkWallet> {
             service: None,
         })
     }
-    pub async fn new_demo_agent() -> Result<Agent<IndySdkWallet>, AriesVcxCoreError> {
+    pub async fn new_demo_agent() -> Result<Agent<IndySdkWallet, sqlx::MySqlPool>, AriesVcxCoreError>
+    {
         let config = WalletConfig {
             wallet_name: uuid::Uuid::new_v4().to_string(),
             wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
@@ -73,11 +74,16 @@ impl AgentMaker<IndySdkWallet> {
 }
 
 // Utils
-impl<T: BaseWallet + 'static> Agent<T> {
+impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
     pub fn get_wallet_ref(&self) -> Arc<dyn BaseWallet> {
         self.wallet.clone()
     }
-
+    pub fn get_persistence_ref(&self) -> Arc<impl MediatorPersistence> {
+        self.persistence.clone()
+    }
+    pub fn get_service_ref(&self) -> Option<&AriesService> {
+        self.service.as_ref()
+    }
     pub async fn reset_service(
         &mut self,
         routing_keys: Vec<String>,
@@ -123,9 +129,34 @@ impl<T: BaseWallet + 'static> Agent<T> {
         info!("{:#?}", unpacked);
         Ok(unpacked)
     }
+
+    pub async fn pack_didcomm(
+        &self,
+        message: &[u8],
+        our_vk: &VeriKey,
+        their_diddoc: &AriesDidDoc,
+    ) -> Result<EncryptionEnvelope, String> {
+        EncryptionEnvelope::create(self.wallet.as_ref(), message, Some(our_vk), their_diddoc)
+            .await
+            .map_err(string_from_std_error)
+    }
     // pub async fn pack_message(&self, message: AriesMessage, recipient_vk: VeriKey, sender_vk:
     // VeriKey) -> Value {     todo!()
     // }
+    /// Returns account details (account_name, our_signing_key, did_doc)
+    pub async fn auth_and_get_details(
+        &self,
+        sender_verkey: &Option<VeriKey>,
+    ) -> Result<(String, VeriKey, AriesDidDoc), String> {
+        let auth_pubkey = sender_verkey
+            .as_deref()
+            .ok_or("Anonymous sender can't be authenticated")?;
+        let (_sr_no, account_name, our_signing_key, did_doc_string) =
+            self.persistence.get_account_details(auth_pubkey).await?;
+        let diddoc =
+            serde_json::from_str::<AriesDidDoc>(&did_doc_string).map_err(string_from_std_error)?;
+        Ok((account_name, our_signing_key, diddoc))
+    }
     pub async fn handle_connection_req(
         &self,
         request: Request,
@@ -174,11 +205,11 @@ impl<T: BaseWallet + 'static> Agent<T> {
         )
         .await
         .map_err(|e| e.to_string())?;
-        // let their_keys = their_diddoc.recipient_keys().map_err(|e| e.to_string())?;
-        // let auth_pubkey = their_keys
-        //     .first()
-        //     .ok_or("No recipient key for client :/ ?".to_owned())?;
-        // self.create_account(vk, auth_pubkey.to_owned()).await?;
+        let their_keys = their_diddoc.recipient_keys().map_err(|e| e.to_string())?;
+        let auth_pubkey = their_keys
+            .first()
+            .ok_or("No recipient key for client :/ ?".to_owned())?;
+        self.create_account(auth_pubkey, &vk, &their_diddoc).await?;
         Ok(packed_response_envelope)
     }
 
