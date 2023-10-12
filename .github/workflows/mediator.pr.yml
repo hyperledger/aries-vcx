@@ -7,7 +7,9 @@ on:
       - nain/mediator-client
   pull_request:
     branches:
-      - "main"
+      - "**"
+    paths:
+      - 'mediator/**'
 
 env:
   DOCKER_BUILDKIT: 1
