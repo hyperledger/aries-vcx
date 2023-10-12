@@ -8,6 +8,7 @@ use crate::{
 };
 
 #[macro_use]
+#[cfg(feature = "vdrtools_wallet")]
 pub mod devsetup;
 
 #[cfg(debug_assertions)]
