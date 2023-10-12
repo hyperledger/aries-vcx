@@ -3,7 +3,7 @@ use mediator::agent::AgentMaker;
 
 #[tokio::main]
 async fn main() {
-    println!("Hello, world!");
+    info!("Starting up mediator! ⚙️⚙️");
     load_dot_env();
     setup_logging();
     let endpoint_root = std::env::var("ENDPOINT_ROOT").unwrap_or("127.0.0.1:8005".into());

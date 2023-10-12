@@ -1,9 +1,10 @@
+use log::info;
 /// Aries Agent TUI
 use mediator::{agent::AgentMaker, routes::tui};
 
 #[tokio::main]
 async fn main() {
-    println!("Hello, world!");
+    info!("TUI initializing!");
     load_dot_env();
     setup_logging();
     let agent = AgentMaker::new_demo_agent().await.unwrap();
