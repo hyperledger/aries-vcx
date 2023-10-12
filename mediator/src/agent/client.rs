@@ -116,7 +116,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             serde_json::to_string_pretty(&packed_aries_msg_json).unwrap()
         );
         aries_transport
-            .push_aries_envelope(packed_aries_msg_json, oob2did(oob_invite))
+            .push_aries_envelope(packed_aries_msg_json, &oob2did(oob_invite))
             .await?;
         let response_envelope = aries_transport.pop_aries_envelope()?;
         info!(

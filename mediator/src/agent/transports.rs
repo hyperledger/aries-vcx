@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 
 use async_trait::async_trait;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use log::info;
 use serde_json::Value;
 
 #[derive(thiserror::Error, Debug)]
@@ -24,7 +25,7 @@ pub trait AriesTransport {
     async fn push_aries_envelope(
         &mut self,
         envelope_json: Value,
-        destination: AriesDidDoc,
+        destination: &AriesDidDoc,
     ) -> Result<(), AriesTransportError>;
 }
 
@@ -38,7 +39,7 @@ impl AriesTransport for AriesReqwest {
     async fn push_aries_envelope(
         &mut self,
         envelope_json: Value,
-        destination: AriesDidDoc,
+        destination: &AriesDidDoc,
     ) -> Result<(), AriesTransportError> {
         let oob_invited_endpoint = destination
             .get_endpoint()
@@ -56,6 +57,7 @@ impl AriesTransport for AriesReqwest {
             .json()
             .await
             .map_err(AriesTransportError::from_std_error)?;
+        info!("Received aries response{:?}", res_json);
         self.response_queue.push_back(res_json);
         Ok(())
     }

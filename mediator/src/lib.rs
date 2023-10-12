@@ -1,3 +1,3 @@
 pub mod agent;
 pub mod routes;
-mod utils;
+pub mod utils;

@@ -25,6 +25,7 @@ use messages::{
 use serde_json::json;
 use xum_test_server::storage::{get_persistence, MediatorPersistence};
 
+use self::transports::AriesTransport;
 use crate::utils::{prelude::*, structs::VeriKey};
 
 pub mod transports;
@@ -140,6 +141,23 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             .await
             .map_err(string_from_std_error)
     }
+    pub async fn pack_and_send_didcomm(
+        &self,
+        message: &[u8],
+        our_vk: &VeriKey,
+        their_diddoc: &AriesDidDoc,
+        aries_transport: &mut impl AriesTransport,
+    ) -> Result<(), String> {
+        let EncryptionEnvelope(packed_message) =
+            self.pack_didcomm(&message, &our_vk, their_diddoc).await?;
+        let packed_json = serde_json::from_slice(&packed_message).map_err(string_from_std_error)?;
+        info!("Packed: {:?}, sending", serde_json::to_string(&packed_json).unwrap());
+        aries_transport
+            .push_aries_envelope(packed_json, their_diddoc)
+            .await
+            .map_err(string_from_std_error)
+    }
+
     // pub async fn pack_message(&self, message: AriesMessage, recipient_vk: VeriKey, sender_vk:
     // VeriKey) -> Value {     todo!()
     // }
@@ -151,10 +169,10 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         let auth_pubkey = sender_verkey
             .as_deref()
             .ok_or("Anonymous sender can't be authenticated")?;
-        let (_sr_no, account_name, our_signing_key, did_doc_string) =
+        let (_sr_no, account_name, our_signing_key, did_doc_json) =
             self.persistence.get_account_details(auth_pubkey).await?;
         let diddoc =
-            serde_json::from_str::<AriesDidDoc>(&did_doc_string).map_err(string_from_std_error)?;
+            serde_json::from_value::<AriesDidDoc>(did_doc_json).map_err(string_from_std_error)?;
         Ok((account_name, our_signing_key, diddoc))
     }
     pub async fn handle_connection_req(
@@ -225,3 +243,36 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         Ok(())
     }
 }
+ mod test{
+    use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
+    use log::info;
+    use serde_json::Value;
+    use xum_test_server::routes::json;
+
+    use crate::agent::utils::oob2did;
+
+    use super::AgentMaker;
+
+    #[tokio::test]
+    pub async fn test_pack_unpack() {
+        let message: Value = serde_json::from_str("{}").unwrap();
+        let message_bytes = serde_json::to_vec(&message).unwrap();
+        let mut agent = AgentMaker::new_demo_agent().await.unwrap();
+        agent
+        .init_service(
+            vec![],
+            format!("http://127.0.0.1:8005/aries").parse().unwrap(),
+        )
+        .await
+        .unwrap();
+        let their_diddoc = oob2did(agent.get_oob_invite().unwrap());
+        let our_service = agent.service.as_ref().unwrap();
+        let our_vk = our_service.recipient_keys.first().unwrap();
+        let EncryptionEnvelope(packed) = agent.pack_didcomm(&message_bytes, our_vk, &their_diddoc).await.unwrap();
+        let unpacked = agent.unpack_didcomm(&packed).await.unwrap();
+        info!("{:?}", unpacked);
+        print!("{:?}", unpacked);
+    }
+
+
+ }
