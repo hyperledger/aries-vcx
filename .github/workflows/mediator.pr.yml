@@ -51,7 +51,7 @@ jobs:
       - name: Install prerequisites (sqlx)
         run: cargo install sqlx-cli
       - name: Setup database
-        run: DATABASE_URL=${MYSQL_URL} sqlx migrate run
+        run: DATABASE_URL=${MYSQL_URL} sqlx migrate run --source mediator/migrations
       - name: "Run mediator integration tests"
         run: |
           RUST_TEST_THREADS=1 cargo test --package mediator;
