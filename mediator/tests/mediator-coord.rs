@@ -14,7 +14,11 @@ use mediator::{
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
 use xum_test_server::{
-    didcomm_types::mediator_coord_structs::MediatorCoordMsgEnum, storage::MediatorPersistence,
+    didcomm_types::mediator_coord_structs::{
+        KeylistData, KeylistQueryData, KeylistUpdateItem, KeylistUpdateItemAction,
+        KeylistUpdateRequestData, MediatorCoordMsgEnum,
+    },
+    storage::MediatorPersistence,
 };
 
 const ENDPOINT_ROOT: &str = "http://localhost:8005";
@@ -105,7 +109,6 @@ async fn test_mediate_grant() -> Result<()> {
         .unpack_didcomm(&serde_json::to_vec(&response).unwrap())
         .await
         .unwrap();
-    info!("response message: {:?}", unpacked_response.message);
     if let MediatorCoordMsgEnum::MediateGrant(grant_data) =
         serde_json::from_str(&unpacked_response.message).unwrap()
     {
@@ -115,8 +118,246 @@ async fn test_mediate_grant() -> Result<()> {
     {
         info!("Deny Data {:?}", deny_data);
     } else {
-        panic!("Should get response that is of type Mediator Grant / Deny")
+        panic!(
+            "Should get response that is of type Mediator Grant / Deny. Found {:?}",
+            unpacked_response.message
+        )
     };
 
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_mediate_keylist_update_add() -> Result<()> {
+    TestSetupAries.init();
+    // ready agent, http client
+    let agent = mediator::agent::AgentMaker::new_demo_agent().await?;
+    let mut aries_transport = AriesReqwest {
+        response_queue: VecDeque::new(),
+        client: reqwest::Client::new(),
+    };
+    // connection and parameters
+    let completed_connection = didcomm_connection(&agent, &mut aries_transport).await?;
+    let our_verikey: VeriKey = completed_connection.pairwise_info().pw_vk.clone();
+    let their_diddoc = completed_connection.their_did_doc();
+    // test feature
+    let (_, new_vk) = agent
+        .get_wallet_ref()
+        .create_and_store_my_did(None, None)
+        .await?;
+    let message = MediatorCoordMsgEnum::KeylistUpdateRequest(KeylistUpdateRequestData {
+        updates: vec![KeylistUpdateItem {
+            recipient_key: new_vk,
+            action: KeylistUpdateItemAction::Add,
+            result: None,
+        }],
+    });
+    info!("Sending {:?}", serde_json::to_string(&message).unwrap());
+    let message_bytes = serde_json::to_vec(&message)?;
+    agent
+        .pack_and_send_didcomm(
+            &message_bytes,
+            &our_verikey,
+            their_diddoc,
+            &mut aries_transport,
+        )
+        .await
+        .map_err(|err| GenericStringError { msg: err })?;
+    // verify response
+    let response = aries_transport.pop_aries_envelope()?;
+    let unpacked_response = agent
+        .unpack_didcomm(&serde_json::to_vec(&response).unwrap())
+        .await
+        .unwrap();
+    if let MediatorCoordMsgEnum::KeylistUpdateResponse(update_response_data) =
+        serde_json::from_str(&unpacked_response.message)?
+    {
+        info!("Received update response {:?}", update_response_data);
+    } else {
+        panic!(
+            "Expected message of type KeylistUpdateResponse. Found {:?}",
+            unpacked_response.message
+        )
+    }
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_mediate_keylist_query() -> Result<()> {
+    TestSetupAries.init();
+    // ready agent, http client
+    let agent = mediator::agent::AgentMaker::new_demo_agent().await?;
+    let mut aries_transport = AriesReqwest {
+        response_queue: VecDeque::new(),
+        client: reqwest::Client::new(),
+    };
+    // connection and parameters
+    let completed_connection = didcomm_connection(&agent, &mut aries_transport).await?;
+    let our_verikey: VeriKey = completed_connection.pairwise_info().pw_vk.clone();
+    let their_diddoc = completed_connection.their_did_doc();
+    // test feature part1: add key
+    let (_, new_vk) = agent
+        .get_wallet_ref()
+        .create_and_store_my_did(None, None)
+        .await?;
+    let message = MediatorCoordMsgEnum::KeylistUpdateRequest(KeylistUpdateRequestData {
+        updates: vec![KeylistUpdateItem {
+            recipient_key: new_vk,
+            action: KeylistUpdateItemAction::Add,
+            result: None,
+        }],
+    });
+    info!("Sending {:?}", serde_json::to_string(&message).unwrap());
+    let message_bytes = serde_json::to_vec(&message)?;
+    agent
+        .pack_and_send_didcomm(
+            &message_bytes,
+            &our_verikey,
+            their_diddoc,
+            &mut aries_transport,
+        )
+        .await
+        .map_err(|err| GenericStringError { msg: err })?;
+    let response = aries_transport.pop_aries_envelope()?;
+    let unpacked_response = agent
+        .unpack_didcomm(&serde_json::to_vec(&response).unwrap())
+        .await
+        .unwrap();
+    if let MediatorCoordMsgEnum::KeylistUpdateResponse(update_response_data) =
+        serde_json::from_str(&unpacked_response.message)?
+    {
+        info!(
+            "Recieved update response {:?}, proceeding to keylist query",
+            update_response_data
+        );
+    } else {
+        panic!(
+            "Expected message of type KeylistUpdateResponse. Found {:?}",
+            unpacked_response.message
+        )
+    }
+
+    //test feature part2: list keys
+    let message = MediatorCoordMsgEnum::KeylistQuery(KeylistQueryData {});
+    info!("Sending {:?}", serde_json::to_string(&message).unwrap());
+    let message_bytes = serde_json::to_vec(&message)?;
+    agent
+        .pack_and_send_didcomm(
+            &message_bytes,
+            &our_verikey,
+            their_diddoc,
+            &mut aries_transport,
+        )
+        .await
+        .map_err(|err| GenericStringError { msg: err })?;
+    // verify response
+    let response = aries_transport.pop_aries_envelope()?;
+    let unpacked_response = agent
+        .unpack_didcomm(&serde_json::to_vec(&response).unwrap())
+        .await
+        .unwrap();
+    if let MediatorCoordMsgEnum::Keylist(KeylistData { keys }) =
+        serde_json::from_str(&unpacked_response.message)?
+    {
+        info!("Keylist mediator sent {:?}", keys)
+    } else {
+        panic!(
+            "Expected message of type Keylist. Found {:?}",
+            unpacked_response.message
+        )
+    }
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_mediate_keylist_update_remove() -> Result<()> {
+    TestSetupAries.init();
+    // ready agent, http client
+    let agent = mediator::agent::AgentMaker::new_demo_agent().await?;
+    let mut aries_transport = AriesReqwest {
+        response_queue: VecDeque::new(),
+        client: reqwest::Client::new(),
+    };
+    // connection and parameters
+    let completed_connection = didcomm_connection(&agent, &mut aries_transport).await?;
+    let our_verikey: VeriKey = completed_connection.pairwise_info().pw_vk.clone();
+    let their_diddoc = completed_connection.their_did_doc();
+    // test feature part1: add key
+    let (_, new_vk) = agent
+        .get_wallet_ref()
+        .create_and_store_my_did(None, None)
+        .await?;
+    let message = MediatorCoordMsgEnum::KeylistUpdateRequest(KeylistUpdateRequestData {
+        updates: vec![KeylistUpdateItem {
+            recipient_key: new_vk.clone(),
+            action: KeylistUpdateItemAction::Add,
+            result: None,
+        }],
+    });
+    info!("Sending {:?}", serde_json::to_string(&message).unwrap());
+    let message_bytes = serde_json::to_vec(&message)?;
+    agent
+        .pack_and_send_didcomm(
+            &message_bytes,
+            &our_verikey,
+            their_diddoc,
+            &mut aries_transport,
+        )
+        .await
+        .map_err(|err| GenericStringError { msg: err })?;
+    let response = aries_transport.pop_aries_envelope()?;
+    let unpacked_response = agent
+        .unpack_didcomm(&serde_json::to_vec(&response).unwrap())
+        .await
+        .unwrap();
+    if let MediatorCoordMsgEnum::KeylistUpdateResponse(update_response_data) =
+        serde_json::from_str(&unpacked_response.message)?
+    {
+        info!(
+            "Recieved update response {:?}, proceeding to delete",
+            update_response_data
+        );
+    } else {
+        panic!(
+            "Expected message of type KeylistUpdateResponse. Found {:?}",
+            unpacked_response.message
+        )
+    }
+    // test feature part2: delete key
+    let message = MediatorCoordMsgEnum::KeylistUpdateRequest(KeylistUpdateRequestData {
+        updates: vec![KeylistUpdateItem {
+            recipient_key: new_vk,
+            action: KeylistUpdateItemAction::Remove,
+            result: None,
+        }],
+    });
+    info!("Sending {:?}", serde_json::to_string(&message).unwrap());
+    let message_bytes = serde_json::to_vec(&message)?;
+    agent
+        .pack_and_send_didcomm(
+            &message_bytes,
+            &our_verikey,
+            their_diddoc,
+            &mut aries_transport,
+        )
+        .await
+        .map_err(|err| GenericStringError { msg: err })?;
+    let response = aries_transport.pop_aries_envelope()?;
+    let unpacked_response = agent
+        .unpack_didcomm(&serde_json::to_vec(&response).unwrap())
+        .await
+        .unwrap();
+    if let MediatorCoordMsgEnum::KeylistUpdateResponse(update_response_data) =
+        serde_json::from_str(&unpacked_response.message)?
+    {
+        info!("Recieved update response {:?}", update_response_data);
+    } else {
+        panic!(
+            "Expected message of type KeylistUpdateResponse. Found {:?}",
+            unpacked_response.message
+        )
+    }
     Ok(())
 }

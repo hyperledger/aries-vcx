@@ -50,7 +50,19 @@ Currently exposed endpoints.
 
 ```yaml
 `/register`:
-- **Description** : Shows an Aries Out Of Band (OOB) invitation which can be used to connect to the mediator using a conformant Aries Agent.
+- **Description** : | 
+    Shows an Aries Out Of Band (OOB) invitation which can be used to connect to the mediator using a conformant Aries Agent.
+    Use `Accept` header with value "application/json" to receive same in json format.
+
+`/register.json`:
+- **Description** : Returns OOB invitation in json format.
+```
+
+```yaml
+`/aries`:
+- **Description** : | 
+    Endpoint for Aries communication. 
+    Encrypted Aries messages (envelops) can be passed and received from this endpoint in json serialized format.
 ```
 
 ### Client API
