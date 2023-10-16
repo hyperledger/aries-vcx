@@ -4,7 +4,7 @@ use aries_vcx::common::primitives::revocation_registry::{
 
 use crate::{
     api_vcx::{
-        api_global::profile::{get_main_anoncreds, get_main_ledger_write},
+        api_global::profile::{get_main_anoncreds, get_main_ledger_write, get_main_wallet},
         api_handle::object_cache::ObjectCache,
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
