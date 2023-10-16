@@ -29,7 +29,10 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
         let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
-            &institution.profile,
+            &institution.wallet,
+            &institution.ledger_read,
+            &institution.ledger_write,
+            &institution.anoncreds,
             &institution.institution_did,
         )
         .await;
@@ -81,8 +84,14 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
         let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &issuer.wallet,
+            &issuer.ledger_read,
+            &issuer.ledger_write,
+            &issuer.anoncreds,
+            &issuer.institution_did,
+        )
+        .await;
         let credential_data1 = credential_data_address_1().to_string();
         let _credential_handle1 = exchange_credential(
             &mut consumer,
@@ -142,7 +151,10 @@ async fn test_agency_pool_credential_exchange_via_proposal() {
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
         let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
-            &institution.profile,
+            &institution.wallet,
+            &institution.ledger_read,
+            &institution.ledger_write,
+            &institution.anoncreds,
             &institution.institution_did,
         )
         .await;
@@ -170,7 +182,10 @@ async fn test_agency_pool_credential_exchange_via_proposal_failed() {
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
         let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
-            &institution.profile,
+            &institution.wallet,
+            &institution.ledger_read,
+            &institution.ledger_write,
+            &institution.anoncreds,
             &institution.institution_did,
         )
         .await;
@@ -209,7 +224,10 @@ async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
         let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
-            &institution.profile,
+            &institution.wallet,
+            &institution.ledger_read,
+            &institution.ledger_write,
+            &institution.anoncreds,
             &institution.institution_did,
         )
         .await;

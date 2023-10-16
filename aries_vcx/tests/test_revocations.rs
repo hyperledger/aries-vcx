@@ -8,7 +8,6 @@ pub mod utils;
 use std::{thread, time::Duration};
 
 use aries_vcx::{
-    core::profile::Profile,
     protocols::proof_presentation::verifier::{
         state_machine::VerifierState, verification_status::PresentationVerificationStatus,
     },
@@ -37,10 +36,7 @@ async fn test_agency_pool_basic_revocation() {
         let (schema, cred_def, rev_reg, issuer) =
             issue_address_credential(&mut consumer, &mut institution).await;
 
-        assert!(!issuer
-            .is_revoked(institution.profile.ledger_read())
-            .await
-            .unwrap());
+        assert!(!issuer.is_revoked(&institution.ledger_read).await.unwrap());
 
         let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
         revoke_credential_and_publish_accumulator(&mut institution, &issuer, &rev_reg).await;
@@ -48,10 +44,7 @@ async fn test_agency_pool_basic_revocation() {
         tokio::time::sleep(Duration::from_millis(1000)).await;
         let time_after_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
 
-        assert!(issuer
-            .is_revoked(institution.profile.ledger_read())
-            .await
-            .unwrap());
+        assert!(issuer.is_revoked(&institution.ledger_read).await.unwrap());
 
         let requested_attrs = requested_attrs_address(
             &institution.institution_did,
@@ -80,8 +73,8 @@ async fn test_agency_pool_basic_revocation() {
 
         verifier
             .verify_presentation(
-                institution.profile.ledger_read(),
-                institution.profile.anoncreds(),
+                &institution.ledger_read,
+                &institution.anoncreds,
                 presentation,
             )
             .await
@@ -105,10 +98,7 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
         let (schema, cred_def, rev_reg, issuer) =
             issue_address_credential(&mut consumer, &mut institution).await;
 
-        assert!(!issuer
-            .is_revoked(institution.profile.ledger_read())
-            .await
-            .unwrap());
+        assert!(!issuer.is_revoked(&institution.ledger_read).await.unwrap());
 
         tokio::time::sleep(Duration::from_millis(1000)).await;
         let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
@@ -146,8 +136,8 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
 
         verifier
             .verify_presentation(
-                institution.profile.ledger_read(),
-                institution.profile.anoncreds(),
+                &institution.ledger_read,
+                &institution.anoncreds,
                 presentation,
             )
             .await
@@ -172,10 +162,7 @@ async fn test_agency_pool_local_revocation() {
             issue_address_credential(&mut consumer, &mut institution).await;
 
         revoke_credential_local(&mut institution, &issuer, &rev_reg.rev_reg_id).await;
-        assert!(!issuer
-            .is_revoked(institution.profile.ledger_read())
-            .await
-            .unwrap());
+        assert!(!issuer.is_revoked(&institution.ledger_read).await.unwrap());
 
         let verifier_handler = exchange_proof(
             &mut institution,
@@ -190,10 +177,7 @@ async fn test_agency_pool_local_revocation() {
             PresentationVerificationStatus::Valid
         );
 
-        assert!(!issuer
-            .is_revoked(institution.profile.ledger_read())
-            .await
-            .unwrap());
+        assert!(!issuer.is_revoked(&institution.ledger_read).await.unwrap());
 
         publish_revocation(&mut institution, &rev_reg).await;
 
@@ -210,10 +194,7 @@ async fn test_agency_pool_local_revocation() {
             PresentationVerificationStatus::Invalid
         );
 
-        assert!(issuer
-            .is_revoked(institution.profile.ledger_read())
-            .await
-            .unwrap());
+        assert!(issuer.is_revoked(&institution.ledger_read).await.unwrap());
     })
     .await;
 }
@@ -229,7 +210,10 @@ async fn test_agency_batch_revocation() {
 
         // Issue and send three credentials of the same schema
         let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
-            &institution.profile,
+            &institution.wallet,
+            &institution.ledger_read,
+            &institution.ledger_write,
+            &institution.anoncreds,
             &institution.institution_did,
         )
         .await;
@@ -267,15 +251,15 @@ async fn test_agency_batch_revocation() {
         revoke_credential_local(&mut institution, &issuer_credential1, &rev_reg.rev_reg_id).await;
         revoke_credential_local(&mut institution, &issuer_credential2, &rev_reg.rev_reg_id).await;
         assert!(!issuer_credential1
-            .is_revoked(institution.profile.ledger_read())
+            .is_revoked(&institution.ledger_read)
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(institution.profile.ledger_read())
+            .is_revoked(&institution.ledger_read)
             .await
             .unwrap());
         assert!(!issuer_credential3
-            .is_revoked(institution.profile.ledger_read())
+            .is_revoked(&institution.ledger_read)
             .await
             .unwrap());
 
@@ -322,15 +306,15 @@ async fn test_agency_batch_revocation() {
         tokio::time::sleep(Duration::from_millis(1000)).await;
 
         assert!(issuer_credential1
-            .is_revoked(institution.profile.ledger_read())
+            .is_revoked(&institution.ledger_read)
             .await
             .unwrap());
         assert!(issuer_credential2
-            .is_revoked(institution.profile.ledger_read())
+            .is_revoked(&institution.ledger_read)
             .await
             .unwrap());
         assert!(!issuer_credential3
-            .is_revoked(institution.profile.ledger_read())
+            .is_revoked(&institution.ledger_read)
             .await
             .unwrap());
 
@@ -383,8 +367,14 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &issuer.wallet,
+            &issuer.ledger_read,
+            &issuer.ledger_write,
+            &issuer.anoncreds,
+            &issuer.institution_did,
+        )
+        .await;
         let credential_data1 = credential_data_address_1().to_string();
         let issuer_credential1 = exchange_credential(
             &mut consumer,
@@ -408,11 +398,11 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         .await;
 
         assert!(!issuer_credential1
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
 
@@ -433,11 +423,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         )
         .await;
         proof_verifier
-            .verify_presentation(
-                verifier.profile.ledger_read(),
-                verifier.profile.anoncreds(),
-                presentation,
-            )
+            .verify_presentation(&verifier.ledger_read, &verifier.anoncreds, presentation)
             .await
             .unwrap();
         assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
@@ -462,11 +448,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         .await;
 
         proof_verifier
-            .verify_presentation(
-                verifier.profile.ledger_read(),
-                verifier.profile.anoncreds(),
-                presentation,
-            )
+            .verify_presentation(&verifier.ledger_read, &verifier.anoncreds, presentation)
             .await
             .unwrap();
         assert_eq!(
@@ -475,11 +457,11 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         );
 
         assert!(issuer_credential1
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
     })
@@ -495,8 +477,14 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &issuer.wallet,
+            &issuer.ledger_read,
+            &issuer.ledger_write,
+            &issuer.anoncreds,
+            &issuer.institution_did,
+        )
+        .await;
         let credential_data1 = credential_data_address_1().to_string();
         let issuer_credential1 = exchange_credential(
             &mut consumer,
@@ -520,11 +508,11 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         .await;
 
         assert!(!issuer_credential1
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
 
@@ -544,11 +532,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         )
         .await;
         proof_verifier
-            .verify_presentation(
-                verifier.profile.ledger_read(),
-                verifier.profile.anoncreds(),
-                presentation,
-            )
+            .verify_presentation(&verifier.ledger_read, &verifier.anoncreds, presentation)
             .await
             .unwrap();
         assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
@@ -572,11 +556,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         .await;
 
         proof_verifier
-            .verify_presentation(
-                verifier.profile.ledger_read(),
-                verifier.profile.anoncreds(),
-                presentation,
-            )
+            .verify_presentation(&verifier.ledger_read, &verifier.anoncreds, presentation)
             .await
             .unwrap();
         assert_eq!(
@@ -585,11 +565,11 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         );
 
         assert!(!issuer_credential1
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         assert!(issuer_credential2
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
     })
@@ -604,8 +584,14 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
         let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &issuer.wallet,
+            &issuer.ledger_read,
+            &issuer.ledger_write,
+            &issuer.anoncreds,
+            &issuer.institution_did,
+        )
+        .await;
         let credential_data1 = credential_data_address_1().to_string();
         let issuer_credential1 = exchange_credential(
             &mut consumer,
@@ -643,11 +629,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
         )
         .await;
         proof_verifier
-            .verify_presentation(
-                verifier.profile.ledger_read(),
-                verifier.profile.anoncreds(),
-                presentation,
-            )
+            .verify_presentation(&verifier.ledger_read, &verifier.anoncreds, presentation)
             .await
             .unwrap();
         assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
@@ -671,11 +653,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
         )
         .await;
         proof_verifier
-            .verify_presentation(
-                verifier.profile.ledger_read(),
-                verifier.profile.anoncreds(),
-                presentation,
-            )
+            .verify_presentation(&verifier.ledger_read, &verifier.anoncreds, presentation)
             .await
             .unwrap();
         assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
@@ -685,11 +663,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
         );
 
         assert!(!issuer_credential1
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
     })
@@ -705,8 +683,14 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &issuer.wallet,
+            &issuer.ledger_read,
+            &issuer.ledger_write,
+            &issuer.anoncreds,
+            &issuer.institution_did,
+        )
+        .await;
         let credential_data1 = credential_data_address_1().to_string();
         let issuer_credential1 = exchange_credential(
             &mut consumer,
@@ -731,11 +715,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         .await;
 
         assert!(!issuer_credential1
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
 
@@ -755,11 +739,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         )
         .await;
         proof_verifier
-            .verify_presentation(
-                verifier.profile.ledger_read(),
-                verifier.profile.anoncreds(),
-                presentation,
-            )
+            .verify_presentation(&verifier.ledger_read, &verifier.anoncreds, presentation)
             .await
             .unwrap();
         assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
@@ -783,11 +763,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         .await;
 
         proof_verifier
-            .verify_presentation(
-                verifier.profile.ledger_read(),
-                verifier.profile.anoncreds(),
-                presentation,
-            )
+            .verify_presentation(&verifier.ledger_read, &verifier.anoncreds, presentation)
             .await
             .unwrap();
         assert_eq!(
@@ -796,11 +772,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         );
 
         assert!(issuer_credential1
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
     })
@@ -815,8 +791,14 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &issuer.wallet,
+            &issuer.ledger_read,
+            &issuer.ledger_write,
+            &issuer.anoncreds,
+            &issuer.institution_did,
+        )
+        .await;
         let credential_data1 = credential_data_address_1().to_string();
         let issuer_credential1 = exchange_credential(
             &mut consumer,
@@ -841,11 +823,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         .await;
 
         assert!(!issuer_credential1
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         assert!(!issuer_credential2
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
 
@@ -867,11 +849,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         .await;
 
         proof_verifier
-            .verify_presentation(
-                verifier.profile.ledger_read(),
-                verifier.profile.anoncreds(),
-                presentation,
-            )
+            .verify_presentation(&verifier.ledger_read, &verifier.anoncreds, presentation)
             .await
             .unwrap();
         assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
@@ -895,11 +873,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         .await;
 
         proof_verifier
-            .verify_presentation(
-                verifier.profile.ledger_read(),
-                verifier.profile.anoncreds(),
-                presentation,
-            )
+            .verify_presentation(&verifier.ledger_read, &verifier.anoncreds, presentation)
             .await
             .unwrap();
         assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
@@ -909,11 +883,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         );
 
         assert!(!issuer_credential1
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         assert!(issuer_credential2
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
     })
@@ -927,8 +901,14 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
         let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
-        let (_schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+        let (_schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &issuer.wallet,
+            &issuer.ledger_read,
+            &issuer.ledger_write,
+            &issuer.anoncreds,
+            &issuer.institution_did,
+        )
+        .await;
 
         let issuer_credential1 = exchange_credential(
             &mut consumer,
@@ -941,7 +921,7 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
         .await;
 
         assert!(!issuer_credential1
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         revoke_credential_local(&mut issuer, &issuer_credential1, &rev_reg.rev_reg_id).await;
@@ -957,7 +937,7 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
         .await;
 
         assert!(!issuer_credential2
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
 
@@ -977,15 +957,15 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
         thread::sleep(Duration::from_millis(100));
 
         assert!(issuer_credential1
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         assert!(issuer_credential2
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
         assert!(issuer_credential3
-            .is_revoked(issuer.profile.ledger_read())
+            .is_revoked(&issuer.ledger_read)
             .await
             .unwrap());
     })

@@ -41,31 +41,36 @@ use crate::utils::{
 async fn test_agency_pool_generate_proof_with_predicates() {
     run_setup!(|setup| async move {
         let schema = create_and_write_test_schema(
-            setup.profile.anoncreds(),
-            setup.profile.ledger_write(),
+            &setup.wallet,
+            &setup.anoncreds,
+            &setup.ledger_write,
             &setup.institution_did,
             aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS,
         )
         .await;
         let cred_def = create_and_write_test_cred_def(
-            setup.profile.anoncreds(),
-            setup.profile.ledger_read(),
-            setup.profile.ledger_write(),
+            &setup.wallet,
+            &setup.anoncreds,
+            &setup.ledger_read,
+            &setup.ledger_write,
             &setup.institution_did,
             &schema.schema_id,
             true,
         )
         .await;
         let rev_reg = create_and_publish_test_rev_reg(
-            setup.profile.anoncreds(),
-            setup.profile.ledger_write(),
+            &setup.wallet,
+            &setup.anoncreds,
+            &setup.ledger_write,
             &setup.institution_did,
             &cred_def.get_cred_def_id(),
         )
         .await;
         let _cred_id = create_and_write_credential(
-            setup.profile.anoncreds(),
-            setup.profile.anoncreds(),
+            &setup.wallet,
+            &setup.wallet,
+            &setup.anoncreds,
+            &setup.anoncreds,
             &setup.institution_did,
             &cred_def,
             Some(&rev_reg),
@@ -110,7 +115,7 @@ async fn test_agency_pool_generate_proof_with_predicates() {
         let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         let all_creds = proof
-            .retrieve_credentials(setup.profile.anoncreds())
+            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
             .await
             .unwrap();
         let selected_credentials: serde_json::Value = json!({
@@ -134,8 +139,9 @@ async fn test_agency_pool_generate_proof_with_predicates() {
         });
         proof
             .generate_presentation(
-                setup.profile.ledger_read(),
-                setup.profile.anoncreds(),
+                &setup.wallet,
+                &setup.ledger_read,
+                &setup.anoncreds,
                 serde_json::from_value(selected_credentials).unwrap(),
                 serde_json::from_value(self_attested).unwrap(),
             )
@@ -145,8 +151,8 @@ async fn test_agency_pool_generate_proof_with_predicates() {
 
         let final_message = verifier
             .verify_presentation(
-                setup.profile.ledger_read(),
-                setup.profile.anoncreds(),
+                &setup.ledger_read,
+                &setup.anoncreds,
                 proof.get_presentation_msg().unwrap(),
             )
             .await
@@ -174,7 +180,10 @@ async fn test_agency_pool_presentation_via_proposal() {
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
         let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
-            &institution.profile,
+            &institution.wallet,
+            &institution.ledger_read,
+            &institution.ledger_write,
+            &institution.anoncreds,
             &institution.institution_did,
         )
         .await;
@@ -217,7 +226,10 @@ async fn test_agency_pool_presentation_via_proposal_with_rejection() {
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
         let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
-            &institution.profile,
+            &institution.wallet,
+            &institution.ledger_read,
+            &institution.ledger_write,
+            &institution.anoncreds,
             &institution.institution_did,
         )
         .await;
@@ -251,7 +263,10 @@ async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
         let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
-            &institution.profile,
+            &institution.wallet,
+            &institution.ledger_read,
+            &institution.ledger_write,
+            &institution.anoncreds,
             &institution.institution_did,
         )
         .await;
