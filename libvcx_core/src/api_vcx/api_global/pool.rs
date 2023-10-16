@@ -12,7 +12,6 @@ use aries_vcx::{
                 InMemoryResponseCacherConfig, InMemoryResponseCacherConfigBuilder,
             },
         },
-        wallet::base_wallet::BaseWallet,
         PoolConfig,
     },
     utils::ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write},
@@ -22,10 +21,7 @@ use aries_vcx_core::ledger::{
     response_cacher::in_memory::InMemoryResponseCacher,
 };
 
-use crate::{
-    api_vcx::api_global::profile::get_main_wallet,
-    errors::error::{LibvcxError, LibvcxResult},
-};
+use crate::errors::error::{LibvcxError, LibvcxResult};
 
 pub static GLOBAL_LEDGER_INDY_READ: RwLock<
     Option<Arc<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>>>,
@@ -71,7 +67,6 @@ impl TryFrom<LibvcxInMemoryResponseCacherConfig> for InMemoryResponseCacherConfi
 }
 
 fn build_components_ledger(
-    base_wallet: Arc<dyn BaseWallet>,
     libvcx_pool_config: &LibvcxLedgerConfig,
 ) -> LibvcxResult<(
     IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>,
@@ -110,9 +105,7 @@ pub fn reset_ledger_components() -> LibvcxResult<()> {
 }
 
 pub async fn setup_ledger_components(config: &LibvcxLedgerConfig) -> LibvcxResult<()> {
-    let base_wallet = get_main_wallet()?;
-
-    let (ledger_read, ledger_write) = build_components_ledger(base_wallet, config)?;
+    let (ledger_read, ledger_write) = build_components_ledger(config)?;
     let mut indy_read_guard = GLOBAL_LEDGER_INDY_READ.write()?;
     *indy_read_guard = Some(Arc::new(ledger_read));
     let mut indy_write_guard = GLOBAL_LEDGER_INDY_WRITE.write()?;
