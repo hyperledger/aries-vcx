@@ -36,6 +36,7 @@ pub mod provision;
 pub mod qualifier;
 pub mod random;
 pub mod uuid;
+pub mod ledger;
 
 #[macro_use]
 pub mod test_logger;

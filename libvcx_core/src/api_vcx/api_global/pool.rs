@@ -15,11 +15,10 @@ use aries_vcx::{
         wallet::base_wallet::BaseWallet,
         PoolConfig,
     },
-    core::profile::ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write},
+    utils::ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write},
 };
 use aries_vcx_core::ledger::{
     indy_vdr_ledger::{IndyVdrLedgerRead, IndyVdrLedgerWrite},
-    request_signer::base_wallet::BaseWalletRequestSigner,
     response_cacher::in_memory::InMemoryResponseCacher,
 };
 
@@ -31,9 +30,8 @@ use crate::{
 pub static GLOBAL_LEDGER_INDY_READ: RwLock<
     Option<Arc<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>>>,
 > = RwLock::new(None);
-pub static GLOBAL_LEDGER_INDY_WRITE: RwLock<
-    Option<Arc<IndyVdrLedgerWrite<IndyVdrSubmitter, BaseWalletRequestSigner>>>,
-> = RwLock::new(None);
+pub static GLOBAL_LEDGER_INDY_WRITE: RwLock<Option<Arc<IndyVdrLedgerWrite<IndyVdrSubmitter>>>> =
+    RwLock::new(None);
 
 pub fn is_main_pool_open() -> bool {
     GLOBAL_LEDGER_INDY_READ
@@ -77,7 +75,7 @@ fn build_components_ledger(
     libvcx_pool_config: &LibvcxLedgerConfig,
 ) -> LibvcxResult<(
     IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>,
-    IndyVdrLedgerWrite<IndyVdrSubmitter, BaseWalletRequestSigner>,
+    IndyVdrLedgerWrite<IndyVdrSubmitter>,
 )> {
     let indy_vdr_config = match &libvcx_pool_config.pool_config {
         None => PoolConfig::default(),
@@ -88,7 +86,7 @@ fn build_components_ledger(
         indy_vdr_config,
         libvcx_pool_config.exclude_nodes.clone().unwrap_or_default(),
     )?;
-    let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
+    let request_submitter = IndyVdrSubmitter::new(ledger_pool);
 
     let cache_config = match &libvcx_pool_config.cache_config {
         None => InMemoryResponseCacherConfig::builder()
@@ -98,7 +96,7 @@ fn build_components_ledger(
         Some(cfg) => cfg.clone().try_into()?,
     };
     let ledger_read = indyvdr_build_ledger_read(request_submitter.clone(), cache_config)?;
-    let ledger_write = indyvdr_build_ledger_write(base_wallet, request_submitter, None);
+    let ledger_write = indyvdr_build_ledger_write(request_submitter, None);
 
     Ok((ledger_read, ledger_write))
 }
@@ -159,7 +157,7 @@ pub mod tests {
         global::settings::DEFAULT_GENESIS_PATH,
         utils::{
             constants::POOL1_TXN,
-            devsetup::{SetupDefaults, SetupEmpty, TempFile},
+            devsetup::{SetupMocks, TempFile},
         },
     };
     use serde_json;
@@ -218,7 +216,7 @@ pub mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_open_pool() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupMocks::init();
         _create_and_open_wallet().await.unwrap();
         let genesis_path = get_temp_file_path(DEFAULT_GENESIS_PATH)
             .to_str()
@@ -240,7 +238,7 @@ pub mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_open_pool_fails_if_genesis_file_is_invalid() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupMocks::init();
         _create_and_open_wallet().await.unwrap();
 
         let _genesis_transactions =
@@ -260,7 +258,7 @@ pub mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_open_pool_fails_if_genesis_path_is_invalid() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
         _create_and_open_wallet().await.unwrap();
 
         let config = LibvcxLedgerConfig {

@@ -51,19 +51,13 @@ fn build_component_base_wallet(wallet_handle: WalletHandle) -> Arc<IndySdkWallet
     Arc::new(IndySdkWallet::new(wallet_handle))
 }
 
-#[allow(unreachable_code)]
-#[allow(clippy::needless_return)]
-fn build_component_anoncreds(base_wallet: Arc<IndySdkWallet>) -> Arc<IndyCredxAnonCreds> {
-    Arc::new(IndyCredxAnonCreds::new(base_wallet.clone()))
-}
-
 fn setup_global_wallet(wallet_handle: WalletHandle) -> LibvcxResult<()> {
     // new way
     let base_wallet_impl = build_component_base_wallet(wallet_handle);
     let mut b_wallet = GLOBAL_BASE_WALLET.write()?;
     *b_wallet = Some(base_wallet_impl.clone());
     // anoncreds
-    let base_anoncreds_impl = build_component_anoncreds(base_wallet_impl);
+    let base_anoncreds_impl = Arc::new(IndyCredxAnonCreds);
     let mut b_anoncreds = GLOBAL_BASE_ANONCREDS.write()?;
     *b_anoncreds = Some(base_anoncreds_impl);
     Ok(())
@@ -105,10 +99,11 @@ pub async fn close_main_wallet() -> LibvcxResult<()> {
 pub async fn create_main_wallet(config: &WalletConfig) -> LibvcxResult<()> {
     let wallet_handle = create_and_open_as_main_wallet(config).await?;
     trace!("Created wallet with handle {:?}", wallet_handle);
+    let wallet = get_main_wallet()?;
 
     // If MS is already in wallet then just continue
     get_main_anoncreds()?
-        .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
+        .prover_create_link_secret(wallet.as_ref(), DEFAULT_LINK_SECRET_ALIAS)
         .await
         .ok();
 
@@ -367,7 +362,7 @@ pub mod tests {
             wallet::delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord,
         },
         global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
-        utils::devsetup::{SetupDefaults, SetupEmpty, TempFile},
+        utils::devsetup::{SetupMocks, TempFile},
     };
 
     use crate::{
@@ -406,7 +401,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_wallet_create() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupMocks::init();
 
         let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4());
         let config: WalletConfig = serde_json::from_value(json!({
@@ -528,7 +523,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_wallet_export_import() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
         let wallet_name = uuid::Uuid::new_v4().to_string();
         let export_file = TempFile::prepare_path(&wallet_name);
         let wallet_config = WalletConfig {
@@ -564,7 +559,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_wallet_open_with_incorrect_key_fails() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
         let wallet_name = uuid::Uuid::new_v4().to_string();
         let _export_file = TempFile::prepare_path(&wallet_name);
         let mut wallet_config = WalletConfig {
@@ -588,7 +583,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_wallet_open_with_wrong_name_fails() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let wallet_config: WalletConfig = serde_json::from_value(json!({
             "wallet_name": "different_wallet_name",
@@ -608,7 +603,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_wallet_open_of_imported_wallet_succeeds() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let (export_wallet_path, wallet_name, wallet_config) =
             _create_main_wallet_and_its_backup().await;
@@ -636,7 +631,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_wallet_import_of_opened_wallet_fails() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let (export_wallet_path, wallet_name, wallet_config) =
             _create_main_wallet_and_its_backup().await;

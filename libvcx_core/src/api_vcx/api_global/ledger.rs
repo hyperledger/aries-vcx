@@ -25,8 +25,13 @@ use crate::{
 };
 
 pub async fn endorse_transaction(transaction: &str, endorser_did: &str) -> LibvcxResult<()> {
+    let wallet = get_main_wallet()?;
     let ledger = get_main_ledger_write()?;
-    map_ariesvcx_core_result(ledger.endorse_transaction(endorser_did, transaction).await)
+    map_ariesvcx_core_result(
+        ledger
+            .endorse_transaction(wallet.as_ref(), endorser_did, transaction)
+            .await,
+    )
 }
 
 pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> LibvcxResult<String> {
@@ -61,6 +66,7 @@ pub async fn ledger_write_endpoint_legacy(
     routing_keys: Vec<String>,
     endpoint: String,
 ) -> LibvcxResult<AriesService> {
+    let wallet = get_main_wallet()?;
     let service =
         AriesService::create()
             .set_service_endpoint(Url::from_str(&endpoint).map_err(|err| {
@@ -68,7 +74,13 @@ pub async fn ledger_write_endpoint_legacy(
             })?)
             .set_recipient_keys(recipient_keys)
             .set_routing_keys(routing_keys);
-    write_endpoint_legacy(get_main_ledger_write()?.as_ref(), target_did, &service).await?;
+    write_endpoint_legacy(
+        wallet.as_ref(),
+        get_main_ledger_write()?.as_ref(),
+        target_did,
+        &service,
+    )
+    .await?;
     Ok(service)
 }
 
@@ -77,6 +89,7 @@ pub async fn ledger_write_endpoint(
     routing_keys: Vec<String>,
     endpoint: String,
 ) -> LibvcxResult<EndpointDidSov> {
+    let wallet = get_main_wallet()?;
     let service =
         EndpointDidSov::create()
             .set_service_endpoint(Url::from_str(&endpoint).map_err(|err| {
@@ -87,7 +100,13 @@ pub async fn ledger_write_endpoint(
                 DidSovServiceType::DidCommunication,
             ]))
             .set_routing_keys(Some(routing_keys));
-    write_endpoint(get_main_ledger_write()?.as_ref(), target_did, &service).await?;
+    write_endpoint(
+        wallet.as_ref(),
+        get_main_ledger_write()?.as_ref(),
+        target_did,
+        &service,
+    )
+    .await?;
     Ok(service)
 }
 
@@ -101,7 +120,16 @@ pub async fn ledger_get_attr(target_did: &str, attr: &str) -> LibvcxResult<Strin
 }
 
 pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
-    map_ariesvcx_result(clear_attr(get_main_ledger_write()?.as_ref(), target_did, attr).await)
+    let wallet = get_main_wallet()?;
+    map_ariesvcx_result(
+        clear_attr(
+            wallet.as_ref(),
+            get_main_ledger_write()?.as_ref(),
+            target_did,
+            attr,
+        )
+        .await,
+    )
 }
 
 pub async fn ledger_write_endorser_did(
@@ -110,8 +138,10 @@ pub async fn ledger_write_endorser_did(
     target_vk: &str,
     alias: Option<String>,
 ) -> LibvcxResult<String> {
+    let wallet = get_main_wallet()?;
     map_ariesvcx_result(
         write_endorser_did(
+            wallet.as_ref(),
             get_main_ledger_write()?.as_ref(),
             submitter_did,
             target_did,
@@ -160,7 +190,7 @@ pub mod tests {
             get_txns_sovrin_testnet,
         },
         global::settings::DEFAULT_GENESIS_PATH,
-        utils::devsetup::SetupEmpty,
+        utils::devsetup::SetupMocks,
     };
 
     use crate::api_vcx::api_global::{
@@ -171,7 +201,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_vcx_get_sovrin_taa() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupMocks::init();
         _create_and_open_wallet().await.unwrap();
         let genesis_path = get_temp_file_path(DEFAULT_GENESIS_PATH)
             .to_str()
@@ -195,7 +225,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_vcx_set_active_txn_author_agreement_meta() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupMocks::init();
         _create_and_open_wallet().await.unwrap();
         let genesis_path = get_temp_file_path(DEFAULT_GENESIS_PATH)
             .to_str()

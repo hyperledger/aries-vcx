@@ -43,6 +43,8 @@ use crate::{
     utils::{constants::POOL1_TXN, file::write_file, test_logger::LibvcxDefaultLogger},
 };
 
+use super::ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write};
+
 const DEFAULT_AML_LABEL: &str = "eula";
 
 lazy_static! {
@@ -88,34 +90,6 @@ pub fn build_ledger_components(
     let ledger_write = indyvdr_build_ledger_write(request_submitter, None);
 
     Ok((ledger_read, ledger_write))
-}
-
-pub fn indyvdr_build_ledger_read(
-    request_submitter: IndyVdrSubmitter,
-    cache_config: InMemoryResponseCacherConfig,
-) -> VcxResult<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>> {
-    let response_parser = ResponseParser;
-    let response_cacher = InMemoryResponseCacher::new(cache_config);
-
-    let config_read = IndyVdrLedgerReadConfig {
-        request_submitter,
-        response_parser,
-        response_cacher,
-        protocol_version: ProtocolVersion::Node1_4,
-    };
-    Ok(IndyVdrLedgerRead::new(config_read))
-}
-
-pub fn indyvdr_build_ledger_write(
-    request_submitter: IndyVdrSubmitter,
-    taa_options: Option<TxnAuthrAgrmtOptions>,
-) -> IndyVdrLedgerWrite<IndyVdrSubmitter> {
-    let config_write = IndyVdrLedgerWriteConfig {
-        request_submitter,
-        taa_options,
-        protocol_version: ProtocolVersion::Node1_4,
-    };
-    IndyVdrLedgerWrite::new(config_write)
 }
 
 pub struct SetupMocks;
