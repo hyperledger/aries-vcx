@@ -565,6 +565,7 @@ impl IssuerSM {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn create_credential(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,

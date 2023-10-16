@@ -20,8 +20,6 @@ pub mod integration_tests {
     async fn test_pool_returns_error_if_proof_request_is_malformed() {
         run_setup!(|setup| async move {
             let proof_req = "{";
-            let ledger_read = setup.ledger_read;
-            let ledger_write = setup.ledger_write;
             let anoncreds = setup.anoncreds;
             let result = anoncreds
                 .prover_get_credentials_for_proof_req(&setup.wallet, proof_req)

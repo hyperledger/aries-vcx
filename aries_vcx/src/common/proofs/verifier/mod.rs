@@ -166,6 +166,7 @@ pub mod integration_tests {
         (schemas, cred_defs, proof_req, proof)
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn create_proof_with_predicate(
         wallet_issuer: &impl BaseWallet,
         wallet_holder: &impl BaseWallet,
@@ -267,6 +268,7 @@ pub mod integration_tests {
         (schemas, cred_defs, proof_req, proof)
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn create_and_store_nonrevocable_credential(
         wallet_issuer: &impl BaseWallet,
         wallet_holder: &impl BaseWallet,
