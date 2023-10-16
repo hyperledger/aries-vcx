@@ -5,7 +5,6 @@ pub mod common;
 
 pub mod indy;
 pub mod indy_vdr_ledger;
-pub mod request_signer;
 pub mod request_submitter;
 pub mod response_cacher;
 

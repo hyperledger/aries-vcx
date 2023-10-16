@@ -62,6 +62,7 @@ pub mod integration_tests {
     use aries_vcx_core::{
         anoncreds::base_anoncreds::BaseAnonCreds,
         ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+        wallet::base_wallet::BaseWallet,
     };
 
     use super::*;
@@ -80,6 +81,8 @@ pub mod integration_tests {
 
     // FUTURE - issuer and holder seperation only needed whilst modular deps not fully implemented
     async fn create_indy_proof(
+        wallet_issuer: &impl BaseWallet,
+        wallet_holder: &impl BaseWallet,
         anoncreds_issuer: &impl BaseAnonCreds,
         anoncreds_holder: &impl BaseAnonCreds,
         ledger_read: &impl AnoncredsLedgerRead,
@@ -87,6 +90,8 @@ pub mod integration_tests {
         did: &str,
     ) -> (String, String, String, String) {
         let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
+            wallet_issuer,
+            wallet_holder,
             anoncreds_issuer,
             anoncreds_holder,
             ledger_read,
@@ -142,12 +147,13 @@ pub mod integration_tests {
         .to_string();
 
         anoncreds_holder
-            .prover_get_credentials_for_proof_req(&proof_req)
+            .prover_get_credentials_for_proof_req(wallet_holder, &proof_req)
             .await
             .unwrap();
 
         let proof = anoncreds_holder
             .prover_create_proof(
+                wallet_holder,
                 &proof_req,
                 &requested_credentials_json,
                 "main",
@@ -161,6 +167,8 @@ pub mod integration_tests {
     }
 
     async fn create_proof_with_predicate(
+        wallet_issuer: &impl BaseWallet,
+        wallet_holder: &impl BaseWallet,
         anoncreds_issuer: &impl BaseAnonCreds,
         anoncreds_holder: &impl BaseAnonCreds,
         ledger_read: &impl AnoncredsLedgerRead,
@@ -169,6 +177,8 @@ pub mod integration_tests {
         include_predicate_cred: bool,
     ) -> (String, String, String, String) {
         let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
+            wallet_issuer,
+            wallet_holder,
             anoncreds_issuer,
             anoncreds_holder,
             ledger_read,
@@ -238,12 +248,13 @@ pub mod integration_tests {
         .to_string();
 
         anoncreds_holder
-            .prover_get_credentials_for_proof_req(&proof_req)
+            .prover_get_credentials_for_proof_req(wallet_holder, &proof_req)
             .await
             .unwrap();
 
         let proof = anoncreds_holder
             .prover_create_proof(
+                wallet_holder,
                 &proof_req,
                 &requested_credentials_json,
                 "main",
@@ -257,6 +268,8 @@ pub mod integration_tests {
     }
 
     async fn create_and_store_nonrevocable_credential(
+        wallet_issuer: &impl BaseWallet,
+        wallet_holder: &impl BaseWallet,
         anoncreds_issuer: &impl BaseAnonCreds,
         anoncreds_holder: &impl BaseAnonCreds,
         ledger_read: &impl AnoncredsLedgerRead,
@@ -264,11 +277,17 @@ pub mod integration_tests {
         issuer_did: &str,
         attr_list: &str,
     ) -> (Schema, CredentialDef, String) {
-        let schema =
-            create_and_write_test_schema(anoncreds_issuer, ledger_write, issuer_did, attr_list)
-                .await;
+        let schema = create_and_write_test_schema(
+            wallet_issuer,
+            anoncreds_issuer,
+            ledger_write,
+            issuer_did,
+            attr_list,
+        )
+        .await;
 
         let cred_def = create_and_write_test_cred_def(
+            wallet_issuer,
             anoncreds_issuer,
             ledger_read,
             ledger_write,
@@ -280,6 +299,8 @@ pub mod integration_tests {
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let cred_id = create_and_write_credential(
+            wallet_issuer,
+            wallet_holder,
             anoncreds_issuer,
             anoncreds_holder,
             issuer_did,
@@ -309,7 +330,7 @@ pub mod integration_tests {
             let revocation_details = r#"{"support_revocation":false}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(setup.profile.anoncreds(), &name)
+            let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -321,9 +342,10 @@ pub mod integration_tests {
 
             let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-            let anoncreds = setup.profile.anoncreds();
+            let anoncreds = &setup.anoncreds;
             let prover_proof_json = anoncreds
                 .prover_create_proof(
+                    &setup.wallet,
                     &proof_req_json,
                     &json!({
                       "self_attested_attributes":{
@@ -343,8 +365,8 @@ pub mod integration_tests {
                 .unwrap();
 
             assert!(validate_indy_proof(
-                setup.profile.ledger_read(),
-                setup.profile.anoncreds(),
+                &setup.ledger_read,
+                &setup.anoncreds,
                 &prover_proof_json,
                 &proof_req_json
             )
@@ -376,7 +398,7 @@ pub mod integration_tests {
             let revocation_details = r#"{"support_revocation":true}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(setup.profile.anoncreds(), &name)
+            let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -389,10 +411,12 @@ pub mod integration_tests {
             let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
             let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
-                setup.profile.anoncreds(),
-                setup.profile.anoncreds(),
-                setup.profile.ledger_read(),
-                setup.profile.ledger_write(),
+                &setup.wallet,
+                &setup.wallet,
+                &setup.anoncreds,
+                &setup.anoncreds,
+                &setup.ledger_read,
+                &setup.ledger_write,
                 &setup.institution_did,
                 utils::constants::DEFAULT_SCHEMA_ATTRS,
             )
@@ -401,9 +425,10 @@ pub mod integration_tests {
                 serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
             let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
 
-            let anoncreds = setup.profile.anoncreds();
+            let anoncreds = &setup.anoncreds;
             let prover_proof_json = anoncreds
                 .prover_create_proof(
+                    &setup.wallet,
                     &proof_req_json,
                     &json!({
                         "self_attested_attributes":{
@@ -425,8 +450,8 @@ pub mod integration_tests {
                 .unwrap();
             assert_eq!(
                 validate_indy_proof(
-                    setup.profile.ledger_read(),
-                    setup.profile.anoncreds(),
+                    &setup.ledger_read,
+                    &setup.anoncreds,
                     &prover_proof_json,
                     &proof_req_json
                 )
@@ -440,8 +465,8 @@ pub mod integration_tests {
                 serde_json::from_str(&proof_req_json).unwrap();
             proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
             assert!(validate_indy_proof(
-                setup.profile.ledger_read(),
-                setup.profile.anoncreds(),
+                &setup.ledger_read,
+                &setup.anoncreds,
                 &prover_proof_json,
                 &proof_req_json.to_string()
             )
@@ -474,7 +499,7 @@ pub mod integration_tests {
             let revocation_details = r#"{"support_revocation":true}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(setup.profile.anoncreds(), &name)
+            let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -487,10 +512,12 @@ pub mod integration_tests {
             let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
             let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
-                setup.profile.anoncreds(),
-                setup.profile.anoncreds(),
-                setup.profile.ledger_read(),
-                setup.profile.ledger_write(),
+                &setup.wallet,
+                &setup.wallet,
+                &setup.anoncreds,
+                &setup.anoncreds,
+                &setup.ledger_read,
+                &setup.ledger_write,
                 &setup.institution_did,
                 utils::constants::DEFAULT_SCHEMA_ATTRS,
             )
@@ -499,9 +526,10 @@ pub mod integration_tests {
                 serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
             let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
 
-            let anoncreds = setup.profile.anoncreds();
+            let anoncreds = &setup.anoncreds;
             let prover_proof_json = anoncreds
                 .prover_create_proof(
+                    &setup.wallet,
                     &proof_req_json,
                     &json!({
                         "self_attested_attributes":{
@@ -522,8 +550,8 @@ pub mod integration_tests {
                 .await
                 .unwrap();
             assert!(validate_indy_proof(
-                setup.profile.ledger_read(),
-                setup.profile.anoncreds(),
+                &setup.ledger_read,
+                &setup.anoncreds,
                 &prover_proof_json,
                 &proof_req_json
             )
@@ -539,8 +567,8 @@ pub mod integration_tests {
 
                 assert_eq!(
                     validate_indy_proof(
-                        setup.profile.ledger_read(),
-                        setup.profile.anoncreds(),
+                        &setup.ledger_read,
+                        &setup.anoncreds,
                         &prover_proof_json,
                         &proof_req_json
                     )
@@ -557,8 +585,8 @@ pub mod integration_tests {
 
                 assert_eq!(
                     validate_indy_proof(
-                        setup.profile.ledger_read(),
-                        setup.profile.anoncreds(),
+                        &setup.ledger_read,
+                        &setup.anoncreds,
                         &prover_proof_json,
                         &proof_req_json
                     )
@@ -576,15 +604,17 @@ pub mod integration_tests {
     async fn test_pool_prover_verify_proof() {
         run_setup!(|setup| async move {
             let (schemas, cred_defs, proof_req, proof) = create_indy_proof(
-                setup.profile.anoncreds(),
-                setup.profile.anoncreds(),
-                setup.profile.ledger_read(),
-                setup.profile.ledger_write(),
+                &setup.wallet,
+                &setup.wallet,
+                &setup.anoncreds,
+                &setup.anoncreds,
+                &setup.ledger_read,
+                &setup.ledger_write,
                 &setup.institution_did,
             )
             .await;
 
-            let anoncreds = setup.profile.anoncreds();
+            let anoncreds = &setup.anoncreds;
             let proof_validation = anoncreds
                 .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
                 .await
@@ -600,16 +630,18 @@ pub mod integration_tests {
     async fn test_pool_prover_verify_proof_with_predicate_success_case() {
         run_setup!(|setup| async move {
             let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
-                setup.profile.anoncreds(),
-                setup.profile.anoncreds(),
-                setup.profile.ledger_read(),
-                setup.profile.ledger_write(),
+                &setup.wallet,
+                &setup.wallet,
+                &setup.anoncreds,
+                &setup.anoncreds,
+                &setup.ledger_read,
+                &setup.ledger_write,
                 &setup.institution_did,
                 true,
             )
             .await;
 
-            let anoncreds = setup.profile.anoncreds();
+            let anoncreds = &setup.anoncreds;
             let proof_validation = anoncreds
                 .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
                 .await
@@ -625,16 +657,18 @@ pub mod integration_tests {
     async fn test_pool_prover_verify_proof_with_predicate_fail_case() {
         run_setup!(|setup| async move {
             let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
-                setup.profile.anoncreds(),
-                setup.profile.anoncreds(),
-                setup.profile.ledger_read(),
-                setup.profile.ledger_write(),
+                &setup.wallet,
+                &setup.wallet,
+                &setup.anoncreds,
+                &setup.anoncreds,
+                &setup.ledger_read,
+                &setup.ledger_write,
                 &setup.institution_did,
                 false,
             )
             .await;
 
-            let anoncreds = setup.profile.anoncreds();
+            let anoncreds = &setup.anoncreds;
             anoncreds
                 .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
                 .await

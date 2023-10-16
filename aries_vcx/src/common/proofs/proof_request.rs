@@ -179,6 +179,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod unit_tests {
+    use agency_client::testing::test_utils::SetupMocks;
     use serde_json::Value;
 
     use super::*;
@@ -186,7 +187,6 @@ mod unit_tests {
         utils,
         utils::{
             constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES},
-            devsetup::SetupDefaults,
             mockdata::{mockdata_proof, profile::mock_anoncreds::MockAnoncreds},
         },
     };
@@ -205,7 +205,7 @@ mod unit_tests {
 
     #[tokio::test]
     async fn test_proof_request_msg() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let anoncreds = MockAnoncreds;
         let request = ProofRequestData::create(&anoncreds, "Test")
@@ -240,7 +240,7 @@ mod unit_tests {
 
     #[tokio::test]
     async fn test_requested_attrs_constructed_correctly() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let anoncreds = MockAnoncreds;
         let request = ProofRequestData::create(&anoncreds, "")
@@ -253,7 +253,7 @@ mod unit_tests {
 
     #[tokio::test]
     async fn test_requested_attrs_constructed_correctly_preformatted() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let expected_req_attrs = _expected_req_attrs();
         let req_attrs_string = serde_json::to_string(&expected_req_attrs).unwrap();
@@ -269,7 +269,7 @@ mod unit_tests {
 
     #[tokio::test]
     async fn test_requested_predicates_constructed_correctly() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let mut check_predicates: HashMap<String, PredicateInfo> = HashMap::new();
         let attr_info1: PredicateInfo = serde_json::from_str(
@@ -311,7 +311,7 @@ mod unit_tests {
 
     #[tokio::test]
     async fn test_requested_attrs_constructed_correctly_for_names() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let attr_info = json!({
           "names": ["name", "age", "email"],
@@ -345,7 +345,7 @@ mod unit_tests {
 
     #[tokio::test]
     async fn test_should_return_error_if_name_and_names_passed_together() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let attr_info = json!({
           "name": "name",
@@ -367,7 +367,7 @@ mod unit_tests {
 
     #[test]
     fn test_indy_proof_req_parses_correctly() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let _proof_req: ProofRequestData =
             serde_json::from_str(utils::constants::INDY_PROOF_REQ_JSON).unwrap();

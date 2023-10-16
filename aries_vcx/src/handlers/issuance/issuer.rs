@@ -1,5 +1,6 @@
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+    wallet::base_wallet::BaseWallet,
 };
 use messages::{
     misc::MimeType,
@@ -143,13 +144,14 @@ impl Issuer {
     // from that
     pub async fn build_credential_offer_msg(
         &mut self,
+        wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
         offer_info: OfferInfo,
         comment: Option<String>,
     ) -> VcxResult<()> {
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
         let libindy_cred_offer = anoncreds
-            .issuer_create_credential_offer(&offer_info.cred_def_id)
+            .issuer_create_credential_offer(wallet, &offer_info.cred_def_id)
             .await?;
         self.issuer_sm = self.issuer_sm.clone().build_credential_offer_msg(
             &libindy_cred_offer,
@@ -179,8 +181,16 @@ impl Issuer {
         Ok(())
     }
 
-    pub async fn build_credential(&mut self, anoncreds: &impl BaseAnonCreds) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().build_credential(anoncreds).await?;
+    pub async fn build_credential(
+        &mut self,
+        wallet: &impl BaseWallet,
+        anoncreds: &impl BaseAnonCreds,
+    ) -> VcxResult<()> {
+        self.issuer_sm = self
+            .issuer_sm
+            .clone()
+            .build_credential(wallet, anoncreds)
+            .await?;
         Ok(())
     }
 
@@ -214,7 +224,11 @@ impl Issuer {
             ))
     }
 
-    pub async fn revoke_credential_local(&self, anoncreds: &impl BaseAnonCreds) -> VcxResult<()> {
+    pub async fn revoke_credential_local(
+        &self,
+        wallet: &impl BaseWallet,
+        anoncreds: &impl BaseAnonCreds,
+    ) -> VcxResult<()> {
         let revocation_info: RevocationInfoV1 =
             self.issuer_sm
                 .get_revocation_info()
@@ -228,7 +242,7 @@ impl Issuer {
             revocation_info.tails_file,
         ) {
             anoncreds
-                .revoke_credential_local(&tails_file, &rev_reg_id, &cred_rev_id)
+                .revoke_credential_local(wallet, &tails_file, &rev_reg_id, &cred_rev_id)
                 .await?;
         } else {
             return Err(AriesVcxError::from_msg(

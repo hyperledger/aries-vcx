@@ -1,6 +1,6 @@
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, errors::error::AriesVcxCoreErrorKind,
-    ledger::base_ledger::AnoncredsLedgerWrite,
+    ledger::base_ledger::AnoncredsLedgerWrite, wallet::base_wallet::BaseWallet,
 };
 
 use super::credential_definition::PublicEntityStateType;
@@ -22,6 +22,7 @@ pub struct RevocationRegistry {
 
 impl RevocationRegistry {
     pub async fn create(
+        wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
         issuer_did: &str,
         cred_def_id: &str,
@@ -39,6 +40,7 @@ impl RevocationRegistry {
             tag
         );
         let (rev_reg_id, rev_reg_def, rev_reg_entry) = generate_rev_reg(
+            wallet,
             anoncreds,
             issuer_did,
             cred_def_id,
@@ -96,6 +98,7 @@ impl RevocationRegistry {
 
     pub async fn publish_rev_reg_def(
         &mut self,
+        wallet: &impl BaseWallet,
         ledger: &impl AnoncredsLedgerWrite,
         issuer_did: &str,
         tails_url: &str,
@@ -109,7 +112,7 @@ impl RevocationRegistry {
         );
         self.rev_reg_def.value.tails_location = String::from(tails_url);
         ledger
-            .publish_rev_reg_def(&json!(self.rev_reg_def).to_string(), issuer_did)
+            .publish_rev_reg_def(wallet, &json!(self.rev_reg_def).to_string(), issuer_did)
             .await
             .map_err(|err| {
                 err.map(
@@ -123,6 +126,7 @@ impl RevocationRegistry {
 
     pub async fn publish_rev_reg_delta(
         &mut self,
+        wallet: &impl BaseWallet,
         ledger_write: &impl AnoncredsLedgerWrite,
         issuer_did: &str,
     ) -> VcxResult<()> {
@@ -132,7 +136,7 @@ impl RevocationRegistry {
             self.rev_reg_id
         );
         ledger_write
-            .publish_rev_reg_delta(&self.rev_reg_id, &self.rev_reg_entry, issuer_did)
+            .publish_rev_reg_delta(wallet, &self.rev_reg_id, &self.rev_reg_entry, issuer_did)
             .await
             .map_err(|err| {
                 err.map(
@@ -146,6 +150,7 @@ impl RevocationRegistry {
 
     pub async fn publish_revocation_primitives(
         &mut self,
+        wallet: &impl BaseWallet,
         ledger_write: &impl AnoncredsLedgerWrite,
         tails_url: &str,
     ) -> VcxResult<()> {
@@ -153,26 +158,29 @@ impl RevocationRegistry {
             "RevocationRegistry::publish_revocation_primitives >>> tails_url: {}",
             tails_url
         );
-        self.publish_built_rev_reg_def(ledger_write, tails_url)
+        self.publish_built_rev_reg_def(wallet, ledger_write, tails_url)
             .await?;
-        self.publish_built_rev_reg_delta(ledger_write).await
+        self.publish_built_rev_reg_delta(wallet, ledger_write).await
     }
 
     async fn publish_built_rev_reg_delta(
         &mut self,
+        wallet: &impl BaseWallet,
         ledger_write: &impl AnoncredsLedgerWrite,
     ) -> VcxResult<()> {
         let issuer_did = &self.issuer_did.clone();
         if self.was_rev_reg_delta_published() {
             info!("No unpublished revocation registry delta found, nothing to publish")
         } else {
-            self.publish_rev_reg_delta(ledger_write, issuer_did).await?;
+            self.publish_rev_reg_delta(wallet, ledger_write, issuer_did)
+                .await?;
         }
         Ok(())
     }
 
     async fn publish_built_rev_reg_def(
         &mut self,
+        wallet: &impl BaseWallet,
         ledger_write: &impl AnoncredsLedgerWrite,
         tails_url: &str,
     ) -> VcxResult<()> {
@@ -180,7 +188,7 @@ impl RevocationRegistry {
         if self.was_rev_reg_def_published() {
             info!("No unpublished revocation registry definition found, nothing to publish")
         } else {
-            self.publish_rev_reg_def(ledger_write, issuer_did, tails_url)
+            self.publish_rev_reg_def(wallet, ledger_write, issuer_did, tails_url)
                 .await?;
         }
         Ok(())
@@ -206,24 +214,29 @@ impl RevocationRegistry {
 
     pub async fn revoke_credential_local(
         &self,
+        wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
         cred_rev_id: &str,
     ) -> VcxResult<()> {
         anoncreds
-            .revoke_credential_local(&self.tails_dir, &self.rev_reg_id, cred_rev_id)
+            .revoke_credential_local(wallet, &self.tails_dir, &self.rev_reg_id, cred_rev_id)
             .await
             .map_err(|err| err.into())
     }
 
     pub async fn publish_local_revocations(
         &self,
+        wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
         ledger_write: &impl AnoncredsLedgerWrite,
         submitter_did: &str,
     ) -> VcxResult<()> {
-        if let Some(delta) = anoncreds.get_rev_reg_delta(&self.rev_reg_id).await? {
+        if let Some(delta) = anoncreds
+            .get_rev_reg_delta(wallet, &self.rev_reg_id)
+            .await?
+        {
             ledger_write
-                .publish_rev_reg_delta(&self.rev_reg_id, &delta, submitter_did)
+                .publish_rev_reg_delta(wallet, &self.rev_reg_id, &delta, submitter_did)
                 .await?;
 
             info!(
@@ -231,7 +244,10 @@ impl RevocationRegistry {
                 self.rev_reg_id
             );
 
-            match anoncreds.clear_rev_reg_delta(&self.rev_reg_id).await {
+            match anoncreds
+                .clear_rev_reg_delta(wallet, &self.rev_reg_id)
+                .await
+            {
                 Ok(_) => {
                     info!(
                         "publish_local_revocations >>> rev_reg_delta storage cleared for \
@@ -282,6 +298,7 @@ pub struct RevocationRegistryDefinition {
     pub ver: String,
 }
 pub async fn generate_rev_reg(
+    wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
     issuer_did: &str,
     cred_def_id: &str,
@@ -300,7 +317,14 @@ pub async fn generate_rev_reg(
     );
 
     let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) = anoncreds
-        .issuer_create_and_store_revoc_reg(issuer_did, cred_def_id, tails_dir, max_creds, tag)
+        .issuer_create_and_store_revoc_reg(
+            wallet,
+            issuer_did,
+            cred_def_id,
+            tails_dir,
+            max_creds,
+            tag,
+        )
         .await?;
 
     let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def_json)

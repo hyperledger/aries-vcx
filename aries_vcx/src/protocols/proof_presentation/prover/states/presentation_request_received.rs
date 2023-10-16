@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+    wallet::base_wallet::BaseWallet,
 };
 use messages::msg_fields::protocols::{
     present_proof::{
@@ -56,6 +57,7 @@ impl PresentationRequestReceived {
 
     pub async fn build_presentation(
         &self,
+        wallet: &impl BaseWallet,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
         credentials: &SelectedCredentials,
@@ -69,6 +71,7 @@ impl PresentationRequestReceived {
         );
 
         generate_indy_proof(
+            wallet,
             ledger,
             anoncreds,
             credentials,

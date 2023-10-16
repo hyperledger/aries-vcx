@@ -43,11 +43,11 @@ pub fn validate_actors(actors: &str) -> VcxResult<Vec<Role>> {
 #[cfg(test)]
 mod unit_tests {
     use super::*;
-    use crate::utils::devsetup::SetupDefaults;
+    use crate::utils::devsetup::SetupMocks;
 
     #[test]
     fn test_did_is_b58_and_valid_length() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
         match validate_did(to_did) {
@@ -58,7 +58,7 @@ mod unit_tests {
 
     #[test]
     fn test_did_is_b58_but_invalid_length() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let to_did = "8XFh8yBzrpJQmNyZzgoT";
         match validate_did(to_did) {
@@ -69,7 +69,7 @@ mod unit_tests {
 
     #[test]
     fn test_validate_did_with_non_base58() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let to_did = "8*Fh8yBzrpJQmNyZzgoTqB";
         match validate_did(to_did) {

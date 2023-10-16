@@ -1,7 +1,7 @@
 use std::{
     fmt::{Debug, Formatter},
     str::FromStr,
-    sync::{Arc, RwLock},
+    sync::RwLock,
 };
 
 use async_trait::async_trait;
@@ -12,7 +12,10 @@ use indy_ledger_response_parser::{
 use indy_vdr as vdr;
 use serde_json::Value;
 use time::OffsetDateTime;
-pub use vdr::ledger::constants::{LedgerRole, UpdateRole};
+pub use vdr::{
+    ledger::constants::{LedgerRole, UpdateRole},
+    pool::ProtocolVersion,
+};
 use vdr::{
     ledger::{
         identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId},
@@ -26,14 +29,13 @@ use vdr::{
         },
         RequestBuilder,
     },
-    pool::{LedgerType, PreparedRequest, ProtocolVersion as VdrProtocolVersion},
+    pool::{LedgerType, PreparedRequest},
     utils::{did::DidValue, Qualifiable},
 };
 
 use super::{
     base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
     map_error_not_found_to_none,
-    request_signer::RequestSigner,
     request_submitter::RequestSubmitter,
     response_cacher::ResponseCacher,
 };
@@ -43,6 +45,7 @@ use crate::{
         base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions},
         common::verify_transaction_can_be_endorsed,
     },
+    wallet::base_wallet::BaseWallet,
 };
 
 // TODO: Should implement builders for these configs...
@@ -52,19 +55,17 @@ where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
-    pub request_submitter: Arc<T>,
-    pub response_parser: Arc<ResponseParser>,
-    pub response_cacher: Arc<V>,
+    pub request_submitter: T,
+    pub response_parser: ResponseParser,
+    pub response_cacher: V,
     pub protocol_version: ProtocolVersion,
 }
 
-pub struct IndyVdrLedgerWriteConfig<T, U>
+pub struct IndyVdrLedgerWriteConfig<T>
 where
     T: RequestSubmitter + Send + Sync,
-    U: RequestSigner + Send + Sync,
 {
-    pub request_signer: Arc<U>,
-    pub request_submitter: Arc<T>,
+    pub request_submitter: T,
     pub taa_options: Option<TxnAuthrAgrmtOptions>,
     pub protocol_version: ProtocolVersion,
 }
@@ -74,19 +75,17 @@ where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
-    request_submitter: Arc<T>,
-    response_parser: Arc<ResponseParser>,
-    response_cacher: Arc<V>,
+    request_submitter: T,
+    response_parser: ResponseParser,
+    response_cacher: V,
     protocol_version: ProtocolVersion,
 }
 
-pub struct IndyVdrLedgerWrite<T, U>
+pub struct IndyVdrLedgerWrite<T>
 where
     T: RequestSubmitter + Send + Sync,
-    U: RequestSigner + Send + Sync,
 {
-    request_signer: Arc<U>,
-    request_submitter: Arc<T>,
+    request_submitter: T,
     taa_options: RwLock<Option<TxnAuthrAgrmtOptions>>,
     protocol_version: ProtocolVersion,
 }
@@ -106,7 +105,7 @@ where
     }
 
     pub fn request_builder(&self) -> VcxCoreResult<RequestBuilder> {
-        Ok(RequestBuilder::new(self.protocol_version.0))
+        Ok(RequestBuilder::new(self.protocol_version))
     }
 
     async fn submit_request(
@@ -145,14 +144,12 @@ where
     }
 }
 
-impl<T, U> IndyVdrLedgerWrite<T, U>
+impl<T> IndyVdrLedgerWrite<T>
 where
     T: RequestSubmitter + Send + Sync,
-    U: RequestSigner + Send + Sync,
 {
-    pub fn new(config: IndyVdrLedgerWriteConfig<T, U>) -> Self {
+    pub fn new(config: IndyVdrLedgerWriteConfig<T>) -> Self {
         Self {
-            request_signer: config.request_signer,
             request_submitter: config.request_submitter,
             taa_options: RwLock::new(None),
             protocol_version: config.protocol_version,
@@ -160,25 +157,36 @@ where
     }
 
     pub fn request_builder(&self) -> VcxCoreResult<RequestBuilder> {
-        Ok(RequestBuilder::new(self.protocol_version.0))
+        Ok(RequestBuilder::new(self.protocol_version))
+    }
+
+    async fn sign_request(
+        wallet: &impl BaseWallet,
+        did: &str,
+        request: &PreparedRequest,
+    ) -> VcxCoreResult<Vec<u8>> {
+        let to_sign = request.get_signature_input()?;
+        let signer_verkey = wallet.key_for_local_did(did).await?;
+        let signature = wallet.sign(&signer_verkey, to_sign.as_bytes()).await?;
+        Ok(signature)
     }
 
     async fn sign_and_submit_request(
         &self,
+        wallet: &impl BaseWallet,
         submitter_did: &str,
         request: PreparedRequest,
     ) -> VcxCoreResult<String> {
         let mut request = request;
-        let signature = self.request_signer.sign(submitter_did, &request).await?;
+        let signature = Self::sign_request(wallet, submitter_did, &request).await?;
         request.set_signature(&signature)?;
         self.request_submitter.submit(request).await
     }
 }
 
-impl<T, U> TaaConfigurator for IndyVdrLedgerWrite<T, U>
+impl<T> TaaConfigurator for IndyVdrLedgerWrite<T>
 where
     T: RequestSubmitter + Send + Sync,
-    U: RequestSigner + Send + Sync,
 {
     fn set_txn_author_agreement_options(
         &self,
@@ -204,10 +212,9 @@ where
     }
 }
 
-impl<T, U> Debug for IndyVdrLedgerWrite<T, U>
+impl<T> Debug for IndyVdrLedgerWrite<T>
 where
     T: RequestSubmitter + Send + Sync,
-    U: RequestSigner + Send + Sync,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "IndyVdrLedgerWrite instance")
@@ -281,10 +288,9 @@ where
     }
 }
 
-impl<T, U> IndyVdrLedgerWrite<T, U>
+impl<T> IndyVdrLedgerWrite<T>
 where
     T: RequestSubmitter + Send + Sync,
-    U: RequestSigner + Send + Sync,
 {
     async fn append_txn_author_agreement_to_request(
         &self,
@@ -311,13 +317,13 @@ where
 }
 
 #[async_trait]
-impl<T, U> IndyLedgerWrite for IndyVdrLedgerWrite<T, U>
+impl<T> IndyLedgerWrite for IndyVdrLedgerWrite<T>
 where
     T: RequestSubmitter + Send + Sync,
-    U: RequestSigner + Send + Sync,
 {
     async fn publish_nym(
         &self,
+        wallet: &impl BaseWallet,
         submitter_did: &str,
         target_did: &str,
         verkey: Option<&str>,
@@ -336,35 +342,43 @@ where
             None,
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
-        self.sign_and_submit_request(submitter_did, request).await
+        self.sign_and_submit_request(wallet, submitter_did, request)
+            .await
     }
 
     async fn set_endorser(
         &self,
+        wallet: &impl BaseWallet,
         submitter_did: &str,
         request_json: &str,
         endorser: &str,
     ) -> VcxCoreResult<String> {
         let mut request = PreparedRequest::from_request_json(request_json)?;
         request.set_endorser(&DidValue::from_str(endorser)?)?;
-        let signature_submitter = self.request_signer.sign(submitter_did, &request).await?;
+        let signature_submitter = Self::sign_request(wallet, submitter_did, &request).await?;
         request.set_multi_signature(&DidValue::from_str(submitter_did)?, &signature_submitter)?;
         Ok(request.req_json.to_string())
     }
 
     async fn endorse_transaction(
         &self,
+        wallet: &impl BaseWallet,
         endorser_did: &str,
         request_json: &str,
     ) -> VcxCoreResult<()> {
         let mut request = PreparedRequest::from_request_json(request_json)?;
         verify_transaction_can_be_endorsed(request_json, endorser_did)?;
-        let signature_endorser = self.request_signer.sign(endorser_did, &request).await?;
+        let signature_endorser = Self::sign_request(wallet, endorser_did, &request).await?;
         request.set_multi_signature(&DidValue::from_str(endorser_did)?, &signature_endorser)?;
         self.request_submitter.submit(request).await.map(|_| ())
     }
 
-    async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
+    async fn add_attr(
+        &self,
+        wallet: &impl BaseWallet,
+        target_did: &str,
+        attrib_json: &str,
+    ) -> VcxCoreResult<String> {
         let identifier = DidValue::from_str(target_did)?;
         let dest = DidValue::from_str(target_did)?;
         let request = self.request_builder()?.build_attrib_request(
@@ -375,11 +389,13 @@ where
             None,
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
-        self.sign_and_submit_request(target_did, request).await
+        self.sign_and_submit_request(wallet, target_did, request)
+            .await
     }
 
     async fn write_did(
         &self,
+        wallet: &impl BaseWallet,
         submitter_did: &str,
         target_did: &str,
         target_vk: &str,
@@ -402,7 +418,9 @@ where
             None,
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
-        let response = self.sign_and_submit_request(submitter_did, request).await?;
+        let response = self
+            .sign_and_submit_request(wallet, submitter_did, request)
+            .await?;
         debug!("write_did << response: {response}");
         return Ok(response);
     }
@@ -539,13 +557,13 @@ where
 }
 
 #[async_trait]
-impl<T, U> AnoncredsLedgerWrite for IndyVdrLedgerWrite<T, U>
+impl<T> AnoncredsLedgerWrite for IndyVdrLedgerWrite<T>
 where
     T: RequestSubmitter + Send + Sync,
-    U: RequestSigner + Send + Sync,
 {
     async fn publish_schema(
         &self,
+        wallet: &impl BaseWallet,
         schema_json: &str,
         submitter_did: &str,
         _endorser_did: Option<String>,
@@ -562,7 +580,9 @@ where
         //             .await?,
         //     )?
         // }
-        let sign_result = self.sign_and_submit_request(submitter_did, request).await;
+        let sign_result = self
+            .sign_and_submit_request(wallet, submitter_did, request)
+            .await;
 
         if let Err(err) = &sign_result {
             if let AriesVcxCoreErrorKind::InvalidLedgerResponse = err.kind() {
@@ -580,6 +600,7 @@ where
 
     async fn publish_cred_def(
         &self,
+        wallet: &impl BaseWallet,
         cred_def_json: &str,
         submitter_did: &str,
     ) -> VcxCoreResult<()> {
@@ -590,13 +611,14 @@ where
             CredentialDefinition::CredentialDefinitionV1(cred_def_data),
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
-        self.sign_and_submit_request(submitter_did, request)
+        self.sign_and_submit_request(wallet, submitter_did, request)
             .await
             .map(|_| ())
     }
 
     async fn publish_rev_reg_def(
         &self,
+        wallet: &impl BaseWallet,
         rev_reg_def: &str,
         submitter_did: &str,
     ) -> VcxCoreResult<()> {
@@ -607,13 +629,14 @@ where
             RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def_data),
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
-        self.sign_and_submit_request(submitter_did, request)
+        self.sign_and_submit_request(wallet, submitter_did, request)
             .await
             .map(|_| ())
     }
 
     async fn publish_rev_reg_delta(
         &self,
+        wallet: &impl BaseWallet,
         rev_reg_id: &str,
         rev_reg_entry_json: &str,
         submitter_did: &str,
@@ -628,27 +651,8 @@ where
             RevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta_data),
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
-        self.sign_and_submit_request(submitter_did, request)
+        self.sign_and_submit_request(wallet, submitter_did, request)
             .await
             .map(|_| ())
-    }
-}
-
-#[derive(Debug)]
-pub struct ProtocolVersion(VdrProtocolVersion);
-
-impl Default for ProtocolVersion {
-    fn default() -> Self {
-        ProtocolVersion(VdrProtocolVersion::Node1_4)
-    }
-}
-
-impl ProtocolVersion {
-    pub fn node_1_3() -> Self {
-        ProtocolVersion(VdrProtocolVersion::Node1_3)
-    }
-
-    pub fn node_1_4() -> Self {
-        ProtocolVersion(VdrProtocolVersion::Node1_4)
     }
 }

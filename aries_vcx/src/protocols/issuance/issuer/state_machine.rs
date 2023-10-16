@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+    wallet::base_wallet::BaseWallet,
 };
 use chrono::Utc;
 use messages::{
@@ -416,10 +417,15 @@ impl IssuerSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn build_credential(self, anoncreds: &impl BaseAnonCreds) -> VcxResult<Self> {
+    pub async fn build_credential(
+        self,
+        wallet: &impl BaseWallet,
+        anoncreds: &impl BaseAnonCreds,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             IssuerFullState::RequestReceived(state_data) => {
                 match create_credential(
+                    wallet,
                     anoncreds,
                     &state_data.request,
                     &state_data.rev_reg_id,
@@ -560,6 +566,7 @@ impl IssuerSM {
 }
 
 async fn create_credential(
+    wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
     request: &RequestCredentialV1,
     rev_reg_id: &Option<String>,
@@ -592,6 +599,7 @@ async fn create_credential(
     let cred_data = encode_attributes(cred_data)?;
     let (libindy_credential, cred_rev_id, _) = anoncreds
         .issuer_create_credential(
+            wallet,
             &offer,
             &request,
             &cred_data,

@@ -3,7 +3,7 @@ use aries_vcx_core::{
     ledger::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
         indy_vdr_ledger::UpdateRole,
-    },
+    }, wallet::base_wallet::BaseWallet,
 };
 use async_trait::async_trait;
 
@@ -50,6 +50,7 @@ impl IndyLedgerRead for MockLedger {
 impl IndyLedgerWrite for MockLedger {
     async fn set_endorser(
         &self,
+        wallet: &impl BaseWallet,
         submitter_did: &str,
         request: &str,
         endorser: &str,
@@ -59,6 +60,7 @@ impl IndyLedgerWrite for MockLedger {
 
     async fn endorse_transaction(
         &self,
+        wallet: &impl BaseWallet,
         endorser_did: &str,
         request_json: &str,
     ) -> VcxCoreResult<()> {
@@ -67,6 +69,7 @@ impl IndyLedgerWrite for MockLedger {
 
     async fn publish_nym(
         &self,
+        wallet: &impl BaseWallet,
         submitter_did: &str,
         target_did: &str,
         verkey: Option<&str>,
@@ -76,12 +79,13 @@ impl IndyLedgerWrite for MockLedger {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
 
-    async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
+    async fn add_attr(&self, wallet: &impl BaseWallet, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
 
     async fn write_did(
         &self,
+        wallet: &impl BaseWallet,
         submitter_did: &str,
         target_did: &str,
         target_vk: &str,
@@ -138,6 +142,7 @@ impl AnoncredsLedgerRead for MockLedger {
 impl AnoncredsLedgerWrite for MockLedger {
     async fn publish_schema(
         &self,
+        wallet: &impl BaseWallet,
         schema_json: &str,
         submitter_did: &str,
         endorser_did: Option<String>,
@@ -147,6 +152,7 @@ impl AnoncredsLedgerWrite for MockLedger {
 
     async fn publish_cred_def(
         &self,
+        wallet: &impl BaseWallet,
         cred_def_json: &str,
         submitter_did: &str,
     ) -> VcxCoreResult<()> {
@@ -155,6 +161,7 @@ impl AnoncredsLedgerWrite for MockLedger {
 
     async fn publish_rev_reg_def(
         &self,
+        wallet: &impl BaseWallet,
         rev_reg_def: &str,
         submitter_did: &str,
     ) -> VcxCoreResult<()> {
@@ -163,6 +170,7 @@ impl AnoncredsLedgerWrite for MockLedger {
 
     async fn publish_rev_reg_delta(
         &self,
+        wallet: &impl BaseWallet,
         rev_reg_id: &str,
         rev_reg_entry_json: &str,
         submitter_did: &str,
