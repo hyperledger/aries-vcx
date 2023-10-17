@@ -3,25 +3,13 @@ pub mod states;
 use std::{error::Error, marker::PhantomData};
 
 use messages::{
-    decorators::{
-        attachment::{Attachment, AttachmentData, AttachmentType},
-        please_ack::{AckOn, PleaseAck},
-        thread::Thread,
-    },
-    misc::MimeType,
+    decorators::thread::Thread,
     msg_fields::protocols::{
         cred_issuance::v2::{
-            ack::AckCredentialV2,
-            issue_credential::{
-                IssueCredentialV2, IssueCredentialV2Content, IssueCredentialV2Decorators,
-            },
-            offer_credential::{
-                OfferCredentialV2, OfferCredentialV2Content, OfferCredentialV2Decorators,
-            },
-            problem_report::CredIssuanceProblemReportV2,
-            propose_credential::ProposeCredentialV2,
-            request_credential::RequestCredentialV2,
-            AttachmentFormatSpecifier, CredentialPreviewV2,
+            ack::AckCredentialV2, issue_credential::IssueCredentialV2,
+            offer_credential::OfferCredentialV2, problem_report::CredIssuanceProblemReportV2,
+            propose_credential::ProposeCredentialV2, request_credential::RequestCredentialV2,
+            CredentialPreviewV2,
         },
         report_problem::{Description, ProblemReportContent, ProblemReportDecorators},
     },
@@ -33,93 +21,17 @@ use self::states::{
     offer_prepared::OfferPrepared, proposal_received::ProposalReceived,
     request_received::RequestReceived,
 };
-use super::{
-    formats::issuer::IssuerCredentialIssuanceFormat, unmatched_thread_id_error,
-    VcxSMTransitionResult,
-};
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     handlers::util::{get_thread_id_or_message_id, matches_thread_id},
-    protocols::issuance_v2::RecoveredSMError,
+    protocols::issuance_v2::{
+        formats::issuer::IssuerCredentialIssuanceFormat,
+        processing::issuer::{
+            create_credential_message_from_attachments, create_offer_message_from_attachments,
+        },
+        unmatched_thread_id_error, RecoveredSMError, VcxSMTransitionResult,
+    },
 };
-
-fn create_offer_message_from_attachment<T: IssuerCredentialIssuanceFormat>(
-    attachment_data: Vec<u8>,
-    preview: CredentialPreviewV2,
-    replacement_id: Option<String>,
-    thread_id: Option<String>,
-) -> OfferCredentialV2 {
-    let attachment_content = AttachmentType::Base64(base64::encode(&attachment_data));
-    let attach_id = Uuid::new_v4().to_string();
-    let attachment = Attachment::builder()
-        .id(attach_id.clone())
-        .mime_type(MimeType::Json)
-        .data(
-            AttachmentData::builder()
-                .content(attachment_content)
-                .build(),
-        )
-        .build();
-
-    let content = OfferCredentialV2Content::builder()
-        .credential_preview(preview)
-        .formats(vec![AttachmentFormatSpecifier::builder()
-            .attach_id(attach_id)
-            .format(T::get_offer_attachment_format())
-            .build()])
-        .offers_attach(vec![attachment])
-        .replacement_id(replacement_id)
-        .build();
-
-    let decorators = OfferCredentialV2Decorators::builder()
-        .thread(thread_id.map(|id| Thread::builder().thid(id).build()))
-        .build();
-
-    OfferCredentialV2::builder()
-        .id(Uuid::new_v4().to_string())
-        .content(content)
-        .decorators(decorators)
-        .build()
-}
-
-fn create_credential_message_from_attachment<T: IssuerCredentialIssuanceFormat>(
-    attachment_data: Vec<u8>,
-    please_ack: bool,
-    thread_id: String,
-    replacement_id: Option<String>,
-) -> IssueCredentialV2 {
-    let attachment_content = AttachmentType::Base64(base64::encode(&attachment_data));
-    let attach_id = Uuid::new_v4().to_string();
-    let attachment = Attachment::builder()
-        .id(attach_id.clone())
-        .mime_type(MimeType::Json)
-        .data(
-            AttachmentData::builder()
-                .content(attachment_content)
-                .build(),
-        )
-        .build();
-
-    let content = IssueCredentialV2Content::builder()
-        .formats(vec![AttachmentFormatSpecifier::builder()
-            .attach_id(attach_id)
-            .format(T::get_credential_attachment_format())
-            .build()])
-        .credentials_attach(vec![attachment])
-        .replacement_id(replacement_id)
-        .build();
-
-    let decorators = IssueCredentialV2Decorators::builder()
-        .thread(Thread::builder().thid(thread_id).build())
-        .please_ack(please_ack.then_some(PleaseAck::builder().on(vec![AckOn::Outcome]).build()))
-        .build();
-
-    IssueCredentialV2::builder()
-        .id(Uuid::new_v4().to_string())
-        .content(content)
-        .decorators(decorators)
-        .build()
-}
 
 /// Represents a type-state machine which walks through issue-credential-v2 from the Issuer
 /// perspective. https://github.com/hyperledger/aries-rfcs/blob/main/features/0453-issue-credential-v2/README.md
@@ -229,9 +141,9 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
                     })
                 }
             };
-
-        let offer = create_offer_message_from_attachment::<T>(
-            attachment_data,
+        let attachments_format_and_data = vec![(T::get_offer_attachment_format(), attachment_data)];
+        let offer = create_offer_message_from_attachments(
+            attachments_format_and_data,
             preview,
             replacement_id,
             Some(self.thread_id.clone()),
@@ -263,8 +175,9 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
         let (attachment_data, offer_metadata) =
             T::create_offer_attachment_content(input_data).await?;
 
-        let offer = create_offer_message_from_attachment::<T>(
-            attachment_data,
+        let attachments_format_and_data = vec![(T::get_offer_attachment_format(), attachment_data)];
+        let offer = create_offer_message_from_attachments(
+            attachments_format_and_data,
             preview,
             replacement_id,
             None,
@@ -433,10 +346,12 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
                 })
             }
         };
+        let attachments_format_and_data =
+            vec![(T::get_credential_attachment_format(), attachment_data)];
 
         let please_ack = please_ack.unwrap_or(false);
-        let credential = create_credential_message_from_attachment::<T>(
-            attachment_data,
+        let credential = create_credential_message_from_attachments(
+            attachments_format_and_data,
             please_ack,
             self.thread_id.clone(),
             replacement_id,

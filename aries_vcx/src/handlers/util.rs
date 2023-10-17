@@ -87,8 +87,6 @@ pub(crate) use make_attach_from_str;
 pub(crate) use matches_opt_thread_id;
 pub(crate) use matches_thread_id;
 
-use crate::global::settings;
-
 pub fn extract_attachment_as_base64(attachment: &Attachment) -> VcxResult<Vec<u8>> {
     let AttachmentType::Base64(encoded_attach) = &attachment.data.content else {
         return Err(AriesVcxError::from_msg(
@@ -97,12 +95,14 @@ pub fn extract_attachment_as_base64(attachment: &Attachment) -> VcxResult<Vec<u8
         ));
     };
 
-    general_purpose::URL_SAFE.decode(encoded_attach).map_err(|_| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::EncodeError,
-            format!("Message attachment is not base64 as expected: {attachment:?}"),
-        )
-    })
+    general_purpose::URL_SAFE
+        .decode(encoded_attach)
+        .map_err(|_| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::EncodeError,
+                format!("Message attachment is not base64 as expected: {attachment:?}"),
+            )
+        })
 }
 
 pub fn get_attachment_with_id<'a>(

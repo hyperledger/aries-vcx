@@ -3,8 +3,8 @@ use messages::AriesMessage;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 
 pub mod formats;
-pub mod holder;
-pub mod issuer;
+pub mod processing;
+pub mod state_machines;
 
 // TODO - better name?
 pub struct RecoveredSMError<T> {

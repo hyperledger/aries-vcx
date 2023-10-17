@@ -92,7 +92,7 @@ pub trait HolderCredentialIssuanceFormat {
             attachment_id,
         )?;
 
-                // TODO - BAD, not ALWAYS base64, could be JSON
+        // TODO - BAD, not ALWAYS base64, could be JSON
         extract_attachment_as_base64(attachment)
     }
 

@@ -2,23 +2,14 @@ pub mod states;
 
 use std::{error::Error, marker::PhantomData};
 
-use ::messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
 use messages::{
     decorators::thread::Thread,
-    misc::MimeType,
     msg_fields::protocols::{
         cred_issuance::v2::{
-            ack::AckCredentialV2,
-            issue_credential::IssueCredentialV2,
-            offer_credential::OfferCredentialV2,
-            problem_report::CredIssuanceProblemReportV2,
-            propose_credential::{
-                ProposeCredentialV2, ProposeCredentialV2Content, ProposeCredentialV2Decorators,
-            },
-            request_credential::{
-                RequestCredentialV2, RequestCredentialV2Content, RequestCredentialV2Decorators,
-            },
-            AttachmentFormatSpecifier, CredentialPreviewV2,
+            ack::AckCredentialV2, issue_credential::IssueCredentialV2,
+            offer_credential::OfferCredentialV2, problem_report::CredIssuanceProblemReportV2,
+            propose_credential::ProposeCredentialV2, request_credential::RequestCredentialV2,
+            CredentialPreviewV2,
         },
         notification::ack::{AckContent, AckDecorators, AckStatus},
         report_problem::{Description, ProblemReportContent, ProblemReportDecorators},
@@ -31,86 +22,17 @@ use self::states::{
     offer_received::OfferReceived, proposal_prepared::ProposalPrepared,
     request_prepared::RequestPrepared,
 };
-use super::{
-    formats::holder::HolderCredentialIssuanceFormat, unmatched_thread_id_error, RecoveredSMError,
-    VcxSMTransitionResult,
-};
 use crate::{
     errors::error::VcxResult,
     handlers::util::{get_thread_id_or_message_id, matches_thread_id},
+    protocols::issuance_v2::{
+        formats::holder::HolderCredentialIssuanceFormat,
+        processing::holder::{
+            create_proposal_message_from_attachments, create_request_message_from_attachments,
+        },
+        unmatched_thread_id_error, RecoveredSMError, VcxSMTransitionResult,
+    },
 };
-
-fn create_proposal_message_from_attachment<T: HolderCredentialIssuanceFormat>(
-    attachment_data: Vec<u8>,
-    preview: Option<CredentialPreviewV2>,
-    thread_id: Option<String>,
-) -> ProposeCredentialV2 {
-    let attachment_content = AttachmentType::Base64(base64::encode(&attachment_data));
-    let attach_id = Uuid::new_v4().to_string();
-    let attachment = Attachment::builder()
-        .id(attach_id.clone())
-        .mime_type(MimeType::Json)
-        .data(
-            AttachmentData::builder()
-                .content(attachment_content)
-                .build(),
-        )
-        .build();
-
-    let content = ProposeCredentialV2Content::builder()
-        .formats(vec![AttachmentFormatSpecifier::builder()
-            .attach_id(attach_id)
-            .format(T::get_proposal_attachment_format())
-            .build()])
-        .filters_attach(vec![attachment])
-        .credential_preview(preview)
-        .build();
-
-    let decorators = ProposeCredentialV2Decorators::builder()
-        .thread(thread_id.map(|id| Thread::builder().thid(id).build()))
-        .build();
-
-    ProposeCredentialV2::builder()
-        .id(Uuid::new_v4().to_string())
-        .content(content)
-        .decorators(decorators)
-        .build()
-}
-
-fn create_request_message_from_attachment<T: HolderCredentialIssuanceFormat>(
-    attachment_data: Vec<u8>,
-    thread_id: Option<String>,
-) -> RequestCredentialV2 {
-    let attachment_content = AttachmentType::Base64(base64::encode(&attachment_data));
-    let attach_id = uuid::Uuid::new_v4().to_string();
-    let attachment = Attachment::builder()
-        .id(attach_id.clone())
-        .mime_type(MimeType::Json)
-        .data(
-            AttachmentData::builder()
-                .content(attachment_content)
-                .build(),
-        )
-        .build();
-
-    let content = RequestCredentialV2Content::builder()
-        .formats(vec![AttachmentFormatSpecifier::builder()
-            .attach_id(attach_id)
-            .format(T::get_request_attachment_format())
-            .build()])
-        .requests_attach(vec![attachment])
-        .build();
-
-    let decorators = RequestCredentialV2Decorators::builder()
-        .thread(thread_id.map(|id| Thread::builder().thid(id).build()))
-        .build();
-
-    RequestCredentialV2::builder()
-        .id(Uuid::new_v4().to_string())
-        .content(content)
-        .decorators(decorators)
-        .build()
-}
 
 /// Represents a type-state machine which walks through issue-credential-v2 from the Holder
 /// perspective. https://github.com/hyperledger/aries-rfcs/blob/main/features/0453-issue-credential-v2/README.md
@@ -171,7 +93,10 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
         preview: Option<CredentialPreviewV2>,
     ) -> VcxResult<Self> {
         let attachment_data = T::create_proposal_attachment_content(input_data).await?;
-        let proposal = create_proposal_message_from_attachment::<T>(attachment_data, preview, None);
+        let attachments_format_and_data =
+            vec![(T::get_proposal_attachment_format(), attachment_data)];
+        let proposal =
+            create_proposal_message_from_attachments(attachments_format_and_data, preview, None);
 
         Ok(HolderV2 {
             thread_id: get_thread_id_or_message_id!(proposal),
@@ -278,8 +203,10 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
                 })
             }
         };
-        let proposal = create_proposal_message_from_attachment::<T>(
-            attachment_data,
+        let attachments_format_and_data =
+            vec![(T::get_proposal_attachment_format(), attachment_data)];
+        let proposal = create_proposal_message_from_attachments(
+            attachments_format_and_data,
             preview,
             Some(self.thread_id.clone()),
         );
@@ -318,8 +245,10 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
                 }
             };
 
-        let request = create_request_message_from_attachment::<T>(
-            attachment_data,
+        let attachments_format_and_data =
+            vec![(T::get_request_attachment_format(), attachment_data)];
+        let request = create_request_message_from_attachments(
+            attachments_format_and_data,
             Some(self.thread_id.clone()),
         );
 
@@ -353,7 +282,9 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
         let (attachment_data, output_metadata) =
             T::create_request_attachment_content_independent_of_offer(input_data).await?;
 
-        let request = create_request_message_from_attachment::<T>(attachment_data, None);
+        let attachments_format_and_data =
+            vec![(T::get_request_attachment_format(), attachment_data)];
+        let request = create_request_message_from_attachments(attachments_format_and_data, None);
 
         let thread_id = get_thread_id_or_message_id!(request);
 
@@ -512,7 +443,7 @@ mod tests {
 
     use crate::protocols::issuance_v2::{
         formats::holder::mocks::MockHolderCredentialIssuanceFormat,
-        holder::{states::proposal_prepared::ProposalPrepared, HolderV2},
+        state_machines::holder::{states::proposal_prepared::ProposalPrepared, HolderV2},
     };
 
     #[tokio::test]
