@@ -37,13 +37,12 @@ use aries_vcx_core::{
 };
 use chrono::{DateTime, Duration, Utc};
 
+use super::ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write};
 use crate::{
     errors::error::VcxResult,
     global::settings,
     utils::{constants::POOL1_TXN, file::write_file, test_logger::LibvcxDefaultLogger},
 };
-
-use super::ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write};
 
 const DEFAULT_AML_LABEL: &str = "eula";
 

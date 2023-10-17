@@ -1,8 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::{ledger::VcxPoolConfig, modular_libs_profile::ModularLibsProfile, Profile},
-    global::settings::DEFAULT_LINK_SECRET_ALIAS,
+    global::settings::DEFAULT_LINK_SECRET_ALIAS, utils::devsetup::dev_build_profile_modular,
 };
 use aries_vcx_core::{
     self,
@@ -66,52 +65,69 @@ impl Agent {
 
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
 
-        let pool_config = VcxPoolConfig {
-            genesis_file_path: init_config.pool_config.genesis_path,
-            indy_vdr_config: None,
-            response_cache_config: None,
-        };
+        let (ledger_read, ledger_write, anoncreds) =
+            dev_build_profile_modular(init_config.pool_config.genesis_path);
+        let ledger_read = Arc::new(ledger_read);
+        let ledger_write = Arc::new(ledger_write);
 
-        let indy_profile = ModularLibsProfile::init(wallet, pool_config).unwrap();
-        let profile = Arc::new(indy_profile);
-        let anoncreds = profile.anoncreds();
         anoncreds
-            .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
+            .prover_create_link_secret(wallet.as_ref(), DEFAULT_LINK_SECRET_ALIAS)
             .await
             .unwrap();
 
         let connections = Arc::new(ServiceConnections::new(
-            Arc::clone(&profile),
+            ledger_read.clone(),
+            wallet.clone(),
             init_config.service_endpoint,
         ));
         let schemas = Arc::new(ServiceSchemas::new(
-            Arc::clone(&profile),
+            ledger_read.clone(),
+            ledger_write.clone(),
+            anoncreds,
+            wallet.clone(),
             config_issuer.institution_did.clone(),
         ));
-        let cred_defs = Arc::new(ServiceCredentialDefinitions::new(Arc::clone(&profile)));
+        let cred_defs = Arc::new(ServiceCredentialDefinitions::new(
+            ledger_read.clone(),
+            ledger_write.clone(),
+            anoncreds,
+            wallet.clone(),
+        ));
         let rev_regs = Arc::new(ServiceRevocationRegistries::new(
-            Arc::clone(&profile),
+            ledger_write.clone(),
+            anoncreds,
+            wallet.clone(),
             config_issuer.institution_did.clone(),
         ));
         let issuer = Arc::new(ServiceCredentialsIssuer::new(
-            Arc::clone(&profile),
+            anoncreds,
+            wallet.clone(),
             connections.clone(),
         ));
         let holder = Arc::new(ServiceCredentialsHolder::new(
-            Arc::clone(&profile),
+            ledger_read.clone(),
+            anoncreds,
+            wallet.clone(),
             connections.clone(),
         ));
         let verifier = Arc::new(ServiceVerifier::new(
-            Arc::clone(&profile),
+            ledger_read.clone(),
+            anoncreds,
+            wallet.clone(),
             connections.clone(),
         ));
         let prover = Arc::new(ServiceProver::new(
-            Arc::clone(&profile),
+            ledger_read.clone(),
+            anoncreds,
+            wallet.clone(),
             connections.clone(),
         ));
 
         Ok(Self {
-            profile,
+            ledger_read,
+            ledger_write,
+            anoncreds,
+            wallet,
             connections,
             schemas,
             cred_defs,

@@ -3,7 +3,8 @@ use aries_vcx_core::{
     ledger::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
         indy_vdr_ledger::UpdateRole,
-    }, wallet::base_wallet::BaseWallet,
+    },
+    wallet::base_wallet::BaseWallet,
 };
 use async_trait::async_trait;
 
@@ -79,7 +80,12 @@ impl IndyLedgerWrite for MockLedger {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
 
-    async fn add_attr(&self, wallet: &impl BaseWallet, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
+    async fn add_attr(
+        &self,
+        wallet: &impl BaseWallet,
+        target_did: &str,
+        attrib_json: &str,
+    ) -> VcxCoreResult<String> {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
 

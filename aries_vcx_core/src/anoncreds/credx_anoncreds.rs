@@ -188,7 +188,7 @@ impl BaseWallet for WalletAdapter {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct IndyCredxAnonCreds;
 
 impl IndyCredxAnonCreds {

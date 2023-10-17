@@ -290,13 +290,9 @@ pub mod pool_tests {
         run_setup!(|setup| async move {
             // empty vector
             assert_eq!(
-                build_rev_states_json(
-                    &setup.ledger_read,
-                    &setup.anoncreds,
-                    Vec::new().as_mut()
-                )
-                .await
-                .unwrap(),
+                build_rev_states_json(&setup.ledger_read, &setup.anoncreds, Vec::new().as_mut())
+                    .await
+                    .unwrap(),
                 "{}".to_string()
             );
 
@@ -314,13 +310,9 @@ pub mod pool_tests {
                 revealed: None,
             };
             assert_eq!(
-                build_rev_states_json(
-                    &setup.ledger_read,
-                    &setup.anoncreds,
-                    vec![cred1].as_mut()
-                )
-                .await
-                .unwrap(),
+                build_rev_states_json(&setup.ledger_read, &setup.anoncreds, vec![cred1].as_mut())
+                    .await
+                    .unwrap(),
                 "{}".to_string()
             );
         })

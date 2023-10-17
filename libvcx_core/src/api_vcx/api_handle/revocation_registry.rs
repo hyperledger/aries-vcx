@@ -48,7 +48,11 @@ pub async fn create(config: RevocationRegistryConfig) -> LibvcxResult<u32> {
 pub async fn publish(handle: u32, tails_url: &str) -> LibvcxResult<u32> {
     let mut rev_reg = REV_REG_MAP.get_cloned(handle)?;
     rev_reg
-        .publish_revocation_primitives(get_main_wallet()?.as_ref(),get_main_ledger_write()?.as_ref(), tails_url)
+        .publish_revocation_primitives(
+            get_main_wallet()?.as_ref(),
+            get_main_ledger_write()?.as_ref(),
+            tails_url,
+        )
         .await?;
     REV_REG_MAP.insert(handle, rev_reg)?;
     Ok(handle)
