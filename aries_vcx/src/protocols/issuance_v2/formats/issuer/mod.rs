@@ -53,6 +53,7 @@ pub trait IssuerCredentialIssuanceFormat {
         let attachment =
             get_attachment_with_id(&proposal_message.content.filters_attach, attachment_id)?;
 
+                    // TODO - BAD, not ALWAYS base64, could be JSON
         extract_attachment_as_base64(attachment)
     }
 
@@ -83,6 +84,7 @@ pub trait IssuerCredentialIssuanceFormat {
         let attachment =
             get_attachment_with_id(&request_message.content.requests_attach, attachment_id)?;
 
+                    // TODO - BAD, not ALWAYS base64, could be JSON
         extract_attachment_as_base64(attachment)
     }
 

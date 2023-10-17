@@ -506,6 +506,7 @@ impl<S> HolderV2<S> {
 
 #[cfg(test)]
 mod tests {
+    use base64::{engine::general_purpose, Engine};
     use messages::decorators::attachment::AttachmentType;
     use shared_vcx::maybe_known::MaybeKnown;
 
@@ -553,7 +554,7 @@ mod tests {
             panic!("wrong attachment type")
         };
 
-        let decoded = base64::decode_config(&b64_content, base64::URL_SAFE).unwrap();
+        let decoded = general_purpose::URL_SAFE.decode(&b64_content).unwrap();
 
         assert_eq!(String::from_utf8(decoded).unwrap(), String::from("data"));
     }

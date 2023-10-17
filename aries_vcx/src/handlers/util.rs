@@ -1,3 +1,4 @@
+use base64::{engine::general_purpose, Engine};
 use messages::{
     decorators::attachment::{Attachment, AttachmentType},
     msg_fields::protocols::{
@@ -96,7 +97,7 @@ pub fn extract_attachment_as_base64(attachment: &Attachment) -> VcxResult<Vec<u8
         ));
     };
 
-    base64::decode_config(encoded_attach, base64::URL_SAFE).map_err(|_| {
+    general_purpose::URL_SAFE.decode(encoded_attach).map_err(|_| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::EncodeError,
             format!("Message attachment is not base64 as expected: {attachment:?}"),
