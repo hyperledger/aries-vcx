@@ -152,7 +152,7 @@ async fn test_hlindy_non_revocable_credential_issuance_v2_from_proposal() {
         // usually this would be the DID from the connection, but does not really matter
         let pw = PairwiseInfo::create(setup.profile.wallet()).await.unwrap();
         let request_input = HyperledgerIndyCreateRequestInput {
-            my_pairwise_did: pw.pw_did,
+            entropy_did: pw.pw_did,
             ledger: ledger_read,
             anoncreds: anoncreds,
         };
@@ -361,7 +361,7 @@ async fn manual_test_holder_against_acapy() {
 
     let holder = holder
         .prepare_credential_request(&HyperledgerIndyCreateRequestInput {
-            my_pairwise_did: pairwise_info.pw_did,
+            entropy_did: pairwise_info.pw_did,
             ledger: anoncreds_read,
             anoncreds: anoncreds,
         })

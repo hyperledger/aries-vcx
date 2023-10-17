@@ -77,7 +77,7 @@ where
     R: AnoncredsLedgerRead,
     A: BaseAnonCreds,
 {
-    pub my_pairwise_did: String,
+    pub entropy_did: String,
     pub ledger: &'a R,
     pub anoncreds: &'a A,
 }
@@ -167,7 +167,7 @@ where
         })?;
 
         let cred_def_id = parse_cred_def_id_from_cred_offer(&offer_payload)?;
-        let entropy = &data.my_pairwise_did;
+        let entropy = &data.entropy_did;
         let ledger = data.ledger;
         let anoncreds = data.anoncreds;
 

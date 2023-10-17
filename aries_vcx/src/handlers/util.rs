@@ -87,24 +87,32 @@ pub(crate) use make_attach_from_str;
 pub(crate) use matches_opt_thread_id;
 pub(crate) use matches_thread_id;
 
-pub fn extract_attachment_as_base64(attachment: &Attachment) -> VcxResult<Vec<u8>> {
-    let AttachmentType::Base64(encoded_attach) = &attachment.data.content else {
-        return Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidMessageFormat,
-            format!("Message attachment is not base64 as expected: {attachment:?}"),
-        ));
+/// Extract/decode the inner data of an [Attachment] as a [Vec<u8>], regardless of whether the inner
+/// data is encoded as base64 or JSON.
+pub fn extract_attachment_data(attachment: &Attachment) -> VcxResult<Vec<u8>> {
+    let data = match &attachment.data.content {
+        AttachmentType::Base64(encoded_attach) => general_purpose::URL_SAFE
+            .decode(encoded_attach)
+            .map_err(|_| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::EncodeError,
+                    format!("Message attachment is not base64 as expected: {attachment:?}"),
+                )
+            })?,
+        AttachmentType::Json(json_attach) => serde_json::to_vec(json_attach)?,
+        _ => {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidMessageFormat,
+                format!("Message attachment is not base64 or JSON: {attachment:?}"),
+            ))
+        }
     };
 
-    general_purpose::URL_SAFE
-        .decode(encoded_attach)
-        .map_err(|_| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::EncodeError,
-                format!("Message attachment is not base64 as expected: {attachment:?}"),
-            )
-        })
+    Ok(data)
 }
 
+/// Retrieve the first [Attachment] from a list, where the [Attachment] as an `id` matching the
+/// supplied id. Returning an error if no attachment is found.
 pub fn get_attachment_with_id<'a>(
     attachments: &'a Vec<Attachment>,
     id: &String,
