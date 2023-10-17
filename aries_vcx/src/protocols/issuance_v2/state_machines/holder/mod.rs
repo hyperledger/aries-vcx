@@ -320,7 +320,8 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
             }
         };
 
-        let new_state = CredentialReceived::new(credential, credential_received_metadata);
+        let should_ack = credential.decorators.please_ack.is_some();
+        let new_state = CredentialReceived::new(credential_received_metadata, should_ack);
         Ok(HolderV2 {
             state: new_state,
             thread_id: self.thread_id,
@@ -338,7 +339,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
     // TODO - consider enum variants for (HolderV2<AckPrepared>, HoldverV2<Completed>)
     /// Transition into the [Complete] state, by preparing an Ack message, only if required.
     pub fn prepare_ack_if_required(self) -> (HolderV2<Completed<T>>, Option<AckCredentialV2>) {
-        let should_ack = self.state.get_credential().decorators.please_ack.is_some();
+        let should_ack = self.state.get_should_ack();
 
         let ack = if should_ack {
             Some(
