@@ -108,7 +108,7 @@ pub async fn get_verkey_from_ledger(
 //
 //     #[tokio::test]
 //     #[ignore]
-//     #[cfg(all(not(feature = "vdr_proxy_ledger"), not(feature = "modular_libs"),))]
+//     #[cfg(all(not(feature = "vdr_proxy_ledger"), not(feature = "credx"),))]
 //     async fn test_pool_rotate_verkey_fails() {
 //         use super::*;
 //

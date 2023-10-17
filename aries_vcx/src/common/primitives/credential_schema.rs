@@ -111,7 +111,7 @@ impl Schema {
             .map_err(|err: AriesVcxError| err.extend("Cannot deserialize Schema"))
     }
 
-    pub async fn update_state(&mut self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<u32> {
+    pub async fn update_state(&mut self, ledger: &impl AnoncredsLedgerRead) -> VcxResult<u32> {
         if ledger.get_schema(&self.schema_id, None).await.is_ok() {
             self.state = PublicEntityStateType::Published
         }

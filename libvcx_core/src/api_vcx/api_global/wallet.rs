@@ -3,13 +3,9 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-#[cfg(feature = "anoncreds_credx")]
-use aries_vcx::aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
-#[cfg(feature = "anoncreds_vdrtools")]
-use aries_vcx::aries_vcx_core::anoncreds::indy_anoncreds::IndySdkAnonCreds;
 use aries_vcx::{
     aries_vcx_core::{
-        anoncreds::base_anoncreds::BaseAnonCreds,
+        anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
         wallet,
         wallet::{
             base_wallet::BaseWallet,
@@ -28,7 +24,7 @@ use aries_vcx::{
 
 use crate::{
     api_vcx::api_global::profile::{
-        get_main_anoncreds, get_main_indy_ledger_write, get_main_wallet, try_get_main_wallet,
+        get_main_anoncreds, get_main_ledger_write, get_main_wallet, try_get_main_wallet,
     },
     errors::{
         error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -37,11 +33,8 @@ use crate::{
     },
 };
 
-lazy_static! {
-    pub static ref GLOBAL_BASE_WALLET: RwLock<Option<Arc<dyn BaseWallet>>> = RwLock::new(None);
-    pub static ref GLOBAL_BASE_ANONCREDS: RwLock<Option<Arc<dyn BaseAnonCreds>>> =
-        RwLock::new(None);
-}
+pub static GLOBAL_BASE_WALLET: RwLock<Option<Arc<IndySdkWallet>>> = RwLock::new(None);
+pub static GLOBAL_BASE_ANONCREDS: RwLock<Option<Arc<IndyCredxAnonCreds>>> = RwLock::new(None);
 
 pub fn get_main_wallet_handle() -> LibvcxResult<WalletHandle> {
     get_main_wallet().map(|wallet| wallet.get_wallet_handle())
@@ -54,26 +47,14 @@ pub async fn export_main_wallet(path: &str, backup_key: &str) -> LibvcxResult<()
     )
 }
 
-fn build_component_base_wallet(wallet_handle: WalletHandle) -> Arc<dyn BaseWallet> {
+fn build_component_base_wallet(wallet_handle: WalletHandle) -> Arc<IndySdkWallet> {
     Arc::new(IndySdkWallet::new(wallet_handle))
 }
 
 #[allow(unreachable_code)]
 #[allow(clippy::needless_return)]
-fn build_component_anoncreds(base_wallet: Arc<dyn BaseWallet>) -> Arc<dyn BaseAnonCreds> {
-    #[cfg(feature = "anoncreds_vdrtools")]
-    {
-        let wallet_handle = base_wallet.get_wallet_handle();
-        return Arc::new(IndySdkAnonCreds::new(wallet_handle));
-    }
-    #[cfg(feature = "anoncreds_credx")]
-    {
-        return Arc::new(IndyCredxAnonCreds::new(Arc::clone(&base_wallet)));
-    }
-    #[cfg(not(any(feature = "anoncreds_vdrtools", feature = "anoncreds_credx")))]
-    {
-        compile_error!("No anoncreds implementation enabled by feature flag upon build");
-    }
+fn build_component_anoncreds(base_wallet: Arc<IndySdkWallet>) -> Arc<IndyCredxAnonCreds> {
+    Arc::new(IndyCredxAnonCreds::new(base_wallet.clone()))
 }
 
 fn setup_global_wallet(wallet_handle: WalletHandle) -> LibvcxResult<()> {
@@ -82,7 +63,7 @@ fn setup_global_wallet(wallet_handle: WalletHandle) -> LibvcxResult<()> {
     let mut b_wallet = GLOBAL_BASE_WALLET.write()?;
     *b_wallet = Some(base_wallet_impl.clone());
     // anoncreds
-    let base_anoncreds_impl: Arc<dyn BaseAnonCreds> = build_component_anoncreds(base_wallet_impl);
+    let base_anoncreds_impl = build_component_anoncreds(base_wallet_impl);
     let mut b_anoncreds = GLOBAL_BASE_ANONCREDS.write()?;
     *b_anoncreds = Some(base_anoncreds_impl);
     Ok(())
@@ -158,8 +139,8 @@ pub async fn replace_did_keys_start(did: &str) -> LibvcxResult<String> {
 pub async fn rotate_verkey_apply(did: &str, temp_vk: &str) -> LibvcxResult<()> {
     map_ariesvcx_result(
         aries_vcx::common::keys::rotate_verkey_apply(
-            &get_main_wallet()?,
-            &get_main_indy_ledger_write()?,
+            get_main_wallet()?.as_ref(),
+            get_main_ledger_write()?.as_ref(),
             did,
             temp_vk,
         )
@@ -309,6 +290,7 @@ pub mod test_utils {
         global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
         utils::devsetup::TempFile,
     };
+    use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
     use crate::{
         api_vcx::api_global::{

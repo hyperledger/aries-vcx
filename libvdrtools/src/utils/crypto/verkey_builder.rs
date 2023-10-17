@@ -2,7 +2,7 @@ use indy_api_types::errors::prelude::*;
 
 use crate::{
     services::CryptoService,
-    utils::crypto::base58::{FromBase58, ToBase58},
+    utils::crypto::base58::{DecodeBase58, ToBase58},
 };
 
 pub fn build_full_verkey(dest: &str, verkey: Option<&str>) -> Result<String, IndyError> {
@@ -14,9 +14,9 @@ pub fn build_full_verkey(dest: &str, verkey: Option<&str>) -> Result<String, Ind
             (verkey, None)
         };
 
-        let verkey = if verkey.starts_with('~') {
-            let mut result = dest.from_base58()?;
-            let mut end = verkey[1..].from_base58()?;
+        let verkey = if let Some(verkey) = verkey.strip_prefix('~') {
+            let mut result = dest.decode_base58()?;
+            let mut end = verkey.decode_base58()?;
             result.append(&mut end);
             result.to_base58()
         } else {

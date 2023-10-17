@@ -1,24 +1,33 @@
 use rand::{distributions::Alphanumeric, Rng};
 
 pub fn generate_random_schema_name() -> String {
-    rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(25)
-        .collect::<String>()
+    String::from_utf8(
+        rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(25)
+            .collect(),
+    )
+    .unwrap()
 }
 
 pub fn generate_random_name() -> String {
-    rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(25)
-        .collect::<String>()
+    String::from_utf8(
+        rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(25)
+            .collect(),
+    )
+    .unwrap()
 }
 
 pub fn generate_random_seed() -> String {
-    rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(32)
-        .collect::<String>()
+    String::from_utf8(
+        rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(32)
+            .collect(),
+    )
+    .unwrap()
 }
 
 pub fn generate_random_schema_version() -> String {

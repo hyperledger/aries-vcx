@@ -56,7 +56,7 @@ macro_rules! get_attach_as_string {
         };
 
         let Some(messages::decorators::attachment::AttachmentType::Base64(encoded_attach)) = __attach else { return err_fn($attachments.get(0)); };
-        let Ok(bytes) = base64::decode(&encoded_attach) else { return err_fn($attachments.get(0)); };
+        let Ok(bytes) = base64::engine::Engine::decode(&base64::engine::general_purpose::STANDARD, &encoded_attach) else { return err_fn($attachments.get(0)); };
         let Ok(attach_string) = String::from_utf8(bytes) else { return err_fn($attachments.get(0)); };
 
         attach_string
@@ -65,8 +65,9 @@ macro_rules! get_attach_as_string {
 
 macro_rules! make_attach_from_str {
     ($str_attach:expr, $id:expr) => {{
-        let attach_type =
-            messages::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach));
+        let attach_type = messages::decorators::attachment::AttachmentType::Base64(
+            base64::engine::Engine::encode(&base64::engine::general_purpose::STANDARD, $str_attach),
+        );
         let attach_data = messages::decorators::attachment::AttachmentData::builder()
             .content(attach_type)
             .build();

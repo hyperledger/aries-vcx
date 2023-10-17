@@ -12,7 +12,7 @@ use crate::errors::error::prelude::*;
 
 pub async fn provision_cloud_agent(
     client: &mut AgencyClient,
-    wallet: Arc<dyn BaseWallet>,
+    wallet: Arc<impl BaseWallet + 'static>,
     provision_config: &AgentProvisionConfig,
 ) -> VcxResult<AgencyClientConfig> {
     let seed = provision_config.agent_seed.as_deref();

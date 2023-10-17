@@ -1,4 +1,4 @@
-use std::{fmt, sync::Arc};
+use std::fmt;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
@@ -450,7 +450,7 @@ impl HolderSM {
         }
     }
 
-    pub async fn delete_credential(&self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<()> {
+    pub async fn delete_credential(&self, anoncreds: &impl BaseAnonCreds) -> VcxResult<()> {
         trace!("Holder::delete_credential");
 
         match self.state {

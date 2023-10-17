@@ -24,6 +24,7 @@ use aries_vcx::{
     run_setup,
     utils::constants::DEFAULT_SCHEMA_ATTRS,
 };
+use base64::{engine::general_purpose, Engine};
 use messages::{
     decorators::attachment::{Attachment, AttachmentData, AttachmentType},
     misc::MimeType,
@@ -31,9 +32,6 @@ use messages::{
         RequestPresentation, RequestPresentationContent,
     },
 };
-
-#[cfg(feature = "migration")]
-use crate::utils::migration::Migratable;
 
 #[tokio::test]
 #[ignore]
@@ -52,7 +50,9 @@ async fn test_agency_pool_retrieve_credentials_empty() {
         let pres_req_data: PresentationRequestData =
             serde_json::from_str(&req.to_string()).unwrap();
 
-        let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+        let attach_type = AttachmentType::Base64(
+            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
+        );
         let attach_data = AttachmentData::builder().content(attach_type).build();
         let attach = Attachment::builder()
             .data(attach_data)
@@ -72,9 +72,6 @@ async fn test_agency_pool_retrieve_credentials_empty() {
             .build();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-        #[cfg(feature = "migration")]
-        let setup = setup.migrate().await;
-
         let retrieved_creds = proof
             .retrieve_credentials(setup.profile.anoncreds())
             .await
@@ -90,7 +87,9 @@ async fn test_agency_pool_retrieve_credentials_empty() {
         let pres_req_data: PresentationRequestData =
             serde_json::from_str(&req.to_string()).unwrap();
 
-        let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+        let attach_type = AttachmentType::Base64(
+            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
+        );
         let attach_data = AttachmentData::builder().content(attach_type).build();
         let attach = Attachment::builder()
             .data(attach_data)
@@ -176,7 +175,9 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             serde_json::from_str(&req.to_string()).unwrap();
         let id = "test_id".to_owned();
 
-        let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+        let attach_type = AttachmentType::Base64(
+            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
+        );
         let attach_data = AttachmentData::builder().content(attach_type).build();
         let attach = Attachment::builder()
             .data(attach_data)
@@ -212,7 +213,9 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             serde_json::from_str(&req.to_string()).unwrap();
         let id = "test_id".to_owned();
 
-        let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+        let attach_type = AttachmentType::Base64(
+            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
+        );
         let attach_data = AttachmentData::builder().content(attach_type).build();
         let attach = Attachment::builder()
             .data(attach_data)
@@ -223,9 +226,6 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
         let content = RequestPresentationContent::builder()
             .request_presentations_attach(vec![attach])
             .build();
-
-        #[cfg(feature = "migration")]
-        let setup = setup.migrate().await;
 
         let proof_req = RequestPresentation::builder()
             .id(id)
@@ -249,7 +249,9 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             serde_json::from_str(&req.to_string()).unwrap();
         let id = "test_id".to_owned();
 
-        let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+        let attach_type = AttachmentType::Base64(
+            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
+        );
         let attach_data = AttachmentData::builder().content(attach_type).build();
         let attach = Attachment::builder()
             .data(attach_data)
@@ -281,7 +283,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
 }
 
 // todo: credx implementation does not support checking credential value in respect to predicate
-#[cfg(not(feature = "modular_libs"))]
+#[cfg(not(feature = "credx"))]
 #[tokio::test]
 #[ignore]
 #[allow(unused_mut)]
@@ -303,9 +305,6 @@ async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
 
         issue_address_credential(&mut consumer, &mut institution).await;
 
-        #[cfg(feature = "migration")]
-        let mut institution = institution.migrate().await;
-
         let requested_preds_string = serde_json::to_string(&json!([{
             "name": "zip",
             "p_type": ">=",
@@ -317,9 +316,6 @@ async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
             create_proof_request_data(&mut institution, "[]", &requested_preds_string, "{}", None)
                 .await;
         let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
-
-        #[cfg(feature = "migration")]
-        let mut consumer = consumer.migrate().await;
 
         let presentation_request = verifier.get_presentation_request_msg().unwrap();
         let mut prover = create_prover_from_request(presentation_request.clone()).await;

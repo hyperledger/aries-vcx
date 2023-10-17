@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 
 use indy_api_types::{
     errors::{IndyErrorKind, IndyResult},
-    validation::Validatable,
     IndyError,
 };
 
@@ -60,10 +59,9 @@ pub fn schemas_map_to_schemas_v1_map(schemas: Schemas) -> HashMap<SchemaId, Sche
         .collect()
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct AttributeNames(pub HashSet<String>);
 
-#[allow(dead_code)]
 impl AttributeNames {
     pub fn new() -> Self {
         AttributeNames(HashSet::new())
@@ -76,54 +74,9 @@ impl From<HashSet<String>> for AttributeNames {
     }
 }
 
-impl Into<HashSet<String>> for AttributeNames {
-    fn into(self) -> HashSet<String> {
-        self.0
-    }
-}
-
-impl Validatable for Schema {
-    fn validate(&self) -> Result<(), String> {
-        match self {
-            Schema::SchemaV1(schema) => {
-                schema.attr_names.validate()?;
-                schema.id.validate()?;
-                if let Some((_, name, version)) = schema.id.parts() {
-                    if name != schema.name {
-                        return Err(format!(
-                            "Inconsistent Schema Id and Schema Name: {:?} and {}",
-                            schema.id, schema.name
-                        ));
-                    }
-                    if version != schema.version {
-                        return Err(format!(
-                            "Inconsistent Schema Id and Schema Version: {:?} and {}",
-                            schema.id, schema.version
-                        ));
-                    }
-                }
-                Ok(())
-            }
-        }
-    }
-}
-
-impl Validatable for AttributeNames {
-    fn validate(&self) -> Result<(), String> {
-        if self.0.is_empty() {
-            return Err(String::from(
-                "Empty list of Schema attributes has been passed",
-            ));
-        }
-
-        if self.0.len() > MAX_ATTRIBUTES_COUNT {
-            return Err(format!(
-                "The number of Schema attributes {} cannot be greater than {}",
-                self.0.len(),
-                MAX_ATTRIBUTES_COUNT
-            ));
-        }
-        Ok(())
+impl From<AttributeNames> for HashSet<String> {
+    fn from(value: AttributeNames) -> HashSet<String> {
+        value.0
     }
 }
 
@@ -213,21 +166,6 @@ impl SchemaId {
     }
 }
 
-impl Validatable for SchemaId {
-    fn validate(&self) -> Result<(), String> {
-        if self.0.parse::<i32>().is_ok() {
-            return Ok(());
-        }
-
-        self.parts().ok_or(format!(
-            "SchemaId validation failed: {:?}, doesn't match pattern",
-            self.0
-        ))?;
-
-        Ok(())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -312,91 +250,6 @@ mod tests {
         #[test]
         fn test_schema_id_parts_for_invalid_unqualified() {
             assert!(_schema_id_invalid().parts().is_none());
-        }
-    }
-
-    mod validate {
-        use super::*;
-
-        #[test]
-        fn test_validate_schema_id_as_seq_no() {
-            _schema_id_seq_no().validate().unwrap();
-        }
-
-        #[test]
-        fn test_validate_schema_id_as_unqualified() {
-            _schema_id_unqualified().validate().unwrap();
-        }
-
-        #[test]
-        fn test_validate_schema_id_as_fully_qualified() {
-            _schema_id_qualified().validate().unwrap();
-        }
-
-        #[test]
-        fn test_validate_schema_id_for_invalid_unqualified() {
-            _schema_id_invalid().validate().unwrap_err();
-        }
-
-        #[test]
-        fn test_validate_schema_id_for_invalid_fully_qualified() {
-            let id = SchemaId("schema:sov:NcYxiDXkpYi6ov5FcYDi1e:2:1.0".to_string());
-            id.validate().unwrap_err();
-        }
-    }
-
-    mod test_schema_validation {
-        use super::*;
-
-        #[test]
-        fn test_valid_schema() {
-            let schema_json = json!({
-                "id": _schema_id_qualified(),
-                "name": "gvt",
-                "ver": "1.0",
-                "version": "1.0",
-                "attrNames": ["aaa", "bbb", "ccc"],
-            })
-            .to_string();
-
-            let schema: Schema = serde_json::from_str(&schema_json).unwrap();
-            schema.validate().unwrap();
-            match schema {
-                Schema::SchemaV1(schema) => {
-                    assert_eq!(schema.name, "gvt");
-                    assert_eq!(schema.version, "1.0");
-                }
-            }
-        }
-
-        #[test]
-        fn test_invalid_name_schema() {
-            let schema_json = json!({
-                "id": _schema_id_qualified(),
-                "name": "gvt1",
-                "ver": "1.0",
-                "version": "1.0",
-                "attrNames": ["aaa", "bbb", "ccc"],
-            })
-            .to_string();
-
-            let schema: Schema = serde_json::from_str(&schema_json).unwrap();
-            schema.validate().unwrap_err();
-        }
-
-        #[test]
-        fn test_invalid_version_schema() {
-            let schema_json = json!({
-                "id": _schema_id_qualified(),
-                "name": "gvt",
-                "ver": "1.0",
-                "version": "1.1",
-                "attrNames": ["aaa", "bbb", "ccc"],
-            })
-            .to_string();
-
-            let schema: Schema = serde_json::from_str(&schema_json).unwrap();
-            schema.validate().unwrap_err();
         }
     }
 }

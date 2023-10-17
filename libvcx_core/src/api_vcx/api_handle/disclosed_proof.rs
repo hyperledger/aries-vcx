@@ -12,7 +12,7 @@ use serde_json;
 use super::mediated_connection::send_message;
 use crate::{
     api_vcx::{
-        api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_read},
+        api_global::profile::{get_main_anoncreds, get_main_ledger_read},
         api_handle::{mediated_connection, object_cache::ObjectCache},
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -214,8 +214,8 @@ pub async fn generate_proof(
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     proof
         .generate_presentation(
-            &get_main_anoncreds_ledger_read()?,
-            &get_main_anoncreds()?,
+            get_main_ledger_read()?.as_ref(),
+            get_main_anoncreds()?.as_ref(),
             serde_json::from_str(credentials)?,
             serde_json::from_str(self_attested_attrs)?,
         )
@@ -242,7 +242,9 @@ pub async fn decline_presentation_request(
 
 pub async fn retrieve_credentials(handle: u32) -> LibvcxResult<String> {
     let proof = HANDLE_MAP.get_cloned(handle)?;
-    let retrieved_creds = proof.retrieve_credentials(&get_main_anoncreds()?).await?;
+    let retrieved_creds = proof
+        .retrieve_credentials(get_main_anoncreds()?.as_ref())
+        .await?;
 
     Ok(serde_json::to_string(&retrieved_creds)?)
 }

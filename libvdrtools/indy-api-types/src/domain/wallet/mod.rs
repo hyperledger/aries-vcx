@@ -2,8 +2,6 @@ use std::{collections::HashMap, fmt};
 
 use serde_json::value::Value;
 
-use crate::validation::Validatable;
-
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Config {
     pub id: String,
@@ -101,12 +99,3 @@ impl fmt::Debug for Record {
 }
 
 pub type Tags = HashMap<String, String>;
-
-impl Validatable for Config {
-    fn validate(&self) -> Result<(), String> {
-        if self.id.is_empty() {
-            return Err("Wallet id is empty".to_string());
-        }
-        Ok(())
-    }
-}

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     aries_vcx_core::{
-        anoncreds::indy_anoncreds::IndySdkAnonCreds,
+        anoncreds::credx_anoncreds::IndyCredxAnonCreds,
         ledger::base_ledger::TxnAuthrAgrmtOptions,
         wallet::indy::{wallet::create_and_open_wallet, IndySdkWallet, WalletConfig},
     },
@@ -16,8 +16,8 @@ use crate::{errors::error::VcxUniFFIResult, runtime::block_on};
 
 #[derive(Debug)]
 pub struct UniffiProfile {
-    wallet: IndySdkWallet,
-    anoncreds: IndySdkAnonCreds,
+    wallet: Arc<IndySdkWallet>,
+    anoncreds: IndyCredxAnonCreds,
     ledger_read: MockLedger,
     ledger_write: MockLedger,
 }
@@ -26,7 +26,7 @@ pub struct UniffiProfile {
 impl Profile for UniffiProfile {
     type LedgerRead = MockLedger;
     type LedgerWrite = MockLedger;
-    type Anoncreds = IndySdkAnonCreds;
+    type Anoncreds = IndyCredxAnonCreds;
     type Wallet = IndySdkWallet;
 
     fn ledger_read(&self) -> &Self::LedgerRead {
@@ -61,10 +61,10 @@ pub fn new_indy_profile(wallet_config: WalletConfig) -> VcxUniFFIResult<Arc<Prof
     block_on(async {
         let wh = create_and_open_wallet(&wallet_config).await?;
 
-        let wallet = IndySdkWallet::new(wh);
+        let wallet = Arc::new(IndySdkWallet::new(wh));
         let profile = UniffiProfile {
+            anoncreds: IndyCredxAnonCreds::new(wallet.clone()),
             wallet,
-            anoncreds: IndySdkAnonCreds::new(wh),
             ledger_read: MockLedger,
             ledger_write: MockLedger,
         };

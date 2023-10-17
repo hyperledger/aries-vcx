@@ -173,6 +173,7 @@ pub(super) async fn export_continue(
     Ok(())
 }
 
+#[allow(clippy::type_complexity)]
 pub(super) fn preparse_file_to_import<T>(
     reader: T,
     passphrase: &str,

@@ -4,7 +4,7 @@ use aries_vcx::common::primitives::revocation_registry::{
 
 use crate::{
     api_vcx::{
-        api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_write},
+        api_global::profile::{get_main_anoncreds, get_main_ledger_write},
         api_handle::object_cache::ObjectCache,
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -32,7 +32,7 @@ pub async fn create(config: RevocationRegistryConfig) -> LibvcxResult<u32> {
         tag,
     } = config;
     let rev_reg = RevocationRegistry::create(
-        &get_main_anoncreds()?,
+        get_main_anoncreds()?.as_ref(),
         &issuer_did,
         &cred_def_id,
         &tails_dir,
@@ -47,7 +47,7 @@ pub async fn create(config: RevocationRegistryConfig) -> LibvcxResult<u32> {
 pub async fn publish(handle: u32, tails_url: &str) -> LibvcxResult<u32> {
     let mut rev_reg = REV_REG_MAP.get_cloned(handle)?;
     rev_reg
-        .publish_revocation_primitives(&get_main_anoncreds_ledger_write()?, tails_url)
+        .publish_revocation_primitives(get_main_ledger_write()?.as_ref(), tails_url)
         .await?;
     REV_REG_MAP.insert(handle, rev_reg)?;
     Ok(handle)
@@ -57,8 +57,8 @@ pub async fn publish_revocations(handle: u32, submitter_did: &str) -> LibvcxResu
     let rev_reg = REV_REG_MAP.get_cloned(handle)?;
     rev_reg
         .publish_local_revocations(
-            &get_main_anoncreds()?,
-            &get_main_anoncreds_ledger_write()?,
+            get_main_anoncreds()?.as_ref(),
+            get_main_ledger_write()?.as_ref(),
             submitter_did,
         )
         .await?;

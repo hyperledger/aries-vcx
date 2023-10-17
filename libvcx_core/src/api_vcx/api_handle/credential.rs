@@ -17,7 +17,7 @@ use serde_json;
 
 use crate::{
     api_vcx::{
-        api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_read},
+        api_global::profile::{get_main_anoncreds, get_main_ledger_read},
         api_handle::{
             mediated_connection::{self, send_message},
             object_cache::ObjectCache,
@@ -163,8 +163,8 @@ pub async fn update_state(
         Some(aries_msg) => {
             credential
                 .process_aries_msg(
-                    &get_main_anoncreds_ledger_read()?,
-                    &get_main_anoncreds()?,
+                    get_main_ledger_read()?.as_ref(),
+                    get_main_anoncreds()?.as_ref(),
                     aries_msg.clone(),
                 )
                 .await?;
@@ -224,7 +224,7 @@ pub fn get_rev_reg_id(handle: u32) -> LibvcxResult<String> {
 pub async fn is_revokable(handle: u32) -> LibvcxResult<bool> {
     let credential = HANDLE_MAP.get_cloned(handle)?;
     credential
-        .is_revokable(&get_main_anoncreds_ledger_read()?)
+        .is_revokable(get_main_ledger_read()?.as_ref())
         .await
         .map_err(|err| err.into())
 }
@@ -235,7 +235,9 @@ pub async fn delete_credential(handle: u32) -> LibvcxResult<()> {
         handle
     );
     let credential = HANDLE_MAP.get_cloned(handle)?;
-    credential.delete_credential(&get_main_anoncreds()?).await?;
+    credential
+        .delete_credential(get_main_anoncreds()?.as_ref())
+        .await?;
     HANDLE_MAP.release(handle)
 }
 
@@ -265,8 +267,8 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
     let msg_response = credential
         .prepare_credential_request(
-            &get_main_anoncreds_ledger_read()?,
-            &get_main_anoncreds()?,
+            get_main_ledger_read()?.as_ref(),
+            get_main_anoncreds()?.as_ref(),
             my_pw_did,
         )
         .await?;

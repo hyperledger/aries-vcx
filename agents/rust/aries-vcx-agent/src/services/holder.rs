@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
+    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
     handlers::issuance::holder::Holder,
     messages::{
         msg_fields::protocols::cred_issuance::v1::{
@@ -36,14 +36,14 @@ impl HolderWrapper {
 }
 
 pub struct ServiceCredentialsHolder {
-    profile: Arc<VdrtoolsProfile>,
+    profile: Arc<ModularLibsProfile>,
     creds_holder: ObjectCache<HolderWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceCredentialsHolder {
     pub fn new(
-        profile: Arc<VdrtoolsProfile>,
+        profile: Arc<ModularLibsProfile>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {

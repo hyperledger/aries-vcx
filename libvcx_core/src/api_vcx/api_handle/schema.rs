@@ -5,9 +5,7 @@ use serde_json;
 
 use crate::{
     api_vcx::{
-        api_global::profile::{
-            get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_anoncreds_ledger_write,
-        },
+        api_global::profile::{get_main_anoncreds, get_main_ledger_read, get_main_ledger_write},
         api_handle::object_cache::ObjectCache,
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -44,7 +42,7 @@ pub async fn create_and_publish_schema(
         )
     })?;
     let schema = Schema::create(
-        &get_main_anoncreds()?,
+        get_main_anoncreds()?.as_ref(),
         source_id,
         issuer_did,
         &name,
@@ -52,7 +50,7 @@ pub async fn create_and_publish_schema(
         &data,
     )
     .await?
-    .publish(&get_main_anoncreds_ledger_write()?)
+    .publish(get_main_ledger_write()?.as_ref())
     .await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
     debug!(
@@ -101,7 +99,7 @@ pub fn release_all() {
 pub async fn update_state(schema_handle: u32) -> LibvcxResult<u32> {
     let mut schema = SCHEMA_MAP.get_cloned(schema_handle)?;
     let res = schema
-        .update_state(&get_main_anoncreds_ledger_read()?)
+        .update_state(get_main_ledger_read()?.as_ref())
         .await?;
     SCHEMA_MAP.insert(schema_handle, schema)?;
     Ok(res)

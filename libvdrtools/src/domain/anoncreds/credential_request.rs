@@ -1,4 +1,3 @@
-use indy_api_types::validation::Validatable;
 use ursa::cl::{
     BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof,
     CredentialSecretsBlindingFactors, Nonce,
@@ -33,13 +32,3 @@ impl CredentialRequest {
         }
     }
 }
-
-impl Validatable for CredentialRequest {
-    fn validate(&self) -> Result<(), String> {
-        self.cred_def_id.validate()?;
-        self.prover_did.validate()?;
-        Ok(())
-    }
-}
-
-impl Validatable for CredentialRequestMetadata {}
