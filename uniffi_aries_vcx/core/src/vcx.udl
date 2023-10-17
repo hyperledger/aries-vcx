@@ -68,6 +68,83 @@ interface Connection {
     void send_ack(ProfileHolder profile);
 };
 
+interface Holder {
+    [Throws=VcxUniFFIError]
+    void set_proposal(string credential_proposal);
+
+    [Throws=VcxUniFFIError]
+    void prepare_credential_request(ProfileHolder profile, string my_pw_did);
+
+    [Throws=VcxUniFFIError]
+    string get_msg_credential_request();
+
+    [Throws=VcxUniFFIError]
+    string decline_offer();
+
+    [Throws=VcxUniFFIError]
+    void process_credential(ProfileHolder profile, string credential);
+
+    [Throws=VcxUniFFIError]
+    boolean is_terminal_state();
+
+    [Throws=VcxUniFFIError]
+    HolderState get_state();
+
+    [Throws=VcxUniFFIError]
+    string get_source_id();
+
+    [Throws=VcxUniFFIError]
+    string get_credential();
+
+    [Throws=VcxUniFFIError]
+    string get_attributes();
+
+    [Throws=VcxUniFFIError]
+    string get_attachment();
+
+    [Throws=VcxUniFFIError]
+    string get_offer();
+
+    [Throws=VcxUniFFIError]
+    string get_tails_location();
+
+    [Throws=VcxUniFFIError]
+    string get_tails_hash();
+
+    [Throws=VcxUniFFIError]
+    string get_rev_reg_id();
+
+    [Throws=VcxUniFFIError]
+    string get_cred_id();
+
+    [Throws=VcxUniFFIError]
+    string get_thread_id();
+
+    [Throws=VcxUniFFIError]
+    boolean is_revokable(ProfileHolder profile);
+
+    [Throws=VcxUniFFIError]
+    boolean is_revoked(ProfileHolder profile);
+
+    [Throws=VcxUniFFIError]
+    string get_cred_rev_id(ProfileHolder profile);
+
+    [Throws=VcxUniFFIError]
+    string get_problem_report();
+
+    [Throws=VcxUniFFIError]
+    string? get_final_message();
+};
+
+enum HolderState {
+    "Initial",
+    "ProposalSet",
+    "OfferReceived",
+    "RequestSet",
+    "Finished",
+    "Failed"
+};
+
 [Error]
 enum VcxUniFFIError {
     "AriesVcxError",
@@ -88,4 +165,13 @@ namespace vcx {
 
     [Throws=VcxUniFFIError]
     UnpackMessage unpack_message(ProfileHolder profile, string packed_msg);
+
+    [Throws=VcxUniFFIError]
+    Holder create(string source_id);
+
+    [Throws=VcxUniFFIError]
+    Holder create_from_offer(string source_id, string offer_message);
+
+    [Throws=VcxUniFFIError]
+    Holder create_with_proposal(string source_id, string propose_credential);
 };
