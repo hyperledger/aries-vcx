@@ -91,25 +91,21 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
     pub async fn with_proposal(
         input_data: &T::CreateProposalInput,
         preview: Option<CredentialPreviewV2>,
-    ) -> VcxResult<Self> {
+    ) -> VcxResult<(Self, ProposeCredentialV2)> {
         let attachment_data = T::create_proposal_attachment_content(input_data).await?;
         let attachments_format_and_data =
             vec![(T::get_proposal_attachment_format(), attachment_data)];
         let proposal =
             create_proposal_message_from_attachments(attachments_format_and_data, preview, None);
 
-        Ok(HolderV2 {
+        let holder = HolderV2 {
             thread_id: get_thread_id_or_message_id!(proposal),
             state: ProposalPrepared {
-                proposal,
                 _marker: PhantomData,
             },
-        })
-    }
+        };
 
-    /// Get the prepared proposal message which should be sent to the issuer.
-    pub fn get_proposal(&self) -> &ProposeCredentialV2 {
-        &self.state.proposal
+        Ok((holder, proposal))
     }
 
     /// Receive an incoming [OfferCredentialV2] message for this protocol. On success, the
@@ -193,7 +189,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
         self,
         input_data: &T::CreateProposalInput,
         preview: Option<CredentialPreviewV2>,
-    ) -> VcxSMTransitionResult<HolderV2<ProposalPrepared<T>>, Self> {
+    ) -> VcxSMTransitionResult<(HolderV2<ProposalPrepared<T>>, ProposeCredentialV2), Self> {
         let attachment_data = match T::create_proposal_attachment_content(input_data).await {
             Ok(msg) => msg,
             Err(error) => {
@@ -211,13 +207,14 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
             Some(self.thread_id.clone()),
         );
 
-        Ok(HolderV2 {
+        let holder = HolderV2 {
             state: ProposalPrepared {
-                proposal,
                 _marker: PhantomData,
             },
             thread_id: self.thread_id,
-        })
+        };
+
+        Ok((holder, proposal))
     }
 
     /// Respond to an offer by preparing a request (to accept the offer). The request is prepared in
@@ -231,7 +228,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
     pub async fn prepare_credential_request(
         self,
         input_data: &T::CreateRequestInput,
-    ) -> VcxSMTransitionResult<HolderV2<RequestPrepared<T>>, Self> {
+    ) -> VcxSMTransitionResult<(HolderV2<RequestPrepared<T>>, RequestCredentialV2), Self> {
         let offer_message = &self.state.offer;
 
         let (attachment_data, output_metadata) =
@@ -254,13 +251,14 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
 
         let new_state = RequestPrepared {
             request_preparation_metadata: output_metadata,
-            request,
         };
 
-        Ok(HolderV2 {
+        let holder = HolderV2 {
             state: new_state,
             thread_id: self.thread_id,
-        })
+        };
+
+        Ok((holder, request))
     }
 }
 
@@ -278,7 +276,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
     /// support this.
     pub async fn with_request(
         input_data: &T::CreateRequestInput,
-    ) -> VcxResult<HolderV2<RequestPrepared<T>>> {
+    ) -> VcxResult<(HolderV2<RequestPrepared<T>>, RequestCredentialV2)> {
         let (attachment_data, output_metadata) =
             T::create_request_attachment_content_independent_of_offer(input_data).await?;
 
@@ -290,18 +288,14 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
 
         let new_state = RequestPrepared {
             request_preparation_metadata: output_metadata,
-            request,
         };
 
-        Ok(HolderV2 {
+        let holder = HolderV2 {
             thread_id,
             state: new_state,
-        })
-    }
+        };
 
-    /// Get the prepared request message which should be sent to the issuer.
-    pub fn get_request(&self) -> &RequestCredentialV2 {
-        &self.state.request
+        Ok((holder, request))
     }
 
     /// Receive a credential in response to a request message that was sent to the issuer.
@@ -359,7 +353,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
 
     // TODO - consider enum variants for (HolderV2<AckPrepared>, HoldverV2<Completed>)
     /// Transition into the [Complete] state, by preparing an Ack message, only if required.
-    pub fn prepare_ack_if_required(self) -> HolderV2<Complete<T>> {
+    pub fn prepare_ack_if_required(self) -> (HolderV2<Complete<T>>, Option<AckCredentialV2>) {
         let should_ack = self.state.credential.decorators.please_ack.is_some();
 
         let ack = if should_ack {
@@ -377,22 +371,14 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
         } else {
             None
         };
-        HolderV2 {
+        let holder = HolderV2 {
             state: Complete {
-                ack,
                 _marker: PhantomData,
             },
             thread_id: self.thread_id,
-        }
-    }
-}
+        };
 
-impl<T: HolderCredentialIssuanceFormat> HolderV2<Complete<T>> {
-    /// Get the prepared Ack message in response to the received credential, ready to be sent to the
-    /// issuer. If an acknowledgement is not required by the issuer, then [None] is returned and
-    /// nothing is required to be sent.
-    pub fn get_ack(&self) -> Option<&AckCredentialV2> {
-        self.state.ack.as_ref()
+        (holder, ack)
     }
 }
 
@@ -459,15 +445,13 @@ mod tests {
         ctx2.expect()
             .returning(|| MaybeKnown::Unknown(String::from("format")));
 
-        let holder =
+        let (_holder, proposal) =
             HolderV2::<ProposalPrepared<MockHolderCredentialIssuanceFormat>>::with_proposal(
                 &String::from("in"),
                 None,
             )
             .await
             .unwrap();
-
-        let proposal = holder.get_proposal();
 
         let formats = proposal.content.formats.clone();
         let attachments = proposal.content.filters_attach.clone();

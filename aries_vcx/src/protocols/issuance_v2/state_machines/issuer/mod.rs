@@ -130,7 +130,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
         input_data: &T::CreateOfferInput,
         preview: CredentialPreviewV2,
         replacement_id: Option<String>,
-    ) -> VcxSMTransitionResult<IssuerV2<OfferPrepared<T>>, Self> {
+    ) -> VcxSMTransitionResult<(IssuerV2<OfferPrepared<T>>, OfferCredentialV2), Self> {
         let (attachment_data, offer_metadata) =
             match T::create_offer_attachment_content(input_data).await {
                 Ok(data) => data,
@@ -149,15 +149,14 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
             Some(self.thread_id.clone()),
         );
 
-        let new_state = OfferPrepared {
-            offer_metadata,
-            offer,
-        };
+        let new_state = OfferPrepared { offer_metadata };
 
-        Ok(IssuerV2 {
+        let issuer = IssuerV2 {
             state: new_state,
             thread_id: self.thread_id,
-        })
+        };
+
+        Ok((issuer, offer))
     }
 }
 
@@ -171,7 +170,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
         input_data: &T::CreateOfferInput,
         preview: CredentialPreviewV2,
         replacement_id: Option<String>,
-    ) -> VcxResult<Self> {
+    ) -> VcxResult<(Self, OfferCredentialV2)> {
         let (attachment_data, offer_metadata) =
             T::create_offer_attachment_content(input_data).await?;
 
@@ -185,20 +184,14 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
 
         let thread_id = get_thread_id_or_message_id!(offer);
 
-        let new_state = OfferPrepared {
-            offer_metadata,
-            offer,
-        };
+        let new_state = OfferPrepared { offer_metadata };
 
-        Ok(IssuerV2 {
+        let issuer = IssuerV2 {
             state: new_state,
             thread_id,
-        })
-    }
+        };
 
-    /// Get the prepared offer message which should be sent to the holder.
-    pub fn get_offer(&self) -> &OfferCredentialV2 {
-        &self.state.offer
+        Ok((issuer, offer))
     }
 
     /// Receive an incoming [ProposeCredentialV2] message for this protocol. On success, the
@@ -324,7 +317,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
         input_data: &T::CreateCredentialInput,
         please_ack: Option<bool>, // defaults to false
         replacement_id: Option<String>,
-    ) -> VcxSMTransitionResult<IssuerV2<CredentialPrepared<T>>, Self> {
+    ) -> VcxSMTransitionResult<(IssuerV2<CredentialPrepared<T>>, IssueCredentialV2), Self> {
         let request = &self.state.request;
 
         let res = match &self.state.from_offer_metadata {
@@ -360,23 +353,19 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
         let new_state = CredentialPrepared {
             from_offer_metadata: self.state.from_offer_metadata,
             credential_metadata: cred_metadata,
-            credential,
             please_ack,
         };
 
-        Ok(IssuerV2 {
+        let issuer = IssuerV2 {
             state: new_state,
             thread_id: self.thread_id,
-        })
+        };
+
+        Ok((issuer, credential))
     }
 }
 
 impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
-    /// Get the prepared credential message which should be sent to the holder.
-    pub fn get_credential(&self) -> &IssueCredentialV2 {
-        &self.state.credential
-    }
-
     /// Get details about the credential that was prepared.
     /// The details are specific to the [IssuerCredentialIssuanceFormat] being used.
     pub fn get_credential_creation_metadata(&self) -> &T::CreatedCredentialMetadata {

@@ -21,11 +21,13 @@ use aries_vcx::{
                     HyperledgerIndyIssuerCredentialIssuanceFormat,
                 },
             },
-            holder::{
-                states::{offer_received::OfferReceived, proposal_prepared::ProposalPrepared},
-                HolderV2,
+            state_machines::{
+                holder::{
+                    states::{offer_received::OfferReceived, proposal_prepared::ProposalPrepared},
+                    HolderV2,
+                },
+                issuer::{states::proposal_received::ProposalReceived, IssuerV2},
             },
-            issuer::{states::proposal_received::ProposalReceived, IssuerV2},
         },
         mediated_connection::pairwise_info::PairwiseInfo,
     },
@@ -88,13 +90,14 @@ async fn test_hlindy_non_revocable_credential_issuance_v2_from_proposal() {
             .name(String::from("address"))
             .value(String::from("123 Main St"))
             .build()]);
-        let holder = HolderV2::<
+
+        let (holder, proposal_msg) = HolderV2::<
             ProposalPrepared<HyperledgerIndyHolderCredentialIssuanceFormat<_, _>>,
-        >::with_proposal(&proposal_input, Some(proposal_preview.clone()))
+        >::with_proposal(
+            &proposal_input, Some(proposal_preview.clone())
+        )
         .await
         .unwrap();
-
-        let proposal_msg = holder.get_proposal().clone();
 
         let issuer = IssuerV2::<
             ProposalReceived<HyperledgerIndyIssuerCredentialIssuanceFormat<_>>,
@@ -131,12 +134,10 @@ async fn test_hlindy_non_revocable_credential_issuance_v2_from_proposal() {
                 .value(String::from("84000"))
                 .build(),
         ]);
-        let issuer = issuer
+        let (issuer, offer_msg) = issuer
             .prepare_offer(&offer_data, offer_preview.clone(), None)
             .await
             .unwrap();
-
-        let offer_msg = issuer.get_offer().clone();
 
         let holder = holder.receive_offer(offer_msg).unwrap();
 
@@ -157,12 +158,10 @@ async fn test_hlindy_non_revocable_credential_issuance_v2_from_proposal() {
             anoncreds: anoncreds,
         };
 
-        let holder = holder
+        let (holder, request_msg) = holder
             .prepare_credential_request(&request_input)
             .await
             .unwrap();
-
-        let request_msg = holder.get_request().clone();
 
         let issuer = issuer.receive_request(request_msg).unwrap();
 
@@ -184,13 +183,11 @@ async fn test_hlindy_non_revocable_credential_issuance_v2_from_proposal() {
             revocation_info: None,
         };
 
-        let issuer = issuer
+        let (issuer, cred_msg) = issuer
             .prepare_credential(&cred_data, Some(true), None)
             .await
             .unwrap();
         let issuer_cred_metadata = issuer.get_credential_creation_metadata().clone();
-
-        let cred_msg = issuer.get_credential().clone();
 
         let receive_input = HyperledgerIndyStoreCredentialInput {
             ledger: ledger_read,
@@ -202,11 +199,9 @@ async fn test_hlindy_non_revocable_credential_issuance_v2_from_proposal() {
             .await
             .unwrap();
         let holder_cred_metadata = holder.get_stored_credential_metadata().clone();
-        let holder = holder.prepare_ack_if_required();
+        let (_holder, ack_msg) = holder.prepare_ack_if_required();
 
-        let ack_msg = holder.get_ack().unwrap().clone();
-
-        let _issuer = issuer.complete_with_ack(ack_msg);
+        let _issuer = issuer.complete_with_ack(ack_msg.unwrap());
 
         // check final states
         assert!(issuer_cred_metadata.credential_revocation_id.is_none());
@@ -359,7 +354,7 @@ async fn manual_test_holder_against_acapy() {
 
     // send request
 
-    let holder = holder
+    let (holder, msg) = holder
         .prepare_credential_request(&HyperledgerIndyCreateRequestInput {
             entropy_did: pairwise_info.pw_did,
             ledger: anoncreds_read,
@@ -368,8 +363,9 @@ async fn manual_test_holder_against_acapy() {
         .await
         .unwrap();
 
-    let msg = holder.get_request().to_owned().into();
-    conn.send_message(wallet, &msg, &HttpClient).await.unwrap();
+    conn.send_message(wallet, &msg.into(), &HttpClient)
+        .await
+        .unwrap();
 
     // get cred
     let cred = await_next_aries_msg::<IssueCredentialV2>(&relay_internal_endpoint, wallet).await;
