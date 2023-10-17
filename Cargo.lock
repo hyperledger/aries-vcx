@@ -340,6 +340,7 @@ dependencies = [
  "lazy_static",
  "log",
  "messages",
+ "mockall",
  "num-bigint",
  "rand 0.8.5",
  "regex",
