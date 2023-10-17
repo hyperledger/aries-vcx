@@ -18,7 +18,7 @@ use messages::{
 use uuid::Uuid;
 
 use self::states::{
-    complete::Complete, credential_received::CredentialReceived, failed::Failed,
+    completed::Completed, credential_received::CredentialReceived, failed::Failed,
     offer_received::OfferReceived, proposal_prepared::ProposalPrepared,
     request_prepared::RequestPrepared,
 };
@@ -353,7 +353,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
 
     // TODO - consider enum variants for (HolderV2<AckPrepared>, HoldverV2<Completed>)
     /// Transition into the [Complete] state, by preparing an Ack message, only if required.
-    pub fn prepare_ack_if_required(self) -> (HolderV2<Complete<T>>, Option<AckCredentialV2>) {
+    pub fn prepare_ack_if_required(self) -> (HolderV2<Completed<T>>, Option<AckCredentialV2>) {
         let should_ack = self.state.credential.decorators.please_ack.is_some();
 
         let ack = if should_ack {
@@ -372,7 +372,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
             None
         };
         let holder = HolderV2 {
-            state: Complete {
+            state: Completed {
                 _marker: PhantomData,
             },
             thread_id: self.thread_id,

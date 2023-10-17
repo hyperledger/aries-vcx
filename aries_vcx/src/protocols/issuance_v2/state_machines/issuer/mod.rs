@@ -17,7 +17,7 @@ use messages::{
 use uuid::Uuid;
 
 use self::states::{
-    complete::Complete, credential_prepared::CredentialPrepared, failed::Failed,
+    completed::Completed, credential_prepared::CredentialPrepared, failed::Failed,
     offer_prepared::OfferPrepared, proposal_received::ProposalReceived,
     request_received::RequestReceived,
 };
@@ -384,7 +384,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
     /// In the event of failure, an error is returned which contains the reason for failure
     /// and the state machine before any transitions. Consumers should decide whether the failure
     /// is terminal, in which case they should prepare a problem report.
-    pub fn complete_without_ack(self) -> VcxSMTransitionResult<IssuerV2<Complete<T>>, Self> {
+    pub fn complete_without_ack(self) -> VcxSMTransitionResult<IssuerV2<Completed<T>>, Self> {
         if self.is_expecting_ack() {
             return Err(RecoveredSMError {
                 error: AriesVcxError::from_msg(
@@ -395,7 +395,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
             });
         }
 
-        let new_state = Complete {
+        let new_state = Completed {
             ack: None,
             _marker: PhantomData,
         };
@@ -414,7 +414,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
     pub fn complete_with_ack(
         self,
         ack: AckCredentialV2,
-    ) -> VcxSMTransitionResult<IssuerV2<Complete<T>>, Self> {
+    ) -> VcxSMTransitionResult<IssuerV2<Completed<T>>, Self> {
         let is_match = matches_thread_id!(ack, self.thread_id.as_str());
         if !is_match {
             return Err(RecoveredSMError {
@@ -423,7 +423,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
             });
         }
 
-        let new_state = Complete {
+        let new_state = Completed {
             ack: Some(ack),
             _marker: PhantomData,
         };

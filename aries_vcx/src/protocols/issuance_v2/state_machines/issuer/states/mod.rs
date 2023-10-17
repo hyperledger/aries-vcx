@@ -1,4 +1,4 @@
-pub mod complete;
+pub mod completed;
 pub mod credential_prepared;
 pub mod failed;
 pub mod offer_prepared;
