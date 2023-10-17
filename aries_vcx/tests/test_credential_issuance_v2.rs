@@ -10,15 +10,28 @@ use aries_vcx::{
         connection::Connection,
         issuance_v2::{
             formats::{
-                holder::hyperledger_indy::{
-                    HyperledgerIndyCreateProposalInput, HyperledgerIndyCreateRequestInput,
-                    HyperledgerIndyCredentialFilterBuilder,
-                    HyperledgerIndyHolderCredentialIssuanceFormat,
-                    HyperledgerIndyStoreCredentialInput,
+                holder::{
+                    hyperledger_indy::{
+                        HyperledgerIndyCreateProposalInput, HyperledgerIndyCreateRequestInput,
+                        HyperledgerIndyCredentialFilterBuilder,
+                        HyperledgerIndyHolderCredentialIssuanceFormat,
+                        HyperledgerIndyStoreCredentialInput,
+                    },
+                    HolderCredentialIssuanceFormat,
                 },
-                issuer::hyperledger_indy::{
-                    HyperledgerIndyCreateCredentialInput, HyperledgerIndyCreateOfferInput,
-                    HyperledgerIndyIssuerCredentialIssuanceFormat,
+                issuer::{
+                    hyperledger_indy::{
+                        HyperledgerIndyCreateCredentialInput, HyperledgerIndyCreateOfferInput,
+                        HyperledgerIndyIssuerCredentialIssuanceFormat,
+                    },
+                    IssuerCredentialIssuanceFormat,
+                },
+            },
+            processing::{
+                holder::create_request_message_from_attachments,
+                issuer::{
+                    create_credential_message_from_attachments,
+                    create_offer_message_from_attachments,
                 },
             },
             state_machines::{
@@ -33,6 +46,7 @@ use aries_vcx::{
     },
     run_setup,
     transport::Transport,
+    utils::mockdata::profile::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -55,6 +69,158 @@ use messages::msg_fields::protocols::{
 use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
 use url::Url;
+
+type HLIndyIssuerFormat<'a, A> = HyperledgerIndyIssuerCredentialIssuanceFormat<'a, A>;
+type HLIndyHolderFormat<'a, R, A> = HyperledgerIndyHolderCredentialIssuanceFormat<'a, R, A>;
+
+#[tokio::test]
+#[ignore]
+async fn test_hlindy_credential_issuance_v2_with_processing_functions() {
+    run_setup!(|setup| async move {
+        let anoncreds = setup.profile.anoncreds();
+        let ledger_read = setup.profile.ledger_read();
+
+        let schema = create_and_write_test_schema(
+            anoncreds,
+            setup.profile.ledger_write(),
+            &setup.institution_did,
+            aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
+        let cred_def = create_and_write_test_cred_def(
+            anoncreds,
+            ledger_read,
+            setup.profile.ledger_write(),
+            &setup.institution_did,
+            &schema.schema_id,
+            false,
+        )
+        .await;
+
+        let offer_preview = CredentialPreviewV2::new(vec![
+            CredentialAttr::builder()
+                .name(String::from("address1"))
+                .value(String::from("123 Main St"))
+                .build(),
+            CredentialAttr::builder()
+                .name(String::from("address2"))
+                .value(String::from("Suite 3"))
+                .build(),
+            CredentialAttr::builder()
+                .name(String::from("city"))
+                .value(String::from("Draper"))
+                .build(),
+            CredentialAttr::builder()
+                .name(String::from("state"))
+                .value(String::from("UT"))
+                .build(),
+            CredentialAttr::builder()
+                .name(String::from("zip"))
+                .value(String::from("84000"))
+                .build(),
+        ]);
+
+        // TODO - how bad is it bad that this requires an impl generic? IndyCredxAnonCreds
+        let attachment_format = HLIndyIssuerFormat::<MockAnoncreds>::get_offer_attachment_format();
+        let (attachment_data, offer_metadata) =
+            HLIndyIssuerFormat::create_offer_attachment_content(&HyperledgerIndyCreateOfferInput {
+                anoncreds,
+                cred_def_id: cred_def.get_cred_def_id(),
+            })
+            .await
+            .unwrap();
+        let attachments_format_and_data = vec![(attachment_format, attachment_data)];
+
+        let offer_msg = create_offer_message_from_attachments(
+            attachments_format_and_data,
+            offer_preview,
+            None,
+            None,
+        );
+
+        let thread_id = offer_msg
+            .decorators
+            .thread
+            .as_ref()
+            .map(|th| th.thid.clone())
+            .unwrap_or(offer_msg.id.clone());
+
+        let offer_details =
+            HLIndyHolderFormat::<MockLedger, MockAnoncreds>::extract_offer_details(&offer_msg)
+                .unwrap();
+        assert_eq!(offer_details.schema_id, cred_def.get_schema_id());
+        assert_eq!(offer_details.cred_def_id, cred_def.get_cred_def_id());
+
+        let attachment_format =
+            HLIndyHolderFormat::<MockLedger, MockAnoncreds>::get_request_attachment_format();
+        let (request_attach, request_metadata) =
+            HLIndyHolderFormat::<_, _>::create_request_attachment_content(
+                &offer_msg,
+                &HyperledgerIndyCreateRequestInput {
+                    entropy_did: setup.institution_did, // not realistic
+                    ledger: ledger_read,
+                    anoncreds,
+                },
+            )
+            .await
+            .unwrap();
+        let attachments_format_and_data = vec![(attachment_format, request_attach)];
+        let request_msg = create_request_message_from_attachments(
+            attachments_format_and_data,
+            Some(thread_id.clone()),
+        );
+
+        let attachment_format =
+            HLIndyIssuerFormat::<MockAnoncreds>::get_credential_attachment_format();
+        let (attachment_data, created_cred_metadata) =
+            HLIndyIssuerFormat::<_>::create_credential_attachment_content(
+                &offer_metadata,
+                &request_msg,
+                &HyperledgerIndyCreateCredentialInput {
+                    anoncreds,
+                    credential_attributes: HashMap::from([
+                        (String::from("address1"), String::from("123 Main St")),
+                        (String::from("address2"), String::from("Suite 3")),
+                        (String::from("city"), String::from("Draper")),
+                        (String::from("state"), String::from("UT")),
+                        (String::from("zip"), String::from("84000")),
+                    ]),
+                    revocation_info: None,
+                },
+            )
+            .await
+            .unwrap();
+        let attachments_format_and_data = vec![(attachment_format, attachment_data)];
+        let cred_msg = create_credential_message_from_attachments(
+            attachments_format_and_data,
+            false,
+            thread_id.clone(),
+            None,
+        );
+
+        let stored_cred_metadata = HLIndyHolderFormat::<_, _>::process_and_store_credential(
+            &cred_msg,
+            &HyperledgerIndyStoreCredentialInput {
+                ledger: ledger_read,
+                anoncreds,
+            },
+            &request_metadata,
+        )
+        .await
+        .unwrap();
+
+        assert!(created_cred_metadata.credential_revocation_id.is_none());
+        assert!(!stored_cred_metadata.credential_id.is_empty());
+
+        let stored_cred = anoncreds
+            .prover_get_credential(&stored_cred_metadata.credential_id)
+            .await
+            .unwrap();
+
+        assert!(!stored_cred.is_empty());
+    })
+    .await;
+}
 
 #[tokio::test]
 #[ignore]
@@ -169,13 +335,7 @@ async fn test_hlindy_non_revocable_credential_issuance_v2_from_proposal() {
             anoncreds: anoncreds,
             credential_attributes: HashMap::from([
                 (String::from("address1"), String::from("123 Main St")),
-                (
-                    String::from("address2"),
-                    String::from(
-                        "Suite
-    3",
-                    ),
-                ),
+                (String::from("address2"), String::from("Suite 3")),
                 (String::from("city"), String::from("Draper")),
                 (String::from("state"), String::from("UT")),
                 (String::from("zip"), String::from("84000")),
