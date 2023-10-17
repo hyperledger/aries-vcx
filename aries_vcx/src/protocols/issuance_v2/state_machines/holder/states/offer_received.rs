@@ -5,8 +5,8 @@ use messages::msg_fields::protocols::cred_issuance::v2::offer_credential::OfferC
 use crate::protocols::issuance_v2::formats::holder::HolderCredentialIssuanceFormat;
 
 pub struct OfferReceived<T: HolderCredentialIssuanceFormat> {
-    pub(crate) offer: OfferCredentialV2,
-    pub(crate) _marker: PhantomData<T>,
+    offer: OfferCredentialV2,
+    _marker: PhantomData<T>,
 }
 
 impl<T: HolderCredentialIssuanceFormat> OfferReceived<T> {

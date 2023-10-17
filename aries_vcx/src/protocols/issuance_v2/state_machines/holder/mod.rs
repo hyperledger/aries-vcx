@@ -1,6 +1,6 @@
 pub mod states;
 
-use std::{error::Error, marker::PhantomData};
+use std::error::Error;
 
 use messages::{
     decorators::thread::Thread,
@@ -100,9 +100,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
 
         let holder = HolderV2 {
             thread_id: get_thread_id_or_message_id!(proposal),
-            state: ProposalPrepared {
-                _marker: PhantomData,
-            },
+            state: ProposalPrepared::new(),
         };
 
         Ok((holder, proposal))
@@ -133,10 +131,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
             });
         }
 
-        let new_state = OfferReceived {
-            offer,
-            _marker: PhantomData,
-        };
+        let new_state = OfferReceived::new(offer);
 
         Ok(HolderV2 {
             state: new_state,
@@ -158,10 +153,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
     pub fn from_offer(offer: OfferCredentialV2) -> Self {
         Self {
             thread_id: get_thread_id_or_message_id!(offer),
-            state: OfferReceived {
-                offer,
-                _marker: PhantomData,
-            },
+            state: OfferReceived::new(offer),
         }
     }
 
@@ -169,8 +161,9 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
     /// [HolderCredentialIssuanceFormat::OfferDetails] data will contain data specific to the
     /// format being used.
     pub fn get_offer_details(&self) -> VcxResult<(T::OfferDetails, &CredentialPreviewV2)> {
-        let details = T::extract_offer_details(&self.state.offer)?;
-        let preview = &self.state.offer.content.credential_preview;
+        let offer_msg = self.state.get_offer();
+        let details = T::extract_offer_details(offer_msg)?;
+        let preview = &offer_msg.content.credential_preview;
 
         Ok((details, preview))
     }
@@ -208,9 +201,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
         );
 
         let holder = HolderV2 {
-            state: ProposalPrepared {
-                _marker: PhantomData,
-            },
+            state: ProposalPrepared::new(),
             thread_id: self.thread_id,
         };
 
@@ -229,7 +220,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
         self,
         input_data: &T::CreateRequestInput,
     ) -> VcxSMTransitionResult<(HolderV2<RequestPrepared<T>>, RequestCredentialV2), Self> {
-        let offer_message = &self.state.offer;
+        let offer_message = self.state.get_offer();
 
         let (attachment_data, output_metadata) =
             match T::create_request_attachment_content(offer_message, input_data).await {
@@ -249,9 +240,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
             Some(self.thread_id.clone()),
         );
 
-        let new_state = RequestPrepared {
-            request_preparation_metadata: output_metadata,
-        };
+        let new_state = RequestPrepared::new(output_metadata);
 
         let holder = HolderV2 {
             state: new_state,
@@ -286,9 +275,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
 
         let thread_id = get_thread_id_or_message_id!(request);
 
-        let new_state = RequestPrepared {
-            request_preparation_metadata: output_metadata,
-        };
+        let new_state = RequestPrepared::new(output_metadata);
 
         let holder = HolderV2 {
             thread_id,
@@ -320,7 +307,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
         let credential_received_metadata = match T::process_and_store_credential(
             &credential,
             input_data,
-            &self.state.request_preparation_metadata,
+            self.state.get_request_preparation_metadata(),
         )
         .await
         {
@@ -333,10 +320,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
             }
         };
 
-        let new_state = CredentialReceived {
-            credential,
-            stored_credential_metadata: credential_received_metadata,
-        };
+        let new_state = CredentialReceived::new(credential, credential_received_metadata);
         Ok(HolderV2 {
             state: new_state,
             thread_id: self.thread_id,
@@ -348,13 +332,13 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
     /// Get details about the credential that was received and stored.
     /// The details are specific to the [HolderCredentialIssuanceFormat] being used.
     pub fn get_stored_credential_metadata(&self) -> &T::StoredCredentialMetadata {
-        &self.state.stored_credential_metadata
+        self.state.get_stored_credential_metadata()
     }
 
     // TODO - consider enum variants for (HolderV2<AckPrepared>, HoldverV2<Completed>)
     /// Transition into the [Complete] state, by preparing an Ack message, only if required.
     pub fn prepare_ack_if_required(self) -> (HolderV2<Completed<T>>, Option<AckCredentialV2>) {
-        let should_ack = self.state.credential.decorators.please_ack.is_some();
+        let should_ack = self.state.get_credential().decorators.please_ack.is_some();
 
         let ack = if should_ack {
             Some(
@@ -372,9 +356,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
             None
         };
         let holder = HolderV2 {
-            state: Completed {
-                _marker: PhantomData,
-            },
+            state: Completed::new(),
             thread_id: self.thread_id,
         };
 
@@ -385,7 +367,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
 impl HolderV2<Failed> {
     /// Get the prepared [CredIssuanceProblemReportV2] to be sent to the issuer to report a failure.
     pub fn get_problem_report(&self) -> &CredIssuanceProblemReportV2 {
-        &self.state.problem_report
+        &self.state.get_problem_report()
     }
 }
 
@@ -410,9 +392,7 @@ impl<S> HolderV2<S> {
             .decorators(decorators)
             .build();
 
-        let new_state = Failed {
-            problem_report: report,
-        };
+        let new_state = Failed::new(report);
 
         HolderV2 {
             state: new_state,

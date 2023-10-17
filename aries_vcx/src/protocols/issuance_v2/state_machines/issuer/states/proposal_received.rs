@@ -5,8 +5,8 @@ use messages::msg_fields::protocols::cred_issuance::v2::propose_credential::Prop
 use crate::protocols::issuance_v2::formats::issuer::IssuerCredentialIssuanceFormat;
 
 pub struct ProposalReceived<T: IssuerCredentialIssuanceFormat> {
-    pub(crate) proposal: ProposeCredentialV2,
-    pub(crate) _marker: PhantomData<T>,
+    proposal: ProposeCredentialV2,
+    _marker: PhantomData<T>,
 }
 
 impl<T: IssuerCredentialIssuanceFormat> ProposalReceived<T> {

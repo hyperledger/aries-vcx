@@ -1,6 +1,6 @@
 pub mod states;
 
-use std::{error::Error, marker::PhantomData};
+use std::error::Error;
 
 use messages::{
     decorators::thread::Thread,
@@ -96,10 +96,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
     pub fn from_proposal(proposal: ProposeCredentialV2) -> Self {
         IssuerV2 {
             thread_id: get_thread_id_or_message_id!(proposal),
-            state: ProposalReceived {
-                proposal,
-                _marker: PhantomData,
-            },
+            state: ProposalReceived::new(proposal),
         }
     }
 
@@ -109,8 +106,9 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
     pub fn get_proposal_details(
         &self,
     ) -> VcxResult<(T::ProposalDetails, Option<&CredentialPreviewV2>)> {
-        let details = T::extract_proposal_details(&self.state.proposal)?;
-        let preview = self.state.proposal.content.credential_preview.as_ref();
+        let propsoal_msg = self.state.get_proposal();
+        let details = T::extract_proposal_details(propsoal_msg)?;
+        let preview = propsoal_msg.content.credential_preview.as_ref();
 
         Ok((details, preview))
     }
@@ -149,7 +147,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
             Some(self.thread_id.clone()),
         );
 
-        let new_state = OfferPrepared { offer_metadata };
+        let new_state = OfferPrepared::new(offer_metadata);
 
         let issuer = IssuerV2 {
             state: new_state,
@@ -184,7 +182,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
 
         let thread_id = get_thread_id_or_message_id!(offer);
 
-        let new_state = OfferPrepared { offer_metadata };
+        let new_state = OfferPrepared::new(offer_metadata);
 
         let issuer = IssuerV2 {
             state: new_state,
@@ -219,10 +217,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
             });
         }
 
-        let new_state = ProposalReceived {
-            proposal,
-            _marker: PhantomData,
-        };
+        let new_state = ProposalReceived::new(proposal);
 
         Ok(IssuerV2 {
             state: new_state,
@@ -255,10 +250,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
             });
         }
 
-        let new_state = RequestReceived {
-            from_offer_metadata: Some(self.state.offer_metadata),
-            request,
-        };
+        let new_state = RequestReceived::new(Some(self.state.into_parts()), request);
 
         Ok(IssuerV2 {
             state: new_state,
@@ -288,10 +280,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
 
         let thread_id = get_thread_id_or_message_id!(request);
 
-        let new_state = RequestReceived {
-            from_offer_metadata: None,
-            request,
-        };
+        let new_state = RequestReceived::new(None, request);
 
         Ok(Self {
             state: new_state,
@@ -318,9 +307,9 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
         please_ack: Option<bool>, // defaults to false
         replacement_id: Option<String>,
     ) -> VcxSMTransitionResult<(IssuerV2<CredentialPrepared<T>>, IssueCredentialV2), Self> {
-        let request = &self.state.request;
+        let request = self.state.get_request();
 
-        let res = match &self.state.from_offer_metadata {
+        let res = match self.state.get_from_offer_metadata() {
             Some(offer) => {
                 T::create_credential_attachment_content(offer, request, input_data).await
             }
@@ -350,11 +339,8 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
             replacement_id,
         );
 
-        let new_state = CredentialPrepared {
-            from_offer_metadata: self.state.from_offer_metadata,
-            credential_metadata: cred_metadata,
-            please_ack,
-        };
+        let new_state =
+            CredentialPrepared::new(self.state.into_parts().0, cred_metadata, please_ack);
 
         let issuer = IssuerV2 {
             state: new_state,
@@ -369,12 +355,12 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
     /// Get details about the credential that was prepared.
     /// The details are specific to the [IssuerCredentialIssuanceFormat] being used.
     pub fn get_credential_creation_metadata(&self) -> &T::CreatedCredentialMetadata {
-        &self.state.credential_metadata
+        self.state.get_credential_metadata()
     }
 
     /// Whether or not this [IssuerV2] is expecting an Ack message to complete.
     pub fn is_expecting_ack(&self) -> bool {
-        self.state.please_ack
+        self.state.get_please_ack()
     }
 
     /// Transition into a completed state without receiving an ack message from the holder.
@@ -395,10 +381,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
             });
         }
 
-        let new_state = Completed {
-            ack: None,
-            _marker: PhantomData,
-        };
+        let new_state = Completed::new(None);
 
         Ok(IssuerV2 {
             state: new_state,
@@ -423,10 +406,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
             });
         }
 
-        let new_state = Completed {
-            ack: Some(ack),
-            _marker: PhantomData,
-        };
+        let new_state = Completed::new(Some(ack));
 
         Ok(IssuerV2 {
             state: new_state,
@@ -438,7 +418,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
 impl IssuerV2<Failed> {
     /// Get the prepared [CredIssuanceProblemReportV2] to be sent to the holder to report a failure.
     pub fn get_problem_report(&self) -> &CredIssuanceProblemReportV2 {
-        &self.state.problem_report
+        &self.state.get_problem_report()
     }
 }
 
@@ -463,9 +443,7 @@ impl<S> IssuerV2<S> {
             .decorators(decorators)
             .build();
 
-        let new_state = Failed {
-            problem_report: report,
-        };
+        let new_state = Failed::new(report);
 
         IssuerV2 {
             state: new_state,

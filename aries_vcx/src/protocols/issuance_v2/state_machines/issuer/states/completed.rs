@@ -5,8 +5,8 @@ use messages::msg_fields::protocols::cred_issuance::v2::ack::AckCredentialV2;
 use crate::protocols::issuance_v2::formats::issuer::IssuerCredentialIssuanceFormat;
 
 pub struct Completed<T: IssuerCredentialIssuanceFormat> {
-    pub(crate) ack: Option<AckCredentialV2>,
-    pub(crate) _marker: PhantomData<T>,
+    ack: Option<AckCredentialV2>,
+    _marker: PhantomData<T>,
 }
 
 impl<T: IssuerCredentialIssuanceFormat> Completed<T> {

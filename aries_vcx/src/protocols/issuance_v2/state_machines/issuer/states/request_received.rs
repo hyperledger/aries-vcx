@@ -3,8 +3,8 @@ use messages::msg_fields::protocols::cred_issuance::v2::request_credential::Requ
 use crate::protocols::issuance_v2::formats::issuer::IssuerCredentialIssuanceFormat;
 
 pub struct RequestReceived<T: IssuerCredentialIssuanceFormat> {
-    pub(crate) from_offer_metadata: Option<T::CreatedOfferMetadata>,
-    pub(crate) request: RequestCredentialV2,
+    from_offer_metadata: Option<T::CreatedOfferMetadata>,
+    request: RequestCredentialV2,
 }
 
 impl<T: IssuerCredentialIssuanceFormat> RequestReceived<T> {
@@ -16,6 +16,10 @@ impl<T: IssuerCredentialIssuanceFormat> RequestReceived<T> {
             from_offer_metadata,
             request,
         }
+    }
+
+    pub fn into_parts(self) -> (Option<T::CreatedOfferMetadata>, RequestCredentialV2) {
+        (self.from_offer_metadata, self.request)
     }
 
     pub fn get_from_offer_metadata(&self) -> Option<&T::CreatedOfferMetadata> {

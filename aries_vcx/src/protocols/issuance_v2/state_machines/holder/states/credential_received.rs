@@ -3,9 +3,8 @@ use messages::msg_fields::protocols::cred_issuance::v2::issue_credential::IssueC
 use crate::protocols::issuance_v2::formats::holder::HolderCredentialIssuanceFormat;
 
 pub struct CredentialReceived<T: HolderCredentialIssuanceFormat> {
-    #[allow(dead_code)] // `credential` may become used in future
-    pub(crate) credential: IssueCredentialV2,
-    pub(crate) stored_credential_metadata: T::StoredCredentialMetadata,
+    credential: IssueCredentialV2,
+    stored_credential_metadata: T::StoredCredentialMetadata,
 }
 
 impl<T: HolderCredentialIssuanceFormat> CredentialReceived<T> {

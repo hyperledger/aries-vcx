@@ -1,7 +1,7 @@
 use crate::protocols::issuance_v2::formats::holder::HolderCredentialIssuanceFormat;
 
 pub struct RequestPrepared<T: HolderCredentialIssuanceFormat> {
-    pub(crate) request_preparation_metadata: T::CreatedRequestMetadata,
+    request_preparation_metadata: T::CreatedRequestMetadata,
 }
 
 impl<T: HolderCredentialIssuanceFormat> RequestPrepared<T> {

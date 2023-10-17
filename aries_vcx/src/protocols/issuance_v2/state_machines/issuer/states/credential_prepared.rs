@@ -1,9 +1,9 @@
 use crate::protocols::issuance_v2::formats::issuer::IssuerCredentialIssuanceFormat;
 
 pub struct CredentialPrepared<T: IssuerCredentialIssuanceFormat> {
-    pub(crate) from_offer_metadata: Option<T::CreatedOfferMetadata>,
-    pub(crate) credential_metadata: T::CreatedCredentialMetadata,
-    pub(crate) please_ack: bool,
+    from_offer_metadata: Option<T::CreatedOfferMetadata>,
+    credential_metadata: T::CreatedCredentialMetadata,
+    please_ack: bool,
 }
 
 impl<T: IssuerCredentialIssuanceFormat> CredentialPrepared<T> {
