@@ -1,16 +1,23 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
-use super::decorators::PickupDecoratorsCommon;
-use crate::msg_parts::MsgParts;
+use crate::{decorators::transport::Transport, msg_parts::MsgParts};
 
-pub type StatusRequest = MsgParts<StatusRequestContent, PickupDecoratorsCommon>;
+pub type StatusRequest = MsgParts<StatusRequestContent, StatusRequestDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct StatusRequestContent {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recipient_key: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
+pub struct StatusRequestDecorators {
+    #[builder(default, setter(strip_option))]
+    #[serde(rename = "~transport")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transport: Option<Transport>,
 }
 
 #[cfg(test)]
@@ -34,7 +41,7 @@ mod tests {
         let content = StatusRequestContent::builder()
             .recipient_key("<key for messages>".to_owned())
             .build();
-        let decorators = PickupDecoratorsCommon::builder().build();
+        let decorators = StatusRequestDecorators::builder().build();
 
         test_utils::test_msg(content, decorators, PickupTypeV2_0::StatusRequest, expected);
     }

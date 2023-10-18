@@ -2,10 +2,12 @@ use serde::{Deserialize, Serialize};
 use serde_with::{base64::Base64, serde_as};
 use typed_builder::TypedBuilder;
 
-use super::decorators::PickupDecoratorsCommon;
-use crate::msg_parts::MsgParts;
+use crate::{
+    decorators::{thread::Thread, transport::Transport},
+    msg_parts::MsgParts,
+};
 
-pub type Delivery = MsgParts<DeliveryContent, PickupDecoratorsCommon>;
+pub type Delivery = MsgParts<DeliveryContent, DeliveryDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct DeliveryContent {
@@ -28,6 +30,18 @@ pub struct DeliveryAttach {
 pub struct DeliveryAttachData {
     #[serde_as(as = "Base64")]
     pub base64: Vec<u8>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
+pub struct DeliveryDecorators {
+    #[builder(default, setter(strip_option))]
+    #[serde(rename = "~transport")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transport: Option<Transport>,
+    #[builder(default, setter(strip_option))]
+    #[serde(rename = "~thread")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thread: Option<Thread>,
 }
 
 #[cfg(test)]
@@ -66,7 +80,7 @@ mod tests {
             .recipient_key("<key for messages>".to_owned())
             .attach(vec![attach])
             .build();
-        let decorators = PickupDecoratorsCommon::builder()
+        let decorators = DeliveryDecorators::builder()
             .thread(
                 Thread::builder()
                     .thid("<message id of delivery-request message>".to_owned())

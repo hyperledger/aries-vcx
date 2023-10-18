@@ -1,14 +1,21 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
-use super::decorators::PickupDecoratorsCommon;
-use crate::msg_parts::MsgParts;
+use crate::{decorators::transport::Transport, msg_parts::MsgParts};
 
-pub type MessagesReceived = MsgParts<MessagesReceivedContent, PickupDecoratorsCommon>;
+pub type MessagesReceived = MsgParts<MessagesReceivedContent, MessagesReceivedDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct MessagesReceivedContent {
     pub message_id_list: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
+pub struct MessagesReceivedDecorators {
+    #[builder(default, setter(strip_option))]
+    #[serde(rename = "~transport")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transport: Option<Transport>,
 }
 
 #[cfg(test)]
@@ -31,7 +38,7 @@ mod tests {
         let content = MessagesReceivedContent::builder()
             .message_id_list(vec!["123".to_string(), "456".to_string()])
             .build();
-        let decorators = PickupDecoratorsCommon::builder().build();
+        let decorators = MessagesReceivedDecorators::builder().build();
 
         test_utils::test_msg(
             content,

@@ -1,14 +1,21 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
-use super::decorators::PickupDecoratorsCommon;
-use crate::msg_parts::MsgParts;
+use crate::{decorators::transport::Transport, msg_parts::MsgParts};
 
-pub type LiveDeliveryChange = MsgParts<LiveDeliveryChangeContent, PickupDecoratorsCommon>;
+pub type LiveDeliveryChange = MsgParts<LiveDeliveryChangeContent, LiveDeliveryChangeDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct LiveDeliveryChangeContent {
     pub live_delivery: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
+pub struct LiveDeliveryChangeDecorators {
+    #[builder(default, setter(strip_option))]
+    #[serde(rename = "~transport")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transport: Option<Transport>,
 }
 
 #[cfg(test)]
@@ -30,7 +37,7 @@ mod tests {
         let content = LiveDeliveryChangeContent::builder()
             .live_delivery(true)
             .build();
-        let decorators = PickupDecoratorsCommon::builder().build();
+        let decorators = LiveDeliveryChangeDecorators::builder().build();
 
         test_utils::test_msg(
             content,
