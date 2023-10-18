@@ -20,6 +20,7 @@ use self::{
         RequestPresentationV1, RequestPresentationV1Content, RequestPresentationV1Decorators,
     },
 };
+use super::PresentProof;
 use crate::{
     misc::utils::{self, into_msg_with_type, transit_to_aries_msg},
     msg_fields::{
@@ -95,17 +96,17 @@ impl DelayedSerde for PresentProofV1 {
 
 transit_to_aries_msg!(
     ProposePresentationV1Content: ProposePresentationV1Decorators,
-    PresentProofV1
+    PresentProofV1, PresentProof
 );
 transit_to_aries_msg!(
     RequestPresentationV1Content: RequestPresentationV1Decorators,
-    PresentProofV1
+    PresentProofV1, PresentProof
 );
-transit_to_aries_msg!(PresentationV1Content: PresentationV1Decorators, PresentProofV1);
-transit_to_aries_msg!(AckPresentationV1Content: AckDecorators, PresentProofV1);
+transit_to_aries_msg!(PresentationV1Content: PresentationV1Decorators, PresentProofV1, PresentProof);
+transit_to_aries_msg!(AckPresentationV1Content: AckDecorators, PresentProofV1, PresentProof);
 transit_to_aries_msg!(
     PresentProofV1ProblemReportContent: ProblemReportDecorators,
-    PresentProofV1
+    PresentProofV1, PresentProof
 );
 
 into_msg_with_type!(

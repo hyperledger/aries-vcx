@@ -8,15 +8,18 @@ use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
         notification::Notification,
-        present_proof::v1::{
-            ack::AckPresentationV1,
-            present::PresentationV1,
-            propose::{
-                PresentationPreview, ProposePresentationV1, ProposePresentationV1Content,
-                ProposePresentationV1Decorators,
+        present_proof::{
+            v1::{
+                ack::AckPresentationV1,
+                present::PresentationV1,
+                propose::{
+                    PresentationPreview, ProposePresentationV1, ProposePresentationV1Content,
+                    ProposePresentationV1Decorators,
+                },
+                request::RequestPresentationV1,
+                PresentProofV1,
             },
-            request::RequestPresentationV1,
-            PresentProofV1,
+            PresentProof,
         },
     },
     AriesMessage,
@@ -188,11 +191,13 @@ impl Prover {
 
     pub async fn process_aries_msg(&mut self, message: AriesMessage) -> VcxResult<()> {
         let prover_sm = match message {
-            AriesMessage::PresentProof(PresentProofV1::RequestPresentation(request)) => self
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::RequestPresentation(
+                request,
+            ))) => self
                 .prover_sm
                 .clone()
                 .receive_presentation_request(request)?,
-            AriesMessage::PresentProof(PresentProofV1::Ack(ack)) => {
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Ack(ack))) => {
                 self.prover_sm.clone().receive_presentation_ack(ack)?
             }
             AriesMessage::ReportProblem(report) => {
@@ -202,10 +207,11 @@ impl Prover {
                 .prover_sm
                 .clone()
                 .receive_presentation_reject(report.into())?,
-            AriesMessage::PresentProof(PresentProofV1::ProblemReport(report)) => self
-                .prover_sm
-                .clone()
-                .receive_presentation_reject(report.into())?,
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::ProblemReport(report))) => {
+                self.prover_sm
+                    .clone()
+                    .receive_presentation_reject(report.into())?
+            }
             _ => self.prover_sm.clone(),
         };
         self.prover_sm = prover_sm;

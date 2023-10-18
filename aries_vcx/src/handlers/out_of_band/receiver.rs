@@ -18,9 +18,7 @@ use messages::{
             invitation::{Invitation, OobService},
             OutOfBand,
         },
-        present_proof::v1::{
-            present::PresentationV1, request::RequestPresentationV1, PresentProofV1,
-        },
+        present_proof::v1::{present::PresentationV1, request::RequestPresentationV1},
     },
     AriesMessage,
 };
@@ -272,9 +270,7 @@ impl OutOfBandReceiver {
                                 )
                             })?;
 
-                        return Ok(Some(AriesMessage::PresentProof(
-                            PresentProofV1::RequestPresentation(request),
-                        )));
+                        return Ok(Some(request.into()));
                     }
                     AttachmentId::Presentation => {
                         let mut presentation =
@@ -287,9 +283,7 @@ impl OutOfBandReceiver {
 
                         presentation.decorators.thread.pthid = Some(self.oob.id.clone());
 
-                        return Ok(Some(AriesMessage::PresentProof(
-                            PresentProofV1::Presentation(presentation),
-                        )));
+                        return Ok(Some(presentation.into()));
                     }
                 },
                 None => {

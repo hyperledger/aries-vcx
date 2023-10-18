@@ -17,7 +17,6 @@ use messages::{
                 RequestPresentationV1, RequestPresentationV1Content,
                 RequestPresentationV1Decorators,
             },
-            PresentProofV1,
         },
         report_problem::ProblemReport,
     },
@@ -169,10 +168,7 @@ impl VerifierSM {
     }
 
     pub fn receive_presentation_proposal(self, proposal: ProposePresentationV1) -> VcxResult<Self> {
-        verify_thread_id(
-            &self.thread_id,
-            &AriesMessage::PresentProof(PresentProofV1::ProposePresentation(proposal.clone())),
-        )?;
+        verify_thread_id(&self.thread_id, &proposal.clone().into())?;
         let (state, thread_id) = match self.state {
             VerifierFullState::Initial(_) => {
                 let thread_id = match proposal.decorators.thread {
@@ -260,10 +256,7 @@ impl VerifierSM {
         anoncreds: &'a impl BaseAnonCreds,
         presentation: PresentationV1,
     ) -> VcxResult<Self> {
-        verify_thread_id(
-            &self.thread_id,
-            &AriesMessage::PresentProof(PresentProofV1::Presentation(presentation.clone())),
-        )?;
+        verify_thread_id(&self.thread_id, &presentation.clone().into())?;
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
                 let verification_result = state

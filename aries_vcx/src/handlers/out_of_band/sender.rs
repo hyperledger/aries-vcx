@@ -7,7 +7,7 @@ use messages::{
             invitation::{Invitation, InvitationContent, InvitationDecorators, OobService},
             OobGoalCode,
         },
-        present_proof::v1::PresentProofV1,
+        present_proof::{v1::PresentProofV1, PresentProof},
     },
     msg_types::Protocol,
     AriesMessage,
@@ -92,7 +92,9 @@ impl OutOfBandSender {
 
     pub fn append_a2a_message(mut self, msg: AriesMessage) -> VcxResult<Self> {
         let (attach_id, attach) = match msg {
-            a2a_msg @ AriesMessage::PresentProof(PresentProofV1::RequestPresentation(_)) => (
+            a2a_msg @ AriesMessage::PresentProof(PresentProof::V1(
+                PresentProofV1::RequestPresentation(_),
+            )) => (
                 AttachmentId::PresentationRequest,
                 json!(&a2a_msg).to_string(),
             ),
