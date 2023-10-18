@@ -8,7 +8,7 @@ use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
         notification::Notification,
-        present_proof::{
+        present_proof::v1::{
             ack::AckPresentation,
             present::Presentation,
             propose::{

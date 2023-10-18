@@ -5,7 +5,7 @@ use messages::{
         discover_features::DiscoverFeatures,
         notification::Notification,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
-        present_proof::{
+        present_proof::v1::{
             propose::{Predicate, PresentationAttr},
             PresentProof,
         },

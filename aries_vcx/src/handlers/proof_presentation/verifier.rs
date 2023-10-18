@@ -4,7 +4,7 @@ use aries_vcx_core::{
 use messages::{
     msg_fields::protocols::{
         notification::Notification,
-        present_proof::{
+        present_proof::v1::{
             present::Presentation, propose::ProposePresentation, request::RequestPresentation,
             PresentProof,
         },

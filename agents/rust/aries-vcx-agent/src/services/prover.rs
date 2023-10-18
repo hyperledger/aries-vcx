@@ -7,7 +7,7 @@ use aries_vcx::{
         util::PresentationProposalData,
     },
     messages::{
-        msg_fields::protocols::present_proof::{
+        msg_fields::protocols::present_proof::v1::{
             ack::AckPresentation, request::RequestPresentation,
         },
         AriesMessage,

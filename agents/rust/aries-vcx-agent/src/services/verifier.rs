@@ -5,7 +5,7 @@ use aries_vcx::{
     core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
     handlers::proof_presentation::verifier::Verifier,
     messages::{
-        msg_fields::protocols::present_proof::{
+        msg_fields::protocols::present_proof::v1::{
             present::Presentation, propose::ProposePresentation,
         },
         AriesMessage,

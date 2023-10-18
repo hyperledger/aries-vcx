@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use messages::{msg_fields::protocols::present_proof::PresentProof, AriesMessage};
+use messages::{msg_fields::protocols::present_proof::v1::PresentProof, AriesMessage};
 
 use crate::{
     handlers::{

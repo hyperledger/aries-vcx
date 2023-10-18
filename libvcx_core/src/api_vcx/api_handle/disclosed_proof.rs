@@ -3,7 +3,7 @@ use aries_vcx::{
         mediated_prover::prover_find_message_to_handle, prover::Prover,
     },
     messages::{
-        msg_fields::protocols::present_proof::{request::RequestPresentation, PresentProof},
+        msg_fields::protocols::present_proof::v1::{request::RequestPresentation, PresentProof},
         AriesMessage,
     },
 };

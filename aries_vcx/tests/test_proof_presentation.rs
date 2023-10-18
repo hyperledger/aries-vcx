@@ -25,7 +25,7 @@ use aries_vcx::{
     run_setup,
     utils::devsetup::*,
 };
-use messages::{msg_fields::protocols::present_proof::PresentProof, AriesMessage};
+use messages::{msg_fields::protocols::present_proof::v1::PresentProof, AriesMessage};
 
 use crate::utils::{
     scenarios::{

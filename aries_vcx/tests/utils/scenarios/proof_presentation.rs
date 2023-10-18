@@ -30,7 +30,7 @@ use aries_vcx_core::ledger::{
 };
 use messages::{
     msg_fields::protocols::{
-        present_proof::{
+        present_proof::v1::{
             ack::AckPresentation, present::Presentation, propose::ProposePresentation,
             request::RequestPresentation, PresentProof,
         },

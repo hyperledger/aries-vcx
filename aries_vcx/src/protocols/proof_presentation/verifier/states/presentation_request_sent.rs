@@ -2,7 +2,7 @@ use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
 use messages::msg_fields::protocols::{
-    present_proof::{present::Presentation, request::RequestPresentation},
+    present_proof::v1::{present::Presentation, request::RequestPresentation},
     report_problem::ProblemReport,
 };
 

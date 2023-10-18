@@ -7,7 +7,7 @@ use messages::{
             invitation::{Invitation, InvitationContent, InvitationDecorators, OobService},
             OobGoalCode,
         },
-        present_proof::PresentProof,
+        present_proof::v1::PresentProof,
     },
     msg_types::Protocol,
     AriesMessage,

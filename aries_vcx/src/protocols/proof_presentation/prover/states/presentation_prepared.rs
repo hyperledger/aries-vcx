@@ -1,4 +1,4 @@
-use messages::msg_fields::protocols::present_proof::{
+use messages::msg_fields::protocols::present_proof::v1::{
     present::Presentation, request::RequestPresentation,
 };
 

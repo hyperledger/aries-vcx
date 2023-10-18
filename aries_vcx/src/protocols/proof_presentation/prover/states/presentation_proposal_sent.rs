@@ -1,4 +1,4 @@
-use messages::msg_fields::protocols::present_proof::propose::{
+use messages::msg_fields::protocols::present_proof::v1::propose::{
     PresentationPreview, ProposePresentation, ProposePresentationContent,
 };
 use uuid::Uuid;

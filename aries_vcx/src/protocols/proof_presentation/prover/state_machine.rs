@@ -7,7 +7,7 @@ use chrono::Utc;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
-        present_proof::{
+        present_proof::v1::{
             ack::AckPresentation,
             present::{Presentation, PresentationContent, PresentationDecorators},
             propose::{

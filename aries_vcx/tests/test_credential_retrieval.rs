@@ -28,7 +28,7 @@ use base64::{engine::general_purpose, Engine};
 use messages::{
     decorators::attachment::{Attachment, AttachmentData, AttachmentType},
     misc::MimeType,
-    msg_fields::protocols::present_proof::request::{
+    msg_fields::protocols::present_proof::v1::request::{
         RequestPresentation, RequestPresentationContent,
     },
 };

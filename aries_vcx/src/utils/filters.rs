@@ -2,7 +2,7 @@ use messages::{
     decorators::attachment::Attachment,
     msg_fields::protocols::{
         cred_issuance::v1::offer_credential::OfferCredentialV1,
-        present_proof::request::RequestPresentation,
+        present_proof::v1::request::RequestPresentation,
     },
 };
 use serde_json;

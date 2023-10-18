@@ -1,5 +1,7 @@
 use messages::msg_fields::protocols::{
-    present_proof::{ack::AckPresentation, present::Presentation, request::RequestPresentation},
+    present_proof::v1::{
+        ack::AckPresentation, present::Presentation, request::RequestPresentation,
+    },
     report_problem::ProblemReport,
 };
 

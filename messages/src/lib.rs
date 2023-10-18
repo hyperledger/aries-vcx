@@ -29,7 +29,7 @@ use crate::{
         protocols::{
             basic_message::BasicMessage, connection::Connection,
             discover_features::DiscoverFeatures, notification::Notification,
-            out_of_band::OutOfBand, present_proof::PresentProof, report_problem::ProblemReport,
+            out_of_band::OutOfBand, present_proof::v1::PresentProof, report_problem::ProblemReport,
             revocation::Revocation, routing::Forward, trust_ping::TrustPing,
         },
         traits::DelayedSerde,

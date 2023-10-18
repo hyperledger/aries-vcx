@@ -18,7 +18,7 @@ use messages::{
             invitation::{Invitation, OobService},
             OutOfBand,
         },
-        present_proof::{present::Presentation, request::RequestPresentation, PresentProof},
+        present_proof::v1::{present::Presentation, request::RequestPresentation, PresentProof},
     },
     AriesMessage,
 };

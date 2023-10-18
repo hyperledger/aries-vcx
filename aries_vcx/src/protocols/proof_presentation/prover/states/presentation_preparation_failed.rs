@@ -1,5 +1,5 @@
 use messages::msg_fields::protocols::{
-    present_proof::request::RequestPresentation, report_problem::ProblemReport,
+    present_proof::v1::request::RequestPresentation, report_problem::ProblemReport,
 };
 
 use crate::{
