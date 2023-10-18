@@ -51,7 +51,7 @@ mod tests {
         msg_fields::protocols::report_problem::{
             Description, Impact, Where, WhereParty, WhoRetries,
         },
-        msg_types::present_proof::PresentProofTypeV1_0,
+        msg_types::present_proof::PresentProofTypeV2_0,
     };
 
     #[test]
@@ -75,7 +75,7 @@ mod tests {
         test_utils::test_msg(
             content,
             decorators,
-            PresentProofTypeV1_0::ProblemReport,
+            PresentProofTypeV2_0::ProblemReport,
             expected,
         );
     }
@@ -130,7 +130,7 @@ mod tests {
         test_utils::test_msg(
             content,
             decorators,
-            PresentProofTypeV1_0::ProblemReport,
+            PresentProofTypeV2_0::ProblemReport,
             expected,
         );
     }

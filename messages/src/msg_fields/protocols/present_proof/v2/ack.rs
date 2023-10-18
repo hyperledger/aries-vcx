@@ -41,7 +41,7 @@ mod tests {
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
         misc::test_utils,
         msg_fields::protocols::notification::ack::AckStatus,
-        msg_types::present_proof::PresentProofTypeV1_0,
+        msg_types::present_proof::PresentProofTypeV2_0,
     };
 
     #[test]
@@ -57,7 +57,7 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, PresentProofTypeV1_0::Ack, expected);
+        test_utils::test_msg(content, decorators, PresentProofTypeV2_0::Ack, expected);
     }
 
     #[test]
@@ -75,6 +75,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, PresentProofTypeV1_0::Ack, expected);
+        test_utils::test_msg(content, decorators, PresentProofTypeV2_0::Ack, expected);
     }
 }

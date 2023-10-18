@@ -51,66 +51,85 @@ pub enum PresentationRequestAttachmentFormatType {
     DifPresentationExchangeDefinitions1_0,
 }
 
-// #[cfg(test)]
-// #[allow(clippy::unwrap_used)]
-// #[allow(clippy::field_reassign_with_default)]
-// mod tests {
-//     use serde_json::json;
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+    use shared_vcx::maybe_known::MaybeKnown;
 
-//     use super::*;
-//     use crate::{
-//         decorators::{
-//             attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
-//             timing::tests::make_extended_timing,
-//         },
-//         misc::test_utils,
-//         msg_types::present_proof::PresentProofTypeV1_0,
-//     };
+    use super::*;
+    use crate::{
+        decorators::{
+            attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
+            timing::tests::make_extended_timing,
+        },
+        misc::test_utils,
+        msg_types::present_proof::PresentProofTypeV2_0,
+    };
 
-//     #[test]
-//     fn test_minimal_request_proof() {
-//         let content = RequestPresentationV2Content::builder()
-//             .request_presentations_attach(vec![make_extended_attachment()])
-//             .build();
+    #[test]
+    fn test_minimal_request_proof() {
+        let content = RequestPresentationV2Content::builder()
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(
+                    PresentationRequestAttachmentFormatType::HyperledgerIndyProofRequest2_0,
+                ),
+            }])
+            .request_presentations_attach(vec![make_extended_attachment()])
+            .build();
 
-//         let decorators = RequestPresentationV2Decorators::default();
+        let decorators = RequestPresentationV2Decorators::default();
 
-//         let expected = json!({
-//             "request_presentations~attach": content.request_presentations_attach,
-//         });
+        let expected = json!({
+            "formats": content.formats,
+            "request_presentations~attach": content.request_presentations_attach,
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             PresentProofTypeV1_0::RequestPresentation,
-//             expected,
-//         );
-//     }
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV2_0::RequestPresentation,
+            expected,
+        );
+    }
 
-//     #[test]
-//     fn test_extended_request_proof() {
-//         let content = RequestPresentationV2Content::builder()
-//             .request_presentations_attach(vec![make_extended_attachment()])
-//             .comment("test_comment".to_owned())
-//             .build();
+    #[test]
+    fn test_extended_request_proof() {
+        let content = RequestPresentationV2Content::builder()
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(
+                    PresentationRequestAttachmentFormatType::HyperledgerIndyProofRequest2_0,
+                ),
+            }])
+            .request_presentations_attach(vec![make_extended_attachment()])
+            .goal_code(Some("goal.goal".to_owned()))
+            .comment(Some("test_comment".to_owned()))
+            .will_confirm(Some(true))
+            .build();
 
-//         let decorators = RequestPresentationV2Decorators::builder()
-//             .thread(make_extended_thread())
-//             .timing(make_extended_timing())
-//             .build();
+        let decorators = RequestPresentationV2Decorators::builder()
+            .thread(Some(make_extended_thread()))
+            .timing(Some(make_extended_timing()))
+            .build();
 
-//         let expected = json!({
-//             "request_presentations~attach": content.request_presentations_attach,
-//             "comment": content.comment,
-//             "~thread": decorators.thread,
-//             "~timing": decorators.timing
-//         });
+        let expected = json!({
+            "formats": content.formats,
+            "request_presentations~attach": content.request_presentations_attach,
+            "goal_code": content.goal_code,
+            "comment": content.comment,
+            "will_confirm": content.will_confirm,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             PresentProofTypeV1_0::RequestPresentation,
-//             expected,
-//         );
-//     }
-// }
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV2_0::RequestPresentation,
+            expected,
+        );
+    }
+}

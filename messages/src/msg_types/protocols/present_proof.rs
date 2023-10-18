@@ -59,7 +59,7 @@ mod tests {
     use crate::misc::test_utils;
 
     #[test]
-    fn test_protocol_present_proof() {
+    fn test_protocol_present_proof_v1() {
         test_utils::test_serde(
             Protocol::from(PresentProofTypeV1::new_v1_0()),
             json!("https://didcomm.org/present-proof/1.0"),
@@ -67,7 +67,7 @@ mod tests {
     }
 
     #[test]
-    fn test_version_resolution_present_proof() {
+    fn test_version_resolution_present_proof_v1() {
         test_utils::test_msg_type_resolution(
             "https://didcomm.org/present-proof/1.255",
             PresentProofTypeV1::new_v1_0(),
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_unsupported_version_present_proof() {
+    fn test_unsupported_version_present_proof_v1() {
         test_utils::test_serde(
             Protocol::from(PresentProofTypeV1::new_v1_0()),
             json!("https://didcomm.org/present-proof/2.0"),
@@ -84,7 +84,7 @@ mod tests {
     }
 
     #[test]
-    fn test_msg_type_propose() {
+    fn test_msg_type_propose_v1() {
         test_utils::test_msg_type(
             "https://didcomm.org/present-proof/1.0",
             "propose-presentation",
@@ -93,7 +93,7 @@ mod tests {
     }
 
     #[test]
-    fn test_msg_type_request() {
+    fn test_msg_type_request_v1() {
         test_utils::test_msg_type(
             "https://didcomm.org/present-proof/1.0",
             "request-presentation",
@@ -102,7 +102,7 @@ mod tests {
     }
 
     #[test]
-    fn test_msg_type_presentation() {
+    fn test_msg_type_presentation_v1() {
         test_utils::test_msg_type(
             "https://didcomm.org/present-proof/1.0",
             "presentation",
@@ -111,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    fn test_msg_type_preview() {
+    fn test_msg_type_preview_v1() {
         test_utils::test_msg_type(
             "https://didcomm.org/present-proof/1.0",
             "presentation-preview",
@@ -120,11 +120,81 @@ mod tests {
     }
 
     #[test]
-    fn test_msg_type_ack() {
+    fn test_msg_type_ack_v1() {
         test_utils::test_msg_type(
             "https://didcomm.org/present-proof/1.0",
             "ack",
             PresentProofTypeV1::new_v1_0(),
+        )
+    }
+
+    #[test]
+    fn test_protocol_present_proof_v2() {
+        test_utils::test_serde(
+            Protocol::from(PresentProofTypeV2::new_v2_0()),
+            json!("https://didcomm.org/present-proof/2.0"),
+        )
+    }
+
+    #[test]
+    fn test_version_resolution_present_proof_v2() {
+        test_utils::test_msg_type_resolution(
+            "https://didcomm.org/present-proof/2.255",
+            PresentProofTypeV2::new_v2_0(),
+        )
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unsupported_version_present_proof_v2() {
+        test_utils::test_serde(
+            Protocol::from(PresentProofTypeV2::new_v2_0()),
+            json!("https://didcomm.org/present-proof/1.0"),
+        )
+    }
+
+    #[test]
+    fn test_msg_type_propose_v2() {
+        test_utils::test_msg_type(
+            "https://didcomm.org/present-proof/2.0",
+            "propose-presentation",
+            PresentProofTypeV2::new_v2_0(),
+        )
+    }
+
+    #[test]
+    fn test_msg_type_request_v2() {
+        test_utils::test_msg_type(
+            "https://didcomm.org/present-proof/2.0",
+            "request-presentation",
+            PresentProofTypeV2::new_v2_0(),
+        )
+    }
+
+    #[test]
+    fn test_msg_type_presentation_v2() {
+        test_utils::test_msg_type(
+            "https://didcomm.org/present-proof/2.0",
+            "presentation",
+            PresentProofTypeV2::new_v2_0(),
+        )
+    }
+
+    #[test]
+    fn test_msg_type_preview_v2() {
+        test_utils::test_msg_type(
+            "https://didcomm.org/present-proof/2.0",
+            "presentation-preview",
+            PresentProofTypeV2::new_v2_0(),
+        )
+    }
+
+    #[test]
+    fn test_msg_type_ack_v2() {
+        test_utils::test_msg_type(
+            "https://didcomm.org/present-proof/2.0",
+            "ack",
+            PresentProofTypeV2::new_v2_0(),
         )
     }
 }

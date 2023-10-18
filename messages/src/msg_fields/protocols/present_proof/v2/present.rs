@@ -23,7 +23,7 @@ pub struct PresentationV2Content {
     pub goal_code: Option<String>,
     pub formats: Vec<AttachmentFormatSpecifier<PresentationAttachmentFormatType>>,
     #[serde(rename = "presentations~attach")]
-    pub requests_attach: Vec<Attachment>,
+    pub presentations_attach: Vec<Attachment>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
@@ -50,72 +50,89 @@ pub enum PresentationAttachmentFormatType {
     DifPresentationExchangeSubmission1_0,
 }
 
-// #[cfg(test)]
-// #[allow(clippy::unwrap_used)]
-// #[allow(clippy::field_reassign_with_default)]
-// mod tests {
-//     use serde_json::json;
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+    use shared_vcx::maybe_known::MaybeKnown;
 
-//     use super::*;
-//     use crate::{
-//         decorators::{
-//             attachment::tests::make_extended_attachment,
-//             please_ack::tests::make_minimal_please_ack, thread::tests::make_extended_thread,
-//             timing::tests::make_extended_timing,
-//         },
-//         misc::test_utils,
-//         msg_types::present_proof::PresentProofTypeV1_0,
-//     };
+    use super::*;
+    use crate::{
+        decorators::{
+            attachment::tests::make_extended_attachment,
+            please_ack::tests::make_minimal_please_ack, thread::tests::make_extended_thread,
+            timing::tests::make_extended_timing,
+        },
+        misc::test_utils,
+        msg_types::present_proof::PresentProofTypeV2_0,
+    };
 
-//     #[test]
-//     fn test_minimal_present_proof() {
-//         let content = PresentationV2Content::builder()
-//             .presentations_attach(vec![make_extended_attachment()])
-//             .build();
+    #[test]
+    fn test_minimal_present_proof() {
+        let content = PresentationV2Content::builder()
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(
+                    PresentationAttachmentFormatType::HyperledgerIndyProof2_0,
+                ),
+            }])
+            .presentations_attach(vec![make_extended_attachment()])
+            .build();
 
-//         let decorators = PresentationV2Decorators::builder()
-//             .thread(make_extended_thread())
-//             .build();
+        let decorators = PresentationV2Decorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
-//         let expected = json!({
-//             "presentations~attach": content.presentations_attach,
-//             "~thread": decorators.thread
-//         });
+        let expected = json!({
+            "formats": content.formats,
+            "presentations~attach": content.presentations_attach,
+            "~thread": decorators.thread
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             PresentProofTypeV1_0::Presentation,
-//             expected,
-//         );
-//     }
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV2_0::Presentation,
+            expected,
+        );
+    }
 
-//     #[test]
-//     fn test_extended_present_proof() {
-//         let content = PresentationV2Content::builder()
-//             .presentations_attach(vec![make_extended_attachment()])
-//             .comment("test_comment".to_owned())
-//             .build();
+    #[test]
+    fn test_extended_present_proof() {
+        let content = PresentationV2Content::builder()
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(
+                    PresentationAttachmentFormatType::HyperledgerIndyProof2_0,
+                ),
+            }])
+            .presentations_attach(vec![make_extended_attachment()])
+            .comment(Some("test_comment".to_owned()))
+            .goal_code(Some("goal.goal".to_owned()))
+            .build();
 
-//         let decorators = PresentationV2Decorators::builder()
-//             .thread(make_extended_thread())
-//             .timing(make_extended_timing())
-//             .please_ack(make_minimal_please_ack())
-//             .build();
+        let decorators = PresentationV2Decorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .please_ack(make_minimal_please_ack())
+            .build();
 
-//         let expected = json!({
-//             "comment": content.comment,
-//             "presentations~attach": content.presentations_attach,
-//             "~thread": decorators.thread,
-//             "~timing": decorators.timing,
-//             "~please_ack": decorators.please_ack
-//         });
+        let expected = json!({
+            "comment": content.comment,
+            "goal_code": content.goal_code,
+            "formats": content.formats,
+            "presentations~attach": content.presentations_attach,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing,
+            "~please_ack": decorators.please_ack
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             PresentProofTypeV1_0::Presentation,
-//             expected,
-//         );
-//     }
-// }
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV2_0::Presentation,
+            expected,
+        );
+    }
+}

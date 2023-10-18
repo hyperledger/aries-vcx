@@ -48,80 +48,82 @@ pub enum ProposePresentationAttachmentFormatType {
     HyperledgerIndyProofRequest2_0,
 }
 
-// #[cfg(test)]
-// #[allow(clippy::unwrap_used)]
-// #[allow(clippy::field_reassign_with_default)]
-// mod tests {
-//     use serde_json::json;
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+    use shared_vcx::maybe_known::MaybeKnown;
 
-//     use super::*;
-//     use crate::{
-//         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
-//         misc::test_utils,
-//     };
+    use super::*;
+    use crate::{
+        decorators::{
+            attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
+            timing::tests::make_extended_timing,
+        },
+        misc::test_utils,
+        msg_types::present_proof::PresentProofTypeV2_0,
+    };
 
-//     #[test]
-//     fn test_minimal_propose_proof() {
-//         let attribute = PresentationAttr::builder()
-//             .name("test_attribute_name".to_owned())
-//             .build();
-//         let predicate = Predicate::builder()
-//             .name("test_predicate_name".to_owned())
-//             .predicate(PredicateOperator::GreaterOrEqual)
-//             .threshold(1000)
-//             .build();
-//         let preview = PresentationPreview::new(vec![attribute], vec![predicate]);
-//         let content = ProposePresentationV2Content::builder()
-//             .presentation_proposal(preview)
-//             .build();
+    #[test]
+    fn test_minimal_propose_proof() {
+        let content = ProposePresentationV2Content::builder()
+            .formats(vec![OptionalIdAttachmentFormatSpecifier {
+                attach_id: None,
+                format: MaybeKnown::Known(
+                    ProposePresentationAttachmentFormatType::HyperledgerIndyProofRequest2_0,
+                ),
+            }])
+            .proposals_attach(None)
+            .build();
 
-//         let decorators = ProposePresentationV2Decorators::default();
+        let decorators = ProposePresentationV2Decorators::default();
 
-//         let expected = json!({
-//             "presentation_proposal": content.presentation_proposal
-//         });
+        let expected = json!({
+            "formats": content.formats
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             PresentProofTypeV1_0::ProposePresentation,
-//             expected,
-//         );
-//     }
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV2_0::ProposePresentation,
+            expected,
+        );
+    }
 
-//     #[test]
-//     fn test_extended_propose_proof() {
-//         let attribute = PresentationAttr::builder()
-//             .name("test_attribute_name".to_owned())
-//             .build();
-//         let predicate = Predicate::builder()
-//             .name("test_predicate_name".to_owned())
-//             .predicate(PredicateOperator::GreaterOrEqual)
-//             .threshold(1000)
-//             .build();
-//         let preview = PresentationPreview::new(vec![attribute], vec![predicate]);
-//         let content = ProposePresentationV2Content::builder()
-//             .presentation_proposal(preview)
-//             .comment("test_comment".to_owned())
-//             .build();
+    #[test]
+    fn test_extended_propose_proof() {
+        let content = ProposePresentationV2Content::builder()
+            .formats(vec![OptionalIdAttachmentFormatSpecifier {
+                attach_id: Some("1".to_owned()),
+                format: MaybeKnown::Known(
+                    ProposePresentationAttachmentFormatType::HyperledgerIndyProofRequest2_0,
+                ),
+            }])
+            .proposals_attach(Some(vec![make_extended_attachment()]))
+            .goal_code(Some("goal.goal".to_owned()))
+            .comment(Some("test_comment".to_owned()))
+            .build();
 
-//         let decorators = ProposePresentationV2Decorators::builder()
-//             .thread(make_extended_thread())
-//             .timing(make_extended_timing())
-//             .build();
+        let decorators = ProposePresentationV2Decorators::builder()
+            .thread(Some(make_extended_thread()))
+            .timing(Some(make_extended_timing()))
+            .build();
 
-//         let expected = json!({
-//             "comment": content.comment,
-//             "presentation_proposal": content.presentation_proposal,
-//             "~thread": decorators.thread,
-//             "~timing": decorators.timing
-//         });
+        let expected = json!({
+            "comment": content.comment,
+            "goal_code": content.goal_code,
+            "formats": content.formats,
+            "proposals~attach": content.proposals_attach,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             PresentProofTypeV1_0::ProposePresentation,
-//             expected,
-//         );
-//     }
-// }
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV2_0::ProposePresentation,
+            expected,
+        );
+    }
+}
