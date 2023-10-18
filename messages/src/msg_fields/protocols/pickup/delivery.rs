@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
-use serde_with::{base64::Base64, serde_as};
 use typed_builder::TypedBuilder;
 
 use crate::{
-    decorators::{thread::Thread, transport::Transport},
+    decorators::{attachment::Attachment, thread::Thread, transport::Transport},
     msg_parts::MsgParts,
 };
 
@@ -15,21 +14,7 @@ pub struct DeliveryContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recipient_key: Option<String>,
     #[serde(rename = "~attach")]
-    pub attach: Vec<DeliveryAttach>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
-pub struct DeliveryAttach {
-    #[serde(rename = "@id")]
-    pub id: String,
-    pub data: DeliveryAttachData,
-}
-
-#[serde_as]
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
-pub struct DeliveryAttachData {
-    #[serde_as(as = "Base64")]
-    pub base64: Vec<u8>,
+    pub attach: Vec<Attachment>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
@@ -52,7 +37,12 @@ mod tests {
 
     use super::*;
     use crate::{
-        decorators::thread::Thread, misc::test_utils, msg_types::protocols::pickup::PickupTypeV2_0,
+        decorators::{
+            attachment::{AttachmentData, AttachmentType},
+            thread::Thread,
+        },
+        misc::test_utils,
+        msg_types::protocols::pickup::PickupTypeV2_0,
     };
     #[test]
     fn test_delivery() {
@@ -72,9 +62,13 @@ mod tests {
                 }]
             }
         );
-        let attach = DeliveryAttach::builder()
+        let attach = Attachment::builder()
             .id("<messageid>".to_owned())
-            .data(DeliveryAttachData::builder().base64("".into()).build())
+            .data(
+                AttachmentData::builder()
+                    .content(AttachmentType::Base64("".into()))
+                    .build(),
+            )
             .build();
         let content = DeliveryContent::builder()
             .recipient_key("<key for messages>".to_owned())
