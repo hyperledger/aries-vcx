@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
-use crate::{decorators::transport::Transport, msg_parts::MsgParts};
+use crate::{
+    decorators::{thread::Thread, transport::Transport},
+    msg_parts::MsgParts,
+};
 
 pub type Status = MsgParts<StatusContent, StatusDecorators>;
 
@@ -19,6 +22,10 @@ pub struct StatusDecorators {
     #[serde(rename = "~transport")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub transport: Option<Transport>,
+    #[builder(default, setter(strip_option))]
+    #[serde(rename = "~thread")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thread: Option<Thread>,
 }
 
 #[cfg(test)]
