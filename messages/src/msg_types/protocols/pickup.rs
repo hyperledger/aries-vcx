@@ -4,7 +4,7 @@ use strum_macros::{AsRefStr, EnumString};
 use transitive::Transitive;
 
 use super::Protocol;
-use crate::msg_types::MsgKindType;
+use crate::msg_types::{MsgKindType, Role};
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
 #[msg_type(protocol = "messagepickup")]
@@ -16,7 +16,7 @@ pub enum PickupType {
 #[transitive(into(PickupType, Protocol))]
 #[msg_type(major = 2)]
 pub enum PickupTypeV2 {
-    #[msg_type(minor = 0, roles = "")]
+    #[msg_type(minor = 0, roles = "Role::Mediator")]
     V2_0(MsgKindType<PickupTypeV2_0>),
 }
 
