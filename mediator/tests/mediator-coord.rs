@@ -65,7 +65,9 @@ async fn didcomm_connection(
 #[ignore]
 async fn test_init() {
     TestSetupAries.init();
-    let agent = mediator::aries_agent::AgentMaker::new_demo_agent().await.unwrap();
+    let agent = mediator::aries_agent::AgentMaker::new_demo_agent()
+        .await
+        .unwrap();
     let mut aries_transport = AriesReqwest {
         response_queue: VecDeque::new(),
         client: reqwest::Client::new(),
