@@ -27,6 +27,6 @@ pub enum PickupTypeV2_0 {
     StatusRequest,
     DeliveryRequest,
     Delivery,
-    MessageReceived,
+    MessagesReceived,
     LiveDeliveryChange,
 }

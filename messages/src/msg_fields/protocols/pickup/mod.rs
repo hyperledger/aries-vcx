@@ -1,9 +1,22 @@
+mod decorators;
+mod delivery;
+mod delivery_request;
+mod live_delivery_change;
+mod messages_received;
 mod status;
+mod status_request;
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use status::Status;
 
-use self::status::StatusContent;
+use self::{
+    decorators::PickupDecoratorsCommon,
+    delivery::{Delivery, DeliveryContent},
+    delivery_request::{DeliveryRequest, DeliveryRequestContent},
+    live_delivery_change::{LiveDeliveryChange, LiveDeliveryChangeContent},
+    messages_received::{MessagesReceived, MessagesReceivedContent},
+    status::{Status, StatusContent},
+    status_request::{StatusRequest, StatusRequestContent},
+};
 use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
@@ -16,6 +29,11 @@ use crate::{
 #[derive(Clone, Debug, From, PartialEq)]
 pub enum Pickup {
     Status(Status),
+    StatusRequest(StatusRequest),
+    DeliveryRequest(DeliveryRequest),
+    Delivery(Delivery),
+    MessagesReceived(MessagesReceived),
+    LiveDeliveryChange(LiveDeliveryChange),
 }
 
 impl DelayedSerde for Pickup {
@@ -46,10 +64,25 @@ impl DelayedSerde for Pickup {
     {
         match self {
             Self::Status(v) => MsgWithType::from(v).serialize(serializer),
+            Self::StatusRequest(v) => MsgWithType::from(v).serialize(serializer),
+            Self::Delivery(v) => MsgWithType::from(v).serialize(serializer),
+            Self::DeliveryRequest(v) => MsgWithType::from(v).serialize(serializer),
+            Self::MessagesReceived(v) => MsgWithType::from(v).serialize(serializer),
+            Self::LiveDeliveryChange(v) => MsgWithType::from(v).serialize(serializer),
         }
     }
 }
 
-transit_to_aries_msg!(StatusContent, Pickup);
+transit_to_aries_msg!(StatusContent: PickupDecoratorsCommon, Pickup);
+transit_to_aries_msg!(StatusRequestContent: PickupDecoratorsCommon, Pickup);
+transit_to_aries_msg!(DeliveryContent: PickupDecoratorsCommon, Pickup);
+transit_to_aries_msg!(DeliveryRequestContent: PickupDecoratorsCommon, Pickup);
+transit_to_aries_msg!(MessagesReceivedContent: PickupDecoratorsCommon, Pickup);
+transit_to_aries_msg!(LiveDeliveryChangeContent: PickupDecoratorsCommon, Pickup);
 
 into_msg_with_type!(Status, PickupTypeV2_0, Status);
+into_msg_with_type!(StatusRequest, PickupTypeV2_0, StatusRequest);
+into_msg_with_type!(Delivery, PickupTypeV2_0, Delivery);
+into_msg_with_type!(DeliveryRequest, PickupTypeV2_0, DeliveryRequest);
+into_msg_with_type!(MessagesReceived, PickupTypeV2_0, MessagesReceived);
+into_msg_with_type!(LiveDeliveryChange, PickupTypeV2_0, LiveDeliveryChange);

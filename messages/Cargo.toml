@@ -25,3 +25,4 @@ messages_macros = { path = "../messages_macros" }
 diddoc_legacy = { path = "../diddoc_legacy" }
 shared_vcx = { path = "../shared_vcx" }
 did_parser = { path = "../did_parser" }
+serde_with = { version = "3.4.0", features = ["base64"] }
