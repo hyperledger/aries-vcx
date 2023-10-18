@@ -63,9 +63,7 @@ fn map_insert(
         roles,
     };
 
-    map.entry((protocol_name, major))
-        .or_insert(Vec::new())
-        .push(entry);
+    map.entry((protocol_name, major)).or_default().push(entry);
 }
 
 lazy_static! {
