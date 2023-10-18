@@ -1168,7 +1168,7 @@ impl Ord for WalletRecord {
 
 impl PartialOrd for WalletRecord {
     fn partial_cmp(&self, other: &Self) -> Option<::std::cmp::Ordering> {
-        (&self.type_, &self.id).partial_cmp(&(&other.type_, &other.id))
+        Some(self.cmp(other))
     }
 }
 
