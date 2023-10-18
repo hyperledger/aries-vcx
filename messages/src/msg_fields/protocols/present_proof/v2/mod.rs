@@ -29,7 +29,7 @@ use crate::{
     },
     msg_types::{
         present_proof::{PresentProofTypeV2, PresentProofTypeV2_0},
-        protocols::present_proof::{PresentProofType, PresentProofTypeV1_0},
+        protocols::present_proof::PresentProofType,
         MsgWithType,
     },
 };
@@ -117,18 +117,18 @@ transit_to_aries_msg!(
 
 into_msg_with_type!(
     ProposePresentationV2,
-    PresentProofTypeV1_0,
+    PresentProofTypeV2_0,
     ProposePresentation
 );
 into_msg_with_type!(
     RequestPresentationV2,
-    PresentProofTypeV1_0,
+    PresentProofTypeV2_0,
     RequestPresentation
 );
-into_msg_with_type!(PresentationV2, PresentProofTypeV1_0, Presentation);
-into_msg_with_type!(AckPresentationV2, PresentProofTypeV1_0, Ack);
+into_msg_with_type!(PresentationV2, PresentProofTypeV2_0, Presentation);
+into_msg_with_type!(AckPresentationV2, PresentProofTypeV2_0, Ack);
 into_msg_with_type!(
     PresentProofV2ProblemReport,
-    PresentProofTypeV1_0,
+    PresentProofTypeV2_0,
     ProblemReport
 );
