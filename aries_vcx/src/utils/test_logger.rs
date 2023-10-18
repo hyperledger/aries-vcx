@@ -55,8 +55,10 @@ fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result
 
 impl LibvcxDefaultLogger {
     pub fn init_testing_logger() {
-        LibvcxDefaultLogger::init(env::var("RUST_LOG").ok())
-            .expect("Failed to initialize LibvcxDefaultLogger for testing");
+        if let Ok(log_pattern) = env::var("RUST_LOG") {
+            LibvcxDefaultLogger::init(Some(log_pattern))
+                .expect("Failed to initialize LibvcxDefaultLogger for testing")
+        }
     }
 
     pub fn init(pattern: Option<String>) -> VcxResult<()> {
