@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use aries_vcx::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::connection::{
+        initiation_type::Inviter, inviter::states::completed::Completed,
         pairwise_info::PairwiseInfo, Connection as VcxConnection,
         GenericConnection as VcxGenericConnection, ThinState,
     },
@@ -233,6 +234,24 @@ impl Connection {
                     &connection.get_ack().into(),
                     &HttpClient,
                 )
+                .await?;
+            Ok(())
+        })
+    }
+
+    pub fn send_message(
+        &self,
+        profile_holder: Arc<ProfileHolder>,
+        message: String,
+    ) -> VcxUniFFIResult<()> {
+        let message = serde_json::from_str(&message)?;
+        let mut handler = self.handler.lock()?;
+        let connection: VcxConnection<Inviter, Completed> =
+            VcxConnection::try_from(handler.clone())?;
+
+        block_on(async {
+            connection
+                .send_message(profile_holder.inner.wallet(), &message, &HttpClient)
                 .await?;
             Ok(())
         })
