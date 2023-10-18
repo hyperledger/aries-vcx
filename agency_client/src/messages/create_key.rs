@@ -65,14 +65,12 @@ impl CreateKeyBuilder {
     }
 }
 
-#[cfg(feature = "general_test")]
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::errors::error::AgencyClientErrorKind;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_create_key_set_values() {
         let for_did = "11235yBzrpJQmNyZzgoTqB";
         let for_verkey = "EkVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
@@ -85,7 +83,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_create_key_set_invalid_did_errors() {
         let for_did = "11235yBzrpJQmNyZzgoT";
         let res = CreateKeyBuilder::create().for_did(for_did).unwrap_err();
