@@ -17,7 +17,7 @@ use derive_more::From;
 use misc::utils;
 use msg_fields::protocols::{
     cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
-    present_proof::PresentProof,
+    present_proof::{v2::PresentProofV2, PresentProof},
 };
 use msg_types::{
     cred_issuance::CredentialIssuanceType, present_proof::PresentProofType,
@@ -142,6 +142,13 @@ impl DelayedSerde for AriesMessage {
                 )
                 .map(|x| AriesMessage::from(PresentProof::V1(x)))
             }
+            Protocol::PresentProofType(PresentProofType::V2(msg_type)) => {
+                PresentProofV2::delayed_deserialize(
+                    (PresentProofType::V2(msg_type), kind_str),
+                    deserializer,
+                )
+                .map(|x| AriesMessage::from(PresentProof::V2(x)))
+            }
             Protocol::TrustPingType(msg_type) => {
                 TrustPing::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
@@ -184,6 +191,7 @@ impl DelayedSerde for AriesMessage {
             Self::CredentialIssuance(CredentialIssuance::V2(v)) => v.delayed_serialize(serializer),
             Self::ReportProblem(v) => MsgWithType::from(v).serialize(serializer),
             Self::PresentProof(PresentProof::V1(v)) => v.delayed_serialize(serializer),
+            Self::PresentProof(PresentProof::V2(v)) => v.delayed_serialize(serializer),
             Self::TrustPing(v) => v.delayed_serialize(serializer),
             Self::DiscoverFeatures(v) => v.delayed_serialize(serializer),
             Self::BasicMessage(v) => MsgWithType::from(v).serialize(serializer),

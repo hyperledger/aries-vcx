@@ -30,9 +30,12 @@ use aries_vcx_core::ledger::{
 };
 use messages::{
     msg_fields::protocols::{
-        present_proof::v1::{
-            ack::AckPresentationV1, present::PresentationV1, propose::ProposePresentationV1,
-            request::RequestPresentationV1, PresentProofV1,
+        present_proof::{
+            v1::{
+                ack::AckPresentationV1, present::PresentationV1, propose::ProposePresentationV1,
+                request::RequestPresentationV1, PresentProofV1,
+            },
+            PresentProof,
         },
         report_problem::ProblemReport,
     },
@@ -176,7 +179,9 @@ pub async fn generate_and_send_proof<P: Profile>(
         info!("generate_and_send_proof :: proof sent");
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
         let message = match message {
-            AriesMessage::PresentProof(PresentProofV1::Presentation(presentation)) => presentation,
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Presentation(
+                presentation,
+            ))) => presentation,
             _ => panic!("Unexpected message type"),
         };
         Some(message)
@@ -199,7 +204,7 @@ pub async fn verify_proof<P: Profile>(
         .await
         .unwrap();
     let msg = match msg {
-        AriesMessage::PresentProof(PresentProofV1::Ack(ack)) => ack,
+        AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Ack(ack))) => ack,
         _ => panic!("Unexpected message type"),
     };
     // TODO: Perhaps we should leave verification on the caller

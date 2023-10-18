@@ -3,8 +3,9 @@ use aries_vcx::{
         mediated_prover::prover_find_message_to_handle, prover::Prover,
     },
     messages::{
-        msg_fields::protocols::present_proof::v1::{
-            request::RequestPresentationV1, PresentProofV1,
+        msg_fields::protocols::present_proof::{
+            v1::{request::RequestPresentationV1, PresentProofV1},
+            PresentProof,
         },
         AriesMessage,
     },
@@ -286,9 +287,9 @@ async fn get_proof_request(connection_handle: u32, msg_id: &str) -> LibvcxResult
         let message = mediated_connection::get_message_by_id(connection_handle, msg_id).await?;
 
         match message {
-            AriesMessage::PresentProof(PresentProofV1::RequestPresentation(
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::RequestPresentation(
                 presentation_request,
-            )) => presentation_request,
+            ))) => presentation_request,
             msg => {
                 return Err(LibvcxError::from_msg(
                     LibvcxErrorKind::InvalidMessages,
@@ -316,7 +317,9 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<
             .await?
             .into_iter()
             .filter_map(|(_, message)| match message {
-                AriesMessage::PresentProof(PresentProofV1::RequestPresentation(_)) => Some(message),
+                AriesMessage::PresentProof(PresentProof::V1(
+                    PresentProofV1::RequestPresentation(_),
+                )) => Some(message),
                 _ => None,
             })
             .collect();

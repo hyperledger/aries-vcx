@@ -10,6 +10,7 @@ use messages::{
                 propose::{Predicate, PresentationAttr},
                 PresentProofV1,
             },
+            v2::PresentProofV2,
             PresentProof,
         },
         report_problem::ProblemReport,
@@ -177,6 +178,21 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
             matches_opt_thread_id!(msg, thread_id)
         }
         AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::ProblemReport(msg))) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::V2(PresentProofV2::Ack(msg))) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::V2(PresentProofV2::Presentation(msg))) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::V2(PresentProofV2::ProposePresentation(msg))) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::V2(PresentProofV2::RequestPresentation(msg))) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::V2(PresentProofV2::ProblemReport(msg))) => {
             matches_opt_thread_id!(msg, thread_id)
         }
         AriesMessage::ReportProblem(msg) => matches_opt_thread_id!(msg, thread_id),

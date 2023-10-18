@@ -10,6 +10,7 @@ use crate::msg_types::{role::Role, MsgKindType};
 #[msg_type(protocol = "present-proof")]
 pub enum PresentProofType {
     V1(PresentProofTypeV1),
+    V2(PresentProofTypeV2),
 }
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, Transitive, MessageType)]
@@ -20,9 +21,28 @@ pub enum PresentProofTypeV1 {
     V1_0(MsgKindType<PresentProofTypeV1_0>),
 }
 
+#[derive(Copy, Clone, Debug, From, TryInto, PartialEq, Transitive, MessageType)]
+#[transitive(into(PresentProofType, Protocol))]
+#[msg_type(major = 2)]
+pub enum PresentProofTypeV2 {
+    #[msg_type(minor = 0, roles = "Role::Prover, Role::Verifier")]
+    V2_0(MsgKindType<PresentProofTypeV2_0>),
+}
+
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PresentProofTypeV1_0 {
+    ProposePresentation,
+    RequestPresentation,
+    Presentation,
+    PresentationPreview,
+    Ack,
+    ProblemReport,
+}
+
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
+#[strum(serialize_all = "kebab-case")]
+pub enum PresentProofTypeV2_0 {
     ProposePresentation,
     RequestPresentation,
     Presentation,

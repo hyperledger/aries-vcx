@@ -56,6 +56,11 @@ impl DelayedSerde for PresentProofV1 {
 
         let kind = match protocol {
             PresentProofType::V1(PresentProofTypeV1::V1_0(kind)) => kind.kind_from_str(kind_str),
+            PresentProofType::V2(_) => {
+                return Err(D::Error::custom(
+                    "Cannot deserialize present-proof-v2 message type into present-proof-v1",
+                ))
+            }
         };
 
         match kind.map_err(D::Error::custom)? {
