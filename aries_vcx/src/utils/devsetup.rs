@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used)]
+#![allow(unused_imports)]
 
 use std::{
     env, fs,
@@ -19,21 +20,22 @@ use aries_vcx_core::{
             GetTxnAuthorAgreementData, IndyVdrLedgerRead, IndyVdrLedgerReadConfig,
             IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig, ProtocolVersion,
         },
-        request_submitter::{
-            vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
-            vdr_proxy::VdrProxySubmitter,
-        },
+        request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
     },
-    wallet::{
-        base_wallet::BaseWallet,
-        indy::{
-            did_mocks::DidMocks,
-            wallet::{create_and_open_wallet, create_and_store_my_did},
-            WalletConfig,
-        },
+    wallet::base_wallet::BaseWallet,
+    PoolConfig, ResponseParser,
+};
+#[cfg(feature = "vdr_proxy_ledger")]
+use aries_vcx_core::{ledger::request_submitter::vdr_proxy::VdrProxySubmitter, VdrProxyClient};
+#[cfg(feature = "vdrtools_wallet")]
+use aries_vcx_core::{
+    wallet::indy::{
+        did_mocks::DidMocks,
+        wallet::{create_and_open_wallet, create_and_store_my_did},
+        WalletConfig,
     },
-    PoolConfig, ResponseParser, VdrProxyClient, WalletHandle,
+    WalletHandle,
 };
 use chrono::{DateTime, Duration, Utc};
 
