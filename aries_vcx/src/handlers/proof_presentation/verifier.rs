@@ -5,8 +5,8 @@ use messages::{
     msg_fields::protocols::{
         notification::Notification,
         present_proof::v1::{
-            present::Presentation, propose::ProposePresentation, request::RequestPresentation,
-            PresentProof,
+            present::PresentationV1, propose::ProposePresentationV1,
+            request::RequestPresentationV1, PresentProofV1,
         },
         report_problem::ProblemReport,
     },
@@ -55,7 +55,7 @@ impl Verifier {
 
     pub fn create_from_proposal(
         source_id: &str,
-        presentation_proposal: &ProposePresentation,
+        presentation_proposal: &ProposePresentationV1,
     ) -> VcxResult<Self> {
         trace!(
             "Issuer::create_from_proposal >>> source_id: {:?}, presentation_proposal: {:?}",
@@ -76,7 +76,7 @@ impl Verifier {
     }
 
     // TODO: Find a better name for this method
-    pub fn mark_presentation_request_sent(&mut self) -> VcxResult<RequestPresentation> {
+    pub fn mark_presentation_request_sent(&mut self) -> VcxResult<RequestPresentationV1> {
         if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
             let request = self.verifier_sm.presentation_request_msg()?;
             self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_sent()?;
@@ -94,7 +94,7 @@ impl Verifier {
         &mut self,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
-        presentation: Presentation,
+        presentation: PresentationV1,
     ) -> VcxResult<AriesMessage> {
         trace!("Verifier::verify_presentation >>>");
         self.verifier_sm = self
@@ -123,7 +123,7 @@ impl Verifier {
         Ok(())
     }
 
-    pub fn get_presentation_request_msg(&self) -> VcxResult<RequestPresentation> {
+    pub fn get_presentation_request_msg(&self) -> VcxResult<RequestPresentationV1> {
         self.verifier_sm.presentation_request_msg()
     }
 
@@ -134,7 +134,7 @@ impl Verifier {
         ))
     }
 
-    pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {
+    pub fn get_presentation_msg(&self) -> VcxResult<PresentationV1> {
         self.verifier_sm.get_presentation_msg()
     }
 
@@ -149,7 +149,7 @@ impl Verifier {
         ))
     }
 
-    pub fn get_presentation_proposal(&self) -> VcxResult<ProposePresentation> {
+    pub fn get_presentation_proposal(&self) -> VcxResult<ProposePresentationV1> {
         self.verifier_sm.presentation_proposal()
     }
 
@@ -164,13 +164,13 @@ impl Verifier {
         message: AriesMessage,
     ) -> VcxResult<Option<AriesMessage>> {
         let (verifier_sm, message) = match message {
-            AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => (
+            AriesMessage::PresentProof(PresentProofV1::ProposePresentation(proposal)) => (
                 self.verifier_sm
                     .clone()
                     .receive_presentation_proposal(proposal)?,
                 None,
             ),
-            AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => {
+            AriesMessage::PresentProof(PresentProofV1::Presentation(presentation)) => {
                 let sm = self
                     .verifier_sm
                     .clone()
@@ -190,7 +190,7 @@ impl Verifier {
                     .receive_presentation_request_reject(report.into())?,
                 None,
             ),
-            AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => (
+            AriesMessage::PresentProof(PresentProofV1::ProblemReport(report)) => (
                 self.verifier_sm
                     .clone()
                     .receive_presentation_request_reject(report.into())?,

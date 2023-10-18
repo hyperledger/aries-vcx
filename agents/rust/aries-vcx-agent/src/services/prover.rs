@@ -8,7 +8,7 @@ use aries_vcx::{
     },
     messages::{
         msg_fields::protocols::present_proof::v1::{
-            ack::AckPresentation, request::RequestPresentation,
+            ack::AckPresentationV1, request::RequestPresentationV1,
         },
         AriesMessage,
     },
@@ -91,7 +91,7 @@ impl ServiceProver {
     pub fn create_from_request(
         &self,
         connection_id: &str,
-        request: RequestPresentation,
+        request: RequestPresentationV1,
     ) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let prover = Prover::create_from_request("", request)?;
@@ -170,7 +170,7 @@ impl ServiceProver {
     pub fn process_presentation_ack(
         &self,
         thread_id: &str,
-        ack: AckPresentation,
+        ack: AckPresentationV1,
     ) -> AgentResult<String> {
         let ProverWrapper {
             mut prover,

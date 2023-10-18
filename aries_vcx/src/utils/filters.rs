@@ -2,7 +2,7 @@ use messages::{
     decorators::attachment::Attachment,
     msg_fields::protocols::{
         cred_issuance::v1::offer_credential::OfferCredentialV1,
-        present_proof::v1::request::RequestPresentation,
+        present_proof::v1::request::RequestPresentationV1,
     },
 };
 use serde_json;
@@ -16,9 +16,9 @@ fn __accommodate_macro(attachments: &[Attachment]) -> VcxResult<String> {
 fn _filter_proof_requests_by_name(
     requests: &str,
     match_name: &str,
-) -> VcxResult<Vec<RequestPresentation>> {
-    let presentation_requests: Vec<RequestPresentation> =
-        serde_json::from_str(requests).map_err(|err| {
+) -> VcxResult<Vec<RequestPresentationV1>> {
+    let presentation_requests: Vec<RequestPresentationV1> = serde_json::from_str(requests)
+        .map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
                 format!(
@@ -79,7 +79,7 @@ fn _filter_offers_by_comment(
 // todo: need not to return Result, can be modified to return String, never error - likely for other
 // functions in this file as well
 pub fn filter_proof_requests_by_name(requests: &str, name: &str) -> VcxResult<String> {
-    let presentation_requests: Vec<RequestPresentation> =
+    let presentation_requests: Vec<RequestPresentationV1> =
         _filter_proof_requests_by_name(requests, name)?;
     let filtered: String = serde_json::to_string(&presentation_requests).map_err(|err| {
         AriesVcxError::from_msg(

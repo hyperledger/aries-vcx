@@ -6,7 +6,7 @@ use aries_vcx::{
     handlers::proof_presentation::verifier::Verifier,
     messages::{
         msg_fields::protocols::present_proof::v1::{
-            present::Presentation, propose::ProposePresentation,
+            present::PresentationV1, propose::ProposePresentationV1,
         },
         AriesMessage,
     },
@@ -62,7 +62,7 @@ impl ServiceVerifier {
         &self,
         connection_id: &str,
         request: PresentationRequestData,
-        proposal: Option<ProposePresentation>,
+        proposal: Option<ProposePresentationV1>,
     ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut verifier = if let Some(proposal) = proposal {
@@ -96,7 +96,7 @@ impl ServiceVerifier {
     pub async fn verify_presentation(
         &self,
         thread_id: &str,
-        presentation: Presentation,
+        presentation: PresentationV1,
     ) -> AgentResult<()> {
         let VerifierWrapper {
             mut verifier,

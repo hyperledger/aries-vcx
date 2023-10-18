@@ -6,10 +6,10 @@ use crate::{
     msg_parts::MsgParts,
 };
 
-pub type Presentation = MsgParts<PresentationContent, PresentationDecorators>;
+pub type PresentationV1 = MsgParts<PresentationV1Content, PresentationV1Decorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct PresentationContent {
+pub struct PresentationV1Content {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -18,7 +18,7 @@ pub struct PresentationContent {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct PresentationDecorators {
+pub struct PresentationV1Decorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
     #[builder(default, setter(strip_option))]
@@ -50,11 +50,11 @@ mod tests {
 
     #[test]
     fn test_minimal_present_proof() {
-        let content = PresentationContent::builder()
+        let content = PresentationV1Content::builder()
             .presentations_attach(vec![make_extended_attachment()])
             .build();
 
-        let decorators = PresentationDecorators::builder()
+        let decorators = PresentationV1Decorators::builder()
             .thread(make_extended_thread())
             .build();
 
@@ -73,12 +73,12 @@ mod tests {
 
     #[test]
     fn test_extended_present_proof() {
-        let content = PresentationContent::builder()
+        let content = PresentationV1Content::builder()
             .presentations_attach(vec![make_extended_attachment()])
             .comment("test_comment".to_owned())
             .build();
 
-        let decorators = PresentationDecorators::builder()
+        let decorators = PresentationV1Decorators::builder()
             .thread(make_extended_thread())
             .timing(make_extended_timing())
             .please_ack(make_minimal_please_ack())

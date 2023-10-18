@@ -7,7 +7,7 @@ use messages::{
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
         present_proof::v1::{
             propose::{Predicate, PresentationAttr},
-            PresentProof,
+            PresentProofV1,
         },
         report_problem::ProblemReport,
         revocation::Revocation,
@@ -161,17 +161,17 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
         AriesMessage::OutOfBand(OutOfBand::HandshakeReuseAccepted(msg)) => {
             matches_thread_id!(msg, thread_id)
         }
-        AriesMessage::PresentProof(PresentProof::Ack(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::PresentProof(PresentProof::Presentation(msg)) => {
+        AriesMessage::PresentProof(PresentProofV1::Ack(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::PresentProof(PresentProofV1::Presentation(msg)) => {
             matches_thread_id!(msg, thread_id)
         }
-        AriesMessage::PresentProof(PresentProof::ProposePresentation(msg)) => {
+        AriesMessage::PresentProof(PresentProofV1::ProposePresentation(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
         }
-        AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => {
+        AriesMessage::PresentProof(PresentProofV1::RequestPresentation(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
         }
-        AriesMessage::PresentProof(PresentProof::ProblemReport(msg)) => {
+        AriesMessage::PresentProof(PresentProofV1::ProblemReport(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
         }
         AriesMessage::ReportProblem(msg) => matches_opt_thread_id!(msg, thread_id),

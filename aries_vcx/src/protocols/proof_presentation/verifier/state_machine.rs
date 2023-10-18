@@ -9,14 +9,15 @@ use messages::{
     msg_fields::protocols::{
         notification::ack::{AckContent, AckDecorators, AckStatus},
         present_proof::v1::{
-            ack::AckPresentation,
-            present::Presentation,
-            problem_report::PresentProofProblemReport,
-            propose::ProposePresentation,
+            ack::AckPresentationV1,
+            present::PresentationV1,
+            problem_report::PresentProofV1ProblemReport,
+            propose::ProposePresentationV1,
             request::{
-                RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
+                RequestPresentationV1, RequestPresentationV1Content,
+                RequestPresentationV1Decorators,
             },
-            PresentProof,
+            PresentProofV1,
         },
         report_problem::ProblemReport,
     },
@@ -88,7 +89,7 @@ impl Default for VerifierFullState {
     }
 }
 
-pub fn build_verification_ack(thread_id: &str) -> AckPresentation {
+pub fn build_verification_ack(thread_id: &str) -> AckPresentationV1 {
     let content = AckContent::builder().status(AckStatus::Ok).build();
 
     let decorators = AckDecorators::builder()
@@ -96,7 +97,7 @@ pub fn build_verification_ack(thread_id: &str) -> AckPresentation {
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
 
-    AckPresentation::builder()
+    AckPresentationV1::builder()
         .id(Uuid::new_v4().to_string())
         .content(content)
         .decorators(decorators)
@@ -107,10 +108,10 @@ pub fn build_starting_presentation_request(
     thread_id: &str,
     request_data: &PresentationRequestData,
     comment: Option<String>,
-) -> VcxResult<RequestPresentation> {
+) -> VcxResult<RequestPresentationV1> {
     let id = thread_id.to_owned();
 
-    let content = RequestPresentationContent::builder().request_presentations_attach(vec![
+    let content = RequestPresentationV1Content::builder().request_presentations_attach(vec![
         make_attach_from_str!(
             &json!(request_data).to_string(),
             AttachmentId::PresentationRequest.as_ref().to_string()
@@ -123,11 +124,11 @@ pub fn build_starting_presentation_request(
         content.build()
     };
 
-    let decorators = RequestPresentationDecorators::builder()
+    let decorators = RequestPresentationV1Decorators::builder()
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
 
-    Ok(RequestPresentation::builder()
+    Ok(RequestPresentationV1::builder()
         .id(id)
         .content(content)
         .decorators(decorators)
@@ -157,7 +158,7 @@ impl VerifierSM {
         sm.set_presentation_request(presentation_request_data, None)
     }
 
-    pub fn from_proposal(source_id: &str, presentation_proposal: &ProposePresentation) -> Self {
+    pub fn from_proposal(source_id: &str, presentation_proposal: &ProposePresentationV1) -> Self {
         Self {
             source_id: source_id.to_string(),
             thread_id: presentation_proposal.id.clone(),
@@ -167,10 +168,10 @@ impl VerifierSM {
         }
     }
 
-    pub fn receive_presentation_proposal(self, proposal: ProposePresentation) -> VcxResult<Self> {
+    pub fn receive_presentation_proposal(self, proposal: ProposePresentationV1) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
-            &AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal.clone())),
+            &AriesMessage::PresentProof(PresentProofV1::ProposePresentation(proposal.clone())),
         )?;
         let (state, thread_id) = match self.state {
             VerifierFullState::Initial(_) => {
@@ -257,11 +258,11 @@ impl VerifierSM {
         self,
         ledger: &'a impl AnoncredsLedgerRead,
         anoncreds: &'a impl BaseAnonCreds,
-        presentation: Presentation,
+        presentation: PresentationV1,
     ) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
-            &AriesMessage::PresentProof(PresentProof::Presentation(presentation.clone())),
+            &AriesMessage::PresentProof(PresentProofV1::Presentation(presentation.clone())),
         )?;
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
@@ -309,7 +310,7 @@ impl VerifierSM {
                     )),
                     Status::Success => Ok(build_problem_report_msg(None, &self.thread_id).into()),
                     Status::Failed(problem_report) | Status::Declined(problem_report) => {
-                        let problem_report = PresentProofProblemReport::builder()
+                        let problem_report = PresentProofV1ProblemReport::builder()
                             .id(problem_report.id.clone())
                             .content(problem_report.content.clone().into())
                             .decorators(problem_report.decorators.clone())
@@ -427,7 +428,7 @@ impl VerifierSM {
         }
     }
 
-    pub fn presentation_request_msg(&self) -> VcxResult<RequestPresentation> {
+    pub fn presentation_request_msg(&self) -> VcxResult<RequestPresentationV1> {
         match self.state {
             VerifierFullState::Initial(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -457,7 +458,7 @@ impl VerifierSM {
         }
     }
 
-    pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {
+    pub fn get_presentation_msg(&self) -> VcxResult<PresentationV1> {
         match self.state {
             VerifierFullState::Finished(ref state) => {
                 state.presentation.clone().ok_or(AriesVcxError::from_msg(
@@ -472,7 +473,7 @@ impl VerifierSM {
         }
     }
 
-    pub fn presentation_proposal(&self) -> VcxResult<ProposePresentation> {
+    pub fn presentation_proposal(&self) -> VcxResult<ProposePresentationV1> {
         match self.state {
             VerifierFullState::PresentationProposalReceived(ref state) => {
                 Ok(state.presentation_proposal.clone())

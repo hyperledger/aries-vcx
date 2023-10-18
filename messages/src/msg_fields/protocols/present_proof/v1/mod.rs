@@ -10,11 +10,15 @@ use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use self::{
-    ack::{AckPresentation, AckPresentationContent},
-    present::{Presentation, PresentationContent, PresentationDecorators},
-    problem_report::{PresentProofProblemReport, PresentProofProblemReportContent},
-    propose::{ProposePresentation, ProposePresentationContent, ProposePresentationDecorators},
-    request::{RequestPresentation, RequestPresentationContent, RequestPresentationDecorators},
+    ack::{AckPresentationV1, AckPresentationV1Content},
+    present::{PresentationV1, PresentationV1Content, PresentationV1Decorators},
+    problem_report::{PresentProofV1ProblemReport, PresentProofV1ProblemReportContent},
+    propose::{
+        ProposePresentationV1, ProposePresentationV1Content, ProposePresentationV1Decorators,
+    },
+    request::{
+        RequestPresentationV1, RequestPresentationV1Content, RequestPresentationV1Decorators,
+    },
 };
 use crate::{
     misc::utils::{self, into_msg_with_type, transit_to_aries_msg},
@@ -29,15 +33,15 @@ use crate::{
 };
 
 #[derive(Clone, Debug, From, PartialEq)]
-pub enum PresentProof {
-    ProposePresentation(ProposePresentation),
-    RequestPresentation(RequestPresentation),
-    Presentation(Presentation),
-    Ack(AckPresentation),
-    ProblemReport(PresentProofProblemReport),
+pub enum PresentProofV1 {
+    ProposePresentation(ProposePresentationV1),
+    RequestPresentation(RequestPresentationV1),
+    Presentation(PresentationV1),
+    Ack(AckPresentationV1),
+    ProblemReport(PresentProofV1ProblemReport),
 }
 
-impl DelayedSerde for PresentProof {
+impl DelayedSerde for PresentProofV1 {
     type MsgType<'a> = (PresentProofType, &'a str);
 
     fn delayed_deserialize<'de, D>(
@@ -55,17 +59,19 @@ impl DelayedSerde for PresentProof {
 
         match kind.map_err(D::Error::custom)? {
             PresentProofTypeV1_0::ProposePresentation => {
-                ProposePresentation::deserialize(deserializer).map(From::from)
+                ProposePresentationV1::deserialize(deserializer).map(From::from)
             }
             PresentProofTypeV1_0::RequestPresentation => {
-                RequestPresentation::deserialize(deserializer).map(From::from)
+                RequestPresentationV1::deserialize(deserializer).map(From::from)
             }
             PresentProofTypeV1_0::Presentation => {
-                Presentation::deserialize(deserializer).map(From::from)
+                PresentationV1::deserialize(deserializer).map(From::from)
             }
-            PresentProofTypeV1_0::Ack => AckPresentation::deserialize(deserializer).map(From::from),
+            PresentProofTypeV1_0::Ack => {
+                AckPresentationV1::deserialize(deserializer).map(From::from)
+            }
             PresentProofTypeV1_0::ProblemReport => {
-                PresentProofProblemReport::deserialize(deserializer).map(From::from)
+                PresentProofV1ProblemReport::deserialize(deserializer).map(From::from)
             }
             PresentProofTypeV1_0::PresentationPreview => {
                 Err(utils::not_standalone_msg::<D>(kind_str))
@@ -88,34 +94,34 @@ impl DelayedSerde for PresentProof {
 }
 
 transit_to_aries_msg!(
-    ProposePresentationContent: ProposePresentationDecorators,
-    PresentProof
+    ProposePresentationV1Content: ProposePresentationV1Decorators,
+    PresentProofV1
 );
 transit_to_aries_msg!(
-    RequestPresentationContent: RequestPresentationDecorators,
-    PresentProof
+    RequestPresentationV1Content: RequestPresentationV1Decorators,
+    PresentProofV1
 );
-transit_to_aries_msg!(PresentationContent: PresentationDecorators, PresentProof);
-transit_to_aries_msg!(AckPresentationContent: AckDecorators, PresentProof);
+transit_to_aries_msg!(PresentationV1Content: PresentationV1Decorators, PresentProofV1);
+transit_to_aries_msg!(AckPresentationV1Content: AckDecorators, PresentProofV1);
 transit_to_aries_msg!(
-    PresentProofProblemReportContent: ProblemReportDecorators,
-    PresentProof
+    PresentProofV1ProblemReportContent: ProblemReportDecorators,
+    PresentProofV1
 );
 
 into_msg_with_type!(
-    ProposePresentation,
+    ProposePresentationV1,
     PresentProofTypeV1_0,
     ProposePresentation
 );
 into_msg_with_type!(
-    RequestPresentation,
+    RequestPresentationV1,
     PresentProofTypeV1_0,
     RequestPresentation
 );
-into_msg_with_type!(Presentation, PresentProofTypeV1_0, Presentation);
-into_msg_with_type!(AckPresentation, PresentProofTypeV1_0, Ack);
+into_msg_with_type!(PresentationV1, PresentProofTypeV1_0, Presentation);
+into_msg_with_type!(AckPresentationV1, PresentProofTypeV1_0, Ack);
 into_msg_with_type!(
-    PresentProofProblemReport,
+    PresentProofV1ProblemReport,
     PresentProofTypeV1_0,
     ProblemReport
 );

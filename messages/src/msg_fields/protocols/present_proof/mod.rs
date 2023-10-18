@@ -1,6 +1,6 @@
 use derive_more::From;
 
-use self::v1::PresentProof as PresentProofV1;
+use self::v1::PresentProofV1;
 
 pub mod v1;
 

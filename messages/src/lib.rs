@@ -29,8 +29,9 @@ use crate::{
         protocols::{
             basic_message::BasicMessage, connection::Connection,
             discover_features::DiscoverFeatures, notification::Notification,
-            out_of_band::OutOfBand, present_proof::v1::PresentProof, report_problem::ProblemReport,
-            revocation::Revocation, routing::Forward, trust_ping::TrustPing,
+            out_of_band::OutOfBand, present_proof::v1::PresentProofV1,
+            report_problem::ProblemReport, revocation::Revocation, routing::Forward,
+            trust_ping::TrustPing,
         },
         traits::DelayedSerde,
     },
@@ -59,7 +60,7 @@ pub enum AriesMessage {
     Revocation(Revocation),
     CredentialIssuance(CredentialIssuance),
     ReportProblem(ProblemReport),
-    PresentProof(PresentProof),
+    PresentProof(PresentProofV1),
     TrustPing(TrustPing),
     DiscoverFeatures(DiscoverFeatures),
     BasicMessage(BasicMessage),
@@ -134,7 +135,7 @@ impl DelayedSerde for AriesMessage {
                 }
             }
             Protocol::PresentProofType(msg_type) => {
-                PresentProof::delayed_deserialize((msg_type, kind_str), deserializer)
+                PresentProofV1::delayed_deserialize((msg_type, kind_str), deserializer)
                     .map(From::from)
             }
             Protocol::TrustPingType(msg_type) => {

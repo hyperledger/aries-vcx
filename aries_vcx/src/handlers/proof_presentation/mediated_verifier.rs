@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use messages::{msg_fields::protocols::present_proof::v1::PresentProof, AriesMessage};
+use messages::{msg_fields::protocols::present_proof::v1::PresentProofV1, AriesMessage};
 
 use crate::{
     handlers::{
@@ -22,21 +22,21 @@ pub fn verifier_find_message_to_handle(
     for (uid, message) in messages {
         match sm.get_state() {
             VerifierState::Initial => match &message {
-                AriesMessage::PresentProof(PresentProof::ProposePresentation(_)) => {
+                AriesMessage::PresentProof(PresentProofV1::ProposePresentation(_)) => {
                     return Some((uid, message));
                 }
-                AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => {
+                AriesMessage::PresentProof(PresentProofV1::RequestPresentation(_)) => {
                     return Some((uid, message));
                 }
                 _ => {}
             },
             VerifierState::PresentationRequestSent => match &message {
-                AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => {
+                AriesMessage::PresentProof(PresentProofV1::Presentation(presentation)) => {
                     if matches_thread_id!(presentation, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
-                AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => {
+                AriesMessage::PresentProof(PresentProofV1::ProposePresentation(proposal)) => {
                     if matches_opt_thread_id!(proposal, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }

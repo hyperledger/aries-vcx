@@ -29,7 +29,7 @@ use messages::{
     decorators::attachment::{Attachment, AttachmentData, AttachmentType},
     misc::MimeType,
     msg_fields::protocols::present_proof::v1::request::{
-        RequestPresentation, RequestPresentationContent,
+        RequestPresentationV1, RequestPresentationV1Content,
     },
 };
 
@@ -60,13 +60,13 @@ async fn test_agency_pool_retrieve_credentials_empty() {
             .mime_type(MimeType::Json)
             .build();
 
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![attach])
             .build();
 
         // test retrieving credentials for empty proof request returns "{}"
         let id = "test_id".to_owned();
-        let proof_req = RequestPresentation::builder()
+        let proof_req = RequestPresentationV1::builder()
             .id(id)
             .content(content)
             .build();
@@ -97,14 +97,14 @@ async fn test_agency_pool_retrieve_credentials_empty() {
             .mime_type(MimeType::Json)
             .build();
 
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![attach])
             .build();
 
         // test retrieving credentials for the proof request returns the referent with no cred
         // matches
         let id = "test_id".to_owned();
-        let proof_req = RequestPresentation::builder()
+        let proof_req = RequestPresentationV1::builder()
             .id(id)
             .content(content)
             .build();
@@ -185,11 +185,11 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .mime_type(MimeType::Json)
             .build();
 
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![attach])
             .build();
 
-        let proof_req = RequestPresentation::builder()
+        let proof_req = RequestPresentationV1::builder()
             .id(id)
             .content(content)
             .build();
@@ -223,11 +223,11 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .mime_type(MimeType::Json)
             .build();
 
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![attach])
             .build();
 
-        let proof_req = RequestPresentation::builder()
+        let proof_req = RequestPresentationV1::builder()
             .id(id)
             .content(content)
             .build();
@@ -259,11 +259,11 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .mime_type(MimeType::Json)
             .build();
 
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![attach])
             .build();
 
-        let proof_req = RequestPresentation::builder()
+        let proof_req = RequestPresentationV1::builder()
             .id(id)
             .content(content)
             .build();

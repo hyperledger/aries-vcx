@@ -8,13 +8,13 @@ use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
         present_proof::v1::{
-            ack::AckPresentation,
-            present::{Presentation, PresentationContent, PresentationDecorators},
+            ack::AckPresentationV1,
+            present::{PresentationV1, PresentationV1Content, PresentationV1Decorators},
             propose::{
-                PresentationPreview, ProposePresentation, ProposePresentationContent,
-                ProposePresentationDecorators,
+                PresentationPreview, ProposePresentationV1, ProposePresentationV1Content,
+                ProposePresentationV1Decorators,
             },
-            request::RequestPresentation,
+            request::RequestPresentationV1,
         },
         report_problem::ProblemReport,
     },
@@ -93,22 +93,22 @@ impl fmt::Display for ProverFullState {
 fn build_presentation_msg(
     thread_id: &str,
     presentation_attachment: String,
-) -> VcxResult<Presentation> {
+) -> VcxResult<PresentationV1> {
     let id = Uuid::new_v4().to_string();
 
-    let content = PresentationContent::builder()
+    let content = PresentationV1Content::builder()
         .presentations_attach(vec![make_attach_from_str!(
             &presentation_attachment,
             AttachmentId::Presentation.as_ref().to_string()
         )])
         .build();
 
-    let decorators = PresentationDecorators::builder()
+    let decorators = PresentationV1Decorators::builder()
         .thread(Thread::builder().thid(thread_id.to_owned()).build())
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
 
-    Ok(Presentation::builder()
+    Ok(PresentationV1::builder()
         .id(id)
         .content(content)
         .decorators(decorators)
@@ -130,7 +130,10 @@ impl ProverSM {
         }
     }
 
-    pub fn from_request(presentation_request: RequestPresentation, source_id: String) -> ProverSM {
+    pub fn from_request(
+        presentation_request: RequestPresentationV1,
+        source_id: String,
+    ) -> ProverSM {
         ProverSM {
             source_id,
             thread_id: presentation_request.id.clone(),
@@ -149,7 +152,8 @@ impl ProverSM {
                 let id = self.thread_id.clone();
                 let preview =
                     PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
-                let content = ProposePresentationContent::builder().presentation_proposal(preview);
+                let content =
+                    ProposePresentationV1Content::builder().presentation_proposal(preview);
 
                 let content = if let Some(comment) = proposal_data.comment {
                     content.comment(comment).build()
@@ -157,7 +161,7 @@ impl ProverSM {
                     content.build()
                 };
 
-                let proposal = ProposePresentation::builder()
+                let proposal = ProposePresentationV1::builder()
                     .id(id)
                     .content(content)
                     .build();
@@ -168,18 +172,19 @@ impl ProverSM {
                 let preview =
                     PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
 
-                let content = ProposePresentationContent::builder().presentation_proposal(preview);
+                let content =
+                    ProposePresentationV1Content::builder().presentation_proposal(preview);
                 let content = if let Some(comment) = proposal_data.comment {
                     content.comment(comment).build()
                 } else {
                     content.build()
                 };
 
-                let decorators = ProposePresentationDecorators::builder()
+                let decorators = ProposePresentationV1Decorators::builder()
                     .thread(Thread::builder().thid(self.thread_id.clone()).build())
                     .build();
 
-                let proposal = ProposePresentation::builder()
+                let proposal = ProposePresentationV1::builder()
                     .id(id)
                     .content(content)
                     .decorators(decorators)
@@ -299,7 +304,10 @@ impl ProverSM {
         }
     }
 
-    pub fn receive_presentation_request(self, request: RequestPresentation) -> VcxResult<ProverSM> {
+    pub fn receive_presentation_request(
+        self,
+        request: RequestPresentationV1,
+    ) -> VcxResult<ProverSM> {
         let prover_sm = match &self.state {
             ProverFullState::PresentationProposalSent(_) => {
                 let state = ProverFullState::PresentationRequestReceived(
@@ -333,7 +341,7 @@ impl ProverSM {
         Ok(prover_sm)
     }
 
-    pub fn receive_presentation_ack(self, ack: AckPresentation) -> VcxResult<Self> {
+    pub fn receive_presentation_ack(self, ack: AckPresentationV1) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationSent(state) => {
                 ProverFullState::Finished((state, ack).into())
@@ -396,7 +404,7 @@ impl ProverSM {
         }
     }
 
-    pub fn get_presentation_request(&self) -> VcxResult<&RequestPresentation> {
+    pub fn get_presentation_request(&self) -> VcxResult<&RequestPresentationV1> {
         match self.state {
             ProverFullState::Initial(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -426,7 +434,7 @@ impl ProverSM {
         }
     }
 
-    pub fn get_presentation_msg(&self) -> VcxResult<&Presentation> {
+    pub fn get_presentation_msg(&self) -> VcxResult<&PresentationV1> {
         match self.state {
             ProverFullState::Initial(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -455,7 +463,7 @@ impl ProverSM {
         }
     }
 
-    pub fn get_presentation_proposal(&self) -> VcxResult<ProposePresentation> {
+    pub fn get_presentation_proposal(&self) -> VcxResult<ProposePresentationV1> {
         match &self.state {
             ProverFullState::PresentationProposalSent(state) => Ok(state.proposal.clone()),
             _ => Err(AriesVcxError::from_msg(

@@ -1,5 +1,5 @@
 use messages::msg_fields::protocols::present_proof::v1::request::{
-    RequestPresentation, RequestPresentationContent,
+    RequestPresentationV1, RequestPresentationV1Content,
 };
 use uuid::Uuid;
 
@@ -7,18 +7,18 @@ use crate::protocols::proof_presentation::verifier::states::presentation_request
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSetState {
-    pub presentation_request: RequestPresentation,
+    pub presentation_request: RequestPresentationV1,
 }
 
 impl Default for PresentationRequestSetState {
     fn default() -> Self {
         let id = Uuid::new_v4().to_string();
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(Vec::new())
             .build();
 
         Self {
-            presentation_request: RequestPresentation::builder()
+            presentation_request: RequestPresentationV1::builder()
                 .id(id)
                 .content(content)
                 .build(),
@@ -27,7 +27,7 @@ impl Default for PresentationRequestSetState {
 }
 
 impl PresentationRequestSetState {
-    pub fn new(presentation_request: RequestPresentation) -> Self {
+    pub fn new(presentation_request: RequestPresentationV1) -> Self {
         Self {
             presentation_request,
         }

@@ -8,23 +8,23 @@ use crate::{
     msg_parts::MsgParts,
 };
 
-pub type PresentProofProblemReport =
-    MsgParts<PresentProofProblemReportContent, ProblemReportDecorators>;
+pub type PresentProofV1ProblemReport =
+    MsgParts<PresentProofV1ProblemReportContent, ProblemReportDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(transparent)]
-pub struct PresentProofProblemReportContent {
+pub struct PresentProofV1ProblemReportContent {
     pub inner: ProblemReportContent,
 }
 
-impl From<ProblemReportContent> for PresentProofProblemReportContent {
+impl From<ProblemReportContent> for PresentProofV1ProblemReportContent {
     fn from(value: ProblemReportContent) -> Self {
         Self { inner: value }
     }
 }
 
-impl From<PresentProofProblemReport> for ProblemReport {
-    fn from(value: PresentProofProblemReport) -> Self {
+impl From<PresentProofV1ProblemReport> for ProblemReport {
+    fn from(value: PresentProofV1ProblemReport) -> Self {
         Self::builder()
             .id(value.id)
             .content(value.content.inner)
@@ -68,7 +68,7 @@ mod tests {
             "description": content.description
         });
 
-        let content = PresentProofProblemReportContent::builder()
+        let content = PresentProofV1ProblemReportContent::builder()
             .inner(content)
             .build();
 
@@ -123,7 +123,7 @@ mod tests {
             "fix-hint~l10n": decorators.fix_hint_locale
         });
 
-        let content = PresentProofProblemReportContent::builder()
+        let content = PresentProofV1ProblemReportContent::builder()
             .inner(content)
             .build();
 
