@@ -11,6 +11,7 @@ use crate::msg_types::protocols::{
     discover_features::DiscoverFeaturesTypeV1,
     notification::NotificationTypeV1,
     out_of_band::OutOfBandTypeV1,
+    pickup::PickupTypeV2,
     present_proof::PresentProofTypeV1,
     report_problem::ReportProblemTypeV1,
     revocation::RevocationTypeV2,
@@ -87,6 +88,8 @@ lazy_static! {
         map_insert(&mut m, extract_parts!(ReportProblemTypeV1::new_v1_0()));
         map_insert(&mut m, extract_parts!(RevocationTypeV2::new_v2_0()));
         map_insert(&mut m, extract_parts!(TrustPingTypeV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(PickupTypeV2::new_v2_0()));
+
         m
     };
 }
