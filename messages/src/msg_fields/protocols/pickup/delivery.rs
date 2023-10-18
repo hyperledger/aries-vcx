@@ -29,3 +29,51 @@ pub struct DeliveryAttachData {
     #[serde_as(as = "Base64")]
     pub base64: Vec<u8>,
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{
+        decorators::thread::Thread, misc::test_utils, msg_types::protocols::pickup::PickupTypeV2_0,
+    };
+    #[test]
+    fn test_delivery() {
+        let expected = json!(
+            {
+                "@id": "123456781",
+                "~thread": {
+                    "thid": "<message id of delivery-request message>"
+                  },
+                "@type": "https://didcomm.org/messagepickup/2.0/delivery",
+                "recipient_key": "<key for messages>",
+                "~attach": [{
+                    "@id": "<messageid>",
+                    "data": {
+                        "base64": ""
+                    }
+                }]
+            }
+        );
+        let attach = DeliveryAttach::builder()
+            .id("<messageid>".to_owned())
+            .data(DeliveryAttachData::builder().base64("".into()).build())
+            .build();
+        let content = DeliveryContent::builder()
+            .recipient_key("<key for messages>".to_owned())
+            .attach(vec![attach])
+            .build();
+        let decorators = PickupDecoratorsCommon::builder()
+            .thread(
+                Thread::builder()
+                    .thid("<message id of delivery-request message>".to_owned())
+                    .build(),
+            )
+            .build();
+
+        test_utils::test_msg(content, decorators, PickupTypeV2_0::Delivery, expected);
+    }
+}

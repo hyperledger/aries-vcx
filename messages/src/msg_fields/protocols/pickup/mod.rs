@@ -53,8 +53,20 @@ impl DelayedSerde for Pickup {
         };
 
         match kind.map_err(D::Error::custom)? {
+            PickupTypeV2_0::StatusRequest => {
+                StatusRequest::deserialize(deserializer).map(From::from)
+            }
             PickupTypeV2_0::Status => Status::deserialize(deserializer).map(From::from),
-            _ => todo!(),
+            PickupTypeV2_0::DeliveryRequest => {
+                DeliveryRequest::deserialize(deserializer).map(From::from)
+            }
+            PickupTypeV2_0::Delivery => Delivery::deserialize(deserializer).map(From::from),
+            PickupTypeV2_0::MessagesReceived => {
+                MessagesReceived::deserialize(deserializer).map(From::from)
+            }
+            PickupTypeV2_0::LiveDeliveryChange => {
+                LiveDeliveryChange::deserialize(deserializer).map(From::from)
+            }
         }
     }
 
