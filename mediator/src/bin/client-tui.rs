@@ -1,6 +1,6 @@
 use log::info;
 /// Aries Agent TUI
-use mediator::{agent::AgentMaker, routes::tui};
+use mediator::{aries_agent::AgentMaker, http_routes::tui};
 
 #[tokio::main]
 async fn main() {

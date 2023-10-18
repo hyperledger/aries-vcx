@@ -1,5 +1,5 @@
 use log::info;
-use mediator::agent::AgentMaker;
+use mediator::aries_agent::AgentMaker;
 
 #[tokio::main]
 async fn main() {
@@ -16,7 +16,7 @@ async fn main() {
         )
         .await
         .unwrap();
-    let app_router = mediator::routes::build_router(agent).await;
+    let app_router = mediator::http_routes::build_router(agent).await;
     axum::Server::bind(
         &endpoint_root
             .parse()

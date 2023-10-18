@@ -254,7 +254,7 @@ mod test {
     use serde_json::Value;
 
     use super::AgentMaker;
-    use crate::agent::utils::oob2did;
+    use crate::aries_agent::utils::oob2did;
 
     #[tokio::test]
     pub async fn test_pack_unpack() {

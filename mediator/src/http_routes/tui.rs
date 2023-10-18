@@ -17,7 +17,7 @@ use log::info;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use xum_test_server::storage::MediatorPersistence;
 
-use crate::{agent::Agent, routes::client::handle_register};
+use crate::{aries_agent::Agent, http_routes::client::handle_register};
 
 pub async fn init_tui<T: BaseWallet + 'static, P: MediatorPersistence>(agent: Agent<T, P>) {
     let mut cursive = Cursive::new();

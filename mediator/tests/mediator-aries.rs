@@ -2,7 +2,7 @@ mod common;
 use std::collections::VecDeque;
 
 use common::{prelude::*, test_setup::OneTimeInit};
-use mediator::agent::transports::AriesReqwest;
+use mediator::aries_agent::transports::AriesReqwest;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
 
@@ -39,7 +39,7 @@ async fn didcomm_connection_succeeds() -> Result<()> {
         .json()
         .await?;
     info!("Got invitation from register endpoint {:?}", oobi);
-    let agent = mediator::agent::AgentMaker::new_demo_agent().await?;
+    let agent = mediator::aries_agent::AgentMaker::new_demo_agent().await?;
     let mut aries_transport = AriesReqwest {
         response_queue: VecDeque::new(),
         client: reqwest::Client::new(),

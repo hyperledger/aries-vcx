@@ -5,7 +5,7 @@ use aries_vcx::protocols::connection::invitee::{states::completed::Completed, In
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use common::{prelude::*, test_setup::OneTimeInit};
 use mediator::{
-    agent::{
+    aries_agent::{
         transports::{AriesReqwest, AriesTransport},
         Agent,
     },
@@ -65,7 +65,7 @@ async fn didcomm_connection(
 #[ignore]
 async fn test_init() {
     TestSetupAries.init();
-    let agent = mediator::agent::AgentMaker::new_demo_agent().await.unwrap();
+    let agent = mediator::aries_agent::AgentMaker::new_demo_agent().await.unwrap();
     let mut aries_transport = AriesReqwest {
         response_queue: VecDeque::new(),
         client: reqwest::Client::new(),
@@ -77,7 +77,7 @@ async fn test_init() {
 #[tokio::test]
 async fn test_mediate_grant() -> Result<()> {
     TestSetupAries.init();
-    let agent = mediator::agent::AgentMaker::new_demo_agent().await?;
+    let agent = mediator::aries_agent::AgentMaker::new_demo_agent().await?;
     let mut aries_transport = AriesReqwest {
         response_queue: VecDeque::new(),
         client: reqwest::Client::new(),
@@ -131,7 +131,7 @@ async fn test_mediate_grant() -> Result<()> {
 async fn test_mediate_keylist_update_add() -> Result<()> {
     TestSetupAries.init();
     // ready agent, http client
-    let agent = mediator::agent::AgentMaker::new_demo_agent().await?;
+    let agent = mediator::aries_agent::AgentMaker::new_demo_agent().await?;
     let mut aries_transport = AriesReqwest {
         response_queue: VecDeque::new(),
         client: reqwest::Client::new(),
@@ -187,7 +187,7 @@ async fn test_mediate_keylist_update_add() -> Result<()> {
 async fn test_mediate_keylist_query() -> Result<()> {
     TestSetupAries.init();
     // ready agent, http client
-    let agent = mediator::agent::AgentMaker::new_demo_agent().await?;
+    let agent = mediator::aries_agent::AgentMaker::new_demo_agent().await?;
     let mut aries_transport = AriesReqwest {
         response_queue: VecDeque::new(),
         client: reqwest::Client::new(),
@@ -275,7 +275,7 @@ async fn test_mediate_keylist_query() -> Result<()> {
 async fn test_mediate_keylist_update_remove() -> Result<()> {
     TestSetupAries.init();
     // ready agent, http client
-    let agent = mediator::agent::AgentMaker::new_demo_agent().await?;
+    let agent = mediator::aries_agent::AgentMaker::new_demo_agent().await?;
     let mut aries_transport = AriesReqwest {
         response_queue: VecDeque::new(),
         client: reqwest::Client::new(),

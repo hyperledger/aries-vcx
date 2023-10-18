@@ -6,7 +6,7 @@ use serde_json::json;
 use xum_test_server::storage::MediatorPersistence;
 
 use super::*;
-use crate::agent::transports::AriesReqwest;
+use crate::aries_agent::transports::AriesReqwest;
 
 pub async fn handle_register(
     State(agent): State<ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>>,

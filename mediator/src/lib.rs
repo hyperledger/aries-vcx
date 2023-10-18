@@ -1,3 +1,3 @@
-pub mod agent;
-pub mod routes;
+pub mod aries_agent;
+pub mod http_routes;
 pub mod utils;
