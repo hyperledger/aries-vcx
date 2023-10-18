@@ -29,4 +29,4 @@ diddoc_legacy = { path = "../../diddoc_legacy" }
 url = "2.3.1"
 
 [build-dependencies]
-uniffi = { version = "0.23.0", features = [ "build", "cli" ] }
+uniffi = { version = "0.23.0", features = ["build", "cli"] }

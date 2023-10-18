@@ -1,8 +1,9 @@
+use std::sync::{Arc, Mutex};
+
 use aries_vcx::{
-    core::profile::profile::Profile, handlers::issuance::holder::Holder as VcxHolder,
+    handlers::issuance::holder::Holder as VcxHolder,
     protocols::issuance::holder::state_machine::HolderState as VcxHolderState,
 };
-use std::sync::{Arc, Mutex};
 
 use crate::{core::profile::ProfileHolder, errors::error::VcxUniFFIResult, runtime::block_on};
 pub struct Holder {
@@ -10,7 +11,7 @@ pub struct Holder {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-enum HolderState {
+pub enum HolderState {
     Initial,
     ProposalSet,
     OfferReceived,
@@ -63,7 +64,7 @@ pub fn create_with_proposal(
 }
 
 impl Holder {
-    pub fn set_proposal(&mut self, credential_proposal: String) -> VcxUniFFIResult<()> {
+    pub fn set_proposal(&self, credential_proposal: String) -> VcxUniFFIResult<()> {
         self.handler
             .lock()?
             .set_proposal(serde_json::from_str(&credential_proposal)?)?;
@@ -71,7 +72,7 @@ impl Holder {
     }
 
     pub fn prepare_credential_request(
-        &mut self,
+        &self,
         profile: Arc<ProfileHolder>,
         my_pw_did: String,
     ) -> VcxUniFFIResult<()> {
@@ -79,6 +80,7 @@ impl Holder {
             self.handler
                 .lock()?
                 .prepare_credential_request(
+                    profile.inner.wallet(),
                     profile.inner.ledger_read(),
                     profile.inner.anoncreds(),
                     my_pw_did,
@@ -100,8 +102,8 @@ impl Holder {
         )?)
     }
 
-    pub async fn process_credential(
-        &mut self,
+    pub fn process_credential(
+        &self,
         profile: Arc<ProfileHolder>,
         credential: String,
     ) -> VcxUniFFIResult<()> {
@@ -112,6 +114,7 @@ impl Holder {
                 .handler
                 .lock()?
                 .process_credential(
+                    profile.inner.wallet(),
                     profile.inner.ledger_read(),
                     profile.inner.anoncreds(),
                     credential,
@@ -169,7 +172,7 @@ impl Holder {
         Ok(self.handler.lock()?.get_thread_id()?)
     }
 
-    pub async fn is_revokable(&self, profile: Arc<ProfileHolder>) -> VcxUniFFIResult<bool> {
+    pub fn is_revokable(&self, profile: Arc<ProfileHolder>) -> VcxUniFFIResult<bool> {
         block_on(async {
             Ok(self
                 .handler
@@ -179,12 +182,18 @@ impl Holder {
         })
     }
 
-    pub async fn is_revoked(&self, profile: Arc<ProfileHolder>) -> VcxUniFFIResult<bool> {
-        Ok(self
-            .handler
-            .lock()?
-            .is_revoked(profile.inner.ledger_read(), profile.inner.anoncreds())
-            .await?)
+    pub fn is_revoked(&self, profile: Arc<ProfileHolder>) -> VcxUniFFIResult<bool> {
+        block_on(async {
+            Ok(self
+                .handler
+                .lock()?
+                .is_revoked(
+                    profile.inner.wallet(),
+                    profile.inner.ledger_read(),
+                    profile.inner.anoncreds(),
+                )
+                .await?)
+        })
     }
 
     pub fn get_cred_rev_id(&self, profile: Arc<ProfileHolder>) -> VcxUniFFIResult<String> {
@@ -192,7 +201,7 @@ impl Holder {
             Ok(self
                 .handler
                 .lock()?
-                .get_cred_rev_id(profile.inner.anoncreds())
+                .get_cred_rev_id(profile.inner.wallet(), profile.inner.anoncreds())
                 .await?)
         })
     }

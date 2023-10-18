@@ -8,7 +8,7 @@ pub mod runtime;
 use aries_vcx::{
     aries_vcx_core::wallet::indy::WalletConfig, protocols::connection::pairwise_info::PairwiseInfo,
 };
-use handlers::connection::*;
+use handlers::{connection::*, holder::*};
 
 use crate::{
     core::{profile::*, unpack_message::*},
