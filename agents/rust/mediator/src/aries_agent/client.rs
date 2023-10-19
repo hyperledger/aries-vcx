@@ -1,6 +1,3 @@
-// use aries_vcx::protocols::connection::initiation_type::Invitee;
-// use aries_vcx::protocols::connection::invitee::states::invited::Invited;
-// use aries_vcx::protocols::oob;
 use aries_vcx::{
     handlers::util::AnyInvitation,
     protocols::{
@@ -25,25 +22,25 @@ use messages::{
     AriesMessage,
 };
 
-// use super::transports::AriesTransport;
-// use diddoc_legacy::aries::service::AriesService;
 use super::{transports::AriesTransport, Agent};
 use crate::{aries_agent::utils::oob2did, utils::prelude::*};
+
 // client role utilities
 impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
-    /// Starts a new connection object and tries to create request to the specified OOB invite
-    /// endpoint
-    pub async fn gen_client_connect_req(
+    /// Starting from a new connection object, tries to create connection request object for the
+    /// specified OOB invite endpoint
+    pub async fn gen_connection_request(
         &self,
         oob_invite: OOBInvitation,
     ) -> Result<(InviteeConnection<ClientRequestSent>, EncryptionEnvelope), String> {
+        // Generate keys
         let (pw_did, pw_vk) = self
             .wallet
             .create_and_store_my_did(None, None)
             .await
             .unwrap();
-
-        let mock_ledger = MockLedger {}; // not good. will be dealt later. (can see brutish attempt above)
+        // Create fresh connection object and transform step wise to requested state
+        let mock_ledger = MockLedger {}; // not good. to be dealt later
         let client_conn = InviteeConnection::<ClientInit>::new_invitee(
             "foo".into(),
             PairwiseInfo { pw_did, pw_vk },
@@ -51,12 +48,11 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         .accept_invitation(&mock_ledger, AnyInvitation::Oob(oob_invite.clone()))
         .await
         .unwrap();
-
         let client_conn = client_conn
             .prepare_request("http://response.http.alt".parse().unwrap(), vec![])
             .await
             .unwrap();
-
+        // Extract the actual connection request message to be sent
         let msg_connection_request = client_conn.get_request().clone();
         info!("Client Connection Request: {:#?}", msg_connection_request);
         let req_msg = client_conn.get_request();
@@ -64,7 +60,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             "Connection Request: {},",
             serde_json::to_string_pretty(&req_msg).unwrap()
         );
-        // encrypt/pack connection request
+        // encrypt/pack the connection request message
         let EncryptionEnvelope(packed_aries_msg_bytes) = client_conn
             .encrypt_message(
                 self.wallet.as_ref(),
@@ -76,7 +72,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         Ok((client_conn, EncryptionEnvelope(packed_aries_msg_bytes)))
     }
 
-    pub async fn handle_response(
+    pub async fn handle_connection_response(
         &self,
         state: InviteeConnection<ClientRequestSent>,
         response: Response,
@@ -86,7 +82,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             .await
             .map_err(|err| err.to_string())
     }
-    pub async fn save_completed_as_contact(
+    pub async fn save_completed_connection_as_contact(
         &self,
         state: &InviteeConnection<Completed>,
     ) -> Result<(), String> {
@@ -100,14 +96,14 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
     pub async fn list_contacts(&self) -> Result<Vec<(String, String)>, String> {
         self.persistence.list_accounts().await
     }
-
+    /// Workflow method to establish DidComm connection with Aries peer, given OOB invite.
     pub async fn establish_connection(
         &self,
         oob_invite: OOBInvitation,
         aries_transport: &mut impl AriesTransport,
     ) -> Result<InviteeConnection<Completed>, anyhow::Error> {
         let (state, EncryptionEnvelope(packed_aries_msg_bytes)) = self
-            .gen_client_connect_req(oob_invite.clone())
+            .gen_connection_request(oob_invite.clone())
             .await
             .map_err(|err| GenericStringError { msg: err })?;
         let packed_aries_msg_json = serde_json::from_slice(&packed_aries_msg_bytes)?;
@@ -137,14 +133,14 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             .into());
         };
         let state = self
-            .handle_response(state, connection_response)
+            .handle_connection_response(state, connection_response)
             .await
             .map_err(|err| GenericStringError { msg: err })?;
         info!(
             "Completed Connection {:?}, saving as contact",
             serde_json::to_value(&state).unwrap()
         );
-        self.save_completed_as_contact(&state)
+        self.save_completed_connection_as_contact(&state)
             .await
             .map_err(|err| GenericStringError { msg: err })?;
         Ok(state)
