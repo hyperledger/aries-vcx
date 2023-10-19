@@ -82,14 +82,14 @@ async fn gen_mediator_connected_agent() -> Result<(
 
 /// Sends message over didcomm connection and returns unpacked response message
 async fn send_message_and_pop_response_message(
-    message_bytes: &Vec<u8>,
+    message_bytes: &[u8],
     agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
     aries_transport: &mut impl AriesTransport,
     our_verikey: &VeriKey,
     their_diddoc: &AriesDidDoc,
 ) -> Result<String> {
     agent
-        .pack_and_send_didcomm(&message_bytes, &our_verikey, their_diddoc, aries_transport)
+        .pack_and_send_didcomm(message_bytes, our_verikey, their_diddoc, aries_transport)
         .await
         .map_err(|err| GenericStringError { msg: err })?;
     // unpack
