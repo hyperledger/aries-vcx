@@ -34,12 +34,4 @@ pub async fn handle_mediation_coord(
     )
     .await;
     Ok(coord_response)
-    // match coord_msg {
-    //     MediatorCoordMsgEnum::MediateRequest(request_data) => {
-    //         let Json(response) =
-    // mediation::routes::coordination::handle_coord(State(agent.get_persistence_ref()),
-    // Json(coord_msg)).await;         todo!()
-    //     },
-    //     _ => Err(unhandled_aries(coord_msg)),
-    // }
 }
