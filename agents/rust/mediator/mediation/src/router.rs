@@ -1,14 +1,20 @@
 // Copyright 2023 Naian G.
 // SPDX-License-Identifier: Apache-2.0
 // use crate::routes::coordination::handle_coord;
-use crate::routes::forward::handle_forward;
-use crate::routes::hello_world;
-use crate::routes::json;
-use crate::routes::json::respond_message_json;
-use crate::routes::pickup::handle_pickup;
-use crate::storage;
-use axum::{routing::get, routing::post, Router};
 use std::sync::Arc;
+
+use axum::{
+    routing::{get, post},
+    Router,
+};
+
+use crate::{
+    routes::{
+        forward::handle_forward, hello_world, json, json::respond_message_json,
+        pickup::handle_pickup,
+    },
+    storage,
+};
 
 pub async fn create_router() -> Router {
     // Initialize and get a storage struct that implements MediatorPersistence trait

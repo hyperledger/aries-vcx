@@ -1,7 +1,8 @@
 // Copyright 2023 Naian G.
 // SPDX-License-Identifier: Apache-2.0
-use crate::router::create_router;
 use log::info;
+
+use crate::router::create_router;
 
 pub async fn run_server() {
     // app definition, and routings

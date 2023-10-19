@@ -105,8 +105,9 @@ pub struct PickupDeliveryReqMsg {
 }
 
 pub mod pickup_delivery_message_structs {
-    use super::{skip_serializing_none, Deserialize, Serialize};
     use serde_with::{base64::Base64, serde_as};
+
+    use super::{skip_serializing_none, Deserialize, Serialize};
 
     #[serde_as]
     #[derive(Serialize, Deserialize, Debug)]

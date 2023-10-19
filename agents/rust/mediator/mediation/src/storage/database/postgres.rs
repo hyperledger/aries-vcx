@@ -15,25 +15,50 @@ pub async fn get_db_pool() -> PgPool {
 }
 
 use async_trait::async_trait;
+
 use super::super::MediatorPersistence;
 
 #[cfg(feature = "postgres_db")]
 #[async_trait]
 impl MediatorPersistence for sqlx::AnyPool {
-    async fn create_account(&self, auth_pubkey: &str) -> Result<(), String>{unimplemented!()}
-    async fn get_account_id(&self, auth_pubkey: &str) -> Result<Vec<u8>, String>{unimplemented!()}
+    async fn create_account(&self, auth_pubkey: &str) -> Result<(), String> {
+        unimplemented!()
+    }
+    async fn get_account_id(&self, auth_pubkey: &str) -> Result<Vec<u8>, String> {
+        unimplemented!()
+    }
     // async fn vaporize_account(&self, auth_pubkey: String);
-    async fn add_recipient(&self, auth_pubkey: &str, recipient_key: &str) ->  Result<(), String>{unimplemented!()}
-    async fn remove_recipient(&self, auth_pubkey: &str, recipient_key: &str) ->  Result<(), String>{unimplemented!()}
-    async fn list_recipient_keys(&self, auth_pubkey: &str) -> Result<Vec<String>, String>{unimplemented!()}
-    async fn persist_forward_message(&self, recipient_key: &str, message_data: &str) -> Result<(), String>{unimplemented!()}
-    async fn retrieve_pending_message_count(&self, auth_pubkey: &str, recipient_key: Option<&String>) -> Result<u32, String>{unimplemented!()}
+    async fn add_recipient(&self, auth_pubkey: &str, recipient_key: &str) -> Result<(), String> {
+        unimplemented!()
+    }
+    async fn remove_recipient(&self, auth_pubkey: &str, recipient_key: &str) -> Result<(), String> {
+        unimplemented!()
+    }
+    async fn list_recipient_keys(&self, auth_pubkey: &str) -> Result<Vec<String>, String> {
+        unimplemented!()
+    }
+    async fn persist_forward_message(
+        &self,
+        recipient_key: &str,
+        message_data: &str,
+    ) -> Result<(), String> {
+        unimplemented!()
+    }
+    async fn retrieve_pending_message_count(
+        &self,
+        auth_pubkey: &str,
+        recipient_key: Option<&String>,
+    ) -> Result<u32, String> {
+        unimplemented!()
+    }
     async fn retrieve_pending_messages(
         &self,
         auth_pubkey: &str,
         limit: u32,
         recipient_key: Option<&String>,
-    ) -> Result<Vec<(String, Vec<u8>)>, String>{unimplemented!()}
+    ) -> Result<Vec<(String, Vec<u8>)>, String> {
+        unimplemented!()
+    }
 }
 
 #[cfg(test)]

@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use log::info;
-use mediation::logging;
-use mediation::server;
+use mediation::{logging, server};
 
 #[tokio::main]
 async fn main() {

@@ -1,11 +1,14 @@
 // Copyright 2023 Naian G.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::storage::MediatorPersistence;
-use axum::{extract::State, Json};
-use crate::didcomm_types::mediator_coord_structs::*;
-use crate::didcomm_types::mediator_coord_structs::MediatorCoordMsgEnum::*;
 use std::sync::Arc;
+
+use axum::{extract::State, Json};
+
+use crate::{
+    didcomm_types::mediator_coord_structs::{MediatorCoordMsgEnum::*, *},
+    storage::MediatorPersistence,
+};
 
 pub async fn handle_coord_authenticated<T: MediatorPersistence>(
     State(storage): State<Arc<T>>,
@@ -14,7 +17,9 @@ pub async fn handle_coord_authenticated<T: MediatorPersistence>(
 ) -> Json<MediatorCoordMsgEnum> {
     match message {
         MediateRequest => {
-            panic!("Use handle_mediate_request directly. This handler is for preregistered clients.");
+            panic!(
+                "Use handle_mediate_request directly. This handler is for preregistered clients."
+            );
             // handle_mediate_request(
             //     storage,
             //     auth_pubkey,
@@ -30,7 +35,9 @@ pub async fn handle_coord_authenticated<T: MediatorPersistence>(
         KeylistUpdateRequest(keylist_update_data) => {
             handle_keylist_update(storage, keylist_update_data, auth_pubkey).await
         }
-        KeylistQuery(keylist_query_data) => handle_keylist_query(storage, keylist_query_data, auth_pubkey).await,
+        KeylistQuery(keylist_query_data) => {
+            handle_keylist_query(storage, keylist_query_data, auth_pubkey).await
+        }
         _ => handle_unimplemented().await,
     }
 }
@@ -48,8 +55,10 @@ pub async fn handle_mediate_request<T: MediatorPersistence>(
     our_signing_key: &str,
     grant_data: MediateGrantData,
 ) -> Json<MediatorCoordMsgEnum> {
-
-    match storage.create_account(auth_pubkey, our_signing_key, did_doc).await {
+    match storage
+        .create_account(auth_pubkey, our_signing_key, did_doc)
+        .await
+    {
         Ok(()) => Json(MediateGrant(grant_data)),
         Err(msg) => Json(MediateDeny(MediateDenyData { reason: msg })),
     }
@@ -59,7 +68,7 @@ pub async fn handle_keylist_query<T: MediatorPersistence>(
     storage: Arc<T>,
     //todo: use the limits mentioned in the KeylistQueryData to modify response
     _keylist_query_data: KeylistQueryData,
-    auth_pubkey: &str
+    auth_pubkey: &str,
 ) -> Json<MediatorCoordMsgEnum> {
     let keylist_items: Vec<KeylistItem> = match storage.list_recipient_keys(auth_pubkey).await {
         Ok(recipient_keys) => recipient_keys
@@ -76,7 +85,7 @@ pub async fn handle_keylist_query<T: MediatorPersistence>(
 pub async fn handle_keylist_update<T: MediatorPersistence>(
     storage: Arc<T>,
     keylist_update_data: KeylistUpdateRequestData,
-    auth_pubkey: &str
+    auth_pubkey: &str,
 ) -> Json<MediatorCoordMsgEnum> {
     let updates: Vec<KeylistUpdateItem> = keylist_update_data.updates;
     let mut updated: Vec<KeylistUpdateItem> = Vec::new();
@@ -104,8 +113,6 @@ pub async fn handle_keylist_update<T: MediatorPersistence>(
         });
     }
     Json(MediatorCoordMsgEnum::KeylistUpdateResponse(
-        KeylistUpdateResponseData {
-            updated,
-        },
+        KeylistUpdateResponseData { updated },
     ))
 }

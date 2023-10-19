@@ -1,8 +1,9 @@
 // Copyright 2023 Naian G.
 // SPDX-License-Identifier: Apache-2.0
 
-use serde_json::json;
 use std::sync::Once;
+
+use serde_json::json;
 static INIT: Once = Once::new();
 
 const BASE_URL: &str = "http://localhost:7999";
