@@ -3,6 +3,7 @@ use sha2::{Digest, Sha256};
 
 use crate::errors::error::prelude::*;
 
+// TODO - does not have to be a result...
 pub fn encode(s: &str) -> VcxResult<String> {
     match s.parse::<u32>() {
         Ok(val) => Ok(val.to_string()),
