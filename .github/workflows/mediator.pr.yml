@@ -51,6 +51,6 @@ jobs:
         # uses: Swatinem/rust-cache@v2
         run: cargo install sqlx-cli
       - name: Setup database
-        run: DATABASE_URL=${MYSQL_URL} sqlx migrate run --source mediator/migrations
+        run: DATABASE_URL=${MYSQL_URL} sqlx migrate run --source agents/rust/mediator/mediation/migrations
       - name: "Run mediator integration tests"
         run: cargo run --bin mediator & sleep 5 && cargo test --verbose --package mediator -- --nocapture;
