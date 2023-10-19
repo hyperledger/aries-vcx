@@ -196,7 +196,6 @@ impl A2AMessageKinds {
     }
 }
 
-#[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
     use serde_json::json;

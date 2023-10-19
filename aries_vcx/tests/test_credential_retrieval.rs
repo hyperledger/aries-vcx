@@ -73,7 +73,7 @@ async fn test_agency_pool_retrieve_credentials_empty() {
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         let retrieved_creds = proof
-            .retrieve_credentials(setup.profile.anoncreds())
+            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
             .await
             .unwrap();
         assert_eq!(
@@ -111,7 +111,7 @@ async fn test_agency_pool_retrieve_credentials_empty() {
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
         let retrieved_creds = proof
-            .retrieve_credentials(setup.profile.anoncreds())
+            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
             .await
             .unwrap();
         assert_eq!(
@@ -134,24 +134,28 @@ async fn test_agency_pool_retrieve_credentials_empty() {
 async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
     run_setup!(|setup| async move {
         let schema = create_and_write_test_schema(
-            setup.profile.anoncreds(),
-            setup.profile.ledger_write(),
+            &setup.wallet,
+            &setup.anoncreds,
+            &setup.ledger_write,
             &setup.institution_did,
             DEFAULT_SCHEMA_ATTRS,
         )
         .await;
         let cred_def = create_and_write_test_cred_def(
-            setup.profile.anoncreds(),
-            setup.profile.ledger_read(),
-            setup.profile.ledger_write(),
+            &setup.wallet,
+            &setup.anoncreds,
+            &setup.ledger_read,
+            &setup.ledger_write,
             &setup.institution_did,
             &schema.schema_id,
             true,
         )
         .await;
         create_and_write_credential(
-            setup.profile.anoncreds(),
-            setup.profile.anoncreds(),
+            &setup.wallet,
+            &setup.wallet,
+            &setup.anoncreds,
+            &setup.anoncreds,
             &setup.institution_did,
             &cred_def,
             None,
@@ -197,7 +201,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
 
         // All lower case
         let retrieved_creds = proof
-            .retrieve_credentials(setup.profile.anoncreds())
+            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
             .await
             .unwrap();
         assert_eq!(
@@ -233,7 +237,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .build();
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
         let retrieved_creds2 = proof
-            .retrieve_credentials(setup.profile.anoncreds())
+            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
             .await
             .unwrap();
         assert_eq!(
@@ -269,7 +273,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .build();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
         let retrieved_creds3 = proof
-            .retrieve_credentials(setup.profile.anoncreds())
+            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
             .await
             .unwrap();
         assert_eq!(

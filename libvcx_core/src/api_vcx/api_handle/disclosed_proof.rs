@@ -15,7 +15,7 @@ use serde_json;
 use super::mediated_connection::send_message;
 use crate::{
     api_vcx::{
-        api_global::profile::{get_main_anoncreds, get_main_ledger_read},
+        api_global::profile::{get_main_anoncreds, get_main_ledger_read, get_main_wallet},
         api_handle::{mediated_connection, object_cache::ObjectCache},
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -217,6 +217,7 @@ pub async fn generate_proof(
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     proof
         .generate_presentation(
+            get_main_wallet()?.as_ref(),
             get_main_ledger_read()?.as_ref(),
             get_main_anoncreds()?.as_ref(),
             serde_json::from_str(credentials)?,
@@ -246,7 +247,7 @@ pub async fn decline_presentation_request(
 pub async fn retrieve_credentials(handle: u32) -> LibvcxResult<String> {
     let proof = HANDLE_MAP.get_cloned(handle)?;
     let retrieved_creds = proof
-        .retrieve_credentials(get_main_anoncreds()?.as_ref())
+        .retrieve_credentials(get_main_wallet()?.as_ref(), get_main_anoncreds()?.as_ref())
         .await?;
 
     Ok(serde_json::to_string(&retrieved_creds)?)
@@ -344,10 +345,7 @@ mod tests {
 
     use aries_vcx::{
         utils,
-        utils::{
-            devsetup::{SetupDefaults, SetupMocks},
-            mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
-        },
+        utils::{devsetup::SetupMocks, mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION},
     };
     use serde_json::Value;
 
@@ -416,7 +414,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_deserialize_fails() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         assert_eq!(
             from_string("{}").unwrap_err().kind(),
@@ -426,7 +424,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_deserialize_succeeds_with_self_attest_allowed() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_with_proof_request("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 

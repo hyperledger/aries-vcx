@@ -1,32 +1,52 @@
 #![allow(clippy::unwrap_used)]
+#![allow(unused_imports)]
 
 use std::{
-    fs,
+    env, fs,
     future::Future,
     sync::{Arc, Once},
 };
 
 use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
 use aries_vcx_core::{
-    ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path},
+    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    ledger::{
+        base_ledger::{
+            AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
+            TxnAuthrAgrmtOptions,
+        },
+        indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path},
+        indy_vdr_ledger::{
+            GetTxnAuthorAgreementData, IndyVdrLedgerRead, IndyVdrLedgerReadConfig,
+            IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig, ProtocolVersion,
+        },
+        request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
+        response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
+    },
+    wallet::base_wallet::BaseWallet,
+    PoolConfig, ResponseParser,
+};
+#[cfg(feature = "vdr_proxy_ledger")]
+use aries_vcx_core::{ledger::request_submitter::vdr_proxy::VdrProxySubmitter, VdrProxyClient};
+#[cfg(feature = "vdrtools_wallet")]
+use aries_vcx_core::{
     wallet::indy::{
         did_mocks::DidMocks,
         wallet::{create_and_open_wallet, create_and_store_my_did},
-        IndySdkWallet, WalletConfig,
+        WalletConfig,
     },
     WalletHandle,
 };
 use chrono::{DateTime, Duration, Utc};
 
-#[cfg(all(feature = "credx", feature = "vdrtools_wallet"))]
-use crate::core::profile::modular_libs_profile::ModularLibsProfile;
-#[cfg(feature = "vdr_proxy_ledger")]
-use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
+use super::ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write};
 use crate::{
-    core::profile::Profile,
+    errors::error::VcxResult,
     global::settings,
     utils::{constants::POOL1_TXN, file::write_file, test_logger::LibvcxDefaultLogger},
 };
+
+const DEFAULT_AML_LABEL: &str = "eula";
 
 lazy_static! {
     static ref TEST_LOGGING_INIT: Once = Once::new();
@@ -38,9 +58,40 @@ pub fn init_test_logging() {
     })
 }
 
-pub struct SetupEmpty;
+pub type DefaultIndyLedgerRead = IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>;
+pub type DefaultIndyLedgerWrite = IndyVdrLedgerWrite<IndyVdrSubmitter>;
 
-pub struct SetupDefaults;
+pub struct VcxPoolConfig {
+    pub genesis_file_path: String,
+    pub indy_vdr_config: Option<PoolConfig>,
+    pub response_cache_config: Option<InMemoryResponseCacherConfig>,
+}
+
+pub fn build_ledger_components(
+    pool_config: VcxPoolConfig,
+) -> VcxResult<(DefaultIndyLedgerRead, DefaultIndyLedgerWrite)> {
+    let indy_vdr_config = match pool_config.indy_vdr_config {
+        None => PoolConfig::default(),
+        Some(cfg) => cfg,
+    };
+    let cache_config = match pool_config.response_cache_config {
+        None => InMemoryResponseCacherConfig::builder()
+            .ttl(std::time::Duration::from_secs(60))
+            .capacity(1000)?
+            .build(),
+        Some(cfg) => cfg,
+    };
+
+    let ledger_pool =
+        IndyVdrLedgerPool::new(pool_config.genesis_file_path, indy_vdr_config, vec![])?;
+
+    let request_submitter = IndyVdrSubmitter::new(ledger_pool);
+
+    let ledger_read = indyvdr_build_ledger_read(request_submitter.clone(), cache_config)?;
+    let ledger_write = indyvdr_build_ledger_write(request_submitter, None);
+
+    Ok((ledger_read, ledger_write))
+}
 
 pub struct SetupMocks;
 
@@ -48,11 +99,34 @@ pub const AGENCY_ENDPOINT: &str = "http://localhost:8080";
 pub const AGENCY_DID: &str = "VsKV7grR1BUE29mG2Fm2kX";
 pub const AGENCY_VERKEY: &str = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
 
-#[derive(Clone)]
-pub struct SetupProfile<P: Profile> {
+pub struct SetupProfile<LR, LW, A, W>
+where
+    LR: IndyLedgerRead + AnoncredsLedgerRead,
+    LW: IndyLedgerWrite + AnoncredsLedgerWrite,
+    A: BaseAnonCreds,
+    W: BaseWallet,
+{
     pub institution_did: String,
-    pub profile: P,
+    pub ledger_read: LR,
+    pub ledger_write: LW,
+    pub anoncreds: A,
+    pub wallet: W,
     pub genesis_file_path: String,
+}
+
+pub async fn prepare_taa_options(
+    ledger_read: &impl IndyLedgerRead,
+) -> VcxResult<Option<TxnAuthrAgrmtOptions>> {
+    if let Some(taa_result) = ledger_read.get_txn_author_agreement().await? {
+        let taa_result: GetTxnAuthorAgreementData = serde_json::from_str(&taa_result)?;
+        Ok(Some(TxnAuthrAgrmtOptions {
+            version: taa_result.version,
+            text: taa_result.text,
+            mechanism: DEFAULT_AML_LABEL.to_string(),
+        }))
+    } else {
+        Ok(None)
+    }
 }
 
 pub struct SetupPoolDirectory {
@@ -65,37 +139,11 @@ pub fn reset_global_state() {
     DidMocks::clear_mocks();
 }
 
-impl SetupEmpty {
-    pub fn init() -> SetupEmpty {
-        init_test_logging();
-        SetupEmpty {}
-    }
-}
-
-impl Drop for SetupEmpty {
-    fn drop(&mut self) {
-        reset_global_state();
-    }
-}
-
-impl SetupDefaults {
-    pub fn init() -> SetupDefaults {
-        init_test_logging();
-        SetupDefaults {}
-    }
-}
-
-impl Drop for SetupDefaults {
-    fn drop(&mut self) {
-        reset_global_state();
-    }
-}
-
 impl SetupMocks {
     pub fn init() -> SetupMocks {
         init_test_logging();
         enable_agency_mocks();
-        SetupMocks {}
+        SetupMocks
     }
 }
 
@@ -129,42 +177,77 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
 #[cfg(all(feature = "credx", feature = "vdrtools_wallet"))]
 pub fn dev_build_profile_modular(
     genesis_file_path: String,
-    wallet: Arc<IndySdkWallet>,
-) -> ModularLibsProfile {
+) -> (
+    DefaultIndyLedgerRead,
+    DefaultIndyLedgerWrite,
+    IndyCredxAnonCreds,
+) {
     info!("dev_build_profile_modular >>");
-    let vcx_pool_config = crate::core::profile::ledger::VcxPoolConfig {
+    let vcx_pool_config = VcxPoolConfig {
         genesis_file_path,
         indy_vdr_config: None,
         response_cache_config: None,
     };
-    ModularLibsProfile::init(wallet, vcx_pool_config).unwrap()
+
+    let anoncreds = IndyCredxAnonCreds;
+    let (ledger_read, ledger_write) = build_ledger_components(vcx_pool_config).unwrap();
+
+    (ledger_read, ledger_write, anoncreds)
 }
 
 #[cfg(feature = "vdr_proxy_ledger")]
-pub async fn dev_build_profile_vdr_proxy_ledger(wallet: Arc<IndySdkWallet>) -> VdrProxyProfile {
-    use std::env;
-
-    use aries_vcx_core::VdrProxyClient;
-
+pub async fn dev_build_profile_vdr_proxy_ledger() -> (
+    IndyVdrLedgerRead<VdrProxySubmitter, InMemoryResponseCacher>,
+    IndyVdrLedgerWrite<VdrProxySubmitter>,
+    IndyCredxAnonCreds,
+) {
     info!("dev_build_profile_vdr_proxy_ledger >>");
 
     let client_url =
         env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
     let client = VdrProxyClient::new(&client_url).unwrap();
 
-    VdrProxyProfile::init(wallet, client).await.unwrap()
+    let anoncreds = IndyCredxAnonCreds;
+    let request_submitter = VdrProxySubmitter::new(Arc::new(client));
+    let response_parser = ResponseParser;
+    let cacher_config = InMemoryResponseCacherConfig::builder()
+        .ttl(std::time::Duration::from_secs(60))
+        .capacity(1000)
+        .unwrap()
+        .build();
+    let response_cacher = InMemoryResponseCacher::new(cacher_config);
+
+    let config_read = IndyVdrLedgerReadConfig {
+        request_submitter: request_submitter.clone(),
+        response_parser,
+        response_cacher,
+        protocol_version: ProtocolVersion::Node1_4,
+    };
+    let ledger_read = IndyVdrLedgerRead::new(config_read);
+
+    let config_write = IndyVdrLedgerWriteConfig {
+        request_submitter,
+        taa_options: prepare_taa_options(&ledger_read).await.unwrap(),
+        protocol_version: ProtocolVersion::Node1_4,
+    };
+    let ledger_write = IndyVdrLedgerWrite::new(config_write);
+
+    (ledger_read, ledger_write, anoncreds)
 }
 
 #[allow(unreachable_code)]
 #[allow(unused_variables)]
 pub async fn dev_build_featured_profile(
     genesis_file_path: String,
-    wallet: Arc<IndySdkWallet>,
-) -> impl Profile {
+) -> (
+    impl IndyLedgerRead + AnoncredsLedgerRead,
+    impl IndyLedgerWrite + AnoncredsLedgerWrite,
+    impl BaseAnonCreds,
+) {
     #[cfg(feature = "vdr_proxy_ledger")]
     return {
         info!("SetupProfile >> using vdr proxy profile");
-        dev_build_profile_vdr_proxy_ledger(wallet).await
+        dev_build_profile_vdr_proxy_ledger().await
     };
 
     #[cfg(all(
@@ -174,21 +257,20 @@ pub async fn dev_build_featured_profile(
     ))]
     return {
         info!("SetupProfile >> using modular profile");
-        dev_build_profile_modular(genesis_file_path, wallet)
+        dev_build_profile_modular(genesis_file_path)
     };
 
     #[cfg(not(any(
         all(feature = "credx", feature = "vdrtools_wallet"),
         feature = "vdr_proxy_ledger"
     )))]
-    super::mockdata::profile::mock_profile::MockProfile
+    (MockLedger, MockLedger, MockAnoncreds)
 }
 
 #[macro_export]
 macro_rules! run_setup {
     ($func:expr) => {{
         use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-        use $crate::core::profile::Profile;
 
         $crate::utils::devsetup::init_test_logging();
 
@@ -205,21 +287,23 @@ macro_rules! run_setup {
         let (public_did, wallet_handle) =
             $crate::utils::devsetup::dev_setup_wallet_indy($crate::utils::constants::TRUSTEE_SEED)
                 .await;
-        let wallet = std::sync::Arc::new(aries_vcx_core::wallet::indy::IndySdkWallet::new(
-            wallet_handle,
-        ));
-        let profile =
-            $crate::utils::devsetup::dev_build_featured_profile(genesis_file_path.clone(), wallet)
-                .await;
-        profile
-            .anoncreds()
-            .prover_create_link_secret(aries_vcx_core::global::settings::DEFAULT_LINK_SECRET_ALIAS)
+        let wallet = aries_vcx_core::wallet::indy::IndySdkWallet::new(wallet_handle);
+        let (ledger_read, ledger_write, anoncreds) =
+            $crate::utils::devsetup::dev_build_featured_profile(genesis_file_path.clone()).await;
+        anoncreds
+            .prover_create_link_secret(
+                &wallet,
+                aries_vcx_core::global::settings::DEFAULT_LINK_SECRET_ALIAS,
+            )
             .await
             .unwrap();
 
         $crate::utils::devsetup::SetupProfile::new(
+            ledger_read,
+            ledger_write,
+            anoncreds,
+            wallet,
             public_did.to_string(),
-            profile,
             genesis_file_path,
         )
         .await
@@ -227,16 +311,29 @@ macro_rules! run_setup {
     }};
 }
 
-impl<P> SetupProfile<P>
+impl<LR, LW, A, W> SetupProfile<LR, LW, A, W>
 where
-    P: Profile,
+    LR: IndyLedgerRead + AnoncredsLedgerRead,
+    LW: IndyLedgerWrite + AnoncredsLedgerWrite,
+    A: BaseAnonCreds,
+    W: BaseWallet,
 {
-    pub async fn new(institution_did: String, profile: P, genesis_file_path: String) -> Self {
+    pub async fn new(
+        ledger_read: LR,
+        ledger_write: LW,
+        anoncreds: A,
+        wallet: W,
+        institution_did: String,
+        genesis_file_path: String,
+    ) -> Self {
         debug!("genesis_file_path: {}", genesis_file_path);
         SetupProfile {
             institution_did,
-            profile,
             genesis_file_path,
+            ledger_read,
+            ledger_write,
+            anoncreds,
+            wallet,
         }
     }
 

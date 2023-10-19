@@ -3,6 +3,7 @@ use std::sync::Arc;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+    wallet::base_wallet::BaseWallet,
 };
 
 use super::credential_definition::PublicEntityStateType;
@@ -78,11 +79,15 @@ impl Schema {
         self.submitter_did.clone()
     }
 
-    pub async fn publish(self, ledger: &impl AnoncredsLedgerWrite) -> VcxResult<Self> {
+    pub async fn publish(
+        self,
+        wallet: &impl BaseWallet,
+        ledger: &impl AnoncredsLedgerWrite,
+    ) -> VcxResult<Self> {
         trace!("Schema::publish >>>");
 
         ledger
-            .publish_schema(&self.schema_json, &self.submitter_did, None)
+            .publish_schema(wallet, &self.schema_json, &self.submitter_did, None)
             .await?;
 
         Ok(Self {

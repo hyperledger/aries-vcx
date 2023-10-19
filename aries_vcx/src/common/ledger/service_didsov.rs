@@ -63,12 +63,10 @@ impl Default for EndpointDidSov {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod unit_tests {
+    use agency_client::testing::test_utils::SetupMocks;
     use diddoc_legacy::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
 
-    use crate::{
-        common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov},
-        utils::devsetup::SetupEmpty,
-    };
+    use crate::common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov};
 
     #[test]
     fn test_service_comparison() {
@@ -95,7 +93,7 @@ mod unit_tests {
 
     #[test]
     fn test_didsov_service_serialization() {
-        SetupEmpty::init();
+        SetupMocks::init();
         let service1 = EndpointDidSov::create()
             .set_service_endpoint(_service_endpoint())
             .set_routing_keys(Some(_routing_keys()))
@@ -118,7 +116,7 @@ mod unit_tests {
 
     #[test]
     fn test_didsov_service_deserialization() {
-        SetupEmpty::init();
+        SetupMocks::init();
 
         let data = json!({
             "endpoint": "http://localhost:8080",

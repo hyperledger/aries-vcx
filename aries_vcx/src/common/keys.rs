@@ -13,7 +13,7 @@ pub async fn rotate_verkey_apply(
     temp_vk: &str,
 ) -> VcxResult<()> {
     let nym_result = indy_ledger_write
-        .publish_nym(did, did, Some(temp_vk), None, None)
+        .publish_nym(wallet, did, did, Some(temp_vk), None, None)
         .await?;
 
     let nym_result_json: Value = serde_json::from_str(&nym_result).map_err(|err| {

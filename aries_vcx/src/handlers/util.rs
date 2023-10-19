@@ -5,6 +5,7 @@ use messages::{
         discover_features::DiscoverFeatures,
         notification::Notification,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
+        pickup::Pickup,
         present_proof::{
             v1::{
                 propose::{Predicate, PresentationAttr},
@@ -201,6 +202,19 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
         AriesMessage::Routing(msg) => msg.id == thread_id,
         AriesMessage::TrustPing(TrustPing::Ping(msg)) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::TrustPing(TrustPing::PingResponse(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::Pickup(Pickup::Status(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::Pickup(Pickup::StatusRequest(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::Pickup(Pickup::Delivery(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::Pickup(Pickup::DeliveryRequest(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+
+        AriesMessage::Pickup(Pickup::MessagesReceived(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::Pickup(Pickup::LiveDeliveryChange(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
     };
 
     if !is_match {

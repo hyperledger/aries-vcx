@@ -4,23 +4,21 @@ use lazy_static::lazy_static;
 use shared_vcx::maybe_known::MaybeKnown;
 
 use super::{role::Role, Protocol};
-use crate::msg_types::{
-    present_proof::PresentProofTypeV2,
-    protocols::{
-        basic_message::BasicMessageTypeV1,
-        connection::ConnectionTypeV1,
-        cred_issuance::{CredentialIssuanceTypeV1, CredentialIssuanceTypeV2},
-        discover_features::DiscoverFeaturesTypeV1,
-        notification::NotificationTypeV1,
-        out_of_band::OutOfBandTypeV1,
-        present_proof::PresentProofTypeV1,
-        report_problem::ReportProblemTypeV1,
-        revocation::RevocationTypeV2,
-        routing::RoutingTypeV1,
-        signature::SignatureTypeV1,
-        trust_ping::TrustPingTypeV1,
-    },
-};
+use crate::msg_types::{protocols::{
+    basic_message::BasicMessageTypeV1,
+    connection::ConnectionTypeV1,
+    cred_issuance::{CredentialIssuanceTypeV1, CredentialIssuanceTypeV2},
+    discover_features::DiscoverFeaturesTypeV1,
+    notification::NotificationTypeV1,
+    out_of_band::OutOfBandTypeV1,
+    pickup::PickupTypeV2,
+    present_proof::PresentProofTypeV1,
+    report_problem::ReportProblemTypeV1,
+    revocation::RevocationTypeV2,
+    routing::RoutingTypeV1,
+    signature::SignatureTypeV1,
+    trust_ping::TrustPingTypeV1,
+}, present_proof::PresentProofTypeV2};
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
 
 /// An entry in the protocol registry.
@@ -66,9 +64,7 @@ fn map_insert(
         roles,
     };
 
-    map.entry((protocol_name, major))
-        .or_insert(Vec::new())
-        .push(entry);
+    map.entry((protocol_name, major)).or_default().push(entry);
 }
 
 lazy_static! {
@@ -93,6 +89,8 @@ lazy_static! {
         map_insert(&mut m, extract_parts!(ReportProblemTypeV1::new_v1_0()));
         map_insert(&mut m, extract_parts!(RevocationTypeV2::new_v2_0()));
         map_insert(&mut m, extract_parts!(TrustPingTypeV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(PickupTypeV2::new_v2_0()));
+
         m
     };
 }

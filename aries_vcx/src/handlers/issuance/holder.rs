@@ -96,6 +96,7 @@ impl Holder {
 
     pub async fn prepare_credential_request(
         &mut self,
+        wallet: &impl BaseWallet,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
         my_pw_did: String,
@@ -103,7 +104,7 @@ impl Holder {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .prepare_credential_request(ledger, anoncreds, my_pw_did)
+            .prepare_credential_request(wallet, ledger, anoncreds, my_pw_did)
             .await?;
         match self.get_state() {
             HolderState::Failed => Ok(self.get_problem_report()?.into()),
@@ -141,6 +142,7 @@ impl Holder {
 
     pub async fn process_credential(
         &mut self,
+        wallet: &impl BaseWallet,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
         credential: IssueCredentialV1,
@@ -148,7 +150,7 @@ impl Holder {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .receive_credential(ledger, anoncreds, credential)
+            .receive_credential(wallet, ledger, anoncreds, credential)
             .await?;
         Ok(())
     }
@@ -207,22 +209,31 @@ impl Holder {
 
     pub async fn is_revoked(
         &self,
+        wallet: &impl BaseWallet,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
     ) -> VcxResult<bool> {
-        self.holder_sm.is_revoked(ledger, anoncreds).await
+        self.holder_sm.is_revoked(wallet, ledger, anoncreds).await
     }
 
-    pub async fn delete_credential(&self, anoncreds: &impl BaseAnonCreds) -> VcxResult<()> {
-        self.holder_sm.delete_credential(anoncreds).await
+    pub async fn delete_credential(
+        &self,
+        wallet: &impl BaseWallet,
+        anoncreds: &impl BaseAnonCreds,
+    ) -> VcxResult<()> {
+        self.holder_sm.delete_credential(wallet, anoncreds).await
     }
 
     pub fn get_credential_status(&self) -> VcxResult<u32> {
         Ok(self.holder_sm.credential_status())
     }
 
-    pub async fn get_cred_rev_id(&self, anoncreds: &impl BaseAnonCreds) -> VcxResult<String> {
-        get_cred_rev_id(anoncreds, &self.get_cred_id()?).await
+    pub async fn get_cred_rev_id(
+        &self,
+        wallet: &impl BaseWallet,
+        anoncreds: &impl BaseAnonCreds,
+    ) -> VcxResult<String> {
+        get_cred_rev_id(wallet, anoncreds, &self.get_cred_id()?).await
     }
 
     pub async fn handle_revocation_notification(
@@ -238,7 +249,7 @@ impl Holder {
             // TODO: Store to remember notification was received along with details
             RevocationNotificationReceiver::build(
                 self.get_rev_reg_id()?,
-                self.get_cred_rev_id(anoncreds).await?,
+                self.get_cred_rev_id(wallet, anoncreds).await?,
             )
             .handle_revocation_notification(notification, send_message)
             .await?;
@@ -257,6 +268,7 @@ impl Holder {
 
     pub async fn process_aries_msg(
         &mut self,
+        wallet: &impl BaseWallet,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
         message: AriesMessage,
@@ -270,7 +282,7 @@ impl Holder {
             )) => {
                 self.holder_sm
                     .clone()
-                    .receive_credential(ledger, anoncreds, credential)
+                    .receive_credential(wallet, ledger, anoncreds, credential)
                     .await?
             }
             // TODO: What about credential issuance problem report?

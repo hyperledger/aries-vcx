@@ -2,8 +2,9 @@ use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
     common::primitives::credential_definition::{CredentialDef, CredentialDefConfig},
-    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
+    utils::devsetup::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
 };
+use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
 
 use crate::{
     error::*,
@@ -11,22 +12,34 @@ use crate::{
 };
 
 pub struct ServiceCredentialDefinitions {
-    profile: Arc<ModularLibsProfile>,
+    ledger_read: Arc<DefaultIndyLedgerRead>,
+    ledger_write: Arc<DefaultIndyLedgerWrite>,
+    anoncreds: IndyCredxAnonCreds,
+    wallet: Arc<IndySdkWallet>,
     cred_defs: ObjectCache<CredentialDef>,
 }
 
 impl ServiceCredentialDefinitions {
-    pub fn new(profile: Arc<ModularLibsProfile>) -> Self {
+    pub fn new(
+        ledger_read: Arc<DefaultIndyLedgerRead>,
+        ledger_write: Arc<DefaultIndyLedgerWrite>,
+        anoncreds: IndyCredxAnonCreds,
+        wallet: Arc<IndySdkWallet>,
+    ) -> Self {
         Self {
-            profile,
             cred_defs: ObjectCache::new("cred-defs"),
+            ledger_read,
+            ledger_write,
+            anoncreds,
+            wallet,
         }
     }
 
     pub async fn create_cred_def(&self, config: CredentialDefConfig) -> AgentResult<String> {
         let cd = CredentialDef::create(
-            self.profile.ledger_read(),
-            self.profile.anoncreds(),
+            self.wallet.as_ref(),
+            self.ledger_read.as_ref(),
+            &self.anoncreds,
             "".to_string(),
             config,
             true,
@@ -38,7 +51,11 @@ impl ServiceCredentialDefinitions {
     pub async fn publish_cred_def(&self, thread_id: &str) -> AgentResult<()> {
         let cred_def = self.cred_defs.get(thread_id)?;
         let cred_def = cred_def
-            .publish_cred_def(self.profile.ledger_read(), self.profile.ledger_write())
+            .publish_cred_def(
+                self.wallet.as_ref(),
+                self.ledger_read.as_ref(),
+                self.ledger_write.as_ref(),
+            )
             .await?;
         self.cred_defs.insert(thread_id, cred_def)?;
         Ok(())

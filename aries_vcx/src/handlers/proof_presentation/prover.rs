@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+    wallet::base_wallet::BaseWallet,
 };
 use chrono::Utc;
 use messages::{
@@ -73,12 +74,13 @@ impl Prover {
 
     pub async fn retrieve_credentials(
         &self,
+        wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
     ) -> VcxResult<RetrievedCredentials> {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
         let json_retrieved_credentials = anoncreds
-            .prover_get_credentials_for_proof_req(&presentation_request)
+            .prover_get_credentials_for_proof_req(wallet, &presentation_request)
             .await?;
         trace!(
             "Prover::retrieve_credentials >>> presentation_request: {presentation_request}, \
@@ -89,6 +91,7 @@ impl Prover {
 
     pub async fn generate_presentation(
         &mut self,
+        wallet: &impl BaseWallet,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
         credentials: SelectedCredentials,
@@ -102,7 +105,7 @@ impl Prover {
         self.prover_sm = self
             .prover_sm
             .clone()
-            .generate_presentation(ledger, anoncreds, credentials, self_attested_attrs)
+            .generate_presentation(wallet, ledger, anoncreds, credentials, self_attested_attrs)
             .await?;
         Ok(())
     }

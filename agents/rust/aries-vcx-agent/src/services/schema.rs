@@ -2,9 +2,12 @@ use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
     common::primitives::credential_schema::Schema,
-    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
+    utils::devsetup::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
 };
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_core::{
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+    wallet::indy::IndySdkWallet,
+};
 
 use crate::{
     error::*,
@@ -12,17 +15,29 @@ use crate::{
 };
 
 pub struct ServiceSchemas {
-    profile: Arc<ModularLibsProfile>,
+    ledger_read: Arc<DefaultIndyLedgerRead>,
+    ledger_write: Arc<DefaultIndyLedgerWrite>,
+    anoncreds: IndyCredxAnonCreds,
+    wallet: Arc<IndySdkWallet>,
     issuer_did: String,
     schemas: ObjectCache<Schema>,
 }
 
 impl ServiceSchemas {
-    pub fn new(profile: Arc<ModularLibsProfile>, issuer_did: String) -> Self {
+    pub fn new(
+        ledger_read: Arc<DefaultIndyLedgerRead>,
+        ledger_write: Arc<DefaultIndyLedgerWrite>,
+        anoncreds: IndyCredxAnonCreds,
+        wallet: Arc<IndySdkWallet>,
+        issuer_did: String,
+    ) -> Self {
         Self {
-            profile,
             issuer_did,
             schemas: ObjectCache::new("schemas"),
+            ledger_read,
+            ledger_write,
+            anoncreds,
+            wallet,
         }
     }
 
@@ -33,7 +48,7 @@ impl ServiceSchemas {
         attributes: &Vec<String>,
     ) -> AgentResult<String> {
         let schema = Schema::create(
-            self.profile.anoncreds(),
+            &self.anoncreds,
             "",
             &self.issuer_did,
             name,
@@ -46,13 +61,15 @@ impl ServiceSchemas {
 
     pub async fn publish_schema(&self, thread_id: &str) -> AgentResult<()> {
         let schema = self.schemas.get(thread_id)?;
-        let schema = schema.publish(self.profile.ledger_write()).await?;
+        let schema = schema
+            .publish(self.wallet.as_ref(), self.ledger_write.as_ref())
+            .await?;
         self.schemas.insert(thread_id, schema)?;
         Ok(())
     }
 
     pub async fn schema_json(&self, thread_id: &str) -> AgentResult<String> {
-        let ledger = self.profile.ledger_read();
+        let ledger = self.ledger_read.as_ref();
         Ok(ledger.get_schema(thread_id, None).await?)
     }
 

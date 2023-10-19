@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use aries_vcx::{
     common::proofs::proof_request::PresentationRequestData,
-    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
     handlers::proof_presentation::verifier::Verifier,
     messages::{
         msg_fields::protocols::present_proof::v1::{
@@ -16,7 +15,9 @@ use aries_vcx::{
         },
         SendClosure,
     },
+    utils::devsetup::DefaultIndyLedgerRead,
 };
+use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
 
 use super::connection::ServiceConnections;
 use crate::{
@@ -41,20 +42,26 @@ impl VerifierWrapper {
 }
 
 pub struct ServiceVerifier {
-    profile: Arc<ModularLibsProfile>,
+    ledger_read: Arc<DefaultIndyLedgerRead>,
+    anoncreds: IndyCredxAnonCreds,
+    wallet: Arc<IndySdkWallet>,
     verifiers: ObjectCache<VerifierWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceVerifier {
     pub fn new(
-        profile: Arc<ModularLibsProfile>,
+        ledger_read: Arc<DefaultIndyLedgerRead>,
+        anoncreds: IndyCredxAnonCreds,
+        wallet: Arc<IndySdkWallet>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
-            profile,
             service_connections,
             verifiers: ObjectCache::new("verifiers"),
+            ledger_read,
+            anoncreds,
+            wallet,
         }
     }
 
@@ -71,7 +78,7 @@ impl ServiceVerifier {
             Verifier::create_from_request("".to_string(), &request)?
         };
 
-        let wallet = self.profile.wallet();
+        let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
@@ -103,18 +110,14 @@ impl ServiceVerifier {
             connection_id,
         } = self.verifiers.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        let wallet = self.profile.wallet();
+        let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
         });
 
         let message = verifier
-            .verify_presentation(
-                self.profile.ledger_read(),
-                self.profile.anoncreds(),
-                presentation,
-            )
+            .verify_presentation(self.ledger_read.as_ref(), &self.anoncreds, presentation)
             .await?;
         send_closure(message).await?;
         self.verifiers

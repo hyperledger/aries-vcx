@@ -1,7 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
 use aries_vcx::{
-    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
     handlers::{
         proof_presentation::{prover::Prover, types::SelectedCredentials},
         util::PresentationProposalData,
@@ -13,7 +12,9 @@ use aries_vcx::{
         AriesMessage,
     },
     protocols::{proof_presentation::prover::state_machine::ProverState, SendClosure},
+    utils::devsetup::DefaultIndyLedgerRead,
 };
+use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
 use serde_json::Value;
 
 use super::connection::ServiceConnections;
@@ -39,20 +40,26 @@ impl ProverWrapper {
 }
 
 pub struct ServiceProver {
-    profile: Arc<ModularLibsProfile>,
+    ledger_read: Arc<DefaultIndyLedgerRead>,
+    anoncreds: IndyCredxAnonCreds,
+    wallet: Arc<IndySdkWallet>,
     provers: ObjectCache<ProverWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceProver {
     pub fn new(
-        profile: Arc<ModularLibsProfile>,
+        ledger_read: Arc<DefaultIndyLedgerRead>,
+        anoncreds: IndyCredxAnonCreds,
+        wallet: Arc<IndySdkWallet>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
-            profile,
             service_connections,
             provers: ObjectCache::new("provers"),
+            ledger_read,
+            anoncreds,
+            wallet,
         }
     }
 
@@ -72,7 +79,7 @@ impl ServiceProver {
         tails_dir: Option<&str>,
     ) -> AgentResult<SelectedCredentials> {
         let credentials = prover
-            .retrieve_credentials(self.profile.anoncreds())
+            .retrieve_credentials(self.wallet.as_ref(), &self.anoncreds)
             .await?;
 
         let mut res_credentials = SelectedCredentials::default();
@@ -109,7 +116,7 @@ impl ServiceProver {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut prover = Prover::create("")?;
 
-        let wallet = self.profile.wallet();
+        let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
@@ -145,14 +152,15 @@ impl ServiceProver {
             .await?;
         prover
             .generate_presentation(
-                self.profile.ledger_read(),
-                self.profile.anoncreds(),
+                self.wallet.as_ref(),
+                self.ledger_read.as_ref(),
+                &self.anoncreds,
                 credentials,
                 HashMap::new(),
             )
             .await?;
 
-        let wallet = self.profile.wallet();
+        let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })

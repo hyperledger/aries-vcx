@@ -2,6 +2,7 @@ use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+    wallet::base_wallet::BaseWallet,
 };
 
 use crate::{
@@ -93,6 +94,7 @@ async fn _try_get_cred_def_from_ledger(
 }
 impl CredentialDef {
     pub async fn create(
+        wallet: &impl BaseWallet,
         ledger_read: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
         source_id: String,
@@ -113,6 +115,7 @@ impl CredentialDef {
             .get_schema(&schema_id, Some(&issuer_did))
             .await?;
         let (cred_def_id, cred_def_json) = generate_cred_def(
+            wallet,
             anoncreds,
             &issuer_did,
             &schema_json,
@@ -147,6 +150,7 @@ impl CredentialDef {
 
     pub async fn publish_cred_def(
         self,
+        wallet: &impl BaseWallet,
         ledger_read: &impl AnoncredsLedgerRead,
         ledger_write: &impl AnoncredsLedgerWrite,
     ) -> VcxResult<Self> {
@@ -167,7 +171,7 @@ impl CredentialDef {
             ));
         }
         ledger_write
-            .publish_cred_def(&self.cred_def_json, &self.issuer_did)
+            .publish_cred_def(wallet, &self.cred_def_json, &self.issuer_did)
             .await?;
         Ok(Self {
             state: PublicEntityStateType::Published,
@@ -230,6 +234,7 @@ impl CredentialDef {
 }
 
 pub async fn generate_cred_def(
+    wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
     issuer_did: &str,
     schema_json: &str,
@@ -252,6 +257,7 @@ pub async fn generate_cred_def(
 
     anoncreds
         .issuer_create_and_store_credential_def(
+            wallet,
             issuer_did,
             schema_json,
             tag,
@@ -285,22 +291,24 @@ pub mod integration_tests {
     async fn test_pool_create_cred_def_real() {
         run_setup!(|setup| async move {
             let schema = create_and_write_test_schema(
-                setup.profile.anoncreds(),
-                setup.profile.ledger_write(),
+                &setup.wallet,
+                &setup.anoncreds,
+                &setup.ledger_write,
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
 
-            let ledger_read = setup.profile.ledger_read();
-            let ledger_write = setup.profile.ledger_write();
+            let ledger_read = setup.ledger_read;
+            let ledger_write = &setup.ledger_write;
             let schema_json = ledger_read
                 .get_schema(&schema.schema_id, None)
                 .await
                 .unwrap();
 
             let (cred_def_id, cred_def_json_local) = generate_cred_def(
-                setup.profile.anoncreds(),
+                &setup.wallet,
+                &setup.anoncreds,
                 &setup.institution_did,
                 &schema_json,
                 "tag_1",
@@ -311,7 +319,7 @@ pub mod integration_tests {
             .unwrap();
 
             ledger_write
-                .publish_cred_def(&cred_def_json_local, &setup.institution_did)
+                .publish_cred_def(&setup.wallet, &cred_def_json_local, &setup.institution_did)
                 .await
                 .unwrap();
 
@@ -333,21 +341,23 @@ pub mod integration_tests {
     async fn test_pool_create_rev_reg_def() {
         run_setup!(|setup| async move {
             let schema = create_and_write_test_schema(
-                setup.profile.anoncreds(),
-                setup.profile.ledger_write(),
+                &setup.wallet,
+                &setup.anoncreds,
+                &setup.ledger_write,
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let ledger_read = setup.profile.ledger_read();
-            let ledger_write = setup.profile.ledger_write();
+            let ledger_read = &setup.ledger_read;
+            let ledger_write = &setup.ledger_write;
             let schema_json = ledger_read
                 .get_schema(&schema.schema_id, None)
                 .await
                 .unwrap();
 
             let (cred_def_id, cred_def_json) = generate_cred_def(
-                setup.profile.anoncreds(),
+                &setup.wallet,
+                &setup.anoncreds,
                 &setup.institution_did,
                 &schema_json,
                 "tag_1",
@@ -357,14 +367,15 @@ pub mod integration_tests {
             .await
             .unwrap();
             ledger_write
-                .publish_cred_def(&cred_def_json, &setup.institution_did)
+                .publish_cred_def(&setup.wallet, &cred_def_json, &setup.institution_did)
                 .await
                 .unwrap();
 
             let path = get_temp_dir_path();
 
             let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) = generate_rev_reg(
-                setup.profile.anoncreds(),
+                &setup.wallet,
+                &setup.anoncreds,
                 &setup.institution_did,
                 &cred_def_id,
                 path.to_str().unwrap(),
@@ -374,11 +385,20 @@ pub mod integration_tests {
             .await
             .unwrap();
             ledger_write
-                .publish_rev_reg_def(&json!(rev_reg_def_json).to_string(), &setup.institution_did)
+                .publish_rev_reg_def(
+                    &setup.wallet,
+                    &json!(rev_reg_def_json).to_string(),
+                    &setup.institution_did,
+                )
                 .await
                 .unwrap();
             ledger_write
-                .publish_rev_reg_delta(&rev_reg_def_id, &rev_reg_entry_json, &setup.institution_did)
+                .publish_rev_reg_delta(
+                    &setup.wallet,
+                    &rev_reg_def_id,
+                    &rev_reg_entry_json,
+                    &setup.institution_did,
+                )
                 .await
                 .unwrap();
         })

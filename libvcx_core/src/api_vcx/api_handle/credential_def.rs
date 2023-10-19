@@ -4,7 +4,9 @@ use aries_vcx::common::primitives::credential_definition::{
 
 use crate::{
     api_vcx::{
-        api_global::profile::{get_main_anoncreds, get_main_ledger_read, get_main_ledger_write},
+        api_global::profile::{
+            get_main_anoncreds, get_main_ledger_read, get_main_ledger_write, get_main_wallet,
+        },
         api_handle::object_cache::ObjectCache,
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -38,6 +40,7 @@ pub async fn create(
         })?;
 
     let cred_def = CredentialDef::create(
+        get_main_wallet()?.as_ref(),
         get_main_ledger_read()?.as_ref(),
         get_main_anoncreds()?.as_ref(),
         source_id,
@@ -54,6 +57,7 @@ pub async fn publish(handle: u32) -> LibvcxResult<()> {
     if !cd.was_published() {
         cd = cd
             .publish_cred_def(
+                get_main_wallet()?.as_ref(),
                 get_main_ledger_read()?.as_ref(),
                 get_main_ledger_write()?.as_ref(),
             )
