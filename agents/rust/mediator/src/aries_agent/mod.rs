@@ -40,6 +40,8 @@ pub struct Agent<T: BaseWallet, P: MediatorPersistence> {
     service: Option<AriesService>,
 }
 
+pub type ArcAgent<T, P> = Arc<Agent<T, P>>;
+
 pub struct AgentMaker<T: BaseWallet> {
     _type_wallet: PhantomData<T>,
 }
