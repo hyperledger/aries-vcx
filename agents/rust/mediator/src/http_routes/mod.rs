@@ -14,7 +14,7 @@ use log::info;
 use messages::{msg_fields::protocols::connection::Connection, AriesMessage};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use xum_test_server::{
+use mediation::{
     didcomm_types::{
         mediator_coord_structs::{MediateGrantData, MediatorCoordMsgEnum},
         PickupMsgEnum,
@@ -32,8 +32,8 @@ pub mod client;
 #[serde(untagged)]
 enum GeneralAriesMessage {
     AriesVCXSupported(AriesMessage),
-    XumPickup(xum_test_server::didcomm_types::PickupMsgEnum),
-    XumCoord(xum_test_server::didcomm_types::mediator_coord_structs::MediatorCoordMsgEnum),
+    XumPickup(mediation::didcomm_types::PickupMsgEnum),
+    XumCoord(mediation::didcomm_types::mediator_coord_structs::MediatorCoordMsgEnum),
 }
 pub fn unhandled_aries(message: impl Debug) -> String {
     format!("Don't know how to handle this message type {:#?}", message)
@@ -76,7 +76,7 @@ pub async fn handle_mediation_coord(
         });
         return Ok(coord_response);
     };
-    let Json(coord_response) = xum_test_server::routes::coordination::handle_coord_authenticated(
+    let Json(coord_response) = mediation::routes::coordination::handle_coord_authenticated(
         State(agent.get_persistence_ref()),
         Json(coord_msg),
         auth_pubkey,
@@ -86,7 +86,7 @@ pub async fn handle_mediation_coord(
     // match coord_msg {
     //     MediatorCoordMsgEnum::MediateRequest(request_data) => {
     //         let Json(response) =
-    // xum_test_server::routes::coordination::handle_coord(State(agent.get_persistence_ref()),
+    // mediation::routes::coordination::handle_coord(State(agent.get_persistence_ref()),
     // Json(coord_msg)).await;         todo!()
     //     },
     //     _ => Err(unhandled_aries(coord_msg)),
@@ -121,14 +121,14 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
         //     let service_endpoint = agent.get_service_ref().unwrap().service_endpoint;
         //     let routing_keys = agent.get_service_ref().unwrap().routing_keys;
 
-        //     xum_test_server::routes::coordination::handle_mediate_request(
+        //     mediation::routes::coordination::handle_mediate_request(
         //         agent.get_persistence_ref(),
         //         &unpacked
         //             .sender_verkey
         //             .ok_or("Can't register anon aries peer")?,
         //         did_doc,
         //         &unpacked.recipient_verkey,
-        //         xum_test_server::didcomm_types::mediator_coord_structs::MediateGrantData{
+        //         mediation::didcomm_types::mediator_coord_structs::MediateGrantData{
         // endpoint: service_endpoint.into(), routing_keys},     );
         //     todo!()
         } else {

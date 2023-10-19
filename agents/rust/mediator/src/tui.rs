@@ -15,7 +15,7 @@ use cursive::{
 use futures::executor::block_on;
 use log::info;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
-use xum_test_server::storage::MediatorPersistence;
+use mediation::storage::MediatorPersistence;
 
 use crate::{aries_agent::Agent, http_routes::client::handle_register};
 

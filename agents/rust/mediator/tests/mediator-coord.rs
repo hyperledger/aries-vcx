@@ -13,7 +13,7 @@ use mediator::{
 };
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
-use xum_test_server::{
+use mediation::{
     didcomm_types::mediator_coord_structs::{
         KeylistData, KeylistQueryData, KeylistUpdateItem, KeylistUpdateItemAction,
         KeylistUpdateRequestData, MediatorCoordMsgEnum,

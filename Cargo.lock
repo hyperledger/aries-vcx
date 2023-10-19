@@ -2858,6 +2858,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "mediation"
+version = "0.2.3"
+dependencies = [
+ "async-trait",
+ "axum",
+ "axum-macros",
+ "dotenvy",
+ "env_logger 0.10.0",
+ "futures",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sqlx",
+ "tokio",
+]
+
+[[package]]
 name = "mediator"
 version = "0.1.0"
 dependencies = [
@@ -2874,6 +2893,7 @@ dependencies = [
  "fast_qr",
  "futures",
  "log",
+ "mediation",
  "messages",
  "reqwest",
  "serde",
@@ -2884,7 +2904,6 @@ dependencies = [
  "tower-http",
  "url",
  "uuid 1.4.1",
- "xum-test-server",
 ]
 
 [[package]]
@@ -4328,6 +4347,7 @@ dependencies = [
  "sha2",
  "sqlx-core",
  "sqlx-mysql",
+ "sqlx-postgres",
  "sqlx-sqlite",
  "syn 1.0.109",
  "tempfile",
@@ -5493,24 +5513,6 @@ name = "xi-unicode"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a67300977d3dc3f8034dae89778f502b6ba20b269527b3223ba59c0cf393bb8a"
-
-[[package]]
-name = "xum-test-server"
-version = "0.2.3"
-source = "git+https://github.com/nain-F49FF806/axum-test-server.git?branch=aries-vcx-mediator-integration#08955e41201bc6a3bb4fb7dea96bd4a51823def3"
-dependencies = [
- "async-trait",
- "axum",
- "dotenvy",
- "env_logger 0.10.0",
- "futures",
- "log",
- "serde",
- "serde_json",
- "serde_with",
- "sqlx",
- "tokio",
-]
 
 [[package]]
 name = "zeroize"

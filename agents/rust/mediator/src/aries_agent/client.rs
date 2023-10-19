@@ -23,7 +23,7 @@ use messages::{
     },
     AriesMessage,
 };
-use xum_test_server::storage::MediatorPersistence;
+use mediation::storage::MediatorPersistence;
 
 // use super::transports::AriesTransport;
 // use diddoc_legacy::aries::service::AriesService;

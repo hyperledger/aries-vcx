@@ -23,7 +23,7 @@ use messages::{
     AriesMessage,
 };
 use serde_json::json;
-use xum_test_server::storage::{get_persistence, MediatorPersistence};
+use mediation::storage::{get_persistence, MediatorPersistence};
 
 use self::transports::AriesTransport;
 use crate::utils::{prelude::*, structs::VeriKey};
