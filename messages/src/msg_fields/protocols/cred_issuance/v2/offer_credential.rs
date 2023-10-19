@@ -3,11 +3,8 @@ use typed_builder::TypedBuilder;
 
 use super::CredentialPreviewV2;
 use crate::{
-    decorators::{
-        attachment::{Attachment, AttachmentFormatSpecifier},
-        thread::Thread,
-        timing::Timing,
-    },
+    decorators::{attachment::Attachment, thread::Thread, timing::Timing},
+    msg_fields::protocols::common::attachment_format_specifier::AttachmentFormatSpecifier,
     msg_parts::MsgParts,
 };
 

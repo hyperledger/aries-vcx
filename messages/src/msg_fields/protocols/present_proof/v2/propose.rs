@@ -2,11 +2,8 @@ use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
 use crate::{
-    decorators::{
-        attachment::{Attachment, OptionalIdAttachmentFormatSpecifier},
-        thread::Thread,
-        timing::Timing,
-    },
+    decorators::{attachment::Attachment, thread::Thread, timing::Timing},
+    msg_fields::protocols::common::attachment_format_specifier::OptionalIdAttachmentFormatSpecifier,
     msg_parts::MsgParts,
 };
 

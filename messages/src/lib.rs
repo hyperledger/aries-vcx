@@ -17,8 +17,8 @@ use derive_more::From;
 use misc::utils;
 use msg_fields::protocols::{
     cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
-    present_proof::{v2::PresentProofV2, PresentProof},
     pickup::Pickup,
+    present_proof::{v2::PresentProofV2, PresentProof},
 };
 use msg_types::{
     cred_issuance::CredentialIssuanceType, present_proof::PresentProofType,

@@ -1,7 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use shared_vcx::maybe_known::MaybeKnown;
 use typed_builder::TypedBuilder;
 use url::Url;
 
@@ -57,22 +56,6 @@ pub enum AttachmentType {
     Json(Value),
     // An URL list
     Links(Vec<Url>),
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, TypedBuilder)]
-#[serde(rename_all = "snake_case")]
-pub struct AttachmentFormatSpecifier<F> {
-    pub attach_id: String,
-    pub format: MaybeKnown<F>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, TypedBuilder)]
-#[serde(rename_all = "snake_case")]
-pub struct OptionalIdAttachmentFormatSpecifier<F> {
-    #[builder(default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub attach_id: Option<String>,
-    pub format: MaybeKnown<F>,
 }
 
 #[cfg(test)]
