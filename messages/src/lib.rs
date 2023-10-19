@@ -15,8 +15,9 @@ pub mod msg_types;
 
 use derive_more::From;
 use misc::utils;
-use msg_fields::protocols::cred_issuance::{
-    v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance,
+use msg_fields::protocols::{
+    cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
+    pickup::Pickup,
 };
 use msg_types::{
     cred_issuance::CredentialIssuanceType, report_problem::ReportProblemTypeV1_0,
@@ -65,6 +66,7 @@ pub enum AriesMessage {
     BasicMessage(BasicMessage),
     OutOfBand(OutOfBand),
     Notification(Notification),
+    Pickup(Pickup),
 }
 
 impl DelayedSerde for AriesMessage {
@@ -164,6 +166,9 @@ impl DelayedSerde for AriesMessage {
                 Notification::delayed_deserialize((msg_type, kind_str), deserializer)
                     .map(From::from)
             }
+            Protocol::PickupType(msg_type) => {
+                Pickup::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
+            }
         }
     }
 
@@ -184,6 +189,7 @@ impl DelayedSerde for AriesMessage {
             Self::BasicMessage(v) => MsgWithType::from(v).serialize(serializer),
             Self::OutOfBand(v) => v.delayed_serialize(serializer),
             Self::Notification(v) => v.delayed_serialize(serializer),
+            Self::Pickup(v) => v.delayed_serialize(serializer),
         }
     }
 }
