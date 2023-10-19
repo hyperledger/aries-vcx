@@ -2,6 +2,7 @@ use std::fmt;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+    wallet::base_wallet::BaseWallet,
 };
 use chrono::Utc;
 use messages::{
@@ -205,6 +206,7 @@ impl HolderSM {
 
     pub async fn prepare_credential_request<'a>(
         self,
+        wallet: &impl BaseWallet,
         ledger: &'a impl AnoncredsLedgerRead,
         anoncreds: &'a impl BaseAnonCreds,
         my_pw_did: String,
@@ -213,6 +215,7 @@ impl HolderSM {
         let state = match self.state {
             HolderFullState::OfferReceived(state_data) => {
                 match build_credential_request_msg(
+                    wallet,
                     ledger,
                     anoncreds,
                     self.thread_id.clone(),
@@ -264,6 +267,7 @@ impl HolderSM {
 
     pub async fn receive_credential<'a>(
         self,
+        wallet: &'a impl BaseWallet,
         ledger: &'a impl AnoncredsLedgerRead,
         anoncreds: &'a impl BaseAnonCreds,
         credential: IssueCredentialV1,
@@ -272,6 +276,7 @@ impl HolderSM {
         let state = match self.state {
             HolderFullState::RequestSet(state_data) => {
                 match _store_credential(
+                    wallet,
                     ledger,
                     anoncreds,
                     &credential,
@@ -434,13 +439,14 @@ impl HolderSM {
 
     pub async fn is_revoked(
         &self,
+        wallet: &impl BaseWallet,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
     ) -> VcxResult<bool> {
         if self.is_revokable(ledger).await? {
             let rev_reg_id = self.get_rev_reg_id()?;
             let cred_id = self.get_cred_id()?;
-            let rev_id = get_cred_rev_id(anoncreds, &cred_id).await?;
+            let rev_id = get_cred_rev_id(wallet, anoncreds, &cred_id).await?;
             is_cred_revoked(ledger, &rev_reg_id, &rev_id).await
         } else {
             Err(AriesVcxError::from_msg(
@@ -450,7 +456,11 @@ impl HolderSM {
         }
     }
 
-    pub async fn delete_credential(&self, anoncreds: &impl BaseAnonCreds) -> VcxResult<()> {
+    pub async fn delete_credential(
+        &self,
+        wallet: &impl BaseWallet,
+        anoncreds: &impl BaseAnonCreds,
+    ) -> VcxResult<()> {
         trace!("Holder::delete_credential");
 
         match self.state {
@@ -460,7 +470,7 @@ impl HolderSM {
                     "Cannot get credential: credential id not found",
                 ))?;
                 anoncreds
-                    .prover_delete_credential(&cred_id)
+                    .prover_delete_credential(wallet, &cred_id)
                     .await
                     .map_err(|err| err.into())
             }
@@ -532,6 +542,7 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
 }
 
 async fn _store_credential(
+    wallet: &impl BaseWallet,
     ledger: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
     credential: &IssueCredentialV1,
@@ -557,6 +568,7 @@ async fn _store_credential(
 
     let cred_id = anoncreds
         .prover_store_credential(
+            wallet,
             None,
             req_meta,
             &credential_json,
@@ -568,6 +580,7 @@ async fn _store_credential(
 }
 
 pub async fn create_anoncreds_credential_request(
+    wallet: &impl BaseWallet,
     ledger: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
     cred_def_id: &str,
@@ -578,7 +591,13 @@ pub async fn create_anoncreds_credential_request(
 
     let master_secret_id = settings::DEFAULT_LINK_SECRET_ALIAS;
     anoncreds
-        .prover_create_credential_req(prover_did, cred_offer, &cred_def_json, master_secret_id)
+        .prover_create_credential_req(
+            wallet,
+            prover_did,
+            cred_offer,
+            &cred_def_json,
+            master_secret_id,
+        )
         .await
         .map_err(|err| err.extend("Cannot create credential request"))
         .map(|(s1, s2)| (s1, s2, cred_def_id.to_string(), cred_def_json))
@@ -586,6 +605,7 @@ pub async fn create_anoncreds_credential_request(
 }
 
 async fn build_credential_request_msg(
+    wallet: &impl BaseWallet,
     ledger: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
     thread_id: String,
@@ -603,6 +623,7 @@ async fn build_credential_request_msg(
     trace!("Parsed cred offer attachment: {}", cred_offer);
     let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
     let (req, req_meta, _cred_def_id, cred_def_json) = create_anoncreds_credential_request(
+        wallet,
         ledger,
         anoncreds,
         &cred_def_id,

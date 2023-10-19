@@ -2,6 +2,7 @@ use std::{collections::HashMap, fmt};
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+    wallet::base_wallet::BaseWallet,
 };
 use chrono::Utc;
 use messages::{
@@ -229,6 +230,7 @@ impl ProverSM {
 
     pub async fn generate_presentation(
         self,
+        wallet: &impl BaseWallet,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
         credentials: SelectedCredentials,
@@ -237,7 +239,13 @@ impl ProverSM {
         let state = match self.state {
             ProverFullState::PresentationRequestReceived(state) => {
                 match state
-                    .build_presentation(ledger, anoncreds, &credentials, &self_attested_attrs)
+                    .build_presentation(
+                        wallet,
+                        ledger,
+                        anoncreds,
+                        &credentials,
+                        &self_attested_attrs,
+                    )
                     .await
                 {
                     Ok(presentation) => {

@@ -1,6 +1,7 @@
 use std::{
     collections::{hash_map::RandomState, HashMap},
     fmt::{Debug, Formatter},
+    sync::Arc,
 };
 
 use async_trait::async_trait;
@@ -14,14 +15,15 @@ use tokio::sync::oneshot;
 use super::RequestSubmitter;
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
+#[derive(Clone)]
 pub struct IndyVdrLedgerPool {
-    pub(self) runner: Option<PoolRunner>,
+    runner: Arc<PoolRunner>,
 }
 
 impl IndyVdrLedgerPool {
     pub fn new_from_runner(runner: PoolRunner) -> Self {
         IndyVdrLedgerPool {
-            runner: Some(runner),
+            runner: Arc::new(runner),
         }
     }
 
@@ -51,7 +53,7 @@ impl IndyVdrLedgerPool {
         .into_runner()?;
 
         Ok(IndyVdrLedgerPool {
-            runner: Some(runner),
+            runner: Arc::new(runner),
         })
     }
 }
@@ -64,6 +66,7 @@ impl Debug for IndyVdrLedgerPool {
     }
 }
 
+#[derive(Clone)]
 pub struct IndyVdrSubmitter {
     pool: IndyVdrLedgerPool,
 }
@@ -87,23 +90,13 @@ impl RequestSubmitter for IndyVdrSubmitter {
             VdrError,
         >;
         let (sender, recv) = oneshot::channel::<VdrSendRequestResult>();
-        self.pool
-            .runner
-            .as_ref()
-            .ok_or(
-                // should not happen - strictly for unit testing
-                AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::NoPoolOpen,
-                    "IndyVdrLedgerPool runner was not provided",
-                ),
-            )?
-            .send_request(
-                request,
-                Box::new(move |result| {
-                    // unable to handle a failure from `send` here
-                    sender.send(result).ok();
-                }),
-            )?;
+        self.pool.runner.send_request(
+            request,
+            Box::new(move |result| {
+                // unable to handle a failure from `send` here
+                sender.send(result).ok();
+            }),
+        )?;
 
         let send_req_result: VdrSendRequestResult = recv
             .await

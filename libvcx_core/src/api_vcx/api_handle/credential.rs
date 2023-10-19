@@ -17,7 +17,7 @@ use serde_json;
 
 use crate::{
     api_vcx::{
-        api_global::profile::{get_main_anoncreds, get_main_ledger_read},
+        api_global::profile::{get_main_anoncreds, get_main_ledger_read, get_main_wallet},
         api_handle::{
             mediated_connection::{self, send_message},
             object_cache::ObjectCache,
@@ -163,6 +163,7 @@ pub async fn update_state(
         Some(aries_msg) => {
             credential
                 .process_aries_msg(
+                    get_main_wallet()?.as_ref(),
                     get_main_ledger_read()?.as_ref(),
                     get_main_anoncreds()?.as_ref(),
                     aries_msg.clone(),
@@ -236,7 +237,7 @@ pub async fn delete_credential(handle: u32) -> LibvcxResult<()> {
     );
     let credential = HANDLE_MAP.get_cloned(handle)?;
     credential
-        .delete_credential(get_main_anoncreds()?.as_ref())
+        .delete_credential(get_main_wallet()?.as_ref(), get_main_anoncreds()?.as_ref())
         .await?;
     HANDLE_MAP.release(handle)
 }
@@ -267,6 +268,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
     let msg_response = credential
         .prepare_credential_request(
+            get_main_wallet()?.as_ref(),
             get_main_ledger_read()?.as_ref(),
             get_main_anoncreds()?.as_ref(),
             my_pw_did,
@@ -414,7 +416,7 @@ pub mod tests {
         messages::msg_fields::protocols::cred_issuance::v1::issue_credential::IssueCredentialV1,
         protocols::issuance::holder::state_machine::HolderState,
         utils::{
-            devsetup::{SetupDefaults, SetupMocks},
+            devsetup::SetupMocks,
             mockdata::{
                 mockdata_credex,
                 mockdata_credex::{
@@ -444,7 +446,7 @@ pub mod tests {
 
     #[test]
     fn test_vcx_credential_release() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
         let handle = credential_create_with_offer(
             "test_credential_create_with_offer",
             ARIES_CREDENTIAL_OFFER,
@@ -459,7 +461,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_credential_create_with_offer() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let handle = credential_create_with_offer(
             "test_credential_create_with_offer",
@@ -471,7 +473,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_credential_create_with_offer_with_json_attach() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let handle = credential_create_with_offer(
             "test_credential_create_with_offer",
@@ -483,7 +485,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_credential_create_with_bad_offer() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let err = credential_create_with_offer(
             "test_credential_create_with_bad_offer",
@@ -495,7 +497,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_credential_serialize_deserialize() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let handle1 = credential_create_with_offer(
             "test_credential_serialize_deserialize",

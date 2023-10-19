@@ -283,20 +283,20 @@ where
 
 #[cfg(test)]
 mod tests {
-    use aries_vcx::utils::devsetup::SetupDefaults;
+    use aries_vcx::utils::devsetup::SetupMocks;
 
     use crate::api_vcx::api_handle::object_cache::ObjectCache;
 
     #[test]
     fn create_test() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let _c: ObjectCache<u32> = ObjectCache::new("cache0-u32");
     }
 
     #[test]
     fn get_closure() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let test: ObjectCache<u32> = ObjectCache::new("cache1-u32");
         let handle = test.add(2222).unwrap();
@@ -306,7 +306,7 @@ mod tests {
 
     #[test]
     fn to_string_test() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let test: ObjectCache<u32> = ObjectCache::new("cache2-u32");
         let handle = test.add(2222).unwrap();
@@ -317,7 +317,7 @@ mod tests {
 
     #[test]
     fn mut_object_test() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let test: ObjectCache<String> = ObjectCache::new("cache3-string");
         let handle = test.add(String::from("TEST")).unwrap();

@@ -290,13 +290,9 @@ pub mod pool_tests {
         run_setup!(|setup| async move {
             // empty vector
             assert_eq!(
-                build_rev_states_json(
-                    setup.profile.ledger_read(),
-                    setup.profile.anoncreds(),
-                    Vec::new().as_mut()
-                )
-                .await
-                .unwrap(),
+                build_rev_states_json(&setup.ledger_read, &setup.anoncreds, Vec::new().as_mut())
+                    .await
+                    .unwrap(),
                 "{}".to_string()
             );
 
@@ -314,13 +310,9 @@ pub mod pool_tests {
                 revealed: None,
             };
             assert_eq!(
-                build_rev_states_json(
-                    setup.profile.ledger_read(),
-                    setup.profile.anoncreds(),
-                    vec![cred1].as_mut()
-                )
-                .await
-                .unwrap(),
+                build_rev_states_json(&setup.ledger_read, &setup.anoncreds, vec![cred1].as_mut())
+                    .await
+                    .unwrap(),
                 "{}".to_string()
             );
         })
@@ -450,7 +442,7 @@ pub mod unit_tests {
 
     #[test]
     fn test_credential_def_identifiers() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let cred1 = CredInfoProver {
             referent: "height_1".to_string(),
@@ -549,7 +541,7 @@ pub mod unit_tests {
 
     #[test]
     fn test_credential_def_identifiers_failure() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         // No Creds
         assert_eq!(
@@ -727,7 +719,7 @@ pub mod unit_tests {
 
     #[test]
     fn test_get_credential_intervals_from_proof_req() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let proof_req = json!({
             "nonce": "123432421212",

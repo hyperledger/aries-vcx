@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
+use aries_vcx::utils::devsetup::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite};
+use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
 
 use crate::{
     agent::agent_config::AgentConfig,
@@ -14,7 +15,10 @@ use crate::{
 
 #[derive(Clone)]
 pub struct Agent {
-    pub(super) profile: Arc<ModularLibsProfile>,
+    pub(super) ledger_read: Arc<DefaultIndyLedgerRead>,
+    pub(super) ledger_write: Arc<DefaultIndyLedgerWrite>,
+    pub(super) anoncreds: IndyCredxAnonCreds,
+    pub(super) wallet: Arc<IndySdkWallet>,
     pub(super) config: AgentConfig,
     pub(super) connections: Arc<ServiceConnections>,
     pub(super) schemas: Arc<ServiceSchemas>,
@@ -27,8 +31,20 @@ pub struct Agent {
 }
 
 impl Agent {
-    pub fn profile(&self) -> &ModularLibsProfile {
-        &self.profile
+    pub fn ledger_read(&self) -> &DefaultIndyLedgerRead {
+        &self.ledger_read
+    }
+
+    pub fn ledger_write(&self) -> &DefaultIndyLedgerWrite {
+        &self.ledger_write
+    }
+
+    pub fn anoncreds(&self) -> &IndyCredxAnonCreds {
+        &self.anoncreds
+    }
+
+    pub fn wallet(&self) -> &IndySdkWallet {
+        &self.wallet
     }
 
     pub fn agent_config(&self) -> AgentConfig {

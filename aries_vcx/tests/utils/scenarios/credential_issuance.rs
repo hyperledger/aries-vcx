@@ -11,7 +11,6 @@ use aries_vcx::{
             create_and_write_test_schema,
         },
     },
-    core::profile::Profile,
     handlers::{
         issuance::{holder::Holder, issuer::Issuer},
         util::OfferInfo,
@@ -21,6 +20,13 @@ use aries_vcx::{
         mediated_connection::pairwise_info::PairwiseInfo,
     },
     utils::constants::TEST_TAILS_URL,
+};
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    ledger::base_ledger::{
+        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
+    },
+    wallet::base_wallet::BaseWallet,
 };
 use messages::msg_fields::protocols::{
     cred_issuance::v1::{
@@ -34,15 +40,15 @@ use serde_json::json;
 use super::{attr_names_address_list, create_credential_proposal, credential_data_address_1};
 use crate::utils::test_agent::TestAgent;
 
-pub async fn create_address_schema_creddef_revreg<P: Profile>(
-    profile: &P,
+pub async fn create_address_schema_creddef_revreg(
+    wallet: &impl BaseWallet,
+    ledger_read: &(impl IndyLedgerRead + AnoncredsLedgerRead),
+    ledger_write: &(impl IndyLedgerWrite + AnoncredsLedgerWrite),
+    anoncreds: &impl BaseAnonCreds,
     institution_did: &str,
 ) -> (Schema, CredentialDef, RevocationRegistry) {
-    let ledger_read = profile.ledger_read();
-    let ledger_write = profile.ledger_write();
-    let anoncreds = profile.anoncreds();
-
     let schema = create_and_write_test_schema(
+        wallet,
         anoncreds,
         ledger_write,
         institution_did,
@@ -50,6 +56,7 @@ pub async fn create_address_schema_creddef_revreg<P: Profile>(
     )
     .await;
     let cred_def = create_and_write_test_cred_def(
+        wallet,
         anoncreds,
         ledger_read,
         ledger_write,
@@ -59,6 +66,7 @@ pub async fn create_address_schema_creddef_revreg<P: Profile>(
     )
     .await;
     let rev_reg = create_and_publish_test_rev_reg(
+        wallet,
         anoncreds,
         ledger_write,
         institution_did,
@@ -83,8 +91,13 @@ pub fn create_issuer_from_proposal(proposal: ProposeCredentialV1) -> Issuer {
     issuer
 }
 
-pub async fn accept_credential_proposal<P: Profile>(
-    faber: &mut TestAgent<P>,
+pub async fn accept_credential_proposal(
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     issuer: &mut Issuer,
     cred_proposal: ProposeCredentialV1,
     rev_reg_id: Option<String>,
@@ -98,7 +111,8 @@ pub async fn accept_credential_proposal<P: Profile>(
     };
     issuer
         .build_credential_offer_msg(
-            faber.profile.anoncreds(),
+            &faber.wallet,
+            &faber.anoncreds,
             offer_info,
             Some("comment".into()),
         )
@@ -107,16 +121,22 @@ pub async fn accept_credential_proposal<P: Profile>(
     issuer.get_credential_offer().unwrap()
 }
 
-pub async fn accept_offer<P: Profile>(
-    alice: &mut TestAgent<P>,
+pub async fn accept_offer(
+    alice: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     cred_offer: OfferCredentialV1,
     holder: &mut Holder,
 ) -> RequestCredentialV1 {
     // TODO: Replace with message-specific handler
     holder
         .process_aries_msg(
-            alice.profile.ledger_read(),
-            alice.profile.anoncreds(),
+            &alice.wallet,
+            &alice.ledger_read,
+            &alice.anoncreds,
             cred_offer.into(),
         )
         .await
@@ -125,12 +145,10 @@ pub async fn accept_offer<P: Profile>(
     assert!(holder.get_offer().is_ok());
     holder
         .prepare_credential_request(
-            alice.profile.ledger_read(),
-            alice.profile.anoncreds(),
-            PairwiseInfo::create(alice.profile.wallet())
-                .await
-                .unwrap()
-                .pw_did,
+            &alice.wallet,
+            &alice.ledger_read,
+            &alice.anoncreds,
+            PairwiseInfo::create(&alice.wallet).await.unwrap().pw_did,
         )
         .await
         .unwrap();
@@ -138,16 +156,22 @@ pub async fn accept_offer<P: Profile>(
     holder.get_msg_credential_request().unwrap()
 }
 
-pub async fn decline_offer<P: Profile>(
-    alice: &mut TestAgent<P>,
+pub async fn decline_offer(
+    alice: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     cred_offer: OfferCredentialV1,
     holder: &mut Holder,
 ) -> ProblemReport {
     // TODO: Replace with message-specific handler
     holder
         .process_aries_msg(
-            alice.profile.ledger_read(),
-            alice.profile.anoncreds(),
+            &alice.wallet,
+            &alice.ledger_read,
+            &alice.anoncreds,
             cred_offer.into(),
         )
         .await
@@ -158,9 +182,19 @@ pub async fn decline_offer<P: Profile>(
     problem_report
 }
 
-pub async fn send_credential<P1: Profile, P2: Profile>(
-    alice: &mut TestAgent<P1>,
-    faber: &mut TestAgent<P2>,
+pub async fn send_credential(
+    alice: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     issuer_credential: &mut Issuer,
     holder_credential: &mut Holder,
     cred_request: RequestCredentialV1,
@@ -179,7 +213,7 @@ pub async fn send_credential<P1: Profile, P2: Profile>(
     assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
     issuer_credential
-        .build_credential(faber.profile.anoncreds())
+        .build_credential(&faber.wallet, &faber.anoncreds)
         .await
         .unwrap();
     let credential = issuer_credential.get_msg_issue_credential().unwrap();
@@ -188,15 +222,16 @@ pub async fn send_credential<P1: Profile, P2: Profile>(
     assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
     assert_eq!(
         holder_credential
-            .is_revokable(alice.profile.ledger_read())
+            .is_revokable(&alice.ledger_read)
             .await
             .unwrap(),
         revokable
     );
     holder_credential
         .process_credential(
-            alice.profile.ledger_read(),
-            alice.profile.anoncreds(),
+            &alice.wallet,
+            &alice.ledger_read,
+            &alice.anoncreds,
             credential,
         )
         .await
@@ -204,7 +239,7 @@ pub async fn send_credential<P1: Profile, P2: Profile>(
     assert_eq!(HolderState::Finished, holder_credential.get_state());
     assert_eq!(
         holder_credential
-            .is_revokable(alice.profile.ledger_read())
+            .is_revokable(&alice.ledger_read)
             .await
             .unwrap(),
         revokable
@@ -220,13 +255,28 @@ pub async fn send_credential<P1: Profile, P2: Profile>(
     }
 }
 
-pub async fn issue_address_credential<P1: Profile, P2: Profile>(
-    consumer: &mut TestAgent<P1>,
-    institution: &mut TestAgent<P2>,
+pub async fn issue_address_credential(
+    consumer: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    institution: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
 ) -> (Schema, CredentialDef, RevocationRegistry, Issuer) {
-    let (schema, cred_def, rev_reg) =
-        create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did)
-            .await;
+    let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+        &institution.wallet,
+        &institution.ledger_read,
+        &institution.ledger_write,
+        &institution.anoncreds,
+        &institution.institution_did,
+    )
+    .await;
     let issuer = exchange_credential(
         consumer,
         institution,
@@ -239,9 +289,19 @@ pub async fn issue_address_credential<P1: Profile, P2: Profile>(
     (schema, cred_def, rev_reg, issuer)
 }
 
-pub async fn exchange_credential<P1: Profile, P2: Profile>(
-    consumer: &mut TestAgent<P1>,
-    institution: &mut TestAgent<P2>,
+pub async fn exchange_credential(
+    consumer: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    institution: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     credential_data: String,
     cred_def: &CredentialDef,
     rev_reg: &RevocationRegistry,
@@ -262,15 +322,25 @@ pub async fn exchange_credential<P1: Profile, P2: Profile>(
     )
     .await;
     assert!(!holder_credential
-        .is_revoked(consumer.profile.ledger_read(), consumer.profile.anoncreds(),)
+        .is_revoked(&consumer.wallet, &consumer.ledger_read, &consumer.anoncreds)
         .await
         .unwrap());
     issuer
 }
 
-pub async fn exchange_credential_with_proposal<P1: Profile, P2: Profile>(
-    consumer: &mut TestAgent<P1>,
-    institution: &mut TestAgent<P2>,
+pub async fn exchange_credential_with_proposal(
+    consumer: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    institution: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     schema_id: &str,
     cred_def_id: &str,
     rev_reg_id: Option<String>,
@@ -301,8 +371,13 @@ pub async fn exchange_credential_with_proposal<P1: Profile, P2: Profile>(
     (holder, issuer)
 }
 
-async fn create_credential_offer<P: Profile>(
-    faber: &mut TestAgent<P>,
+async fn create_credential_offer(
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     cred_def: &CredentialDef,
     rev_reg: &RevocationRegistry,
     credential_json: &str,
@@ -317,7 +392,8 @@ async fn create_credential_offer<P: Profile>(
     let mut issuer = Issuer::create("1").unwrap();
     issuer
         .build_credential_offer_msg(
-            faber.profile.anoncreds(),
+            &faber.wallet,
+            &faber.anoncreds,
             offer_info,
             comment.map(String::from),
         )
@@ -326,20 +402,23 @@ async fn create_credential_offer<P: Profile>(
     issuer
 }
 
-async fn create_credential_request<P: Profile>(
-    alice: &mut TestAgent<P>,
+async fn create_credential_request(
+    alice: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     cred_offer: OfferCredentialV1,
 ) -> Holder {
     let mut holder = Holder::create_from_offer("TEST_CREDENTIAL", cred_offer).unwrap();
     assert_eq!(HolderState::OfferReceived, holder.get_state());
     holder
         .prepare_credential_request(
-            alice.profile.ledger_read(),
-            alice.profile.anoncreds(),
-            PairwiseInfo::create(alice.profile.wallet())
-                .await
-                .unwrap()
-                .pw_did,
+            &alice.wallet,
+            &alice.ledger_read,
+            &alice.anoncreds,
+            PairwiseInfo::create(&alice.wallet).await.unwrap().pw_did,
         )
         .await
         .unwrap();

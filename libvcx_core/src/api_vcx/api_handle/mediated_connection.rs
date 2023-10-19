@@ -538,10 +538,7 @@ pub mod test_utils {
 pub mod tests {
     use aries_vcx::{
         self,
-        utils::{
-            constants,
-            devsetup::{SetupEmpty, SetupMocks},
-        },
+        utils::{constants, devsetup::SetupMocks},
     };
     use serde_json::Value;
 
@@ -549,7 +546,7 @@ pub mod tests {
     use crate::api_vcx::VcxStateType;
 
     fn _setup() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupMocks::init();
     }
 
     fn _source_id() -> &'static str {
@@ -558,7 +555,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_get_state_fails() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupMocks::init();
 
         let state = get_state(1);
         assert_eq!(state, VcxStateType::VcxStateNone as u32);
@@ -566,7 +563,7 @@ pub mod tests {
 
     #[tokio::test]
     async fn test_get_string_fails() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupMocks::init();
 
         let rc = to_string(0);
         assert_eq!(rc.unwrap_err().kind(), LibvcxErrorKind::InvalidHandle);

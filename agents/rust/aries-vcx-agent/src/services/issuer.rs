@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
     handlers::{issuance::issuer::Issuer, util::OfferInfo},
     messages::{
         msg_fields::protocols::cred_issuance::v1::{
@@ -12,6 +11,7 @@ use aries_vcx::{
     },
     protocols::{issuance::issuer::state_machine::IssuerState, SendClosure},
 };
+use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
 
 use crate::{
     error::*,
@@ -36,20 +36,23 @@ impl IssuerWrapper {
 }
 
 pub struct ServiceCredentialsIssuer {
-    profile: Arc<ModularLibsProfile>,
+    anoncreds: IndyCredxAnonCreds,
+    wallet: Arc<IndySdkWallet>,
     creds_issuer: ObjectCache<IssuerWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceCredentialsIssuer {
     pub fn new(
-        profile: Arc<ModularLibsProfile>,
+        anoncreds: IndyCredxAnonCreds,
+        wallet: Arc<IndySdkWallet>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
-            profile,
             service_connections,
             creds_issuer: ObjectCache::new("creds-issuer"),
+            anoncreds,
+            wallet,
         }
     }
 
@@ -89,10 +92,10 @@ impl ServiceCredentialsIssuer {
         };
         let connection = self.service_connections.get_by_id(&connection_id)?;
         issuer
-            .build_credential_offer_msg(self.profile.anoncreds(), offer_info, None)
+            .build_credential_offer_msg(self.wallet.as_ref(), &self.anoncreds, offer_info, None)
             .await?;
 
-        let wallet = self.profile.wallet();
+        let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
@@ -143,13 +146,15 @@ impl ServiceCredentialsIssuer {
         } = self.creds_issuer.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
 
-        let wallet = self.profile.wallet();
+        let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
         });
 
-        issuer.build_credential(self.profile.anoncreds()).await?;
+        issuer
+            .build_credential(self.wallet.as_ref(), &self.anoncreds)
+            .await?;
         match issuer.get_state() {
             IssuerState::Failed => {
                 let problem_report = issuer.get_problem_report()?;

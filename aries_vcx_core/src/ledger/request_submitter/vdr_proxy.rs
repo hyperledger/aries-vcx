@@ -7,6 +7,7 @@ use indy_vdr_proxy_client::VdrProxyClient;
 use super::RequestSubmitter;
 use crate::errors::error::VcxCoreResult;
 
+#[derive(Clone)]
 pub struct VdrProxySubmitter {
     client: Arc<VdrProxyClient>,
 }
