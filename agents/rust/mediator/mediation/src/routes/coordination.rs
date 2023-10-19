@@ -57,7 +57,8 @@ pub async fn handle_mediate_request<T: MediatorPersistence>(
 
 pub async fn handle_keylist_query<T: MediatorPersistence>(
     storage: Arc<T>,
-    keylist_query_data: KeylistQueryData,
+    //todo: use the limits mentioned in the KeylistQueryData to modify response
+    _keylist_query_data: KeylistQueryData,
     auth_pubkey: &str
 ) -> Json<MediatorCoordMsgEnum> {
     let keylist_items: Vec<KeylistItem> = match storage.list_recipient_keys(auth_pubkey).await {
