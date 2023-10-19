@@ -6,7 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["client_http_api"]
+default = ["client"]
+# default = ["client_http_api"]
 client = []
 client_http_api = ["client"]
 client_tui = ["client", "cursive"]

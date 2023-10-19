@@ -12,7 +12,7 @@ async fn main() {
     agent
         .init_service(
             vec![],
-            format!("http://{endpoint_root}/aries").parse().unwrap(),
+            format!("http://{endpoint_root}/didcomm").parse().unwrap(),
         )
         .await
         .unwrap();
