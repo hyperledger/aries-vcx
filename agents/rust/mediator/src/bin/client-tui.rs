@@ -1,9 +1,20 @@
+#[cfg(feature = "client_tui")]
 use log::info;
 /// Aries Agent TUI
-use mediator::{aries_agent::AgentMaker, http_routes::tui};
+#[cfg(feature = "client_tui")]
+use mediator::{aries_agent::AgentMaker, tui};
 
+#[cfg(feature = "client_tui")]
 #[tokio::main]
 async fn main() {
+    fn setup_logging() {
+        let env = env_logger::Env::default().default_filter_or("info");
+        env_logger::init_from_env(env);
+    }
+
+    fn load_dot_env() {
+        let _ = dotenvy::dotenv();
+    }
     info!("TUI initializing!");
     load_dot_env();
     setup_logging();
@@ -11,11 +22,7 @@ async fn main() {
     tui::init_tui(agent).await;
 }
 
-fn setup_logging() {
-    let env = env_logger::Env::default().default_filter_or("info");
-    env_logger::init_from_env(env);
-}
-
-fn load_dot_env() {
-    let _ = dotenvy::dotenv();
+#[cfg(not(feature = "client_tui"))]
+fn main() {
+    print!("This is a placeholder binary. Please enable \"client_tui\" feature to to build the functional client_tui binary.")
 }

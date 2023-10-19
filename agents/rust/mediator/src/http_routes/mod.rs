@@ -26,7 +26,6 @@ use crate::{aries_agent::Agent, utils::string_from_std_error};
 type ArcAgent<T, P> = Arc<Agent<T, P>>;
 
 pub mod client;
-pub mod tui;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
