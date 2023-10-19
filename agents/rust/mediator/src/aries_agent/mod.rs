@@ -28,10 +28,10 @@ use xum_test_server::storage::{get_persistence, MediatorPersistence};
 use self::transports::AriesTransport;
 use crate::utils::{prelude::*, structs::VeriKey};
 
-pub mod transports;
-pub mod utils;
 #[cfg(any(test, feature = "client"))]
 pub mod client;
+pub mod transports;
+pub mod utils;
 
 #[derive(Clone)]
 pub struct Agent<T: BaseWallet, P: MediatorPersistence> {
