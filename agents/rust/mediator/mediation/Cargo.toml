@@ -9,9 +9,9 @@ path = "src/lib.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 default = ["mysql_db", "mediator_persistence_extras"]
-postgres_db=["sqlx/postgres"]
+# postgres_db=["sqlx/postgres"]
 mysql_db=["sqlx/mysql"]
-any_db=["sqlx/all-databases"]
+# any_db=["sqlx/all-databases"]
 mediator_persistence_extras = []
 
 [dependencies]
