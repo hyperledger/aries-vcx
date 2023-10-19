@@ -16,6 +16,7 @@ use aries_vcx::{
     utils::{encryption_envelope::EncryptionEnvelope, mockdata::profile::mock_ledger::MockLedger},
 };
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use mediation::storage::MediatorPersistence;
 use messages::{
     msg_fields::protocols::{
         connection::{response::Response, Connection},
@@ -23,7 +24,6 @@ use messages::{
     },
     AriesMessage,
 };
-use mediation::storage::MediatorPersistence;
 
 // use super::transports::AriesTransport;
 // use diddoc_legacy::aries::service::AriesService;

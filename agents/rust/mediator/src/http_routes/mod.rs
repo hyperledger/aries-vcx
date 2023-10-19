@@ -11,9 +11,6 @@ use axum::{
     Json, Router,
 };
 use log::info;
-use messages::{msg_fields::protocols::connection::Connection, AriesMessage};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use mediation::{
     didcomm_types::{
         mediator_coord_structs::{MediateGrantData, MediatorCoordMsgEnum},
@@ -21,6 +18,9 @@ use mediation::{
     },
     storage::MediatorPersistence,
 };
+use messages::{msg_fields::protocols::connection::Connection, AriesMessage};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::{aries_agent::Agent, utils::string_from_std_error};
 type ArcAgent<T, P> = Arc<Agent<T, P>>;

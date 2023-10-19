@@ -15,6 +15,7 @@ use aries_vcx_core::{
     WalletHandle,
 };
 use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
+use mediation::storage::{get_persistence, MediatorPersistence};
 use messages::{
     msg_fields::protocols::{
         connection::{request::Request, response::Response, Connection},
@@ -23,7 +24,6 @@ use messages::{
     AriesMessage,
 };
 use serde_json::json;
-use mediation::storage::{get_persistence, MediatorPersistence};
 
 use self::transports::AriesTransport;
 use crate::utils::{prelude::*, structs::VeriKey};

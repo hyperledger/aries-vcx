@@ -2,9 +2,9 @@ use std::collections::VecDeque;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use axum::routing::post;
+use mediation::storage::MediatorPersistence;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use serde_json::json;
-use mediation::storage::MediatorPersistence;
 
 use super::*;
 use crate::aries_agent::transports::AriesReqwest;

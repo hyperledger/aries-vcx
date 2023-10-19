@@ -4,6 +4,13 @@ use std::collections::VecDeque;
 use aries_vcx::protocols::connection::invitee::{states::completed::Completed, InviteeConnection};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use common::{prelude::*, test_setup::OneTimeInit};
+use mediation::{
+    didcomm_types::mediator_coord_structs::{
+        KeylistData, KeylistQueryData, KeylistUpdateItem, KeylistUpdateItemAction,
+        KeylistUpdateRequestData, MediatorCoordMsgEnum,
+    },
+    storage::MediatorPersistence,
+};
 use mediator::{
     aries_agent::{
         transports::{AriesReqwest, AriesTransport},
@@ -13,13 +20,6 @@ use mediator::{
 };
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
-use mediation::{
-    didcomm_types::mediator_coord_structs::{
-        KeylistData, KeylistQueryData, KeylistUpdateItem, KeylistUpdateItemAction,
-        KeylistUpdateRequestData, MediatorCoordMsgEnum,
-    },
-    storage::MediatorPersistence,
-};
 
 const ENDPOINT_ROOT: &str = "http://localhost:8005";
 
