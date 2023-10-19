@@ -42,6 +42,11 @@ Currently the mediator reads the following environment variables.
 - **Description**: This is the address at which the mediator will listen for connections.
 - **Default**: "127.0.0.1:8005"
 - **Usage**: `ENDPOINT_ROOT=127.0.0.1:3000 cargo run`
+
+`MYSQL_URL`: 
+- **Description**: MySQL url for the MYSQL database used for mediator persistence. 
+- **Default**: -
+- **Usage**: `MYSQL_URL=mysql://admin:password1235@localhost:3306/mediator-persistence.db`
 ```
 
 ## API
@@ -59,16 +64,16 @@ Currently exposed endpoints.
 ```
 
 ```yaml
-`/aries`:
+`/didcomm`:
 - **Description** : | 
-    Endpoint for Aries communication. 
+    Endpoint for Aries DIDCOMM communication. 
     Encrypted Aries messages (envelops) can be passed and received from this endpoint in json serialized format.
 ```
 
 ### Client API
 
 ```yaml
-`/client/register`:
+`/client/register-using-oob`:
 - **Input**: Json body containing OOB invite to connect to.
 - **Description** : Attempts to connect to the Aries service defined in the OOB invite using DIDCOMM channel. 
 

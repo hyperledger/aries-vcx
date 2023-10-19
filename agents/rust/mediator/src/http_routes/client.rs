@@ -23,7 +23,7 @@ pub async fn handle_register(
         .map_err(|err| format!("{err:?}"))?;
     Ok(Json(json!({
         "status": "success",
-        "state": state
+        "connection_completed": state
     })))
 }
 
@@ -31,7 +31,7 @@ pub async fn build_client_router<T: BaseWallet + 'static, P: MediatorPersistence
     agent: Agent<T, P>,
 ) -> Router {
     Router::default()
-        .route("/client/register", post(handle_register))
+        .route("/client/register-using-oob", post(handle_register))
         .layer(tower_http::catch_panic::CatchPanicLayer::new())
         .with_state(Arc::new(agent))
 }
