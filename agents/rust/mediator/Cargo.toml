@@ -6,17 +6,24 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = []
-client_tui=["cursive"]
+default = ["client_http_api"]
+client = []
+client_http_api = ["client"]
+client_tui = ["client", "cursive"]
+
 
 [dependencies]
 anyhow = "1.0.75"
 aries-vcx = { path = "../../../aries_vcx" }
-aries_vcx_core = { path = "../../../aries_vcx_core", features = ["vdrtools_wallet"] }
+aries_vcx_core = { path = "../../../aries_vcx_core", features = [
+    "vdrtools_wallet",
+] }
 async-trait = "0.1.73"
 axum = "0.6"
 axum-macros = "0.3.8"
-cursive = { version = "0.20.0", features = ["crossterm-backend"], optional = true}
+cursive = { version = "0.20.0", features = [
+    "crossterm-backend",
+], optional = true }
 diddoc_legacy = { path = "../../../diddoc_legacy" }
 dotenvy = "0.15"
 env_logger = "0.10.0"

@@ -7,7 +7,7 @@ use axum::{
     extract::State,
     http::header::{HeaderMap, ACCEPT},
     response::{Html, IntoResponse, Response},
-    routing::{get, post},
+    routing::get,
     Json, Router,
 };
 use log::info;
@@ -25,6 +25,7 @@ use xum_test_server::{
 use crate::{aries_agent::Agent, utils::string_from_std_error};
 type ArcAgent<T, P> = Arc<Agent<T, P>>;
 
+#[cfg(any(test, feature = "client_tui", feature = "client_http_api"))]
 pub mod client;
 
 #[derive(Debug, Serialize, Deserialize)]

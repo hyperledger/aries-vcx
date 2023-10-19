@@ -30,7 +30,7 @@ use crate::utils::{prelude::*, structs::VeriKey};
 
 pub mod transports;
 pub mod utils;
-// #[cfg(test)]
+#[cfg(any(test, feature = "client"))]
 pub mod client;
 
 #[derive(Clone)]
