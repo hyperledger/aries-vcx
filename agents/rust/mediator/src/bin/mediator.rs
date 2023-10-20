@@ -1,5 +1,5 @@
 use log::info;
-use mediator::aries_agent::AgentMaker;
+use mediator::aries_agent::AgentBuilder;
 
 #[tokio::main]
 async fn main() {
@@ -8,7 +8,7 @@ async fn main() {
     setup_logging();
     let endpoint_root = std::env::var("ENDPOINT_ROOT").unwrap_or("127.0.0.1:8005".into());
     info!("Mediator endpoint root address {}", endpoint_root);
-    let mut agent = AgentMaker::new_demo_agent().await.unwrap();
+    let mut agent = AgentBuilder::new_demo_agent().await.unwrap();
     agent
         .init_service(
             vec![],

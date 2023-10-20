@@ -39,7 +39,7 @@ async fn didcomm_connection_succeeds() -> Result<()> {
         .json()
         .await?;
     info!("Got invitation from register endpoint {:?}", oobi);
-    let agent = mediator::aries_agent::AgentMaker::new_demo_agent().await?;
+    let agent = mediator::aries_agent::AgentBuilder::new_demo_agent().await?;
     let mut aries_transport = AriesReqwest {
         response_queue: VecDeque::new(),
         client: reqwest::Client::new(),

@@ -3,7 +3,7 @@
 #[tokio::main]
 async fn main() {
     use mediator::{
-        aries_agent::AgentMaker,
+        aries_agent::AgentBuilder,
         tui,
         utils::binary_utils::{load_dot_env, setup_logging},
     };
@@ -11,7 +11,7 @@ async fn main() {
     load_dot_env();
     setup_logging();
     log::info!("TUI initializing!");
-    let agent = AgentMaker::new_demo_agent().await.unwrap();
+    let agent = AgentBuilder::new_demo_agent().await.unwrap();
     tui::init_tui(agent).await;
 }
 

@@ -42,11 +42,11 @@ pub struct Agent<T: BaseWallet, P: MediatorPersistence> {
 
 pub type ArcAgent<T, P> = Arc<Agent<T, P>>;
 
-pub struct AgentMaker<T: BaseWallet> {
+pub struct AgentBuilder<T: BaseWallet> {
     _type_wallet: PhantomData<T>,
 }
 /// Constructors
-impl AgentMaker<IndySdkWallet> {
+impl AgentBuilder<IndySdkWallet> {
     pub async fn new_from_wallet_config(
         config: WalletConfig,
     ) -> Result<Agent<IndySdkWallet, sqlx::MySqlPool>, AriesVcxCoreError> {
@@ -255,14 +255,14 @@ mod test {
     use log::info;
     use serde_json::Value;
 
-    use super::AgentMaker;
+    use super::AgentBuilder;
     use crate::aries_agent::utils::oob2did;
 
     #[tokio::test]
     pub async fn test_pack_unpack() {
         let message: Value = serde_json::from_str("{}").unwrap();
         let message_bytes = serde_json::to_vec(&message).unwrap();
-        let mut agent = AgentMaker::new_demo_agent().await.unwrap();
+        let mut agent = AgentBuilder::new_demo_agent().await.unwrap();
         agent
             .init_service(
                 vec![],
