@@ -1,5 +1,7 @@
 use messages::msg_fields::protocols::{
-    present_proof::{ack::AckPresentation, present::Presentation, request::RequestPresentation},
+    present_proof::v1::{
+        ack::AckPresentationV1, present::PresentationV1, request::RequestPresentationV1,
+    },
     report_problem::ProblemReport,
 };
 
@@ -9,12 +11,12 @@ use crate::{
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationSentState {
-    pub presentation_request: RequestPresentation,
-    pub presentation: Presentation,
+    pub presentation_request: RequestPresentationV1,
+    pub presentation: PresentationV1,
 }
 
-impl From<(PresentationSentState, AckPresentation)> for FinishedState {
-    fn from((state, _ack): (PresentationSentState, AckPresentation)) -> Self {
+impl From<(PresentationSentState, AckPresentationV1)> for FinishedState {
+    fn from((state, _ack): (PresentationSentState, AckPresentationV1)) -> Self {
         trace!("transit state from PresentationSentState to FinishedState");
         FinishedState {
             presentation_request: Some(state.presentation_request),

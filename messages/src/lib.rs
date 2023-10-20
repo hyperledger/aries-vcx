@@ -18,10 +18,11 @@ use misc::utils;
 use msg_fields::protocols::{
     cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
     pickup::Pickup,
+    present_proof::{v2::PresentProofV2, PresentProof},
 };
 use msg_types::{
-    cred_issuance::CredentialIssuanceType, report_problem::ReportProblemTypeV1_0,
-    routing::RoutingTypeV1_0, MsgWithType,
+    cred_issuance::CredentialIssuanceType, present_proof::PresentProofType,
+    report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType,
 };
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -30,8 +31,9 @@ use crate::{
         protocols::{
             basic_message::BasicMessage, connection::Connection,
             discover_features::DiscoverFeatures, notification::Notification,
-            out_of_band::OutOfBand, present_proof::PresentProof, report_problem::ProblemReport,
-            revocation::Revocation, routing::Forward, trust_ping::TrustPing,
+            out_of_band::OutOfBand, present_proof::v1::PresentProofV1,
+            report_problem::ProblemReport, revocation::Revocation, routing::Forward,
+            trust_ping::TrustPing,
         },
         traits::DelayedSerde,
     },
@@ -135,9 +137,19 @@ impl DelayedSerde for AriesMessage {
                     }
                 }
             }
-            Protocol::PresentProofType(msg_type) => {
-                PresentProof::delayed_deserialize((msg_type, kind_str), deserializer)
-                    .map(From::from)
+            Protocol::PresentProofType(PresentProofType::V1(msg_type)) => {
+                PresentProofV1::delayed_deserialize(
+                    (PresentProofType::V1(msg_type), kind_str),
+                    deserializer,
+                )
+                .map(|x| AriesMessage::from(PresentProof::V1(x)))
+            }
+            Protocol::PresentProofType(PresentProofType::V2(msg_type)) => {
+                PresentProofV2::delayed_deserialize(
+                    (PresentProofType::V2(msg_type), kind_str),
+                    deserializer,
+                )
+                .map(|x| AriesMessage::from(PresentProof::V2(x)))
             }
             Protocol::TrustPingType(msg_type) => {
                 TrustPing::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
@@ -183,7 +195,8 @@ impl DelayedSerde for AriesMessage {
             Self::CredentialIssuance(CredentialIssuance::V1(v)) => v.delayed_serialize(serializer),
             Self::CredentialIssuance(CredentialIssuance::V2(v)) => v.delayed_serialize(serializer),
             Self::ReportProblem(v) => MsgWithType::from(v).serialize(serializer),
-            Self::PresentProof(v) => v.delayed_serialize(serializer),
+            Self::PresentProof(PresentProof::V1(v)) => v.delayed_serialize(serializer),
+            Self::PresentProof(PresentProof::V2(v)) => v.delayed_serialize(serializer),
             Self::TrustPing(v) => v.delayed_serialize(serializer),
             Self::DiscoverFeatures(v) => v.delayed_serialize(serializer),
             Self::BasicMessage(v) => MsgWithType::from(v).serialize(serializer),

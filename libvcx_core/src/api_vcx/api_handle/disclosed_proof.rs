@@ -3,7 +3,10 @@ use aries_vcx::{
         mediated_prover::prover_find_message_to_handle, prover::Prover,
     },
     messages::{
-        msg_fields::protocols::present_proof::{request::RequestPresentation, PresentProof},
+        msg_fields::protocols::present_proof::{
+            v1::{request::RequestPresentationV1, PresentProofV1},
+            PresentProof,
+        },
         AriesMessage,
     },
 };
@@ -37,7 +40,7 @@ pub fn create_with_proof_request(source_id: &str, proof_req: &str) -> LibvcxResu
         proof_req
     );
 
-    let presentation_request: RequestPresentation =
+    let presentation_request: RequestPresentationV1 =
         serde_json::from_str(proof_req).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidJson,
@@ -60,8 +63,8 @@ pub async fn create_with_msgid(
 ) -> LibvcxResult<(u32, String)> {
     let proof_request = get_proof_request(connection_handle, msg_id).await?;
 
-    let presentation_request: RequestPresentation =
-        serde_json::from_str(&proof_request).map_err(|err| {
+    let presentation_request: RequestPresentationV1 = serde_json::from_str(&proof_request)
+        .map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidJson,
                 format!(
@@ -285,9 +288,9 @@ async fn get_proof_request(connection_handle: u32, msg_id: &str) -> LibvcxResult
         let message = mediated_connection::get_message_by_id(connection_handle, msg_id).await?;
 
         match message {
-            AriesMessage::PresentProof(PresentProof::RequestPresentation(presentation_request)) => {
-                presentation_request
-            }
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::RequestPresentation(
+                presentation_request,
+            ))) => presentation_request,
             msg => {
                 return Err(LibvcxError::from_msg(
                     LibvcxErrorKind::InvalidMessages,
@@ -315,7 +318,9 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<
             .await?
             .into_iter()
             .filter_map(|(_, message)| match message {
-                AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => Some(message),
+                AriesMessage::PresentProof(PresentProof::V1(
+                    PresentProofV1::RequestPresentation(_),
+                )) => Some(message),
                 _ => None,
             })
             .collect();

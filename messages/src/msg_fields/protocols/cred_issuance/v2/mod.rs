@@ -11,8 +11,7 @@ use std::str::FromStr;
 
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use shared_vcx::{maybe_known::MaybeKnown, misc::utils::CowStr};
-use typed_builder::TypedBuilder;
+use shared_vcx::misc::utils::CowStr;
 
 use self::{
     ack::{AckCredentialV2, AckCredentialV2Content},
@@ -173,13 +172,6 @@ impl Serialize for CredentialPreviewV2MsgType {
         let kind = CredentialIssuanceTypeV2_0::from(self);
         format_args!("{protocol}/{}", kind.as_ref()).serialize(serializer)
     }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, TypedBuilder)]
-#[serde(rename_all = "snake_case")]
-pub struct AttachmentFormatSpecifier<F> {
-    attach_id: String,
-    format: MaybeKnown<F>,
 }
 
 transit_to_aries_msg!(

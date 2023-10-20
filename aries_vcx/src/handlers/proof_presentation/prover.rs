@@ -10,13 +10,16 @@ use messages::{
     msg_fields::protocols::{
         notification::Notification,
         present_proof::{
-            ack::AckPresentation,
-            present::Presentation,
-            propose::{
-                PresentationPreview, ProposePresentation, ProposePresentationContent,
-                ProposePresentationDecorators,
+            v1::{
+                ack::AckPresentationV1,
+                present::PresentationV1,
+                propose::{
+                    PresentationPreview, ProposePresentationV1, ProposePresentationV1Content,
+                    ProposePresentationV1Decorators,
+                },
+                request::RequestPresentationV1,
+                PresentProofV1,
             },
-            request::RequestPresentation,
             PresentProof,
         },
     },
@@ -49,7 +52,7 @@ impl Prover {
 
     pub fn create_from_request(
         source_id: &str,
-        presentation_request: RequestPresentation,
+        presentation_request: RequestPresentationV1,
     ) -> VcxResult<Prover> {
         trace!(
             "Prover::create_from_request >>> source_id: {}, presentation_request: {:?}",
@@ -107,14 +110,14 @@ impl Prover {
         Ok(())
     }
 
-    pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {
+    pub fn get_presentation_msg(&self) -> VcxResult<PresentationV1> {
         Ok(self.prover_sm.get_presentation_msg()?.to_owned())
     }
 
     pub async fn build_presentation_proposal(
         &mut self,
         proposal_data: PresentationProposalData,
-    ) -> VcxResult<ProposePresentation> {
+    ) -> VcxResult<ProposePresentationV1> {
         trace!("Prover::build_presentation_proposal >>>");
         self.prover_sm = self
             .prover_sm
@@ -140,7 +143,7 @@ impl Prover {
         }
     }
 
-    pub fn process_presentation_ack(&mut self, ack: AckPresentation) -> VcxResult<()> {
+    pub fn process_presentation_ack(&mut self, ack: AckPresentationV1) -> VcxResult<()> {
         trace!("Prover::process_presentation_ack >>>");
         self.prover_sm = self.prover_sm.clone().receive_presentation_ack(ack)?;
         Ok(())
@@ -191,11 +194,13 @@ impl Prover {
 
     pub async fn process_aries_msg(&mut self, message: AriesMessage) -> VcxResult<()> {
         let prover_sm = match message {
-            AriesMessage::PresentProof(PresentProof::RequestPresentation(request)) => self
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::RequestPresentation(
+                request,
+            ))) => self
                 .prover_sm
                 .clone()
                 .receive_presentation_request(request)?,
-            AriesMessage::PresentProof(PresentProof::Ack(ack)) => {
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Ack(ack))) => {
                 self.prover_sm.clone().receive_presentation_ack(ack)?
             }
             AriesMessage::ReportProblem(report) => {
@@ -205,10 +210,11 @@ impl Prover {
                 .prover_sm
                 .clone()
                 .receive_presentation_reject(report.into())?,
-            AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => self
-                .prover_sm
-                .clone()
-                .receive_presentation_reject(report.into())?,
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::ProblemReport(report))) => {
+                self.prover_sm
+                    .clone()
+                    .receive_presentation_reject(report.into())?
+            }
             _ => self.prover_sm.clone(),
         };
         self.prover_sm = prover_sm;
@@ -249,16 +255,16 @@ impl Prover {
                 let thread_id = self.prover_sm.get_thread_id()?;
                 let id = Uuid::new_v4().to_string();
 
-                let content = ProposePresentationContent::builder()
+                let content = ProposePresentationV1Content::builder()
                     .presentation_proposal(presentation_preview)
                     .build();
 
-                let decorators = ProposePresentationDecorators::builder()
+                let decorators = ProposePresentationV1Decorators::builder()
                     .thread(Thread::builder().thid(thread_id.to_owned()).build())
                     .timing(Timing::builder().out_time(Utc::now()).build())
                     .build();
 
-                let proposal = ProposePresentation::builder()
+                let proposal = ProposePresentationV1::builder()
                     .id(id)
                     .content(content)
                     .decorators(decorators)

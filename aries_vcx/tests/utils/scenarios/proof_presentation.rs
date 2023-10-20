@@ -35,8 +35,11 @@ use aries_vcx_core::{
 use messages::{
     msg_fields::protocols::{
         present_proof::{
-            ack::AckPresentation, present::Presentation, propose::ProposePresentation,
-            request::RequestPresentation, PresentProof,
+            v1::{
+                ack::AckPresentationV1, present::PresentationV1, propose::ProposePresentationV1,
+                request::RequestPresentationV1, PresentProofV1,
+            },
+            PresentProof,
         },
         report_problem::ProblemReport,
     },
@@ -47,7 +50,10 @@ use serde_json::Value;
 use super::requested_attrs_address;
 use crate::utils::{scenarios::requested_attr_objects, test_agent::TestAgent};
 
-pub async fn create_proof_proposal(prover: &mut Prover, cred_def_id: &str) -> ProposePresentation {
+pub async fn create_proof_proposal(
+    prover: &mut Prover,
+    cred_def_id: &str,
+) -> ProposePresentationV1 {
     let attrs = requested_attr_objects(cred_def_id);
     let mut proposal_data = PresentationProposalData::default();
     for attr in attrs.into_iter() {
@@ -69,8 +75,8 @@ pub async fn accept_proof_proposal(
         impl BaseWallet,
     >,
     verifier: &mut Verifier,
-    presentation_proposal: ProposePresentation,
-) -> RequestPresentation {
+    presentation_proposal: ProposePresentationV1,
+) -> RequestPresentationV1 {
     verifier
         .process_aries_msg(
             &faber.ledger_read,
@@ -104,7 +110,7 @@ pub async fn accept_proof_proposal(
     verifier.mark_presentation_request_sent().unwrap()
 }
 
-pub async fn reject_proof_proposal(presentation_proposal: &ProposePresentation) -> ProblemReport {
+pub async fn reject_proof_proposal(presentation_proposal: &ProposePresentationV1) -> ProblemReport {
     let mut verifier = Verifier::create_from_proposal("1", presentation_proposal).unwrap();
     assert_eq!(
         verifier.get_state(),
@@ -147,7 +153,7 @@ pub async fn create_proof_request_data(
         .unwrap()
 }
 
-pub async fn create_prover_from_request(presentation_request: RequestPresentation) -> Prover {
+pub async fn create_prover_from_request(presentation_request: RequestPresentationV1) -> Prover {
     Prover::create_from_request(DEFAULT_PROOF_NAME, presentation_request).unwrap()
 }
 
@@ -169,7 +175,7 @@ pub async fn generate_and_send_proof(
     >,
     prover: &mut Prover,
     selected_credentials: SelectedCredentials,
-) -> Option<Presentation> {
+) -> Option<PresentationV1> {
     let thread_id = prover.get_thread_id().unwrap();
     info!(
         "generate_and_send_proof >>> generating proof using selected credentials {:?}",
@@ -192,7 +198,9 @@ pub async fn generate_and_send_proof(
         info!("generate_and_send_proof :: proof sent");
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
         let message = match message {
-            AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => presentation,
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Presentation(
+                presentation,
+            ))) => presentation,
             _ => panic!("Unexpected message type"),
         };
         Some(message)
@@ -209,14 +217,14 @@ pub async fn verify_proof(
         impl BaseWallet,
     >,
     verifier: &mut Verifier,
-    presentation: Presentation,
-) -> AckPresentation {
+    presentation: PresentationV1,
+) -> AckPresentationV1 {
     let msg = verifier
         .verify_presentation(&faber.ledger_read, &faber.anoncreds, presentation)
         .await
         .unwrap();
     let msg = match msg {
-        AriesMessage::PresentProof(PresentProof::Ack(ack)) => ack,
+        AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Ack(ack))) => ack,
         _ => panic!("Unexpected message type"),
     };
     // TODO: Perhaps we should leave verification on the caller
@@ -366,7 +374,7 @@ pub async fn prover_select_credentials(
         impl BaseAnonCreds,
         impl BaseWallet,
     >,
-    presentation_request: RequestPresentation,
+    presentation_request: RequestPresentationV1,
     preselected_credentials: Option<&str>,
 ) -> SelectedCredentials {
     prover
@@ -401,9 +409,9 @@ pub async fn prover_select_credentials_and_send_proof(
         impl BaseAnonCreds,
         impl BaseWallet,
     >,
-    presentation_request: RequestPresentation,
+    presentation_request: RequestPresentationV1,
     preselected_credentials: Option<&str>,
-) -> Presentation {
+) -> PresentationV1 {
     let mut prover = create_prover_from_request(presentation_request.clone()).await;
     let selected_credentials = prover_select_credentials(
         &mut prover,

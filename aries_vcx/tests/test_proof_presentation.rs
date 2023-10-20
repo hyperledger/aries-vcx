@@ -25,7 +25,10 @@ use aries_vcx::{
     run_setup,
     utils::devsetup::*,
 };
-use messages::{msg_fields::protocols::present_proof::PresentProof, AriesMessage};
+use messages::{
+    msg_fields::protocols::present_proof::{v1::PresentProofV1, PresentProof},
+    AriesMessage,
+};
 
 use crate::utils::{
     scenarios::{
@@ -158,7 +161,7 @@ async fn test_agency_pool_generate_proof_with_predicates() {
             .await
             .unwrap();
 
-        if let AriesMessage::PresentProof(PresentProof::Ack(_)) = final_message {
+        if let AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Ack(_))) = final_message {
             assert_eq!(verifier.get_state(), VerifierState::Finished);
             assert_eq!(
                 verifier.get_verification_status(),

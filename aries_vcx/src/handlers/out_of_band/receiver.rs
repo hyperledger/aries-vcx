@@ -18,7 +18,7 @@ use messages::{
             invitation::{Invitation, OobService},
             OutOfBand,
         },
-        present_proof::{present::Presentation, request::RequestPresentation, PresentProof},
+        present_proof::v1::{present::PresentationV1, request::RequestPresentationV1},
     },
     AriesMessage,
 };
@@ -263,20 +263,18 @@ impl OutOfBandReceiver {
                     }
                     AttachmentId::PresentationRequest => {
                         let request =
-                            RequestPresentation::deserialize(&attach_json).map_err(|_| {
+                            RequestPresentationV1::deserialize(&attach_json).map_err(|_| {
                                 AriesVcxError::from_msg(
                                     AriesVcxErrorKind::SerializationError,
                                     format!("Failed to deserialize attachment: {attach_json:?}"),
                                 )
                             })?;
 
-                        return Ok(Some(AriesMessage::PresentProof(
-                            PresentProof::RequestPresentation(request),
-                        )));
+                        return Ok(Some(request.into()));
                     }
                     AttachmentId::Presentation => {
                         let mut presentation =
-                            Presentation::deserialize(&attach_json).map_err(|_| {
+                            PresentationV1::deserialize(&attach_json).map_err(|_| {
                                 AriesVcxError::from_msg(
                                     AriesVcxErrorKind::SerializationError,
                                     format!("Failed to deserialize attachment: {attach_json:?}"),
@@ -285,9 +283,7 @@ impl OutOfBandReceiver {
 
                         presentation.decorators.thread.pthid = Some(self.oob.id.clone());
 
-                        return Ok(Some(AriesMessage::PresentProof(
-                            PresentProof::Presentation(presentation),
-                        )));
+                        return Ok(Some(presentation.into()));
                     }
                 },
                 None => {
