@@ -1,13 +1,11 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, sync::Arc};
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use axum::routing::post;
+use axum::{extract::State, routing::post, Json, Router};
 use mediation::storage::MediatorPersistence;
+use mediator::aries_agent::{transports::AriesReqwest, Agent, ArcAgent};
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
-use serde_json::json;
-
-use super::*;
-use crate::aries_agent::transports::AriesReqwest;
+use serde_json::{json, Value};
 
 pub async fn handle_register(
     State(agent): State<ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>>,

@@ -17,9 +17,6 @@ use crate::{
     didcomm_handlers,
 };
 
-#[cfg(any(test, feature = "client_tui", feature = "client_http_api"))]
-pub mod client;
-
 pub async fn oob_invite_qr(
     headers: HeaderMap,
     State(agent): State<ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>>,

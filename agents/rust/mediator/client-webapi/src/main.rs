@@ -1,10 +1,11 @@
 /// Client-side focused api accessible Aries Agent
-#[cfg(feature = "client_http_api")]
+mod http_routes;
+
 #[tokio::main]
 async fn main() {
+    use http_routes::build_client_router;
     use mediator::{
         aries_agent::AgentBuilder,
-        http_routes::client::build_client_router,
         utils::binary_utils::{load_dot_env, setup_logging},
     };
 
@@ -25,10 +26,9 @@ async fn main() {
     .unwrap();
 }
 
-#[cfg(not(feature = "client_http_api"))]
-fn main() {
-    print!(
-        "This is a placeholder binary. Please enable \"client_tui\" feature to to build the \
-         functional client_tui binary."
-    )
-}
+// fn main() {
+//     print!(
+//         "This is a placeholder binary. Please enable \"client_tui\" feature to to build the \
+//          functional client_tui binary."
+//     )
+// }

@@ -11,6 +11,7 @@ members = [
     "shared_vcx",
     "diddoc_legacy",
     "agents/rust/mediator",
+    "agents/rust/mediator/client-webapi",
     "agents/rust/aries-vcx-agent",
     "wrappers/vcx-napi-rs",
     "aries_vcx_core",

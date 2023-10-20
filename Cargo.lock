@@ -931,6 +931,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "client-webapi"
+version = "0.1.0"
+dependencies = [
+ "aries_vcx_core",
+ "axum",
+ "log",
+ "mediation",
+ "mediator",
+ "messages",
+ "reqwest",
+ "serde_json",
+ "tokio",
+ "tower-http",
+]
+
+[[package]]
 name = "cmake"
 version = "0.1.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
