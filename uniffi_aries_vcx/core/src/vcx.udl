@@ -79,7 +79,7 @@ interface Holder {
     string get_msg_credential_request();
 
     [Throws=VcxUniFFIError]
-    string decline_offer();
+    string decline_offer(string? comment);
 
     [Throws=VcxUniFFIError]
     void process_credential(ProfileHolder profile, string credential);

@@ -244,7 +244,7 @@ impl Connection {
         message: String,
     ) -> VcxUniFFIResult<()> {
         let message = serde_json::from_str(&message)?;
-        let mut handler = self.handler.lock()?;
+        let handler = self.handler.lock()?.clone();
 
         block_on(async {
             handler

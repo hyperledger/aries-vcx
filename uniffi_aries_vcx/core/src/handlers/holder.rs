@@ -65,9 +65,9 @@ pub fn create_with_proposal(
 
 impl Holder {
     pub fn set_proposal(&self, credential_proposal: String) -> VcxUniFFIResult<()> {
-        self.handler
-            .lock()?
-            .set_proposal(serde_json::from_str(&credential_proposal)?)?;
+        let mut handler = self.handler.lock()?;
+
+        handler.set_proposal(serde_json::from_str(&credential_proposal)?)?;
         Ok(())
     }
 
@@ -76,9 +76,11 @@ impl Holder {
         profile: Arc<ProfileHolder>,
         my_pw_did: String,
     ) -> VcxUniFFIResult<()> {
+        let mut handler = self.handler.lock()?;
+        let mut holder = handler.clone();
+
         block_on(async {
-            self.handler
-                .lock()?
+            holder
                 .prepare_credential_request(
                     profile.inner.wallet(),
                     profile.inner.ledger_read(),
@@ -86,20 +88,27 @@ impl Holder {
                     my_pw_did,
                 )
                 .await?;
+            *handler = holder;
+
             Ok(())
         })
     }
 
     pub fn get_msg_credential_request(&self) -> VcxUniFFIResult<String> {
+        let handler = self.handler.lock()?;
+
         Ok(serde_json::to_string(
-            &self.handler.lock()?.clone().get_msg_credential_request()?,
+            &handler.clone().get_msg_credential_request()?,
         )?)
     }
 
-    pub fn decline_offer(&self) -> VcxUniFFIResult<String> {
-        Ok(serde_json::to_string(
-            &self.handler.lock()?.clone().decline_offer(Some(""))?,
-        )?)
+    pub fn decline_offer(&self, comment: Option<String>) -> VcxUniFFIResult<String> {
+        let mut handler = self.handler.lock()?;
+        let mut holder = handler.clone();
+        let problem_report_result = &holder.decline_offer(comment.as_deref())?;
+        *handler = holder;
+
+        Ok(serde_json::to_string(problem_report_result)?)
     }
 
     pub fn process_credential(
@@ -108,85 +117,106 @@ impl Holder {
         credential: String,
     ) -> VcxUniFFIResult<()> {
         let credential = serde_json::from_str(&credential)?;
+        let mut handler = self.handler.lock()?;
+        let mut holder = handler.clone();
 
         block_on(async {
-            Ok(self
-                .handler
-                .lock()?
+            holder
                 .process_credential(
                     profile.inner.wallet(),
                     profile.inner.ledger_read(),
                     profile.inner.anoncreds(),
                     credential,
                 )
-                .await?)
+                .await?;
+            *handler = holder;
+            Ok(())
         })
     }
 
     pub fn is_terminal_state(&self) -> VcxUniFFIResult<bool> {
-        Ok(self.handler.lock()?.is_terminal_state())
+        let handler = self.handler.lock()?;
+
+        Ok(handler.is_terminal_state())
     }
 
     pub fn get_state(&self) -> VcxUniFFIResult<HolderState> {
-        Ok(HolderState::from(self.handler.lock()?.get_state()))
+        let handler = self.handler.lock()?;
+
+        Ok(HolderState::from(handler.get_state()))
     }
 
     pub fn get_source_id(&self) -> VcxUniFFIResult<String> {
-        Ok(self.handler.lock()?.get_source_id())
+        let handler = self.handler.lock()?;
+
+        Ok(handler.get_source_id())
     }
 
     pub fn get_credential(&self) -> VcxUniFFIResult<String> {
-        let credential = self.handler.lock()?.get_credential()?;
+        let handler = self.handler.lock()?;
+        let credential = handler.get_credential()?;
         Ok(credential.0)
     }
 
     pub fn get_attributes(&self) -> VcxUniFFIResult<String> {
-        Ok(self.handler.lock()?.get_attributes()?)
+        let handler = self.handler.lock()?;
+
+        Ok(handler.get_attributes()?)
     }
 
     pub fn get_attachment(&self) -> VcxUniFFIResult<String> {
-        Ok(self.handler.lock()?.get_attachment()?)
+        let handler = self.handler.lock()?;
+
+        Ok(handler.get_attachment()?)
     }
 
     pub fn get_offer(&self) -> VcxUniFFIResult<String> {
-        Ok(serde_json::to_string(&(self.handler.lock()?.get_offer()?))?)
+        let handler = self.handler.lock()?;
+
+        Ok(serde_json::to_string(&(handler.get_offer()?))?)
     }
 
     pub fn get_tails_location(&self) -> VcxUniFFIResult<String> {
-        Ok(self.handler.lock()?.get_tails_location()?)
+        let handler = self.handler.lock()?;
+
+        Ok(handler.get_tails_location()?)
     }
 
     pub fn get_tails_hash(&self) -> VcxUniFFIResult<String> {
-        Ok(self.handler.lock()?.get_tails_hash()?)
+        let handler = self.handler.lock()?;
+
+        Ok(handler.get_tails_hash()?)
     }
 
     pub fn get_rev_reg_id(&self) -> VcxUniFFIResult<String> {
-        Ok(self.handler.lock()?.get_rev_reg_id()?)
+        let handler = self.handler.lock()?;
+
+        Ok(handler.get_rev_reg_id()?)
     }
 
     pub fn get_cred_id(&self) -> VcxUniFFIResult<String> {
-        Ok(self.handler.lock()?.get_cred_id()?)
+        let handler = self.handler.lock()?;
+
+        Ok(handler.get_cred_id()?)
     }
 
     pub fn get_thread_id(&self) -> VcxUniFFIResult<String> {
-        Ok(self.handler.lock()?.get_thread_id()?)
+        let handler = self.handler.lock()?;
+
+        Ok(handler.get_thread_id()?)
     }
 
     pub fn is_revokable(&self, profile: Arc<ProfileHolder>) -> VcxUniFFIResult<bool> {
-        block_on(async {
-            Ok(self
-                .handler
-                .lock()?
-                .is_revokable(profile.inner.ledger_read())
-                .await?)
-        })
+        let handler = self.handler.lock()?.clone();
+
+        block_on(async { Ok(handler.is_revokable(profile.inner.ledger_read()).await?) })
     }
 
     pub fn is_revoked(&self, profile: Arc<ProfileHolder>) -> VcxUniFFIResult<bool> {
+        let handler = self.handler.lock()?.clone();
+
         block_on(async {
-            Ok(self
-                .handler
-                .lock()?
+            Ok(handler
                 .is_revoked(
                     profile.inner.wallet(),
                     profile.inner.ledger_read(),
@@ -197,24 +227,24 @@ impl Holder {
     }
 
     pub fn get_cred_rev_id(&self, profile: Arc<ProfileHolder>) -> VcxUniFFIResult<String> {
+        let handler = self.handler.lock()?.clone();
+
         block_on(async {
-            Ok(self
-                .handler
-                .lock()?
+            Ok(handler
                 .get_cred_rev_id(profile.inner.wallet(), profile.inner.anoncreds())
                 .await?)
         })
     }
 
     pub fn get_problem_report(&self) -> VcxUniFFIResult<String> {
-        Ok(serde_json::to_string(
-            &self.handler.lock()?.get_problem_report()?,
-        )?)
+        let handler = self.handler.lock()?;
+
+        Ok(serde_json::to_string(&handler.get_problem_report()?)?)
     }
 
     pub fn get_final_message(&self) -> VcxUniFFIResult<Option<String>> {
-        Ok(Some(serde_json::to_string(
-            &self.handler.lock()?.get_final_message()?,
-        )?))
+        let handler = self.handler.lock()?;
+
+        Ok(Some(serde_json::to_string(&handler.get_final_message()?)?))
     }
 }
