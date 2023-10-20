@@ -931,8 +931,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "client-tui"
+version = "0.1.1"
+dependencies = [
+ "aries_vcx_core",
+ "axum",
+ "client-webapi",
+ "cursive",
+ "futures",
+ "log",
+ "mediation",
+ "mediator",
+ "messages",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "client-webapi"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "aries_vcx_core",
  "axum",
@@ -2902,7 +2919,6 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-macros",
- "cursive",
  "diddoc_legacy",
  "dotenvy",
  "env_logger 0.10.0",

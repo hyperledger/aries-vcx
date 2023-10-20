@@ -1,10 +1,9 @@
 /// Aries Agent TUI
-#[cfg(feature = "client_tui")]
+mod tui;
 #[tokio::main]
 async fn main() {
     use mediator::{
         aries_agent::AgentBuilder,
-        tui,
         utils::binary_utils::{load_dot_env, setup_logging},
     };
 
@@ -15,10 +14,9 @@ async fn main() {
     tui::init_tui(agent).await;
 }
 
-#[cfg(not(feature = "client_tui"))]
-fn main() {
-    print!(
-        "This is a placeholder binary. Please enable \"client_tui\" feature to to build the \
-         functional client_tui binary."
-    )
-}
+// fn main() {
+//     print!(
+//         "This is a placeholder binary. Please enable \"client_tui\" feature to to build the \
+//          functional client_tui binary."
+//     )
+// }

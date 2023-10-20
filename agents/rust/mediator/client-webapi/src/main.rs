@@ -1,9 +1,7 @@
 /// Client-side focused api accessible Aries Agent
-mod http_routes;
-
 #[tokio::main]
 async fn main() {
-    use http_routes::build_client_router;
+    use client_webapi::http_routes::build_client_router;
     use mediator::{
         aries_agent::AgentBuilder,
         utils::binary_utils::{load_dot_env, setup_logging},

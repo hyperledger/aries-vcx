@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use axum::{extract::State, Json};
+use client_webapi::http_routes::handle_register;
 use cursive::{
     direction::Orientation,
     event::Key,
@@ -15,9 +16,8 @@ use cursive::{
 use futures::executor::block_on;
 use log::info;
 use mediation::storage::MediatorPersistence;
+use mediator::aries_agent::Agent;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
-
-use crate::{aries_agent::Agent, http_routes::client::handle_register};
 
 pub async fn init_tui<T: BaseWallet + 'static, P: MediatorPersistence>(agent: Agent<T, P>) {
     let mut cursive = Cursive::new();

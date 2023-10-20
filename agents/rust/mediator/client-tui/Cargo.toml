@@ -1,5 +1,5 @@
 [package]
-name = "client-webapi"
+name = "client-tui"
 version = "0.1.1"
 edition = "2021"
 
@@ -10,11 +10,13 @@ aries_vcx_core = { path = "../../../../aries_vcx_core", features = [
     "vdrtools_wallet",
 ] }
 axum = "0.6.20"
+client-webapi = { path = "../client-webapi" }
+cursive = { version = "0.20.0", features = ["crossterm-backend"] }
+futures = "0.3.28"
 log = "0.4.20"
 mediation = { path = "../mediation" }
-mediator = { version = "0.1.1", path = ".." }
+mediator = { path = ".." }
 messages = { path = "../../../../messages" }
-reqwest = "0.11.22"
 serde_json = "1.0.107"
+
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-tower-http = { version = "0.4.4", features = ["catch-panic"] }
