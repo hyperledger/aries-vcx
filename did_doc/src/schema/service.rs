@@ -170,10 +170,7 @@ mod tests {
         .add_service_type(service_type.clone())
         .unwrap()
         .add_service_type(service_type.clone())
-        .unwrap()
-        .build();
-
-        assert_eq!(service.service_type(), &OneOrList::One(service_type));
+        .unwrap_err();
     }
 
     #[test]
