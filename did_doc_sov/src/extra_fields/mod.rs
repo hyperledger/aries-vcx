@@ -83,7 +83,7 @@ impl Display for KeyKind {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, display_as_json::Display)]
 #[serde(untagged)]
 pub enum ExtraFieldsSov {
     DIDCommV1(didcommv1::ExtraFieldsDidCommV1),

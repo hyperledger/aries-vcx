@@ -42,7 +42,10 @@ pub struct DidDocument<E> {
     extra: HashMap<String, Value>,
 }
 
-impl Display for DidDocument<()> {
+impl<E> Display for DidDocument<E>
+where
+    E: Display + Serialize,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let json = serde_json::to_string(self).unwrap();
         write!(f, "{}", json)

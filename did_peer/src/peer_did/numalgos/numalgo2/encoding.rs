@@ -12,7 +12,7 @@ use public_key::Key;
 
 use crate::{
     error::DidPeerError,
-    numalgos::numalgo2::{
+    peer_did::numalgos::numalgo2::{
         purpose::ElementPurpose, service_abbreviated::ServiceAbbreviated,
         verification_method::get_key_by_verification_method,
     },
@@ -163,13 +163,16 @@ fn abbreviate_service(
 #[cfg(test)]
 mod tests {
     use did_doc::schema::{
+        did_doc::DidDocument,
         service::Service,
         verification_method::{VerificationMethod, VerificationMethodType},
     };
-    use did_doc_sov::extra_fields::{didcommv2::ExtraFieldsDidCommV2, KeyKind};
+    use did_doc_sov::extra_fields::{didcommv2::ExtraFieldsDidCommV2, ExtraFieldsSov, KeyKind};
     use did_parser::DidUrl;
 
-    use super::*;
+    use crate::peer_did::numalgos::numalgo2::encoding::{
+        append_encoded_key_segments, append_encoded_service_segment,
+    };
 
     fn create_verification_method(
         did_full: String,

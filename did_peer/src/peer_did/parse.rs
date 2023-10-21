@@ -1,7 +1,6 @@
 use did_parser::Did;
 
-use super::numalgos::NumalgoKind;
-use crate::error::DidPeerError;
+use crate::{error::DidPeerError, peer_did::numalgos::kind::NumalgoKind};
 
 pub fn parse_numalgo(did: &Did) -> Result<NumalgoKind, DidPeerError> {
     did.id()
