@@ -81,13 +81,15 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
             .filter(|t| *t != DidSovServiceType::Unknown)
             .map(|t| t.to_string())
             .collect();
-        Service::builder(
+        let mut builder = Service::builder(
             service_id,
             endpoint.endpoint.as_str().try_into()?,
             Default::default(),
-        )
-        .add_service_types(service_types)?
-        .build()
+        );
+        for service_type in service_types {
+            builder = builder.add_service_type(service_type)?;
+        }
+        builder.build()
     };
 
     // TODO: Use multibase instead of base58
