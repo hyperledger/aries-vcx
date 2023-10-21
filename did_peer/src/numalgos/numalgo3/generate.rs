@@ -1,15 +1,20 @@
-use did_parser::Did;
-use sha256::digest;
+use did_doc::schema::did_doc::DidDocument;
+use did_doc_sov::extra_fields::ExtraFieldsSov;
 
 use crate::{
     error::DidPeerError,
-    peer_did::{numalgos::numalgo3::Numalgo3, PeerDid},
+    peer_did::{
+        numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
+        FromDidDoc, PeerDid,
+    },
 };
 
-pub fn generate_numalgo3(did: &Did) -> Result<PeerDid<Numalgo3>, DidPeerError> {
-    let numalgoless_id = did.id().chars().skip(2).collect::<String>();
-    let numalgoless_id_hashed = digest(numalgoless_id);
-    PeerDid::<Numalgo3>::parse(format!("did:peer:3.{}", numalgoless_id_hashed))
+impl FromDidDoc for Numalgo3 {
+    fn from_did_doc(
+        did_document: DidDocument<ExtraFieldsSov>,
+    ) -> Result<PeerDid<Numalgo3>, DidPeerError> {
+        PeerDid::<Numalgo2>::from_did_doc(did_document)?.to_numalgo3()
+    }
 }
 
 #[cfg(test)]
@@ -18,7 +23,7 @@ mod tests {
 
     #[test]
     fn test_generate_numalgo3() {
-        let peer_did_2 = Did::parse("did:peer:2\
+        let peer_did_2 = PeerDid::<Numalgo2>::parse("did:peer:2\
             .Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
             .Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V\
             .Vz6MkgoLTnTypo3tDRwCkZXSccTPHRLhF4ZnjhueYAFpEX6vg\
@@ -29,7 +34,7 @@ mod tests {
                     .to_string()
             )
             .unwrap(),
-            generate_numalgo3(&peer_did_2).unwrap()
+            peer_did_2.to_numalgo3().unwrap()
         );
     }
 }

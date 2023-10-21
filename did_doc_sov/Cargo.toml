@@ -11,3 +11,4 @@ public_key = { path = "../public_key" } # TODO: Remove after transition to new D
 serde = { version = "1.0.159", default-features = false, features = ["derive"] }
 serde_json = "1.0.95"
 thiserror = "1.0.40"
+display_as_json = { path = "../tools/display_as_json" }

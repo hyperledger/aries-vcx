@@ -31,7 +31,8 @@ members = [
     "wallet_migrator",
     "tools/simple_message_relay",
     "tools/test_utils",
-    "tools/libvcx_logger"
+    "tools/libvcx_logger",
+    "tools/display_as_json"
 ]
 
 [workspace.package]

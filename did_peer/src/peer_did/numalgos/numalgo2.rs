@@ -2,14 +2,9 @@ use did_doc::schema::did_doc::DidDocument;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
 
-use super::{
-    numalgo3::Numalgo3,
-    traits::{Numalgo, ResolvableNumalgo, ToNumalgo3},
-};
+use super::traits::{Numalgo, ResolvableNumalgo};
 use crate::{
-    error::DidPeerError,
-    numalgos::{numalgo2::resolve_numalgo2, numalgo3::generate_numalgo3},
-    peer_did::PeerDid,
+    error::DidPeerError, numalgos::numalgo2::resolve_numalgo2,
     peer_did_resolver::options::PublicKeyEncoding,
 };
 
@@ -27,11 +22,5 @@ impl ResolvableNumalgo for Numalgo2 {
         public_key_encoding: PublicKeyEncoding,
     ) -> Result<DidDocument<ExtraFieldsSov>, DidPeerError> {
         resolve_numalgo2(did, public_key_encoding).map(|builder| builder.build())
-    }
-}
-
-impl ToNumalgo3 for Numalgo2 {
-    fn to_numalgo3(did: &Did) -> Result<PeerDid<Numalgo3>, DidPeerError> {
-        generate_numalgo3(did)
     }
 }
