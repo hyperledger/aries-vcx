@@ -3,7 +3,6 @@ mod fixtures;
 use did_doc::schema::did_doc::DidDocument;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_peer::peer_did::{
-    generate::{generate_numalgo2, generate_numalgo3},
     numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
     PeerDid,
 };
@@ -31,7 +30,7 @@ macro_rules! generate_test_numalgo2 {
                 serde_json::from_str::<DidDocument<ExtraFieldsSov>>($did_doc).unwrap();
             assert_eq!(
                 PeerDid::<Numalgo2>::parse($peer_did.to_string()).unwrap(),
-                generate_numalgo2(did_document).unwrap()
+                PeerDid::<Numalgo2>::from_did_doc(did_document).unwrap()
             );
         }
     };
@@ -45,7 +44,7 @@ macro_rules! generate_test_numalgo3 {
                 serde_json::from_str::<DidDocument<ExtraFieldsSov>>($did_doc).unwrap();
             assert_eq!(
                 PeerDid::<Numalgo3>::parse($peer_did.to_string()).unwrap(),
-                generate_numalgo3(did_document).unwrap()
+                PeerDid::<Numalgo3>::from_did_doc(did_document).unwrap()
             );
         }
     };

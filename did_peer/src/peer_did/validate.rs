@@ -6,8 +6,9 @@ use crate::error::DidPeerError;
 pub fn validate(did: &Did) -> Result<(), DidPeerError> {
     if !PEER_DID_REGEX.is_match(did.did()) {
         Err(DidPeerError::DidValidationError(format!(
-            "Invalid did: {}",
-            did.did()
+            "Invalid did: {} because it's not matching peer did regex {}",
+            did.did(),
+            PEER_DID_REGEX.to_string()
         )))
     } else {
         Ok(())
