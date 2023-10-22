@@ -411,7 +411,7 @@ pub mod tests_utils {
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
-pub mod tests {
+mod tests {
     use aries_vcx::{
         messages::msg_fields::protocols::cred_issuance::v1::issue_credential::IssueCredentialV1,
         protocols::issuance::holder::state_machine::HolderState,

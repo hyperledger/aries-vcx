@@ -356,7 +356,7 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use aries_vcx::{
         aries_vcx_core::wallet::indy::{
             wallet::delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord,

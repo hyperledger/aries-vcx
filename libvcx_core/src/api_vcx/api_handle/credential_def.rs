@@ -114,32 +114,3 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
 pub fn check_is_published(handle: u32) -> LibvcxResult<bool> {
     CREDENTIALDEF_MAP.get(handle, |s| Ok(PublicEntityStateType::Published == s.state))
 }
-
-#[cfg(test)]
-pub mod tests {
-    use std::{thread::sleep, time::Duration};
-
-    use aries_vcx::global::settings::DEFAULT_DID;
-
-    use super::{create, publish};
-    use crate::api_vcx::api_handle::schema;
-
-    pub async fn create_and_publish_nonrevocable_creddef() -> (u32, u32) {
-        let schema_handle = schema::test_utils::create_schema_real().await;
-        sleep(Duration::from_secs(1));
-
-        let schema_id = schema::get_schema_id(schema_handle).unwrap();
-        let cred_def_handle = create(
-            DEFAULT_DID.to_owned(),
-            "1".to_string(),
-            schema_id,
-            "tag_1".to_string(),
-            false,
-        )
-        .await
-        .unwrap();
-
-        publish(cred_def_handle).await.unwrap();
-        (schema_handle, cred_def_handle)
-    }
-}

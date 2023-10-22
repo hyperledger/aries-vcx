@@ -535,7 +535,7 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use aries_vcx::{
         self,
         utils::{constants, devsetup::SetupMocks},

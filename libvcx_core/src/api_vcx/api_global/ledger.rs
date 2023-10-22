@@ -183,7 +183,7 @@ pub fn get_taa_configuration() -> LibvcxResult<Option<TxnAuthrAgrmtOptions>> {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use aries_vcx::{
         aries_vcx_core::ledger::indy::pool::test_utils::{
             create_genesis_txn_file, create_testpool_genesis_txn_file, get_temp_file_path,

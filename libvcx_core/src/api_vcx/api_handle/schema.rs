@@ -168,7 +168,7 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use aries_vcx::{global::settings::DEFAULT_DID, utils::devsetup::SetupMocks};
 
     use super::*;

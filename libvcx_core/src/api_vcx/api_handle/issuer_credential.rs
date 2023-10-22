@@ -310,8 +310,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-pub mod tests {
+mod tests {
     use aries_vcx::utils::{constants::V3_OBJECT_SERIALIZE_VERSION, devsetup::SetupMocks};
 
     use super::*;

@@ -139,7 +139,7 @@ pub async fn close_main_pool() -> LibvcxResult<()> {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
 
     use std::num::NonZeroUsize;
 
