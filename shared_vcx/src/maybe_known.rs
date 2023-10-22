@@ -17,7 +17,7 @@ pub enum MaybeKnown<T, U = String> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
+
 mod tests {
     use serde::Deserialize;
     use serde_json::json;

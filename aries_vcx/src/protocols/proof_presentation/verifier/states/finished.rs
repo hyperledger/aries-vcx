@@ -30,7 +30,6 @@ impl FinishedState {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use super::*;
 

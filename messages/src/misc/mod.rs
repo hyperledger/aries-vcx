@@ -5,7 +5,7 @@ pub use mime_type::MimeType;
 pub use shared_vcx::misc::{serde_ignored::SerdeIgnored as NoDecorators, utils::CowStr};
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
+
 pub mod test_utils {
     use chrono::{DateTime, Utc};
     use serde::{Deserialize, Serialize};

@@ -55,7 +55,6 @@ pub async fn validate_indy_proof(
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 pub mod integration_tests {
     use std::time::Duration;
 

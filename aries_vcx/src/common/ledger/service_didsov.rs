@@ -61,7 +61,6 @@ impl Default for EndpointDidSov {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 mod unit_tests {
     use agency_client::testing::test_utils::SetupMocks;
     use diddoc_legacy::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};

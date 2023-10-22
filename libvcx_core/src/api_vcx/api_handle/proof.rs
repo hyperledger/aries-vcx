@@ -313,7 +313,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
+
 mod tests {
     use aries_vcx::utils::{
         constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, V3_OBJECT_SERIALIZE_VERSION},

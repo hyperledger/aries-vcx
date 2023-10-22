@@ -114,7 +114,6 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     SCHEMA_MAP.get(handle, |s| Ok(s.get_state()))
 }
 
-#[allow(clippy::unwrap_used)]
 pub mod test_utils {
     use aries_vcx::global::settings::DEFAULT_DID;
     use rand::Rng;

@@ -215,8 +215,6 @@ impl GenericConnection {
 /// of the [`crate::protocols::connection::Connection`], if modified, will be modified together.
 #[cfg(test)]
 mod connection_serde_tests {
-    #![allow(clippy::unwrap_used)]
-
     use aries_vcx_core::wallet::mock_wallet::MockWallet;
     use async_trait::async_trait;
     use chrono::Utc;

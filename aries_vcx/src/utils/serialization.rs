@@ -49,7 +49,6 @@ pub enum SerializableObjectWithState<T, P> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 mod tests {
     use serde_json;
 

@@ -275,7 +275,6 @@ pub fn build_requested_credentials_json(
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 pub mod pool_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
@@ -321,7 +320,6 @@ pub mod pool_tests {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 

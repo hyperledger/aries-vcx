@@ -278,7 +278,6 @@ pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
     migration_res.map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::WalletMigrationFailed, e))
 }
 
-#[allow(clippy::unwrap_used)]
 pub mod test_utils {
     use aries_vcx::{
         aries_vcx_core::wallet::indy::WalletConfig,

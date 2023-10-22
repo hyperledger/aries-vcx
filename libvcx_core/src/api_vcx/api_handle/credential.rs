@@ -410,7 +410,7 @@ pub mod tests_utils {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
+
 mod tests {
     use aries_vcx::{
         messages::msg_fields::protocols::cred_issuance::v1::issue_credential::IssueCredentialV1,

@@ -59,7 +59,6 @@ pub enum AttachmentType {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
 pub mod tests {
     use serde_json::json;

@@ -54,7 +54,6 @@ pub async fn is_cred_revoked(
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 mod integration_tests {
     use super::*;
     use crate::common::test_utils::{

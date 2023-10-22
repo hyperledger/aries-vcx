@@ -11,7 +11,6 @@ pub struct PublicInvitationContent {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;

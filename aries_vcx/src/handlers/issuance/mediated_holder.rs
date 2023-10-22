@@ -16,7 +16,6 @@ use crate::{
     protocols::issuance::holder::state_machine::HolderState,
 };
 
-#[allow(clippy::unwrap_used)]
 pub fn holder_find_message_to_handle(
     sm: &Holder,
     messages: HashMap<String, AriesMessage>,

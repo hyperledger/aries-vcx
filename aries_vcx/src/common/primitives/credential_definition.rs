@@ -269,7 +269,6 @@ pub async fn generate_cred_def(
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 pub mod integration_tests {
     use aries_vcx_core::ledger::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},

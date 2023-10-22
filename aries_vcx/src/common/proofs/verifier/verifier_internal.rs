@@ -220,7 +220,6 @@ pub async fn build_rev_reg_json(
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use super::*;
     use crate::utils::{constants::*, devsetup::*, mockdata::profile::mock_ledger::MockLedger};

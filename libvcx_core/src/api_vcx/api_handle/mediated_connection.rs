@@ -499,7 +499,6 @@ pub async fn download_messages(
     Ok(res)
 }
 
-#[allow(clippy::unwrap_used)]
 pub mod test_utils {
     use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,

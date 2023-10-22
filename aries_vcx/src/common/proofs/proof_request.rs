@@ -165,7 +165,6 @@ impl Default for ProofRequestData {
 
 pub type PresentationRequestData = ProofRequestData;
 
-#[allow(clippy::unwrap_used)]
 pub mod test_utils {
     use super::*;
 
@@ -177,7 +176,6 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 mod unit_tests {
     use agency_client::testing::test_utils::SetupMocks;
     use serde_json::Value;

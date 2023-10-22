@@ -246,7 +246,7 @@ impl BaseAnonCreds for MockAnoncreds {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
+
 mod unit_tests {
 
     use aries_vcx_core::{
