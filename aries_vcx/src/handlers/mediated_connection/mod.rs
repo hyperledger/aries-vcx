@@ -891,12 +891,7 @@ impl MediatedConnection {
         ))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
         Ok(Box::new(move |message: AriesMessage| {
-            Box::pin(send_message(
-                wallet,
-                sender_vk.clone(),
-                did_doc.clone(),
-                message,
-            ))
+            Box::pin(send_message(wallet, sender_vk.clone(), did_doc, message))
         }))
     }
 

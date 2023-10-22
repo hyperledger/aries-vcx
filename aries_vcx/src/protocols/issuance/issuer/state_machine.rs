@@ -495,7 +495,7 @@ impl IssuerSM {
         verify_thread_id(
             &self.thread_id,
             &AriesMessage::CredentialIssuance(CredentialIssuance::V1(CredentialIssuanceV1::Ack(
-                ack.clone(),
+                ack,
             ))),
         )?;
         let state = match self.state {

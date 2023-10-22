@@ -165,33 +165,84 @@ pub enum AriesVcxErrorKind {
     InvalidMessageFormat,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(thiserror::Error)]
 pub struct AriesVcxError {
     msg: String,
     kind: AriesVcxErrorKind,
+    backtrace: Option<String>,
+}
+
+fn format_error(err: &AriesVcxError, f: &mut fmt::Formatter) -> fmt::Result {
+    writeln!(f, "Error: {}", err.msg())?;
+    match err.backtrace() {
+        None => {}
+        Some(backtrace) => {
+            writeln!(f, "Backtrace: {}", backtrace)?;
+        }
+    }
+    let mut current = err.source();
+    while let Some(cause) = current {
+        writeln!(f, "Caused by:\n{}", cause)?;
+        current = cause.source();
+    }
+    Ok(())
 }
 
 impl fmt::Display for AriesVcxError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "Error: {}\n", self.msg)?;
-        let mut current = self.source();
-        while let Some(cause) = current {
-            writeln!(f, "Caused by:\n\t{}", cause)?;
-            current = cause.source();
-        }
-        Ok(())
+        format_error(self, f)
     }
 }
 
+impl fmt::Debug for AriesVcxError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        format_error(self, f)
+    }
+}
+
+fn try_capture_backtrace() -> Option<String> {
+    #[cfg(feature = "backtrace_errors")]
+    {
+        use backtrace::Backtrace;
+
+        let backtrace = Backtrace::new();
+        let mut filtered_backtrace = String::new();
+
+        for frame in backtrace.frames() {
+            let symbols = frame.symbols();
+            if !symbols.is_empty() {
+                let symbol = &symbols[0];
+                if let Some(filename) = symbol.filename() {
+                    if let Some(line) = symbol.lineno() {
+                        filtered_backtrace.push_str(&format!("[{}:{}]", filename.display(), line));
+                    }
+                }
+                if let Some(name) = symbol.name() {
+                    filtered_backtrace.push_str(&format!(" {}", name));
+                }
+                filtered_backtrace.push('\n');
+            }
+        }
+        Some(filtered_backtrace)
+    }
+    #[cfg(not(feature = "backtrace_errors"))]
+    None
+}
+
 impl AriesVcxError {
+    fn new(kind: AriesVcxErrorKind, msg: String) -> Self {
+        AriesVcxError {
+            msg,
+            kind,
+            backtrace: try_capture_backtrace(),
+        }
+    }
+
     pub fn from_msg<D>(kind: AriesVcxErrorKind, msg: D) -> AriesVcxError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        AriesVcxError {
-            msg: msg.to_string(),
-            kind,
-        }
+        Self::new(kind, msg.to_string())
     }
 
     pub fn find_root_cause(&self) -> String {
@@ -209,24 +260,26 @@ impl AriesVcxError {
         self.kind
     }
 
+    pub fn msg(&self) -> &str {
+        &self.msg
+    }
+
+    pub fn backtrace(&self) -> Option<&String> {
+        self.backtrace.as_ref()
+    }
+
     pub fn extend<D>(self, msg: D) -> AriesVcxError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        AriesVcxError {
-            msg: msg.to_string(),
-            ..self
-        }
+        Self::new(self.kind, format!("{}\n{}", self.msg, msg))
     }
 
     pub fn map<D>(self, kind: AriesVcxErrorKind, msg: D) -> AriesVcxError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        AriesVcxError {
-            msg: msg.to_string(),
-            kind,
-        }
+        Self::new(kind, msg.to_string())
     }
 }
 
