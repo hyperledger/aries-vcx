@@ -328,6 +328,7 @@ dependencies = [
  "aries_vcx_core",
  "async-channel",
  "async-trait",
+ "backtrace",
  "base64",
  "bs58 0.5.0",
  "chrono",

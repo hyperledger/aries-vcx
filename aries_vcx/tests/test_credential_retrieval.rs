@@ -29,92 +29,90 @@ use crate::utils::{
 #[tokio::test]
 #[ignore]
 // TODO: This should be a unit test
-async fn test_agency_pool_retrieve_credentials_empty() {
+async fn test_agency_pool_retrieve_credentials_empty() -> Result<(), Box<dyn Error>> {
     run_setup_test!(|setup| async move {
-        // create skeleton proof request attachment data
-        let mut req = json!({
-           "nonce":"123432421212",
-           "name":"proof_req_1",
-           "version":"0.1",
-           "requested_attributes": json!({}),
-           "requested_predicates": json!({}),
-        });
 
-        let pres_req_data: PresentationRequestData =
-            serde_json::from_str(&req.to_string()).unwrap();
+    let pres_req_data = PresentationRequestData {
+        nonce: "123432421212".into(),
+        name: "proof_req_1".into(),
+        data_version: "0.1".into(),
+        requested_attributes: serde_json::from_value(json!({}))?,
+        requested_predicates: serde_json::from_value(json!({}))?,
+        non_revoked: None,
+    };
 
-        let attach_type = AttachmentType::Base64(
-            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
-        );
-        let attach_data = AttachmentData::builder().content(attach_type).build();
-        let attach = Attachment::builder()
-            .data(attach_data)
-            .id(AttachmentId::PresentationRequest.as_ref().to_owned())
-            .mime_type(MimeType::Json)
-            .build();
+    let attach_type =
+        AttachmentType::Base64(general_purpose::STANDARD.encode(json!(pres_req_data).to_string()));
+    let attach_data = AttachmentData::builder().content(attach_type).build();
+    let attach = Attachment::builder()
+        .data(attach_data)
+        .id(AttachmentId::PresentationRequest.as_ref().to_owned())
+        .mime_type(MimeType::Json)
+        .build();
 
-        let content = RequestPresentationV1Content::builder()
-            .request_presentations_attach(vec![attach])
-            .build();
+    let content = RequestPresentationV1Content::builder()
+        .request_presentations_attach(vec![attach])
+        .build();
 
-        // test retrieving credentials for empty proof request returns "{}"
-        let id = "test_id".to_owned();
-        let proof_req = RequestPresentationV1::builder()
-            .id(id)
-            .content(content)
-            .build();
-        let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
+    // test retrieving credentials for empty proof request returns "{}"
+    let id = "test_id".to_owned();
+    let proof_req = RequestPresentationV1::builder()
+        .id(id)
+        .content(content)
+        .build();
+    let proof: Prover = Prover::create_from_request("1", proof_req)?;
 
-        let retrieved_creds = proof
-            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
-            .await
-            .unwrap();
-        assert_eq!(
-            serde_json::to_string(&retrieved_creds).unwrap(),
-            "{}".to_string()
-        );
-        assert!(retrieved_creds.credentials_by_referent.is_empty());
+    let retrieved_creds = proof
+        .retrieve_credentials(&setup.wallet, &setup.anoncreds)
+        .await?;
+    assert_eq!(serde_json::to_string(&retrieved_creds)?, "{}".to_string());
+    assert!(retrieved_creds.credentials_by_referent.is_empty());
 
-        // populate proof request with a single attribute referent request
-        req["requested_attributes"]["address1_1"] = json!({"name": "address1"});
-        let pres_req_data: PresentationRequestData =
-            serde_json::from_str(&req.to_string()).unwrap();
+    // populate proof request with a single attribute referent request
+    let pres_req_data = PresentationRequestData {
+        nonce: "123432421212".into(),
+        name: "proof_req_1".into(),
+        data_version: "0.1".into(),
+        requested_attributes: serde_json::from_value(
+            json!({ "address1_1": {"name": "address1"} }),
+        )?,
+        requested_predicates: serde_json::from_value(json!({}))?,
+        non_revoked: None,
+    };
 
-        let attach_type = AttachmentType::Base64(
-            general_purpose::STANDARD.encode(json!(pres_req_data).to_string()),
-        );
-        let attach_data = AttachmentData::builder().content(attach_type).build();
-        let attach = Attachment::builder()
-            .data(attach_data)
-            .id(AttachmentId::PresentationRequest.as_ref().to_owned())
-            .mime_type(MimeType::Json)
-            .build();
+    let attach_type =
+        AttachmentType::Base64(general_purpose::STANDARD.encode(json!(pres_req_data).to_string()));
+    let attach_data = AttachmentData::builder().content(attach_type).build();
+    let attach = Attachment::builder()
+        .data(attach_data)
+        .id(AttachmentId::PresentationRequest.as_ref().to_owned())
+        .mime_type(MimeType::Json)
+        .build();
 
-        let content = RequestPresentationV1Content::builder()
-            .request_presentations_attach(vec![attach])
-            .build();
+    let content = RequestPresentationV1Content::builder()
+        .request_presentations_attach(vec![attach])
+        .build();
 
-        // test retrieving credentials for the proof request returns the referent with no cred
-        // matches
-        let id = "test_id".to_owned();
-        let proof_req = RequestPresentationV1::builder()
-            .id(id)
-            .content(content)
-            .build();
-        let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
+    // test retrieving credentials for the proof request returns the referent with no cred
+    // matches
+    let id = "test_id".to_owned();
+    let proof_req = RequestPresentationV1::builder()
+        .id(id)
+        .content(content)
+        .build();
+    let proof: Prover = Prover::create_from_request("2", proof_req)?;
 
-        let retrieved_creds = proof
-            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
-            .await
-            .unwrap();
-        assert_eq!(
-            serde_json::to_string(&retrieved_creds).unwrap(),
-            json!({"attrs":{"address1_1":[]}}).to_string()
-        );
-        assert_eq!(
-            retrieved_creds,
-            RetrievedCredentials {
-                credentials_by_referent: HashMap::from([("address1_1".to_string(), vec![])])
+    let retrieved_creds = proof
+        .retrieve_credentials(&setup.wallet, &setup.anoncreds)
+        .await?;
+    assert_eq!(
+        serde_json::to_string(&retrieved_creds)?,
+        json!({"attrs":{"address1_1":[]}}).to_string()
+    );
+    assert_eq!(
+        retrieved_creds,
+        RetrievedCredentials {
+            credentials_by_referent: HashMap::from([("address1_1".to_string(), vec![])])
             }
         )
     })
