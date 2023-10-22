@@ -162,14 +162,14 @@ mod tests {
         let service_endpoint = "http://example.com/endpoint";
         let service_type = "DIDCommMessaging".to_string();
 
-        let service = ServiceBuilder::<ExtraSov>::new(
+        ServiceBuilder::<ExtraSov>::new(
             id,
             service_endpoint.try_into().unwrap(),
             Default::default(),
         )
         .add_service_type(service_type.clone())
         .unwrap()
-        .add_service_type(service_type.clone())
+        .add_service_type(service_type)
         .unwrap_err();
     }
 
