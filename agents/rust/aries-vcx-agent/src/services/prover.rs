@@ -13,9 +13,11 @@ use aries_vcx::{
     },
     protocols::{proof_presentation::prover::state_machine::ProverState, SendClosure},
 };
-use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
+use aries_vcx_core::{
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds, ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
+    wallet::indy::IndySdkWallet,
+};
 use serde_json::Value;
-use test_utils::devsetup::DefaultIndyLedgerRead;
 
 use super::connection::ServiceConnections;
 use crate::{

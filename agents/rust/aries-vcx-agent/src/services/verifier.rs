@@ -16,8 +16,10 @@ use aries_vcx::{
         SendClosure,
     },
 };
-use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
-use test_utils::devsetup::DefaultIndyLedgerRead;
+use aries_vcx_core::{
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds, ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
+    wallet::indy::IndySdkWallet,
+};
 
 use super::connection::ServiceConnections;
 use crate::{

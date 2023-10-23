@@ -10,8 +10,7 @@ use aries_vcx::{
         pairwise_info::PairwiseInfo, Connection, GenericConnection, State, ThinState,
     },
 };
-use aries_vcx_core::wallet::indy::IndySdkWallet;
-use test_utils::devsetup::DefaultIndyLedgerRead;
+use aries_vcx_core::{ledger::indy_vdr_ledger::DefaultIndyLedgerRead, wallet::indy::IndySdkWallet};
 use url::Url;
 
 use crate::{

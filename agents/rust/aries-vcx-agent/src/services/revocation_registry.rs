@@ -4,8 +4,10 @@ use std::{
 };
 
 use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
-use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
-use test_utils::devsetup::DefaultIndyLedgerWrite;
+use aries_vcx_core::{
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds,
+    ledger::indy_vdr_ledger::DefaultIndyLedgerWrite, wallet::indy::IndySdkWallet,
+};
 
 use crate::{
     error::*,

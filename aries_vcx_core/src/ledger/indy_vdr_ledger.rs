@@ -12,11 +12,8 @@ use indy_ledger_response_parser::{
 use indy_vdr as vdr;
 use serde_json::Value;
 use time::OffsetDateTime;
-pub use vdr::{
-    ledger::constants::{LedgerRole, UpdateRole},
-    pool::ProtocolVersion,
-};
 use vdr::{
+    config::PoolConfig,
     ledger::{
         identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId},
         requests::{
@@ -32,11 +29,18 @@ use vdr::{
     pool::{LedgerType, PreparedRequest},
     utils::{did::DidValue, Qualifiable},
 };
+pub use vdr::{
+    ledger::constants::{LedgerRole, UpdateRole},
+    pool::ProtocolVersion,
+};
 
 use super::{
     base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
     map_error_not_found_to_none,
-    request_submitter::{vdr_ledger::IndyVdrSubmitter, RequestSubmitter},
+    request_submitter::{
+        vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
+        RequestSubmitter,
+    },
     response_cacher::{
         in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
         ResponseCacher,
@@ -50,6 +54,9 @@ use crate::{
     },
     wallet::base_wallet::BaseWallet,
 };
+
+pub type DefaultIndyLedgerRead = IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>;
+pub type DefaultIndyLedgerWrite = IndyVdrLedgerWrite<IndyVdrSubmitter>;
 
 // TODO: Should implement builders for these configs...
 // Good first issue?
@@ -686,4 +693,36 @@ pub fn indyvdr_build_ledger_write(
         protocol_version: ProtocolVersion::Node1_4,
     };
     IndyVdrLedgerWrite::new(config_write)
+}
+
+pub struct VcxPoolConfig {
+    pub genesis_file_path: String,
+    pub indy_vdr_config: Option<PoolConfig>,
+    pub response_cache_config: Option<InMemoryResponseCacherConfig>,
+}
+
+pub fn build_ledger_components(
+    pool_config: VcxPoolConfig,
+) -> VcxCoreResult<(DefaultIndyLedgerRead, DefaultIndyLedgerWrite)> {
+    let indy_vdr_config = match pool_config.indy_vdr_config {
+        None => PoolConfig::default(),
+        Some(cfg) => cfg,
+    };
+    let cache_config = match pool_config.response_cache_config {
+        None => InMemoryResponseCacherConfig::builder()
+            .ttl(std::time::Duration::from_secs(60))
+            .capacity(1000)?
+            .build(),
+        Some(cfg) => cfg,
+    };
+
+    let ledger_pool =
+        IndyVdrLedgerPool::new(pool_config.genesis_file_path, indy_vdr_config, vec![])?;
+
+    let request_submitter = IndyVdrSubmitter::new(ledger_pool);
+
+    let ledger_read = indyvdr_build_ledger_read(request_submitter.clone(), cache_config)?;
+    let ledger_write = indyvdr_build_ledger_write(request_submitter, None);
+
+    Ok((ledger_read, ledger_write))
 }

@@ -21,9 +21,9 @@ use aries_vcx_core::{
         },
         indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path},
         indy_vdr_ledger::{
-            indyvdr_build_ledger_read, indyvdr_build_ledger_write, GetTxnAuthorAgreementData,
-            IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite,
-            IndyVdrLedgerWriteConfig, ProtocolVersion,
+            indyvdr_build_ledger_read, indyvdr_build_ledger_write, DefaultIndyLedgerRead,
+            DefaultIndyLedgerWrite, GetTxnAuthorAgreementData, IndyVdrLedgerRead,
+            IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig, ProtocolVersion,
         },
         request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
@@ -115,42 +115,6 @@ where
         )
     })
 }
-
-pub type DefaultIndyLedgerRead = IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>;
-pub type DefaultIndyLedgerWrite = IndyVdrLedgerWrite<IndyVdrSubmitter>;
-
-pub struct VcxPoolConfig {
-    pub genesis_file_path: String,
-    pub indy_vdr_config: Option<PoolConfig>,
-    pub response_cache_config: Option<InMemoryResponseCacherConfig>,
-}
-
-pub fn build_ledger_components(
-    pool_config: VcxPoolConfig,
-) -> VcxCoreResult<(DefaultIndyLedgerRead, DefaultIndyLedgerWrite)> {
-    let indy_vdr_config = match pool_config.indy_vdr_config {
-        None => PoolConfig::default(),
-        Some(cfg) => cfg,
-    };
-    let cache_config = match pool_config.response_cache_config {
-        None => InMemoryResponseCacherConfig::builder()
-            .ttl(std::time::Duration::from_secs(60))
-            .capacity(1000)?
-            .build(),
-        Some(cfg) => cfg,
-    };
-
-    let ledger_pool =
-        IndyVdrLedgerPool::new(pool_config.genesis_file_path, indy_vdr_config, vec![])?;
-
-    let request_submitter = IndyVdrSubmitter::new(ledger_pool);
-
-    let ledger_read = indyvdr_build_ledger_read(request_submitter.clone(), cache_config)?;
-    let ledger_write = indyvdr_build_ledger_write(request_submitter, None);
-
-    Ok((ledger_read, ledger_write))
-}
-
 pub struct SetupMocks;
 
 pub const AGENCY_ENDPOINT: &str = "http://localhost:8080";
@@ -240,6 +204,8 @@ pub fn dev_build_profile_modular(
     DefaultIndyLedgerWrite,
     IndyCredxAnonCreds,
 ) {
+    use aries_vcx_core::ledger::indy_vdr_ledger::{build_ledger_components, VcxPoolConfig};
+
     info!("dev_build_profile_modular >>");
     let vcx_pool_config = VcxPoolConfig {
         genesis_file_path,

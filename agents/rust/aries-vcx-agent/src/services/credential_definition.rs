@@ -1,8 +1,11 @@
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::common::primitives::credential_definition::{CredentialDef, CredentialDefConfig};
-use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
-use test_utils::devsetup::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite};
+use aries_vcx_core::{
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds,
+    ledger::indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
+    wallet::indy::IndySdkWallet,
+};
 
 use crate::{
     error::*,
