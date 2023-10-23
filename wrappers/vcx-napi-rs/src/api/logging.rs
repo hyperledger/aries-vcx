@@ -1,6 +1,6 @@
 use libvcx_core::errors::error::LibvcxError;
+use libvcx_logger::LibvcxDefaultLogger;
 use napi_derive::napi;
-use test_utils::test_logger::LibvcxDefaultLogger;
 
 use crate::error::to_napi_err;
 

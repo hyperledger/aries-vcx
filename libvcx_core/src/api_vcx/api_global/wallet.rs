@@ -278,6 +278,7 @@ pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
     migration_res.map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::WalletMigrationFailed, e))
 }
 
+#[cfg(test)]
 pub mod test_utils {
     use ::test_utils::devsetup::TempFile;
     use aries_vcx::{

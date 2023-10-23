@@ -30,7 +30,8 @@ members = [
     "indy_ledger_response_parser",
     "wallet_migrator",
     "tools/simple_message_relay",
-    "tools/test_utils"
+    "tools/test_utils",
+    "tools/libvcx_logger"
 ]
 
 [workspace.package]

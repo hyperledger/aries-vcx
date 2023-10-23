@@ -1,4 +1,4 @@
-use std::{env, io::Write};
+use std::{env, io::Write, sync::Once};
 
 #[cfg(target_os = "android")]
 use android_logger::Filter;
@@ -9,6 +9,14 @@ use chrono::{
 };
 use env_logger::{fmt::Formatter, Builder as EnvLoggerBuilder};
 use log::{info, LevelFilter, Record};
+
+static TEST_LOGGING_INIT: Once = Once::new();
+
+pub fn init_test_logging() {
+    TEST_LOGGING_INIT.call_once(|| {
+        LibvcxDefaultLogger::init_testing_logger();
+    })
+}
 
 pub struct LibvcxDefaultLogger;
 

@@ -44,25 +44,15 @@ use aries_vcx_core::{
 };
 use chrono::{DateTime, Duration, Utc};
 use lazy_static::lazy_static;
+use libvcx_logger::init_test_logging;
 use log::{debug, info, warn};
 
 use crate::{
     constants::{POOL1_TXN, TRUSTEE_SEED},
     mockdata::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
-    test_logger::LibvcxDefaultLogger,
 };
 
 const DEFAULT_AML_LABEL: &str = "eula";
-
-lazy_static! {
-    static ref TEST_LOGGING_INIT: Once = Once::new();
-}
-
-pub fn init_test_logging() {
-    TEST_LOGGING_INIT.call_once(|| {
-        LibvcxDefaultLogger::init_testing_logger();
-    })
-}
 
 pub fn write_file<P: AsRef<Path>>(file: P, content: &str) -> VcxCoreResult<()>
 where

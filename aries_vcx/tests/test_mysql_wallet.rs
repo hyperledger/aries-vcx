@@ -11,7 +11,7 @@ mod dbtests {
             IndySdkWallet, WalletConfig, WalletConfigBuilder,
         },
     };
-    use test_utils::test_logger::LibvcxDefaultLogger;
+    use libvcx_logger::LibvcxDefaultLogger;
 
     #[tokio::test]
     #[ignore]

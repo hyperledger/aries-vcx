@@ -326,7 +326,6 @@ name = "aries-vcx"
 version = "0.61.0"
 dependencies = [
  "agency_client",
- "android_logger",
  "aries_vcx_core",
  "async-channel",
  "async-trait",
@@ -338,6 +337,7 @@ dependencies = [
  "env_logger 0.10.0",
  "futures",
  "lazy_static",
+ "libvcx_logger",
  "log",
  "messages",
  "num-bigint",
@@ -355,7 +355,7 @@ dependencies = [
  "time 0.3.20",
  "tokio",
  "url",
- "uuid 1.4.1",
+ "uuid 1.5.0",
  "wallet_migrator",
 ]
 
@@ -372,7 +372,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "url",
- "uuid 1.4.1",
+ "uuid 1.5.0",
 ]
 
 [[package]]
@@ -398,7 +398,7 @@ dependencies = [
  "thiserror",
  "time 0.3.20",
  "tokio",
- "uuid 1.4.1",
+ "uuid 1.5.0",
 ]
 
 [[package]]
@@ -1524,7 +1524,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "url",
- "uuid 1.4.1",
+ "uuid 1.5.0",
 ]
 
 [[package]]
@@ -2741,8 +2741,19 @@ dependencies = [
  "time 0.3.20",
  "tokio",
  "url",
- "uuid 1.4.1",
+ "uuid 1.5.0",
  "wallet_migrator",
+]
+
+[[package]]
+name = "libvcx_logger"
+version = "0.60.0"
+dependencies = [
+ "android_logger",
+ "aries_vcx_core",
+ "chrono",
+ "env_logger 0.10.0",
+ "log",
 ]
 
 [[package]]
@@ -4647,12 +4658,12 @@ dependencies = [
  "aries_vcx_core",
  "async-trait",
  "chrono",
- "env_logger 0.10.0",
  "lazy_static",
+ "libvcx_logger",
  "log",
  "rand 0.8.5",
  "serde_json",
- "uuid 1.4.1",
+ "uuid 1.5.0",
 ]
 
 [[package]]
@@ -5214,9 +5225,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.4.1"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79daa5ed5740825c40b389c5e50312b9c86df53fccd33f281df655642b43869d"
+checksum = "88ad59a7560b41a70d191093a945f0b87bc1deeda46fb237479708a1d6b6cdfc"
 dependencies = [
  "getrandom 0.2.10",
 ]
@@ -5239,12 +5250,12 @@ version = "0.61.0"
 dependencies = [
  "chrono",
  "libvcx_core",
+ "libvcx_logger",
  "log",
  "napi",
  "napi-build",
  "napi-derive",
- "test_utils",
- "uuid 0.8.2",
+ "uuid 1.5.0",
  "wallet_migrator",
 ]
 

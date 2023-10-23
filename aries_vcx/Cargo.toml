@@ -49,11 +49,9 @@ tokio = { version = "1.20.4" }
 thiserror = "1.0.37"
 url = { version = "2.3", features = ["serde"] }
 
-[target.'cfg(target_os = "android")'.dependencies]
-android_logger = "0.13.3"
-
 [dev-dependencies]
 test_utils = { path = "../tools/test_utils" }
+libvcx_logger = { path = "../tools/libvcx_logger" }
 wallet_migrator = { path = "../wallet_migrator" }
 async-channel = "1.7.1"
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }
