@@ -116,8 +116,8 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
 
 #[cfg(test)]
 mod tests {
-    use aries_vcx::global::settings::DEFAULT_DID;
     use ::test_utils::devsetup::SetupMocks;
+    use aries_vcx::global::settings::DEFAULT_DID;
 
     use super::*;
 

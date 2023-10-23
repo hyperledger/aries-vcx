@@ -536,7 +536,7 @@ pub mod test_utils {
 
 #[cfg(test)]
 mod tests {
-    use ::test_utils::{devsetup::SetupMocks, constants::INSTITUTION_DID};
+    use ::test_utils::{constants::INSTITUTION_DID, devsetup::SetupMocks};
     use serde_json::Value;
 
     use super::*;
@@ -570,8 +570,7 @@ mod tests {
     fn test_generate_public_invitation() {
         let _setup = SetupMocks::init();
 
-        let invitation =
-            generate_public_invitation(INSTITUTION_DID, "faber-enterprise").unwrap();
+        let invitation = generate_public_invitation(INSTITUTION_DID, "faber-enterprise").unwrap();
         let parsed: Value = serde_json::from_str(&invitation).unwrap();
         assert!(parsed["@id"].is_string());
         assert_eq!(

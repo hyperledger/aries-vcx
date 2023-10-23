@@ -36,8 +36,11 @@ use vdr::{
 use super::{
     base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
     map_error_not_found_to_none,
-    request_submitter::{RequestSubmitter, vdr_ledger::IndyVdrSubmitter},
-    response_cacher::{ResponseCacher, in_memory::{InMemoryResponseCacherConfig, InMemoryResponseCacher}},
+    request_submitter::{vdr_ledger::IndyVdrSubmitter, RequestSubmitter},
+    response_cacher::{
+        in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
+        ResponseCacher,
+    },
 };
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},

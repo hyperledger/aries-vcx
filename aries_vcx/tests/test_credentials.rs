@@ -1,6 +1,6 @@
 pub mod utils;
 
-use aries_vcx::common::credentials::{get_cred_rev_id, ProverCredential, is_cred_revoked};
+use aries_vcx::common::credentials::{get_cred_rev_id, is_cred_revoked, ProverCredential};
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, run_setup_test};
 
