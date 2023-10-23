@@ -11,7 +11,6 @@ path = "src/lib.rs"
 doctest = false
 
 [features]
-default = ["credx", "vdrtools_wallet"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 credx = ["aries_vcx_core/credx"]
 vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "aries_vcx_core/vdrtools_wallet"]

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use aries_vcx::utils::devsetup::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite};
 use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
+use test_utils::devsetup::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite};
 
 use crate::{
     agent::agent_config::AgentConfig,

@@ -7,6 +7,7 @@ edition.workspace = true
 
 [dependencies]
 serde = "1.0.145"
+test_utils = { path = "../../../tools/test_utils", features = ["credx"] }
 aries-vcx = { path = "../../../aries_vcx" }
 aries_vcx_core = { path = "../../../aries_vcx_core", features = ["credx", "vdrtools_wallet"] }
 async-trait = "0.1.64"

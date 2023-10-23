@@ -1,8 +1,6 @@
 use std::sync::Arc;
 
-use aries_vcx::{
-    global::settings::DEFAULT_LINK_SECRET_ALIAS, utils::devsetup::dev_build_profile_modular,
-};
+use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx_core::{
     self,
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -11,6 +9,7 @@ use aries_vcx_core::{
         IndySdkWallet, WalletConfig,
     },
 };
+use test_utils::devsetup::dev_build_profile_modular;
 
 use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},

@@ -12,10 +12,10 @@ use aries_vcx::{
         AriesMessage,
     },
     protocols::{proof_presentation::prover::state_machine::ProverState, SendClosure},
-    utils::devsetup::DefaultIndyLedgerRead,
 };
 use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
 use serde_json::Value;
+use test_utils::devsetup::DefaultIndyLedgerRead;
 
 use super::connection::ServiceConnections;
 use crate::{

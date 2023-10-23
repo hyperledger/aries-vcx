@@ -370,6 +370,7 @@ dependencies = [
  "log",
  "serde",
  "serde_json",
+ "test_utils",
  "thiserror",
  "url",
  "uuid 1.4.1",

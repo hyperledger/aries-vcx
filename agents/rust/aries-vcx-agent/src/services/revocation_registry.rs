@@ -3,11 +3,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use aries_vcx::{
-    common::primitives::revocation_registry::RevocationRegistry,
-    utils::devsetup::DefaultIndyLedgerWrite,
-};
+use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
 use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
+use test_utils::devsetup::DefaultIndyLedgerWrite;
 
 use crate::{
     error::*,
