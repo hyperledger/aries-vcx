@@ -240,6 +240,7 @@ impl RevocationNotificationReceiverSM {
     }
 }
 
+#[cfg(test)]
 pub mod test_utils {
     use messages::AriesMessage;
 

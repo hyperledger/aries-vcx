@@ -1,2 +1,11 @@
-pub static DEFAULT_LINK_SECRET_ALIAS: &str = "main";
-pub static DEFAULT_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
+pub const DEFAULT_GENESIS_PATH: &str = "genesis.txn";
+pub const DEFAULT_LINK_SECRET_ALIAS: &str = "main";
+pub const DEFAULT_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
+pub const DEFAULT_WALLET_BACKUP_KEY: &str = "backup_wallet_key";
+pub const DEFAULT_WALLET_KEY: &str = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY";
+pub const WALLET_KDF_RAW: &str = "RAW";
+pub const WALLET_KDF_ARGON2I_INT: &str = "ARGON2I_INT";
+pub const WALLET_KDF_ARGON2I_MOD: &str = "ARGON2I_MOD";
+pub const WALLET_KDF_DEFAULT: &str = WALLET_KDF_ARGON2I_MOD;
+pub const VERKEY: &str = "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE";
+pub static DEFAULT_SERIALIZE_VERSION: &str = "1.0";

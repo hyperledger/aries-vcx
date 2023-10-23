@@ -499,8 +499,9 @@ pub async fn download_messages(
     Ok(res)
 }
 
+#[cfg(test)]
 pub mod test_utils {
-    use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
+    use ::test_utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
     };
 

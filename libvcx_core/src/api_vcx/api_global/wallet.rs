@@ -279,10 +279,10 @@ pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
 }
 
 pub mod test_utils {
+    use ::test_utils::devsetup::TempFile;
     use aries_vcx::{
         aries_vcx_core::wallet::indy::WalletConfig,
         global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
-        utils::devsetup::TempFile,
     };
     use aries_vcx_core::wallet::base_wallet::BaseWallet;
 

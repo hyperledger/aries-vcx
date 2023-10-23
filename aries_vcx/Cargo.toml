@@ -15,7 +15,7 @@ default = ["credx", "vdrtools_wallet"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 credx = ["aries_vcx_core/credx"]
 vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "aries_vcx_core/vdrtools_wallet"]
-vdrtools_wallet = ["aries_vcx_core/vdrtools_wallet"]
+vdrtools_wallet = ["aries_vcx_core/vdrtools_wallet", "test_utils/vdrtools_wallet"]
 
 # Feature for allowing legacy proof verification
 legacy_proof = ["aries_vcx_core/legacy_proof"]
@@ -54,6 +54,7 @@ url = { version = "2.3", features = ["serde"] }
 android_logger = "0.13.3"
 
 [dev-dependencies]
+test_utils = { path = "../tools/test_utils" }
 wallet_migrator = { path = "../wallet_migrator" }
 async-channel = "1.7.1"
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }

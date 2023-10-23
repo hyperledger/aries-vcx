@@ -18,7 +18,6 @@ use crate::{
     errors::error::prelude::*,
     global::settings,
     handlers::proof_presentation::types::SelectedCredentials,
-    utils::mockdata::mock_settings::get_mock_generate_indy_proof,
 };
 
 pub async fn generate_indy_proof(
@@ -35,13 +34,6 @@ pub async fn generate_indy_proof(
         secret!(&self_attested_attrs)
     );
 
-    match get_mock_generate_indy_proof() {
-        None => {}
-        Some(mocked_indy_proof) => {
-            warn!("generate_indy_proof :: returning mocked response");
-            return Ok(mocked_indy_proof);
-        }
-    }
     let proof_request: ProofRequestData =
         serde_json::from_str(proof_req_data_json).map_err(|err| {
             AriesVcxError::from_msg(

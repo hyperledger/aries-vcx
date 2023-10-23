@@ -350,6 +350,7 @@ dependencies = [
  "shared_vcx",
  "strum 0.25.0",
  "strum_macros 0.25.2",
+ "test_utils",
  "thiserror",
  "time 0.3.20",
  "tokio",
@@ -1550,6 +1551,7 @@ dependencies = [
  "mockall",
  "serde",
  "serde_json",
+ "test_utils",
  "thiserror",
  "tokio",
  "url",
@@ -2765,6 +2767,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "test_utils",
  "thiserror",
  "time 0.3.20",
  "tokio",
@@ -4668,6 +4671,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 
 [[package]]
+name = "test_utils"
+version = "0.60.0"
+dependencies = [
+ "agency_client",
+ "aries_vcx_core",
+ "async-trait",
+ "chrono",
+ "env_logger 0.10.0",
+ "lazy_static",
+ "log",
+ "rand 0.8.5",
+ "serde_json",
+ "uuid 1.4.1",
+]
+
+[[package]]
 name = "textwrap"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5044,6 +5063,7 @@ dependencies = [
  "once_cell",
  "serde",
  "serde_json",
+ "test_utils",
  "thiserror",
  "tokio",
  "uniffi",

@@ -31,6 +31,7 @@ uuid = { version = "1.4.1", default-features = false, features = ["v4"] }
 agency_client = { path = "../agency_client" }
 async-trait = "0.1.61"
 url = "2.3.1"
+test_utils = {path = "../tools/test_utils" }
 wallet_migrator = { path = "../wallet_migrator" }
 
 [dev-dependencies]

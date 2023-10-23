@@ -29,7 +29,8 @@ members = [
     "public_key",
     "indy_ledger_response_parser",
     "wallet_migrator",
-    "tools/simple_message_relay"
+    "tools/simple_message_relay",
+    "tools/test_utils"
 ]
 
 [workspace.package]

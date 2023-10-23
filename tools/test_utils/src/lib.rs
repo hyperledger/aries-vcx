@@ -1,4 +1,3 @@
-pub mod adapter;
 pub mod devsetup;
 pub mod mockdata;
 pub mod random;

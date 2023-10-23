@@ -7,10 +7,6 @@ use crate::{
     utils::encryption_envelope::EncryptionEnvelope,
 };
 
-#[macro_use]
-#[cfg(feature = "vdrtools_wallet")]
-pub mod devsetup;
-
 #[cfg(debug_assertions)]
 #[macro_export]
 macro_rules! secret {
@@ -27,21 +23,11 @@ macro_rules! secret {
     }};
 }
 
-#[rustfmt::skip]
-pub mod constants;
-pub mod file;
-pub mod ledger;
-pub mod mockdata;
 pub mod openssl;
-pub mod provision;
 pub mod qualifier;
-pub mod random;
-pub mod uuid;
 
 #[macro_use]
-pub mod test_logger;
 pub mod encryption_envelope;
-pub mod filters;
 pub mod serialization;
 pub mod validation;
 

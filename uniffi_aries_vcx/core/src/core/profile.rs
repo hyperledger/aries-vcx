@@ -7,8 +7,8 @@ use aries_vcx::{
         wallet::indy::{wallet::create_and_open_wallet, IndySdkWallet, WalletConfig},
     },
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    utils::mockdata::profile::mock_ledger::MockLedger,
 };
+use test_utils::mockdata::mock_ledger::MockLedger;
 
 use crate::{errors::error::VcxUniFFIResult, runtime::block_on};
 

@@ -177,17 +177,14 @@ pub mod test_utils {
 
 #[cfg(test)]
 mod unit_tests {
+    use ::test_utils::{
+        constants::{INDY_PROOF_REQ_JSON, REQUESTED_ATTRS, REQUESTED_PREDICATES},
+        mockdata::{mock_anoncreds::MockAnoncreds, mockdata_proof},
+    };
     use agency_client::testing::test_utils::SetupMocks;
     use serde_json::Value;
 
     use super::*;
-    use crate::{
-        utils,
-        utils::{
-            constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES},
-            mockdata::{mockdata_proof, profile::mock_anoncreds::MockAnoncreds},
-        },
-    };
 
     fn _expected_req_attrs() -> HashMap<String, AttrInfo> {
         let mut check_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
@@ -367,7 +364,6 @@ mod unit_tests {
     fn test_indy_proof_req_parses_correctly() {
         let _setup = SetupMocks::init();
 
-        let _proof_req: ProofRequestData =
-            serde_json::from_str(utils::constants::INDY_PROOF_REQ_JSON).unwrap();
+        let _proof_req: ProofRequestData = serde_json::from_str(INDY_PROOF_REQ_JSON).unwrap();
     }
 }

@@ -4,20 +4,20 @@ use std::{
     time::Duration,
 };
 
-use aries_vcx::{
-    aries_vcx_core::{
-        ledger::{
-            request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
-            response_cacher::in_memory::{
-                InMemoryResponseCacherConfig, InMemoryResponseCacherConfigBuilder,
-            },
+use aries_vcx::aries_vcx_core::{
+    ledger::{
+        request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
+        response_cacher::in_memory::{
+            InMemoryResponseCacherConfig, InMemoryResponseCacherConfigBuilder,
         },
-        PoolConfig,
     },
-    utils::ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write},
+    PoolConfig,
 };
 use aries_vcx_core::ledger::{
-    indy_vdr_ledger::{IndyVdrLedgerRead, IndyVdrLedgerWrite},
+    indy_vdr_ledger::{
+        indyvdr_build_ledger_read, indyvdr_build_ledger_write, IndyVdrLedgerRead,
+        IndyVdrLedgerWrite,
+    },
     response_cacher::in_memory::InMemoryResponseCacher,
 };
 

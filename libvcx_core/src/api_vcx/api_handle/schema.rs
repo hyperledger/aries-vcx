@@ -114,61 +114,10 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     SCHEMA_MAP.get(handle, |s| Ok(s.get_state()))
 }
 
-pub mod test_utils {
-    use aries_vcx::global::settings::DEFAULT_DID;
-    use rand::Rng;
-
-    use super::*;
-
-    pub fn prepare_schema_data() -> (String, String, String, String) {
-        let data = json!(data()).to_string();
-        let schema_name: String = aries_vcx::utils::random::generate_random_schema_name();
-        let schema_version: String = format!(
-            "{}.{}",
-            rand::thread_rng().gen::<u32>(),
-            rand::thread_rng().gen::<u32>()
-        );
-        let did = DEFAULT_DID.to_owned();
-
-        (did, schema_name, schema_version, data)
-    }
-
-    // TODO: Reuse test utils code and data
-    pub async fn create_schema_real() -> u32 {
-        let (_did, schema_name, schema_version, data) = prepare_schema_data();
-        create_and_publish_schema(DEFAULT_DID, "id", schema_name, schema_version, data)
-            .await
-            .unwrap()
-    }
-
-    pub fn check_schema(schema_handle: u32, schema_json: &str, schema_id: &str, data: &str) {
-        let schema: Schema = Schema::from_string_versioned(schema_json).unwrap();
-        info!("schema: {:?}", schema);
-        assert_eq!(schema.schema_id, schema_id.to_string());
-
-        let mut schema_data = schema.data;
-        schema_data.sort();
-        let mut vec_data: Vec<String> = serde_json::from_str(data).unwrap();
-        vec_data.sort();
-        assert_eq!(schema_data, vec_data);
-
-        assert!(schema_handle > 0);
-    }
-
-    fn data() -> Vec<String> {
-        vec![
-            "address1".to_string(),
-            "address2".to_string(),
-            "zip".to_string(),
-            "city".to_string(),
-            "state".to_string(),
-        ]
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use aries_vcx::{global::settings::DEFAULT_DID, utils::devsetup::SetupMocks};
+    use aries_vcx::global::settings::DEFAULT_DID;
+    use ::test_utils::devsetup::SetupMocks;
 
     use super::*;
 

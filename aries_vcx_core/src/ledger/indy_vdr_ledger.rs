@@ -36,8 +36,8 @@ use vdr::{
 use super::{
     base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
     map_error_not_found_to_none,
-    request_submitter::RequestSubmitter,
-    response_cacher::ResponseCacher,
+    request_submitter::{RequestSubmitter, vdr_ledger::IndyVdrSubmitter},
+    response_cacher::{ResponseCacher, in_memory::{InMemoryResponseCacherConfig, InMemoryResponseCacher}},
 };
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -655,4 +655,32 @@ where
             .await
             .map(|_| ())
     }
+}
+
+pub fn indyvdr_build_ledger_read(
+    request_submitter: IndyVdrSubmitter,
+    cache_config: InMemoryResponseCacherConfig,
+) -> VcxCoreResult<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>> {
+    let response_parser = ResponseParser;
+    let response_cacher = InMemoryResponseCacher::new(cache_config);
+
+    let config_read = IndyVdrLedgerReadConfig {
+        request_submitter,
+        response_parser,
+        response_cacher,
+        protocol_version: ProtocolVersion::Node1_4,
+    };
+    Ok(IndyVdrLedgerRead::new(config_read))
+}
+
+pub fn indyvdr_build_ledger_write(
+    request_submitter: IndyVdrSubmitter,
+    taa_options: Option<TxnAuthrAgrmtOptions>,
+) -> IndyVdrLedgerWrite<IndyVdrSubmitter> {
+    let config_write = IndyVdrLedgerWriteConfig {
+        request_submitter,
+        taa_options,
+        protocol_version: ProtocolVersion::Node1_4,
+    };
+    IndyVdrLedgerWrite::new(config_write)
 }

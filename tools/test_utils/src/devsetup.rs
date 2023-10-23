@@ -13,6 +13,7 @@ use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    global::settings::{DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
     ledger::{
         base_ledger::{
             AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
@@ -27,8 +28,8 @@ use aries_vcx_core::{
         request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
     },
-    wallet::base_wallet::BaseWallet,
-    PoolConfig, ResponseParser, global::settings::{DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
+    wallet::{base_wallet::BaseWallet, mock_wallet::MockWallet},
+    PoolConfig, ResponseParser,
 };
 #[cfg(feature = "vdr_proxy_ledger")]
 use aries_vcx_core::{ledger::request_submitter::vdr_proxy::VdrProxySubmitter, VdrProxyClient};
@@ -46,7 +47,7 @@ use lazy_static::lazy_static;
 use log::{debug, info, warn};
 
 use crate::{
-    constants::POOL1_TXN,
+    constants::{POOL1_TXN, TRUSTEE_SEED},
     mockdata::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
     test_logger::LibvcxDefaultLogger,
 };
@@ -294,7 +295,7 @@ pub async fn dev_build_profile_vdr_proxy_ledger() -> (
 
 #[allow(unreachable_code)]
 #[allow(unused_variables)]
-pub async fn dev_build_featured_profile(
+pub async fn dev_build_featured_components(
     genesis_file_path: String,
 ) -> (
     impl IndyLedgerRead + AnoncredsLedgerRead,
@@ -307,65 +308,78 @@ pub async fn dev_build_featured_profile(
         dev_build_profile_vdr_proxy_ledger().await
     };
 
-    #[cfg(all(
-        feature = "credx",
-        feature = "vdrtools_wallet",
-        not(feature = "vdr_proxy_ledger")
-    ))]
+    #[cfg(all(feature = "credx", not(feature = "vdr_proxy_ledger")))]
     return {
         info!("SetupProfile >> using modular profile");
         dev_build_profile_modular(genesis_file_path)
     };
 
-    #[cfg(not(any(
-        all(feature = "credx", feature = "vdrtools_wallet"),
-        feature = "vdr_proxy_ledger"
-    )))]
+    #[cfg(not(any(feature = "credx", feature = "vdr_proxy_ledger")))]
     (MockLedger, MockLedger, MockAnoncreds)
+}
+
+#[cfg(feature = "vdrtools_wallet")]
+pub async fn dev_build_indy_wallet() -> (String, impl BaseWallet) {
+    use aries_vcx_core::wallet::indy::IndySdkWallet;
+
+    let (public_did, wallet_handle) = dev_setup_wallet_indy(TRUSTEE_SEED).await;
+    (public_did, IndySdkWallet::new(wallet_handle))
+}
+
+#[allow(unreachable_code)]
+#[allow(unused_variables)]
+pub async fn dev_build_featured_wallet() -> (String, impl BaseWallet) {
+    #[cfg(feature = "vdrtools_wallet")]
+    return {
+        info!("SetupProfile >> using indy wallet");
+        dev_build_indy_wallet().await
+    };
+
+    #[cfg(not(feature = "vdrtools_wallet"))]
+    return { (String::new(), MockWallet) };
 }
 
 #[macro_export]
 macro_rules! run_setup {
     ($func:expr) => {{
-        use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+        $crate::devsetup::build_setup_profile().await.run($func)
+    }};
+}
 
-        $crate::utils::devsetup::init_test_logging();
+pub async fn build_setup_profile() -> SetupProfile<
+    impl IndyLedgerRead + AnoncredsLedgerRead,
+    impl IndyLedgerWrite + AnoncredsLedgerWrite,
+    impl BaseAnonCreds,
+    impl BaseWallet,
+> {
+    use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 
-        let genesis_file_path = aries_vcx_core::ledger::indy::pool::test_utils::get_temp_file_path(
-            $crate::utils::constants::POOL1_TXN,
-        )
-        .to_str()
-        .unwrap()
-        .to_string();
-        aries_vcx_core::ledger::indy::pool::test_utils::create_testpool_genesis_txn_file(
-            &genesis_file_path,
-        );
+    init_test_logging();
 
-        let (public_did, wallet_handle) =
-            $crate::utils::devsetup::dev_setup_wallet_indy($crate::utils::constants::TRUSTEE_SEED)
-                .await;
-        let wallet = aries_vcx_core::wallet::indy::IndySdkWallet::new(wallet_handle);
-        let (ledger_read, ledger_write, anoncreds) =
-            $crate::utils::devsetup::dev_build_featured_profile(genesis_file_path.clone()).await;
-        anoncreds
-            .prover_create_link_secret(
-                &wallet,
-                aries_vcx_core::global::settings::DEFAULT_LINK_SECRET_ALIAS,
-            )
-            .await
-            .unwrap();
+    let genesis_file_path = get_temp_file_path(POOL1_TXN).to_str().unwrap().to_string();
+    create_testpool_genesis_txn_file(&genesis_file_path);
 
-        $crate::utils::devsetup::SetupProfile::new(
-            ledger_read,
-            ledger_write,
-            anoncreds,
-            wallet,
-            public_did.to_string(),
-            genesis_file_path,
+    let (institution_did, wallet) = dev_build_featured_wallet().await;
+    let (ledger_read, ledger_write, anoncreds) =
+        dev_build_featured_components(genesis_file_path.clone()).await;
+    anoncreds
+        .prover_create_link_secret(
+            &wallet,
+            aries_vcx_core::global::settings::DEFAULT_LINK_SECRET_ALIAS,
         )
         .await
-        .run($func)
-    }};
+        .unwrap();
+
+    debug!("genesis_file_path: {}", genesis_file_path);
+
+    SetupProfile {
+        ledger_read,
+        ledger_write,
+        anoncreds,
+        wallet,
+        institution_did,
+        genesis_file_path,
+    }
 }
 
 impl<LR, LW, A, W> SetupProfile<LR, LW, A, W>
@@ -375,25 +389,6 @@ where
     A: BaseAnonCreds,
     W: BaseWallet,
 {
-    pub async fn new(
-        ledger_read: LR,
-        ledger_write: LW,
-        anoncreds: A,
-        wallet: W,
-        institution_did: String,
-        genesis_file_path: String,
-    ) -> Self {
-        debug!("genesis_file_path: {}", genesis_file_path);
-        SetupProfile {
-            institution_did,
-            genesis_file_path,
-            ledger_read,
-            ledger_write,
-            anoncreds,
-            wallet,
-        }
-    }
-
     pub async fn run<F>(self, f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,

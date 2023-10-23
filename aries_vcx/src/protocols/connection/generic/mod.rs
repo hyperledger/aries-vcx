@@ -230,6 +230,7 @@ mod connection_serde_tests {
             notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
         },
     };
+    use test_utils::mockdata::mock_ledger::MockLedger;
     use url::Url;
     use uuid::Uuid;
 
@@ -240,7 +241,6 @@ mod connection_serde_tests {
         protocols::connection::{
             invitee::InviteeConnection, inviter::InviterConnection, serializable::*, Connection,
         },
-        utils::mockdata::profile::mock_ledger::MockLedger,
     };
 
     impl<'a> From<RefInviteeState<'a>> for InviteeState {

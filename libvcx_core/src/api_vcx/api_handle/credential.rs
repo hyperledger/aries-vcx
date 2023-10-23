@@ -8,12 +8,11 @@ use aries_vcx::{
         },
         AriesMessage,
     },
-    utils::{
-        constants::GET_MESSAGES_DECRYPTED_RESPONSE,
-        mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER,
-    },
 };
 use serde_json;
+use test_utils::{
+    constants::GET_MESSAGES_DECRYPTED_RESPONSE, mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER,
+};
 
 use crate::{
     api_vcx::{

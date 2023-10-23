@@ -1,11 +1,8 @@
 use std::{thread, time::Duration};
 
-use aries_vcx::{
-    common::ledger::{
-        service_didsov::{DidSovServiceType, EndpointDidSov},
-        transactions::write_endpoint,
-    },
-    run_setup,
+use aries_vcx::common::ledger::{
+    service_didsov::{DidSovServiceType, EndpointDidSov},
+    transactions::write_endpoint,
 };
 use aries_vcx_core::{ledger::base_ledger::IndyLedgerWrite, wallet::base_wallet::BaseWallet};
 use did_resolver::{
@@ -13,6 +10,7 @@ use did_resolver::{
     traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable},
 };
 use did_resolver_sov::resolution::DidSovResolver;
+use test_utils::run_setup;
 
 async fn write_test_endpoint(
     wallet: &impl BaseWallet,
