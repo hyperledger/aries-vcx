@@ -414,14 +414,13 @@ mod tests {
     use aries_vcx::{
         messages::msg_fields::protocols::cred_issuance::v1::issue_credential::IssueCredentialV1,
         protocols::issuance::holder::state_machine::HolderState,
-        utils::{
-            devsetup::SetupMocks,
-            mockdata::{
-                mockdata_credex,
-                mockdata_credex::{
-                    ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT,
-                    CREDENTIAL_SM_FINISHED,
-                },
+    };
+    use test_utils::{
+        devsetup::SetupMocks,
+        mockdata::{
+            mockdata_credex,
+            mockdata_credex::{
+                ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, CREDENTIAL_SM_FINISHED,
             },
         },
     };

@@ -5274,6 +5274,7 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
+ "test_utils",
  "uuid 0.8.2",
  "wallet_migrator",
 ]

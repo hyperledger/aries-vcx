@@ -148,12 +148,12 @@ mod tests {
             create_testpool_genesis_txn_file, get_temp_file_path,
         },
         global::settings::DEFAULT_GENESIS_PATH,
-        utils::{
-            constants::POOL1_TXN,
-            devsetup::{SetupMocks, TempFile},
-        },
     };
     use serde_json;
+    use test_utils::{
+        constants::POOL1_TXN,
+        devsetup::{SetupMocks, TempFile},
+    };
 
     use crate::{
         api_vcx::api_global::{

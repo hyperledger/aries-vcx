@@ -1,12 +1,23 @@
+pub mod utils;
+
+use aries_vcx::common::credentials::get_cred_rev_id;
 use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,
     ledger::{base_ledger::AnoncredsLedgerRead, indy::pool::test_utils::get_temp_dir_path},
+};
+use serde_json::json;
+use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, run_setup_test};
+
+use crate::utils::{
+    create_and_publish_test_rev_reg, create_and_write_credential, create_and_write_test_cred_def,
+    create_and_write_test_schema,
 };
 
 #[tokio::test]
 #[ignore]
 async fn test_pool_returns_error_if_proof_request_is_malformed() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let proof_req = "{";
         let anoncreds = setup.anoncreds;
         let result = anoncreds
@@ -23,7 +34,7 @@ async fn test_pool_returns_error_if_proof_request_is_malformed() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_prover_get_credentials() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let proof_req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -61,7 +72,7 @@ async fn test_pool_prover_get_credentials() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_proof_req_attribute_names() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let proof_req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -96,13 +107,13 @@ async fn test_pool_proof_req_attribute_names() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_revoke_credential() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let schema = create_and_write_test_schema(
             &setup.wallet,
             &setup.anoncreds,
             &setup.ledger_write,
             &setup.institution_did,
-            crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
+            DEFAULT_SCHEMA_ATTRS,
         )
         .await;
         let cred_def = create_and_write_test_cred_def(

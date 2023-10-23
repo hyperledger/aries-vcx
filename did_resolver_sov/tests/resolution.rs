@@ -10,7 +10,7 @@ use did_resolver::{
     traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable},
 };
 use did_resolver_sov::resolution::DidSovResolver;
-use test_utils::run_setup;
+use test_utils::run_setup_test;
 
 async fn write_test_endpoint(
     wallet: &impl BaseWallet,
@@ -29,7 +29,7 @@ async fn write_test_endpoint(
 
 #[tokio::test]
 async fn write_service_on_ledger_and_resolve_did_doc() {
-    run_setup!(|init| async move {
+    run_setup_test!(|init| async move {
         let did = format!("did:sov:{}", init.institution_did);
         write_test_endpoint(&init.wallet, &init.ledger_write, &init.institution_did).await;
         let resolver = DidSovResolver::new(&init.ledger_read);
@@ -47,7 +47,7 @@ async fn write_service_on_ledger_and_resolve_did_doc() {
 
 #[tokio::test]
 async fn test_error_handling_during_resolution() {
-    run_setup!(|init| async move {
+    run_setup_test!(|init| async move {
         let did = format!("did:unknownmethod:{}", init.institution_did);
 
         let resolver = DidSovResolver::new(&init.ledger_read);

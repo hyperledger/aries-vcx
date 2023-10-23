@@ -1,20 +1,8 @@
 #![allow(clippy::diverging_sub_expression)]
-
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate serde_json;
-
 pub mod utils;
 
 use aries_vcx::{
-    common::{
-        proofs::proof_request::PresentationRequestData,
-        test_utils::{
-            create_and_publish_test_rev_reg, create_and_write_credential,
-            create_and_write_test_cred_def, create_and_write_test_schema,
-        },
-    },
+    common::proofs::proof_request::PresentationRequestData,
     handlers::proof_presentation::{prover::Prover, verifier::Verifier},
     protocols::proof_presentation::{
         prover::state_machine::ProverState,
@@ -22,15 +10,17 @@ use aries_vcx::{
             state_machine::VerifierState, verification_status::PresentationVerificationStatus,
         },
     },
-    run_setup,
-    utils::devsetup::*,
 };
 use messages::{
     msg_fields::protocols::present_proof::{v1::PresentProofV1, PresentProof},
     AriesMessage,
 };
+use serde_json::json;
+use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupPoolDirectory, run_setup_test};
 
 use crate::utils::{
+    create_and_publish_test_rev_reg, create_and_write_credential, create_and_write_test_cred_def,
+    create_and_write_test_schema,
     scenarios::{
         accept_proof_proposal, create_address_schema_creddef_revreg, create_proof_proposal,
         exchange_credential_with_proposal, generate_and_send_proof, prover_select_credentials,
@@ -42,13 +32,13 @@ use crate::utils::{
 #[tokio::test]
 #[ignore]
 async fn test_agency_pool_generate_proof_with_predicates() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let schema = create_and_write_test_schema(
             &setup.wallet,
             &setup.anoncreds,
             &setup.ledger_write,
             &setup.institution_did,
-            aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS,
+            DEFAULT_SCHEMA_ATTRS,
         )
         .await;
         let cred_def = create_and_write_test_cred_def(

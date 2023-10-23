@@ -340,7 +340,7 @@ pub async fn dev_build_featured_wallet() -> (String, impl BaseWallet) {
 }
 
 #[macro_export]
-macro_rules! run_setup {
+macro_rules! run_setup_test {
     ($func:expr) => {{
         $crate::devsetup::build_setup_profile().await.run($func)
     }};

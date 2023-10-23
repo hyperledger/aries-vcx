@@ -361,8 +361,8 @@ mod tests {
             wallet::delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord,
         },
         global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
-        utils::devsetup::{SetupMocks, TempFile},
     };
+    use test_utils::devsetup::{SetupMocks, TempFile};
 
     use crate::{
         api_vcx::api_global::wallet::{

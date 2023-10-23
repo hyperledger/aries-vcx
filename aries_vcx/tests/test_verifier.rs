@@ -1,19 +1,24 @@
+pub mod utils;
+
 use std::time::Duration;
 
+use aries_vcx::{
+    common::{
+        primitives::{credential_definition::CredentialDef, credential_schema::Schema},
+        proofs::{proof_request::ProofRequestData, verifier::validate_indy_proof},
+    },
+    errors::error::AriesVcxErrorKind,
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
-use test_utils::constants::DEFAULT_SCHEMA_ATTRS;
+use serde_json::json;
+use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, run_setup_test};
 
-use super::*;
-use crate::{
-    common::{
-        primitives::{credential_definition::CredentialDef, credential_schema::Schema},
-        proofs::proof_request::ProofRequestData,
-    },
-    errors::error::AriesVcxErrorKind,
+use crate::utils::{
+    create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_schema,
 };
 
 // FUTURE - issuer and holder seperation only needed whilst modular deps not fully implemented
@@ -253,7 +258,7 @@ async fn create_and_store_nonrevocable_credential(
 #[tokio::test]
 #[ignore]
 async fn test_pool_proof_self_attested_proof_validation() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let requested_attrs = json!([
             json!({
                 "name":"address1",
@@ -318,7 +323,7 @@ async fn test_pool_proof_self_attested_proof_validation() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_proof_restrictions() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let requested_attrs = json!([
             json!({
                 "name":"address1",
@@ -357,7 +362,7 @@ async fn test_pool_proof_restrictions() {
             &setup.ledger_read,
             &setup.ledger_write,
             &setup.institution_did,
-            utils::constants::DEFAULT_SCHEMA_ATTRS,
+            DEFAULT_SCHEMA_ATTRS,
         )
         .await;
         let cred_def_json: serde_json::Value =
@@ -417,7 +422,7 @@ async fn test_pool_proof_restrictions() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_proof_validate_attribute() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let requested_attrs = json!([
             json!({
                 "name":"address1",
@@ -457,7 +462,7 @@ async fn test_pool_proof_validate_attribute() {
             &setup.ledger_read,
             &setup.ledger_write,
             &setup.institution_did,
-            utils::constants::DEFAULT_SCHEMA_ATTRS,
+            DEFAULT_SCHEMA_ATTRS,
         )
         .await;
         let cred_def_json: serde_json::Value =
@@ -539,7 +544,7 @@ async fn test_pool_proof_validate_attribute() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_prover_verify_proof() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let (schemas, cred_defs, proof_req, proof) = create_indy_proof(
             &setup.wallet,
             &setup.wallet,
@@ -565,7 +570,7 @@ async fn test_pool_prover_verify_proof() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_prover_verify_proof_with_predicate_success_case() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
             &setup.wallet,
             &setup.wallet,
@@ -592,7 +597,7 @@ async fn test_pool_prover_verify_proof_with_predicate_success_case() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_prover_verify_proof_with_predicate_fail_case() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
             &setup.wallet,
             &setup.wallet,

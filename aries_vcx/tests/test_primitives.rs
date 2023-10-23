@@ -1,17 +1,21 @@
+pub mod utils;
+
+use aries_vcx::common::primitives::{
+    credential_definition::generate_cred_def, revocation_registry::generate_rev_reg,
+};
 use aries_vcx_core::ledger::{
     base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     indy::pool::test_utils::get_temp_dir_path,
 };
-use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, run_setup};
+use serde_json::json;
+use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, run_setup_test};
 
-use crate::common::primitives::{
-    credential_definition::generate_cred_def, revocation_registry::generate_rev_reg,
-};
+use crate::utils::create_and_write_test_schema;
 
 #[tokio::test]
 #[ignore]
 async fn test_pool_create_cred_def_real() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let schema = create_and_write_test_schema(
             &setup.wallet,
             &setup.anoncreds,
@@ -61,7 +65,7 @@ async fn test_pool_create_cred_def_real() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_create_rev_reg_def() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let schema = create_and_write_test_schema(
             &setup.wallet,
             &setup.anoncreds,

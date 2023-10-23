@@ -1,28 +1,15 @@
 #![allow(clippy::diverging_sub_expression)]
 
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate serde_json;
-
 pub mod utils;
 
 use std::collections::HashMap;
 
 use aries_vcx::{
-    common::{
-        proofs::proof_request::PresentationRequestData,
-        test_utils::{
-            create_and_write_credential, create_and_write_test_cred_def,
-            create_and_write_test_schema,
-        },
-    },
+    common::proofs::proof_request::PresentationRequestData,
     handlers::{
         proof_presentation::{prover::Prover, types::RetrievedCredentials},
         util::AttachmentId,
     },
-    run_setup,
-    utils::constants::DEFAULT_SCHEMA_ATTRS,
 };
 use base64::{engine::general_purpose, Engine};
 use messages::{
@@ -32,12 +19,18 @@ use messages::{
         RequestPresentationV1, RequestPresentationV1Content,
     },
 };
+use serde_json::json;
+use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, run_setup_test};
+
+use crate::utils::{
+    create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_schema,
+};
 
 #[tokio::test]
 #[ignore]
 // TODO: This should be a unit test
 async fn test_agency_pool_retrieve_credentials_empty() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         // create skeleton proof request attachment data
         let mut req = json!({
            "nonce":"123432421212",
@@ -132,7 +125,7 @@ async fn test_agency_pool_retrieve_credentials_empty() {
 #[ignore]
 // TODO: This should be a unit test
 async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let schema = create_and_write_test_schema(
             &setup.wallet,
             &setup.anoncreds,

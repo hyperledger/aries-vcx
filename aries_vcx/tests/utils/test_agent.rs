@@ -1,19 +1,17 @@
 #![allow(clippy::diverging_sub_expression)]
 
-use aries_vcx::{
-    global::settings::DEFAULT_LINK_SECRET_ALIAS,
-    utils::{
-        constants::TRUSTEE_SEED,
-        devsetup::{dev_build_featured_profile, dev_setup_wallet_indy},
-        random::generate_random_seed,
-    },
-};
+use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     ledger::base_ledger::{
         AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
     },
     wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
+};
+use test_utils::{
+    constants::TRUSTEE_SEED,
+    devsetup::{dev_build_featured_components, dev_setup_wallet_indy},
+    random::generate_random_seed,
 };
 
 pub struct TestAgent<LR, LW, A, W>
@@ -43,7 +41,7 @@ async fn create_test_agent_from_seed(
     let (institution_did, wallet_handle) = dev_setup_wallet_indy(seed).await;
     let wallet = IndySdkWallet::new(wallet_handle);
     let (ledger_read, ledger_write, anoncreds) =
-        dev_build_featured_profile(genesis_file_path.clone()).await;
+        dev_build_featured_components(genesis_file_path.clone()).await;
 
     anoncreds
         .prover_create_link_secret(&wallet, DEFAULT_LINK_SECRET_ALIAS)

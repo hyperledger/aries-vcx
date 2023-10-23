@@ -343,11 +343,11 @@ pub fn get_presentation_status(handle: u32) -> LibvcxResult<u32> {
 mod tests {
     extern crate serde_json;
 
-    use aries_vcx::{
-        utils,
-        utils::{devsetup::SetupMocks, mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION},
-    };
     use serde_json::Value;
+    use test_utils::{
+        constants::V3_OBJECT_SERIALIZE_VERSION, devsetup::SetupMocks,
+        mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
+    };
 
     use super::*;
     use crate::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
@@ -406,7 +406,7 @@ mod tests {
 
         let serialized = to_string(handle).unwrap();
         let j: Value = serde_json::from_str(&serialized).unwrap();
-        assert_eq!(j["version"], utils::constants::V3_OBJECT_SERIALIZE_VERSION);
+        assert_eq!(j["version"], V3_OBJECT_SERIALIZE_VERSION);
 
         let handle_2 = from_string(&serialized).unwrap();
         assert_ne!(handle, handle_2);

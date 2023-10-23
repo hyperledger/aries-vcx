@@ -12,13 +12,13 @@ use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 pub mod encoding;
 
 #[derive(Serialize, Deserialize)]
-struct ProverCredential {
-    referent: String,
-    attrs: HashMap<String, String>,
-    schema_id: String,
-    cred_def_id: String,
-    rev_reg_id: Option<String>,
-    cred_rev_id: Option<String>,
+pub struct ProverCredential {
+    pub referent: String,
+    pub attrs: HashMap<String, String>,
+    pub schema_id: String,
+    pub cred_def_id: String,
+    pub rev_reg_id: Option<String>,
+    pub cred_rev_id: Option<String>,
 }
 
 pub async fn get_cred_rev_id(

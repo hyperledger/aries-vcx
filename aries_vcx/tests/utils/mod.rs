@@ -23,7 +23,10 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::BaseWallet,
 };
-use test_utils::random::{generate_random_schema_name, generate_random_schema_version};
+use test_utils::{
+    constants::TEST_TAILS_URL,
+    random::{generate_random_schema_name, generate_random_schema_version},
+};
 
 pub async fn create_and_write_test_schema(
     wallet: &impl BaseWallet,

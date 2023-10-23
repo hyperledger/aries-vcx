@@ -102,6 +102,7 @@ mod tests {
         messages::update_message::UIDsByConn, testing::mocking::AgencyMockDecrypted,
         MessageStatusCode,
     };
+    use test_utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::SetupMocks};
 
     use crate::api_vcx::api_global::agency_client::{agency_update_messages, update_webhook_url};
 
@@ -114,9 +115,7 @@ mod tests {
     #[tokio::test]
     async fn test_messages_update_status() {
         let _setup = SetupMocks::init();
-        AgencyMockDecrypted::set_next_decrypted_response(
-            constants::GET_MESSAGES_DECRYPTED_RESPONSE,
-        );
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
 
         let uids_by_conns_str =
             String::from(r#"[{"pairwiseDID":"QSrw8hebcvQxiwBETmAaRs","uids":["mgrmngq"]}]"#);

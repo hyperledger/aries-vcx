@@ -279,7 +279,7 @@ pub mod pool_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
         constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
-        run_setup,
+        run_setup_test,
     };
 
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
@@ -287,7 +287,7 @@ pub mod pool_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_build_rev_states_json_empty() {
-        run_setup!(|setup| async move {
+        run_setup_test!(|setup| async move {
             // empty vector
             assert_eq!(
                 build_rev_states_json(&setup.ledger_read, &setup.anoncreds, Vec::new().as_mut())

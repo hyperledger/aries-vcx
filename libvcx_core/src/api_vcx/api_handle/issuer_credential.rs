@@ -311,7 +311,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 
 #[cfg(test)]
 mod tests {
-    use aries_vcx::utils::{constants::V3_OBJECT_SERIALIZE_VERSION, devsetup::SetupMocks};
+    use test_utils::{constants::V3_OBJECT_SERIALIZE_VERSION, devsetup::SetupMocks};
 
     use super::*;
 

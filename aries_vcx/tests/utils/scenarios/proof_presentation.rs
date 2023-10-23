@@ -22,7 +22,6 @@ use aries_vcx::{
             state_machine::VerifierState, verification_status::PresentationVerificationStatus,
         },
     },
-    utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL},
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -32,6 +31,7 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::BaseWallet,
 };
+use log::info;
 use messages::{
     msg_fields::protocols::{
         present_proof::{
@@ -46,6 +46,7 @@ use messages::{
     AriesMessage,
 };
 use serde_json::Value;
+use test_utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL};
 
 use super::requested_attrs_address;
 use crate::utils::{scenarios::requested_attr_objects, test_agent::TestAgent};

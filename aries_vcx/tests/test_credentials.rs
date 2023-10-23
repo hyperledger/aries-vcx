@@ -1,5 +1,10 @@
-use super::*;
-use crate::common::test_utils::{
+pub mod utils;
+
+use aries_vcx::common::credentials::{get_cred_rev_id, ProverCredential, is_cred_revoked};
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, run_setup_test};
+
+use crate::utils::{
     create_and_publish_test_rev_reg, create_and_write_credential, create_and_write_test_cred_def,
     create_and_write_test_schema,
 };
@@ -7,13 +12,13 @@ use crate::common::test_utils::{
 #[tokio::test]
 #[ignore]
 async fn test_pool_prover_get_credential() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let schema = create_and_write_test_schema(
             &setup.wallet,
             &setup.anoncreds,
             &setup.ledger_write,
             &setup.institution_did,
-            crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
+            DEFAULT_SCHEMA_ATTRS,
         )
         .await;
         let cred_def = create_and_write_test_cred_def(
@@ -66,13 +71,13 @@ async fn test_pool_prover_get_credential() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_is_cred_revoked() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let schema = create_and_write_test_schema(
             &setup.wallet,
             &setup.anoncreds,
             &setup.ledger_write,
             &setup.institution_did,
-            crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
+            DEFAULT_SCHEMA_ATTRS,
         )
         .await;
         let cred_def = create_and_write_test_cred_def(

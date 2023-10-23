@@ -1,10 +1,5 @@
 #![allow(clippy::diverging_sub_expression)]
 
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate serde_json;
-
 pub mod utils;
 use std::{thread, time::Duration};
 
@@ -24,17 +19,8 @@ use aries_vcx::{
             revocation_registry::{generate_rev_reg, RevocationRegistry},
             revocation_registry_delta::RevocationRegistryDelta,
         },
-        test_utils::{
-            create_and_publish_test_rev_reg, create_and_write_test_cred_def,
-            create_and_write_test_schema,
-        },
     },
     errors::error::AriesVcxErrorKind,
-    run_setup,
-    utils::{
-        constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_URL},
-        devsetup::SetupPoolDirectory,
-    },
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -45,8 +31,15 @@ use aries_vcx_core::{
     wallet::{base_wallet::BaseWallet, indy::wallet::get_verkey_from_wallet},
 };
 use diddoc_legacy::aries::service::AriesService;
+use serde_json::json;
+use test_utils::{
+    constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_URL},
+    devsetup::SetupPoolDirectory,
+    run_setup_test,
+};
 
 use crate::utils::{
+    create_and_publish_test_rev_reg, create_and_write_test_cred_def, create_and_write_test_schema,
     scenarios::attr_names_address_list,
     test_agent::{create_test_agent, create_test_agent_trustee},
 };
@@ -122,7 +115,7 @@ async fn create_and_store_revocable_credential_def(
 #[tokio::test]
 #[ignore]
 async fn test_pool_rotate_verkey() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let (did, verkey) = add_new_did(
             &setup.wallet,
             &setup.ledger_write,
@@ -149,7 +142,7 @@ async fn test_pool_rotate_verkey() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_add_get_service() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let did = setup.institution_did.clone();
         let expect_service = AriesService::default();
         write_endpoint_legacy(&setup.wallet, &setup.ledger_write, &did, &expect_service)
@@ -218,7 +211,7 @@ async fn test_pool_write_new_endorser_did() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_add_get_service_public() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let did = setup.institution_did.clone();
         let create_service = EndpointDidSov::create()
             .set_service_endpoint("https://example.org".parse().unwrap())
@@ -254,7 +247,7 @@ async fn test_pool_add_get_service_public() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_add_get_service_public_none_routing_keys() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let did = setup.institution_did.clone();
         let create_service = EndpointDidSov::create()
             .set_service_endpoint("https://example.org".parse().unwrap())
@@ -290,7 +283,7 @@ async fn test_pool_add_get_service_public_none_routing_keys() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_multiple_service_formats() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let did = setup.institution_did.clone();
 
         // Write legacy service format
@@ -352,7 +345,7 @@ async fn test_pool_multiple_service_formats() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_add_get_attr() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let did = setup.institution_did.clone();
         let attr_json = json!({
             "attr_json": {
@@ -394,7 +387,7 @@ async fn test_pool_add_get_attr() {
 #[tokio::test]
 #[ignore]
 async fn test_agency_pool_get_credential_def() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
             &setup.wallet,
             &setup.anoncreds,
@@ -418,7 +411,7 @@ async fn test_agency_pool_get_credential_def() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         // Cred def is created with support_revocation=false,
         // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
         let (_, _, cred_def_id, _, _) = create_and_store_nonrevocable_credential_def(
@@ -453,7 +446,7 @@ async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_get_rev_reg_def_json() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let attrs = format!("{:?}", attr_names_address_list());
         let (_, _, rev_reg) = create_and_store_revocable_credential_def(
             &setup.wallet,
@@ -477,7 +470,7 @@ async fn test_pool_get_rev_reg_def_json() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_get_rev_reg_delta_json() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let attrs = format!("{:?}", attr_names_address_list());
         let (_, _, rev_reg) = create_and_store_revocable_credential_def(
             &setup.wallet,
@@ -503,7 +496,7 @@ async fn test_pool_get_rev_reg_delta_json() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_get_rev_reg() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let attrs = format!("{:?}", attr_names_address_list());
         let (_, _, rev_reg) = create_and_store_revocable_credential_def(
             &setup.wallet,
@@ -536,7 +529,7 @@ async fn test_pool_get_rev_reg() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_create_and_get_schema() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let schema = create_and_write_test_schema(
             &setup.wallet,
             &setup.anoncreds,
@@ -558,7 +551,7 @@ async fn test_pool_create_and_get_schema() {
 #[tokio::test]
 #[ignore]
 async fn test_pool_create_rev_reg_delta_from_ledger() {
-    run_setup!(|setup| async move {
+    run_setup_test!(|setup| async move {
         let attrs = format!("{:?}", attr_names_address_list());
         let (_, _, rev_reg) = create_and_store_revocable_credential_def(
             &setup.wallet,
