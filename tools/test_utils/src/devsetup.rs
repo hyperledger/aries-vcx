@@ -50,7 +50,7 @@ use libvcx_logger::init_test_logging;
 use log::{debug, info, warn};
 
 use crate::{
-    constants::{POOL1_TXN, TRUSTEE_SEED},
+    constants::{INSTITUTION_DID, POOL1_TXN, TRUSTEE_SEED},
     mockdata::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
 };
 
@@ -190,7 +190,7 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
 pub fn dev_build_profile_vdr_ledger(
     genesis_file_path: String,
 ) -> (DefaultIndyLedgerRead, DefaultIndyLedgerWrite) {
-    info!("dev_build_profile_modular >>");
+    info!("dev_build_profile_vdr_ledger >>");
     let vcx_pool_config = VcxPoolConfig {
         genesis_file_path,
         indy_vdr_config: None,
@@ -250,18 +250,15 @@ pub async fn dev_build_featured_indy_ledger(
 ) {
     #[cfg(feature = "vdr_proxy_ledger")]
     return {
-        info!("SetupProfile >> using vdr proxy profile");
+        info!("SetupProfile >> using vdr proxy ldeger");
         dev_build_profile_vdr_proxy_ledger().await
     };
 
-    #[cfg(all(feature = "credx", not(feature = "vdr_proxy_ledger")))]
+    #[cfg(not(feature = "vdr_proxy_ledger"))]
     return {
-        info!("SetupProfile >> using modular profile");
-        dev_build_profile_modular(genesis_file_path)
+        info!("SetupProfile >> using vdr ledger");
+        dev_build_profile_vdr_ledger(genesis_file_path)
     };
-
-    #[cfg(not(any(feature = "credx", feature = "vdr_proxy_ledger")))]
-    (MockLedger, MockLedger)
 }
 
 #[cfg(feature = "vdrtools_wallet")]
@@ -292,7 +289,7 @@ pub async fn dev_build_featured_wallet(key_seed: &str) -> (String, impl BaseWall
     };
 
     #[cfg(not(feature = "vdrtools_wallet"))]
-    return (String::new(), MockWallet);
+    return (INSTITUTION_DID.to_owned(), MockWallet);
 }
 
 #[macro_export]
