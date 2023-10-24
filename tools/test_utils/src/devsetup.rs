@@ -23,9 +23,10 @@ use aries_vcx_core::{
         },
         indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path},
         indy_vdr_ledger::{
-            indyvdr_build_ledger_read, indyvdr_build_ledger_write, DefaultIndyLedgerRead,
-            DefaultIndyLedgerWrite, GetTxnAuthorAgreementData, IndyVdrLedgerRead,
-            IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig, ProtocolVersion,
+            build_ledger_components, indyvdr_build_ledger_read, indyvdr_build_ledger_write,
+            DefaultIndyLedgerRead, DefaultIndyLedgerWrite, GetTxnAuthorAgreementData,
+            IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite,
+            IndyVdrLedgerWriteConfig, ProtocolVersion, VcxPoolConfig,
         },
         request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
@@ -186,17 +187,9 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
 
     (did, wallet_handle)
 }
-
-#[cfg(feature = "credx")]
-pub fn dev_build_profile_modular(
+pub fn dev_build_profile_vdr_ledger(
     genesis_file_path: String,
-) -> (
-    DefaultIndyLedgerRead,
-    DefaultIndyLedgerWrite,
-    IndyCredxAnonCreds,
-) {
-    use aries_vcx_core::ledger::indy_vdr_ledger::{build_ledger_components, VcxPoolConfig};
-
+) -> (DefaultIndyLedgerRead, DefaultIndyLedgerWrite) {
     info!("dev_build_profile_modular >>");
     let vcx_pool_config = VcxPoolConfig {
         genesis_file_path,
@@ -204,17 +197,15 @@ pub fn dev_build_profile_modular(
         response_cache_config: None,
     };
 
-    let anoncreds = IndyCredxAnonCreds;
     let (ledger_read, ledger_write) = build_ledger_components(vcx_pool_config).unwrap();
 
-    (ledger_read, ledger_write, anoncreds)
+    (ledger_read, ledger_write)
 }
 
 #[cfg(feature = "vdr_proxy_ledger")]
 pub async fn dev_build_profile_vdr_proxy_ledger() -> (
     IndyVdrLedgerRead<VdrProxySubmitter, InMemoryResponseCacher>,
     IndyVdrLedgerWrite<VdrProxySubmitter>,
-    IndyCredxAnonCreds,
 ) {
     info!("dev_build_profile_vdr_proxy_ledger >>");
 
@@ -222,7 +213,6 @@ pub async fn dev_build_profile_vdr_proxy_ledger() -> (
         env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
     let client = VdrProxyClient::new(&client_url).unwrap();
 
-    let anoncreds = IndyCredxAnonCreds;
     let request_submitter = VdrProxySubmitter::new(Arc::new(client));
     let response_parser = ResponseParser;
     let cacher_config = InMemoryResponseCacherConfig::builder()
@@ -247,17 +237,16 @@ pub async fn dev_build_profile_vdr_proxy_ledger() -> (
     };
     let ledger_write = IndyVdrLedgerWrite::new(config_write);
 
-    (ledger_read, ledger_write, anoncreds)
+    (ledger_read, ledger_write)
 }
 
 #[allow(unreachable_code)]
 #[allow(unused_variables)]
-pub async fn dev_build_featured_components(
+pub async fn dev_build_featured_indy_ledger(
     genesis_file_path: String,
 ) -> (
     impl IndyLedgerRead + AnoncredsLedgerRead,
     impl IndyLedgerWrite + AnoncredsLedgerWrite,
-    impl BaseAnonCreds,
 ) {
     #[cfg(feature = "vdr_proxy_ledger")]
     return {
@@ -272,7 +261,7 @@ pub async fn dev_build_featured_components(
     };
 
     #[cfg(not(any(feature = "credx", feature = "vdr_proxy_ledger")))]
-    (MockLedger, MockLedger, MockAnoncreds)
+    (MockLedger, MockLedger)
 }
 
 #[cfg(feature = "vdrtools_wallet")]
@@ -281,6 +270,16 @@ pub async fn dev_build_indy_wallet(key_seed: &str) -> (String, impl BaseWallet) 
 
     let (public_did, wallet_handle) = dev_setup_wallet_indy(key_seed).await;
     (public_did, IndySdkWallet::new(wallet_handle))
+}
+
+#[allow(unreachable_code)]
+#[allow(unused_variables)]
+pub async fn dev_build_featured_anoncreds() -> impl BaseAnonCreds {
+    #[cfg(feature = "credx")]
+    return IndyCredxAnonCreds;
+
+    #[cfg(not(feature = "credx"))]
+    return MockAnoncreds;
 }
 
 #[allow(unreachable_code)]
@@ -317,8 +316,10 @@ pub async fn build_setup_profile() -> SetupProfile<
     create_testpool_genesis_txn_file(&genesis_file_path);
 
     let (institution_did, wallet) = dev_build_featured_wallet(TRUSTEE_SEED).await;
-    let (ledger_read, ledger_write, anoncreds) =
-        dev_build_featured_components(genesis_file_path.clone()).await;
+    let (ledger_read, ledger_write) =
+        dev_build_featured_indy_ledger(genesis_file_path.clone()).await;
+    let anoncreds = dev_build_featured_anoncreds().await;
+
     anoncreds
         .prover_create_link_secret(
             &wallet,
