@@ -8,10 +8,7 @@ use vdrtools::{
 
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::indy::{
-        did_mocks::{did_mocks_enabled, DidMocks},
-        IssuerConfig, RestoreWalletConfigs, WalletConfig,
-    },
+    wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig},
 };
 
 pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<WalletHandle> {
@@ -317,11 +314,6 @@ pub async fn libindy_replace_keys_start(
     wallet_handle: WalletHandle,
     did: &str,
 ) -> VcxCoreResult<String> {
-    if DidMocks::has_did_mock_responses() {
-        warn!("libindy_replace_keys_start >> retrieving did mock response");
-        return Ok(DidMocks::get_next_did_response());
-    }
-
     let res = Locator::instance()
         .did_controller
         .replace_keys_start(wallet_handle, KeyInfo::default(), DidValue(did.into()))
@@ -334,11 +326,6 @@ pub async fn libindy_replace_keys_apply(
     wallet_handle: WalletHandle,
     did: &str,
 ) -> VcxCoreResult<()> {
-    if did_mocks_enabled() {
-        warn!("libindy_replace_keys_apply >> retrieving did mock response");
-        return Ok(());
-    }
-
     Locator::instance()
         .did_controller
         .replace_keys_apply(wallet_handle, DidValue(did.into()))
@@ -351,11 +338,6 @@ pub async fn get_verkey_from_wallet(
     wallet_handle: WalletHandle,
     did: &str,
 ) -> VcxCoreResult<String> {
-    if DidMocks::has_did_mock_responses() {
-        warn!("get_verkey_from_wallet >> retrieving did mock response");
-        return Ok(DidMocks::get_next_did_response());
-    }
-
     let res = Locator::instance()
         .did_controller
         .key_for_local_did(wallet_handle, DidValue(did.into()))

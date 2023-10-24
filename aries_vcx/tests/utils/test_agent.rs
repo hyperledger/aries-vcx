@@ -6,11 +6,11 @@ use aries_vcx_core::{
     ledger::base_ledger::{
         AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
     },
-    wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
+    wallet::base_wallet::BaseWallet,
 };
 use test_utils::{
     constants::TRUSTEE_SEED,
-    devsetup::{dev_build_featured_components, dev_setup_wallet_indy},
+    devsetup::{dev_build_featured_components, dev_build_featured_wallet},
     random::generate_random_seed,
 };
 
@@ -38,8 +38,7 @@ async fn create_test_agent_from_seed(
     impl BaseAnonCreds,
     impl BaseWallet,
 > {
-    let (institution_did, wallet_handle) = dev_setup_wallet_indy(seed).await;
-    let wallet = IndySdkWallet::new(wallet_handle);
+    let (institution_did, wallet) = dev_build_featured_wallet(seed).await;
     let (ledger_read, ledger_write, anoncreds) =
         dev_build_featured_components(genesis_file_path.clone()).await;
 

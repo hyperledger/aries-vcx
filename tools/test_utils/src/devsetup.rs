@@ -36,7 +36,6 @@ use aries_vcx_core::{ledger::request_submitter::vdr_proxy::VdrProxySubmitter, Vd
 #[cfg(feature = "vdrtools_wallet")]
 use aries_vcx_core::{
     wallet::indy::{
-        did_mocks::DidMocks,
         wallet::{create_and_open_wallet, create_and_store_my_did},
         WalletConfig,
     },
@@ -148,7 +147,6 @@ pub struct SetupPoolDirectory {
 pub fn reset_global_state() {
     warn!("reset_global_state >>");
     AgencyMockDecrypted::clear_mocks();
-    DidMocks::clear_mocks();
 }
 
 impl SetupMocks {
@@ -165,6 +163,7 @@ impl Drop for SetupMocks {
     }
 }
 
+#[cfg(feature = "vdrtools_wallet")]
 pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
     info!("dev_setup_wallet_indy >>");
     let config_wallet = WalletConfig {
@@ -186,7 +185,7 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
     (did, wallet_handle)
 }
 
-#[cfg(all(feature = "credx", feature = "vdrtools_wallet"))]
+#[cfg(feature = "credx")]
 pub fn dev_build_profile_modular(
     genesis_file_path: String,
 ) -> (
@@ -275,24 +274,24 @@ pub async fn dev_build_featured_components(
 }
 
 #[cfg(feature = "vdrtools_wallet")]
-pub async fn dev_build_indy_wallet() -> (String, impl BaseWallet) {
+pub async fn dev_build_indy_wallet(key_seed: &str) -> (String, impl BaseWallet) {
     use aries_vcx_core::wallet::indy::IndySdkWallet;
 
-    let (public_did, wallet_handle) = dev_setup_wallet_indy(TRUSTEE_SEED).await;
+    let (public_did, wallet_handle) = dev_setup_wallet_indy(key_seed).await;
     (public_did, IndySdkWallet::new(wallet_handle))
 }
 
 #[allow(unreachable_code)]
 #[allow(unused_variables)]
-pub async fn dev_build_featured_wallet() -> (String, impl BaseWallet) {
+pub async fn dev_build_featured_wallet(key_seed: &str) -> (String, impl BaseWallet) {
     #[cfg(feature = "vdrtools_wallet")]
     return {
         info!("SetupProfile >> using indy wallet");
-        dev_build_indy_wallet().await
+        dev_build_indy_wallet(key_seed).await
     };
 
     #[cfg(not(feature = "vdrtools_wallet"))]
-    return { (String::new(), MockWallet) };
+    return (String::new(), MockWallet);
 }
 
 #[macro_export]
@@ -315,7 +314,7 @@ pub async fn build_setup_profile() -> SetupProfile<
     let genesis_file_path = get_temp_file_path(POOL1_TXN).to_str().unwrap().to_string();
     create_testpool_genesis_txn_file(&genesis_file_path);
 
-    let (institution_did, wallet) = dev_build_featured_wallet().await;
+    let (institution_did, wallet) = dev_build_featured_wallet(TRUSTEE_SEED).await;
     let (ledger_read, ledger_write, anoncreds) =
         dev_build_featured_components(genesis_file_path.clone()).await;
     anoncreds
