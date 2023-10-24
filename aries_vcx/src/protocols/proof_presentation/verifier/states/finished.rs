@@ -1,5 +1,5 @@
 use messages::msg_fields::protocols::{
-    present_proof::{present::Presentation, request::RequestPresentation},
+    present_proof::v1::{present::PresentationV1, request::RequestPresentationV1},
     report_problem::ProblemReport,
 };
 use serde::Deserialize;
@@ -11,8 +11,8 @@ use crate::{
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FinishedState {
-    pub presentation_request: Option<RequestPresentation>,
-    pub presentation: Option<Presentation>,
+    pub presentation_request: Option<RequestPresentationV1>,
+    pub presentation: Option<PresentationV1>,
     pub status: Status,
     pub verification_status: PresentationVerificationStatus,
 }

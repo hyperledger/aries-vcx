@@ -8,7 +8,7 @@ use messages::{
                 CredentialPreviewV1,
             },
         },
-        present_proof::propose::PresentationAttr,
+        present_proof::v1::propose::PresentationAttr,
     },
 };
 use serde_json::{json, Value};

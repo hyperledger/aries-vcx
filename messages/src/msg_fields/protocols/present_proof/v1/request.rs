@@ -6,10 +6,11 @@ use crate::{
     msg_parts::MsgParts,
 };
 
-pub type RequestPresentation = MsgParts<RequestPresentationContent, RequestPresentationDecorators>;
+pub type RequestPresentationV1 =
+    MsgParts<RequestPresentationV1Content, RequestPresentationV1Decorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct RequestPresentationContent {
+pub struct RequestPresentationV1Content {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -18,7 +19,7 @@ pub struct RequestPresentationContent {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
-pub struct RequestPresentationDecorators {
+pub struct RequestPresentationV1Decorators {
     #[builder(default, setter(strip_option))]
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -47,11 +48,11 @@ mod tests {
 
     #[test]
     fn test_minimal_request_proof() {
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![make_extended_attachment()])
             .build();
 
-        let decorators = RequestPresentationDecorators::default();
+        let decorators = RequestPresentationV1Decorators::default();
 
         let expected = json!({
             "request_presentations~attach": content.request_presentations_attach,
@@ -67,12 +68,12 @@ mod tests {
 
     #[test]
     fn test_extended_request_proof() {
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![make_extended_attachment()])
             .comment("test_comment".to_owned())
             .build();
 
-        let decorators = RequestPresentationDecorators::builder()
+        let decorators = RequestPresentationV1Decorators::builder()
             .thread(make_extended_thread())
             .timing(make_extended_timing())
             .build();

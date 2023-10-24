@@ -6,9 +6,15 @@ pub mod utils;
 
 use aries_vcx::{
     common::ledger::transactions::write_endpoint_legacy,
-    core::profile::Profile,
     protocols::{connection::GenericConnection, mediated_connection::pairwise_info::PairwiseInfo},
     utils::{devsetup::*, encryption_envelope::EncryptionEnvelope},
+};
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    ledger::base_ledger::{
+        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
+    },
+    wallet::base_wallet::BaseWallet,
 };
 use chrono::Utc;
 use diddoc_legacy::aries::service::AriesService;
@@ -49,13 +55,18 @@ fn build_basic_message(content: String) -> BasicMessage {
         .build()
 }
 
-async fn decrypt_message<P: Profile>(
-    consumer: &TestAgent<P>,
+async fn decrypt_message(
+    consumer: &TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     received: Vec<u8>,
     consumer_to_institution: &GenericConnection,
 ) -> AriesMessage {
     EncryptionEnvelope::auth_unpack(
-        consumer.profile.wallet(),
+        &consumer.wallet,
         received,
         &consumer_to_institution.remote_vk().unwrap(),
     )
@@ -63,28 +74,46 @@ async fn decrypt_message<P: Profile>(
     .unwrap()
 }
 
-async fn send_and_receive_message<P1: Profile, P2: Profile>(
-    consumer: &TestAgent<P1>,
-    insitution: &TestAgent<P2>,
+async fn send_and_receive_message(
+    consumer: &TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    insitution: &TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     institution_to_consumer: &GenericConnection,
     consumer_to_institution: &GenericConnection,
     message: &AriesMessage,
 ) -> AriesMessage {
     let encrypted_message = institution_to_consumer
-        .encrypt_message(insitution.profile.wallet(), message)
+        .encrypt_message(&insitution.wallet, message)
         .await
         .unwrap()
         .0;
     decrypt_message(consumer, encrypted_message, consumer_to_institution).await
 }
 
-async fn create_service<P: Profile>(faber: &TestAgent<P>) {
-    let pairwise_info = PairwiseInfo::create(faber.profile.wallet()).await.unwrap();
+async fn create_service(
+    faber: &TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+) {
+    let pairwise_info = PairwiseInfo::create(&faber.wallet).await.unwrap();
     let service = AriesService::create()
         .set_service_endpoint("http://dummy.org".parse().unwrap())
         .set_recipient_keys(vec![pairwise_info.pw_vk.clone()]);
     write_endpoint_legacy(
-        faber.profile.ledger_write(),
+        &faber.wallet,
+        &faber.ledger_write,
         &faber.institution_did,
         &service,
     )

@@ -6,22 +6,22 @@ use crate::{
     msg_parts::MsgParts,
 };
 
-pub type AckPresentation = MsgParts<AckPresentationContent, AckDecorators>;
+pub type AckPresentationV1 = MsgParts<AckPresentationV1Content, AckDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(transparent)]
-pub struct AckPresentationContent {
+pub struct AckPresentationV1Content {
     pub inner: AckContent,
 }
 
-impl From<AckContent> for AckPresentationContent {
+impl From<AckContent> for AckPresentationV1Content {
     fn from(value: AckContent) -> Self {
         Self { inner: value }
     }
 }
 
-impl From<AckPresentation> for Ack {
-    fn from(value: AckPresentation) -> Self {
+impl From<AckPresentationV1> for Ack {
+    fn from(value: AckPresentationV1) -> Self {
         Self::builder()
             .id(value.id)
             .content(value.content.inner)
@@ -46,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_minimal_ack_proof() {
-        let content: AckPresentationContent = AckContent::builder().status(AckStatus::Ok).build();
+        let content: AckPresentationV1Content = AckContent::builder().status(AckStatus::Ok).build();
 
         let decorators = AckDecorators::builder()
             .thread(make_extended_thread())
@@ -62,7 +62,7 @@ mod tests {
 
     #[test]
     fn test_extended_ack_proof() {
-        let content: AckPresentationContent = AckContent::builder().status(AckStatus::Ok).build();
+        let content: AckPresentationV1Content = AckContent::builder().status(AckStatus::Ok).build();
 
         let decorators = AckDecorators::builder()
             .thread(make_extended_thread())

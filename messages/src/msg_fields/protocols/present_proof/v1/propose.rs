@@ -15,10 +15,11 @@ use crate::{
     },
 };
 
-pub type ProposePresentation = MsgParts<ProposePresentationContent, ProposePresentationDecorators>;
+pub type ProposePresentationV1 =
+    MsgParts<ProposePresentationV1Content, ProposePresentationV1Decorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct ProposePresentationContent {
+pub struct ProposePresentationV1Content {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -26,7 +27,7 @@ pub struct ProposePresentationContent {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
-pub struct ProposePresentationDecorators {
+pub struct ProposePresentationV1Decorators {
     #[builder(default, setter(strip_option))]
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -176,11 +177,11 @@ mod tests {
             .threshold(1000)
             .build();
         let preview = PresentationPreview::new(vec![attribute], vec![predicate]);
-        let content = ProposePresentationContent::builder()
+        let content = ProposePresentationV1Content::builder()
             .presentation_proposal(preview)
             .build();
 
-        let decorators = ProposePresentationDecorators::default();
+        let decorators = ProposePresentationV1Decorators::default();
 
         let expected = json!({
             "presentation_proposal": content.presentation_proposal
@@ -205,12 +206,12 @@ mod tests {
             .threshold(1000)
             .build();
         let preview = PresentationPreview::new(vec![attribute], vec![predicate]);
-        let content = ProposePresentationContent::builder()
+        let content = ProposePresentationV1Content::builder()
             .presentation_proposal(preview)
             .comment("test_comment".to_owned())
             .build();
 
-        let decorators = ProposePresentationDecorators::builder()
+        let decorators = ProposePresentationV1Decorators::builder()
             .thread(make_extended_thread())
             .timing(make_extended_timing())
             .build();

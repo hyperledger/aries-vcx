@@ -2,11 +2,12 @@ use std::collections::HashMap;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+    wallet::base_wallet::BaseWallet,
 };
 use messages::msg_fields::protocols::{
-    present_proof::{
-        present::Presentation,
-        request::{RequestPresentation, RequestPresentationContent},
+    present_proof::v1::{
+        present::PresentationV1,
+        request::{RequestPresentationV1, RequestPresentationV1Content},
     },
     report_problem::ProblemReport,
 };
@@ -28,18 +29,18 @@ use crate::{
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestReceived {
-    pub presentation_request: RequestPresentation,
+    pub presentation_request: RequestPresentationV1,
 }
 
 impl Default for PresentationRequestReceived {
     fn default() -> Self {
         let id = Uuid::new_v4().to_string();
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(Vec::new())
             .build();
 
         Self {
-            presentation_request: RequestPresentation::builder()
+            presentation_request: RequestPresentationV1::builder()
                 .id(id)
                 .content(content)
                 .build(),
@@ -48,7 +49,7 @@ impl Default for PresentationRequestReceived {
 }
 
 impl PresentationRequestReceived {
-    pub fn new(presentation_request: RequestPresentation) -> Self {
+    pub fn new(presentation_request: RequestPresentationV1) -> Self {
         Self {
             presentation_request,
         }
@@ -56,6 +57,7 @@ impl PresentationRequestReceived {
 
     pub async fn build_presentation(
         &self,
+        wallet: &impl BaseWallet,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
         credentials: &SelectedCredentials,
@@ -69,6 +71,7 @@ impl PresentationRequestReceived {
         );
 
         generate_indy_proof(
+            wallet,
             ledger,
             anoncreds,
             credentials,
@@ -91,8 +94,8 @@ impl From<(PresentationRequestReceived, ProblemReport)> for PresentationPreparat
     }
 }
 
-impl From<(PresentationRequestReceived, Presentation)> for PresentationPreparedState {
-    fn from((state, presentation): (PresentationRequestReceived, Presentation)) -> Self {
+impl From<(PresentationRequestReceived, PresentationV1)> for PresentationPreparedState {
+    fn from((state, presentation): (PresentationRequestReceived, PresentationV1)) -> Self {
         trace!("transit state from PresentationRequestReceived to PresentationPreparedState");
         PresentationPreparedState {
             presentation_request: state.presentation_request,

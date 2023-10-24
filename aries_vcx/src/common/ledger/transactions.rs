@@ -92,7 +92,7 @@ pub async fn add_new_did(
     let (did, verkey) = wallet.create_and_store_my_did(None, None).await?;
 
     let res = indy_ledger_write
-        .publish_nym(submitter_did, &did, Some(&verkey), None, role)
+        .publish_nym(wallet, submitter_did, &did, Some(&verkey), None, role)
         .await?;
     check_response(&res)?;
 
@@ -284,6 +284,7 @@ pub async fn parse_legacy_endpoint_attrib(
 }
 
 pub async fn write_endorser_did(
+    wallet: &impl BaseWallet,
     indy_ledger_write: &impl IndyLedgerWrite,
     submitter_did: &str,
     target_did: &str,
@@ -292,6 +293,7 @@ pub async fn write_endorser_did(
 ) -> VcxResult<String> {
     let res = indy_ledger_write
         .write_did(
+            wallet,
             submitter_did,
             target_did,
             target_vk,
@@ -304,33 +306,40 @@ pub async fn write_endorser_did(
 }
 
 pub async fn write_endpoint_legacy(
+    wallet: &impl BaseWallet,
     indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
     service: &AriesService,
 ) -> VcxResult<String> {
     let attrib_json = json!({ "service": service }).to_string();
-    let res = indy_ledger_write.add_attr(did, &attrib_json).await?;
+    let res = indy_ledger_write
+        .add_attr(wallet, did, &attrib_json)
+        .await?;
     check_response(&res)?;
     Ok(res)
 }
 
 pub async fn write_endpoint(
+    wallet: &impl BaseWallet,
     indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
     service: &EndpointDidSov,
 ) -> VcxResult<String> {
     let attrib_json = json!({ "endpoint": service }).to_string();
-    let res = indy_ledger_write.add_attr(did, &attrib_json).await?;
+    let res = indy_ledger_write
+        .add_attr(wallet, did, &attrib_json)
+        .await?;
     check_response(&res)?;
     Ok(res)
 }
 
 pub async fn add_attr(
+    wallet: &impl BaseWallet,
     indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
     attr: &str,
 ) -> VcxResult<()> {
-    let res = indy_ledger_write.add_attr(did, attr).await?;
+    let res = indy_ledger_write.add_attr(wallet, did, attr).await?;
     check_response(&res)
 }
 
@@ -349,12 +358,13 @@ pub async fn get_attr(
 }
 
 pub async fn clear_attr(
+    wallet: &impl BaseWallet,
     indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
     attr_name: &str,
 ) -> VcxResult<String> {
     indy_ledger_write
-        .add_attr(did, &json!({ attr_name: Value::Null }).to_string())
+        .add_attr(wallet, did, &json!({ attr_name: Value::Null }).to_string())
         .await
         .map_err(|err| err.into())
 }

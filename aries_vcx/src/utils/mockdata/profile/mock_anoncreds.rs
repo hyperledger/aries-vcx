@@ -1,6 +1,7 @@
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    wallet::base_wallet::BaseWallet,
 };
 use async_trait::async_trait;
 
@@ -37,6 +38,7 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn issuer_create_and_store_revoc_reg(
         &self,
+        __wallet: &impl BaseWallet,
         _issuer_did: &str,
         _cred_def_id: &str,
         _tails_dir: &str,
@@ -52,6 +54,7 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn issuer_create_and_store_credential_def(
         &self,
+        __wallet: &impl BaseWallet,
         _issuer_did: &str,
         _schema_json: &str,
         _tag: &str,
@@ -65,12 +68,17 @@ impl BaseAnonCreds for MockAnoncreds {
         ))
     }
 
-    async fn issuer_create_credential_offer(&self, _cred_def_id: &str) -> VcxCoreResult<String> {
+    async fn issuer_create_credential_offer(
+        &self,
+        __wallet: &impl BaseWallet,
+        _cred_def_id: &str,
+    ) -> VcxCoreResult<String> {
         Ok(LIBINDY_CRED_OFFER.to_string())
     }
 
     async fn issuer_create_credential(
         &self,
+        __wallet: &impl BaseWallet,
         _cred_offer_json: &str,
         _cred_req_json: &str,
         _cred_values_json: &str,
@@ -82,6 +90,7 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn prover_create_proof(
         &self,
+        __wallet: &impl BaseWallet,
         _proof_req_json: &str,
         _requested_credentials_json: &str,
         _master_secret_id: &str,
@@ -92,7 +101,11 @@ impl BaseAnonCreds for MockAnoncreds {
         Ok(utils::constants::PROOF_JSON.to_owned())
     }
 
-    async fn prover_get_credential(&self, _cred_id: &str) -> VcxCoreResult<String> {
+    async fn prover_get_credential(
+        &self,
+        __wallet: &impl BaseWallet,
+        _cred_id: &str,
+    ) -> VcxCoreResult<String> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -100,7 +113,11 @@ impl BaseAnonCreds for MockAnoncreds {
         ))
     }
 
-    async fn prover_get_credentials(&self, _filter_json: Option<&str>) -> VcxCoreResult<String> {
+    async fn prover_get_credentials(
+        &self,
+        __wallet: &impl BaseWallet,
+        _filter_json: Option<&str>,
+    ) -> VcxCoreResult<String> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -110,6 +127,7 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn prover_get_credentials_for_proof_req(
         &self,
+        _wallet: &impl BaseWallet,
         _proof_request_json: &str,
     ) -> VcxCoreResult<String> {
         match get_mock_creds_retrieved_for_proof_request() {
@@ -127,6 +145,7 @@ impl BaseAnonCreds for MockAnoncreds {
     // todo: change _prover_did argument, see: https://github.com/hyperledger/aries-vcx/issues/950
     async fn prover_create_credential_req(
         &self,
+        _wallet: &impl BaseWallet,
         _prover_did: &str,
         _cred_offer_json: &str,
         _cred_def_json: &str,
@@ -151,6 +170,7 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn prover_store_credential(
         &self,
+        _wallet: &impl BaseWallet,
         _cred_id: Option<&str>,
         _cred_req_metadata_json: &str,
         _cred_json: &str,
@@ -160,7 +180,11 @@ impl BaseAnonCreds for MockAnoncreds {
         Ok("cred_id".to_string())
     }
 
-    async fn prover_delete_credential(&self, _cred_id: &str) -> VcxCoreResult<()> {
+    async fn prover_delete_credential(
+        &self,
+        _wallet: &impl BaseWallet,
+        _cred_id: &str,
+    ) -> VcxCoreResult<()> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -168,7 +192,11 @@ impl BaseAnonCreds for MockAnoncreds {
         ))
     }
 
-    async fn prover_create_link_secret(&self, _link_secret_id: &str) -> VcxCoreResult<String> {
+    async fn prover_create_link_secret(
+        &self,
+        _wallet: &impl BaseWallet,
+        _link_secret_id: &str,
+    ) -> VcxCoreResult<String> {
         Ok(settings::DEFAULT_LINK_SECRET_ALIAS.to_string())
     }
 
@@ -188,6 +216,7 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn revoke_credential_local(
         &self,
+        _wallet: &impl BaseWallet,
         _tails_dir: &str,
         _rev_reg_id: &str,
         _cred_rev_id: &str,
@@ -195,11 +224,19 @@ impl BaseAnonCreds for MockAnoncreds {
         Ok(())
     }
 
-    async fn get_rev_reg_delta(&self, _rev_reg_id: &str) -> VcxCoreResult<Option<String>> {
+    async fn get_rev_reg_delta(
+        &self,
+        _wallet: &impl BaseWallet,
+        _rev_reg_id: &str,
+    ) -> VcxCoreResult<Option<String>> {
         Ok(Some(REV_REG_DELTA_JSON.to_string()))
     }
 
-    async fn clear_rev_reg_delta(&self, _rev_reg_id: &str) -> VcxCoreResult<()> {
+    async fn clear_rev_reg_delta(
+        &self,
+        _wallet: &impl BaseWallet,
+        _rev_reg_id: &str,
+    ) -> VcxCoreResult<()> {
         Ok(())
     }
 
@@ -215,6 +252,7 @@ mod unit_tests {
     use aries_vcx_core::{
         anoncreds::base_anoncreds::BaseAnonCreds,
         errors::error::{AriesVcxCoreErrorKind, VcxCoreResult},
+        wallet::mock_wallet::MockWallet,
     };
 
     use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
@@ -231,7 +269,7 @@ mod unit_tests {
             )
         }
 
-        let anoncreds: Box<dyn BaseAnonCreds> = Box::new(MockAnoncreds);
+        let anoncreds = MockAnoncreds;
 
         assert_unimplemented(
             anoncreds
@@ -240,18 +278,22 @@ mod unit_tests {
         );
         assert_unimplemented(
             anoncreds
-                .issuer_create_and_store_revoc_reg("", "", "", 0, "")
+                .issuer_create_and_store_revoc_reg(&MockWallet, "", "", "", 0, "")
                 .await,
         );
         assert_unimplemented(
             anoncreds
-                .issuer_create_and_store_credential_def("", "", "", None, "")
+                .issuer_create_and_store_credential_def(&MockWallet, "", "", "", None, "")
                 .await,
         );
-        assert_unimplemented(anoncreds.prover_get_credential("").await);
-        assert_unimplemented(anoncreds.prover_get_credentials(None).await);
-        assert_unimplemented(anoncreds.prover_get_credentials_for_proof_req("").await);
-        assert_unimplemented(anoncreds.prover_delete_credential("").await);
+        assert_unimplemented(anoncreds.prover_get_credential(&MockWallet, "").await);
+        assert_unimplemented(anoncreds.prover_get_credentials(&MockWallet, None).await);
+        assert_unimplemented(
+            anoncreds
+                .prover_get_credentials_for_proof_req(&MockWallet, "")
+                .await,
+        );
+        assert_unimplemented(anoncreds.prover_delete_credential(&MockWallet, "").await);
         assert_unimplemented(anoncreds.issuer_create_schema("", "", "", "").await);
     }
 }

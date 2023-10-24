@@ -5,8 +5,13 @@ use messages::{
         discover_features::DiscoverFeatures,
         notification::Notification,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
+        pickup::Pickup,
         present_proof::{
-            propose::{Predicate, PresentationAttr},
+            v1::{
+                propose::{Predicate, PresentationAttr},
+                PresentProofV1,
+            },
+            v2::PresentProofV2,
             PresentProof,
         },
         report_problem::ProblemReport,
@@ -161,17 +166,34 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
         AriesMessage::OutOfBand(OutOfBand::HandshakeReuseAccepted(msg)) => {
             matches_thread_id!(msg, thread_id)
         }
-        AriesMessage::PresentProof(PresentProof::Ack(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::PresentProof(PresentProof::Presentation(msg)) => {
+        AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Ack(msg))) => {
             matches_thread_id!(msg, thread_id)
         }
-        AriesMessage::PresentProof(PresentProof::ProposePresentation(msg)) => {
+        AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Presentation(msg))) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::ProposePresentation(msg))) => {
             matches_opt_thread_id!(msg, thread_id)
         }
-        AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => {
+        AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::RequestPresentation(msg))) => {
             matches_opt_thread_id!(msg, thread_id)
         }
-        AriesMessage::PresentProof(PresentProof::ProblemReport(msg)) => {
+        AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::ProblemReport(msg))) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::V2(PresentProofV2::Ack(msg))) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::V2(PresentProofV2::Presentation(msg))) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::V2(PresentProofV2::ProposePresentation(msg))) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::V2(PresentProofV2::RequestPresentation(msg))) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::V2(PresentProofV2::ProblemReport(msg))) => {
             matches_opt_thread_id!(msg, thread_id)
         }
         AriesMessage::ReportProblem(msg) => matches_opt_thread_id!(msg, thread_id),
@@ -180,6 +202,19 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
         AriesMessage::Routing(msg) => msg.id == thread_id,
         AriesMessage::TrustPing(TrustPing::Ping(msg)) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::TrustPing(TrustPing::PingResponse(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::Pickup(Pickup::Status(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::Pickup(Pickup::StatusRequest(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::Pickup(Pickup::Delivery(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::Pickup(Pickup::DeliveryRequest(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+
+        AriesMessage::Pickup(Pickup::MessagesReceived(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::Pickup(Pickup::LiveDeliveryChange(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
     };
 
     if !is_match {

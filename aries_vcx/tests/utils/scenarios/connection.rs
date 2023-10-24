@@ -1,6 +1,5 @@
 use aries_vcx::{
     common::ledger::transactions::into_did_doc,
-    core::profile::Profile,
     errors::error::VcxResult,
     handlers::{out_of_band::sender::OutOfBandSender, util::AnyInvitation},
     protocols::{
@@ -8,6 +7,13 @@ use aries_vcx::{
         mediated_connection::pairwise_info::PairwiseInfo,
     },
     transport::Transport,
+};
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    ledger::base_ledger::{
+        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
+    },
+    wallet::base_wallet::BaseWallet,
 };
 use async_trait::async_trait;
 use messages::{
@@ -25,9 +31,19 @@ use uuid::Uuid;
 
 use crate::utils::test_agent::TestAgent;
 
-async fn establish_connection_from_invite<P1: Profile, P2: Profile>(
-    alice: &mut TestAgent<P1>,
-    faber: &mut TestAgent<P2>,
+async fn establish_connection_from_invite(
+    alice: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     invitation: AnyInvitation,
     inviter_pairwise_info: PairwiseInfo,
 ) -> (GenericConnection, GenericConnection) {
@@ -41,9 +57,9 @@ async fn establish_connection_from_invite<P1: Profile, P2: Profile>(
         }
     }
 
-    let invitee_pairwise_info = PairwiseInfo::create(alice.profile.wallet()).await.unwrap();
+    let invitee_pairwise_info = PairwiseInfo::create(&alice.wallet).await.unwrap();
     let invitee = Connection::new_invitee("".to_owned(), invitee_pairwise_info)
-        .accept_invitation(alice.profile.ledger_read(), invitation.clone())
+        .accept_invitation(&alice.ledger_read, invitation.clone())
         .await
         .unwrap()
         .prepare_request("http://dummy.org".parse().unwrap(), vec![])
@@ -54,7 +70,7 @@ async fn establish_connection_from_invite<P1: Profile, P2: Profile>(
     let inviter = Connection::new_inviter("".to_owned(), inviter_pairwise_info)
         .into_invited(invitation.id())
         .handle_request(
-            faber.profile.wallet(),
+            &faber.wallet,
             request,
             "http://dummy.org".parse().unwrap(),
             vec![],
@@ -64,7 +80,7 @@ async fn establish_connection_from_invite<P1: Profile, P2: Profile>(
     let response = inviter.get_connection_response_msg();
 
     let invitee = invitee
-        .handle_response(alice.profile.wallet(), response)
+        .handle_response(&alice.wallet, response)
         .await
         .unwrap();
     let ack = invitee.get_ack();
@@ -74,9 +90,19 @@ async fn establish_connection_from_invite<P1: Profile, P2: Profile>(
     (invitee.into(), inviter.into())
 }
 
-pub async fn create_connections_via_oob_invite<P1: Profile, P2: Profile>(
-    alice: &mut TestAgent<P1>,
-    faber: &mut TestAgent<P2>,
+pub async fn create_connections_via_oob_invite(
+    alice: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
 ) -> (GenericConnection, GenericConnection) {
     let oob_sender = OutOfBandSender::create()
         .set_label("test-label")
@@ -88,9 +114,7 @@ pub async fn create_connections_via_oob_invite<P1: Profile, P2: Profile>(
         )))
         .unwrap();
     let invitation = AnyInvitation::Oob(oob_sender.oob.clone());
-    let ddo = into_did_doc(alice.profile.ledger_read(), &invitation)
-        .await
-        .unwrap();
+    let ddo = into_did_doc(&alice.ledger_read, &invitation).await.unwrap();
     // TODO: Create a key and write on ledger instead
     let inviter_pairwise_info = PairwiseInfo {
         pw_did: ddo.clone().id,
@@ -99,9 +123,19 @@ pub async fn create_connections_via_oob_invite<P1: Profile, P2: Profile>(
     establish_connection_from_invite(alice, faber, invitation, inviter_pairwise_info).await
 }
 
-pub async fn create_connections_via_public_invite<P1: Profile, P2: Profile>(
-    alice: &mut TestAgent<P1>,
-    faber: &mut TestAgent<P2>,
+pub async fn create_connections_via_public_invite(
+    alice: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
 ) -> (GenericConnection, GenericConnection) {
     let content = InvitationContent::builder_public()
         .label("faber".to_owned())
@@ -114,7 +148,7 @@ pub async fn create_connections_via_public_invite<P1: Profile, P2: Profile>(
             .content(content)
             .build(),
     );
-    let ddo = into_did_doc(alice.profile.ledger_read(), &public_invite)
+    let ddo = into_did_doc(&alice.ledger_read, &public_invite)
         .await
         .unwrap();
     // TODO: Create a key and write on ledger instead
@@ -126,11 +160,21 @@ pub async fn create_connections_via_public_invite<P1: Profile, P2: Profile>(
         .await
 }
 
-pub async fn create_connections_via_pairwise_invite<P1: Profile, P2: Profile>(
-    alice: &mut TestAgent<P1>,
-    faber: &mut TestAgent<P2>,
+pub async fn create_connections_via_pairwise_invite(
+    alice: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
 ) -> (GenericConnection, GenericConnection) {
-    let inviter_pairwise_info = PairwiseInfo::create(faber.profile.wallet()).await.unwrap();
+    let inviter_pairwise_info = PairwiseInfo::create(&faber.wallet).await.unwrap();
     let invite = {
         let id = Uuid::new_v4().to_string();
         let content = InvitationContent::builder_pairwise()

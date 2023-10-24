@@ -1,7 +1,6 @@
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
-    core::profile::{modular_libs_profile::ModularLibsProfile, Profile},
     handlers::util::AnyInvitation,
     messages::msg_fields::protocols::{
         connection::{request::Request, response::Response},
@@ -10,7 +9,9 @@ use aries_vcx::{
     protocols::connection::{
         pairwise_info::PairwiseInfo, Connection, GenericConnection, State, ThinState,
     },
+    utils::devsetup::DefaultIndyLedgerRead,
 };
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 use url::Url;
 
 use crate::{
@@ -22,17 +23,23 @@ use crate::{
 pub type ServiceEndpoint = Url;
 
 pub struct ServiceConnections {
-    profile: Arc<ModularLibsProfile>,
+    ledger_read: Arc<DefaultIndyLedgerRead>,
+    wallet: Arc<IndySdkWallet>,
     service_endpoint: ServiceEndpoint,
     connections: Arc<ObjectCache<GenericConnection>>,
 }
 
 impl ServiceConnections {
-    pub fn new(profile: Arc<ModularLibsProfile>, service_endpoint: ServiceEndpoint) -> Self {
+    pub fn new(
+        ledger_read: Arc<DefaultIndyLedgerRead>,
+        wallet: Arc<IndySdkWallet>,
+        service_endpoint: ServiceEndpoint,
+    ) -> Self {
         Self {
-            profile,
             service_endpoint,
             connections: Arc::new(ObjectCache::new("connections")),
+            ledger_read,
+            wallet,
         }
     }
 
@@ -40,7 +47,7 @@ impl ServiceConnections {
         &self,
         pw_info: Option<PairwiseInfo>,
     ) -> AgentResult<AnyInvitation> {
-        let pw_info = pw_info.unwrap_or(PairwiseInfo::create(self.profile.wallet()).await?);
+        let pw_info = pw_info.unwrap_or(PairwiseInfo::create(self.wallet.as_ref()).await?);
         let inviter = Connection::new_inviter("".to_owned(), pw_info)
             .create_invitation(vec![], self.service_endpoint.clone());
         let invite = inviter.get_invitation().clone();
@@ -52,9 +59,9 @@ impl ServiceConnections {
     }
 
     pub async fn receive_invitation(&self, invite: AnyInvitation) -> AgentResult<String> {
-        let pairwise_info = PairwiseInfo::create(self.profile.wallet()).await?;
+        let pairwise_info = PairwiseInfo::create(self.wallet.as_ref()).await?;
         let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
-            .accept_invitation(self.profile.ledger_read(), invite)
+            .accept_invitation(self.ledger_read.as_ref(), invite)
             .await?;
 
         let thread_id = invitee.thread_id().to_owned();
@@ -69,7 +76,7 @@ impl ServiceConnections {
             .await?;
         let request = invitee.get_request().clone();
         invitee
-            .send_message(self.profile.wallet(), &request.into(), &HttpClient)
+            .send_message(self.wallet.as_ref(), &request.into(), &HttpClient)
             .await?;
         self.connections.insert(thread_id, invitee.into())?;
         Ok(())
@@ -94,7 +101,7 @@ impl ServiceConnections {
 
         let inviter = inviter
             .handle_request(
-                self.profile.wallet(),
+                self.wallet.as_ref(),
                 request,
                 self.service_endpoint.clone(),
                 vec![],
@@ -110,7 +117,7 @@ impl ServiceConnections {
         let inviter: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         let response = inviter.get_connection_response_msg();
         inviter
-            .send_message(self.profile.wallet(), &response.into(), &HttpClient)
+            .send_message(self.wallet.as_ref(), &response.into(), &HttpClient)
             .await?;
 
         self.connections.insert(thread_id, inviter.into())?;
@@ -121,7 +128,7 @@ impl ServiceConnections {
     pub async fn accept_response(&self, thread_id: &str, response: Response) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         let invitee = invitee
-            .handle_response(self.profile.wallet(), response)
+            .handle_response(self.wallet.as_ref(), response)
             .await?;
 
         self.connections.insert(thread_id, invitee.into())?;
@@ -132,11 +139,7 @@ impl ServiceConnections {
     pub async fn send_ack(&self, thread_id: &str) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         invitee
-            .send_message(
-                self.profile.wallet(),
-                &invitee.get_ack().into(),
-                &HttpClient,
-            )
+            .send_message(self.wallet.as_ref(), &invitee.get_ack().into(), &HttpClient)
             .await?;
 
         self.connections.insert(thread_id, invitee.into())?;

@@ -33,6 +33,5 @@ pub mod global;
 pub mod protocols;
 
 pub mod common;
-pub mod core;
 pub mod errors;
 pub mod transport;

@@ -7,9 +7,9 @@ use shared_vcx::misc::utils::CowStr;
 use self::{
     basic_message::BasicMessageType, connection::ConnectionType,
     cred_issuance::CredentialIssuanceType, discover_features::DiscoverFeaturesType,
-    notification::NotificationType, out_of_band::OutOfBandType, present_proof::PresentProofType,
-    report_problem::ReportProblemType, revocation::RevocationType, routing::RoutingType,
-    signature::SignatureType, trust_ping::TrustPingType,
+    notification::NotificationType, out_of_band::OutOfBandType, pickup::PickupType,
+    present_proof::PresentProofType, report_problem::ReportProblemType, revocation::RevocationType,
+    routing::RoutingType, signature::SignatureType, trust_ping::TrustPingType,
 };
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
@@ -22,6 +22,7 @@ pub mod cred_issuance;
 pub mod discover_features;
 pub mod notification;
 pub mod out_of_band;
+pub mod pickup;
 pub mod present_proof;
 pub mod report_problem;
 pub mod revocation;
@@ -58,6 +59,7 @@ pub enum Protocol {
     BasicMessageType(BasicMessageType),
     OutOfBandType(OutOfBandType),
     NotificationType(NotificationType),
+    PickupType(PickupType),
 }
 
 /// Utility macro to avoid harder to read and error prone calling
@@ -93,6 +95,7 @@ impl Protocol {
         match_protocol!(BasicMessageType, protocol, major, minor);
         match_protocol!(OutOfBandType, protocol, major, minor);
         match_protocol!(NotificationType, protocol, major, minor);
+        match_protocol!(PickupType, protocol, major, minor);
 
         Err(MsgTypeError::unknown_protocol(protocol.to_owned()))
     }
@@ -112,6 +115,7 @@ impl Protocol {
             Self::BasicMessageType(v) => v.as_protocol_parts(),
             Self::OutOfBandType(v) => v.as_protocol_parts(),
             Self::NotificationType(v) => v.as_protocol_parts(),
+            Self::PickupType(v) => v.as_protocol_parts(),
         }
     }
 

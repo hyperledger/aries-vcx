@@ -7,7 +7,6 @@ use aries_vcx::{
         },
         proofs::{proof_request::PresentationRequestData, proof_request_internal::AttrInfo},
     },
-    core::profile::Profile,
     handlers::{
         issuance::issuer::Issuer,
         proof_presentation::{
@@ -25,14 +24,22 @@ use aries_vcx::{
     },
     utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL},
 };
-use aries_vcx_core::ledger::{
-    base_ledger::AnoncredsLedgerRead, indy::pool::test_utils::get_temp_dir_path,
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    ledger::{
+        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
+        indy::pool::test_utils::get_temp_dir_path,
+    },
+    wallet::base_wallet::BaseWallet,
 };
 use messages::{
     msg_fields::protocols::{
         present_proof::{
-            ack::AckPresentation, present::Presentation, propose::ProposePresentation,
-            request::RequestPresentation, PresentProof,
+            v1::{
+                ack::AckPresentationV1, present::PresentationV1, propose::ProposePresentationV1,
+                request::RequestPresentationV1, PresentProofV1,
+            },
+            PresentProof,
         },
         report_problem::ProblemReport,
     },
@@ -43,7 +50,10 @@ use serde_json::Value;
 use super::requested_attrs_address;
 use crate::utils::{scenarios::requested_attr_objects, test_agent::TestAgent};
 
-pub async fn create_proof_proposal(prover: &mut Prover, cred_def_id: &str) -> ProposePresentation {
+pub async fn create_proof_proposal(
+    prover: &mut Prover,
+    cred_def_id: &str,
+) -> ProposePresentationV1 {
     let attrs = requested_attr_objects(cred_def_id);
     let mut proposal_data = PresentationProposalData::default();
     for attr in attrs.into_iter() {
@@ -57,15 +67,20 @@ pub async fn create_proof_proposal(prover: &mut Prover, cred_def_id: &str) -> Pr
     proposal
 }
 
-pub async fn accept_proof_proposal<P: Profile>(
-    faber: &mut TestAgent<P>,
+pub async fn accept_proof_proposal(
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     verifier: &mut Verifier,
-    presentation_proposal: ProposePresentation,
-) -> RequestPresentation {
+    presentation_proposal: ProposePresentationV1,
+) -> RequestPresentationV1 {
     verifier
         .process_aries_msg(
-            faber.profile.ledger_read(),
-            faber.profile.anoncreds(),
+            &faber.ledger_read,
+            &faber.anoncreds,
             presentation_proposal.clone().into(),
         )
         .await
@@ -84,19 +99,18 @@ pub async fn accept_proof_proposal<P: Profile>(
             ..AttrInfo::default()
         })
         .collect();
-    let presentation_request_data =
-        PresentationRequestData::create(faber.profile.anoncreds(), "request-1")
-            .await
-            .unwrap()
-            .set_requested_attributes_as_vec(attrs)
-            .unwrap();
+    let presentation_request_data = PresentationRequestData::create(&faber.anoncreds, "request-1")
+        .await
+        .unwrap()
+        .set_requested_attributes_as_vec(attrs)
+        .unwrap();
     verifier
         .set_presentation_request(presentation_request_data, None)
         .unwrap();
     verifier.mark_presentation_request_sent().unwrap()
 }
 
-pub async fn reject_proof_proposal(presentation_proposal: &ProposePresentation) -> ProblemReport {
+pub async fn reject_proof_proposal(presentation_proposal: &ProposePresentationV1) -> ProblemReport {
     let mut verifier = Verifier::create_from_proposal("1", presentation_proposal).unwrap();
     assert_eq!(
         verifier.get_state(),
@@ -116,14 +130,19 @@ pub async fn receive_proof_proposal_rejection(prover: &mut Prover, rejection: Pr
     assert_eq!(prover.get_state(), ProverState::Failed);
 }
 
-pub async fn create_proof_request_data<P: Profile>(
-    faber: &mut TestAgent<P>,
+pub async fn create_proof_request_data(
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     requested_attrs: &str,
     requested_preds: &str,
     revocation_interval: &str,
     request_name: Option<&str>,
 ) -> PresentationRequestData {
-    PresentationRequestData::create(faber.profile.anoncreds(), request_name.unwrap_or("name"))
+    PresentationRequestData::create(&faber.anoncreds, request_name.unwrap_or("name"))
         .await
         .unwrap()
         .set_requested_attributes_as_string(requested_attrs.to_string())
@@ -134,7 +153,7 @@ pub async fn create_proof_request_data<P: Profile>(
         .unwrap()
 }
 
-pub async fn create_prover_from_request(presentation_request: RequestPresentation) -> Prover {
+pub async fn create_prover_from_request(presentation_request: RequestPresentationV1) -> Prover {
     Prover::create_from_request(DEFAULT_PROOF_NAME, presentation_request).unwrap()
 }
 
@@ -147,11 +166,16 @@ pub async fn create_verifier_from_request_data(
     verifier
 }
 
-pub async fn generate_and_send_proof<P: Profile>(
-    alice: &mut TestAgent<P>,
+pub async fn generate_and_send_proof(
+    alice: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     prover: &mut Prover,
     selected_credentials: SelectedCredentials,
-) -> Option<Presentation> {
+) -> Option<PresentationV1> {
     let thread_id = prover.get_thread_id().unwrap();
     info!(
         "generate_and_send_proof >>> generating proof using selected credentials {:?}",
@@ -159,8 +183,9 @@ pub async fn generate_and_send_proof<P: Profile>(
     );
     prover
         .generate_presentation(
-            alice.profile.ledger_read(),
-            alice.profile.anoncreds(),
+            &alice.wallet,
+            &alice.ledger_read,
+            &alice.anoncreds,
             selected_credentials,
             HashMap::new(),
         )
@@ -173,7 +198,9 @@ pub async fn generate_and_send_proof<P: Profile>(
         info!("generate_and_send_proof :: proof sent");
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
         let message = match message {
-            AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => presentation,
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Presentation(
+                presentation,
+            ))) => presentation,
             _ => panic!("Unexpected message type"),
         };
         Some(message)
@@ -182,21 +209,22 @@ pub async fn generate_and_send_proof<P: Profile>(
     }
 }
 
-pub async fn verify_proof<P: Profile>(
-    faber: &mut TestAgent<P>,
+pub async fn verify_proof(
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     verifier: &mut Verifier,
-    presentation: Presentation,
-) -> AckPresentation {
+    presentation: PresentationV1,
+) -> AckPresentationV1 {
     let msg = verifier
-        .verify_presentation(
-            faber.profile.ledger_read(),
-            faber.profile.anoncreds(),
-            presentation,
-        )
+        .verify_presentation(&faber.ledger_read, &faber.anoncreds, presentation)
         .await
         .unwrap();
     let msg = match msg {
-        AriesMessage::PresentProof(PresentProof::Ack(ack)) => ack,
+        AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Ack(ack))) => ack,
         _ => panic!("Unexpected message type"),
     };
     // TODO: Perhaps we should leave verification on the caller
@@ -208,8 +236,13 @@ pub async fn verify_proof<P: Profile>(
     msg
 }
 
-pub async fn revoke_credential_and_publish_accumulator<P: Profile>(
-    faber: &mut TestAgent<P>,
+pub async fn revoke_credential_and_publish_accumulator(
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     issuer_credential: &Issuer,
     rev_reg: &RevocationRegistry,
 ) {
@@ -217,27 +250,33 @@ pub async fn revoke_credential_and_publish_accumulator<P: Profile>(
 
     rev_reg
         .publish_local_revocations(
-            faber.profile.anoncreds(),
-            faber.profile.ledger_write(),
+            &faber.wallet,
+            &faber.anoncreds,
+            &faber.ledger_write,
             &faber.institution_did,
         )
         .await
         .unwrap();
 }
 
-pub async fn revoke_credential_local<P: Profile>(
-    faber: &mut TestAgent<P>,
+pub async fn revoke_credential_local(
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     issuer_credential: &Issuer,
     rev_reg_id: &str,
 ) {
-    let ledger = faber.profile.ledger_read();
+    let ledger = &faber.ledger_read;
     let (_, delta, timestamp) = ledger
         .get_rev_reg_delta_json(rev_reg_id, None, None)
         .await
         .unwrap();
 
     issuer_credential
-        .revoke_credential_local(faber.profile.anoncreds())
+        .revoke_credential_local(&faber.wallet, &faber.anoncreds)
         .await
         .unwrap();
 
@@ -250,13 +289,19 @@ pub async fn revoke_credential_local<P: Profile>(
                                            // cache
 }
 
-pub async fn rotate_rev_reg<P: Profile>(
-    faber: &mut TestAgent<P>,
+pub async fn rotate_rev_reg(
+    faber: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     credential_def: &CredentialDef,
     rev_reg: &RevocationRegistry,
 ) -> RevocationRegistry {
     let mut rev_reg = RevocationRegistry::create(
-        faber.profile.anoncreds(),
+        &faber.wallet,
+        &faber.anoncreds,
         &faber.institution_did,
         &credential_def.get_cred_def_id(),
         &rev_reg.get_tails_dir(),
@@ -266,28 +311,39 @@ pub async fn rotate_rev_reg<P: Profile>(
     .await
     .unwrap();
     rev_reg
-        .publish_revocation_primitives(faber.profile.ledger_write(), TEST_TAILS_URL)
+        .publish_revocation_primitives(&faber.wallet, &faber.ledger_write, TEST_TAILS_URL)
         .await
         .unwrap();
     rev_reg
 }
 
-pub async fn publish_revocation<P: Profile>(
-    institution: &mut TestAgent<P>,
+pub async fn publish_revocation(
+    institution: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     rev_reg: &RevocationRegistry,
 ) {
     rev_reg
         .publish_local_revocations(
-            institution.profile.anoncreds(),
-            institution.profile.ledger_write(),
+            &institution.wallet,
+            &institution.anoncreds,
+            &institution.ledger_write,
             &institution.institution_did,
         )
         .await
         .unwrap();
 }
 
-pub async fn verifier_create_proof_and_send_request<P: Profile>(
-    institution: &mut TestAgent<P>,
+pub async fn verifier_create_proof_and_send_request(
+    institution: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     schema_id: &str,
     cred_def_id: &str,
     request_name: Option<&str>,
@@ -310,10 +366,15 @@ pub async fn verifier_create_proof_and_send_request<P: Profile>(
     create_verifier_from_request_data(presentation_request_data).await
 }
 
-pub async fn prover_select_credentials<P: Profile>(
+pub async fn prover_select_credentials(
     prover: &mut Prover,
-    alice: &mut TestAgent<P>,
-    presentation_request: RequestPresentation,
+    alice: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    presentation_request: RequestPresentationV1,
     preselected_credentials: Option<&str>,
 ) -> SelectedCredentials {
     prover
@@ -322,7 +383,7 @@ pub async fn prover_select_credentials<P: Profile>(
         .unwrap();
     assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
     let retrieved_credentials = prover
-        .retrieve_credentials(alice.profile.anoncreds())
+        .retrieve_credentials(&alice.wallet, &alice.anoncreds)
         .await
         .unwrap();
     info!("prover_select_credentials >> retrieved_credentials: {retrieved_credentials:?}");
@@ -341,11 +402,16 @@ pub async fn prover_select_credentials<P: Profile>(
     }
 }
 
-pub async fn prover_select_credentials_and_send_proof<P: Profile>(
-    alice: &mut TestAgent<P>,
-    presentation_request: RequestPresentation,
+pub async fn prover_select_credentials_and_send_proof(
+    alice: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    presentation_request: RequestPresentationV1,
     preselected_credentials: Option<&str>,
-) -> Presentation {
+) -> PresentationV1 {
     let mut prover = create_prover_from_request(presentation_request.clone()).await;
     let selected_credentials = prover_select_credentials(
         &mut prover,
@@ -432,9 +498,19 @@ pub fn match_preselected_credentials(
     selected_credentials
 }
 
-pub async fn exchange_proof<P1: Profile, P2: Profile>(
-    institution: &mut TestAgent<P1>,
-    consumer: &mut TestAgent<P2>,
+pub async fn exchange_proof(
+    institution: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    consumer: &mut TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
     schema_id: &str,
     cred_def_id: &str,
     request_name: Option<&str>,
@@ -451,8 +527,8 @@ pub async fn exchange_proof<P1: Profile, P2: Profile>(
 
     verifier
         .verify_presentation(
-            institution.profile.ledger_read(),
-            institution.profile.anoncreds(),
+            &institution.ledger_read,
+            &institution.anoncreds,
             presentation,
         )
         .await

@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+    wallet::base_wallet::BaseWallet,
 };
 
 use crate::{
@@ -21,6 +22,7 @@ use crate::{
 };
 
 pub async fn generate_indy_proof(
+    wallet: &impl BaseWallet,
     ledger: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
     credentials: &SelectedCredentials,
@@ -64,6 +66,7 @@ pub async fn generate_indy_proof(
 
     let proof = anoncreds
         .prover_create_proof(
+            wallet,
             proof_req_data_json,
             &requested_credentials,
             settings::DEFAULT_LINK_SECRET_ALIAS,

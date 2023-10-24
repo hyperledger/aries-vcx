@@ -5,7 +5,9 @@ use serde_json;
 
 use crate::{
     api_vcx::{
-        api_global::profile::{get_main_anoncreds, get_main_ledger_read, get_main_ledger_write},
+        api_global::profile::{
+            get_main_anoncreds, get_main_ledger_read, get_main_ledger_write, get_main_wallet,
+        },
         api_handle::object_cache::ObjectCache,
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -50,7 +52,10 @@ pub async fn create_and_publish_schema(
         &data,
     )
     .await?
-    .publish(get_main_ledger_write()?.as_ref())
+    .publish(
+        get_main_wallet()?.as_ref(),
+        get_main_ledger_write()?.as_ref(),
+    )
     .await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
     debug!(
@@ -164,16 +169,13 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::{
-        global::settings::DEFAULT_DID,
-        utils::devsetup::{SetupDefaults, SetupEmpty},
-    };
+    use aries_vcx::{global::settings::DEFAULT_DID, utils::devsetup::SetupMocks};
 
     use super::*;
 
     #[tokio::test]
     async fn test_create_schema_fails() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let err = create_and_publish_schema(
             DEFAULT_DID,
@@ -189,7 +191,7 @@ pub mod tests {
 
     #[test]
     fn test_handle_errors() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupMocks::init();
 
         assert_eq!(
             to_string(13435178).unwrap_err().kind(),

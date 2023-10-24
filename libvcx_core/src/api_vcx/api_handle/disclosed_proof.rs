@@ -3,7 +3,10 @@ use aries_vcx::{
         mediated_prover::prover_find_message_to_handle, prover::Prover,
     },
     messages::{
-        msg_fields::protocols::present_proof::{request::RequestPresentation, PresentProof},
+        msg_fields::protocols::present_proof::{
+            v1::{request::RequestPresentationV1, PresentProofV1},
+            PresentProof,
+        },
         AriesMessage,
     },
 };
@@ -12,7 +15,7 @@ use serde_json;
 use super::mediated_connection::send_message;
 use crate::{
     api_vcx::{
-        api_global::profile::{get_main_anoncreds, get_main_ledger_read},
+        api_global::profile::{get_main_anoncreds, get_main_ledger_read, get_main_wallet},
         api_handle::{mediated_connection, object_cache::ObjectCache},
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -37,7 +40,7 @@ pub fn create_with_proof_request(source_id: &str, proof_req: &str) -> LibvcxResu
         proof_req
     );
 
-    let presentation_request: RequestPresentation =
+    let presentation_request: RequestPresentationV1 =
         serde_json::from_str(proof_req).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidJson,
@@ -60,8 +63,8 @@ pub async fn create_with_msgid(
 ) -> LibvcxResult<(u32, String)> {
     let proof_request = get_proof_request(connection_handle, msg_id).await?;
 
-    let presentation_request: RequestPresentation =
-        serde_json::from_str(&proof_request).map_err(|err| {
+    let presentation_request: RequestPresentationV1 = serde_json::from_str(&proof_request)
+        .map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidJson,
                 format!(
@@ -214,6 +217,7 @@ pub async fn generate_proof(
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     proof
         .generate_presentation(
+            get_main_wallet()?.as_ref(),
             get_main_ledger_read()?.as_ref(),
             get_main_anoncreds()?.as_ref(),
             serde_json::from_str(credentials)?,
@@ -243,7 +247,7 @@ pub async fn decline_presentation_request(
 pub async fn retrieve_credentials(handle: u32) -> LibvcxResult<String> {
     let proof = HANDLE_MAP.get_cloned(handle)?;
     let retrieved_creds = proof
-        .retrieve_credentials(get_main_anoncreds()?.as_ref())
+        .retrieve_credentials(get_main_wallet()?.as_ref(), get_main_anoncreds()?.as_ref())
         .await?;
 
     Ok(serde_json::to_string(&retrieved_creds)?)
@@ -284,9 +288,9 @@ async fn get_proof_request(connection_handle: u32, msg_id: &str) -> LibvcxResult
         let message = mediated_connection::get_message_by_id(connection_handle, msg_id).await?;
 
         match message {
-            AriesMessage::PresentProof(PresentProof::RequestPresentation(presentation_request)) => {
-                presentation_request
-            }
+            AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::RequestPresentation(
+                presentation_request,
+            ))) => presentation_request,
             msg => {
                 return Err(LibvcxError::from_msg(
                     LibvcxErrorKind::InvalidMessages,
@@ -314,7 +318,9 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<
             .await?
             .into_iter()
             .filter_map(|(_, message)| match message {
-                AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => Some(message),
+                AriesMessage::PresentProof(PresentProof::V1(
+                    PresentProofV1::RequestPresentation(_),
+                )) => Some(message),
                 _ => None,
             })
             .collect();
@@ -339,10 +345,7 @@ mod tests {
 
     use aries_vcx::{
         utils,
-        utils::{
-            devsetup::{SetupDefaults, SetupMocks},
-            mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
-        },
+        utils::{devsetup::SetupMocks, mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION},
     };
     use serde_json::Value;
 
@@ -411,7 +414,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_deserialize_fails() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         assert_eq!(
             from_string("{}").unwrap_err().kind(),
@@ -421,7 +424,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_deserialize_succeeds_with_self_attest_allowed() {
-        let _setup = SetupDefaults::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_with_proof_request("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 

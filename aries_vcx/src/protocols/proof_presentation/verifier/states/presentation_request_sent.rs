@@ -2,7 +2,7 @@ use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
 use messages::msg_fields::protocols::{
-    present_proof::{present::Presentation, request::RequestPresentation},
+    present_proof::v1::{present::PresentationV1, request::RequestPresentationV1},
     report_problem::ProblemReport,
 };
 
@@ -17,7 +17,7 @@ use crate::{
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSentState {
-    pub presentation_request: RequestPresentation,
+    pub presentation_request: RequestPresentationV1,
 }
 
 impl PresentationRequestSentState {
@@ -25,7 +25,7 @@ impl PresentationRequestSentState {
         &self,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
-        presentation: &Presentation,
+        presentation: &PresentationV1,
         thread_id: &str,
     ) -> VcxResult<()> {
         if !matches_thread_id!(presentation, thread_id) {
@@ -62,14 +62,14 @@ impl PresentationRequestSentState {
 impl
     From<(
         PresentationRequestSentState,
-        Presentation,
+        PresentationV1,
         PresentationVerificationStatus,
     )> for FinishedState
 {
     fn from(
         (state, presentation, verification_status): (
             PresentationRequestSentState,
-            Presentation,
+            PresentationV1,
             PresentationVerificationStatus,
         ),
     ) -> Self {

@@ -4,23 +4,22 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Join the chat at https://chat.hyperledger.org/channel/aries](https://img.shields.io/badge/Chat%20on-Hyperledger%20Chat-blue)](https://chat.hyperledger.org/channel/aries)
 
-The repository contains
-- Rust library `aries-vcx` implementing Aries protocols,
-- collection of supporting projects.
+The repository contains a set of crates to build [Aries](https://github.com/hyperledger/aries-rfcs/) / [DIDComm](https://didcomm.org/) applications in Rust.
 
-## If you are Rust 🦀 developer
-You can build your Rust project on top of
-- [`aries-vcx`](aries_vcx) - ready to go Rust library to work with Aries protocols for didcomm, VC issuance and verification.
+## Aries components
+  - [`aries_vcx`](aries_vcx) - Library implementing DIDComm protocols, with focus on verifiable credential issuance and verification.
+  - [`messages`](messages) - Library for building and parsing Aries messages.
+  - `aries_vcx_core` - Interfaces for interaction with ledgers, wallets and credentials.
+  - [`agents`](agents/rust) - Aries agents built on top of `aries_vcx`.
+  
+## General components
+  - `did_parser` - Building and parsing [DIDs](https://w3c.github.io/did-core/).
+  - `did_doc` - Building and parsing DID Documents.
+  - `did_peer`, `did_sov`, `did_web`, `did_key` - DID resolvers for different [DID methods](https://w3c.github.io/did-spec-registries/#did-methods). 
 
-Additionally, `aries-vcx` is built on top of smaller Rust crates which are part of this repo:
-- [`aries_vcx_core`](aries_vcx_core) - foundational APIs to interact with ledger, wallet and anoncreds.
-- [`messages`](messages) - crate for building and parsing Aries messages
-- [`did_doc`](diddoc) - crate to work with DIDDocs 
-
-## If you are mobile 📱 developer
-Aries-vcx can be used to build native mobile applications. You can write part of your mobile backend in Rust on top of
-`aries-vcx` crate. Then expose FFI API for iOS/android environments.
-- There's POC in progress [`uniffi_aries_vcx`](./uniffi_aries_vcx) using UniFFI library to autogenerate Swift and Kotlin wrappers.
+## Mobile 📱
+  - [`uniffi_aries_vcx`](./uniffi_aries_vcx) - UniFFI wrapper for `aries_vcx` and sample mobile app
+  - [`simple_message_relay`](./tools/simple_message_relay) - simple implementation of message relay service for development / testing purposes
 
 # Reach out 👋
 - Ask a question on [discord](https://discord.com/channels/905194001349627914/955480822675308604)

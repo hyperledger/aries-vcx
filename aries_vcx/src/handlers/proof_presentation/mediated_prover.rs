@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use messages::{
-    msg_fields::protocols::{notification::Notification, present_proof::PresentProof},
+    msg_fields::protocols::{
+        notification::Notification,
+        present_proof::{v1::PresentProofV1, PresentProof},
+    },
     AriesMessage,
 };
 
@@ -32,7 +35,9 @@ pub fn prover_find_message_to_handle(
                         return Some((uid, message));
                     }
                 }
-                AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => {
+                AriesMessage::PresentProof(PresentProof::V1(
+                    PresentProofV1::RequestPresentation(msg),
+                )) => {
                     if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
@@ -45,7 +50,7 @@ pub fn prover_find_message_to_handle(
                         return Some((uid, message));
                     }
                 }
-                AriesMessage::PresentProof(PresentProof::Ack(msg)) => {
+                AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Ack(msg))) => {
                     if matches_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
@@ -60,7 +65,9 @@ pub fn prover_find_message_to_handle(
                         return Some((uid, message));
                     }
                 }
-                AriesMessage::PresentProof(PresentProof::ProblemReport(msg)) => {
+                AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::ProblemReport(
+                    msg,
+                ))) => {
                     if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }

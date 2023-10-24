@@ -28,8 +28,8 @@ use base64::{engine::general_purpose, Engine};
 use messages::{
     decorators::attachment::{Attachment, AttachmentData, AttachmentType},
     misc::MimeType,
-    msg_fields::protocols::present_proof::request::{
-        RequestPresentation, RequestPresentationContent,
+    msg_fields::protocols::present_proof::v1::request::{
+        RequestPresentationV1, RequestPresentationV1Content,
     },
 };
 
@@ -60,20 +60,20 @@ async fn test_agency_pool_retrieve_credentials_empty() {
             .mime_type(MimeType::Json)
             .build();
 
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![attach])
             .build();
 
         // test retrieving credentials for empty proof request returns "{}"
         let id = "test_id".to_owned();
-        let proof_req = RequestPresentation::builder()
+        let proof_req = RequestPresentationV1::builder()
             .id(id)
             .content(content)
             .build();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         let retrieved_creds = proof
-            .retrieve_credentials(setup.profile.anoncreds())
+            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
             .await
             .unwrap();
         assert_eq!(
@@ -97,21 +97,21 @@ async fn test_agency_pool_retrieve_credentials_empty() {
             .mime_type(MimeType::Json)
             .build();
 
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![attach])
             .build();
 
         // test retrieving credentials for the proof request returns the referent with no cred
         // matches
         let id = "test_id".to_owned();
-        let proof_req = RequestPresentation::builder()
+        let proof_req = RequestPresentationV1::builder()
             .id(id)
             .content(content)
             .build();
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
         let retrieved_creds = proof
-            .retrieve_credentials(setup.profile.anoncreds())
+            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
             .await
             .unwrap();
         assert_eq!(
@@ -134,24 +134,28 @@ async fn test_agency_pool_retrieve_credentials_empty() {
 async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
     run_setup!(|setup| async move {
         let schema = create_and_write_test_schema(
-            setup.profile.anoncreds(),
-            setup.profile.ledger_write(),
+            &setup.wallet,
+            &setup.anoncreds,
+            &setup.ledger_write,
             &setup.institution_did,
             DEFAULT_SCHEMA_ATTRS,
         )
         .await;
         let cred_def = create_and_write_test_cred_def(
-            setup.profile.anoncreds(),
-            setup.profile.ledger_read(),
-            setup.profile.ledger_write(),
+            &setup.wallet,
+            &setup.anoncreds,
+            &setup.ledger_read,
+            &setup.ledger_write,
             &setup.institution_did,
             &schema.schema_id,
             true,
         )
         .await;
         create_and_write_credential(
-            setup.profile.anoncreds(),
-            setup.profile.anoncreds(),
+            &setup.wallet,
+            &setup.wallet,
+            &setup.anoncreds,
+            &setup.anoncreds,
             &setup.institution_did,
             &cred_def,
             None,
@@ -185,11 +189,11 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .mime_type(MimeType::Json)
             .build();
 
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![attach])
             .build();
 
-        let proof_req = RequestPresentation::builder()
+        let proof_req = RequestPresentationV1::builder()
             .id(id)
             .content(content)
             .build();
@@ -197,7 +201,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
 
         // All lower case
         let retrieved_creds = proof
-            .retrieve_credentials(setup.profile.anoncreds())
+            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
             .await
             .unwrap();
         assert_eq!(
@@ -223,17 +227,17 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .mime_type(MimeType::Json)
             .build();
 
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![attach])
             .build();
 
-        let proof_req = RequestPresentation::builder()
+        let proof_req = RequestPresentationV1::builder()
             .id(id)
             .content(content)
             .build();
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
         let retrieved_creds2 = proof
-            .retrieve_credentials(setup.profile.anoncreds())
+            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
             .await
             .unwrap();
         assert_eq!(
@@ -259,17 +263,17 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .mime_type(MimeType::Json)
             .build();
 
-        let content = RequestPresentationContent::builder()
+        let content = RequestPresentationV1Content::builder()
             .request_presentations_attach(vec![attach])
             .build();
 
-        let proof_req = RequestPresentation::builder()
+        let proof_req = RequestPresentationV1::builder()
             .id(id)
             .content(content)
             .build();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
         let retrieved_creds3 = proof
-            .retrieve_credentials(setup.profile.anoncreds())
+            .retrieve_credentials(&setup.wallet, &setup.anoncreds)
             .await
             .unwrap();
         assert_eq!(

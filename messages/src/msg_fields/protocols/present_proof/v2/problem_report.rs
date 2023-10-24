@@ -8,23 +8,23 @@ use crate::{
     msg_parts::MsgParts,
 };
 
-pub type PresentProofProblemReport =
-    MsgParts<PresentProofProblemReportContent, ProblemReportDecorators>;
+pub type PresentProofV2ProblemReport =
+    MsgParts<PresentProofV2ProblemReportContent, ProblemReportDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(transparent)]
-pub struct PresentProofProblemReportContent {
+pub struct PresentProofV2ProblemReportContent {
     pub inner: ProblemReportContent,
 }
 
-impl From<ProblemReportContent> for PresentProofProblemReportContent {
+impl From<ProblemReportContent> for PresentProofV2ProblemReportContent {
     fn from(value: ProblemReportContent) -> Self {
         Self { inner: value }
     }
 }
 
-impl From<PresentProofProblemReport> for ProblemReport {
-    fn from(value: PresentProofProblemReport) -> Self {
+impl From<PresentProofV2ProblemReport> for ProblemReport {
+    fn from(value: PresentProofV2ProblemReport) -> Self {
         Self::builder()
             .id(value.id)
             .content(value.content.inner)
@@ -51,7 +51,7 @@ mod tests {
         msg_fields::protocols::report_problem::{
             Description, Impact, Where, WhereParty, WhoRetries,
         },
-        msg_types::present_proof::PresentProofTypeV1_0,
+        msg_types::present_proof::PresentProofTypeV2_0,
     };
 
     #[test]
@@ -68,14 +68,14 @@ mod tests {
             "description": content.description
         });
 
-        let content = PresentProofProblemReportContent::builder()
+        let content = PresentProofV2ProblemReportContent::builder()
             .inner(content)
             .build();
 
         test_utils::test_msg(
             content,
             decorators,
-            PresentProofTypeV1_0::ProblemReport,
+            PresentProofTypeV2_0::ProblemReport,
             expected,
         );
     }
@@ -123,14 +123,14 @@ mod tests {
             "fix-hint~l10n": decorators.fix_hint_locale
         });
 
-        let content = PresentProofProblemReportContent::builder()
+        let content = PresentProofV2ProblemReportContent::builder()
             .inner(content)
             .build();
 
         test_utils::test_msg(
             content,
             decorators,
-            PresentProofTypeV1_0::ProblemReport,
+            PresentProofTypeV2_0::ProblemReport,
             expected,
         );
     }
