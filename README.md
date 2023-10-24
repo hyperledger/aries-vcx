@@ -4,22 +4,22 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Join the chat at https://chat.hyperledger.org/channel/aries](https://img.shields.io/badge/Chat%20on-Hyperledger%20Chat-blue)](https://chat.hyperledger.org/channel/aries)
 
-The repository contains set crate to build Aries / Didcomm applications in Rust.
+The repository contains a set of crates to build [Aries](https://github.com/hyperledger/aries-rfcs/) / [DIDComm](https://didcomm.org/) applications in Rust.
 
 ## Aries components
-  - [`aries_vcx`](aries_vcx) - Library to work with Aries protocols for didcomm v1, VC issuance and verification.
-  - [`messages`](messages) - Crate to build and parse Aries messages.
-  - `aries_vcx_core` - Building blocks for `aries_vcx` to interact with ledger, wallet and anoncreds.
-  - [`agents`](agents/rust) - Aries agents, built on top of `aries_vcx` crate.
+  - [`aries_vcx`](aries_vcx) - Library implementing DIDComm protocols, with focus on verifiable credential issuance and verification.
+  - [`messages`](messages) - Library for building and parsing Aries messages.
+  - `aries_vcx_core` - Interfaces for interaction with ledgers, wallets and credentials.
+  - [`agents`](agents/rust) - Aries agents built on top of `aries_vcx`.
   
 ## General components
-  - `did_parser` - Parse and build DIDs.
-  - `did_doc` - Crate and work with DID Documents.
-  - `did_peer`, `did_sov`, `did_web`, `did_key` - DID resolvers for different DID methods. 
+  - `did_parser` - Building and parsing [DIDs](https://w3c.github.io/did-core/).
+  - `did_doc` - Building and parsing DID Documents.
+  - `did_peer`, `did_sov`, `did_web`, `did_key` - DID resolvers for different [DID methods](https://w3c.github.io/did-spec-registries/#did-methods). 
 
 ## Mobile 📱
   - [`uniffi_aries_vcx`](./uniffi_aries_vcx) - UniFFI wrapper for `aries_vcx` and sample mobile app
-  - [`simple_message_relay`](./tools/simple_message_relay) - simple implementation of message relay service useful for development/testing
+  - [`simple_message_relay`](./tools/simple_message_relay) - simple implementation of message relay service for development / testing purposes
 
 # Reach out 👋
 - Ask a question on [discord](https://discord.com/channels/905194001349627914/955480822675308604)
