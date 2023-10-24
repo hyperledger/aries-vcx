@@ -2918,7 +2918,7 @@ dependencies = [
  "tokio",
  "tower-http",
  "url",
- "uuid 1.4.1",
+ "uuid 1.5.0",
 ]
 
 [[package]]
