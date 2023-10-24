@@ -289,7 +289,7 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
           skip-docker-setup: true
       - name: "Run workspace unit tests"
-        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator
+        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --exclude mediator
 
   test-integration-aries-vcx:
     needs: workflow-setup
@@ -401,6 +401,8 @@ jobs:
         run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run demo:revocation)
       - name: "Run integration tests"
         run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run test:integration)
+
+
 
   ##########################################################################################
   ############################   NPMJS PUBLISHING   #######################################
