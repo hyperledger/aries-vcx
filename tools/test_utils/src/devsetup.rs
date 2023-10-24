@@ -10,8 +10,10 @@ use std::{
 };
 
 use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
+#[cfg(feature = "credx")]
+use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx_core::{
-    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     global::settings::{DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
     ledger::{

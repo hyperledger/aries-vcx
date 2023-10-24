@@ -10,7 +10,7 @@ edition.workspace = true
 
 [features]
 vdrtools_wallet = ["aries_vcx_core/vdrtools_wallet"]
-vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger"]
+vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "credx"]
 credx = ["aries_vcx_core/credx"]
 
 [dependencies]
