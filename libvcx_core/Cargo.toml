@@ -23,7 +23,7 @@ serde = "1.0.97"
 serde_json = "1.0.40"
 serde_derive = "1.0.97"
 futures = { version = "0.3", default-features = false }
-aries-vcx = { path = "../aries_vcx" }
+aries-vcx = { path = "../aries_vcx", features = ["credx", "vdrtools_wallet"] }
 aries_vcx_core = { path = "../aries_vcx_core" }
 diddoc_legacy = { path = "../diddoc_legacy" }
 thiserror = "1.0.37"
