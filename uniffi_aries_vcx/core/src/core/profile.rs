@@ -14,7 +14,6 @@ use aries_vcx::{
     },
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
 };
-use test_utils::mockdata::mock_ledger::MockLedger;
 
 use crate::{errors::error::VcxUniFFIResult, runtime::block_on};
 
@@ -68,7 +67,7 @@ pub fn new_indy_profile(
         let profile = UniffiProfile {
             anoncreds: IndyCredxAnonCreds,
             wallet,
-            ledger_read: ledger_read,
+            ledger_read,
         };
 
         Ok(Arc::new(ProfileHolder { inner: profile }))
