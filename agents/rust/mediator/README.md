@@ -27,10 +27,10 @@ cargo run --bin mediator
 
 ```bash
 # For testing / demo purposes
-cargo run --bin client-tui
+cargo run --package client-tui
 
 # To also see panic and debug info produced by tui
-cargo run --bin client-tui 2> err || cat  err
+cargo run --package client-tui 2> err || cat  err
 ```
 
 ### Configurable Options
@@ -68,13 +68,4 @@ Currently exposed endpoints.
 - **Description** : | 
     Endpoint for Aries DIDCOMM communication. 
     Encrypted Aries messages (envelops) can be passed and received from this endpoint in json serialized format.
-```
-
-### Client API
-
-```yaml
-`/client/register-using-oob`:
-- **Input**: Json body containing OOB invite to connect to.
-- **Description** : Attempts to connect to the Aries service defined in the OOB invite using DIDCOMM channel. 
-
 ```
