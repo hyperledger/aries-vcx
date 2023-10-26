@@ -1,6 +1,6 @@
 [package]
 name = "mediation"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 
 [lib]
@@ -10,23 +10,26 @@ path = "src/lib.rs"
 [features]
 default = ["mysql_db", "mediator_persistence_extras"]
 # postgres_db=["sqlx/postgres"]
-mysql_db=["sqlx/mysql"]
+mysql_db = ["sqlx/mysql"]
 # any_db=["sqlx/all-databases"]
 mediator_persistence_extras = []
 
 [dependencies]
 async-trait = "0.1.72"
 axum = "0.6.18"
+base64-url = "2.0.0"
 dotenvy = "0.15.7"
 env_logger = "0.10.0"
 futures = "0.3.28"
 log = "0.4.19"
+messages = { path = "../../../../messages" }
 serde = { version = "1.0.164", features = ["derive"] }
 serde_json = "1.0.104"
 serde_with = { version = "3.1.0", features = ["base64"] }
 sqlx = { version = "0.7", features = ["runtime-tokio"], optional = true }
 # sqlx = { version = "0.5.8", git = "https://github.com/jovfer/sqlx", branch = "feature/json_no_preserve_order_v5", features = [ "sqlite", "mysql", "json_no_preserve_order", "runtime-tokio-rustls"], optional = true }
 tokio = { version = "1.28.2", features = ["rt-multi-thread", "macros"] }
+uuid = { version = "1.5.0", features = ["v4"] }
 
 # Workaround required because of bug in sqlx pre v6 https://github.com/launchbadge/sqlx/issues/2418
 # [build-dependencies]
