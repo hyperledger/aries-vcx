@@ -2,6 +2,7 @@
 
 use std::{
     env,
+    error::Error,
     fs::{self, DirBuilder, OpenOptions},
     future::Future,
     io::Write,
@@ -349,7 +350,13 @@ where
         F: Future<Output = ()>,
     {
         f(self).await;
-        reset_global_state();
+    }
+
+    pub async fn run2<F>(self, f: impl FnOnce(Self) -> F) -> Result<(), Box<dyn Error>>
+    where
+        F: Future<Output = Result<(), Box<dyn Error>>>,
+    {
+        f(self).await
     }
 }
 
