@@ -67,7 +67,7 @@ async fn get_mediator_grant_data(
     .await
     .unwrap();
     // extract routing parameters
-    
+
     if let MediatorCoordMsgEnum::MediateGrant(grant_data) =
         serde_json::from_str(&response_message).unwrap()
     {
