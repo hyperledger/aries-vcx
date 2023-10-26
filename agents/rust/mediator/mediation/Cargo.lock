@@ -977,6 +977,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "mediation"
+version = "0.2.3"
+dependencies = [
+ "async-trait",
+ "axum",
+ "axum-macros",
+ "dotenvy",
+ "env_logger",
+ "futures",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sqlx",
+ "tokio",
+]
+
+[[package]]
 name = "memchr"
 version = "2.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1422,9 +1441,9 @@ checksum = "d626bb9dae77e28219937af045c257c28bfd3f69333c512553507f5f9798cb76"
 
 [[package]]
 name = "rustix"
-version = "0.38.18"
+version = "0.38.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a74ee2d7c2581cd139b42447d7d9389b889bdaad3a73f1ebb16f2a3237bb19c"
+checksum = "67ce50cb2e16c2903e30d1cbccfd8387a74b9d4c938b6a4c5ec6cc7556f7a8a0"
 dependencies = [
  "bitflags 2.4.0",
  "errno",
@@ -1752,7 +1771,6 @@ dependencies = [
  "sha2",
  "sqlx-core",
  "sqlx-mysql",
- "sqlx-postgres",
  "sqlx-sqlite",
  "syn 1.0.109",
  "tempfile",
@@ -2423,25 +2441,6 @@ checksum = "524e57b2c537c0f9b1e69f1965311ec12182b4122e45035b1508cd24d2adadb1"
 dependencies = [
  "cfg-if",
  "windows-sys",
-]
-
-[[package]]
-name = "xum-test-server"
-version = "0.2.3"
-dependencies = [
- "async-trait",
- "axum",
- "axum-macros",
- "dotenvy",
- "env_logger",
- "futures",
- "log",
- "reqwest",
- "serde",
- "serde_json",
- "serde_with",
- "sqlx",
- "tokio",
 ]
 
 [[package]]
