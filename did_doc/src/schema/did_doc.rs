@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use did_parser::{Did, DidUrl};
 use serde::{Deserialize, Serialize};
@@ -40,6 +40,13 @@ pub struct DidDocument<E> {
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     #[serde(flatten)]
     extra: HashMap<String, Value>,
+}
+
+impl Display for DidDocument<()> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let json = serde_json::to_string(self).unwrap();
+        write!(f, "{}", json)
+    }
 }
 
 impl<E> DidDocument<E> {

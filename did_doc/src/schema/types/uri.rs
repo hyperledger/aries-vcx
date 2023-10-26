@@ -73,8 +73,7 @@ mod tests {
     fn test_uri_clone() {
         let uri_str = "http://example.com";
         let uri = Uri::from_str(uri_str).unwrap();
-        let uri_clone = uri.clone();
-        assert_eq!(uri, uri_clone);
+        assert_eq!(uri, uri.clone());
     }
 
     #[test]

@@ -8,7 +8,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{error::ParseError, utils::parse::parse_did_method_id, DidRange, DidUrl};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Did {
     did: String,
     method: Option<DidRange>,
@@ -67,6 +67,16 @@ impl FromStr for Did {
 impl Display for Did {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.did)
+    }
+}
+
+impl std::fmt::Debug for Did {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Did")
+            .field("did", &self.did)
+            .field("method", &self.method())
+            .field("id", &self.id())
+            .finish()
     }
 }
 
