@@ -326,18 +326,18 @@ name = "aries-vcx"
 version = "0.61.0"
 dependencies = [
  "agency_client",
- "android_logger",
  "aries_vcx_core",
  "async-channel",
  "async-trait",
  "base64",
  "bs58 0.5.0",
  "chrono",
- "derive_builder 0.12.0",
+ "derive_builder",
  "diddoc_legacy",
  "env_logger 0.10.0",
  "futures",
  "lazy_static",
+ "libvcx_logger",
  "log",
  "messages",
  "num-bigint",
@@ -350,11 +350,12 @@ dependencies = [
  "shared_vcx",
  "strum 0.25.0",
  "strum_macros 0.25.2",
+ "test_utils",
  "thiserror",
  "time 0.3.20",
  "tokio",
  "url",
- "uuid 1.4.1",
+ "uuid 1.5.0",
  "wallet_migrator",
 ]
 
@@ -365,13 +366,13 @@ dependencies = [
  "aries-vcx",
  "aries_vcx_core",
  "async-trait",
- "derive_builder 0.11.2",
+ "derive_builder",
  "log",
  "serde",
  "serde_json",
  "thiserror",
  "url",
- "uuid 1.4.1",
+ "uuid 1.5.0",
 ]
 
 [[package]]
@@ -380,7 +381,7 @@ version = "0.1.0"
 dependencies = [
  "agency_client",
  "async-trait",
- "derive_builder 0.12.0",
+ "derive_builder",
  "futures",
  "indy-api-types",
  "indy-credx",
@@ -397,7 +398,7 @@ dependencies = [
  "thiserror",
  "time 0.3.20",
  "tokio",
- "uuid 1.4.1",
+ "uuid 1.5.0",
 ]
 
 [[package]]
@@ -1369,32 +1370,11 @@ dependencies = [
 
 [[package]]
 name = "derive_builder"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d07adf7be193b71cc36b193d0f5fe60b918a3a9db4dad0449f57bcfd519704a3"
-dependencies = [
- "derive_builder_macro 0.11.2",
-]
-
-[[package]]
-name = "derive_builder"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d67778784b508018359cbc8696edb3db78160bab2c2a28ba7f56ef6932997f8"
 dependencies = [
- "derive_builder_macro 0.12.0",
-]
-
-[[package]]
-name = "derive_builder_core"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f91d4cfa921f1c05904dc3c57b4a32c38aed3340cce209f3a6fd1478babafc4"
-dependencies = [
- "darling 0.14.4",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
+ "derive_builder_macro",
 ]
 
 [[package]]
@@ -1411,21 +1391,11 @@ dependencies = [
 
 [[package]]
 name = "derive_builder_macro"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f0314b72bed045f3a68671b3c86328386762c93f82d98c65c3cb5e5f573dd68"
-dependencies = [
- "derive_builder_core 0.11.2",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "derive_builder_macro"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebcda35c7a396850a55ffeac740804b40ffec779b98fffbb1738f4033f0ee79e"
 dependencies = [
- "derive_builder_core 0.12.0",
+ "derive_builder_core",
  "syn 1.0.109",
 ]
 
@@ -1550,10 +1520,11 @@ dependencies = [
  "mockall",
  "serde",
  "serde_json",
+ "test_utils",
  "thiserror",
  "tokio",
  "url",
- "uuid 1.4.1",
+ "uuid 1.5.0",
 ]
 
 [[package]]
@@ -2765,12 +2736,24 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "test_utils",
  "thiserror",
  "time 0.3.20",
  "tokio",
  "url",
- "uuid 1.4.1",
+ "uuid 1.5.0",
  "wallet_migrator",
+]
+
+[[package]]
+name = "libvcx_logger"
+version = "0.61.0"
+dependencies = [
+ "android_logger",
+ "aries_vcx_core",
+ "chrono",
+ "env_logger 0.10.0",
+ "log",
 ]
 
 [[package]]
@@ -2931,11 +2914,12 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "test_utils",
  "thiserror",
  "tokio",
  "tower-http",
  "url",
- "uuid 1.4.1",
+ "uuid 1.5.0",
 ]
 
 [[package]]
@@ -4668,6 +4652,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 
 [[package]]
+name = "test_utils"
+version = "0.61.0"
+dependencies = [
+ "agency_client",
+ "aries_vcx_core",
+ "async-trait",
+ "chrono",
+ "lazy_static",
+ "libvcx_logger",
+ "log",
+ "rand 0.8.5",
+ "serde_json",
+ "uuid 1.5.0",
+]
+
+[[package]]
 name = "textwrap"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5044,6 +5044,7 @@ dependencies = [
  "once_cell",
  "serde",
  "serde_json",
+ "test_utils",
  "thiserror",
  "tokio",
  "uniffi",
@@ -5225,9 +5226,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.4.1"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79daa5ed5740825c40b389c5e50312b9c86df53fccd33f281df655642b43869d"
+checksum = "88ad59a7560b41a70d191093a945f0b87bc1deeda46fb237479708a1d6b6cdfc"
 dependencies = [
  "getrandom 0.2.10",
 ]
@@ -5250,11 +5251,12 @@ version = "0.61.0"
 dependencies = [
  "chrono",
  "libvcx_core",
+ "libvcx_logger",
  "log",
  "napi",
  "napi-build",
  "napi-derive",
- "uuid 0.8.2",
+ "uuid 1.5.0",
  "wallet_migrator",
 ]
 

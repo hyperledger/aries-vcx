@@ -39,7 +39,6 @@ pub struct BasicMessageDecorators {
 into_msg_with_type!(BasicMessage, BasicMessageTypeV1_0, Message);
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;

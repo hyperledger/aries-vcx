@@ -1,17 +1,14 @@
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    global::settings::DEFAULT_LINK_SECRET_ALIAS,
     wallet::base_wallet::BaseWallet,
 };
 use async_trait::async_trait;
 
-use crate::{
-    global::settings,
-    utils::{
-        self,
-        constants::{LARGE_NONCE, LIBINDY_CRED_OFFER, REV_REG_DELTA_JSON, REV_STATE_JSON},
-        mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request,
-    },
+use crate::constants::{
+    CREDENTIAL_JSON, CREDENTIAL_REQ_STRING, LARGE_NONCE, LIBINDY_CRED_OFFER, PROOF_JSON,
+    REV_REG_DELTA_JSON, REV_STATE_JSON,
 };
 
 #[derive(Debug)]
@@ -85,7 +82,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _rev_reg_id: Option<String>,
         _tails_dir: Option<String>,
     ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
-        Ok((utils::constants::CREDENTIAL_JSON.to_owned(), None, None))
+        Ok((CREDENTIAL_JSON.to_owned(), None, None))
     }
 
     async fn prover_create_proof(
@@ -98,7 +95,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _credential_defs_json: &str,
         _revoc_states_json: Option<&str>,
     ) -> VcxCoreResult<String> {
-        Ok(utils::constants::PROOF_JSON.to_owned())
+        Ok(PROOF_JSON.to_owned())
     }
 
     async fn prover_get_credential(
@@ -130,16 +127,10 @@ impl BaseAnonCreds for MockAnoncreds {
         _wallet: &impl BaseWallet,
         _proof_request_json: &str,
     ) -> VcxCoreResult<String> {
-        match get_mock_creds_retrieved_for_proof_request() {
-            None => Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::UnimplementedFeature,
-                "mock data for `prover_get_credentials_for_proof_req` must be set",
-            )),
-            Some(mocked_creds) => {
-                warn!("get_mock_creds_retrieved_for_proof_request  returning mocked response");
-                Ok(mocked_creds)
-            }
-        }
+        Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::UnimplementedFeature,
+            "mock data for `prover_get_credentials_for_proof_req` must be set",
+        ))
     }
 
     // todo: change _prover_did argument, see: https://github.com/hyperledger/aries-vcx/issues/950
@@ -151,10 +142,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_def_json: &str,
         _master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
-        Ok((
-            utils::constants::CREDENTIAL_REQ_STRING.to_owned(),
-            String::new(),
-        ))
+        Ok((CREDENTIAL_REQ_STRING.to_owned(), String::new()))
     }
 
     async fn create_revocation_state(
@@ -197,7 +185,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _wallet: &impl BaseWallet,
         _link_secret_id: &str,
     ) -> VcxCoreResult<String> {
-        Ok(settings::DEFAULT_LINK_SECRET_ALIAS.to_string())
+        Ok(DEFAULT_LINK_SECRET_ALIAS.to_string())
     }
 
     async fn issuer_create_schema(
@@ -242,58 +230,5 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn generate_nonce(&self) -> VcxCoreResult<String> {
         Ok(LARGE_NONCE.to_string())
-    }
-}
-
-#[cfg(test)]
-#[allow(clippy::unwrap_used)]
-mod unit_tests {
-
-    use aries_vcx_core::{
-        anoncreds::base_anoncreds::BaseAnonCreds,
-        errors::error::{AriesVcxCoreErrorKind, VcxCoreResult},
-        wallet::mock_wallet::MockWallet,
-    };
-
-    use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
-
-    #[tokio::test]
-    async fn test_unimplemented_methods() {
-        // test used to assert which methods are unimplemented currently, can be removed after all
-        // methods implemented
-
-        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxCoreResult<T>) {
-            assert_eq!(
-                result.unwrap_err().kind(),
-                AriesVcxCoreErrorKind::UnimplementedFeature
-            )
-        }
-
-        let anoncreds = MockAnoncreds;
-
-        assert_unimplemented(
-            anoncreds
-                .verifier_verify_proof("", "", "", "", "", "")
-                .await,
-        );
-        assert_unimplemented(
-            anoncreds
-                .issuer_create_and_store_revoc_reg(&MockWallet, "", "", "", 0, "")
-                .await,
-        );
-        assert_unimplemented(
-            anoncreds
-                .issuer_create_and_store_credential_def(&MockWallet, "", "", "", None, "")
-                .await,
-        );
-        assert_unimplemented(anoncreds.prover_get_credential(&MockWallet, "").await);
-        assert_unimplemented(anoncreds.prover_get_credentials(&MockWallet, None).await);
-        assert_unimplemented(
-            anoncreds
-                .prover_get_credentials_for_proof_req(&MockWallet, "")
-                .await,
-        );
-        assert_unimplemented(anoncreds.prover_delete_credential(&MockWallet, "").await);
-        assert_unimplemented(anoncreds.issuer_create_schema("", "", "", "").await);
     }
 }

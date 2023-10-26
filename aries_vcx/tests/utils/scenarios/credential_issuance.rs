@@ -1,15 +1,9 @@
 use std::{thread, time::Duration};
 
 use aries_vcx::{
-    common::{
-        primitives::{
-            credential_definition::CredentialDef, credential_schema::Schema,
-            revocation_registry::RevocationRegistry,
-        },
-        test_utils::{
-            create_and_publish_test_rev_reg, create_and_write_test_cred_def,
-            create_and_write_test_schema,
-        },
+    common::primitives::{
+        credential_definition::CredentialDef, credential_schema::Schema,
+        revocation_registry::RevocationRegistry,
     },
     handlers::{
         issuance::{holder::Holder, issuer::Issuer},
@@ -19,7 +13,6 @@ use aries_vcx::{
         issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
         mediated_connection::pairwise_info::PairwiseInfo,
     },
-    utils::constants::TEST_TAILS_URL,
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -36,9 +29,13 @@ use messages::msg_fields::protocols::{
     report_problem::ProblemReport,
 };
 use serde_json::json;
+use test_utils::constants::TEST_TAILS_URL;
 
 use super::{attr_names_address_list, create_credential_proposal, credential_data_address_1};
-use crate::utils::test_agent::TestAgent;
+use crate::utils::{
+    create_and_publish_test_rev_reg, create_and_write_test_cred_def, create_and_write_test_schema,
+    test_agent::TestAgent,
+};
 
 pub async fn create_address_schema_creddef_revreg(
     wallet: &impl BaseWallet,

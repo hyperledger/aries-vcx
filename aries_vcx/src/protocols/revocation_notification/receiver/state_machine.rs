@@ -240,6 +240,7 @@ impl RevocationNotificationReceiverSM {
     }
 }
 
+#[cfg(test)]
 pub mod test_utils {
     use messages::AriesMessage;
 
@@ -263,7 +264,6 @@ pub mod test_utils {
 }
 
 // #[cfg(test)]
-// #[allow(clippy::unwrap_used)]
 // pub mod unit_tests {
 //     use std::sync::mpsc::sync_channel;
 

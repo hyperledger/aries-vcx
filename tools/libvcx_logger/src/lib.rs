@@ -1,23 +1,22 @@
+use std::{env, io::Write, sync::Once};
+
 #[cfg(target_os = "android")]
-extern crate android_logger;
-#[cfg(target_os = "android")]
-use self::android_logger::Filter;
-
-extern crate env_logger;
-extern crate log;
-
-use std::{env, io::Write};
-
+use android_logger::Filter;
+use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use chrono::{
     format::{DelayedFormat, StrftimeItems},
     Local,
 };
+use env_logger::{fmt::Formatter, Builder as EnvLoggerBuilder};
+use log::{info, LevelFilter, Record};
 
-use self::{
-    env_logger::{fmt::Formatter, Builder as EnvLoggerBuilder},
-    log::{LevelFilter, Record},
-};
-use crate::errors::error::prelude::*;
+static TEST_LOGGING_INIT: Once = Once::new();
+
+pub fn init_test_logging() {
+    TEST_LOGGING_INIT.call_once(|| {
+        LibvcxDefaultLogger::init_testing_logger();
+    })
+}
 
 pub struct LibvcxDefaultLogger;
 
@@ -61,7 +60,7 @@ impl LibvcxDefaultLogger {
         }
     }
 
-    pub fn init(pattern: Option<String>) -> VcxResult<()> {
+    pub fn init(pattern: Option<String>) -> VcxCoreResult<()> {
         let pattern = pattern.or(env::var("RUST_LOG").ok());
         if cfg!(target_os = "android") {
             #[cfg(target_os = "android")]
@@ -95,8 +94,8 @@ impl LibvcxDefaultLogger {
                 .parse_filters(pattern.as_deref().unwrap_or("warn"))
                 .try_init()
                 .map_err(|err| {
-                    AriesVcxError::from_msg(
-                        AriesVcxErrorKind::LoggingError,
+                    AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::LoggingError,
                         format!("Cannot init logger: {:?}", err),
                     )
                 })?;

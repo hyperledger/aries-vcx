@@ -8,11 +8,9 @@ use aries_vcx_core::{
 };
 use async_trait::async_trait;
 
-use crate::{
-    utils,
-    utils::constants::{
-        rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON,
-    },
+use crate::constants::{
+    rev_def_json, CRED_DEF_JSON, DEFAULT_AUTHOR_AGREEMENT, REQUEST_WITH_ENDORSER,
+    REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON,
 };
 
 #[derive(Debug)]
@@ -22,7 +20,7 @@ pub struct MockLedger;
 #[async_trait]
 impl IndyLedgerRead for MockLedger {
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>> {
-        Ok(Some(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string()))
+        Ok(Some(DEFAULT_AUTHOR_AGREEMENT.to_string()))
     }
 
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String> {
@@ -56,7 +54,7 @@ impl IndyLedgerWrite for MockLedger {
         request: &str,
         endorser: &str,
     ) -> VcxCoreResult<String> {
-        Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string())
+        Ok(REQUEST_WITH_ENDORSER.to_string())
     }
 
     async fn endorse_transaction(
@@ -182,34 +180,5 @@ impl AnoncredsLedgerWrite for MockLedger {
         submitter_did: &str,
     ) -> VcxCoreResult<()> {
         Ok(())
-    }
-}
-
-#[cfg(test)]
-#[allow(clippy::unwrap_used)]
-mod unit_tests {
-
-    use aries_vcx_core::{
-        errors::error::{AriesVcxCoreErrorKind, VcxCoreResult},
-        ledger::base_ledger::IndyLedgerRead,
-    };
-
-    use super::MockLedger;
-
-    #[tokio::test]
-    async fn test_unimplemented_methods() {
-        // test used to assert which methods are unimplemented currently, can be removed after all
-        // methods implemented
-
-        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxCoreResult<T>) {
-            assert_eq!(
-                result.unwrap_err().kind(),
-                AriesVcxCoreErrorKind::UnimplementedFeature
-            )
-        }
-
-        let ledger: Box<dyn IndyLedgerRead> = Box::new(MockLedger);
-
-        assert_unimplemented(ledger.get_nym("").await);
     }
 }

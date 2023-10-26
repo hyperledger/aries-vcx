@@ -16,7 +16,6 @@ use crate::{
     protocols::proof_presentation::prover::state_machine::ProverState,
 };
 
-#[allow(clippy::unwrap_used)]
 pub fn prover_find_message_to_handle(
     sm: &Prover,
     messages: HashMap<String, AriesMessage>,

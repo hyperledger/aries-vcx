@@ -1,13 +1,9 @@
-#[macro_use]
-extern crate log;
-extern crate serde_json;
-
 pub mod utils;
 
 use aries_vcx::{
     common::ledger::transactions::write_endpoint_legacy,
     protocols::{connection::GenericConnection, mediated_connection::pairwise_info::PairwiseInfo},
-    utils::{devsetup::*, encryption_envelope::EncryptionEnvelope},
+    utils::encryption_envelope::EncryptionEnvelope,
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -25,6 +21,7 @@ use messages::{
     },
     AriesMessage,
 };
+use test_utils::devsetup::*;
 use utils::test_agent::TestAgent;
 use uuid::Uuid;
 

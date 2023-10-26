@@ -313,13 +313,13 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-pub mod tests {
-    use aries_vcx::utils::{
+
+mod tests {
+    use serde_json::Value;
+    use test_utils::{
         constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, V3_OBJECT_SERIALIZE_VERSION},
         devsetup::SetupMocks,
     };
-    use serde_json::Value;
 
     use super::*;
 

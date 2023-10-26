@@ -153,7 +153,7 @@ impl RevocationNotificationSenderSM {
     }
 }
 
-#[allow(clippy::unwrap_used)]
+#[cfg(test)]
 pub mod test_utils {
     use super::*;
     use crate::protocols::revocation_notification::test_utils::{

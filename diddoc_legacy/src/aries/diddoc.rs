@@ -487,7 +487,7 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
+
 mod unit_tests {
     use serde_json::json;
 

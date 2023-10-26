@@ -1,18 +1,12 @@
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate serde_json;
-
 pub mod utils;
 
 use std::{thread, time::Duration};
 
-use aries_vcx::{
-    protocols::proof_presentation::verifier::{
-        state_machine::VerifierState, verification_status::PresentationVerificationStatus,
-    },
-    utils::devsetup::*,
+use aries_vcx::protocols::proof_presentation::verifier::{
+    state_machine::VerifierState, verification_status::PresentationVerificationStatus,
 };
+use serde_json::json;
+use test_utils::devsetup::*;
 
 use crate::utils::{
     scenarios::{

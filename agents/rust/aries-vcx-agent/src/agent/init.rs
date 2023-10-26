@@ -1,11 +1,9 @@
 use std::sync::Arc;
 
-use aries_vcx::{
-    global::settings::DEFAULT_LINK_SECRET_ALIAS, utils::devsetup::dev_build_profile_modular,
-};
+use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx_core::{
     self,
-    anoncreds::base_anoncreds::BaseAnonCreds,
+    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
     wallet::indy::{
         wallet::{create_and_open_wallet, wallet_configure_issuer},
         IndySdkWallet, WalletConfig,
@@ -65,8 +63,18 @@ impl Agent {
 
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
 
-        let (ledger_read, ledger_write, anoncreds) =
-            dev_build_profile_modular(init_config.pool_config.genesis_path);
+        use aries_vcx_core::ledger::indy_vdr_ledger::{build_ledger_components, VcxPoolConfig};
+
+        info!("dev_build_profile_modular >>");
+        let vcx_pool_config = VcxPoolConfig {
+            indy_vdr_config: None,
+            response_cache_config: None,
+            genesis_file_path: init_config.pool_config.genesis_path,
+        };
+
+        let anoncreds = IndyCredxAnonCreds;
+        let (ledger_read, ledger_write) = build_ledger_components(vcx_pool_config).unwrap();
+
         let ledger_read = Arc::new(ledger_read);
         let ledger_write = Arc::new(ledger_write);
 

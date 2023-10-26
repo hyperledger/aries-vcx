@@ -17,8 +17,9 @@ wallet_migrator = { path = "../../wallet_migrator" }
 log = "0.4.16"
 napi = { version = "2.10.14", default-features = false, features = [ "async" ] }
 napi-derive = { version = "2.10.1" }
-uuid = { version = "0.8", default-features = false, features = ["v4"] }
+uuid = { version = "1.5.0", default-features = false, features = ["v4"] }
 chrono = "0.4.23"
+libvcx_logger = { path = "../../tools/libvcx_logger" }
 
 [build-dependencies]
 napi-build = "2.0.1"

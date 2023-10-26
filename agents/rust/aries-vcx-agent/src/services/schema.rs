@@ -1,11 +1,12 @@
 use std::sync::{Arc, Mutex};
 
-use aries_vcx::{
-    common::primitives::credential_schema::Schema,
-    utils::devsetup::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
-};
+use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx_core::{
-    anoncreds::credx_anoncreds::IndyCredxAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds,
+    ledger::{
+        base_ledger::AnoncredsLedgerRead,
+        indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
+    },
     wallet::indy::IndySdkWallet,
 };
 

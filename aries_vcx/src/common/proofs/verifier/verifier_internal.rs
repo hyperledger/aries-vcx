@@ -220,10 +220,10 @@ pub async fn build_rev_reg_json(
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
+    use test_utils::{constants::*, devsetup::*, mockdata::mock_ledger::MockLedger};
+
     use super::*;
-    use crate::utils::{constants::*, devsetup::*, mockdata::profile::mock_ledger::MockLedger};
 
     #[tokio::test]
     async fn test_build_cred_defs_json_verifier_with_multiple_credentials() {

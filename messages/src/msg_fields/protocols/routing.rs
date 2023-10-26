@@ -20,7 +20,7 @@ pub struct ForwardContent {
 into_msg_with_type!(Forward, RoutingTypeV1_0, Forward);
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
+
 mod tests {
     use serde_json::json;
     // Bind `shared_vcx::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.

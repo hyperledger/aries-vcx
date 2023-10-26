@@ -108,11 +108,11 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use serde_json::Value;
+    use test_utils::devsetup::*;
 
-    use crate::{common::credentials::encoding::encode_attributes, utils::devsetup::*};
+    use crate::common::credentials::encoding::encode_attributes;
 
     #[test]
     fn test_encode_with_several_attributes_success() {

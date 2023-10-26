@@ -215,8 +215,6 @@ impl GenericConnection {
 /// of the [`crate::protocols::connection::Connection`], if modified, will be modified together.
 #[cfg(test)]
 mod connection_serde_tests {
-    #![allow(clippy::unwrap_used)]
-
     use aries_vcx_core::wallet::mock_wallet::MockWallet;
     use async_trait::async_trait;
     use chrono::Utc;
@@ -232,6 +230,7 @@ mod connection_serde_tests {
             notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
         },
     };
+    use test_utils::mockdata::mock_ledger::MockLedger;
     use url::Url;
     use uuid::Uuid;
 
@@ -242,7 +241,6 @@ mod connection_serde_tests {
         protocols::connection::{
             invitee::InviteeConnection, inviter::InviterConnection, serializable::*, Connection,
         },
-        utils::mockdata::profile::mock_ledger::MockLedger,
     };
 
     impl<'a> From<RefInviteeState<'a>> for InviteeState {

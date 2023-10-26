@@ -102,7 +102,6 @@ pub async fn get_verkey_from_ledger(
 // todo: was originally written for vdrtool ledger implementation, ideally we should moc out
 //       ledger client completely
 // #[cfg(test)]
-// #[allow(clippy::unwrap_used)]
 // mod test {
 //     use aries_vcx_core::ledger::indy::pool_mocks::{enable_pool_mocks, PoolMocks};
 //

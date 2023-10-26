@@ -283,7 +283,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use aries_vcx::utils::devsetup::SetupMocks;
+    use test_utils::devsetup::SetupMocks;
 
     use crate::api_vcx::api_handle::object_cache::ObjectCache;
 

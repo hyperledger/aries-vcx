@@ -12,7 +12,6 @@ use crate::{
     SearchHandle, WalletHandle,
 };
 
-pub mod did_mocks;
 pub mod indy_wallet;
 pub mod internal;
 pub mod signing;

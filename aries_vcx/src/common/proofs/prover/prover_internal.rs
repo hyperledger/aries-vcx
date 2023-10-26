@@ -275,19 +275,19 @@ pub fn build_requested_credentials_json(
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 pub mod pool_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
-
-    use crate::{
-        common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver},
-        utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
+    use test_utils::{
+        constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
+        run_setup_test,
     };
+
+    use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
 
     #[tokio::test]
     #[ignore]
     async fn test_pool_build_rev_states_json_empty() {
-        run_setup!(|setup| async move {
+        run_setup_test!(|setup| async move {
             // empty vector
             assert_eq!(
                 build_rev_states_json(&setup.ledger_read, &setup.anoncreds, Vec::new().as_mut())
@@ -321,20 +321,19 @@ pub mod pool_tests {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
-
-    use super::*;
-    use crate::utils::{
+    use test_utils::{
         constants::{
             ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID,
             ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
             REV_STATE_JSON, SCHEMA_ID,
         },
         devsetup::*,
-        mockdata::profile::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
+        mockdata::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
     };
+
+    use super::*;
 
     fn proof_req_no_interval() -> ProofRequestData {
         let proof_req = json!({

@@ -183,15 +183,15 @@ pub fn get_taa_configuration() -> LibvcxResult<Option<TxnAuthrAgrmtOptions>> {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use aries_vcx::{
         aries_vcx_core::ledger::indy::pool::test_utils::{
             create_genesis_txn_file, create_testpool_genesis_txn_file, get_temp_file_path,
             get_txns_sovrin_testnet,
         },
         global::settings::DEFAULT_GENESIS_PATH,
-        utils::devsetup::SetupMocks,
     };
+    use test_utils::devsetup::SetupMocks;
 
     use crate::api_vcx::api_global::{
         ledger::{get_taa_configuration, ledger_get_txn_author_agreement, set_taa_configuration},

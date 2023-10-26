@@ -68,15 +68,14 @@ impl TrustPingSender {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 mod unit_tests {
     use messages::AriesMessage;
+    use test_utils::devsetup::SetupMocks;
 
     use crate::{
         errors::error::VcxResult,
         handlers::trust_ping::TrustPingSender,
         protocols::{trustping::build_ping_response, SendClosure},
-        utils::devsetup::SetupMocks,
     };
 
     pub fn _send_message() -> SendClosure<'static> {

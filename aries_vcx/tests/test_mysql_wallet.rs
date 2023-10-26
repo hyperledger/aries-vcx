@@ -3,7 +3,7 @@ extern crate serde_json;
 
 #[cfg(test)]
 mod dbtests {
-    use aries_vcx::{global::settings, utils::test_logger::LibvcxDefaultLogger};
+    use aries_vcx::global::settings;
     use aries_vcx_core::wallet::{
         base_wallet::BaseWallet,
         indy::{
@@ -11,6 +11,7 @@ mod dbtests {
             IndySdkWallet, WalletConfig, WalletConfigBuilder,
         },
     };
+    use libvcx_logger::LibvcxDefaultLogger;
 
     #[tokio::test]
     #[ignore]

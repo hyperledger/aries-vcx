@@ -9,13 +9,12 @@ use aries_vcx::agency_client::{
     messages::update_message::UIDsByConn,
     MessageStatusCode,
 };
-use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use aries_vcx_core::wallet::{
+    agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet,
+};
 
 use super::profile::get_main_wallet;
-use crate::errors::{
-    error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
-    mapping_from_ariesvcx::map_ariesvcx_result,
-};
+use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
     pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::new());
@@ -81,21 +80,29 @@ pub async fn provision_cloud_agent(
 ) -> LibvcxResult<AgencyClientConfig> {
     let wallet = get_main_wallet()?;
     let mut client = get_main_agency_client()?;
-    let res =
-        aries_vcx::utils::provision::provision_cloud_agent(&mut client, wallet, agency_config)
-            .await;
-    map_ariesvcx_result(res)
+    let seed = agency_config.agent_seed.as_deref();
+    let (my_did, my_vk) = wallet.create_and_store_my_did(seed, None).await?;
+    client
+        .provision_cloud_agent(
+            wallet.to_base_agency_client_wallet(),
+            &my_did,
+            &my_vk,
+            &agency_config.agency_did,
+            &agency_config.agency_verkey,
+            agency_config.agency_endpoint.clone(),
+        )
+        .await?;
+    let config = client.get_config()?;
+    Ok(config)
 }
 
 #[cfg(test)]
-pub mod tests {
-    use aries_vcx::{
-        agency_client::{
-            messages::update_message::UIDsByConn, testing::mocking::AgencyMockDecrypted,
-            MessageStatusCode,
-        },
-        utils::{constants, devsetup::SetupMocks},
+mod tests {
+    use aries_vcx::agency_client::{
+        messages::update_message::UIDsByConn, testing::mocking::AgencyMockDecrypted,
+        MessageStatusCode,
     };
+    use test_utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::SetupMocks};
 
     use crate::api_vcx::api_global::agency_client::{agency_update_messages, update_webhook_url};
 
@@ -108,9 +115,7 @@ pub mod tests {
     #[tokio::test]
     async fn test_messages_update_status() {
         let _setup = SetupMocks::init();
-        AgencyMockDecrypted::set_next_decrypted_response(
-            constants::GET_MESSAGES_DECRYPTED_RESPONSE,
-        );
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
 
         let uids_by_conns_str =
             String::from(r#"[{"pairwiseDID":"QSrw8hebcvQxiwBETmAaRs","uids":["mgrmngq"]}]"#);

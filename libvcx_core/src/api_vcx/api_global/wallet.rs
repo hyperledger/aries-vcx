@@ -278,12 +278,12 @@ pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
     migration_res.map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::WalletMigrationFailed, e))
 }
 
-#[allow(clippy::unwrap_used)]
+#[cfg(test)]
 pub mod test_utils {
+    use ::test_utils::devsetup::TempFile;
     use aries_vcx::{
         aries_vcx_core::wallet::indy::WalletConfig,
         global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
-        utils::devsetup::TempFile,
     };
     use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
@@ -356,14 +356,14 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use aries_vcx::{
         aries_vcx_core::wallet::indy::{
             wallet::delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord,
         },
         global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
-        utils::devsetup::{SetupMocks, TempFile},
     };
+    use test_utils::devsetup::{SetupMocks, TempFile};
 
     use crate::{
         api_vcx::api_global::wallet::{

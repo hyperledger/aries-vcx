@@ -4,20 +4,20 @@ use std::{
     time::Duration,
 };
 
-use aries_vcx::{
-    aries_vcx_core::{
-        ledger::{
-            request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
-            response_cacher::in_memory::{
-                InMemoryResponseCacherConfig, InMemoryResponseCacherConfigBuilder,
-            },
+use aries_vcx::aries_vcx_core::{
+    ledger::{
+        request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
+        response_cacher::in_memory::{
+            InMemoryResponseCacherConfig, InMemoryResponseCacherConfigBuilder,
         },
-        PoolConfig,
     },
-    utils::ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write},
+    PoolConfig,
 };
 use aries_vcx_core::ledger::{
-    indy_vdr_ledger::{IndyVdrLedgerRead, IndyVdrLedgerWrite},
+    indy_vdr_ledger::{
+        indyvdr_build_ledger_read, indyvdr_build_ledger_write, IndyVdrLedgerRead,
+        IndyVdrLedgerWrite,
+    },
     response_cacher::in_memory::InMemoryResponseCacher,
 };
 
@@ -139,7 +139,7 @@ pub async fn close_main_pool() -> LibvcxResult<()> {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
 
     use std::num::NonZeroUsize;
 
@@ -148,12 +148,12 @@ pub mod tests {
             create_testpool_genesis_txn_file, get_temp_file_path,
         },
         global::settings::DEFAULT_GENESIS_PATH,
-        utils::{
-            constants::POOL1_TXN,
-            devsetup::{SetupMocks, TempFile},
-        },
     };
     use serde_json;
+    use test_utils::{
+        constants::POOL1_TXN,
+        devsetup::{SetupMocks, TempFile},
+    };
 
     use crate::{
         api_vcx::api_global::{

@@ -13,7 +13,6 @@ use crate::{
     protocols::proof_presentation::verifier::state_machine::VerifierState,
 };
 
-#[allow(clippy::unwrap_used)]
 pub fn verifier_find_message_to_handle(
     sm: &Verifier,
     messages: HashMap<String, AriesMessage>,

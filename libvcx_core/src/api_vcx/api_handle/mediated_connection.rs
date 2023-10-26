@@ -499,9 +499,9 @@ pub async fn download_messages(
     Ok(res)
 }
 
-#[allow(clippy::unwrap_used)]
+#[cfg(test)]
 pub mod test_utils {
-    use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
+    use ::test_utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
     };
 
@@ -535,11 +535,8 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
-    use aries_vcx::{
-        self,
-        utils::{constants, devsetup::SetupMocks},
-    };
+mod tests {
+    use ::test_utils::{constants::INSTITUTION_DID, devsetup::SetupMocks};
     use serde_json::Value;
 
     use super::*;
@@ -573,15 +570,14 @@ pub mod tests {
     fn test_generate_public_invitation() {
         let _setup = SetupMocks::init();
 
-        let invitation =
-            generate_public_invitation(constants::INSTITUTION_DID, "faber-enterprise").unwrap();
+        let invitation = generate_public_invitation(INSTITUTION_DID, "faber-enterprise").unwrap();
         let parsed: Value = serde_json::from_str(&invitation).unwrap();
         assert!(parsed["@id"].is_string());
         assert_eq!(
             parsed["@type"],
             "https://didcomm.org/connections/1.0/invitation"
         );
-        assert_eq!(parsed["did"], constants::INSTITUTION_DID);
+        assert_eq!(parsed["did"], INSTITUTION_DID);
         assert_eq!(parsed["label"], "faber-enterprise");
     }
 }

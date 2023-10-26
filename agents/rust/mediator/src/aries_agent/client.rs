@@ -10,7 +10,7 @@ use aries_vcx::{
         },
         mediated_connection::pairwise_info::PairwiseInfo,
     },
-    utils::{encryption_envelope::EncryptionEnvelope, mockdata::profile::mock_ledger::MockLedger},
+    utils::encryption_envelope::EncryptionEnvelope,
 };
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use mediation::storage::MediatorPersistence;
@@ -21,6 +21,7 @@ use messages::{
     },
     AriesMessage,
 };
+use test_utils::mockdata::mock_ledger::MockLedger;
 
 use super::{transports::AriesTransport, Agent};
 use crate::{aries_agent::utils::oob2did, utils::prelude::*};

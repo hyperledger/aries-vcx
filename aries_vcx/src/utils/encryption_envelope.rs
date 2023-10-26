@@ -1,5 +1,5 @@
 use agency_client::testing::mocking::AgencyMockDecrypted;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_core::{global::settings::VERKEY, wallet::base_wallet::BaseWallet};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use futures::TryFutureExt;
 use messages::{
@@ -8,7 +8,7 @@ use messages::{
 };
 use uuid::Uuid;
 
-use crate::{errors::error::prelude::*, utils::constants};
+use crate::errors::error::prelude::*;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -137,7 +137,7 @@ impl EncryptionEnvelope {
             trace!("EncryptionEnvelope::anon_unpack >>> returning decrypted mock message");
             (
                 AgencyMockDecrypted::get_next_decrypted_message(),
-                Some(constants::VERKEY.to_string()),
+                Some(VERKEY.to_string()),
             )
         } else {
             Self::_unpack_a2a_message(wallet, payload).await?

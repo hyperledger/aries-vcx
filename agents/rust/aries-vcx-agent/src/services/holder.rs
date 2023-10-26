@@ -10,9 +10,11 @@ use aries_vcx::{
         AriesMessage,
     },
     protocols::{issuance::holder::state_machine::HolderState, SendClosure},
-    utils::devsetup::DefaultIndyLedgerRead,
 };
-use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
+use aries_vcx_core::{
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds, ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
+    wallet::indy::IndySdkWallet,
+};
 
 use crate::{
     error::*,

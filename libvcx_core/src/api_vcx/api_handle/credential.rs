@@ -1,5 +1,6 @@
+#[cfg(test)]
+use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::{
-    agency_client::testing::mocking::AgencyMockDecrypted,
     handlers::issuance::{holder::Holder, mediated_holder::holder_find_message_to_handle},
     messages::{
         msg_fields::protocols::cred_issuance::{
@@ -8,12 +9,12 @@ use aries_vcx::{
         },
         AriesMessage,
     },
-    utils::{
-        constants::GET_MESSAGES_DECRYPTED_RESPONSE,
-        mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER,
-    },
 };
 use serde_json;
+#[cfg(test)]
+use test_utils::{
+    constants::GET_MESSAGES_DECRYPTED_RESPONSE, mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER,
+};
 
 use crate::{
     api_vcx::{
@@ -317,8 +318,11 @@ pub async fn get_credential_offer_messages_with_conn_handle(
         connection_handle
     );
 
-    AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-    AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
+    #[cfg(test)]
+    {
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
+    }
 
     let credential_offers: Vec<AriesMessage> = mediated_connection::get_messages(connection_handle)
         .await?
@@ -410,19 +414,18 @@ pub mod tests_utils {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-pub mod tests {
+
+mod tests {
     use aries_vcx::{
         messages::msg_fields::protocols::cred_issuance::v1::issue_credential::IssueCredentialV1,
         protocols::issuance::holder::state_machine::HolderState,
-        utils::{
-            devsetup::SetupMocks,
-            mockdata::{
-                mockdata_credex,
-                mockdata_credex::{
-                    ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT,
-                    CREDENTIAL_SM_FINISHED,
-                },
+    };
+    use test_utils::{
+        devsetup::SetupMocks,
+        mockdata::{
+            mockdata_credex,
+            mockdata_credex::{
+                ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, CREDENTIAL_SM_FINISHED,
             },
         },
     };

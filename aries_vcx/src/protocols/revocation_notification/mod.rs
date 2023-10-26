@@ -1,6 +1,7 @@
 pub mod receiver;
 pub mod sender;
 
+#[cfg(test)]
 pub mod test_utils {
     use messages::{
         decorators::please_ack::{AckOn, PleaseAck},
@@ -10,9 +11,10 @@ pub mod test_utils {
         AriesMessage,
     };
     use shared_vcx::maybe_known::MaybeKnown;
+    use test_utils::constants::REV_REG_ID;
     use uuid::Uuid;
 
-    use crate::{errors::error::VcxResult, protocols::SendClosure, utils::constants::REV_REG_ID};
+    use crate::{errors::error::VcxResult, protocols::SendClosure};
 
     pub fn _send_message() -> SendClosure<'static> {
         Box::new(|_: AriesMessage| Box::pin(async { VcxResult::Ok(()) }))

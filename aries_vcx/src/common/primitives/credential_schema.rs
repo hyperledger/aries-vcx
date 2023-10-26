@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
+    global::settings::DEFAULT_SERIALIZE_VERSION,
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
@@ -9,7 +10,7 @@ use aries_vcx_core::{
 use super::credential_definition::PublicEntityStateType;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    utils::{constants::DEFAULT_SERIALIZE_VERSION, serialization::ObjectWithVersion},
+    utils::serialization::ObjectWithVersion,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -140,10 +141,10 @@ impl Schema {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 mod tests {
+    use test_utils::constants::SCHEMA_ID;
+
     use super::*;
-    use crate::utils::constants::SCHEMA_ID;
 
     #[test]
     fn test_to_string_versioned() {
