@@ -59,15 +59,16 @@ async fn get_mediator_grant_data(
     // send message and get response
     let response_message = send_message_and_pop_response_message(
         &message_bytes,
-        &agent,
+        agent,
         agent_aries_transport,
-        &agent_verikey,
-        &mediator_diddoc,
+        agent_verikey,
+        mediator_diddoc,
     )
     .await
     .unwrap();
     // extract routing parameters
-    let grant_data = if let MediatorCoordMsgEnum::MediateGrant(grant_data) =
+    
+    if let MediatorCoordMsgEnum::MediateGrant(grant_data) =
         serde_json::from_str(&response_message).unwrap()
     {
         info!("Grant Data {:?}", grant_data);
@@ -77,8 +78,7 @@ async fn get_mediator_grant_data(
             "Should get response that is of type Mediator Grant. Found {:?}",
             response_message
         )
-    };
-    grant_data
+    }
 }
 
 #[tokio::test]
