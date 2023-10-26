@@ -38,4 +38,5 @@ mediation = { path = "./mediation" }
 test_utils = { path = "../../../tools/test_utils" }
 
 [dev-dependencies]
+chrono = "0.4.31"
 reqwest = { version = "0.11.20", features = ["blocking"] }

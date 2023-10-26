@@ -8,8 +8,9 @@ pub async fn handle_routing_forward(
     agent: ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>,
     forward: Forward,
 ) -> Result<(), String> {
-    let forward_msg: ForwardMsg =
-        ForwardMsg::new(&forward.content.to, forward.content.msg.as_str().unwrap());
+    info!("{:?}", forward);
+    let forward_msg_content_str = serde_json::to_string(&forward.content.msg).unwrap();
+    let forward_msg: ForwardMsg = ForwardMsg::new(&forward.content.to, &forward_msg_content_str);
 
     let _ = handle_forward(State(agent.get_persistence_ref()), Json(forward_msg)).await;
     Ok(())

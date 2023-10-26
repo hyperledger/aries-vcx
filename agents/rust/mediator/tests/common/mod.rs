@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+pub mod agent_and_transport_utils;
 
 pub mod test_setup {
     // inspired by

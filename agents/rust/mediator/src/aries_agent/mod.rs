@@ -78,7 +78,7 @@ impl AgentBuilder<IndySdkWallet> {
 
 // Utils
 impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
-    pub fn get_wallet_ref(&self) -> Arc<dyn BaseWallet> {
+    pub fn get_wallet_ref(&self) -> Arc<impl BaseWallet> {
         self.wallet.clone()
     }
     pub fn get_persistence_ref(&self) -> Arc<impl MediatorPersistence> {

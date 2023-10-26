@@ -2902,6 +2902,7 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-macros",
+ "chrono",
  "diddoc_legacy",
  "dotenvy",
  "env_logger 0.10.0",
