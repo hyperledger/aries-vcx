@@ -9,10 +9,7 @@ use axum::{
 };
 
 use crate::{
-    routes::{
-        forward::handle_forward, hello_world, json, json::respond_message_json,
-        pickup::handle_pickup,
-    },
+    routes::{forward::handle_forward, hello_world, json, json::respond_message_json},
     storage,
 };
 
@@ -30,7 +27,7 @@ pub async fn create_router() -> Router {
             get(json::echo_message_json).post(respond_message_json),
         )
         .route("/forward", post(handle_forward))
-        .route("/pickup", post(handle_pickup))
+        // .route("/pickup", post(handle_pickup))
         // .route("/coord", post(handle_coord))
         .with_state(Arc::new(storage))
 }

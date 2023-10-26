@@ -21,7 +21,6 @@ use pickup::handle_pickup_protocol;
 #[serde(untagged)]
 enum GeneralAriesMessage {
     AriesVCXSupported(AriesMessage),
-    XumPickup(mediation::didcomm_types::PickupMsgEnum),
     XumCoord(mediation::didcomm_types::mediator_coord_structs::MediatorCoordMsgEnum),
 }
 pub fn unhandled_aries_message(message: impl Debug) -> String {
@@ -54,6 +53,15 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
                 .expect("Sender key authenticated above, so it must be present..");
             log::info!("Processing message for {:?}", account_name);
             match aries_message {
+                GeneralAriesMessage::AriesVCXSupported(AriesMessage::Pickup(pickup_message)) => {
+                    let pickup_response =
+                        handle_pickup_protocol(&agent, pickup_message, &auth_pubkey).await?;
+                    let aries_response =
+                        serde_json::to_vec(&pickup_response).map_err(string_from_std_error)?;
+                    agent
+                        .pack_didcomm(&aries_response, &our_signing_key, &their_diddoc)
+                        .await?
+                }
                 GeneralAriesMessage::AriesVCXSupported(aries_message) => {
                     Err(unhandled_aries_message(aries_message))?
                 }
@@ -65,10 +73,6 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
                     agent
                         .pack_didcomm(&aries_response, &our_signing_key, &their_diddoc)
                         .await?
-                }
-                GeneralAriesMessage::XumPickup(pickup_message) => {
-                    handle_pickup_protocol(agent, pickup_message).await?;
-                    todo!();
                 }
             }
         };

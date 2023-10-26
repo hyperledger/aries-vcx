@@ -7,7 +7,7 @@ mod status_request;
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-use self::{
+pub use self::{
     delivery::{Delivery, DeliveryContent, DeliveryDecorators},
     delivery_request::{DeliveryRequest, DeliveryRequestContent, DeliveryRequestDecorators},
     live_delivery_change::{
@@ -26,7 +26,7 @@ use crate::{
     },
 };
 
-#[derive(Clone, Debug, From, PartialEq)]
+#[derive(Clone, Debug, From, PartialEq, Serialize, Deserialize)]
 pub enum Pickup {
     Status(Status),
     StatusRequest(StatusRequest),

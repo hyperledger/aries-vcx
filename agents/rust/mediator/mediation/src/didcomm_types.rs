@@ -73,7 +73,6 @@ impl PickupStatusMsg {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PickupStatusReqMsg {
     #[serde(default)]
-    pub auth_pubkey: String,
     pub recipient_key: Option<String>,
 }
 
@@ -81,7 +80,6 @@ pub struct PickupStatusReqMsg {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PickupDeliveryReqMsg {
     #[serde(default)]
-    pub auth_pubkey: String,
     pub limit: u32,
     pub recipient_key: Option<String>,
 }
