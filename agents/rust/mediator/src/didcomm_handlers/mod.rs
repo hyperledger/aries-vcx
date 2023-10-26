@@ -3,15 +3,17 @@ use std::fmt::Debug;
 use axum::{body::Bytes, extract::State, Json};
 use messages::AriesMessage;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 use utils::prelude::*;
 
 mod connection;
+mod forward;
 mod mediator_coord;
 mod pickup;
 mod utils;
 
 use connection::handle_aries_connection;
+use forward::handle_routing_forward;
 use mediator_coord::handle_mediation_coord;
 use pickup::handle_pickup_protocol;
 
@@ -39,6 +41,11 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
             aries_message
         {
             handle_aries_connection(agent.clone(), conn).await?
+        } else if let GeneralAriesMessage::AriesVCXSupported(AriesMessage::Routing(forward)) =
+            aries_message
+        {
+            handle_routing_forward(agent.clone(), forward).await?;
+            return Ok(Json(json!({})));
         } else {
             let (account_name, our_signing_key, their_diddoc) =
                 agent.auth_and_get_details(&unpacked.sender_verkey).await?;

@@ -24,22 +24,22 @@ pub struct ForwardMsg {
     pub message_data: String,
 }
 
-// impl ForwardMsg {
-//     pub fn default_alice() -> ForwardMsg {
-//         ForwardMsg {
-//             _type: type_uri::FORWARD.to_owned(),
-//             recipient_key: "Alice".to_owned(),
-//             message: "Hello!".to_owned(),
-//         }
-//     }
-//     pub fn new(recipient_key: &str, message: &str) -> ForwardMsg {
-//         ForwardMsg {
-//             _type: type_uri::FORWARD.to_string(),
-//             recipient_key: recipient_key.to_string(),
-//             message: message.to_string(),
-//         }
-//     }
-// }
+impl ForwardMsg {
+    // pub fn default_alice() -> ForwardMsg {
+    //     ForwardMsg {
+    //         _type: type_uri::FORWARD.to_owned(),
+    //         recipient_key: "Alice".to_owned(),
+    //         message: "Hello!".to_owned(),
+    //     }
+    // }
+    pub fn new(recipient_key: &str, message: &str) -> ForwardMsg {
+        ForwardMsg {
+            _type: type_uri::FORWARD.to_string(),
+            recipient_key: recipient_key.to_string(),
+            message_data: message.to_string(),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "@type")]
