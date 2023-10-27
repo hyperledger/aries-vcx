@@ -56,10 +56,11 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
                 GeneralAriesMessage::AriesVCXSupported(AriesMessage::Pickup(pickup_message)) => {
                     let pickup_response =
                         handle_pickup_protocol(&agent, pickup_message, &auth_pubkey).await?;
-                    let aries_response =
-                        serde_json::to_vec(&pickup_response).map_err(string_from_std_error)?;
+                    let aries_response = AriesMessage::Pickup(pickup_response);
+                    let aries_response_bytes =
+                        serde_json::to_vec(&aries_response).map_err(string_from_std_error)?;
                     agent
-                        .pack_didcomm(&aries_response, &our_signing_key, &their_diddoc)
+                        .pack_didcomm(&aries_response_bytes, &our_signing_key, &their_diddoc)
                         .await?
                 }
                 GeneralAriesMessage::AriesVCXSupported(aries_message) => {
