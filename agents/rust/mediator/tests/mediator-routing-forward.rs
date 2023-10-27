@@ -17,7 +17,7 @@ use mediator::{
         utils::oob2did,
         Agent,
     },
-    utils::{structs::VeriKey, GenericStringError},
+    utils::{structs::VerKey, GenericStringError},
 };
 use messages::msg_fields::protocols::{
     basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators},
@@ -50,7 +50,7 @@ impl OneTimeInit for TestSetupAries {
 async fn get_mediator_grant_data(
     agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
     agent_aries_transport: &mut impl AriesTransport,
-    agent_verikey: &VeriKey,
+    agent_verkey: &VerKey,
     mediator_diddoc: &AriesDidDoc,
 ) -> MediateGrantData {
     // prepare request message
@@ -61,7 +61,7 @@ async fn get_mediator_grant_data(
         &message_bytes,
         agent,
         agent_aries_transport,
-        agent_verikey,
+        agent_verkey,
         mediator_diddoc,
     )
     .await
@@ -85,13 +85,13 @@ async fn get_mediator_grant_data(
 async fn test_forward_flow() -> Result<()> {
     TestSetupAries.init();
     // prepare receiver connection parameters
-    let (mut agent, mut agent_aries_transport, agent_verikey, mediator_diddoc) =
+    let (mut agent, mut agent_aries_transport, agent_verkey, mediator_diddoc) =
         gen_mediator_connected_agent().await?;
     // setup receiver routing
     let grant_data = get_mediator_grant_data(
         &agent,
         &mut agent_aries_transport,
-        &agent_verikey,
+        &agent_verkey,
         &mediator_diddoc,
     )
     .await;
@@ -122,7 +122,7 @@ async fn test_forward_flow() -> Result<()> {
         &message_bytes,
         &agent,
         &mut agent_aries_transport,
-        &agent_verikey,
+        &agent_verkey,
         &mediator_diddoc,
     )
     .await?;

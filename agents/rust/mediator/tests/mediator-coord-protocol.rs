@@ -17,7 +17,7 @@ use mediator::{
         transports::{AriesReqwest, AriesTransport},
         Agent,
     },
-    utils::{structs::VeriKey, GenericStringError},
+    utils::{structs::VerKey, GenericStringError},
 };
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
@@ -62,11 +62,11 @@ async fn didcomm_connection(
     Ok(state)
 }
 
-/// Returns agent, aries transport for agent, agent's verikey, and mediator's diddoc.
+/// Returns agent, aries transport for agent, agent's verkey, and mediator's diddoc.
 async fn gen_mediator_connected_agent() -> Result<(
     Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
     impl AriesTransport,
-    VeriKey,
+    VerKey,
     AriesDidDoc,
 )> {
     let agent = mediator::aries_agent::AgentBuilder::new_demo_agent().await?;
@@ -75,9 +75,9 @@ async fn gen_mediator_connected_agent() -> Result<(
         client: reqwest::Client::new(),
     };
     let completed_connection = didcomm_connection(&agent, &mut aries_transport).await?;
-    let our_verikey: VeriKey = completed_connection.pairwise_info().pw_vk.clone();
+    let our_verkey: VerKey = completed_connection.pairwise_info().pw_vk.clone();
     let their_diddoc = completed_connection.their_did_doc().clone();
-    Ok((agent, aries_transport, our_verikey, their_diddoc))
+    Ok((agent, aries_transport, our_verkey, their_diddoc))
 }
 
 /// Sends message over didcomm connection and returns unpacked response message
@@ -85,11 +85,11 @@ async fn send_message_and_pop_response_message(
     message_bytes: &[u8],
     agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
     aries_transport: &mut impl AriesTransport,
-    our_verikey: &VeriKey,
+    our_verkey: &VerKey,
     their_diddoc: &AriesDidDoc,
 ) -> Result<String> {
     agent
-        .pack_and_send_didcomm(message_bytes, our_verikey, their_diddoc, aries_transport)
+        .pack_and_send_didcomm(message_bytes, our_verkey, their_diddoc, aries_transport)
         .await
         .map_err(|err| GenericStringError { msg: err })?;
     // unpack
@@ -120,7 +120,7 @@ async fn test_init() {
 async fn test_mediate_grant() -> Result<()> {
     TestSetupAries.init();
     // prepare connection parameters
-    let (agent, mut aries_transport, our_verikey, their_diddoc) =
+    let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
     // prepare request message
     let message = MediatorCoordMsgEnum::MediateRequest;
@@ -130,7 +130,7 @@ async fn test_mediate_grant() -> Result<()> {
         &message_bytes,
         &agent,
         &mut aries_transport,
-        &our_verikey,
+        &our_verkey,
         &their_diddoc,
     )
     .await?;
@@ -157,7 +157,7 @@ async fn test_mediate_grant() -> Result<()> {
 async fn test_mediate_keylist_update_add() -> Result<()> {
     TestSetupAries.init();
     // prepare connection parameters
-    let (agent, mut aries_transport, our_verikey, their_diddoc) =
+    let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
     // prepare request message
     let (_, new_vk) = agent
@@ -178,7 +178,7 @@ async fn test_mediate_keylist_update_add() -> Result<()> {
         &message_bytes,
         &agent,
         &mut aries_transport,
-        &our_verikey,
+        &our_verkey,
         &their_diddoc,
     )
     .await?;
@@ -201,7 +201,7 @@ async fn test_mediate_keylist_update_add() -> Result<()> {
 async fn test_mediate_keylist_query() -> Result<()> {
     TestSetupAries.init();
     // prepare connection parameters
-    let (agent, mut aries_transport, our_verikey, their_diddoc) =
+    let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
     // prepare request message: add key
     let (_, new_vk) = agent
@@ -221,7 +221,7 @@ async fn test_mediate_keylist_query() -> Result<()> {
         &message_bytes,
         &agent,
         &mut aries_transport,
-        &our_verikey,
+        &our_verkey,
         &their_diddoc,
     )
     .await?;
@@ -235,7 +235,7 @@ async fn test_mediate_keylist_query() -> Result<()> {
         &message_bytes,
         &agent,
         &mut aries_transport,
-        &our_verikey,
+        &our_verkey,
         &their_diddoc,
     )
     .await?;
@@ -258,7 +258,7 @@ async fn test_mediate_keylist_query() -> Result<()> {
 async fn test_mediate_keylist_update_remove() -> Result<()> {
     TestSetupAries.init();
     // prepare connection parameters
-    let (agent, mut aries_transport, our_verikey, their_diddoc) =
+    let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
     // prepare request message: add key
     let (_, new_vk) = agent
@@ -278,7 +278,7 @@ async fn test_mediate_keylist_update_remove() -> Result<()> {
         &message_bytes,
         &agent,
         &mut aries_transport,
-        &our_verikey,
+        &our_verkey,
         &their_diddoc,
     )
     .await?;
@@ -298,7 +298,7 @@ async fn test_mediate_keylist_update_remove() -> Result<()> {
         &message_bytes,
         &agent,
         &mut aries_transport,
-        &our_verikey,
+        &our_verkey,
         &their_diddoc,
     )
     .await?;
