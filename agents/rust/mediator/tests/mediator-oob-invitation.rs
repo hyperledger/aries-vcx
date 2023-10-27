@@ -1,12 +1,20 @@
+mod common;
+
 use anyhow::Result;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::{ACCEPT, CONTENT_TYPE};
 use url::Url;
 
+use crate::common::{prelude::*, test_setup::setup_env_logging};
+
+static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
+
 const ENDPOINT_ROOT: &str = "http://localhost:8005";
 
 #[test]
 fn endpoint_register_json_returns_oob() -> Result<()> {
+    LOGGING_INIT.call_once(setup_env_logging);
+
     let client = reqwest::blocking::Client::new();
     let base: Url = ENDPOINT_ROOT.parse().unwrap();
     let endpoint_register_json = base.join("/register.json").unwrap();
@@ -15,7 +23,7 @@ fn endpoint_register_json_returns_oob() -> Result<()> {
         .get(endpoint_register_json)
         .send()?
         .error_for_status()?;
-    println!("{:?}", res);
+    info!("{:?}", res);
 
     let _oob: OOBInvitation = res.json()?;
 
@@ -24,6 +32,8 @@ fn endpoint_register_json_returns_oob() -> Result<()> {
 
 #[test]
 fn endpoint_register_returns_oob_with_correct_accept_header() -> Result<()> {
+    LOGGING_INIT.call_once(setup_env_logging);
+
     let client = reqwest::blocking::Client::new();
     let base: Url = ENDPOINT_ROOT.parse().unwrap();
     let endpoint_register = base.join("/register").unwrap();
@@ -33,7 +43,7 @@ fn endpoint_register_returns_oob_with_correct_accept_header() -> Result<()> {
         .header(ACCEPT, "application/json")
         .send()?
         .error_for_status()?;
-    println!("{:?}", res);
+    info!("{:?}", res);
 
     let _oob: OOBInvitation = res.json()?;
 
@@ -42,12 +52,14 @@ fn endpoint_register_returns_oob_with_correct_accept_header() -> Result<()> {
 
 #[test]
 fn endpoint_register_returns_html_page() -> Result<()> {
+    LOGGING_INIT.call_once(setup_env_logging);
+
     let client = reqwest::blocking::Client::new();
     let base: Url = ENDPOINT_ROOT.parse().unwrap();
     let endpoint_register = base.join("/register").unwrap();
 
     let res = client.get(endpoint_register).send()?.error_for_status()?;
-    println!("{:?}", res);
+    info!("{:?}", res);
 
     assert!(res
         .headers()
@@ -63,12 +75,14 @@ fn endpoint_register_returns_html_page() -> Result<()> {
 #[test]
 #[ignore]
 fn endpoint_register_returns_html_page_with_valid_oob_qr() -> Result<()> {
+    LOGGING_INIT.call_once(setup_env_logging);
+
     let client = reqwest::blocking::Client::new();
     let base: Url = ENDPOINT_ROOT.parse().unwrap();
     let endpoint_register = base.join("/register").unwrap();
 
     let res = client.get(endpoint_register).send()?.error_for_status()?;
-    println!("{:?}", res);
+    info!("{:?}", res);
 
     let _html = res.text()?;
     // validate qr of html page

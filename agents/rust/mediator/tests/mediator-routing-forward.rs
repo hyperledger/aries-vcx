@@ -29,23 +29,10 @@ use crate::common::{
         gen_mediator_connected_agent, send_message_and_pop_response_message,
     },
     prelude::*,
-    test_setup::OneTimeInit,
+    test_setup::setup_env_logging,
 };
 
-struct TestSetupAries;
-impl OneTimeInit for TestSetupAries {
-    fn one_time_setup_code(&self) {
-        fn setup_logging() {
-            let env = env_logger::Env::default().default_filter_or("info");
-            env_logger::init_from_env(env);
-        }
-        fn load_dot_env() {
-            let _ = dotenvy::dotenv();
-        }
-        load_dot_env();
-        setup_logging();
-    }
-}
+static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
 
 async fn get_mediator_grant_data(
     agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
@@ -83,7 +70,7 @@ async fn get_mediator_grant_data(
 
 #[tokio::test]
 async fn test_forward_flow() -> Result<()> {
-    TestSetupAries.init();
+    LOGGING_INIT.call_once(setup_env_logging);
     // prepare receiver connection parameters
     let (mut agent, mut agent_aries_transport, agent_verkey, mediator_diddoc) =
         gen_mediator_connected_agent().await?;

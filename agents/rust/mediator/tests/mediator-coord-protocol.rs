@@ -3,7 +3,6 @@ use std::collections::VecDeque;
 
 use aries_vcx::protocols::connection::invitee::{states::completed::Completed, InviteeConnection};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use common::{prelude::*, test_setup::OneTimeInit};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediation::{
     didcomm_types::mediator_coord_structs::{
@@ -22,22 +21,12 @@ use mediator::{
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
 
+use crate::common::{prelude::*, test_setup::setup_env_logging};
+
+static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
+
 const ENDPOINT_ROOT: &str = "http://localhost:8005";
 
-struct TestSetupAries;
-impl OneTimeInit for TestSetupAries {
-    fn one_time_setup_code(&self) {
-        fn setup_logging() {
-            let env = env_logger::Env::default().default_filter_or("info");
-            env_logger::init_from_env(env);
-        }
-        fn load_dot_env() {
-            let _ = dotenvy::dotenv();
-        }
-        load_dot_env();
-        setup_logging();
-    }
-}
 async fn didcomm_connection(
     agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
     aries_transport: &mut impl AriesTransport,
@@ -104,7 +93,7 @@ async fn send_message_and_pop_response_message(
 #[tokio::test]
 #[ignore]
 async fn test_init() {
-    TestSetupAries.init();
+    LOGGING_INIT.call_once(setup_env_logging);
     let agent = mediator::aries_agent::AgentBuilder::new_demo_agent()
         .await
         .unwrap();
@@ -118,7 +107,7 @@ async fn test_init() {
 
 #[tokio::test]
 async fn test_mediate_grant() -> Result<()> {
-    TestSetupAries.init();
+    LOGGING_INIT.call_once(setup_env_logging);
     // prepare connection parameters
     let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
@@ -155,7 +144,7 @@ async fn test_mediate_grant() -> Result<()> {
 
 #[tokio::test]
 async fn test_mediate_keylist_update_add() -> Result<()> {
-    TestSetupAries.init();
+    LOGGING_INIT.call_once(setup_env_logging);
     // prepare connection parameters
     let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
@@ -199,7 +188,7 @@ async fn test_mediate_keylist_update_add() -> Result<()> {
 
 #[tokio::test]
 async fn test_mediate_keylist_query() -> Result<()> {
-    TestSetupAries.init();
+    LOGGING_INIT.call_once(setup_env_logging);
     // prepare connection parameters
     let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
@@ -256,7 +245,7 @@ async fn test_mediate_keylist_query() -> Result<()> {
 
 #[tokio::test]
 async fn test_mediate_keylist_update_remove() -> Result<()> {
-    TestSetupAries.init();
+    LOGGING_INIT.call_once(setup_env_logging);
     // prepare connection parameters
     let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
