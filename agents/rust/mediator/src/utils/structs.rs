@@ -1,1 +1,1 @@
-pub type VeriKey = String;
+pub type VerKey = String;

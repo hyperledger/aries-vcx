@@ -26,7 +26,7 @@ use messages::{
 use serde_json::json;
 
 use self::transports::AriesTransport;
-use crate::utils::{prelude::*, structs::VeriKey};
+use crate::utils::{prelude::*, structs::VerKey};
 
 #[cfg(any(test, feature = "client"))]
 pub mod client;
@@ -78,7 +78,7 @@ impl AgentBuilder<IndySdkWallet> {
 
 // Utils
 impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
-    pub fn get_wallet_ref(&self) -> Arc<dyn BaseWallet> {
+    pub fn get_wallet_ref(&self) -> Arc<impl BaseWallet> {
         self.wallet.clone()
     }
     pub fn get_persistence_ref(&self) -> Arc<impl MediatorPersistence> {
@@ -136,7 +136,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
     pub async fn pack_didcomm(
         &self,
         message: &[u8],
-        our_vk: &VeriKey,
+        our_vk: &VerKey,
         their_diddoc: &AriesDidDoc,
     ) -> Result<EncryptionEnvelope, String> {
         EncryptionEnvelope::create(self.wallet.as_ref(), message, Some(our_vk), their_diddoc)
@@ -146,7 +146,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
     pub async fn pack_and_send_didcomm(
         &self,
         message: &[u8],
-        our_vk: &VeriKey,
+        our_vk: &VerKey,
         their_diddoc: &AriesDidDoc,
         aries_transport: &mut impl AriesTransport,
     ) -> Result<(), String> {
@@ -163,14 +163,10 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             .map_err(string_from_std_error)
     }
 
-    // pub async fn pack_message(&self, message: AriesMessage, recipient_vk: VeriKey, sender_vk:
-    // VeriKey) -> Value {     todo!()
-    // }
-    /// Returns account details (account_name, our_signing_key, did_doc)
     pub async fn auth_and_get_details(
         &self,
-        sender_verkey: &Option<VeriKey>,
-    ) -> Result<(String, VeriKey, AriesDidDoc), String> {
+        sender_verkey: &Option<VerKey>,
+    ) -> Result<(String, VerKey, AriesDidDoc), String> {
         let auth_pubkey = sender_verkey
             .as_deref()
             .ok_or("Anonymous sender can't be authenticated")?;
@@ -238,8 +234,8 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
 
     pub async fn create_account(
         &self,
-        their_vk: &VeriKey,
-        our_vk: &VeriKey,
+        their_vk: &VerKey,
+        our_vk: &VerKey,
         did_doc: &AriesDidDoc,
     ) -> Result<(), String> {
         self.persistence
