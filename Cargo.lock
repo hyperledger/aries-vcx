@@ -2899,6 +2899,7 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-macros",
+ "base64-url",
  "chrono",
  "diddoc_legacy",
  "dotenvy",
