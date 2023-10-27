@@ -26,7 +26,7 @@ use crate::{
     },
 };
 
-#[derive(Clone, Debug, From, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, From, PartialEq)]
 pub enum Pickup {
     Status(Status),
     StatusRequest(StatusRequest),
