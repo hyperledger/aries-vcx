@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use display_as_json::Display;
+use serde::{Deserialize, Serialize};
 
 use super::KeyKind;
 

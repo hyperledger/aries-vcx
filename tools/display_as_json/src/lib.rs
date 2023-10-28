@@ -2,7 +2,6 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn;
 
 #[proc_macro_derive(Display)]
 pub fn display_as_json_derive(input: TokenStream) -> TokenStream {
