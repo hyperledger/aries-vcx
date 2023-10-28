@@ -11,7 +11,8 @@ use did_resolver::{
 
 use super::options::ExtraFieldsOptions;
 use crate::{
-    error::DidPeerError, numalgos::numalgo2::resolve_numalgo2, peer_did::generic::GenericPeerDid,
+    error::DidPeerError,
+    peer_did::{generic::AnyPeerDid, numalgos::numalgo2::resolve::resolve_numalgo2},
 };
 
 pub struct PeerDidResolver;
@@ -26,9 +27,9 @@ impl DidResolvable for PeerDidResolver {
         did: &Did,
         options: &DidResolutionOptions<Self::ExtraFieldsOptions>,
     ) -> Result<DidResolutionOutput<Self::ExtraFieldsService>, GenericError> {
-        let peer_did = GenericPeerDid::parse(did.to_owned())?;
+        let peer_did = AnyPeerDid::parse(did.to_owned())?;
         match peer_did {
-            GenericPeerDid::Numalgo2(peer_did) => {
+            AnyPeerDid::Numalgo2(peer_did) => {
                 let did_doc =
                     resolve_numalgo2(peer_did.did(), options.extra().public_key_encoding())?
                         .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)

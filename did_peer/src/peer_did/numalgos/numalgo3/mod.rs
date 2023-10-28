@@ -4,10 +4,17 @@ use did_doc_sov::extra_fields::ExtraFieldsSov;
 use crate::{
     error::DidPeerError,
     peer_did::{
-        numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
+        numalgos::{numalgo2::Numalgo2, Numalgo},
         FromDidDoc, PeerDid,
     },
 };
+
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
+pub struct Numalgo3;
+
+impl Numalgo for Numalgo3 {
+    const NUMALGO_CHAR: char = '3';
+}
 
 impl FromDidDoc for Numalgo3 {
     fn from_did_doc(
@@ -19,7 +26,10 @@ impl FromDidDoc for Numalgo3 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::peer_did::{
+        numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
+        PeerDid,
+    };
 
     #[test]
     fn test_generate_numalgo3() {

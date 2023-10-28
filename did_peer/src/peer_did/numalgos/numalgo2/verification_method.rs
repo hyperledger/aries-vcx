@@ -4,7 +4,7 @@ use did_doc::schema::verification_method::{
 use did_parser::{Did, DidUrl};
 use public_key::{Key, KeyType};
 
-use crate::{error::DidPeerError, peer_did_resolver::options::PublicKeyEncoding};
+use crate::{error::DidPeerError, resolver::options::PublicKeyEncoding};
 
 pub fn get_verification_methods_by_key(
     key: &Key,
@@ -49,7 +49,7 @@ pub fn get_key_by_verification_method(vm: &VerificationMethod) -> Result<Key, Di
         t => {
             return Err(DidPeerError::UnsupportedVerificationMethodType(
                 t.to_owned(),
-            ))
+            ));
         }
     };
     Ok(Key::new(vm.public_key_field().key_decoded()?, key_type)?)
@@ -118,7 +118,9 @@ fn to_did_url_reference(key: &Key) -> Result<DidUrl, DidPeerError> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use did_doc::schema::verification_method::{VerificationMethod, VerificationMethodType};
+    use did_parser::Did;
+    use public_key::Key;
 
     fn did() -> Did {
         "did:peer:2.Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc.\
@@ -172,11 +174,18 @@ mod tests {
 
     mod get_verification_methods_by_key {
         use super::*;
+        use crate::{
+            peer_did::numalgos::numalgo2::verification_method, resolver::options::PublicKeyEncoding,
+        };
 
         // Multibase encoded keys are multicodec-prefixed by their encoding type ...
         fn test_get_verification_methods_by_key_multibase(key: &Key) {
-            let vms =
-                get_verification_methods_by_key(key, &did(), PublicKeyEncoding::Multibase).unwrap();
+            let vms = verification_method::get_verification_methods_by_key(
+                key,
+                &did(),
+                PublicKeyEncoding::Multibase,
+            )
+            .unwrap();
             assert_eq!(vms.len(), 1);
             assert_eq!(
                 vms[0].public_key_field().key_decoded().unwrap(),
@@ -187,8 +196,12 @@ mod tests {
 
         // ... and base58 encoded keys are not
         fn test_get_verification_methods_by_key_base58(key: &Key) {
-            let vms =
-                get_verification_methods_by_key(key, &did(), PublicKeyEncoding::Base58).unwrap();
+            let vms = verification_method::get_verification_methods_by_key(
+                key,
+                &did(),
+                PublicKeyEncoding::Base58,
+            )
+            .unwrap();
             assert_eq!(vms.len(), 1);
             assert_ne!(
                 vms[0].public_key_field().key_decoded().unwrap(),
@@ -230,11 +243,13 @@ mod tests {
 
     mod get_key_by_verification_method {
         use super::*;
+        use crate::peer_did::numalgos::numalgo2::verification_method;
 
         #[test]
         fn test_get_key_by_verification_method_0() {
             assert_eq!(
-                get_key_by_verification_method(&verification_method_0()).unwrap(),
+                verification_method::get_key_by_verification_method(&verification_method_0())
+                    .unwrap(),
                 key_0()
             );
         }
@@ -242,7 +257,8 @@ mod tests {
         #[test]
         fn test_get_key_by_verification_method_1() {
             assert_eq!(
-                get_key_by_verification_method(&verification_method_1()).unwrap(),
+                verification_method::get_key_by_verification_method(&verification_method_1())
+                    .unwrap(),
                 key_1()
             );
         }
@@ -250,7 +266,8 @@ mod tests {
         #[test]
         fn test_get_key_by_verification_method_2() {
             assert_eq!(
-                get_key_by_verification_method(&verification_method_2()).unwrap(),
+                verification_method::get_key_by_verification_method(&verification_method_2())
+                    .unwrap(),
                 key_2()
             );
         }

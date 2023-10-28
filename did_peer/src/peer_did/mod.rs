@@ -1,7 +1,6 @@
 pub mod numalgos;
 
 mod parse;
-mod regex;
 mod validate;
 
 pub mod generic;
@@ -12,7 +11,7 @@ use std::{fmt::Display, marker::PhantomData};
 use did_doc::schema::did_doc::DidDocument;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
-use numalgos::traits::Numalgo;
+use numalgos::Numalgo;
 use serde::{
     de::{self, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,

@@ -5,20 +5,20 @@ use super::PeerDid;
 use crate::{
     error::DidPeerError,
     peer_did::{
-        numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3, NumalgoKind},
+        numalgos::{kind::NumalgoKind, numalgo2::Numalgo2, numalgo3::Numalgo3},
         parse::parse_numalgo,
         validate::validate,
     },
 };
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum GenericPeerDid {
+pub enum AnyPeerDid {
     Numalgo2(PeerDid<Numalgo2>),
     Numalgo3(PeerDid<Numalgo3>),
 }
 
-impl GenericPeerDid {
-    pub fn parse<T>(did: T) -> Result<GenericPeerDid, DidPeerError>
+impl AnyPeerDid {
+    pub fn parse<T>(did: T) -> Result<AnyPeerDid, DidPeerError>
     where
         Did: TryFrom<T>,
         <Did as TryFrom<T>>::Error: Into<DidPeerError>,
@@ -28,9 +28,9 @@ impl GenericPeerDid {
         validate(&did)?;
         let parsed = match numalgo {
             NumalgoKind::MultipleInceptionKeys(numalgo) => {
-                GenericPeerDid::Numalgo2(PeerDid { did, numalgo })
+                AnyPeerDid::Numalgo2(PeerDid { did, numalgo })
             }
-            _ => GenericPeerDid::Numalgo3(PeerDid {
+            _ => AnyPeerDid::Numalgo3(PeerDid {
                 did,
                 numalgo: Numalgo3,
             }),
@@ -40,27 +40,25 @@ impl GenericPeerDid {
 
     pub fn numalgo(&self) -> NumalgoKind {
         match self {
-            GenericPeerDid::Numalgo2(peer_did) => {
-                NumalgoKind::MultipleInceptionKeys(peer_did.numalgo)
-            }
-            GenericPeerDid::Numalgo3(peer_did) => NumalgoKind::DidShortening(peer_did.numalgo),
+            AnyPeerDid::Numalgo2(peer_did) => NumalgoKind::MultipleInceptionKeys(peer_did.numalgo),
+            AnyPeerDid::Numalgo3(peer_did) => NumalgoKind::DidShortening(peer_did.numalgo),
         }
     }
 }
 
-impl Serialize for GenericPeerDid {
+impl Serialize for AnyPeerDid {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
         match &self {
-            GenericPeerDid::Numalgo2(peer_did) => serializer.serialize_str(peer_did.did().did()),
-            GenericPeerDid::Numalgo3(peer_did) => serializer.serialize_str(peer_did.did().did()),
+            AnyPeerDid::Numalgo2(peer_did) => serializer.serialize_str(peer_did.did().did()),
+            AnyPeerDid::Numalgo3(peer_did) => serializer.serialize_str(peer_did.did().did()),
         }
     }
 }
 
-impl<'de> Deserialize<'de> for GenericPeerDid {
+impl<'de> Deserialize<'de> for AnyPeerDid {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -88,15 +86,15 @@ mod tests {
     const INVALID_PEER_DID_NUMALGO3: &str =
         "did:peer:3.d8da5079c166b183cfz15ee27747f34e116977103d8b23c96dcba9a9d9429689";
 
-    fn generic_peer_did_numalgo2() -> GenericPeerDid {
-        GenericPeerDid::Numalgo2(PeerDid {
+    fn generic_peer_did_numalgo2() -> AnyPeerDid {
+        AnyPeerDid::Numalgo2(PeerDid {
             did: VALID_PEER_DID_NUMALGO2.parse().unwrap(),
             numalgo: Numalgo2,
         })
     }
 
-    fn generic_peer_did_numalgo3() -> GenericPeerDid {
-        GenericPeerDid::Numalgo3(PeerDid {
+    fn generic_peer_did_numalgo3() -> AnyPeerDid {
+        AnyPeerDid::Numalgo3(PeerDid {
             did: VALID_PEER_DID_NUMALGO3.parse().unwrap(),
             numalgo: Numalgo3,
         })
@@ -123,28 +121,28 @@ mod tests {
 
         #[test]
         fn numalgo2() {
-            let deserialized: GenericPeerDid =
+            let deserialized: AnyPeerDid =
                 serde_json::from_str(&format!("\"{}\"", VALID_PEER_DID_NUMALGO2)).unwrap();
             assert_eq!(deserialized, generic_peer_did_numalgo2());
         }
 
         #[test]
         fn numalgo2_invalid() {
-            let deserialized: Result<GenericPeerDid, _> =
+            let deserialized: Result<AnyPeerDid, _> =
                 serde_json::from_str(&format!("\"{}\"", INVALID_PEER_DID_NUMALGO2));
             assert!(deserialized.is_err());
         }
 
         #[test]
         fn numalgo3() {
-            let deserialized: GenericPeerDid =
+            let deserialized: AnyPeerDid =
                 serde_json::from_str(&format!("\"{}\"", VALID_PEER_DID_NUMALGO3)).unwrap();
             assert_eq!(deserialized, generic_peer_did_numalgo3());
         }
 
         #[test]
         fn numalgo3_invalid() {
-            let deserialized: Result<GenericPeerDid, _> =
+            let deserialized: Result<AnyPeerDid, _> =
                 serde_json::from_str(&format!("\"{}\"", INVALID_PEER_DID_NUMALGO3));
             assert!(deserialized.is_err());
         }

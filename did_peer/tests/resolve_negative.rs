@@ -2,7 +2,7 @@ mod fixtures;
 
 use did_peer::{
     error::DidPeerError,
-    peer_did_resolver::{
+    resolver::{
         options::{ExtraFieldsOptions, PublicKeyEncoding},
         resolver::PeerDidResolver,
     },

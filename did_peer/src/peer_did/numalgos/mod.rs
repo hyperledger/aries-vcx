@@ -1,55 +1,43 @@
+pub mod kind;
 pub mod numalgo0;
 pub mod numalgo1;
 pub mod numalgo2;
 pub mod numalgo3;
 
-pub(super) mod traits;
-
 use std::fmt::Display;
 
-use numalgo0::Numalgo0;
-use numalgo1::Numalgo1;
-use numalgo2::Numalgo2;
-use numalgo3::Numalgo3;
+use did_doc::schema::did_doc::DidDocument;
+use did_doc_sov::extra_fields::ExtraFieldsSov;
+use did_parser::Did;
 
-use self::traits::Numalgo;
-use crate::error::DidPeerError;
+use crate::{
+    error::DidPeerError,
+    peer_did::{parse::parse_numalgo, validate::validate, FromDidDoc, PeerDid},
+    resolver::options::PublicKeyEncoding,
+};
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum NumalgoKind {
-    InceptionKeyWithoutDoc(Numalgo0),
-    GenesisDoc(Numalgo1),
-    MultipleInceptionKeys(Numalgo2),
-    DidShortening(Numalgo3),
-}
+pub trait Numalgo: Sized + Default {
+    const NUMALGO_CHAR: char;
 
-impl NumalgoKind {
-    pub fn to_char(&self) -> char {
-        match self {
-            NumalgoKind::InceptionKeyWithoutDoc(_) => Numalgo0::NUMALGO_CHAR,
-            NumalgoKind::GenesisDoc(_) => Numalgo1::NUMALGO_CHAR,
-            NumalgoKind::MultipleInceptionKeys(_) => Numalgo2::NUMALGO_CHAR,
-            NumalgoKind::DidShortening(_) => Numalgo3::NUMALGO_CHAR,
+    fn parse<T>(did: T) -> Result<PeerDid<Self>, DidPeerError>
+    where
+        Did: TryFrom<T>,
+        <Did as TryFrom<T>>::Error: Into<DidPeerError>,
+    {
+        let did: Did = did.try_into().map_err(Into::into)?;
+        let numalgo_char = parse_numalgo(&did)?.to_char();
+        if numalgo_char != Self::NUMALGO_CHAR {
+            return Err(DidPeerError::InvalidNumalgoCharacter(numalgo_char));
         }
+        validate(&did)?;
+        Ok(PeerDid::from_parts(did, Self::default()))
     }
 }
 
-impl Display for NumalgoKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.to_char().fmt(f)
-    }
-}
-
-impl TryFrom<char> for NumalgoKind {
-    type Error = DidPeerError;
-
-    fn try_from(value: char) -> Result<Self, Self::Error> {
-        match value {
-            Numalgo0::NUMALGO_CHAR => Ok(NumalgoKind::InceptionKeyWithoutDoc(Numalgo0)),
-            Numalgo1::NUMALGO_CHAR => Ok(NumalgoKind::GenesisDoc(Numalgo1)),
-            Numalgo2::NUMALGO_CHAR => Ok(NumalgoKind::MultipleInceptionKeys(Numalgo2)),
-            Numalgo3::NUMALGO_CHAR => Ok(NumalgoKind::DidShortening(Numalgo3)),
-            c => Err(DidPeerError::InvalidNumalgoCharacter(c)),
-        }
-    }
+pub trait ResolvableNumalgo: Numalgo {
+    fn resolve(
+        &self,
+        did: &Did,
+        public_key_encoding: PublicKeyEncoding,
+    ) -> Result<DidDocument<ExtraFieldsSov>, DidPeerError>;
 }
