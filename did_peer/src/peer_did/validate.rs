@@ -8,7 +8,7 @@ pub fn validate(did: &Did) -> Result<(), DidPeerError> {
         Err(DidPeerError::DidValidationError(format!(
             "Invalid did: {} because it's not matching peer did regex {}",
             did.did(),
-            PEER_DID_REGEX.to_string()
+            *PEER_DID_REGEX
         )))
     } else {
         Ok(())
