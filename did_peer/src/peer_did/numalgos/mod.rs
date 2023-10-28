@@ -4,15 +4,13 @@ pub mod numalgo1;
 pub mod numalgo2;
 pub mod numalgo3;
 
-use std::fmt::Display;
-
 use did_doc::schema::did_doc::DidDocument;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
 
 use crate::{
     error::DidPeerError,
-    peer_did::{parse::parse_numalgo, validate::validate, FromDidDoc, PeerDid},
+    peer_did::{parse::parse_numalgo, validate::validate, PeerDid},
     resolver::options::PublicKeyEncoding,
 };
 

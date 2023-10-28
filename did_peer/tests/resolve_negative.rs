@@ -4,7 +4,7 @@ use did_peer::{
     error::DidPeerError,
     resolver::{
         options::{ExtraFieldsOptions, PublicKeyEncoding},
-        resolver::PeerDidResolver,
+        PeerDidResolver,
     },
 };
 use did_resolver::traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable};
