@@ -1,11 +1,5 @@
-use std::collections::HashMap;
-
 use aries_vcx::{
-    common::ledger::transactions::into_did_doc,
-    handlers::{
-        out_of_band::{receiver::OutOfBandReceiver, sender::OutOfBandSender},
-        util::AnyInvitation,
-    },
+    handlers::out_of_band::{receiver::OutOfBandReceiver, sender::OutOfBandSender},
     messages::{
         msg_fields::protocols::out_of_band::{invitation::OobService, OobGoalCode},
         msg_types::Protocol,
@@ -14,16 +8,7 @@ use aries_vcx::{
 };
 
 use crate::{
-    api_vcx::{
-        api_global::{
-            agency_client::get_main_agency_client,
-            profile::{get_main_ledger_read, get_main_wallet},
-        },
-        api_handle::{
-            connection, mediated_connection::CONNECTION_MAP as MEDIATED_CONS_MAP,
-            object_cache::ObjectCache,
-        },
-    },
+    api_vcx::api_handle::object_cache::ObjectCache,
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
 
@@ -163,84 +148,6 @@ pub fn to_a2a_message(handle: u32) -> LibvcxResult<String> {
             )
         })
     })
-}
-
-// todo: remove this
-pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxResult<(u32, bool)> {
-    trace!(
-        "connection_exists >>> handle: {}, conn_handles: {:?}",
-        handle,
-        conn_handles
-    );
-    let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
-    let mut conn_map = HashMap::new();
-    for conn_handle in conn_handles {
-        let connection = MEDIATED_CONS_MAP.get_cloned(*conn_handle)?;
-        conn_map.insert(*conn_handle, connection);
-    }
-    let connections = conn_map.values().collect();
-
-    if let Some(connection) = oob
-        .connection_exists(get_main_ledger_read()?.as_ref(), &connections)
-        .await?
-    {
-        if let Some((&handle, _)) = conn_map.iter().find(|(_, conn)| *conn == connection) {
-            Ok((handle, true))
-        } else {
-            Err(LibvcxError::from_msg(
-                LibvcxErrorKind::UnknownError,
-                "Can't find handel for found connection. Instance was probably released in the \
-                 meantime.",
-            ))
-        }
-    } else {
-        Ok((0, false))
-    }
-}
-
-// todo: remove this
-pub async fn nonmediated_connection_exists(
-    handle: u32,
-    conn_handles: &[u32],
-) -> LibvcxResult<(u32, bool)> {
-    trace!(
-        "nonmediated_connection_exists >>> handle: {}, conn_handles: {:?}",
-        handle,
-        conn_handles
-    );
-    let indy_ledger = get_main_ledger_read()?;
-    let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
-
-    let filter_closure = |h: &u32| {
-        connection::get_cloned_generic_connection(h)
-            .ok()
-            .map(|c| (*h, c))
-    };
-    let connections: HashMap<_, _> = conn_handles.iter().filter_map(filter_closure).collect();
-
-    match oob
-        .nonmediated_connection_exists::<_, &u32>(indy_ledger.as_ref(), &connections)
-        .await
-    {
-        None => Ok((0, false)),
-        Some(h) => Ok((*h, true)),
-    }
-}
-
-pub async fn build_connection(handle: u32) -> LibvcxResult<String> {
-    trace!("build_connection >>> handle: {}", handle);
-    let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
-    let invitation = AnyInvitation::Oob(oob.oob.clone());
-    let ddo = into_did_doc(get_main_ledger_read()?.as_ref(), &invitation).await?;
-    oob.build_connection(
-        get_main_wallet()?.as_ref(),
-        &get_main_agency_client()?,
-        ddo,
-        false,
-    )
-    .await?
-    .to_string()
-    .map_err(|err| err.into())
 }
 
 pub fn get_thread_id_sender(handle: u32) -> LibvcxResult<String> {

@@ -34,35 +34,6 @@ export class OutOfBandReceiver extends VcxBase<IOOBSerializedData> {
     }
   }
 
-  public async connectionExists(connections: [Connection]): Promise<void | Connection> {
-    try {
-      const connHandles = connections.map((conn) => conn.handle);
-      const connHandle = await ffi.outOfBandReceiverConnectionExists(this.handle, connHandles);
-      return connections.find((conn) => conn.handle === connHandle);
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  public async nonmediatedConnectionExists(connections: [NonmediatedConnection]): Promise<void | NonmediatedConnection> {
-    try {
-      const connHandles = connections.map((conn) => conn.handle);
-      const connHandle = await ffi.outOfBandReceiverNonmediatedConnectionExists(this.handle, connHandles);
-      return connections.find((conn) => conn.handle === connHandle);
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  public async buildConnection(): Promise<Connection> {
-    try {
-      const connection = await ffi.outOfBandReceiverBuildConnection(this.handle);
-      return Connection.deserialize(JSON.parse(connection));
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
-  }
-
   public getThreadId(): string {
     try {
       return ffi.outOfBandReceiverGetThreadId(this.handle);
