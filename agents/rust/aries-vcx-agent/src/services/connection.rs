@@ -15,7 +15,7 @@ use url::Url;
 
 use crate::{
     error::*,
-    http_client::HttpClient,
+    http::VcxHttpClient,
     storage::{object_cache::ObjectCache, Storage},
 };
 
@@ -75,7 +75,7 @@ impl ServiceConnections {
             .await?;
         let request = invitee.get_request().clone();
         invitee
-            .send_message(self.wallet.as_ref(), &request.into(), &HttpClient)
+            .send_message(self.wallet.as_ref(), &request.into(), &VcxHttpClient)
             .await?;
         self.connections.insert(thread_id, invitee.into())?;
         Ok(())
@@ -116,7 +116,7 @@ impl ServiceConnections {
         let inviter: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         let response = inviter.get_connection_response_msg();
         inviter
-            .send_message(self.wallet.as_ref(), &response.into(), &HttpClient)
+            .send_message(self.wallet.as_ref(), &response.into(), &VcxHttpClient)
             .await?;
 
         self.connections.insert(thread_id, inviter.into())?;
@@ -138,7 +138,11 @@ impl ServiceConnections {
     pub async fn send_ack(&self, thread_id: &str) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         invitee
-            .send_message(self.wallet.as_ref(), &invitee.get_ack().into(), &HttpClient)
+            .send_message(
+                self.wallet.as_ref(),
+                &invitee.get_ack().into(),
+                &VcxHttpClient,
+            )
             .await?;
 
         self.connections.insert(thread_id, invitee.into())?;

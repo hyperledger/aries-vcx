@@ -49,7 +49,8 @@ pub mod test_utils {
     };
 
     use crate::{
-        errors::error::prelude::*, handlers::connection::mediated_connection::MediatedConnection,
+        errors::error::prelude::*,
+        handlers::mediated_connection::mediated_connection::MediatedConnection,
     };
 
     pub async fn get_revocation_notification_messages(

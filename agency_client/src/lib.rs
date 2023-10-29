@@ -9,7 +9,6 @@ extern crate serde_derive;
 
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
-
 mod utils;
 
 #[macro_use]
@@ -18,7 +17,6 @@ pub mod agency_client;
 pub mod api;
 pub mod configuration;
 
-pub mod httpclient;
 pub mod messages;
 pub mod testing;
 pub mod wallet;

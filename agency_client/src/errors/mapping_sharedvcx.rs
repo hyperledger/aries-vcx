@@ -1,19 +1,19 @@
-use shared_vcx::errors::error::{SharedVcxError, SharedVcxErrorKind};
+use shared_vcx::errors::validation::{ValidationError, ValidationErrorKind};
 
 use crate::errors::error::{AgencyClientError, AgencyClientErrorKind};
 
-impl From<SharedVcxErrorKind> for AgencyClientErrorKind {
-    fn from(error: SharedVcxErrorKind) -> Self {
+impl From<ValidationErrorKind> for AgencyClientErrorKind {
+    fn from(error: ValidationErrorKind) -> Self {
         match error {
-            SharedVcxErrorKind::InvalidDid => AgencyClientErrorKind::InvalidDid,
-            SharedVcxErrorKind::InvalidVerkey => AgencyClientErrorKind::InvalidVerkey,
-            SharedVcxErrorKind::NotBase58 => AgencyClientErrorKind::NotBase58,
+            ValidationErrorKind::InvalidDid => AgencyClientErrorKind::InvalidDid,
+            ValidationErrorKind::InvalidVerkey => AgencyClientErrorKind::InvalidVerkey,
+            ValidationErrorKind::NotBase58 => AgencyClientErrorKind::NotBase58,
         }
     }
 }
 
-impl From<SharedVcxError> for AgencyClientError {
-    fn from(error: SharedVcxError) -> Self {
+impl From<ValidationError> for AgencyClientError {
+    fn from(error: ValidationError) -> Self {
         let kind: AgencyClientErrorKind = error.kind().into();
         AgencyClientError::from_msg(kind, error.to_string())
     }

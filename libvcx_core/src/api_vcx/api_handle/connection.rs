@@ -1,6 +1,5 @@
 use std::{any::type_name, collections::HashMap, str::FromStr, sync::RwLock};
 
-use agency_client::httpclient::post_message;
 use aries_vcx::{
     errors::error::{AriesVcxError, VcxResult},
     messages::msg_fields::protocols::connection::request::Request,
@@ -12,6 +11,7 @@ use aries_vcx::{
 };
 use async_trait::async_trait;
 use rand::Rng;
+use shared_vcx::http_client::post_message;
 use url::Url;
 
 use crate::{

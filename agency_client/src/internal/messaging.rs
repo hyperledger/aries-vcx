@@ -1,11 +1,11 @@
 use core::u8;
 
 use serde_json::Value;
+use shared_vcx::http_client::post_message;
 
 use crate::{
     agency_client::AgencyClient,
     errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
-    httpclient,
     messages::{a2a_message::Client2AgencyMessage, forward::ForwardV2},
     testing::mocking::AgencyMockDecrypted,
 };
@@ -13,7 +13,12 @@ use crate::{
 impl AgencyClient {
     pub async fn post_to_agency(&self, body_content: Vec<u8>) -> AgencyClientResult<Vec<u8>> {
         let url = self.get_agency_url_full()?;
-        httpclient::post_message(body_content, url).await
+        post_message(body_content, url).await.map_err(|err| {
+            AgencyClientError::from_msg(
+                AgencyClientErrorKind::PostMessageFailed,
+                format!("Cannot send message to agency: {err}"),
+            )
+        })
     }
 
     pub async fn prepare_message_for_agency(

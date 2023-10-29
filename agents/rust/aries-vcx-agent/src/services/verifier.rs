@@ -24,7 +24,7 @@ use aries_vcx_core::{
 use super::connection::ServiceConnections;
 use crate::{
     error::*,
-    http_client::HttpClient,
+    http::VcxHttpClient,
     storage::{object_cache::ObjectCache, Storage},
 };
 
@@ -83,7 +83,7 @@ impl ServiceVerifier {
         let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
         });
 
         let message = verifier.mark_presentation_request_sent()?;
@@ -115,7 +115,7 @@ impl ServiceVerifier {
         let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
         });
 
         let message = verifier

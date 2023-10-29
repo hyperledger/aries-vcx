@@ -13,7 +13,6 @@ use messages::{
     msg_fields::protocols::{
         basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators},
         connection::{invitation::InvitationContent, request::Request, Connection},
-        discover_features::{disclose::Disclose, DiscoverFeatures, ProtocolDescriptor},
         out_of_band::OutOfBand,
         trust_ping::TrustPing,
     },
@@ -30,8 +29,9 @@ use uuid::Uuid;
 use crate::{
     errors::error::prelude::*,
     handlers::{
-        connection::{cloud_agent::CloudAgentInfo, legacy_agent_info::LegacyAgentInfo},
-        discovery::{respond_discovery_query, send_discovery_query},
+        mediated_connection::{
+            cloud_agent::CloudAgentInfo, legacy_agent_info::LegacyAgentInfo, util::send_message,
+        },
         trust_ping::TrustPingSender,
         util::AnyInvitation,
     },
@@ -45,7 +45,7 @@ use crate::{
         trustping::build_ping_response,
         SendClosure, SendClosureConnection,
     },
-    utils::{send_message, serialization::SerializableObjectWithState},
+    utils::serialization::SerializableObjectWithState,
 };
 
 #[derive(Clone, PartialEq)]
@@ -86,8 +86,6 @@ struct SideConnectionInfo {
     recipient_keys: Vec<String>,
     routing_keys: Vec<String>,
     service_endpoint: Url,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    protocols: Option<Vec<ProtocolDescriptor>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -265,20 +263,6 @@ impl MediatedConnection {
             SmConnection::Invitee(sm_invitee) => sm_invitee.source_id(),
         }
         .to_string()
-    }
-
-    pub fn get_protocols(&self) -> Vec<ProtocolDescriptor> {
-        match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.get_protocols(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.get_protocols(),
-        }
-    }
-
-    pub fn get_remote_protocols(&self) -> Option<Vec<ProtocolDescriptor>> {
-        match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.get_remote_protocols(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.get_remote_protocols(),
-        }
     }
 
     pub fn their_did_doc(&self) -> Option<AriesDidDoc> {
@@ -474,9 +458,7 @@ impl MediatedConnection {
                 AriesMessage::TrustPing(TrustPing::Ping(_))
                 | AriesMessage::TrustPing(TrustPing::PingResponse(_))
                 | AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(_))
-                | AriesMessage::OutOfBand(OutOfBand::HandshakeReuseAccepted(_))
-                | AriesMessage::DiscoverFeatures(DiscoverFeatures::Query(_))
-                | AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(_)) => {
+                | AriesMessage::OutOfBand(OutOfBand::HandshakeReuseAccepted(_)) => {
                     return Some((uid, message))
                 }
                 _ => {}
@@ -528,23 +510,6 @@ impl MediatedConnection {
 
                 let msg = build_handshake_reuse_accepted_msg(&handshake_reuse)?;
                 send_message(wallet, pw_vk.to_string(), did_doc.clone(), msg.into()).await?;
-            }
-            AriesMessage::DiscoverFeatures(DiscoverFeatures::Query(query)) => {
-                let supported_protocols = query.content.lookup();
-
-                info!(
-                    "Answering discovery protocol query, @id: {}, with supported protocols: {:?}",
-                    &query.id, &supported_protocols
-                );
-
-                respond_discovery_query(wallet, query, &did_doc, pw_vk, supported_protocols)
-                    .await?;
-            }
-            AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(disclose)) => {
-                let thread_id = disclose.decorators.thread.thid.as_str();
-                info!("Handling disclose message, thread: {}", thread_id);
-
-                self.connection_sm = self.handle_disclose(disclose).await?;
             }
             _ => {
                 // todo: implement to_string for A2AMessage, printing only type of the message, not
@@ -745,17 +710,6 @@ impl MediatedConnection {
             SmConnection::Inviter(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
                 "Invalid operation, called _step_invitee on Inviter connection.",
-            )),
-        }
-    }
-
-    async fn handle_disclose(&self, disclose: Disclose) -> VcxResult<SmConnection> {
-        match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => Ok(SmConnection::Inviter(
-                sm_inviter.clone().handle_disclose(disclose)?,
-            )),
-            SmConnection::Invitee(sm_invitee) => Ok(SmConnection::Invitee(
-                sm_invitee.clone().handle_disclose(disclose)?,
             )),
         }
     }
@@ -1057,34 +1011,6 @@ impl MediatedConnection {
             .await
     }
 
-    pub async fn send_discovery_query(
-        &self,
-        wallet: &impl BaseWallet,
-        query: Option<String>,
-        comment: Option<String>,
-    ) -> VcxResult<()> {
-        trace!(
-            "MediatedConnection::send_discovery_features_query >>> query: {:?}, comment: {:?}",
-            query,
-            comment
-        );
-        let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::NotReady,
-            "Can't send handshake-reuse to the counterparty, because their did doc is not \
-             available"
-                .to_string(),
-        ))?;
-        send_discovery_query(
-            wallet,
-            query,
-            comment,
-            &did_doc,
-            &self.pairwise_info().pw_vk,
-        )
-        .await?;
-        Ok(())
-    }
-
     pub async fn get_connection_info(&self, agency_client: &AgencyClient) -> VcxResult<String> {
         trace!("MediatedConnection::get_connection_info >>>");
 
@@ -1100,7 +1026,6 @@ impl MediatedConnection {
             recipient_keys,
             routing_keys: agent_info.routing_keys(agency_client)?,
             service_endpoint: agent_info.service_endpoint(agency_client)?,
-            protocols: Some(self.get_protocols()),
         };
 
         let remote = match self.their_did_doc() {
@@ -1111,7 +1036,6 @@ impl MediatedConnection {
                 service_endpoint: did_doc.get_endpoint().ok_or_else(|| {
                     AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc")
                 })?,
-                protocols: self.get_remote_protocols(),
             }),
             None => None,
         };
