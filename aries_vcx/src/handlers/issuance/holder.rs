@@ -29,7 +29,7 @@ use crate::{
     common::credentials::get_cred_rev_id,
     errors::error::prelude::*,
     handlers::{
-        mediated_connection::mediated_connection::MediatedConnection,
+        mediated_connection::MediatedConnection,
         revocation_notification::receiver::RevocationNotificationReceiver,
     },
     protocols::issuance::holder::state_machine::{HolderFullState, HolderSM, HolderState},

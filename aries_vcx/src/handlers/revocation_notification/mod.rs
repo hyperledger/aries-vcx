@@ -48,10 +48,7 @@ pub mod test_utils {
         AriesMessage,
     };
 
-    use crate::{
-        errors::error::prelude::*,
-        handlers::mediated_connection::mediated_connection::MediatedConnection,
-    };
+    use crate::{errors::error::prelude::*, handlers::mediated_connection::MediatedConnection};
 
     pub async fn get_revocation_notification_messages(
         agency_client: &AgencyClient,

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use aries_vcx::{
     agency_client::{api::downloaded_message::DownloadedMessage, MessageStatusCode},
     common::ledger::transactions::into_did_doc,
-    handlers::{mediated_connection::mediated_connection::MediatedConnection, util::AnyInvitation},
+    handlers::{mediated_connection::MediatedConnection, util::AnyInvitation},
     messages::{
         msg_fields::protocols::connection::{
             invitation::{Invitation, InvitationContent},

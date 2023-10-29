@@ -1,13 +1,12 @@
-use crate::{
-    handlers::mediated_connection::mediated_connection::ConnectionState as MediatedConnectionState,
-    protocols::{
-        issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
-        mediated_connection::{
-            invitee::state_machine::InviteeState, inviter::state_machine::InviterState,
-        },
-        proof_presentation::{
-            prover::state_machine::ProverState, verifier::state_machine::VerifierState,
-        },
+use mediated_connection::ConnectionState as MediatedConnectionState;
+
+use crate::protocols::{
+    issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
+    mediated_connection::{
+        invitee::state_machine::InviteeState, inviter::state_machine::InviterState,
+    },
+    proof_presentation::{
+        prover::state_machine::ProverState, verifier::state_machine::VerifierState,
     },
 };
 
