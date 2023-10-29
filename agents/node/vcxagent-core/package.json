@@ -64,7 +64,7 @@
     "command-line-usage": "^5.0.5",
     "express": "^4.17.1",
     "is-port-reachable": "^2.0.1",
-    "jest": "^26.6.3",
+    "jest": "^29.7.0",
     "readline-sync": "^1.4.10",
     "standard": "^16.0.4",
     "winston": "^3.3.3"
