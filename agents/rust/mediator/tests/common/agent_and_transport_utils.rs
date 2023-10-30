@@ -1,6 +1,9 @@
 use std::collections::VecDeque;
 
-use aries_vcx::protocols::connection::invitee::{states::completed::Completed, InviteeConnection};
+use aries_vcx::{
+    protocols::connection::invitee::{states::completed::Completed, InviteeConnection},
+    utils::encryption_envelope::EncryptionEnvelope,
+};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediation::storage::MediatorPersistence;
@@ -68,10 +71,20 @@ pub async fn send_message_and_pop_response_message(
     our_verkey: &VerKey,
     their_diddoc: &AriesDidDoc,
 ) -> Result<String> {
-    agent
-        .pack_and_send_didcomm(message_bytes, our_verkey, their_diddoc, aries_transport)
+    // Wrap message in encrypted envelope
+    let EncryptionEnvelope(packed_message) = agent
+        .pack_didcomm(message_bytes, our_verkey, their_diddoc)
         .await
-        .map_err(|err| GenericStringError { msg: err })?;
+        .map_err(|e| GenericStringError { msg: e.to_string() })?;
+    let packed_json = serde_json::from_slice(&packed_message)?;
+    info!(
+        "Packed: {:?}, sending",
+        serde_json::to_string(&packed_json).unwrap()
+    );
+    // Send serialized envelope over transport
+    aries_transport
+        .push_aries_envelope(packed_json, their_diddoc)
+        .await?;
     // unpack
     let response = aries_transport.pop_aries_envelope()?;
     let unpacked_response = agent

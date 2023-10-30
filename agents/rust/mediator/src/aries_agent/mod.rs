@@ -25,7 +25,6 @@ use messages::{
 };
 use serde_json::json;
 
-use self::transports::AriesTransport;
 use crate::utils::{prelude::*, structs::VerKey};
 
 #[cfg(any(test, feature = "client"))]
@@ -140,25 +139,6 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         their_diddoc: &AriesDidDoc,
     ) -> Result<EncryptionEnvelope, String> {
         EncryptionEnvelope::create(self.wallet.as_ref(), message, Some(our_vk), their_diddoc)
-            .await
-            .map_err(string_from_std_error)
-    }
-    pub async fn pack_and_send_didcomm(
-        &self,
-        message: &[u8],
-        our_vk: &VerKey,
-        their_diddoc: &AriesDidDoc,
-        aries_transport: &mut impl AriesTransport,
-    ) -> Result<(), String> {
-        let EncryptionEnvelope(packed_message) =
-            self.pack_didcomm(message, our_vk, their_diddoc).await?;
-        let packed_json = serde_json::from_slice(&packed_message).map_err(string_from_std_error)?;
-        info!(
-            "Packed: {:?}, sending",
-            serde_json::to_string(&packed_json).unwrap()
-        );
-        aries_transport
-            .push_aries_envelope(packed_json, their_diddoc)
             .await
             .map_err(string_from_std_error)
     }
