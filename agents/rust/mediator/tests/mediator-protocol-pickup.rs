@@ -146,13 +146,10 @@ async fn forward_dummy_anoncrypt_message(
     // Send forward message to provided endpoint
     let packed_json = serde_json::from_slice(&packed_message)?;
     info!("Sending anoncrypt packed message{}", packed_json);
-    agent_f_aries_transport
-        .push_aries_envelope(packed_json, agent_diddoc)
+    let response_envelope = agent_f_aries_transport
+        .send_aries_envelope(packed_json, agent_diddoc)
         .await?;
-    info!(
-        "Response of forward{:?}",
-        agent_f_aries_transport.pop_aries_envelope()?
-    );
+    info!("Response of forward{:?}", response_envelope);
     Ok(())
 }
 

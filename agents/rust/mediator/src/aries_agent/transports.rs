@@ -21,12 +21,12 @@ impl AriesTransportError {
 
 #[async_trait]
 pub trait AriesTransport {
-    fn pop_aries_envelope(&mut self) -> Result<Value, AriesTransportError>;
-    async fn push_aries_envelope(
+    /// Send envelope to destination (defined in AriesDidDoc) and return response
+    async fn send_aries_envelope(
         &mut self,
         envelope_json: Value,
         destination: &AriesDidDoc,
-    ) -> Result<(), AriesTransportError>;
+    ) -> Result<Value, AriesTransportError>;
 }
 
 pub struct AriesReqwest {
@@ -36,11 +36,11 @@ pub struct AriesReqwest {
 
 #[async_trait]
 impl AriesTransport for AriesReqwest {
-    async fn push_aries_envelope(
+    async fn send_aries_envelope(
         &mut self,
         envelope_json: Value,
         destination: &AriesDidDoc,
-    ) -> Result<(), AriesTransportError> {
+    ) -> Result<Value, AriesTransportError> {
         let oob_invited_endpoint = destination
             .get_endpoint()
             .expect("Service needs an endpoint");
@@ -58,12 +58,6 @@ impl AriesTransport for AriesReqwest {
             .await
             .map_err(AriesTransportError::from_std_error)?;
         info!("Received aries response{:?}", res_json);
-        self.response_queue.push_back(res_json);
-        Ok(())
-    }
-    fn pop_aries_envelope(&mut self) -> Result<Value, AriesTransportError> {
-        self.response_queue.pop_front().ok_or(AriesTransportError {
-            msg: "No messages in queue".to_owned(),
-        })
+        Ok(res_json)
     }
 }

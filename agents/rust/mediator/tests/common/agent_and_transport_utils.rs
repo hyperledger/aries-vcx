@@ -82,13 +82,12 @@ pub async fn send_message_and_pop_response_message(
         serde_json::to_string(&packed_json).unwrap()
     );
     // Send serialized envelope over transport
-    aries_transport
-        .push_aries_envelope(packed_json, their_diddoc)
+    let response_envelope = aries_transport
+        .send_aries_envelope(packed_json, their_diddoc)
         .await?;
     // unpack
-    let response = aries_transport.pop_aries_envelope()?;
     let unpacked_response = agent
-        .unpack_didcomm(&serde_json::to_vec(&response).unwrap())
+        .unpack_didcomm(&serde_json::to_vec(&response_envelope).unwrap())
         .await
         .unwrap();
     Ok(unpacked_response.message)
