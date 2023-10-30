@@ -15,7 +15,7 @@ use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::ind
 
 use crate::{
     error::*,
-    http_client::HttpClient,
+    http::VcxHttpClient,
     services::connection::ServiceConnections,
     storage::{object_cache::ObjectCache, Storage},
 };
@@ -98,7 +98,7 @@ impl ServiceCredentialsIssuer {
         let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
         });
 
         let credential_offer = issuer.get_credential_offer_msg()?;
@@ -149,7 +149,7 @@ impl ServiceCredentialsIssuer {
         let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
         });
 
         issuer

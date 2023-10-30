@@ -29,7 +29,7 @@ use crate::{
     common::ledger::transactions::resolve_service,
     errors::error::prelude::*,
     handlers::{
-        connection::mediated_connection::MediatedConnection,
+        mediated_connection::MediatedConnection,
         util::{AnyInvitation, AttachmentId},
     },
     protocols::connection::GenericConnection,

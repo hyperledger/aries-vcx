@@ -1,19 +1,17 @@
-use crate::{
-    handlers::connection::mediated_connection::ConnectionState as MediatedConnectionState,
-    protocols::{
-        issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
-        mediated_connection::{
-            invitee::state_machine::InviteeState, inviter::state_machine::InviterState,
-        },
-        proof_presentation::{
-            prover::state_machine::ProverState, verifier::state_machine::VerifierState,
-        },
+use mediated_connection::ConnectionState as MediatedConnectionState;
+
+use crate::protocols::{
+    issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
+    mediated_connection::{
+        invitee::state_machine::InviteeState, inviter::state_machine::InviterState,
+    },
+    proof_presentation::{
+        prover::state_machine::ProverState, verifier::state_machine::VerifierState,
     },
 };
 
-pub mod connection;
-pub mod discovery;
 pub mod issuance;
+pub mod mediated_connection;
 pub mod out_of_band;
 pub mod proof_presentation;
 pub mod revocation_notification;

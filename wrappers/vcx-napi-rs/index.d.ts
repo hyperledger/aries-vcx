@@ -121,7 +121,6 @@ export function mediatedConnectionDeserialize(connectionData: string): number
 export function mediatedConnectionRelease(handle: number): void
 export function mediatedConnectionInviteDetails(handle: number): string
 export function mediatedConnectionSendPing(handle: number, comment?: string | undefined | null): Promise<void>
-export function mediatedConnectionSendDiscoveryFeatures(handle: number, query?: string | undefined | null, comment?: string | undefined | null): Promise<void>
 export function mediatedConnectionInfo(handle: number): Promise<string>
 export function mediatedConnectionMessagesDownload(connHandles: Array<number>, statusCodes?: string | undefined | null, uids?: string | undefined | null): Promise<string>
 export function mediatedConnectionSignData(handle: number, data: Buffer): Promise<Buffer>

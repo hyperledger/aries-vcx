@@ -1,19 +1,19 @@
-use shared_vcx::errors::error::{SharedVcxError, SharedVcxErrorKind};
+use shared_vcx::errors::validation::{ValidationError, ValidationErrorKind};
 
 use crate::errors::error::{DiddocError, DiddocErrorKind};
 
-impl From<SharedVcxErrorKind> for DiddocErrorKind {
-    fn from(error: SharedVcxErrorKind) -> Self {
+impl From<ValidationErrorKind> for DiddocErrorKind {
+    fn from(error: ValidationErrorKind) -> Self {
         match error {
-            SharedVcxErrorKind::InvalidDid => DiddocErrorKind::InvalidDid,
-            SharedVcxErrorKind::InvalidVerkey => DiddocErrorKind::InvalidVerkey,
-            SharedVcxErrorKind::NotBase58 => DiddocErrorKind::NotBase58,
+            ValidationErrorKind::InvalidDid => DiddocErrorKind::InvalidDid,
+            ValidationErrorKind::InvalidVerkey => DiddocErrorKind::InvalidVerkey,
+            ValidationErrorKind::NotBase58 => DiddocErrorKind::NotBase58,
         }
     }
 }
 
-impl From<SharedVcxError> for DiddocError {
-    fn from(error: SharedVcxError) -> Self {
+impl From<ValidationError> for DiddocError {
+    fn from(error: ValidationError) -> Self {
         let kind: DiddocErrorKind = error.kind().into();
         DiddocError::from_msg(kind, error.to_string())
     }

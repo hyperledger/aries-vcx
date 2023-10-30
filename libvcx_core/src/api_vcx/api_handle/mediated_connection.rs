@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use aries_vcx::{
     agency_client::{api::downloaded_message::DownloadedMessage, MessageStatusCode},
     common::ledger::transactions::into_did_doc,
-    handlers::{connection::mediated_connection::MediatedConnection, util::AnyInvitation},
+    handlers::{mediated_connection::MediatedConnection, util::AnyInvitation},
     messages::{
         msg_fields::protocols::connection::{
             invitation::{Invitation, InvitationContent},
@@ -386,23 +386,6 @@ pub async fn send_ping(handle: u32, comment: Option<&str>) -> LibvcxResult<()> {
 
     connection
         .send_ping(get_main_wallet()?.as_ref(), comment.map(String::from))
-        .await?;
-    CONNECTION_MAP.insert(handle, connection)
-}
-
-pub async fn send_discovery_features(
-    handle: u32,
-    query: Option<&str>,
-    comment: Option<&str>,
-) -> LibvcxResult<()> {
-    let connection = CONNECTION_MAP.get_cloned(handle)?;
-
-    connection
-        .send_discovery_query(
-            get_main_wallet()?.as_ref(),
-            query.map(String::from),
-            comment.map(String::from),
-        )
         .await?;
     CONNECTION_MAP.insert(handle, connection)
 }

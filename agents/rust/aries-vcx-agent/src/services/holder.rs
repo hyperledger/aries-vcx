@@ -18,7 +18,7 @@ use aries_vcx_core::{
 
 use crate::{
     error::*,
-    http_client::HttpClient,
+    http::VcxHttpClient,
     services::connection::ServiceConnections,
     storage::{object_cache::ObjectCache, Storage},
 };
@@ -83,7 +83,7 @@ impl ServiceCredentialsHolder {
         let mut holder = Holder::create("")?;
         holder.set_proposal(propose_credential.clone())?;
         connection
-            .send_message(wallet, &propose_credential.into(), &HttpClient)
+            .send_message(wallet, &propose_credential.into(), &VcxHttpClient)
             .await?;
 
         self.creds_holder.insert(
@@ -121,7 +121,7 @@ impl ServiceCredentialsHolder {
         let pw_did = connection.pairwise_info().pw_did.to_string();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
         });
         let msg_response = holder
             .prepare_credential_request(
@@ -161,7 +161,7 @@ impl ServiceCredentialsHolder {
             Some(msg_response) => {
                 let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
                     Box::pin(
-                        async move { connection.send_message(wallet, &msg, &HttpClient).await },
+                        async move { connection.send_message(wallet, &msg, &VcxHttpClient).await },
                     )
                 });
                 send_closure(msg_response).await?;
