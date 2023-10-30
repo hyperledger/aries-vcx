@@ -13,7 +13,7 @@ use mediation::{
 };
 use mediator::{
     aries_agent::{
-        transports::{AriesReqwest, AriesTransport},
+        client::transports::{AriesReqwest, AriesTransport},
         utils::oob2did,
         Agent,
     },

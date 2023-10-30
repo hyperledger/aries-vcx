@@ -16,7 +16,7 @@ use mediation::{
 };
 use mediator::{
     aries_agent::{
-        transports::{AriesReqwest, AriesTransport},
+        client::transports::{AriesReqwest, AriesTransport},
         Agent,
     },
     utils::{structs::VerKey, GenericStringError},

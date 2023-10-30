@@ -29,7 +29,6 @@ use crate::utils::{prelude::*, structs::VerKey};
 
 #[cfg(any(test, feature = "client"))]
 pub mod client;
-pub mod transports;
 pub mod utils;
 
 #[derive(Clone)]

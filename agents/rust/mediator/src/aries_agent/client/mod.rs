@@ -22,8 +22,10 @@ use messages::{
     AriesMessage,
 };
 use test_utils::mockdata::mock_ledger::MockLedger;
+pub mod transports;
 
-use super::{transports::AriesTransport, Agent};
+use self::transports::AriesTransport;
+use super::Agent;
 use crate::{aries_agent::utils::oob2did, utils::prelude::*};
 
 // client role utilities

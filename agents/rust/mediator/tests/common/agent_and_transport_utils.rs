@@ -9,7 +9,7 @@ use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediation::storage::MediatorPersistence;
 use mediator::{
     aries_agent::{
-        transports::{AriesReqwest, AriesTransport},
+        client::transports::{AriesReqwest, AriesTransport},
         Agent,
     },
     utils::{structs::VerKey, GenericStringError},

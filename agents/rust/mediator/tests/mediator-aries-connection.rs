@@ -1,7 +1,7 @@
 mod common;
 use std::collections::VecDeque;
 
-use mediator::aries_agent::transports::AriesReqwest;
+use mediator::aries_agent::client::transports::AriesReqwest;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
 
