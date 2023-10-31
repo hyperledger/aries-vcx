@@ -34,7 +34,7 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
     log::info!("processing message {:?}", &didcomm_msg);
     let unpacked = agent.unpack_didcomm(&didcomm_msg).await.unwrap();
     let aries_message: GeneralAriesMessage =
-        serde_json::from_str(&unpacked.message).expect("Decoding unpacked message as AriesMessage");
+        serde_json::from_str(&unpacked.message).map_err(|e| e.to_string())?;
     let packed_response =
         if let GeneralAriesMessage::AriesVCXSupported(AriesMessage::Connection(conn)) =
             aries_message
@@ -46,11 +46,9 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
             handle_routing_forward(agent.clone(), forward).await?;
             return Ok(Json(json!({})));
         } else {
-            let (account_name, our_signing_key, their_diddoc) =
+            // Auth known VerKey then process account related messages
+            let (account_name, auth_pubkey, our_signing_key, their_diddoc) =
                 agent.auth_and_get_details(&unpacked.sender_verkey).await?;
-            let auth_pubkey = unpacked
-                .sender_verkey
-                .expect("Sender key authenticated above, so it must be present..");
             log::info!("Processing message for {:?}", account_name);
             match aries_message {
                 GeneralAriesMessage::AriesVCXSupported(AriesMessage::Pickup(pickup_message)) => {
