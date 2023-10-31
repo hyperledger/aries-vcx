@@ -321,7 +321,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
 
 [[package]]
-name = "aries-vcx"
+name = "aries-vcx-agent"
+version = "0.61.0"
+dependencies = [
+ "aries_vcx",
+ "aries_vcx_core",
+ "async-trait",
+ "derive_builder",
+ "log",
+ "serde",
+ "serde_json",
+ "shared_vcx",
+ "thiserror",
+ "url",
+ "uuid 1.5.0",
+]
+
+[[package]]
+name = "aries_vcx"
 version = "0.61.0"
 dependencies = [
  "agency_client",
@@ -356,23 +373,6 @@ dependencies = [
  "url",
  "uuid 1.5.0",
  "wallet_migrator",
-]
-
-[[package]]
-name = "aries-vcx-agent"
-version = "0.61.0"
-dependencies = [
- "aries-vcx",
- "aries_vcx_core",
- "async-trait",
- "derive_builder",
- "log",
- "serde",
- "serde_json",
- "shared_vcx",
- "thiserror",
- "url",
- "uuid 1.5.0",
 ]
 
 [[package]]
@@ -1511,7 +1511,7 @@ dependencies = [
 name = "did_resolver_sov"
 version = "0.1.0"
 dependencies = [
- "aries-vcx",
+ "aries_vcx",
  "aries_vcx_core",
  "async-trait",
  "chrono",
@@ -2719,7 +2719,7 @@ name = "libvcx_core"
 version = "0.61.0"
 dependencies = [
  "agency_client",
- "aries-vcx",
+ "aries_vcx",
  "aries_vcx_core",
  "async-trait",
  "cfg-if",
@@ -2898,7 +2898,7 @@ name = "mediator"
 version = "0.1.1"
 dependencies = [
  "anyhow",
- "aries-vcx",
+ "aries_vcx",
  "aries_vcx_core",
  "async-trait",
  "axum",
@@ -5042,7 +5042,7 @@ dependencies = [
 name = "uniffi_aries_vcx"
 version = "0.61.0"
 dependencies = [
- "aries-vcx",
+ "aries_vcx",
  "async-trait",
  "diddoc_legacy",
  "once_cell",

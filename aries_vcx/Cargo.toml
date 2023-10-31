@@ -1,6 +1,6 @@
 [package]
 
-name = "aries-vcx"
+name = "aries_vcx"
 version.workspace = true
 authors.workspace = true
 license.workspace = true
