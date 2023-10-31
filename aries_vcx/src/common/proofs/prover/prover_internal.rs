@@ -276,47 +276,50 @@ pub fn build_requested_credentials_json(
 
 #[cfg(test)]
 pub mod pool_tests {
+    use std::error::Error;
+
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
         constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
-        run_setup_test,
+        devsetup::build_setup_profile,
     };
 
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
 
     #[tokio::test]
     #[ignore]
-    async fn test_pool_build_rev_states_json_empty() {
-        run_setup_test!(|setup| async move {
-            // empty vector
-            assert_eq!(
-                build_rev_states_json(&setup.ledger_read, &setup.anoncreds, Vec::new().as_mut())
-                    .await
-                    .unwrap(),
-                "{}".to_string()
-            );
+    async fn test_pool_build_rev_states_json_empty() -> Result<(), Box<dyn Error>> {
+        let setup = build_setup_profile().await;
+        let mut empty_credential_identifiers = Vec::new();
+        assert_eq!(
+            build_rev_states_json(
+                &setup.ledger_read,
+                &setup.anoncreds,
+                empty_credential_identifiers.as_mut()
+            )
+            .await?,
+            "{}".to_string()
+        );
 
-            // no rev_reg_id
-            let cred1 = CredInfoProver {
-                referent: "height_1".to_string(),
-                credential_referent: LICENCE_CRED_ID.to_string(),
-                schema_id: SCHEMA_ID.to_string(),
-                cred_def_id: CRED_DEF_ID.to_string(),
-                rev_reg_id: None,
-                cred_rev_id: Some(CRED_REV_ID.to_string()),
-                tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
-                revocation_interval: None,
-                timestamp: None,
-                revealed: None,
-            };
-            assert_eq!(
-                build_rev_states_json(&setup.ledger_read, &setup.anoncreds, vec![cred1].as_mut())
-                    .await
-                    .unwrap(),
-                "{}".to_string()
-            );
-        })
-        .await;
+        // no rev_reg_id
+        let cred1 = CredInfoProver {
+            referent: "height_1".to_string(),
+            credential_referent: LICENCE_CRED_ID.to_string(),
+            schema_id: SCHEMA_ID.to_string(),
+            cred_def_id: CRED_DEF_ID.to_string(),
+            rev_reg_id: None,
+            cred_rev_id: Some(CRED_REV_ID.to_string()),
+            tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
+            revocation_interval: None,
+            timestamp: None,
+            revealed: None,
+        };
+        assert_eq!(
+            build_rev_states_json(&setup.ledger_read, &setup.anoncreds, vec![cred1].as_mut())
+                .await?,
+            "{}".to_string()
+        );
+        Ok(())
     }
 }
 
@@ -546,7 +549,7 @@ pub mod unit_tests {
         assert_eq!(
             credential_def_identifiers(
                 &serde_json::from_str("{}").unwrap(),
-                &proof_req_no_interval()
+                &proof_req_no_interval(),
             )
             .unwrap(),
             Vec::new()
@@ -554,7 +557,7 @@ pub mod unit_tests {
         assert_eq!(
             credential_def_identifiers(
                 &serde_json::from_str(r#"{"attrs":{}}"#).unwrap(),
-                &proof_req_no_interval()
+                &proof_req_no_interval(),
             )
             .unwrap(),
             Vec::new()
@@ -598,7 +601,7 @@ pub mod unit_tests {
         assert_eq!(
             &credential_def_identifiers(
                 &serde_json::from_value(selected_credentials.clone()).unwrap(),
-                &proof_req_no_interval()
+                &proof_req_no_interval(),
             )
             .unwrap(),
             &creds
@@ -610,7 +613,7 @@ pub mod unit_tests {
         assert_eq!(
             &credential_def_identifiers(
                 &serde_json::from_value(selected_credentials).unwrap(),
-                &proof_req_no_interval()
+                &proof_req_no_interval(),
             )
             .unwrap(),
             &creds

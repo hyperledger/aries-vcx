@@ -293,13 +293,6 @@ pub async fn dev_build_featured_wallet(key_seed: &str) -> (String, impl BaseWall
     return (INSTITUTION_DID.to_owned(), MockWallet);
 }
 
-#[macro_export]
-macro_rules! run_setup_test {
-    ($func:expr) => {{
-        $crate::devsetup::build_setup_profile().await.run($func)
-    }};
-}
-
 pub async fn build_setup_profile() -> SetupProfile<
     impl IndyLedgerRead + AnoncredsLedgerRead,
     impl IndyLedgerWrite + AnoncredsLedgerWrite,
@@ -338,21 +331,6 @@ pub async fn build_setup_profile() -> SetupProfile<
     }
 }
 
-impl<LR, LW, A, W> SetupProfile<LR, LW, A, W>
-where
-    LR: IndyLedgerRead + AnoncredsLedgerRead,
-    LW: IndyLedgerWrite + AnoncredsLedgerWrite,
-    A: BaseAnonCreds,
-    W: BaseWallet,
-{
-    pub async fn run<F>(self, f: impl FnOnce(Self) -> F)
-    where
-        F: Future<Output = ()>,
-    {
-        f(self).await;
-    }
-}
-
 impl SetupPoolDirectory {
     pub async fn init() -> SetupPoolDirectory {
         debug!("SetupPoolDirectory init >> going to setup agency environment");
@@ -363,17 +341,6 @@ impl SetupPoolDirectory {
 
         debug!("SetupPoolDirectory init >> completed");
         SetupPoolDirectory { genesis_file_path }
-    }
-
-    pub async fn run<F>(f: impl FnOnce(Self) -> F)
-    where
-        F: Future<Output = ()>,
-    {
-        let init = Self::init().await;
-
-        f(init).await;
-
-        reset_global_state();
     }
 }
 
