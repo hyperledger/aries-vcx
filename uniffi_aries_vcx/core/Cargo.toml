@@ -21,7 +21,6 @@ aries-vcx = { path = "../../aries_vcx", features = [
     "vdrtools_wallet",
     "credx",
 ] }
-test_utils = { path = "../../tools/test_utils" }
 tokio = { version = "1.24.1", features = ["rt-multi-thread"] }
 once_cell = "1.17.0"
 thiserror = "1.0.38"

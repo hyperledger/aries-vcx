@@ -5049,7 +5049,6 @@ dependencies = [
  "serde",
  "serde_json",
  "shared_vcx",
- "test_utils",
  "thiserror",
  "tokio",
  "uniffi",
