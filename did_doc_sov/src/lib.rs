@@ -1,5 +1,3 @@
-extern crate display_as_json;
-
 pub mod error;
 pub mod extra_fields;
 // TODO: Remove once migration is done

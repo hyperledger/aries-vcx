@@ -23,12 +23,8 @@ impl FromDidDoc for Numalgo2 {
         did_document: DidDocument<ExtraFieldsSov>,
     ) -> Result<PeerDid<Numalgo2>, DidPeerError> {
         let mut did = String::from("did:peer:2");
-
         did = append_encoded_key_segments(did, &did_document)?;
-        println!("after append_encoded_key_segments >> did: {}", did);
         did = append_encoded_service_segment(did, &did_document)?;
-        println!("after append_encoded_service_segment >> did: {}", did);
-
         PeerDid::<Numalgo2>::parse(did)
     }
 }
