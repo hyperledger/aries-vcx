@@ -46,16 +46,19 @@ fn demo() -> Result<(), Box<dyn Error>> {
         .add_verification_method(verification_method)
         .add_service(service)
         .build();
-    println!("diddoc: {}", ddo);
+    println!("Did document: \n{}", serde_json::to_string_pretty(&ddo)?);
 
     let peer_did_2 = PeerDid::<Numalgo2>::from_did_doc(ddo.clone())?;
-    println!("PeerDid numalgo(2): {}", peer_did_2);
+    println!("as did:peer numalgo(2): {}", peer_did_2);
 
     let peer_did_3 = PeerDid::<Numalgo3>::from_did_doc(ddo)?;
-    println!("PeerDid numalgo(3): {}", peer_did_3);
+    println!("as did:peer numalgo(3): {}", peer_did_3);
 
     let peer_did_3_v2 = peer_did_2.to_numalgo3()?;
-    println!("Converted PeerDid numalgo(3): {}", peer_did_3_v2);
+    println!(
+        "as did:peer numalgo(2) converted to numalgo(3): {}",
+        peer_did_3_v2
+    );
 
     Ok(())
 }
