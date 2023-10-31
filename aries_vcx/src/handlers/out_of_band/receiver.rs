@@ -5,20 +5,14 @@ use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::B
 use base64::{engine::general_purpose, Engine};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
-    decorators::{attachment::AttachmentType, thread::Thread},
+    decorators::attachment::{Attachment, AttachmentType},
     msg_fields::protocols::{
-        cred_issuance::{
-            v1::{
-                issue_credential::IssueCredentialV1, offer_credential::OfferCredentialV1,
-                request_credential::RequestCredentialV1, CredentialIssuanceV1,
-            },
-            CredentialIssuance,
-        },
+        cred_issuance::v1::offer_credential::OfferCredentialV1,
         out_of_band::{
             invitation::{Invitation, OobService},
             OutOfBand,
         },
-        present_proof::v1::{present::PresentationV1, request::RequestPresentationV1},
+        present_proof::v1::request::RequestPresentationV1,
     },
     AriesMessage,
 };
@@ -160,138 +154,10 @@ impl OutOfBandReceiver {
             .as_ref()
             .and_then(|v| v.get(0))
         {
-            let AttachmentType::Base64(encoded_attach) = &attach.data.content else {
-                return Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::SerializationError,
-                    format!("Attachment is not base 64 encoded JSON: {attach:?}"),
-                ));
-            };
-
-            let Ok(bytes) = general_purpose::STANDARD.decode(encoded_attach) else {
-                return Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::SerializationError,
-                    format!("Attachment is not base 64 encoded JSON: {attach:?}"),
-                ));
-            };
-
-            let attach_json: Value = serde_json::from_slice(&bytes).map_err(|_| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::SerializationError,
-                    format!("Attachment is not base 64 encoded JSON: {attach:?}"),
-                )
-            })?;
-
-            let attach_id = if let Some(attach_id) = attach.id.as_deref() {
-                let attach_id = AttachmentId::from_str(attach_id).map_err(|err| {
-                    AriesVcxError::from_msg(
-                        AriesVcxErrorKind::SerializationError,
-                        format!("Failed to deserialize attachment ID: {}", err),
-                    )
-                })?;
-
-                Some(attach_id)
-            } else {
-                None
-            };
-
-            match attach_id {
-                Some(id) => match id {
-                    AttachmentId::CredentialOffer => {
-                        let mut offer =
-                            OfferCredentialV1::deserialize(&attach_json).map_err(|_| {
-                                AriesVcxError::from_msg(
-                                    AriesVcxErrorKind::SerializationError,
-                                    format!("Failed to deserialize attachment: {attach_json:?}"),
-                                )
-                            })?;
-
-                        if let Some(thread) = &mut offer.decorators.thread {
-                            thread.pthid = Some(self.oob.id.clone());
-                        } else {
-                            let thread = Thread::builder()
-                                .thid(offer.id.clone())
-                                .pthid(self.oob.id.clone())
-                                .build();
-                            offer.decorators.thread = Some(thread);
-                        }
-
-                        return Ok(Some(AriesMessage::CredentialIssuance(
-                            CredentialIssuance::V1(CredentialIssuanceV1::OfferCredential(offer)),
-                        )));
-                    }
-                    AttachmentId::CredentialRequest => {
-                        let mut request =
-                            RequestCredentialV1::deserialize(&attach_json).map_err(|_| {
-                                AriesVcxError::from_msg(
-                                    AriesVcxErrorKind::SerializationError,
-                                    format!("Failed to deserialize attachment: {attach_json:?}"),
-                                )
-                            })?;
-
-                        if let Some(thread) = &mut request.decorators.thread {
-                            thread.pthid = Some(self.oob.id.clone());
-                        } else {
-                            let thread = Thread::builder()
-                                .thid(request.id.clone())
-                                .pthid(self.oob.id.clone())
-                                .build();
-                            request.decorators.thread = Some(thread);
-                        }
-
-                        return Ok(Some(AriesMessage::CredentialIssuance(
-                            CredentialIssuance::V1(CredentialIssuanceV1::RequestCredential(
-                                request,
-                            )),
-                        )));
-                    }
-                    AttachmentId::Credential => {
-                        let mut credential =
-                            IssueCredentialV1::deserialize(&attach_json).map_err(|_| {
-                                AriesVcxError::from_msg(
-                                    AriesVcxErrorKind::SerializationError,
-                                    format!("Failed to deserialize attachment: {attach_json:?}"),
-                                )
-                            })?;
-
-                        credential.decorators.thread.pthid = Some(self.oob.id.clone());
-
-                        return Ok(Some(AriesMessage::CredentialIssuance(
-                            CredentialIssuance::V1(CredentialIssuanceV1::IssueCredential(
-                                credential,
-                            )),
-                        )));
-                    }
-                    AttachmentId::PresentationRequest => {
-                        let request =
-                            RequestPresentationV1::deserialize(&attach_json).map_err(|_| {
-                                AriesVcxError::from_msg(
-                                    AriesVcxErrorKind::SerializationError,
-                                    format!("Failed to deserialize attachment: {attach_json:?}"),
-                                )
-                            })?;
-
-                        return Ok(Some(request.into()));
-                    }
-                    AttachmentId::Presentation => {
-                        let mut presentation =
-                            PresentationV1::deserialize(&attach_json).map_err(|_| {
-                                AriesVcxError::from_msg(
-                                    AriesVcxErrorKind::SerializationError,
-                                    format!("Failed to deserialize attachment: {attach_json:?}"),
-                                )
-                            })?;
-
-                        presentation.decorators.thread.pthid = Some(self.oob.id.clone());
-
-                        return Ok(Some(presentation.into()));
-                    }
-                },
-                None => {
-                    return Ok(None);
-                }
-            };
-        };
-        Ok(None)
+            attachment_to_aries_message(attach)
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn build_connection(
@@ -330,5 +196,67 @@ impl OutOfBandReceiver {
 impl Display for OutOfBandReceiver {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", json!(AriesMessage::from(self.oob.clone())))
+    }
+}
+
+fn attachment_to_aries_message(attach: &Attachment) -> VcxResult<Option<AriesMessage>> {
+    let AttachmentType::Base64(encoded_attach) = &attach.data.content else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
+            format!("Attachment is not base 64 encoded JSON: {attach:?}"),
+        ));
+    };
+
+    let Ok(bytes) = general_purpose::STANDARD.decode(encoded_attach) else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
+            format!("Attachment is not base 64 encoded JSON: {attach:?}"),
+        ));
+    };
+
+    let attach_json: Value = serde_json::from_slice(&bytes).map_err(|_| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
+            format!("Attachment is not base 64 encoded JSON: {attach:?}"),
+        )
+    })?;
+
+    let attach_id = if let Some(attach_id) = attach.id.as_deref() {
+        AttachmentId::from_str(attach_id).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
+                format!("Failed to deserialize attachment ID: {}", err),
+            )
+        })
+    } else {
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidMessageFormat,
+            format!("Missing attachment ID on attach: {attach:?}"),
+        ))
+    }?;
+
+    match attach_id {
+        AttachmentId::CredentialOffer => {
+            let offer = OfferCredentialV1::deserialize(&attach_json).map_err(|_| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::SerializationError,
+                    format!("Failed to deserialize attachment: {attach_json:?}"),
+                )
+            })?;
+            Ok(Some(offer.into()))
+        }
+        AttachmentId::PresentationRequest => {
+            let request = RequestPresentationV1::deserialize(&attach_json).map_err(|_| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::SerializationError,
+                    format!("Failed to deserialize attachment: {attach_json:?}"),
+                )
+            })?;
+            Ok(Some(request.into()))
+        }
+        _ => Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidMessageFormat,
+            format!("unexpected attachment type: {:?}", attach_id),
+        )),
     }
 }
