@@ -1,21 +1,10 @@
 mod common;
-use std::collections::VecDeque;
 
-use aries_vcx::protocols::connection::invitee::{states::completed::Completed, InviteeConnection};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use mediation::{
-    didcomm_types::mediator_coord_structs::{
-        KeylistData, KeylistQueryData, KeylistUpdateItem, KeylistUpdateItemAction,
-        KeylistUpdateRequestData, MediatorCoordMsgEnum,
-    },
-    storage::MediatorPersistence,
+use mediation::didcomm_types::mediator_coord_structs::{
+    KeylistData, KeylistQueryData, KeylistUpdateItem, KeylistUpdateItemAction,
+    KeylistUpdateRequestData, MediatorCoordMsgEnum,
 };
-use mediator::aries_agent::{
-    client::transports::{AriesReqwest, AriesTransport},
-    Agent,
-};
-use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
-use reqwest::header::ACCEPT;
 
 use crate::common::{
     agent_and_transport_utils::{
@@ -26,47 +15,6 @@ use crate::common::{
 };
 
 static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
-
-const ENDPOINT_ROOT: &str = "http://localhost:8005";
-
-async fn didcomm_connection(
-    agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
-    aries_transport: &mut impl AriesTransport,
-) -> Result<InviteeConnection<Completed>> {
-    let client = reqwest::Client::new();
-    let base: Url = ENDPOINT_ROOT.parse().unwrap();
-    let endpoint_register = base.join("register").unwrap();
-
-    let oobi: OOBInvitation = client
-        .get(endpoint_register)
-        .header(ACCEPT, "application/json")
-        .send()
-        .await?
-        .error_for_status()?
-        .json()
-        .await?;
-    info!("Got invitation from register endpoint {:?}", oobi);
-
-    let state: InviteeConnection<Completed> =
-        agent.establish_connection(oobi, aries_transport).await?;
-
-    Ok(state)
-}
-
-#[tokio::test]
-#[ignore]
-async fn test_init() {
-    LOGGING_INIT.call_once(setup_env_logging);
-    let agent = mediator::aries_agent::AgentBuilder::new_demo_agent()
-        .await
-        .unwrap();
-    let mut aries_transport = AriesReqwest {
-        response_queue: VecDeque::new(),
-        client: reqwest::Client::new(),
-    };
-    let _ = didcomm_connection(&agent, &mut aries_transport).await;
-    let _ = didcomm_connection(&agent, &mut aries_transport).await;
-}
 
 #[tokio::test]
 async fn test_mediate_grant() -> Result<()> {
