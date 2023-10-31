@@ -3,6 +3,8 @@ extern crate serde_json;
 
 #[cfg(test)]
 mod dbtests {
+    use std::error::Error;
+
     use aries_vcx::global::settings;
     use aries_vcx_core::wallet::{
         base_wallet::BaseWallet,
@@ -15,7 +17,7 @@ mod dbtests {
 
     #[tokio::test]
     #[ignore]
-    async fn test_mysql_init_issuer_with_mysql_wallet() {
+    async fn test_mysql_init_issuer_with_mysql_wallet() -> Result<(), Box<dyn Error>> {
         LibvcxDefaultLogger::init_testing_logger();
         let db_name = format!("mysqltest_{}", uuid::Uuid::new_v4()).replace('-', "_");
         let storage_config = json!({
@@ -39,18 +41,15 @@ mod dbtests {
             .wallet_type("mysql")
             .storage_config(storage_config)
             .storage_credentials(storage_credentials)
-            .build()
-            .unwrap();
+            .build()?;
 
-        let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
-        let _config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed)
-            .await
-            .unwrap();
+        let wallet_handle = create_and_open_wallet(&config_wallet).await?;
+        let _config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await?;
 
         let (_, _) = IndySdkWallet::new(wallet_handle)
             .create_and_store_my_did(None, None)
-            .await
-            .unwrap();
-        close_wallet(wallet_handle).await.unwrap();
+            .await?;
+        close_wallet(wallet_handle).await?;
+        Ok(())
     }
 }

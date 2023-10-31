@@ -351,17 +351,10 @@ where
     {
         f(self).await;
     }
-
-    pub async fn run2<F>(self, f: impl FnOnce(Self) -> F) -> Result<(), Box<dyn Error>>
-    where
-        F: Future<Output = Result<(), Box<dyn Error>>>,
-    {
-        f(self).await
-    }
 }
 
 impl SetupPoolDirectory {
-    async fn init() -> SetupPoolDirectory {
+    pub async fn init() -> SetupPoolDirectory {
         debug!("SetupPoolDirectory init >> going to setup agency environment");
         init_test_logging();
 

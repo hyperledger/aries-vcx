@@ -1,6 +1,4 @@
-pub mod utils;
-
-use std::time::Duration;
+use std::{error::Error, time::Duration};
 
 use aries_vcx::{
     common::{
@@ -15,11 +13,13 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 use serde_json::json;
-use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, run_setup_test};
+use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};
 
 use crate::utils::{
     create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_schema,
 };
+
+pub mod utils;
 
 // FUTURE - issuer and holder seperation only needed whilst modular deps not fully implemented
 async fn create_indy_proof(
@@ -30,7 +30,7 @@ async fn create_indy_proof(
     ledger_read: &impl AnoncredsLedgerRead,
     ledger_write: &impl AnoncredsLedgerWrite,
     did: &str,
-) -> (String, String, String, String) {
+) -> Result<(String, String, String, String), Box<dyn Error>> {
     let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
         wallet_issuer,
         wallet_holder,
@@ -75,14 +75,13 @@ async fn create_indy_proof(
     .to_string();
 
     let schema_id = schema.schema_id.clone();
-    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
+    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
     let schemas = json!({
         schema_id: schema_json,
     })
     .to_string();
 
-    let cred_def_json: serde_json::Value =
-        serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
+    let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json())?;
     let cred_defs = json!({
         cred_def.get_cred_def_id(): cred_def_json,
     })
@@ -90,8 +89,7 @@ async fn create_indy_proof(
 
     anoncreds_holder
         .prover_get_credentials_for_proof_req(wallet_holder, &proof_req)
-        .await
-        .unwrap();
+        .await?;
 
     let proof = anoncreds_holder
         .prover_create_proof(
@@ -103,9 +101,8 @@ async fn create_indy_proof(
             &cred_defs,
             None,
         )
-        .await
-        .unwrap();
-    (schemas, cred_defs, proof_req, proof)
+        .await?;
+    Ok((schemas, cred_defs, proof_req, proof))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -118,7 +115,7 @@ async fn create_proof_with_predicate(
     ledger_write: &impl AnoncredsLedgerWrite,
     did: &str,
     include_predicate_cred: bool,
-) -> (String, String, String, String) {
+) -> Result<(String, String, String, String), Box<dyn Error>> {
     let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
         wallet_issuer,
         wallet_holder,
@@ -177,14 +174,13 @@ async fn create_proof_with_predicate(
         .to_string()
     };
 
-    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
+    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
     let schemas = json!({
         schema.schema_id: schema_json,
     })
     .to_string();
 
-    let cred_def_json: serde_json::Value =
-        serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
+    let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json())?;
     let cred_defs = json!({
         cred_def.get_cred_def_id(): cred_def_json,
     })
@@ -192,8 +188,7 @@ async fn create_proof_with_predicate(
 
     anoncreds_holder
         .prover_get_credentials_for_proof_req(wallet_holder, &proof_req)
-        .await
-        .unwrap();
+        .await?;
 
     let proof = anoncreds_holder
         .prover_create_proof(
@@ -205,9 +200,8 @@ async fn create_proof_with_predicate(
             &cred_defs,
             None,
         )
-        .await
-        .unwrap();
-    (schemas, cred_defs, proof_req, proof)
+        .await?;
+    Ok((schemas, cred_defs, proof_req, proof))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -257,364 +251,342 @@ async fn create_and_store_nonrevocable_credential(
 
 #[tokio::test]
 #[ignore]
-async fn test_pool_proof_self_attested_proof_validation() {
-    run_setup_test!(|setup| async move {
-        let requested_attrs = json!([
-            json!({
-                "name":"address1",
-                "self_attest_allowed": true,
-            }),
-            json!({
-                "name":"zip",
-                "self_attest_allowed": true,
-            }),
-        ])
-        .to_string();
-        let requested_predicates = json!([]).to_string();
-        let revocation_details = r#"{"support_revocation":false}"#.to_string();
-        let name = "Optional".to_owned();
+async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn Error>> {
+    let setup = build_setup_profile().await;
+    let requested_attrs = json!([
+        json!({
+            "name":"address1",
+            "self_attest_allowed": true,
+        }),
+        json!({
+            "name":"zip",
+            "self_attest_allowed": true,
+        }),
+    ])
+    .to_string();
+    let requested_predicates = json!([]).to_string();
+    let revocation_details = r#"{"support_revocation":false}"#.to_string();
+    let name = "Optional".to_owned();
 
-        let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
-            .await
-            .unwrap()
-            .set_requested_attributes_as_string(requested_attrs)
-            .unwrap()
-            .set_requested_predicates_as_string(requested_predicates)
-            .unwrap()
-            .set_not_revoked_interval(revocation_details)
-            .unwrap();
+    let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
+        .await?
+        .set_requested_attributes_as_string(requested_attrs)?
+        .set_requested_predicates_as_string(requested_predicates)?
+        .set_not_revoked_interval(revocation_details)?;
 
-        let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
+    let proof_req_json = serde_json::to_string(&proof_req_json)?;
 
-        let anoncreds = &setup.anoncreds;
-        let prover_proof_json = anoncreds
-            .prover_create_proof(
-                &setup.wallet,
-                &proof_req_json,
-                &json!({
-                  "self_attested_attributes":{
-                     "attribute_0": "my_self_attested_address",
-                     "attribute_1": "my_self_attested_zip"
-                  },
-                  "requested_attributes":{},
-                  "requested_predicates":{}
-                })
-                .to_string(),
-                "main",
-                &json!({}).to_string(),
-                &json!({}).to_string(),
-                None,
-            )
-            .await
-            .unwrap();
+    let anoncreds = &setup.anoncreds;
+    let prover_proof_json = anoncreds
+        .prover_create_proof(
+            &setup.wallet,
+            &proof_req_json,
+            &json!({
+              "self_attested_attributes":{
+                 "attribute_0": "my_self_attested_address",
+                 "attribute_1": "my_self_attested_zip"
+              },
+              "requested_attributes":{},
+              "requested_predicates":{}
+            })
+            .to_string(),
+            "main",
+            &json!({}).to_string(),
+            &json!({}).to_string(),
+            None,
+        )
+        .await?;
 
-        assert!(validate_indy_proof(
+    assert!(
+        validate_indy_proof(
             &setup.ledger_read,
             &setup.anoncreds,
             &prover_proof_json,
-            &proof_req_json
+            &proof_req_json,
         )
-        .await
-        .unwrap());
-    })
-    .await;
+        .await?
+    );
+    Ok(())
 }
 
 #[tokio::test]
 #[ignore]
-async fn test_pool_proof_restrictions() {
-    run_setup_test!(|setup| async move {
-        let requested_attrs = json!([
-            json!({
-                "name":"address1",
-                "restrictions": [{ "issuer_did": "Not Here" }],
-            }),
-            json!({
-                "name":"zip",
-            }),
-            json!({
-                "name":"self_attest",
-                "self_attest_allowed": true,
-            }),
-        ])
-        .to_string();
-        let requested_predicates = json!([]).to_string();
-        let revocation_details = r#"{"support_revocation":true}"#.to_string();
-        let name = "Optional".to_owned();
+async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
+    let setup = build_setup_profile().await;
+    let requested_attrs = json!([
+        json!({
+            "name":"address1",
+            "restrictions": [{ "issuer_did": "Not Here" }],
+        }),
+        json!({
+            "name":"zip",
+        }),
+        json!({
+            "name":"self_attest",
+            "self_attest_allowed": true,
+        }),
+    ])
+    .to_string();
+    let requested_predicates = json!([]).to_string();
+    let revocation_details = r#"{"support_revocation":true}"#.to_string();
+    let name = "Optional".to_owned();
 
-        let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
-            .await
-            .unwrap()
-            .set_requested_attributes_as_string(requested_attrs)
-            .unwrap()
-            .set_requested_predicates_as_string(requested_predicates)
-            .unwrap()
-            .set_not_revoked_interval(revocation_details)
-            .unwrap();
+    let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
+        .await?
+        .set_requested_attributes_as_string(requested_attrs)?
+        .set_requested_predicates_as_string(requested_predicates)?
+        .set_not_revoked_interval(revocation_details)?;
 
-        let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
+    let proof_req_json = serde_json::to_string(&proof_req_json)?;
 
-        let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
+    let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
+        &setup.wallet,
+        &setup.wallet,
+        &setup.anoncreds,
+        &setup.anoncreds,
+        &setup.ledger_read,
+        &setup.ledger_write,
+        &setup.institution_did,
+        DEFAULT_SCHEMA_ATTRS,
+    )
+    .await;
+    let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json())?;
+    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
+
+    let anoncreds = &setup.anoncreds;
+    let prover_proof_json = anoncreds
+        .prover_create_proof(
             &setup.wallet,
-            &setup.wallet,
-            &setup.anoncreds,
-            &setup.anoncreds,
-            &setup.ledger_read,
-            &setup.ledger_write,
-            &setup.institution_did,
-            DEFAULT_SCHEMA_ATTRS,
+            &proof_req_json,
+            &json!({
+                "self_attested_attributes":{
+                   "attribute_2": "my_self_attested_val"
+                },
+                "requested_attributes":{
+                   "attribute_0": {"cred_id": cred_id, "revealed": true},
+                   "attribute_1": {"cred_id": cred_id, "revealed": true}
+                },
+                "requested_predicates":{}
+            })
+            .to_string(),
+            "main",
+            &json!({ schema.schema_id: schema_json }).to_string(),
+            &json!({ cred_def.get_cred_def_id(): cred_def_json }).to_string(),
+            None,
         )
-        .await;
-        let cred_def_json: serde_json::Value =
-            serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
-        let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
+        .await?;
+    assert_eq!(
+        validate_indy_proof(
+            &setup.ledger_read,
+            &setup.anoncreds,
+            &prover_proof_json,
+            &proof_req_json,
+        )
+        .await
+        .unwrap_err()
+        .kind(),
+        AriesVcxErrorKind::ProofRejected
+    );
 
-        let anoncreds = &setup.anoncreds;
-        let prover_proof_json = anoncreds
-            .prover_create_proof(
-                &setup.wallet,
-                &proof_req_json,
-                &json!({
-                    "self_attested_attributes":{
-                       "attribute_2": "my_self_attested_val"
-                    },
-                    "requested_attributes":{
-                       "attribute_0": {"cred_id": cred_id, "revealed": true},
-                       "attribute_1": {"cred_id": cred_id, "revealed": true}
-                    },
-                    "requested_predicates":{}
-                })
-                .to_string(),
-                "main",
-                &json!({ schema.schema_id: schema_json }).to_string(),
-                &json!({ cred_def.get_cred_def_id(): cred_def_json }).to_string(),
-                None,
-            )
-            .await
-            .unwrap();
+    let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json)?;
+    proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
+    assert!(
+        validate_indy_proof(
+            &setup.ledger_read,
+            &setup.anoncreds,
+            &prover_proof_json,
+            &proof_req_json.to_string(),
+        )
+        .await?
+    );
+    Ok(())
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
+    let setup = build_setup_profile().await;
+    let requested_attrs = json!([
+        json!({
+            "name":"address1",
+            "restrictions": [json!({ "issuer_did": setup.institution_did })]
+        }),
+        json!({
+            "name":"zip",
+            "restrictions": [json!({ "issuer_did": setup.institution_did })]
+        }),
+        json!({
+            "name":"self_attest",
+            "self_attest_allowed": true,
+        }),
+    ])
+    .to_string();
+    let requested_predicates = json!([]).to_string();
+    let revocation_details = r#"{"support_revocation":true}"#.to_string();
+    let name = "Optional".to_owned();
+
+    let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
+        .await?
+        .set_requested_attributes_as_string(requested_attrs)?
+        .set_requested_predicates_as_string(requested_predicates)?
+        .set_not_revoked_interval(revocation_details)?;
+
+    let proof_req_json = serde_json::to_string(&proof_req_json)?;
+
+    let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
+        &setup.wallet,
+        &setup.wallet,
+        &setup.anoncreds,
+        &setup.anoncreds,
+        &setup.ledger_read,
+        &setup.ledger_write,
+        &setup.institution_did,
+        DEFAULT_SCHEMA_ATTRS,
+    )
+    .await;
+    let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json())?;
+    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
+
+    let anoncreds = &setup.anoncreds;
+    let prover_proof_json = anoncreds
+        .prover_create_proof(
+            &setup.wallet,
+            &proof_req_json,
+            &json!({
+                "self_attested_attributes":{
+                   "attribute_2": "my_self_attested_val"
+                },
+                "requested_attributes":{
+                   "attribute_0": {"cred_id": cred_id, "revealed": true},
+                   "attribute_1": {"cred_id": cred_id, "revealed": true}
+                },
+                "requested_predicates":{}
+            })
+            .to_string(),
+            "main",
+            &json!({ schema.schema_id: schema_json }).to_string(),
+            &json!({ cred_def.get_cred_def_id(): cred_def_json }).to_string(),
+            None,
+        )
+        .await?;
+    assert!(
+        validate_indy_proof(
+            &setup.ledger_read,
+            &setup.anoncreds,
+            &prover_proof_json,
+            &proof_req_json,
+        )
+        .await?
+    );
+
+    let mut proof_obj: serde_json::Value = serde_json::from_str(&prover_proof_json)?;
+    {
+        proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["raw"] = json!("Other Value");
+        let prover_proof_json = serde_json::to_string(&proof_obj)?;
+
         assert_eq!(
             validate_indy_proof(
                 &setup.ledger_read,
                 &setup.anoncreds,
                 &prover_proof_json,
-                &proof_req_json
+                &proof_req_json,
             )
             .await
             .unwrap_err()
             .kind(),
-            AriesVcxErrorKind::ProofRejected
+            AriesVcxErrorKind::InvalidProof
         );
+    }
+    {
+        proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["encoded"] =
+            json!("1111111111111111111111111111111111111111111111111111111111");
+        let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
-        let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
-        proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
-        assert!(validate_indy_proof(
-            &setup.ledger_read,
-            &setup.anoncreds,
-            &prover_proof_json,
-            &proof_req_json.to_string()
-        )
-        .await
-        .unwrap());
-    })
-    .await;
-}
-
-#[tokio::test]
-#[ignore]
-async fn test_pool_proof_validate_attribute() {
-    run_setup_test!(|setup| async move {
-        let requested_attrs = json!([
-            json!({
-                "name":"address1",
-                "restrictions": [json!({ "issuer_did": setup.institution_did })]
-            }),
-            json!({
-                "name":"zip",
-                "restrictions": [json!({ "issuer_did": setup.institution_did })]
-            }),
-            json!({
-                "name":"self_attest",
-                "self_attest_allowed": true,
-            }),
-        ])
-        .to_string();
-        let requested_predicates = json!([]).to_string();
-        let revocation_details = r#"{"support_revocation":true}"#.to_string();
-        let name = "Optional".to_owned();
-
-        let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
-            .await
-            .unwrap()
-            .set_requested_attributes_as_string(requested_attrs)
-            .unwrap()
-            .set_requested_predicates_as_string(requested_predicates)
-            .unwrap()
-            .set_not_revoked_interval(revocation_details)
-            .unwrap();
-
-        let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
-
-        let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
-            &setup.wallet,
-            &setup.wallet,
-            &setup.anoncreds,
-            &setup.anoncreds,
-            &setup.ledger_read,
-            &setup.ledger_write,
-            &setup.institution_did,
-            DEFAULT_SCHEMA_ATTRS,
-        )
-        .await;
-        let cred_def_json: serde_json::Value =
-            serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
-        let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
-
-        let anoncreds = &setup.anoncreds;
-        let prover_proof_json = anoncreds
-            .prover_create_proof(
-                &setup.wallet,
+        assert_eq!(
+            validate_indy_proof(
+                &setup.ledger_read,
+                &setup.anoncreds,
+                &prover_proof_json,
                 &proof_req_json,
-                &json!({
-                    "self_attested_attributes":{
-                       "attribute_2": "my_self_attested_val"
-                    },
-                    "requested_attributes":{
-                       "attribute_0": {"cred_id": cred_id, "revealed": true},
-                       "attribute_1": {"cred_id": cred_id, "revealed": true}
-                    },
-                    "requested_predicates":{}
-                })
-                .to_string(),
-                "main",
-                &json!({ schema.schema_id: schema_json }).to_string(),
-                &json!({ cred_def.get_cred_def_id(): cred_def_json }).to_string(),
-                None,
             )
             .await
-            .unwrap();
-        assert!(validate_indy_proof(
-            &setup.ledger_read,
-            &setup.anoncreds,
-            &prover_proof_json,
-            &proof_req_json
-        )
+            .unwrap_err()
+            .kind(),
+            AriesVcxErrorKind::InvalidProof
+        );
+    }
+    Ok(())
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_prover_verify_proof() -> Result<(), Box<dyn Error>> {
+    let setup = build_setup_profile().await;
+    let (schemas, cred_defs, proof_req, proof) = create_indy_proof(
+        &setup.wallet,
+        &setup.wallet,
+        &setup.anoncreds,
+        &setup.anoncreds,
+        &setup.ledger_read,
+        &setup.ledger_write,
+        &setup.institution_did,
+    )
+    .await?;
+
+    let anoncreds = &setup.anoncreds;
+    let proof_validation = anoncreds
+        .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
+        .await?;
+
+    assert!(proof_validation);
+    Ok(())
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_prover_verify_proof_with_predicate_success_case() -> Result<(), Box<dyn Error>> {
+    let setup = build_setup_profile().await;
+    let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
+        &setup.wallet,
+        &setup.wallet,
+        &setup.anoncreds,
+        &setup.anoncreds,
+        &setup.ledger_read,
+        &setup.ledger_write,
+        &setup.institution_did,
+        true,
+    )
+    .await?;
+
+    let anoncreds = &setup.anoncreds;
+    let proof_validation = anoncreds
+        .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
+        .await?;
+
+    assert!(proof_validation);
+    Ok(())
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_prover_verify_proof_with_predicate_fail_case() -> Result<(), Box<dyn Error>> {
+    let setup = build_setup_profile().await;
+    let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
+        &setup.wallet,
+        &setup.wallet,
+        &setup.anoncreds,
+        &setup.anoncreds,
+        &setup.ledger_read,
+        &setup.ledger_write,
+        &setup.institution_did,
+        false,
+    )
+    .await?;
+
+    let anoncreds = &setup.anoncreds;
+    anoncreds
+        .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
         .await
-        .unwrap());
-
-        let mut proof_obj: serde_json::Value = serde_json::from_str(&prover_proof_json).unwrap();
-        {
-            proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["raw"] =
-                json!("Other Value");
-            let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
-
-            assert_eq!(
-                validate_indy_proof(
-                    &setup.ledger_read,
-                    &setup.anoncreds,
-                    &prover_proof_json,
-                    &proof_req_json
-                )
-                .await
-                .unwrap_err()
-                .kind(),
-                AriesVcxErrorKind::InvalidProof
-            );
-        }
-        {
-            proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["encoded"] =
-                json!("1111111111111111111111111111111111111111111111111111111111");
-            let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
-
-            assert_eq!(
-                validate_indy_proof(
-                    &setup.ledger_read,
-                    &setup.anoncreds,
-                    &prover_proof_json,
-                    &proof_req_json
-                )
-                .await
-                .unwrap_err()
-                .kind(),
-                AriesVcxErrorKind::InvalidProof
-            );
-        }
-    })
-    .await;
-}
-#[tokio::test]
-#[ignore]
-async fn test_pool_prover_verify_proof() {
-    run_setup_test!(|setup| async move {
-        let (schemas, cred_defs, proof_req, proof) = create_indy_proof(
-            &setup.wallet,
-            &setup.wallet,
-            &setup.anoncreds,
-            &setup.anoncreds,
-            &setup.ledger_read,
-            &setup.ledger_write,
-            &setup.institution_did,
-        )
-        .await;
-
-        let anoncreds = &setup.anoncreds;
-        let proof_validation = anoncreds
-            .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
-            .await
-            .unwrap();
-
-        assert!(proof_validation);
-    })
-    .await;
-}
-
-#[tokio::test]
-#[ignore]
-async fn test_pool_prover_verify_proof_with_predicate_success_case() {
-    run_setup_test!(|setup| async move {
-        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
-            &setup.wallet,
-            &setup.wallet,
-            &setup.anoncreds,
-            &setup.anoncreds,
-            &setup.ledger_read,
-            &setup.ledger_write,
-            &setup.institution_did,
-            true,
-        )
-        .await;
-
-        let anoncreds = &setup.anoncreds;
-        let proof_validation = anoncreds
-            .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
-            .await
-            .unwrap();
-
-        assert!(proof_validation);
-    })
-    .await;
-}
-
-#[tokio::test]
-#[ignore]
-async fn test_pool_prover_verify_proof_with_predicate_fail_case() {
-    run_setup_test!(|setup| async move {
-        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
-            &setup.wallet,
-            &setup.wallet,
-            &setup.anoncreds,
-            &setup.anoncreds,
-            &setup.ledger_read,
-            &setup.ledger_write,
-            &setup.institution_did,
-            false,
-        )
-        .await;
-
-        let anoncreds = &setup.anoncreds;
-        anoncreds
-            .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
-            .await
-            .unwrap_err();
-    })
-    .await;
+        .unwrap_err();
+    Ok(())
 }

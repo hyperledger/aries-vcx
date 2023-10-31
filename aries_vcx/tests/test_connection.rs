@@ -1,4 +1,4 @@
-pub mod utils;
+use std::error::Error;
 
 use aries_vcx::{
     common::ledger::transactions::write_endpoint_legacy,
@@ -32,6 +32,8 @@ use crate::utils::{
     },
     test_agent::{create_test_agent, create_test_agent_trustee},
 };
+
+pub mod utils;
 
 fn build_basic_message(content: String) -> BasicMessage {
     let now = Utc::now();
@@ -120,86 +122,83 @@ async fn create_service(
 
 #[tokio::test]
 #[ignore]
-async fn test_agency_pool_establish_connection_via_public_invite() {
-    SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_test_agent(setup.genesis_file_path).await;
-        create_service(&institution).await;
+async fn test_agency_pool_establish_connection_via_public_invite() -> Result<(), Box<dyn Error>> {
+    let setup = SetupPoolDirectory::init().await;
+    let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+    let mut consumer = create_test_agent(setup.genesis_file_path).await;
+    create_service(&institution).await;
 
-        let (consumer_to_institution, institution_to_consumer) =
-            create_connections_via_public_invite(&mut consumer, &mut institution).await;
+    let (consumer_to_institution, institution_to_consumer) =
+        create_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-        let basic_message = build_basic_message("Hello TestAgent".to_string());
-        if let AriesMessage::BasicMessage(message) = send_and_receive_message(
-            &consumer,
-            &institution,
-            &institution_to_consumer,
-            &consumer_to_institution,
-            &basic_message.clone().into(),
-        )
-        .await
-        {
-            assert_eq!(message.content.content, basic_message.content.content);
-        } else {
-            panic!("Unexpected message type");
-        }
-    })
-    .await;
+    let basic_message = build_basic_message("Hello TestAgent".to_string());
+    if let AriesMessage::BasicMessage(message) = send_and_receive_message(
+        &consumer,
+        &institution,
+        &institution_to_consumer,
+        &consumer_to_institution,
+        &basic_message.clone().into(),
+    )
+    .await
+    {
+        assert_eq!(message.content.content, basic_message.content.content);
+    } else {
+        panic!("Unexpected message type");
+    }
+    Ok(())
 }
 
 #[tokio::test]
 #[ignore]
-async fn test_agency_pool_establish_connection_via_pairwise_invite() {
-    SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_test_agent(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_test_agent(setup.genesis_file_path).await;
+async fn test_agency_pool_establish_connection_via_pairwise_invite() -> Result<(), Box<dyn Error>> {
+    let setup = SetupPoolDirectory::init().await;
+    let mut institution = create_test_agent(setup.genesis_file_path.clone()).await;
+    let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (consumer_to_institution, institution_to_consumer) =
-            create_connections_via_pairwise_invite(&mut consumer, &mut institution).await;
+    let (consumer_to_institution, institution_to_consumer) =
+        create_connections_via_pairwise_invite(&mut consumer, &mut institution).await;
 
-        let basic_message = build_basic_message("Hello TestAgent".to_string());
-        if let AriesMessage::BasicMessage(message) = send_and_receive_message(
-            &consumer,
-            &institution,
-            &institution_to_consumer,
-            &consumer_to_institution,
-            &basic_message.clone().into(),
-        )
-        .await
-        {
-            assert_eq!(message.content.content, basic_message.content.content);
-        } else {
-            panic!("Unexpected message type");
-        }
-    })
-    .await;
+    let basic_message = build_basic_message("Hello TestAgent".to_string());
+    if let AriesMessage::BasicMessage(message) = send_and_receive_message(
+        &consumer,
+        &institution,
+        &institution_to_consumer,
+        &consumer_to_institution,
+        &basic_message.clone().into(),
+    )
+    .await
+    {
+        assert_eq!(message.content.content, basic_message.content.content);
+    } else {
+        panic!("Unexpected message type");
+    }
+    Ok(())
 }
 
 #[tokio::test]
 #[ignore]
-async fn test_agency_pool_establish_connection_via_out_of_band() {
-    SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_test_agent(setup.genesis_file_path).await;
-        create_service(&institution).await;
+async fn test_agency_pool_establish_connection_via_out_of_band() -> Result<(), Box<dyn Error>> {
+    let setup = SetupPoolDirectory::init().await;
+    let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+    let mut consumer = create_test_agent(setup.genesis_file_path).await;
+    create_service(&institution).await;
 
-        let (consumer_to_institution, institution_to_consumer) =
-            create_connections_via_oob_invite(&mut consumer, &mut institution).await;
+    let (consumer_to_institution, institution_to_consumer) =
+        create_connections_via_oob_invite(&mut consumer, &mut institution).await;
 
-        let basic_message = build_basic_message("Hello TestAgent".to_string());
-        if let AriesMessage::BasicMessage(message) = send_and_receive_message(
-            &consumer,
-            &institution,
-            &institution_to_consumer,
-            &consumer_to_institution,
-            &basic_message.clone().into(),
-        )
-        .await
-        {
-            assert_eq!(message.content.content, basic_message.content.content);
-        } else {
-            panic!("Unexpected message type");
-        }
-    })
-    .await;
+    let basic_message = build_basic_message("Hello TestAgent".to_string());
+    if let AriesMessage::BasicMessage(message) = send_and_receive_message(
+        &consumer,
+        &institution,
+        &institution_to_consumer,
+        &consumer_to_institution,
+        &basic_message.clone().into(),
+    )
+    .await
+    {
+        assert_eq!(message.content.content, basic_message.content.content);
+    } else {
+        panic!("Unexpected message type");
+    }
+    Ok(())
 }
