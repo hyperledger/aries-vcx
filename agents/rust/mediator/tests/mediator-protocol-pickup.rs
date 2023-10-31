@@ -6,8 +6,7 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediation::{
     didcomm_types::mediator_coord_structs::{
-        KeylistUpdateItem, KeylistUpdateItemAction, KeylistUpdateRequestData, MediateGrantData,
-        MediatorCoordMsgEnum,
+        KeylistUpdateItem, KeylistUpdateItemAction, KeylistUpdateRequestData, MediatorCoordMsgEnum,
     },
     storage::MediatorPersistence,
 };
@@ -34,46 +33,14 @@ use messages::{
 
 use crate::common::{
     agent_and_transport_utils::{
-        gen_mediator_connected_agent, send_message_and_pop_response_message,
+        gen_mediator_connected_agent, get_mediator_grant_data,
+        send_message_and_pop_response_message,
     },
     prelude::*,
     test_setup::setup_env_logging,
 };
 
 static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
-
-async fn get_mediator_grant_data(
-    agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
-    agent_aries_transport: &mut impl AriesTransport,
-    agent_verkey: &VerKey,
-    mediator_diddoc: &AriesDidDoc,
-) -> MediateGrantData {
-    // prepare request message
-    let message = MediatorCoordMsgEnum::MediateRequest;
-    let message_bytes = serde_json::to_vec(&message).unwrap();
-    // send message and get response
-    let response_message = send_message_and_pop_response_message(
-        &message_bytes,
-        agent,
-        agent_aries_transport,
-        agent_verkey,
-        mediator_diddoc,
-    )
-    .await
-    .unwrap();
-    // extract routing parameters
-    if let MediatorCoordMsgEnum::MediateGrant(grant_data) =
-        serde_json::from_str(&response_message).unwrap()
-    {
-        info!("Grant Data {:?}", grant_data);
-        grant_data
-    } else {
-        panic!(
-            "Should get response that is of type Mediator Grant. Found {:?}",
-            response_message
-        )
-    }
-}
 
 /// Register recipient keys with mediator
 async fn gen_and_register_recipient_key(
