@@ -13,7 +13,10 @@ use did_peer::peer_did::{
     PeerDid,
 };
 
-#[test]
+fn main() -> Result<(), Box<dyn Error>> {
+    demo()
+}
+
 fn demo() -> Result<(), Box<dyn Error>> {
     let recipient_key = KeyKind::Value("foo".to_string());
     let sov_service_extra = ExtraFieldsSov::DIDCommV1(
@@ -47,10 +50,17 @@ fn demo() -> Result<(), Box<dyn Error>> {
 
     let peer_did_2 = PeerDid::<Numalgo2>::from_did_doc(ddo.clone())?;
     println!("PeerDid numalgo(2): {}", peer_did_2);
+
     let peer_did_3 = PeerDid::<Numalgo3>::from_did_doc(ddo)?;
     println!("PeerDid numalgo(3): {}", peer_did_3);
+
     let peer_did_3_v2 = peer_did_2.to_numalgo3()?;
     println!("Converted PeerDid numalgo(3): {}", peer_did_3_v2);
 
     Ok(())
+}
+
+#[test]
+fn demo_test() -> Result<(), Box<dyn Error>> {
+    demo()
 }
