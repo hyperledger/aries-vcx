@@ -12,8 +12,9 @@ const logger = require('../demo/logger')('out-of-band-test')
 
 const TAILS_DIR = '/tmp/faber/tails'
 
+jest.setTimeout(1000 * 60 * 4)
+
 beforeAll(async () => {
-  jest.setTimeout(1000 * 60 * 4)
   initRustLogger(process.env.RUST_LOG || 'vcx=error')
   mkdirp(TAILS_DIR)
 })

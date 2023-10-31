@@ -1,6 +1,7 @@
 use std::sync::PoisonError;
 
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
+use shared_vcx::errors::http_error::HttpError;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
@@ -23,6 +24,12 @@ impl From<serde_json::Error> for AriesVcxError {
 impl<T> From<PoisonError<T>> for AriesVcxError {
     fn from(err: PoisonError<T>) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+impl From<HttpError> for AriesVcxError {
+    fn from(err: HttpError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::PostMessageFailed, err.to_string())
     }
 }
 

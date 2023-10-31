@@ -1,7 +1,7 @@
 use std::{error::Error, fmt};
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
-pub enum SharedVcxErrorKind {
+pub enum ValidationErrorKind {
     #[error("Invalid DID")]
     InvalidDid,
     #[error("Invalid VERKEY")]
@@ -11,12 +11,12 @@ pub enum SharedVcxErrorKind {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub struct SharedVcxError {
+pub struct ValidationError {
     msg: String,
-    kind: SharedVcxErrorKind,
+    kind: ValidationErrorKind,
 }
 
-impl fmt::Display for SharedVcxError {
+impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Error: {}\n", self.msg)?;
         let mut current = self.source();
@@ -28,27 +28,27 @@ impl fmt::Display for SharedVcxError {
     }
 }
 
-impl SharedVcxError {
-    pub fn from_msg<D>(kind: SharedVcxErrorKind, msg: D) -> SharedVcxError
+impl ValidationError {
+    pub fn from_msg<D>(kind: ValidationErrorKind, msg: D) -> ValidationError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        SharedVcxError {
+        ValidationError {
             msg: msg.to_string(),
             kind,
         }
     }
 
-    pub fn kind(&self) -> SharedVcxErrorKind {
+    pub fn kind(&self) -> ValidationErrorKind {
         self.kind
     }
 }
 
-pub fn err_msg<D>(kind: SharedVcxErrorKind, msg: D) -> SharedVcxError
+pub fn err_msg<D>(kind: ValidationErrorKind, msg: D) -> ValidationError
 where
     D: fmt::Display + fmt::Debug + Send + Sync + 'static,
 {
-    SharedVcxError::from_msg(kind, msg)
+    ValidationError::from_msg(kind, msg)
 }
 
-pub type SharedVcxResult<T> = Result<T, SharedVcxError>;
+pub type ValidationResult<T> = Result<T, ValidationError>;

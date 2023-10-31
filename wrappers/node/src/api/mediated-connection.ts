@@ -284,17 +284,6 @@ export class Connection extends VcxBaseWithState<IConnectionData, MediatedConnec
     }
   }
 
-  public async sendDiscoveryFeatures(
-    query: string | null | undefined,
-    comment: string | null | undefined,
-  ): Promise<void> {
-    try {
-      return await ffiNapi.mediatedConnectionSendDiscoveryFeatures(this.handle, query, comment);
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
-  }
-
   public getPwDid(): string {
     try {
       return ffiNapi.mediatedConnectionGetPwDid(this.handle);

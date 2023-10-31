@@ -243,16 +243,6 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function discoverTheirFeatures () {
-    logger.info('Alice is going to request Faber\'s Aries features.')
-    await vcxAgent.agentInitVcx()
-
-    const res = await vcxAgent.serviceConnections.discoverTheirFeatures(connectionId)
-    logger.info(`Operation result = ${JSON.stringify(res)}`)
-
-    await vcxAgent.agentShutdownVcx()
-  }
-
   async function unpackMsg (encryptedMsg) {
     logger.info(`Alice is going to unpack message of length ${encryptedMsg.length}`)
     await vcxAgent.agentInitVcx()
@@ -287,7 +277,6 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     getTailsHash,
     downloadReceivedMessagesV2,
     sendPing,
-    discoverTheirFeatures,
     unpackMsg
   }
 }

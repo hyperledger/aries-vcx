@@ -230,23 +230,6 @@ pub async fn mediated_connection_send_ping(
 }
 
 #[napi]
-pub async fn mediated_connection_send_discovery_features(
-    handle: u32,
-    query: Option<String>,
-    comment: Option<String>,
-) -> napi::Result<()> {
-    trace!(
-        "mediated_connection_send_discovery_features >>> handle: {:?}, query: {:?}, comment: {:?}",
-        handle,
-        query,
-        comment
-    );
-    mediated_connection::send_discovery_features(handle, query.as_deref(), comment.as_deref())
-        .await
-        .map_err(to_napi_err)
-}
-
-#[napi]
 pub async fn mediated_connection_info(handle: u32) -> napi::Result<String> {
     trace!("mediated_connection_info >>> handle: {:?}", handle);
     mediated_connection::get_connection_info(handle)

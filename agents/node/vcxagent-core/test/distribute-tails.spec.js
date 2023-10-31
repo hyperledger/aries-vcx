@@ -14,8 +14,9 @@ const { proofRequestDataStandard } = require('./utils/data')
 const TAILS_DIR_ALICE = '/tmp/alice/tails'
 const TAILS_DIR_FABER = '/tmp/faber/tails'
 
+jest.setTimeout(1000 * 60 * 4)
+
 beforeAll(async () => {
-  jest.setTimeout(1000 * 60 * 4)
   initRustLogger(process.env.RUST_LOG || 'vcx=error')
   mkdirp(TAILS_DIR_ALICE)
   mkdirp(TAILS_DIR_FABER)

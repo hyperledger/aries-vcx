@@ -1,13 +1,12 @@
 const sleepPromise = require('sleep-promise')
 const axios = require('axios')
-const combineURLs = require('axios/lib/helpers/combineURLs')
 
 module.exports.testTailsUrl = 'http://some-tails-url.org'
 
 async function waitUntilAgencyIsReady (agencyEndpoint, logger) {
   let agencyReady = false
 
-  const url = combineURLs(agencyEndpoint, '/agency')
+  const url = `${agencyEndpoint}/agency`
 
   while (!agencyReady) {
     try {
@@ -23,7 +22,7 @@ async function waitUntilAgencyIsReady (agencyEndpoint, logger) {
 async function getAgencyConfig (agencyUrl, logger) {
   let agencyDid, agencyVerkey
 
-  const url = combineURLs(agencyUrl, '/agency')
+  const url = `${agencyUrl}/agency`
 
   logger.info(`Obtaining agency DID and verkey info from ${url}`)
   try {

@@ -22,7 +22,7 @@ use serde_json::Value;
 use super::connection::ServiceConnections;
 use crate::{
     error::*,
-    http_client::HttpClient,
+    http::VcxHttpClient,
     storage::{object_cache::ObjectCache, Storage},
 };
 
@@ -121,7 +121,7 @@ impl ServiceProver {
         let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
         });
 
         let proposal = prover.build_presentation_proposal(proposal).await?;
@@ -165,7 +165,7 @@ impl ServiceProver {
         let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
         });
 
         let message = prover.mark_presentation_sent()?;

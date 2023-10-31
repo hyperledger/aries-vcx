@@ -1,19 +1,47 @@
 use core::u8;
 
 use serde_json::Value;
+use shared_vcx::http_client::post_message;
 
 use crate::{
     agency_client::AgencyClient,
     errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
-    httpclient,
     messages::{a2a_message::Client2AgencyMessage, forward::ForwardV2},
-    testing::mocking::AgencyMockDecrypted,
+    testing::{
+        mocking,
+        mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse},
+    },
 };
 
 impl AgencyClient {
     pub async fn post_to_agency(&self, body_content: Vec<u8>) -> AgencyClientResult<Vec<u8>> {
         let url = self.get_agency_url_full()?;
-        httpclient::post_message(body_content, url).await
+        if mocking::agency_mocks_enabled() {
+            if HttpClientMockResponse::has_response() {
+                warn!("post_message >> mocking response for POST {}", &url);
+                return HttpClientMockResponse::get_response();
+            }
+            if AgencyMockDecrypted::has_decrypted_mock_responses() {
+                warn!(
+                    "post_message >> will use mocked decrypted response for POST {}",
+                    &url
+                );
+                return Ok(vec![]);
+            }
+            let mocked_response = AgencyMock::get_response();
+            warn!(
+                "post_message >> mocking response of length {} for POST {}",
+                mocked_response.len(),
+                &url
+            );
+            return Ok(mocked_response);
+        }
+        post_message(body_content, url).await.map_err(|err| {
+            AgencyClientError::from_msg(
+                AgencyClientErrorKind::PostMessageFailed,
+                format!("Cannot send message to agency: {err}"),
+            )
+        })
     }
 
     pub async fn prepare_message_for_agency(

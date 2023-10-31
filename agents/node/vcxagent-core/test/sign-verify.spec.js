@@ -3,8 +3,9 @@ require('jest')
 const { createPairedAliceAndFaber } = require('./utils/utils')
 const { initRustLogger } = require('../src')
 
+jest.setTimeout(1000 * 60 * 4)
+
 beforeAll(async () => {
-  jest.setTimeout(1000 * 60 * 4)
   initRustLogger(process.env.RUST_LOG || 'vcx=error')
 })
 

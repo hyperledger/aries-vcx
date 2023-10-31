@@ -16,14 +16,14 @@ use messages::{
 };
 use uuid::Uuid;
 
-use crate::utils::structs::VeriKey;
+use crate::utils::structs::VerKey;
 
 pub async fn build_response_content(
     wallet: &impl BaseWallet,
     thread_id: String,
-    old_recipient_vk: VeriKey,
+    old_recipient_vk: VerKey,
     new_recipient_did: String,
-    new_recipient_vk: VeriKey,
+    new_recipient_vk: VerKey,
     new_service_endpoint: url::Url,
     new_routing_keys: Vec<String>,
 ) -> VcxResult<Response> {

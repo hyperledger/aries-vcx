@@ -32,6 +32,7 @@ agency_client = { path = "../agency_client" }
 async-trait = "0.1.61"
 url = "2.3.1"
 wallet_migrator = { path = "../wallet_migrator" }
+shared_vcx = { path = "../shared_vcx" }
 
 [dev-dependencies]
 test_utils = {path = "../tools/test_utils" }
