@@ -1,7 +1,7 @@
 use std::{env, io::Write, sync::Once};
 
 #[cfg(target_os = "android")]
-use android_logger::Filter;
+use android_logger::Config;
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use chrono::{
     format::{DelayedFormat, StrftimeItems},
@@ -66,14 +66,14 @@ impl LibvcxDefaultLogger {
             #[cfg(target_os = "android")]
             let log_filter = match pattern.as_ref() {
                 Some(val) => match val.to_lowercase().as_ref() {
-                    "error" => Filter::default().with_min_level(log::Level::Error),
-                    "warn" => Filter::default().with_min_level(log::Level::Warn),
-                    "info" => Filter::default().with_min_level(log::Level::Info),
-                    "debug" => Filter::default().with_min_level(log::Level::Debug),
-                    "trace" => Filter::default().with_min_level(log::Level::Trace),
-                    _ => Filter::default().with_min_level(log::Level::Error),
+                    "error" => Config::default().with_max_level(log::LevelFilter::Error),
+                    "warn" => Config::default().with_max_level(log::LevelFilter::Warn),
+                    "info" => Config::default().with_max_level(log::LevelFilter::Info),
+                    "debug" => Config::default().with_max_level(log::LevelFilter::Debug),
+                    "trace" => Config::default().with_max_level(log::LevelFilter::Trace),
+                    _ => Config::default().with_max_level(log::LevelFilter::Error),
                 },
-                None => Filter::default().with_min_level(log::Level::Error),
+                None => Config::default().with_max_level(log::LevelFilter::Error),
             };
 
             //Set logging to off when deploying production android app.

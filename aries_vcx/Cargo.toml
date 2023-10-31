@@ -13,17 +13,25 @@ doctest = false
 [features]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 credx = ["aries_vcx_core/credx", "test_utils/vdrtools_wallet"]
-vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "aries_vcx_core/vdrtools_wallet", "test_utils/vdr_proxy_ledger", "credx"]
-vdrtools_wallet = ["aries_vcx_core/vdrtools_wallet", "test_utils/vdrtools_wallet"]
+vdr_proxy_ledger = [
+    "aries_vcx_core/vdr_proxy_ledger",
+    "aries_vcx_core/vdrtools_wallet",
+    "test_utils/vdr_proxy_ledger",
+    "credx",
+]
+vdrtools_wallet = [
+    "aries_vcx_core/vdrtools_wallet",
+    "test_utils/vdrtools_wallet",
+]
 
 # Feature for allowing legacy proof verification
 legacy_proof = ["aries_vcx_core/legacy_proof"]
 
 [dependencies]
 agency_client = { path = "../agency_client" }
-messages = { path  = "../messages" }
+messages = { path = "../messages" }
 diddoc_legacy = { path = "../diddoc_legacy" }
-aries_vcx_core = { path  = "../aries_vcx_core" }
+aries_vcx_core = { path = "../aries_vcx_core" }
 shared_vcx = { path = "../shared_vcx" }
 bs58 = "0.5.0"
 async-trait = "0.1.53"

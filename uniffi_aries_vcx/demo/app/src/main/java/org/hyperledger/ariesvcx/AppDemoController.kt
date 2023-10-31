@@ -44,9 +44,9 @@ class AppDemoController : ViewModel() {
         rekeyDerivationMethod = null
     )
 
-    suspend fun setupProfile() {
+    suspend fun setupProfile(genesisFilePath: String) {
         withContext(Dispatchers.IO) {
-            val newProfile = newIndyProfile(walletConfig)
+            val newProfile = newIndyProfile(walletConfig, genesisFilePath)
             profile = newProfile
             connection = createInvitee(newProfile)
         }

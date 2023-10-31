@@ -1,6 +1,5 @@
 package org.hyperledger.ariesvcx
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,6 +17,10 @@ import androidx.navigation.NavHostController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.hyperledger.ariesvcx.utils.prepareGenesisFile
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileWriter
 
 
 @Composable
@@ -30,7 +33,7 @@ fun HomeScreen(
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-
+    val file = prepareGenesisFile(context)
     demoController.subscribeToConnectionComplete { newConn ->
         scope.launch(Dispatchers.Main) {
             Toast.makeText(
@@ -50,7 +53,7 @@ fun HomeScreen(
             enabled = (!demoState.profileReady),
             onClick = {
                 scope.launch {
-                    demoController.setupProfile()
+                    demoController.setupProfile(file.absolutePath)
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             context,
