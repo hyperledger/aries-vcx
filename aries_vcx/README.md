@@ -1,29 +1,21 @@
-# aries-vcx
-`aries-vcx` is more of a "library" rather than "framework". We strive to be not too
-opinionated and simply provide building blocks for whatever you want to build.
+# `aries_vcx` crate
+Provides basic tools to build didcomm/aries enabled application in Rust. This can include native mobile apps, or 
+webservers for VC issuance/verification, didcomm mediator service etc. 
 
-You can use `aries-vcx` to build both end-user products (mobile wallets in role of credential
-holder and prover) or server (typically in role of issuer, verifier).
+#### What this crate can do for you
+- Create encrypted wallet.
+- Read/write from/to Indy ledger.
+- Establish didcomm connections and exchange messages.
+- Create and process Aries messages to drive Aries protocols (especially for VC issuance and presentation).
 
-Generally, the crate allows you to:
-- create encrypted wallet,
-- read/write from/to Indy ledger,
-- establish didcomm connections and exchange messages,
-- create and process Aries messages to drive Aries protocols.
-
-## `aries-vcx` components
-Additionally, the following crates may be consumed independently of `aries-vcx`:
-- [messages](../messages) - crate for building and parsing Aries messages
-- [diddoc](../diddoc) - crate to work with DIDDocs
-
-### Deprecation notice: Message mediation
-Aries-vcx contains built-in support for message mediation which is useful for mobile use cases. However,
-this feature (implemented via `MediatedConnection`) is now deprecated as it is tied to mediator
-implementation [vcxagency-node](https://github.com/AbsaOSS/vcxagencynode) which does not implement
-Aries [pick-up protocol](https://github.com/hyperledger/aries-rfcs/tree/main/features/0685-pickup-v2).
+#### What does crate does NOT DO for you
+- Provide message outbounds - `aries_vcx` helps you to create correct response & encrypt it, but you have to take care 
+  of sending it to the right place.
+- Automatic inbound processing - you have to take care of receiving messages and passing them to `aries_vcx` for processing.
+  You need to keep track of your ongoing aries "conversations" and match incoming messages (typically based on message thread id).
 
 # Getting started
-To use `aries-vcx` in your project, you need to add GitHub dependency to your `Cargo.toml`, and best
+To use `aries_vcx` in your project, you need to add GitHub dependency to your `Cargo.toml`, and best
 define a version through a `tag`:
 ```toml
 aries-vcx = { tag = "0.61.0", git = "https://github.com/hyperledger/aries-vcx" }
@@ -31,8 +23,9 @@ aries-vcx = { tag = "0.61.0", git = "https://github.com/hyperledger/aries-vcx" }
 It's also advisable to follow these [instructions](TUTORIAL.md) to check your environment is properly configured.
 
 # Projects built with aries-vcx
-- [aries-vcx-agent](../agents/rust/aries-vcx-agent) - sample agent with local persistence. Used for cross-compatibility testing with other aries implementations.
-- [unifii_aries_vcx](../uniffi_aries_vcx) - wrapper around `aries-vcx` to generate Swift and Kotlin wrappers for mobile use-cases
+- [mediator](../agents/rust/mediator) - Message mediator web service, useful for mobile device to receive messages while the device is offline.
+- [unifii_aries_vcx](../uniffi_aries_vcx) - Mobile wrapper to autogenerate Swift and Kotlin wrappers. Also comes with sample native mobile app.
+- [aries-vcx-agent](../agents/rust/aries-vcx-agent) - Sample agent framework adding persistence and message matching on top of `aries_vcx`. Used for cross-compatibility testing with other aries implementations.
 
 ## Implemented Aries protocols
 * ✅ Connection Protocol 1.0: [`https://didcomm.org/connections/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol)
