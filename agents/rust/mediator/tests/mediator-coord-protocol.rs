@@ -1,12 +1,8 @@
 mod common;
 use std::collections::VecDeque;
 
-use aries_vcx::{
-    protocols::connection::invitee::{states::completed::Completed, InviteeConnection},
-    utils::encryption_envelope::EncryptionEnvelope,
-};
+use aries_vcx::protocols::connection::invitee::{states::completed::Completed, InviteeConnection};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediation::{
     didcomm_types::mediator_coord_structs::{
         KeylistData, KeylistQueryData, KeylistUpdateItem, KeylistUpdateItemAction,
@@ -14,17 +10,20 @@ use mediation::{
     },
     storage::MediatorPersistence,
 };
-use mediator::{
-    aries_agent::{
-        client::transports::{AriesReqwest, AriesTransport},
-        Agent,
-    },
-    utils::{structs::VerKey, GenericStringError},
+use mediator::aries_agent::{
+    client::transports::{AriesReqwest, AriesTransport},
+    Agent,
 };
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
 
-use crate::common::{prelude::*, test_setup::setup_env_logging};
+use crate::common::{
+    agent_and_transport_utils::{
+        gen_mediator_connected_agent, send_message_and_pop_response_message,
+    },
+    prelude::*,
+    test_setup::setup_env_logging,
+};
 
 static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
 
@@ -52,54 +51,6 @@ async fn didcomm_connection(
         agent.establish_connection(oobi, aries_transport).await?;
 
     Ok(state)
-}
-
-/// Returns agent, aries transport for agent, agent's verkey, and mediator's diddoc.
-async fn gen_mediator_connected_agent() -> Result<(
-    Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
-    impl AriesTransport,
-    VerKey,
-    AriesDidDoc,
-)> {
-    let agent = mediator::aries_agent::AgentBuilder::new_demo_agent().await?;
-    let mut aries_transport = AriesReqwest {
-        response_queue: VecDeque::new(),
-        client: reqwest::Client::new(),
-    };
-    let completed_connection = didcomm_connection(&agent, &mut aries_transport).await?;
-    let our_verkey: VerKey = completed_connection.pairwise_info().pw_vk.clone();
-    let their_diddoc = completed_connection.their_did_doc().clone();
-    Ok((agent, aries_transport, our_verkey, their_diddoc))
-}
-
-/// Sends message over didcomm connection and returns unpacked response message
-async fn send_message_and_pop_response_message(
-    message_bytes: &[u8],
-    agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
-    aries_transport: &mut impl AriesTransport,
-    our_verkey: &VerKey,
-    their_diddoc: &AriesDidDoc,
-) -> Result<String> {
-    // Wrap message in encrypted envelope
-    let EncryptionEnvelope(packed_message) = agent
-        .pack_didcomm(message_bytes, our_verkey, their_diddoc)
-        .await
-        .map_err(|e| GenericStringError { msg: e.to_string() })?;
-    let packed_json = serde_json::from_slice(&packed_message)?;
-    info!(
-        "Packed: {:?}, sending",
-        serde_json::to_string(&packed_json).unwrap()
-    );
-    // Send serialized envelope over transport
-    let response_envelope = aries_transport
-        .send_aries_envelope(packed_json, their_diddoc)
-        .await?;
-    // unpack
-    let unpacked_response = agent
-        .unpack_didcomm(&serde_json::to_vec(&response_envelope).unwrap())
-        .await
-        .unwrap();
-    Ok(unpacked_response.message)
 }
 
 #[tokio::test]
