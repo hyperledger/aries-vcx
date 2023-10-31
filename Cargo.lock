@@ -937,23 +937,8 @@ version = "0.1.1"
 dependencies = [
  "aries_vcx_core",
  "axum",
- "client-webapi",
  "cursive",
  "futures",
- "log",
- "mediation",
- "mediator",
- "messages",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "client-webapi"
-version = "0.1.1"
-dependencies = [
- "aries_vcx_core",
- "axum",
  "log",
  "mediation",
  "mediator",
@@ -961,7 +946,6 @@ dependencies = [
  "reqwest",
  "serde_json",
  "tokio",
- "tower-http",
 ]
 
 [[package]]

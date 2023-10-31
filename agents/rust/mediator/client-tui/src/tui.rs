@@ -1,8 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use axum::{extract::State, Json};
-use client_webapi::http_routes::handle_register;
+use client_tui::handle_register;
 use cursive::{
     direction::Orientation,
     event::Key,
@@ -103,8 +102,8 @@ pub fn client_register_connect_cb<T: BaseWallet + 'static, P: MediatorPersistenc
     let agent: &mut Arc<Agent<T, P>> = s.user_data().expect("Userdata should contain Agent");
 
     output.set_content(format!("{:#?}", oob_invite));
-    match block_on(handle_register(State(agent.to_owned()), Json(oob_invite))) {
-        Ok(Json(res_json)) => output.set_content(serde_json::to_string_pretty(&res_json).unwrap()),
+    match block_on(handle_register(agent.to_owned(), oob_invite)) {
+        Ok(res_json) => output.set_content(serde_json::to_string_pretty(&res_json).unwrap()),
         Err(err) => output.set_content(err),
     };
 }
