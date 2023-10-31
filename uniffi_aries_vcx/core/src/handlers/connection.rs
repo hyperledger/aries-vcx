@@ -237,4 +237,20 @@ impl Connection {
             Ok(())
         })
     }
+
+    pub fn send_message(
+        &self,
+        profile_holder: Arc<ProfileHolder>,
+        message: String,
+    ) -> VcxUniFFIResult<()> {
+        let message = serde_json::from_str(&message)?;
+        let handler = self.handler.lock()?.clone();
+
+        block_on(async {
+            handler
+                .send_message(profile_holder.inner.wallet(), &message, &HttpClient)
+                .await?;
+            Ok(())
+        })
+    }
 }
