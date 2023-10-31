@@ -10,7 +10,7 @@ use did_resolver::{
     traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable},
 };
 use did_resolver_sov::resolution::DidSovResolver;
-use test_utils::run_setup_test;
+use test_utils::devsetup::build_setup_profile;
 
 async fn write_test_endpoint(
     wallet: &impl BaseWallet,
@@ -29,37 +29,39 @@ async fn write_test_endpoint(
 
 #[tokio::test]
 async fn write_service_on_ledger_and_resolve_did_doc() {
-    run_setup_test!(|init| async move {
-        let did = format!("did:sov:{}", init.institution_did);
-        write_test_endpoint(&init.wallet, &init.ledger_write, &init.institution_did).await;
-        let resolver = DidSovResolver::new(&init.ledger_read);
-        let did_doc = resolver
-            .resolve(
-                &Did::parse(did.clone()).unwrap(),
-                &DidResolutionOptions::default(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(did_doc.did_document().id().to_string(), did);
-    })
+    let profile = build_setup_profile().await;
+    write_test_endpoint(
+        &profile.wallet,
+        &profile.ledger_write,
+        &profile.institution_did,
+    )
     .await;
+    let resolver = DidSovResolver::new(&profile.ledger_read);
+    let did = format!("did:sov:{}", profile.institution_did);
+
+    let did_doc = resolver
+        .resolve(
+            &Did::parse(did.clone()).unwrap(),
+            &DidResolutionOptions::default(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(did_doc.did_document().id().to_string(), did);
 }
 
 #[tokio::test]
 async fn test_error_handling_during_resolution() {
-    run_setup_test!(|init| async move {
-        let did = format!("did:unknownmethod:{}", init.institution_did);
+    let profile = build_setup_profile().await;
+    let resolver = DidSovResolver::new(&profile.ledger_read);
+    let did = format!("did:unknownmethod:{}", profile.institution_did);
 
-        let resolver = DidSovResolver::new(&init.ledger_read);
+    let result = resolver
+        .resolve(
+            &Did::parse(did.clone()).unwrap(),
+            &DidResolutionOptions::default(),
+        )
+        .await;
 
-        let result = resolver
-            .resolve(
-                &Did::parse(did.clone()).unwrap(),
-                &DidResolutionOptions::default(),
-            )
-            .await;
-
-        assert!(result.is_err());
-    })
-    .await;
+    assert!(result.is_err());
 }
