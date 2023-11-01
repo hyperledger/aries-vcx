@@ -1,4 +1,5 @@
 extern crate display_as_json;
+extern crate derive_builder;
 
 pub mod error;
 pub mod helpers;

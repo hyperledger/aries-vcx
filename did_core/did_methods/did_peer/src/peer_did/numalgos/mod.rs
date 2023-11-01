@@ -3,6 +3,7 @@ pub mod numalgo0;
 pub mod numalgo1;
 pub mod numalgo2;
 pub mod numalgo3;
+pub mod numalgo4;
 
 use did_doc::schema::did_doc::DidDocument;
 use did_parser_nom::Did;
