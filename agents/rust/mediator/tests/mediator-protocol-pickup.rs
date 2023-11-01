@@ -80,7 +80,7 @@ async fn gen_and_register_recipient_key(
     Ok((agent_recipient_key, agent_diddoc))
 }
 
-async fn forward_dummy_anoncrypt_message(
+async fn forward_basic_anoncrypt_message(
     agent_diddoc: &AriesDidDoc,
     message_text: &str,
 ) -> Result<()> {
@@ -146,8 +146,8 @@ async fn test_pickup_flow() -> Result<()> {
     )
     .await?;
     // forward some messages.
-    forward_dummy_anoncrypt_message(&agent_diddoc, "Hi, from AgentF").await?;
-    forward_dummy_anoncrypt_message(&agent_diddoc, "Hi again, from AgentF").await?;
+    forward_basic_anoncrypt_message(&agent_diddoc, "Hi, from AgentF").await?;
+    forward_basic_anoncrypt_message(&agent_diddoc, "Hi again, from AgentF").await?;
     // Pickup flow
     // // Status
     let pickup_status_req = Pickup::StatusRequest(
