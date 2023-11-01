@@ -1,3 +1,5 @@
+mod indy;
+
 use async_trait::async_trait;
 
 use crate::errors::error::VcxCoreResult;
@@ -8,19 +10,15 @@ pub trait Ledger {
 
     type Response: Send + Sync;
 
-    async fn submit<R>(&self, request: Self::Request) -> VcxCoreResult<R::Response>
+    async fn submit<R>(&self, request: Self::Request) -> VcxCoreResult<R>
     where
         R: LedgerRequest<Self>;
 }
 
 pub trait LedgerRequest<L: Ledger + ?Sized> {
-    type RequestParams<'a>;
+    fn into_ledger_request(self) -> VcxCoreResult<L::Request>;
 
-    type Response;
-
-    fn into_ledger_request(self, params: Self::RequestParams<'_>) -> VcxCoreResult<L::Request>;
-
-    fn from_ledger_response(response: L::Response) -> VcxCoreResult<Self::Response>
+    fn from_ledger_response(response: L::Response) -> VcxCoreResult<Self>
     where
         Self: Sized;
 }

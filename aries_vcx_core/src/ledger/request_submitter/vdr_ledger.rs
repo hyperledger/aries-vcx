@@ -6,9 +6,12 @@ use std::{
 
 use async_trait::async_trait;
 use indy_vdr::{
-    common::error::VdrError,
+    common::error::{VdrError, VdrResult},
     config::PoolConfig,
-    pool::{PoolBuilder, PoolRunner, PoolTransactions, PreparedRequest, RequestResult},
+    pool::{
+        PoolBuilder, PoolRunner, PoolTransactions, PreparedRequest, RequestResult, TimingResult,
+    },
+    resolver::types::Callback,
 };
 use tokio::sync::oneshot;
 
@@ -75,6 +78,17 @@ impl IndyVdrSubmitter {
     pub fn new(pool: IndyVdrLedgerPool) -> Self {
         Self { pool }
     }
+
+    pub(crate) fn send_request(
+        &self,
+        request: PreparedRequest,
+        callback: Callback<VdrResult<(RequestResult<String>, Option<TimingResult>)>>,
+    ) -> VcxCoreResult<()> {
+        self.pool
+            .runner
+            .send_request(request, callback)
+            .map_err(From::from)
+    }
 }
 
 #[async_trait]
@@ -90,7 +104,7 @@ impl RequestSubmitter for IndyVdrSubmitter {
             VdrError,
         >;
         let (sender, recv) = oneshot::channel::<VdrSendRequestResult>();
-        self.pool.runner.send_request(
+        self.send_request(
             request,
             Box::new(move |result| {
                 // unable to handle a failure from `send` here
