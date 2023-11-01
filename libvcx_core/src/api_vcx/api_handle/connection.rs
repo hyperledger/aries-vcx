@@ -258,11 +258,9 @@ pub async fn process_request(
     let request: Request = deserialize(request)?;
 
     let con = match con.state() {
-        ThinState::Inviter(State::Initial) => {
-            Connection::try_from(con).map_err(From::from).map(|c| {
-                c.into_invited_by_request(&request)
-            })
-        }
+        ThinState::Inviter(State::Initial) => Connection::try_from(con)
+            .map_err(From::from)
+            .map(|c| c.into_invited_by_request(&request)),
         ThinState::Inviter(State::Invited) => Connection::try_from(con).map_err(From::from),
         s => Err(LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
