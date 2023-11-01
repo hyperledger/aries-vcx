@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
+use crate::{errors::error::VcxCoreResult, wallet2::Wallet};
 
 #[async_trait]
 pub trait VcIssuer {
@@ -27,7 +27,7 @@ pub trait VcIssuer {
 
     async fn create_and_store_revoc_reg(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         issuer_did: &str,
         cred_def_id: Self::CredDefId,
         tails_dir: &str,
@@ -37,7 +37,7 @@ pub trait VcIssuer {
 
     async fn create_and_store_credential_def(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         issuer_did: &str,
         schema_json: Self::Schema,
         tag: &str,
@@ -47,13 +47,13 @@ pub trait VcIssuer {
 
     async fn create_credential_offer(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         cred_def_id: Self::CredDefId,
     ) -> VcxCoreResult<Self::CredOffer>;
 
     async fn create_credential(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         cred_offer: Self::CredOffer,
         cred_req: Self::CredReq,
         cred_values: Self::CredValues,
@@ -82,7 +82,7 @@ pub trait VcIssuer {
     // PURE Anoncreds)
     async fn revoke_credential_local(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         tails_dir: &str,
         rev_reg_id: &str,
         cred_rev_id: &str,
@@ -90,13 +90,13 @@ pub trait VcIssuer {
 
     async fn get_rev_reg_delta(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         rev_reg_id: &str,
     ) -> VcxCoreResult<Option<String>>;
 
     async fn clear_rev_reg_delta(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         rev_reg_id: &str,
     ) -> VcxCoreResult<()>;
 }

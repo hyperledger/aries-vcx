@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet, wallet2::Wallet};
+use crate::{errors::error::VcxCoreResult,  wallet2::Wallet};
 
 #[async_trait]
 pub trait VcProver {
@@ -28,7 +28,7 @@ pub trait VcProver {
     #[allow(clippy::too_many_arguments)]
     async fn create_proof(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         proof_req: Self::PresentationRequest,
         requested_credentials_json: &str,
         master_secret_id: &str,
@@ -39,7 +39,7 @@ pub trait VcProver {
 
     async fn get_credential(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         cred_id: &Self::CredId,
     ) -> VcxCoreResult<Self::Cred>;
 
@@ -54,13 +54,13 @@ pub trait VcProver {
 
     async fn get_credentials_for_proof_req(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         proof_request: Self::PresentationRequest,
     ) -> VcxCoreResult<String>; // Needs a type
 
     async fn create_credential_req(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         prover_did: &str,
         cred_offer: Self::CredOffer,
         cred_def_json: Self::CredDef,
@@ -69,7 +69,7 @@ pub trait VcProver {
 
     async fn store_credential(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         cred_id: Option<Self::CredId>,
         cred_req_metadata: Self::CredReqMeta,
         cred: Self::CredReq,
@@ -79,13 +79,13 @@ pub trait VcProver {
 
     async fn delete_credential(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         cred_id: &Self::CredId,
     ) -> VcxCoreResult<()>;
 
     async fn create_link_secret(
         &self,
-        wallet: &impl BaseWallet,
+        wallet: &impl Wallet,
         link_secret_id: &str,
     ) -> VcxCoreResult<()>;
 }

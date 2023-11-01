@@ -7,37 +7,26 @@ use crate::errors::error::VcxCoreResult;
 #[async_trait]
 pub trait Wallet {
     type Record: Send + Sync;
+    type RecordIdRef<'a>: Send + Sync;
     type RecordUpdate<'a>: Send + Sync;
     type SearchFilter<'a>: Send + Sync;
 
-    async fn add<R>(&self, record: R) -> VcxCoreResult<()>
-    where
-        R: WalletRecord<Self> + Send,
-    {
-        let record = record.into_wallet_record()?;
-        self.add_record(record).await
-    }
+    async fn add(&self, id: Self::RecordIdRef<'_>, record: Self::Record) -> VcxCoreResult<()>;
 
-    async fn add_record(&self, record: Self::Record) -> VcxCoreResult<()>;
-
-    async fn get<R>(&self, id: &str) -> VcxCoreResult<R::Value>
-    where
-        R: WalletRecord<Self>,
-    {
-        let record = self.get_record(id).await?;
-        R::from_wallet_record(record)
-    }
-
-    async fn get_record(&self, id: &str) -> VcxCoreResult<Self::Record>;
+    async fn get(&self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<Self::Record>;
 
     async fn search(
         &self,
         filter: Self::SearchFilter<'_>,
     ) -> VcxCoreResult<BoxStream<'static, VcxCoreResult<Self::Record>>>;
 
-    async fn update(&self, update: Self::RecordUpdate<'_>) -> VcxCoreResult<()>;
+    async fn update(
+        &self,
+        id: Self::RecordIdRef<'_>,
+        update: Self::RecordUpdate<'_>,
+    ) -> VcxCoreResult<()>;
 
-    async fn delete<R>(&self, id: &str) -> VcxCoreResult<()>
+    async fn delete<R>(&self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<()>
     where
         R: WalletRecord<Self>;
 
@@ -68,11 +57,11 @@ pub trait Wallet {
 pub trait WalletRecord<W: Wallet + ?Sized> {
     const RECORD_TYPE: &'static str;
 
-    type Value;
+    type RecordParams<'a>;
 
-    fn into_wallet_record(self) -> VcxCoreResult<W::Record>;
+    fn into_wallet_record(self, params: Self::RecordParams<'_>) -> VcxCoreResult<W::Record>;
 
-    fn from_wallet_record(record: W::Record) -> VcxCoreResult<Self::Value>
+    fn from_wallet_record(record: W::Record) -> VcxCoreResult<Self>
     where
         Self: Sized;
 }

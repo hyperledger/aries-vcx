@@ -8,17 +8,19 @@ pub trait Ledger {
 
     type Response: Send + Sync;
 
-    async fn submit<R>(&self, request: R) -> VcxCoreResult<R::Output>
+    async fn submit<R>(&self, request: Self::Request) -> VcxCoreResult<R::Response>
     where
-        R: IntoLedgerRequest<Self>;
+        R: LedgerRequest<Self>;
 }
 
-pub trait IntoLedgerRequest<L: Ledger + ?Sized> {
-    type Output;
+pub trait LedgerRequest<L: Ledger + ?Sized> {
+    type RequestParams<'a>;
 
-    fn into_ledger_request(self) -> VcxCoreResult<L::Request>;
+    type Response;
 
-    fn from_ledger_response(response: L::Response) -> VcxCoreResult<Self::Output>
+    fn into_ledger_request(self, params: Self::RequestParams<'_>) -> VcxCoreResult<L::Request>;
+
+    fn from_ledger_response(response: L::Response) -> VcxCoreResult<Self::Response>
     where
         Self: Sized;
 }
