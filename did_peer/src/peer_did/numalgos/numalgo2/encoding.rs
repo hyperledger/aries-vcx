@@ -12,7 +12,7 @@ use public_key::Key;
 
 use crate::{
     error::DidPeerError,
-    numalgos::numalgo2::{
+    peer_did::numalgos::numalgo2::{
         purpose::ElementPurpose, service_abbreviated::ServiceAbbreviated,
         verification_method::get_key_by_verification_method,
     },
