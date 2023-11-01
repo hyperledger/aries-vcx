@@ -2,9 +2,7 @@ use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{
     did_doc::DidDocumentBuilder, service::Service, types::uri::Uri, utils::OneOrList,
 };
-use did_doc_sov::extra_fields::{
-    aip1::ExtraFieldsAIP1, didcommv2::ExtraFieldsDidCommV2, ExtraFieldsSov,
-};
+use did_doc_sov::extra_fields::{aip1::ExtraFieldsAIP1, convert_to_hashmap, didcommv2::ExtraFieldsDidCommV2, ExtraFieldsSov};
 use did_parser::Did;
 use public_key::Key;
 
@@ -18,10 +16,10 @@ use crate::{
 };
 
 pub fn process_elements(
-    mut did_doc_builder: DidDocumentBuilder<ExtraFieldsSov>,
+    mut did_doc_builder: DidDocumentBuilder,
     did: &Did,
     public_key_encoding: PublicKeyEncoding,
-) -> Result<DidDocumentBuilder<ExtraFieldsSov>, DidPeerError> {
+) -> Result<DidDocumentBuilder, DidPeerError> {
     let mut service_index: usize = 0;
 
     // Skipping one here because the first element is empty string
@@ -40,11 +38,11 @@ pub fn process_elements(
 
 fn process_element(
     element: &str,
-    mut did_doc_builder: DidDocumentBuilder<ExtraFieldsSov>,
+    mut did_doc_builder: DidDocumentBuilder,
     service_index: &mut usize,
     did: &Did,
     public_key_encoding: PublicKeyEncoding,
-) -> Result<DidDocumentBuilder<ExtraFieldsSov>, DidPeerError> {
+) -> Result<DidDocumentBuilder, DidPeerError> {
     let purpose: ElementPurpose = element
         .chars()
         .next()
@@ -73,9 +71,9 @@ fn process_element(
 
 fn process_service_element(
     element: &str,
-    mut did_doc_builder: DidDocumentBuilder<ExtraFieldsSov>,
+    mut did_doc_builder: DidDocumentBuilder,
     service_index: &mut usize,
-) -> Result<DidDocumentBuilder<ExtraFieldsSov>, DidPeerError> {
+) -> Result<DidDocumentBuilder, DidPeerError> {
     let decoded = STANDARD_NO_PAD.decode(element)?;
     let service: OneOrList<ServiceAbbreviated> = serde_json::from_slice(&decoded)?;
 
@@ -99,11 +97,11 @@ fn process_service_element(
 
 fn process_key_element(
     element: &str,
-    mut did_doc_builder: DidDocumentBuilder<ExtraFieldsSov>,
+    mut did_doc_builder: DidDocumentBuilder,
     did: &Did,
     public_key_encoding: PublicKeyEncoding,
     purpose: ElementPurpose,
-) -> Result<DidDocumentBuilder<ExtraFieldsSov>, DidPeerError> {
+) -> Result<DidDocumentBuilder, DidPeerError> {
     let key = Key::from_fingerprint(element)?;
     let vms = get_verification_methods_by_key(&key, did, public_key_encoding)?;
 
@@ -134,7 +132,7 @@ fn process_key_element(
 fn deabbreviate_service(
     service: ServiceAbbreviated,
     index: usize,
-) -> Result<Service<ExtraFieldsSov>, DidPeerError> {
+) -> Result<Service, DidPeerError> {
     let service_type = match service.service_type() {
         "dm" => "DIDCommMessaging".to_string(),
         t => t.to_string(),
@@ -153,11 +151,11 @@ fn build_service_aip1(
     service: ServiceAbbreviated,
     id: Uri,
     service_type: String,
-) -> Result<Service<ExtraFieldsSov>, DidPeerError> {
-    Ok(Service::<ExtraFieldsSov>::builder(
+) -> Result<Service, DidPeerError> {
+    Ok(Service::builder(
         id,
         service.service_endpoint().parse()?,
-        ExtraFieldsSov::AIP1(ExtraFieldsAIP1::default()),
+        Default::default(),
     )
     .add_service_type(service_type)?
     .build())
@@ -167,13 +165,15 @@ fn build_service_didcommv2(
     service: ServiceAbbreviated,
     id: Uri,
     service_type: String,
-) -> Result<Service<ExtraFieldsSov>, DidPeerError> {
-    let extra_builder = ExtraFieldsDidCommV2::builder()
+) -> Result<Service, DidPeerError> {
+    let extra = ExtraFieldsDidCommV2::builder()
         .set_routing_keys(service.routing_keys().to_owned())
-        .set_accept(service.accept().to_owned());
-    let extra = ExtraFieldsSov::DIDCommV2(extra_builder.build());
+        .set_accept(service.accept().to_owned()).build();
     Ok(
-        Service::<ExtraFieldsSov>::builder(id, service.service_endpoint().parse()?, extra)
+        Service::builder(id,
+                         service.service_endpoint().parse()?,
+                         convert_to_hashmap(&extra)?.into()
+        )
             .add_service_type(service_type)?
             .build(),
     )
@@ -182,7 +182,7 @@ fn build_service_didcommv2(
 #[cfg(test)]
 mod tests {
     use did_doc::schema::utils::OneOrList;
-    use did_doc_sov::extra_fields::{AcceptType, ExtraFieldsSov, KeyKind};
+    use did_doc_sov::extra_fields::{SovAcceptType, ExtraFieldsSov, SovKeyKind};
 
     use super::*;
 
@@ -191,7 +191,7 @@ mod tests {
         let did: Did = "did:peer:2".parse().unwrap();
 
         let built_ddo = process_elements(
-            DidDocumentBuilder::<ExtraFieldsSov>::new(did.clone()),
+            DidDocumentBuilder::new(did.clone()),
             &did,
             PublicKeyEncoding::Base58,
         )
@@ -208,7 +208,7 @@ mod tests {
             .unwrap();
 
         let processed_did_doc_builder = process_elements(
-            DidDocumentBuilder::<ExtraFieldsSov>::new(did.clone()),
+            DidDocumentBuilder::new(did.clone()),
             &did,
             PublicKeyEncoding::Multibase,
         )
@@ -228,7 +228,7 @@ mod tests {
             .unwrap();
 
         match process_elements(
-            DidDocumentBuilder::<ExtraFieldsSov>::new(did.clone()),
+            DidDocumentBuilder::new(did.clone()),
             &did,
             PublicKeyEncoding::Multibase,
         ) {
@@ -247,7 +247,7 @@ mod tests {
             .parse()
             .unwrap();
         let mut index = 0;
-        let ddo_builder = DidDocumentBuilder::<ExtraFieldsSov>::new(did);
+        let ddo_builder = DidDocumentBuilder::new(did);
         let built_ddo =
             process_service_element(purposeless_service_element, ddo_builder, &mut index)
                 .unwrap()
@@ -272,7 +272,7 @@ mod tests {
             .parse()
             .unwrap();
         let mut index = 0;
-        let ddo_builder = DidDocumentBuilder::<ExtraFieldsSov>::new(did);
+        let ddo_builder = DidDocumentBuilder::new(did);
         let built_ddo =
             process_service_element(purposeless_service_element, ddo_builder, &mut index)
                 .unwrap()
@@ -315,8 +315,8 @@ mod tests {
         assert_eq!(
             second_service.extra().accept().unwrap(),
             vec![
-                AcceptType::DIDCommV2,
-                AcceptType::Other("didcomm/aip2;env=rfc587".to_string())
+                SovAcceptType::DIDCommV2,
+                SovAcceptType::Other("didcomm/aip2;env=rfc587".to_string())
             ]
         );
         assert_eq!(
@@ -336,7 +336,7 @@ mod tests {
             .parse()
             .unwrap();
 
-        let ddo_builder = DidDocumentBuilder::<ExtraFieldsSov>::new(did.clone());
+        let ddo_builder = DidDocumentBuilder::new(did.clone());
         let public_key_encoding = PublicKeyEncoding::Multibase;
         let built_ddo = process_key_element(
             purposeless_key_element,
@@ -359,7 +359,7 @@ mod tests {
         let did: Did = "did:peer:2".parse().unwrap();
         assert!(process_key_element(
             "z6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V",
-            DidDocumentBuilder::<ExtraFieldsSov>::new(did.clone()),
+            DidDocumentBuilder::new(did.clone()),
             &did,
             PublicKeyEncoding::Multibase,
             ElementPurpose::Service
@@ -386,7 +386,7 @@ mod tests {
 
     #[test]
     fn test_deabbreviate_service_didcommv2() {
-        let routing_keys = vec![KeyKind::Value("key1".to_string())];
+        let routing_keys = vec![SovKeyKind::Value("key1".to_string())];
         let service_abbreviated = ServiceAbbreviated::from_parts(
             "dm",
             "https://example.com/endpoint",
@@ -413,7 +413,7 @@ mod tests {
 
     #[test]
     fn test_build_service_aip1() {
-        let routing_keys = vec![KeyKind::Value("key1".to_string())];
+        let routing_keys = vec![SovKeyKind::Value("key1".to_string())];
         let service_abbreviated = ServiceAbbreviated::from_parts(
             "dm",
             "https://example.com/endpoint",
@@ -440,8 +440,8 @@ mod tests {
 
     #[test]
     fn test_build_service_didcommv2() {
-        let routing_keys = vec![KeyKind::Value("key1".to_string())];
-        let accept = vec![AcceptType::DIDCommV2];
+        let routing_keys = vec![SovKeyKind::Value("key1".to_string())];
+        let accept = vec![SovAcceptType::DIDCommV2];
         let service_abbreviated = ServiceAbbreviated::from_parts(
             "dm",
             "https://example.com/endpoint",

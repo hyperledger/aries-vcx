@@ -2,8 +2,11 @@ use url::ParseError;
 
 use crate::schema::verification_method::VerificationMethodType;
 
+// todo: eliminate CustomError
+
 #[derive(Debug)]
 pub enum DidDocumentBuilderError {
+    CustomError(String),
     InvalidInput(String),
     MissingField(&'static str),
     UnsupportedPublicKeyField(&'static str),
@@ -48,6 +51,9 @@ impl std::fmt::Display for DidDocumentBuilderError {
             }
             DidDocumentBuilderError::PublicKeyError(error) => {
                 write!(f, "Public key error: {}", error)
+            }
+            DidDocumentBuilderError::CustomError(string) => {
+                write!(f, "Custom DidDocumentBuilderError: {}", string)
             }
         }
     }

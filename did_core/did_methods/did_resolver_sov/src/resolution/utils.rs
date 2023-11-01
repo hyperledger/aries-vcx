@@ -61,11 +61,11 @@ pub(super) fn is_valid_sovrin_did_id(id: &str) -> bool {
     id.chars().all(|c| base58_chars.contains(c))
 }
 
-pub(super) async fn ledger_response_to_ddo<E: Default>(
+pub(super) async fn ledger_response_to_ddo(
     did: &str,
     resp: &str,
     verkey: String,
-) -> Result<DidResolutionOutput<E>, DidSovError> {
+) -> Result<DidResolutionOutput, DidSovError> {
     let (service_id, ddo_id) = prepare_ids(did)?;
 
     let service_data = get_data_from_response(resp)?;

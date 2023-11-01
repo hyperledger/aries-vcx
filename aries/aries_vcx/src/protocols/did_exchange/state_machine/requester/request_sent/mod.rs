@@ -7,7 +7,7 @@ use did_peer::resolver::PeerDidResolver;
 use did_resolver::traits::resolvable::DidResolvable;
 use did_resolver_registry::ResolverRegistry;
 use helpers::{
-    construct_request, did_doc_from_did, oob_invitation_to_diddoc, verify_handshake_protocol,
+    construct_request, verify_handshake_protocol,
 };
 use messages::{
     decorators::{thread::Thread, timing::Timing},
@@ -22,6 +22,10 @@ use messages::{
 };
 use url::Url;
 use uuid::Uuid;
+use did_peer::peer_did::numalgos::numalgo2::Numalgo2;
+use did_peer::peer_did::numalgos::numalgo2::resolve::resolve_numalgo2;
+use did_peer::peer_did::PeerDid;
+use messages::msg_fields::protocols::out_of_band::invitation::{invitation_get_first_did_service, OobService};
 
 use super::DidExchangeRequester;
 use crate::{
@@ -32,48 +36,51 @@ use crate::{
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
     },
 };
+use crate::errors::error::VcxResult;
 
 mod helpers;
 
-impl DidExchangeRequester<RequestSent> {
-    pub async fn construct_request_pairwise(
-        wallet: &impl BaseWallet,
-        invitation: Invitation,
-        resolver_registry: Arc<ResolverRegistry>,
-        service_endpoint: Url,
-        routing_keys: Vec<String>,
-    ) -> Result<TransitionResult<Self, Request>, AriesVcxError> {
-        verify_handshake_protocol(invitation.clone())?;
-        let (our_did_document, _our_verkey) =
-            create_our_did_document(wallet, service_endpoint, routing_keys).await?;
-        let their_did_document =
-            oob_invitation_to_diddoc(&resolver_registry, invitation.clone()).await?;
-
-        let request = construct_request(invitation.id.clone(), our_did_document.id().to_string());
-
-        Ok(TransitionResult {
-            state: DidExchangeRequester::from_parts(
-                RequestSent {
-                    invitation_id: invitation.id.clone(),
-                    request_id: request.id.clone(),
-                },
-                their_did_document,
-                our_did_document,
-            ),
-            output: request,
+/// We are going to support only DID service values in did-exchange protocol unless there's explicit
+/// good reason to keep support for "embedded" type of service value.
+/// This function returns first found DID based service value from invitation.
+pub fn invitation_get_first_did_service(invitation: &Invitation) -> VcxResult<Did> {
+    let did_string = invitation
+        .content
+        .services
+        .iter()
+        .map(|service| match service {
+            OobService::Did(did) => Some(did.clone()),
+            _ => None,
         })
-    }
+        .filter(|did| did.is_some())
+        .first()
+        .ok_or(|| {
+            Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Invitation does not contain did service",
+            ))
+        })?;
+    Did::parse(did_string)
+        .map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                format!("Invalid DID in invitation: {}", err),
+            )
+        })
+}
 
-    pub async fn construct_request_public(
-        ledger: &impl IndyLedgerRead,
+impl DidExchangeRequester<RequestSent> {
+    pub async fn construct_request(
+        resolver_registry: Arc<ResolverRegistry>,
         their_did: Did,
-        our_did: Did,
+        our_peer_did: PeerDid<Numalgo2>
     ) -> Result<TransitionResult<Self, Request>, AriesVcxError> {
-        let (their_did_document, service) = did_doc_from_did(ledger, their_did.clone()).await?;
-        let (our_did_document, _) = did_doc_from_did(ledger, our_did.clone()).await?;
-        let invitation_id = format!("{}#{}", their_did, service.id());
+        let their_did_document = resolver_registry.resolve(&their_did, &Default::default()).await?.did_document().clone();
+        // todo: resolving our did is strange, we should require caller to pass diddoc/peer:did/or data to construct these
+        let our_did_document = resolve_numalgo2(our_peer_did)?.build();
+        let invitation_id = Uuid::new_v4().to_string();
 
-        let request = construct_request(invitation_id.clone(), our_did.to_string());
+        let request = construct_request(invitation_id.clone(), our_peer_did.to_string());
 
         Ok(TransitionResult {
             state: DidExchangeRequester::from_parts(

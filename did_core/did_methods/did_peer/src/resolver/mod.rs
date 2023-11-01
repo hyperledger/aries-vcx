@@ -14,6 +14,7 @@ use crate::{
     peer_did::{generic::AnyPeerDid, numalgos::numalgo2::resolve::resolve_numalgo2},
     resolver::options::ExtraFieldsOptions,
 };
+use crate::resolver::options::PublicKeyEncoding;
 
 pub mod options;
 
@@ -28,19 +29,18 @@ impl PeerDidResolver {
 
 #[async_trait]
 impl DidResolvable for PeerDidResolver {
-    type ExtraFieldsService = ExtraFieldsSov;
-    type ExtraFieldsOptions = ExtraFieldsOptions;
-
+    // todo: Make PublicKeyEncoding configurable via options extra fields
+    //       Perhaps revert some of the associated fields & generics for the resolver
     async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions<Self::ExtraFieldsOptions>,
-    ) -> Result<DidResolutionOutput<Self::ExtraFieldsService>, GenericError> {
+        _options: &DidResolutionOptions,
+    ) -> Result<DidResolutionOutput, GenericError> {
         let peer_did = AnyPeerDid::parse(did.to_owned())?;
         match peer_did {
             AnyPeerDid::Numalgo2(peer_did) => {
                 let did_doc =
-                    resolve_numalgo2(peer_did.did(), options.extra().public_key_encoding())?
+                    resolve_numalgo2(peer_did.did(), PublicKeyEncoding::Base58)?
                         .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
                         .build();
                 let resolution_metadata = DidResolutionMetadata::builder()

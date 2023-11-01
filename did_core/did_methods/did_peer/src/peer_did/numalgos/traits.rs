@@ -31,5 +31,5 @@ pub trait ResolvableNumalgo: Numalgo {
         &self,
         did: &Did,
         public_key_encoding: PublicKeyEncoding,
-    ) -> Result<DidDocument<ExtraFieldsSov>, DidPeerError>;
+    ) -> Result<DidDocument, DidPeerError>;
 }

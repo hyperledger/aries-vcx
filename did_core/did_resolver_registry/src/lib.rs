@@ -17,7 +17,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 // TODO: Use serde_json::Map instead
-pub type GenericMap = HashMap<String, Value>;
 pub type GenericResolver = dyn DidResolvableAdaptorTrait + Send + Sync;
 
 #[derive(Default)]
@@ -25,6 +24,7 @@ pub struct ResolverRegistry {
     resolvers: HashMap<String, Box<GenericResolver>>,
 }
 
+// todo: what is this for?
 pub struct DidResolvableAdaptor<T: DidResolvable> {
     inner: T,
 }
@@ -34,26 +34,18 @@ pub trait DidResolvableAdaptorTrait: Send + Sync {
     async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions<HashMap<String, Value>>,
-    ) -> Result<DidResolutionOutput<HashMap<String, Value>>, GenericError>;
+        options: &DidResolutionOptions,
+    ) -> Result<DidResolutionOutput, GenericError>;
 }
 
 #[async_trait]
-impl<T: DidResolvable + Send + Sync> DidResolvableAdaptorTrait for DidResolvableAdaptor<T>
-where
-    T::ExtraFieldsService: Send + Sync + Serialize + for<'de> Deserialize<'de>,
-    T::ExtraFieldsOptions: Send + Sync + Serialize + for<'de> Deserialize<'de>,
-{
+impl<T: DidResolvable + Send + Sync> DidResolvableAdaptorTrait for DidResolvableAdaptor<T> {
     async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions<HashMap<String, Value>>,
-    ) -> Result<DidResolutionOutput<HashMap<String, Value>>, GenericError> {
-        let options_inner: T::ExtraFieldsOptions = if options.extra().is_empty() {
-            Default::default()
-        } else {
-            serde_json::from_value(Value::Object(options.extra().clone().into_iter().collect()))?
-        };
+        options: &DidResolutionOptions,
+    ) -> Result<DidResolutionOutput, GenericError> {
+        let options_inner = options.extra().clone();
         let result_inner = self
             .inner
             .resolve(did, &DidResolutionOptions::new(options_inner))
@@ -65,7 +57,7 @@ where
             .unwrap()
             .clone();
 
-        let did_document: DidDocument<HashMap<String, Value>> =
+        let did_document: DidDocument =
             serde_json::from_value(Value::Object(did_document_inner_hashmap))?;
 
         Ok(DidResolutionOutput::builder(did_document)
@@ -81,12 +73,7 @@ impl ResolverRegistry {
     }
 
     pub fn register_resolver<T>(mut self, method: String, resolver: T) -> Self
-    where
-        T: DidResolvable + 'static + Send + Sync,
-        for<'de> <T as DidResolvable>::ExtraFieldsService:
-            Send + Sync + Serialize + Deserialize<'de>,
-        for<'de> <T as DidResolvable>::ExtraFieldsOptions:
-            Send + Sync + Serialize + Deserialize<'de>,
+    where T: DidResolvable + 'static + Send + Sync,
     {
         let adaptor = DidResolvableAdaptor { inner: resolver };
         self.resolvers.insert(method, Box::new(adaptor));
@@ -101,8 +88,8 @@ impl ResolverRegistry {
     pub async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions<GenericMap>,
-    ) -> Result<DidResolutionOutput<GenericMap>, GenericError> {
+        options: &DidResolutionOptions,
+    ) -> Result<DidResolutionOutput, GenericError> {
         let method = did
             .method()
             .ok_or(DidResolverRegistryError::UnsupportedMethod)?;
@@ -134,8 +121,8 @@ mod tests {
         async fn resolve(
             &self,
             did: &Did,
-            _options: &DidResolutionOptions<()>,
-        ) -> Result<DidResolutionOutput<()>, GenericError> {
+            _options: &DidResolutionOptions,
+        ) -> Result<DidResolutionOutput, GenericError> {
             Ok(DidResolutionOutput::builder(
                 DidDocumentBuilder::new(Did::parse(did.did().to_string()).unwrap()).build(),
             )
@@ -166,7 +153,7 @@ mod tests {
             .times(1)
             .return_once(move |_, _| {
                 let future = async move {
-                    Err::<DidResolutionOutput<()>, GenericError>(Box::new(DummyResolverError))
+                    Err::<DidResolutionOutput, GenericError>(Box::new(DummyResolverError))
                 };
                 Pin::from(Box::new(future))
             });
@@ -199,7 +186,7 @@ mod tests {
             .times(1)
             .return_once(move |_, _| {
                 let future = async move {
-                    Ok::<DidResolutionOutput<()>, GenericError>(
+                    Ok::<DidResolutionOutput, GenericError>(
                         DidResolutionOutput::builder(
                             DidDocumentBuilder::new(Did::parse(did.to_string()).unwrap()).build(),
                         )

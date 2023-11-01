@@ -14,7 +14,6 @@ use serde_json::Value;
 use crate::{
     common::{keys::get_verkey_from_ledger, ledger::service_didsov::EndpointDidSov},
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    utils::from_service_sov_to_legacy,
 };
 
 #[derive(Deserialize, Debug)]
@@ -72,7 +71,7 @@ pub async fn resolve_service(
 ) -> VcxResult<AriesService> {
     match service {
         OobService::AriesService(service) => Ok(service.clone()),
-        OobService::SovService(service) => Ok(from_service_sov_to_legacy(service.to_owned())),
+        // OobService::SovService(service) => Ok(from_service_sov_to_legacy(service.to_owned())),
         OobService::Did(did) => get_service(indy_ledger, did).await,
     }
 }

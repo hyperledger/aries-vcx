@@ -1426,6 +1426,7 @@ dependencies = [
  "base64",
  "bs58 0.5.0",
  "did_parser",
+ "display_as_json",
  "hex",
  "multibase",
  "pem",
@@ -1502,6 +1503,7 @@ dependencies = [
  "did_doc",
  "did_parser",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

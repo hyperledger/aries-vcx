@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use did_doc_sov::extra_fields::KeyKind;
+use did_doc_sov::extra_fields::SovKeyKind;
 use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 use did_resolver_registry::ResolverRegistry;
 use messages::msg_fields::protocols::out_of_band::invitation::{
@@ -25,9 +25,9 @@ pub async fn resolve_key_from_invitation(
         )
     })? {
         OobService::SovService(service) => match service.extra().first_recipient_key()? {
-            KeyKind::DidKey(did_key) => Ok(did_key.key().to_owned()),
-            KeyKind::Value(value) => Ok(Key::from_base58(value, KeyType::Ed25519)?),
-            KeyKind::Reference(reference) => Err(AriesVcxError::from_msg(
+            SovKeyKind::DidKey(did_key) => Ok(did_key.key().to_owned()),
+            SovKeyKind::Value(value) => Ok(Key::from_base58(value, KeyType::Ed25519)?),
+            SovKeyKind::Reference(reference) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidInput,
                 format!("Cannot resolve the reference {reference} without a did document"),
             )),

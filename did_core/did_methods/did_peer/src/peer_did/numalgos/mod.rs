@@ -5,7 +5,6 @@ pub mod numalgo2;
 pub mod numalgo3;
 
 use did_doc::schema::did_doc::DidDocument;
-use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
 
 use crate::{
@@ -37,5 +36,5 @@ pub trait ResolvableNumalgo: Numalgo {
         &self,
         did: &Did,
         public_key_encoding: PublicKeyEncoding,
-    ) -> Result<DidDocument<ExtraFieldsSov>, DidPeerError>;
+    ) -> Result<DidDocument, DidPeerError>;
 }

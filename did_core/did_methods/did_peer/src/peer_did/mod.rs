@@ -44,7 +44,7 @@ impl<N: Numalgo> PeerDid<N> {
 
 pub trait FromDidDoc: Numalgo {
     fn from_did_doc(
-        did_document: DidDocument<ExtraFieldsSov>,
+        did_document: DidDocument,
     ) -> Result<PeerDid<Self>, DidPeerError>
     where
         Self: Sized;
@@ -52,7 +52,7 @@ pub trait FromDidDoc: Numalgo {
 
 impl<N: Numalgo + FromDidDoc> PeerDid<N> {
     pub fn from_did_doc(
-        did_document: DidDocument<ExtraFieldsSov>,
+        did_document: DidDocument,
     ) -> Result<PeerDid<N>, DidPeerError> {
         N::from_did_doc(did_document)
     }

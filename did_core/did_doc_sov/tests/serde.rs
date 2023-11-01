@@ -1,5 +1,5 @@
 use did_doc_sov::{
-    extra_fields::{AcceptType, KeyKind},
+    extra_fields::{SovAcceptType, SovKeyKind},
     service::ServiceType,
     DidDocumentSov,
 };
@@ -114,7 +114,7 @@ fn test_deserialization() {
     assert!(second_extra.first_routing_key().is_err());
     assert_eq!(
         second_extra.accept().unwrap().get(0).unwrap().clone(),
-        AcceptType::DIDCommV1
+        SovAcceptType::DIDCommV1
     );
     assert_eq!(second_extra.priority().unwrap(), 0);
 
@@ -125,11 +125,11 @@ fn test_deserialization() {
     assert!(third_extra.first_routing_key().is_err());
     assert_eq!(
         third_extra.accept().unwrap().get(0).unwrap().clone(),
-        AcceptType::DIDCommV2
+        SovAcceptType::DIDCommV2
     );
     assert!(third_extra.priority().is_err());
 
-    if let KeyKind::Reference(reference) = second_extra.first_recipient_key().unwrap() {
+    if let SovKeyKind::Reference(reference) = second_extra.first_recipient_key().unwrap() {
         let vm = did_doc.dereference_key(reference).unwrap();
         assert_eq!(
             vm.id().to_string(),

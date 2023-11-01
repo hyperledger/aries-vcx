@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
-use did_doc_sov::DidDocumentSov;
 use did_resolver_registry::ResolverRegistry;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
@@ -15,13 +14,14 @@ use messages::{
 use public_key::Key;
 use url::Url;
 use uuid::Uuid;
+use did_doc::schema::did_doc::DidDocument;
 
 use super::DidExchangeResponder;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::{
         state_machine::helpers::{
-            attach_to_ddo_sov, create_our_did_document, ddo_sov_to_attach, jws_sign_attach,
+            attach_to_ddo_sov, create_our_did_document, ddo_to_attach, jws_sign_attach,
         },
         states::{completed::Completed, responder::response_sent::ResponseSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
@@ -51,7 +51,7 @@ impl DidExchangeResponder<ResponseSent> {
 
         // TODO: Response should sign the new *did* with invitation_key only if key was rotated
         let signed_attach = jws_sign_attach(
-            ddo_sov_to_attach(our_did_document.clone())?,
+            ddo_to_attach(our_did_document.clone())?,
             invitation_key,
             wallet,
         )
@@ -125,7 +125,7 @@ impl DidExchangeResponder<ResponseSent> {
 async fn resolve_their_ddo(
     resolver_registry: &Arc<ResolverRegistry>,
     request: &Request,
-) -> Result<DidDocumentSov, AriesVcxError> {
+) -> Result<DidDocument, AriesVcxError> {
     Ok(request
         .content
         .did_doc

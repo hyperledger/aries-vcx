@@ -1,4 +1,4 @@
-use did_doc_sov::{extra_fields::KeyKind, DidDocumentSov};
+use did_doc_sov::{extra_fields::SovKeyKind, DidDocumentSov};
 
 const LEGACY_DID_DOC_JSON: &str = r#"
 {
@@ -72,7 +72,7 @@ fn test_deserialization_legacy() {
     );
 
     let recipient_key = match service.extra().first_recipient_key().unwrap() {
-        KeyKind::Reference(did_url) => did_doc
+        SovKeyKind::Reference(did_url) => did_doc
             .dereference_key(did_url)
             .unwrap()
             .public_key()

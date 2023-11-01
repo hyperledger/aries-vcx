@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
-use did_doc_sov::DidDocumentSov;
 use did_parser::Did;
 use did_resolver_registry::ResolverRegistry;
 use messages::msg_fields::protocols::{
@@ -13,6 +12,7 @@ use messages::msg_fields::protocols::{
 use public_key::Key;
 pub use thin_state::ThinState;
 use url::Url;
+use did_doc::schema::did_doc::DidDocument;
 
 use super::{requester::DidExchangeRequester, responder::DidExchangeResponder};
 use crate::{
@@ -50,7 +50,7 @@ pub enum ResponderState {
 }
 
 impl GenericDidExchange {
-    pub fn our_did_document(&self) -> &DidDocumentSov {
+    pub fn our_did_document(&self) -> &DidDocument {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(request_sent_state) => request_sent_state.our_did_doc(),
@@ -67,7 +67,7 @@ impl GenericDidExchange {
         }
     }
 
-    pub fn their_did_doc(&self) -> &DidDocumentSov {
+    pub fn their_did_doc(&self) -> &DidDocument {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(request_sent_state) => {
@@ -106,13 +106,13 @@ impl GenericDidExchange {
     }
 
     pub async fn construct_request_public(
-        ledger: &impl IndyLedgerRead,
+        resolver_registry: Arc<ResolverRegistry>,
         their_did: Did,
         our_did: Did,
     ) -> Result<(Self, Request), AriesVcxError> {
         let TransitionResult { state, output } =
-            DidExchangeRequester::<RequestSent>::construct_request_public(
-                ledger, their_did, our_did,
+            DidExchangeRequester::<RequestSent>::construct_request(
+                resolver_registry, their_did, our_did,
             )
             .await?;
         Ok((
@@ -121,27 +121,27 @@ impl GenericDidExchange {
         ))
     }
 
-    pub async fn construct_request_pairwise(
-        wallet: &impl BaseWallet,
-        invitation: Invitation,
-        resolver_registry: Arc<ResolverRegistry>,
-        service_endpoint: Url,
-        routing_keys: Vec<String>,
-    ) -> Result<(Self, Request), AriesVcxError> {
-        let TransitionResult { state, output } =
-            DidExchangeRequester::<RequestSent>::construct_request_pairwise(
-                wallet,
-                invitation,
-                resolver_registry,
-                service_endpoint,
-                routing_keys,
-            )
-            .await?;
-        Ok((
-            GenericDidExchange::Requester(RequesterState::RequestSent(state)),
-            output,
-        ))
-    }
+    // pub async fn construct_request_pairwise(
+    //     wallet: &impl BaseWallet,
+    //     invitation: Invitation,
+    //     resolver_registry: Arc<ResolverRegistry>,
+    //     service_endpoint: Url,
+    //     routing_keys: Vec<String>,
+    // ) -> Result<(Self, Request), AriesVcxError> {
+    //     let TransitionResult { state, output } =
+    //         DidExchangeRequester::<RequestSent>::construct_from_invitation(
+    //             wallet,
+    //             invitation,
+    //             resolver_registry,
+    //             service_endpoint,
+    //             routing_keys,
+    //         )
+    //         .await?;
+    //     Ok((
+    //         GenericDidExchange::Requester(RequesterState::RequestSent(state)),
+    //         output,
+    //     ))
+    // }
 
     pub async fn handle_request(
         wallet: &impl BaseWallet,

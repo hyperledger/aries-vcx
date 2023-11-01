@@ -6,7 +6,7 @@ use did_doc::schema::{
     types::{uri::Uri, url::Url},
     verification_method::{VerificationMethod, VerificationMethodType},
 };
-use did_doc_sov::extra_fields::{didcommv1::ExtraFieldsDidCommV1, ExtraFieldsSov, KeyKind};
+use did_doc_sov::extra_fields::{didcommv1::ExtraFieldsDidCommV1, ExtraFieldsSov, SovKeyKind};
 use did_parser::{Did, DidUrl};
 use did_peer::peer_did::{
     numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
@@ -18,20 +18,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn demo() -> Result<(), Box<dyn Error>> {
-    let recipient_key = KeyKind::Value("foo".to_string());
-    let sov_service_extra = ExtraFieldsSov::DIDCommV1(
-        ExtraFieldsDidCommV1::builder()
-            .set_recipient_keys(vec![recipient_key])
-            .build(),
-    );
-    let service = ServiceBuilder::<ExtraFieldsSov>::new(
-        Uri::new("xyz://example.org")?,
-        Url::new("http://example.org")?,
-        sov_service_extra,
-    )
-    .add_service_type("DIDCommMessaging".to_string())?
-    .build();
-
     let did_url = DidUrl::parse("did:foo:bar#key-1".into())?;
     let did = Did::parse("did:foo:bar".into())?;
     let verification_method = VerificationMethod::builder(
@@ -44,7 +30,6 @@ fn demo() -> Result<(), Box<dyn Error>> {
 
     let ddo = DidDocument::builder(did)
         .add_verification_method(verification_method)
-        .add_service(service)
         .build();
     println!("Did document: \n{}", serde_json::to_string_pretty(&ddo)?);
 

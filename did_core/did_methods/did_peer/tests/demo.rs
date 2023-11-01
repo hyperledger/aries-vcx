@@ -6,7 +6,7 @@ use did_doc::schema::{
     types::{uri::Uri, url::Url},
     verification_method::{VerificationMethod, VerificationMethodType},
 };
-use did_doc_sov::extra_fields::{didcommv1::ExtraFieldsDidCommV1, ExtraFieldsSov, KeyKind};
+use did_doc_sov::extra_fields::{didcommv1::ExtraFieldsDidCommV1, ExtraFieldsSov, SovKeyKind};
 use did_parser::{Did, DidUrl};
 use did_peer::peer_did::{
     numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
@@ -15,13 +15,13 @@ use did_peer::peer_did::{
 
 #[test]
 fn demo() -> Result<(), Box<dyn Error>> {
-    let recipient_key = KeyKind::Value("foo".to_string());
+    let recipient_key = SovKeyKind::Value("foo".to_string());
     let sov_service_extra = ExtraFieldsSov::DIDCommV1(
         ExtraFieldsDidCommV1::builder()
             .set_recipient_keys(vec![recipient_key])
             .build(),
     );
-    let service = ServiceBuilder::<ExtraFieldsSov>::new(
+    let service = ServiceBuilder::new(
         Uri::new("xyz://example.org")?,
         Url::new("http://example.org")?,
         sov_service_extra,

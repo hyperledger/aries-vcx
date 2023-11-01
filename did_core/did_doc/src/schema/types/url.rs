@@ -13,6 +13,10 @@ impl Url {
     pub fn new(url: &str) -> Result<Self, DidDocumentBuilderError> {
         Ok(Self(UrlDep::parse(url)?))
     }
+
+    pub fn inner(&self) -> UrlDep {
+        self.clone().0
+    }
 }
 
 impl TryFrom<&str> for Url {

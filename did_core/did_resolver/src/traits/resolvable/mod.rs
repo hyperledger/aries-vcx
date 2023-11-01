@@ -11,12 +11,9 @@ use crate::error::GenericError;
 
 #[async_trait]
 pub trait DidResolvable {
-    type ExtraFieldsService: Default;
-    type ExtraFieldsOptions: Default;
-
     async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions<Self::ExtraFieldsOptions>,
-    ) -> Result<DidResolutionOutput<Self::ExtraFieldsService>, GenericError>;
+        options: &DidResolutionOptions,
+    ) -> Result<DidResolutionOutput, GenericError>;
 }

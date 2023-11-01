@@ -7,7 +7,6 @@ pub mod responder;
 use std::marker::PhantomData;
 
 use chrono::Utc;
-use did_doc_sov::DidDocumentSov;
 pub use helpers::generate_keypair;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
@@ -16,6 +15,7 @@ use messages::{
     },
 };
 use uuid::Uuid;
+use did_doc::schema::did_doc::DidDocument;
 
 use super::{
     states::{
@@ -29,8 +29,8 @@ use super::{
 pub struct DidExchange<I, S> {
     state: S,
     initiation_type: PhantomData<I>,
-    our_did_document: DidDocumentSov,
-    their_did_document: DidDocumentSov,
+    our_did_document: DidDocument,
+    their_did_document: DidDocument,
 }
 
 impl<I, S: ThreadId> DidExchange<I, S> {
@@ -100,8 +100,8 @@ impl<I, S: InvitationId> DidExchange<I, S> {
 impl<I, S> DidExchange<I, S> {
     pub fn from_parts(
         state: S,
-        their_did_document: DidDocumentSov,
-        our_did_document: DidDocumentSov,
+        their_did_document: DidDocument,
+        our_did_document: DidDocument,
     ) -> Self {
         Self {
             state,
@@ -113,11 +113,11 @@ impl<I, S> DidExchange<I, S> {
 }
 
 impl<I, S> DidExchange<I, S> {
-    pub fn our_did_doc(&self) -> &DidDocumentSov {
+    pub fn our_did_doc(&self) -> &DidDocument {
         &self.our_did_document
     }
 
-    pub fn their_did_doc(&self) -> &DidDocumentSov {
+    pub fn their_did_doc(&self) -> &DidDocument {
         &self.their_did_document
     }
 }

@@ -1,5 +1,5 @@
 use did_doc::schema::types::url::Url;
-use did_doc_sov::extra_fields::{AcceptType, KeyKind};
+use did_doc_sov::extra_fields::{SovAcceptType, SovKeyKind};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -11,11 +11,11 @@ pub struct ServiceAbbreviated {
     #[serde(rename = "r")]
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    routing_keys: Vec<KeyKind>,
+    routing_keys: Vec<SovKeyKind>,
     #[serde(rename = "a")]
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    accept: Vec<AcceptType>,
+    accept: Vec<SovAcceptType>,
 }
 
 impl ServiceAbbreviated {
@@ -31,11 +31,11 @@ impl ServiceAbbreviated {
         self.service_endpoint.as_ref()
     }
 
-    pub fn routing_keys(&self) -> &[KeyKind] {
+    pub fn routing_keys(&self) -> &[SovKeyKind] {
         self.routing_keys.as_ref()
     }
 
-    pub fn accept(&self) -> &[AcceptType] {
+    pub fn accept(&self) -> &[SovAcceptType] {
         self.accept.as_ref()
     }
 
@@ -43,8 +43,8 @@ impl ServiceAbbreviated {
     pub(crate) fn from_parts(
         service_type: &str,
         service_endpoint: &str,
-        routing_keys: &[KeyKind],
-        accept: &[AcceptType],
+        routing_keys: &[SovKeyKind],
+        accept: &[SovAcceptType],
     ) -> Self {
         Self {
             service_type: service_type.to_string(),
@@ -65,8 +65,8 @@ pub struct ServiceAbbreviatedEndpointBuilder {
 pub struct ServiceAbbreviatedCompleteBuilder {
     service_type: String,
     service_endpoint: Url,
-    routing_keys: Vec<KeyKind>,
-    accept: Vec<AcceptType>,
+    routing_keys: Vec<SovKeyKind>,
+    accept: Vec<SovAcceptType>,
 }
 
 impl ServiceAbbreviatedTypeBuilder {
@@ -89,7 +89,7 @@ impl ServiceAbbreviatedEndpointBuilder {
 impl ServiceAbbreviatedCompleteBuilder {
     pub fn set_routing_keys(
         &mut self,
-        routing_keys: Vec<KeyKind>,
+        routing_keys: Vec<SovKeyKind>,
     ) -> &mut ServiceAbbreviatedCompleteBuilder {
         self.routing_keys = routing_keys;
         self
@@ -97,7 +97,7 @@ impl ServiceAbbreviatedCompleteBuilder {
 
     pub fn set_accept_types(
         &mut self,
-        accept: Vec<AcceptType>,
+        accept: Vec<SovAcceptType>,
     ) -> &mut ServiceAbbreviatedCompleteBuilder {
         self.accept = accept;
         self

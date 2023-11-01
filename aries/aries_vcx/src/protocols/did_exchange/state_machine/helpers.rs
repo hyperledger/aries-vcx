@@ -7,9 +7,8 @@ use did_doc::schema::{
     verification_method::{VerificationMethod, VerificationMethodKind, VerificationMethodType},
 };
 use did_doc_sov::{
-    extra_fields::{didcommv1::ExtraFieldsDidCommV1, KeyKind},
-    service::{didcommv1::ServiceDidCommV1, ServiceSov},
-    DidDocumentSov,
+    extra_fields::{didcommv1::ExtraFieldsDidCommV1, SovKeyKind},
+    service::{didcommv1::ServiceDidCommV1},
 };
 use did_key::DidKey;
 use did_parser::{Did, DidUrl};
@@ -18,6 +17,8 @@ use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentTyp
 use public_key::{Key, KeyType};
 use serde_json::Value;
 use url::Url;
+use did_doc::schema::did_doc::DidDocument;
+use did_doc::schema::service::Service;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
@@ -35,57 +36,47 @@ pub async fn generate_keypair(
     Ok(Key::from_base58(&pairwise_info.pw_vk, key_type)?)
 }
 
-pub fn construct_service(
-    routing_keys: Vec<KeyKind>,
-    recipient_keys: Vec<KeyKind>,
-    service_endpoint: Url,
-) -> Result<ServiceSov, AriesVcxError> {
-    let extra = ExtraFieldsDidCommV1::builder()
-        .set_routing_keys(routing_keys)
-        .set_recipient_keys(recipient_keys)
-        .build();
-    let service = ServiceSov::DIDCommV1(ServiceDidCommV1::new(
-        Uri::new("#0")?,
-        service_endpoint.into(),
-        extra,
-    )?);
-    Ok(service)
-}
-
 pub async fn create_our_did_document(
     wallet: &impl BaseWallet,
     service_endpoint: Url,
     routing_keys: Vec<String>,
-) -> Result<(DidDocumentSov, Key), AriesVcxError> {
+) -> Result<(DidDocument, Key), AriesVcxError> {
     let key_ver = generate_keypair(wallet, KeyType::Ed25519).await?;
-    let key_enc = generate_keypair(wallet, KeyType::X25519).await?;
-    let service = construct_service(
-        routing_keys.into_iter().map(KeyKind::Value).collect(),
-        vec![KeyKind::DidKey(key_enc.clone().try_into()?)],
-        service_endpoint,
-    )?;
+    let key_enc = generate_keypair(wallet, KeyType::Ed25519).await?;
 
-    // TODO: Make it easier to generate peer did from keys and service, and generate DDO from it
-    let did_document_temp = did_doc_from_keys(
+    let service: Service = ServiceDidCommV1::new(
+        Uri::new("#0")?,
+        service_endpoint.into(),
+        ExtraFieldsDidCommV1::builder()
+            .set_routing_keys(
+                routing_keys.into_iter().map(SovKeyKind::Value).collect()
+            )
+            .set_recipient_keys(
+                vec![SovKeyKind::DidKey(key_enc.clone().try_into()?)]
+            )
+            .build(),
+    ).into();
+
+    let mut did_document = did_doc_from_keys(
         Default::default(),
         key_ver.clone(),
         key_enc.clone(),
         service.clone(),
     )?;
-    let peer_did = PeerDid::<Numalgo2>::from_did_doc(did_document_temp.into())?;
-
+    let peer_did = PeerDid::<Numalgo2>::from_did_doc(did_document.into())?;
     Ok((
-        did_doc_from_keys(peer_did.into(), key_ver, key_enc.clone(), service)?,
+        did_document.set_id(peer_did.did().clone())?,
         key_enc,
     ))
 }
 
+// todo: add unit tests
 fn did_doc_from_keys(
     did: Did,
     key_ver: Key,
     key_enc: Key,
-    service: ServiceSov,
-) -> Result<DidDocumentSov, AriesVcxError> {
+    service: Service,
+) -> Result<DidDocument, AriesVcxError> {
     let vm_ver_id = DidUrl::from_fragment(key_ver.short_prefixless_fingerprint())?;
     let vm_ka_id = DidUrl::from_fragment(key_enc.short_prefixless_fingerprint())?;
     let vm_ver = VerificationMethod::builder(
@@ -102,15 +93,15 @@ fn did_doc_from_keys(
     )
     .add_public_key_base58(key_enc.base58())
     .build();
-    Ok(DidDocumentSov::builder(did)
+    Ok(DidDocument::builder(did)
         .add_service(service)
         .add_verification_method(vm_ver)
         // TODO: Include just reference
-        .add_key_agreement(VerificationMethodKind::Resolved(vm_ka))
+        .add_key_agreement(vm_ka)
         .build())
 }
 
-pub fn ddo_sov_to_attach(ddo: DidDocumentSov) -> Result<Attachment, AriesVcxError> {
+pub fn ddo_to_attach(ddo: DidDocument) -> Result<Attachment, AriesVcxError> {
     // Interop note: acapy accepts unsigned when using peer dids?
     let content_b64 =
         base64::engine::Engine::encode(&URL_SAFE_NO_PAD, serde_json::to_string(&ddo)?);
@@ -198,5 +189,47 @@ where
     move |error| TransitionError {
         error: error.into(),
         state,
+    }
+}
+
+
+// todo: this is new test, yet to run it after we get stuff compiling
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[tokio::test] // Use tokio::test if your generate_keypair function is async
+    async fn test_did_doc_from_keys() {
+        // Assuming generate_keypair and other functions are available in your context
+        let key_ver = Key::new("7MV7mTpzQekW39mXdPXKnRJn79kkzMvmtaSHZWUSbvt5".into(), KeyType::Ed25519).unwrap();
+        let key_enc = Key::new("tyntrez7bCthPqvZUDGwhYB1bSe9HzpLdSeHFpuSwst".into(), KeyType::Ed25519).unwrap();
+
+        let service_endpoint = Url::parse("http://example.com").unwrap();
+        let routing_keys = vec!["routing_key1".to_string(), "routing_key2".to_string()];
+        let service: Service = ServiceDidCommV1::new(
+            Uri::new("#0")?,
+            service_endpoint.into(),
+            ExtraFieldsDidCommV1::builder()
+                .set_routing_keys(
+                    routing_keys.into_iter().map(SovKeyKind::Value).collect()
+                )
+                .set_recipient_keys(
+                    vec![SovKeyKind::DidKey(key_enc.clone().try_into()?)]
+                )
+                .build(),
+        ).try_into().unwrap();
+
+        let did = Did::default();
+
+        let result = did_doc_from_keys(did.clone(), key_ver.clone(), key_enc.clone(), service.clone());
+
+        assert!(result.is_ok());
+        let did_doc = result.unwrap();
+
+        assert_eq!(did_doc.services().len(), 1);
+        assert_eq!(did_doc.verification_methods().len(), 1);
+        assert_eq!(did_doc.key_agreements().len(), 1);
+        // ...other assertions as needed
     }
 }

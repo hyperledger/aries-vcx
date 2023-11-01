@@ -24,7 +24,7 @@ macro_rules! resolve_positive_test {
                 ExtraFieldsOptions::new().set_public_key_encoding($encoding),
             );
             let did_document_expected =
-                serde_json::from_str::<DidDocument<ExtraFieldsSov>>($did_doc).unwrap();
+                serde_json::from_str::<DidDocument>($did_doc).unwrap();
             let ddo = PeerDidResolver
                 .resolve(&$peer_did.parse().unwrap(), &options)
                 .await

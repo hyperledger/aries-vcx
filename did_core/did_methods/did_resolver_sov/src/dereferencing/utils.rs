@@ -17,9 +17,9 @@ use serde::Serialize;
 
 use crate::error::DidSovError;
 
-pub fn service_by_id<F, E: Default>(services: &[Service<E>], predicate: F) -> Option<&Service<E>>
+pub fn service_by_id<F>(services: &[Service], predicate: F) -> Option<&Service>
 where
-    F: Fn(&str) -> bool,
+    F: Fn(&str) -> bool
 {
     services.iter().find(|svc| predicate(svc.id().as_ref()))
 }
@@ -36,8 +36,8 @@ where
         .find(|auth| predicate(auth.id().did_url()))
 }
 
-fn content_stream_from<E: Default + Serialize>(
-    did_document: &DidDocument<E>,
+fn content_stream_from(
+    did_document: &DidDocument,
     did_url: &DidUrl,
 ) -> Result<Cursor<Vec<u8>>, DidSovError> {
     let fragment = did_url.fragment().ok_or_else(|| {
@@ -71,8 +71,8 @@ fn content_stream_from<E: Default + Serialize>(
 }
 
 // TODO: Currently, only fragment dereferencing is supported
-pub(crate) fn dereference_did_document<E: Default + Serialize>(
-    resolution_output: &DidResolutionOutput<E>,
+pub(crate) fn dereference_did_document(
+    resolution_output: &DidResolutionOutput,
     did_url: &DidUrl,
 ) -> Result<DidDereferencingOutput<Cursor<Vec<u8>>>, DidSovError> {
     let content_stream = content_stream_from(resolution_output.did_document(), did_url)?;
@@ -102,7 +102,7 @@ mod tests {
 
     use super::*;
 
-    fn example_did_document_builder() -> DidDocumentBuilder<()> {
+    fn example_did_document_builder() -> DidDocumentBuilder {
         let verification_method = VerificationMethod::builder(
             DidUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap(),
             "did:example:123456789abcdefghi"
@@ -117,7 +117,7 @@ mod tests {
         let agent_service = Service::builder(
             "did:example:123456789abcdefghi#agent".parse().unwrap(),
             "https://agent.example.com/8377464".try_into().unwrap(),
-            (),
+            Default::default()
         )
         .add_service_type("AgentService".to_string())
         .unwrap()
@@ -126,7 +126,7 @@ mod tests {
         let messaging_service = Service::builder(
             "did:example:123456789abcdefghi#messages".parse().unwrap(),
             "https://example.com/messages/8377464".try_into().unwrap(),
-            (),
+            Default::default()
         )
         .add_service_type("MessagingService".to_string())
         .unwrap()
@@ -138,7 +138,7 @@ mod tests {
             .add_service(messaging_service)
     }
 
-    fn example_resolution_output() -> DidResolutionOutput<()> {
+    fn example_resolution_output() -> DidResolutionOutput {
         DidResolutionOutput::builder(example_did_document_builder().build()).build()
     }
 
@@ -205,7 +205,7 @@ mod tests {
             let additional_service = Service::builder(
                 "did:example:123456789abcdefghi#keys-1".parse().unwrap(),
                 "https://example.com/duplicated/8377464".try_into().unwrap(),
-                (),
+                Default::default(),
             )
             .add_service_type("DuplicatedService".to_string())
             .unwrap()

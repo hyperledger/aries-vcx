@@ -1,5 +1,4 @@
 use did_doc::schema::did_doc::DidDocument;
-use did_doc_sov::extra_fields::ExtraFieldsSov;
 
 use crate::{
     error::DidPeerError,
@@ -18,7 +17,7 @@ impl Numalgo for Numalgo3 {
 
 impl FromDidDoc for Numalgo3 {
     fn from_did_doc(
-        did_document: DidDocument<ExtraFieldsSov>,
+        did_document: DidDocument,
     ) -> Result<PeerDid<Numalgo3>, DidPeerError> {
         PeerDid::<Numalgo2>::from_did_doc(did_document)?.to_numalgo3()
     }

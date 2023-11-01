@@ -12,4 +12,6 @@ pub enum DidDocumentSovError {
     IndexOutOfBounds(usize),
     #[error("JSON error")]
     JsonError(#[from] serde_json::Error),
+    #[error("Parsing err {0}")]
+    ParsingError(String),
 }

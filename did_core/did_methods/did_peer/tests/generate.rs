@@ -27,7 +27,7 @@ macro_rules! generate_test_numalgo2 {
         #[test]
         fn $test_name() {
             let did_document =
-                serde_json::from_str::<DidDocument<ExtraFieldsSov>>($did_doc).unwrap();
+                serde_json::from_str::<DidDocument>($did_doc).unwrap();
             assert_eq!(
                 PeerDid::<Numalgo2>::parse($peer_did.to_string()).unwrap(),
                 PeerDid::<Numalgo2>::from_did_doc(did_document).unwrap()
@@ -41,7 +41,7 @@ macro_rules! generate_test_numalgo3 {
         #[test]
         fn $test_name() {
             let did_document =
-                serde_json::from_str::<DidDocument<ExtraFieldsSov>>($did_doc).unwrap();
+                serde_json::from_str::<DidDocument>($did_doc).unwrap();
             assert_eq!(
                 PeerDid::<Numalgo3>::parse($peer_did.to_string()).unwrap(),
                 PeerDid::<Numalgo3>::from_did_doc(did_document).unwrap()

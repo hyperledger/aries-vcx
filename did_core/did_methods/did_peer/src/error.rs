@@ -1,14 +1,15 @@
 use std::convert::Infallible;
 
 use did_doc::schema::verification_method::VerificationMethodType;
-use thiserror::Error;
 
 use crate::peer_did::numalgos::kind::NumalgoKind;
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum DidPeerError {
     #[error("DID parser error: {0}")]
     DidParserError(#[from] did_parser::ParseError),
+    #[error("Parsing error: {0}")]
+    ParsingError(String),
     #[error("DID validation error: {0}")]
     DidValidationError(String),
     #[error("DID document builder error: {0}")]

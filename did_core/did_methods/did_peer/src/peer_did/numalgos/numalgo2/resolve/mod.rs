@@ -10,8 +10,8 @@ use crate::{error::DidPeerError, resolver::options::PublicKeyEncoding};
 pub fn resolve_numalgo2(
     did: &Did,
     public_key_encoding: PublicKeyEncoding,
-) -> Result<DidDocumentBuilder<ExtraFieldsSov>, DidPeerError> {
-    let mut did_doc_builder: DidDocumentBuilder<ExtraFieldsSov> =
+) -> Result<DidDocumentBuilder, DidPeerError> {
+    let mut did_doc_builder: DidDocumentBuilder =
         DidDocument::builder(did.to_owned());
 
     did_doc_builder = process_elements(did_doc_builder, did, public_key_encoding)?;

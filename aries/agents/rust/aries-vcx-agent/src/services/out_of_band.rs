@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     did_doc_sov::{
-        extra_fields::{didcommv1::ExtraFieldsDidCommV1, KeyKind},
+        extra_fields::{didcommv1::ExtraFieldsDidCommV1, SovKeyKind},
         service::{didcommv1::ServiceDidCommV1, ServiceSov},
     },
     handlers::out_of_band::{
@@ -51,7 +51,7 @@ impl ServiceOutOfBand {
                 service_id.parse()?,
                 self.service_endpoint.to_owned().into(),
                 ExtraFieldsDidCommV1::builder()
-                    .set_recipient_keys(vec![KeyKind::DidKey(public_key.try_into()?)])
+                    .set_recipient_keys(vec![SovKeyKind::DidKey(public_key.try_into()?)])
                     .build(),
             )?)
         };

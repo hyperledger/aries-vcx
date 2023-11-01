@@ -13,12 +13,17 @@ use aries_vcx::{
     },
     transport::Transport,
 };
+use aries_vcx::messages::AriesMessage;
+use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
 use aries_vcx_core::{ledger::indy_vdr_ledger::DefaultIndyLedgerRead, wallet::indy::IndySdkWallet};
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use did_resolver_registry::ResolverRegistry;
+use did_resolver_sov::did_resolver::did_doc::schema::did_doc::DidDocument;
+use url::Url;
+use aries_vcx::utils::from_did_document_to_legacy;
 
 use super::connection::ServiceEndpoint;
 use crate::{
-    helper::{get_their_endpoint, pairwise_encrypt},
     http::VcxHttpClient,
     storage::{object_cache::ObjectCache, Storage},
     AgentError, AgentErrorKind, AgentResult,
@@ -53,7 +58,7 @@ impl ServiceDidExchange {
 
     pub async fn send_request_public(&self, their_did: String) -> AgentResult<String> {
         let (requester, request) = GenericDidExchange::construct_request_public(
-            self.ledger_read.as_ref(),
+            self.resolver_registry.clone(),
             format!("did:sov:{}", their_did).parse()?,
             format!("did:sov:{}", self.public_did).parse()?,
         )
@@ -74,7 +79,7 @@ impl ServiceDidExchange {
         let encryption_envelope =
             pairwise_encrypt(ddo_our, ddo_their, self.wallet.as_ref(), &request.into()).await?;
         VcxHttpClient
-            .send_message(encryption_envelope.0, get_their_endpoint(ddo_their)?)
+            .send_message(encryption_envelope.0, get_first_endpoint(ddo_their)?)
             .await?;
         self.did_exchange.insert(&request_id, requester.clone())
     }
@@ -115,7 +120,7 @@ impl ServiceDidExchange {
         let encryption_envelope =
             pairwise_encrypt(ddo_our, ddo_their, self.wallet.as_ref(), &response.into()).await?;
         VcxHttpClient
-            .send_message(encryption_envelope.0, get_their_endpoint(ddo_their)?)
+            .send_message(encryption_envelope.0, get_first_endpoint(ddo_their)?)
             .await?;
         self.did_exchange.insert(&request_id, responder.clone())
     }
@@ -132,7 +137,7 @@ impl ServiceDidExchange {
         let encryption_envelope =
             pairwise_encrypt(ddo_our, ddo_their, self.wallet.as_ref(), &complete.into()).await?;
         VcxHttpClient
-            .send_message(encryption_envelope.0, get_their_endpoint(ddo_their)?)
+            .send_message(encryption_envelope.0, get_first_endpoint(ddo_their)?)
             .await?;
         self.did_exchange.insert(&thread_id, requester.clone())
     }
@@ -174,4 +179,39 @@ impl ServiceDidExchange {
     pub fn get_state(&self, thread_id: &str) -> AgentResult<ThinState> {
         Ok(self.did_exchange.get(thread_id)?.get_state())
     }
+}
+
+pub fn get_first_endpoint(did_document: &DidDocument) -> AgentResult<Url> {
+    let service = did_document.service().first().ok_or(AgentError::from_msg(
+        AgentErrorKind::InvalidState,
+        "No service found",
+    ))?;
+    Ok(service.service_endpoint().inner())
+}
+
+pub async fn pairwise_encrypt(
+    our_did_doc: &DidDocument,
+    their_did_doc: &DidDocument,
+    wallet: &impl BaseWallet,
+    message: &AriesMessage,
+) -> AgentResult<EncryptionEnvelope> {
+    let sender_verkey = our_did_doc
+        .resolved_key_agreement()
+        .next()
+        .ok_or_else(|| {
+            AgentError::from_msg(
+                AgentErrorKind::InvalidState,
+                "No key agreement method found in our did document",
+            )
+        })?
+        .public_key()?
+        .base58();
+    EncryptionEnvelope::create(
+        wallet,
+        serde_json::json!(message).to_string().as_bytes(),
+        Some(&sender_verkey),
+        &from_did_document_to_legacy(their_did_doc.clone())?,
+    )
+        .await
+        .map_err(|err| err.into())
 }

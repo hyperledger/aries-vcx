@@ -1,5 +1,5 @@
 use std::{collections::HashMap, fmt::Display};
-
+use display_as_json::Display;
 use did_parser::{Did, DidUrl};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -14,10 +14,10 @@ use crate::error::DidDocumentBuilderError;
 
 pub type ControllerAlias = OneOrList<Did>;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default, Display)]
 #[serde(default)]
 #[serde(rename_all = "camelCase")]
-pub struct DidDocument<E> {
+pub struct DidDocument {
     id: Did,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     also_known_as: Vec<Uri>,
@@ -36,29 +36,23 @@ pub struct DidDocument<E> {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     capability_delegation: Vec<VerificationMethodKind>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    service: Vec<Service<E>>,
+    service: Vec<Service>,
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     #[serde(flatten)]
     extra: HashMap<String, Value>,
 }
 
-impl<E> Display for DidDocument<E>
-where
-    E: Display + Serialize,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let json = serde_json::to_string(self).unwrap();
-        write!(f, "{}", json)
-    }
-}
-
-impl<E> DidDocument<E> {
-    pub fn builder(id: Did) -> DidDocumentBuilder<E> {
+impl DidDocument {
+    pub fn builder(id: Did) -> DidDocumentBuilder {
         DidDocumentBuilder::new(id)
     }
 
     pub fn id(&self) -> &Did {
         &self.id
+    }
+
+    pub fn set_id(&mut self, id: Did) {
+        self.id = id;
     }
 
     pub fn also_known_as(&self) -> &[Uri] {
@@ -93,7 +87,7 @@ impl<E> DidDocument<E> {
         self.capability_delegation.as_ref()
     }
 
-    pub fn service(&self) -> &[Service<E>] {
+    pub fn service(&self) -> &[Service] {
         self.service.as_ref()
     }
 
@@ -114,7 +108,7 @@ impl<E> DidDocument<E> {
 }
 
 #[derive(Debug)]
-pub struct DidDocumentBuilder<E> {
+pub struct DidDocumentBuilder {
     id: Did,
     also_known_as: Vec<Uri>,
     controller: Vec<Did>,
@@ -124,11 +118,11 @@ pub struct DidDocumentBuilder<E> {
     key_agreement: Vec<VerificationMethodKind>,
     capability_invocation: Vec<VerificationMethodKind>,
     capability_delegation: Vec<VerificationMethodKind>,
-    service: Vec<Service<E>>,
+    service: Vec<Service>,
     extra: HashMap<String, Value>,
 }
 
-impl<E> Default for DidDocumentBuilder<E> {
+impl Default for DidDocumentBuilder {
     fn default() -> Self {
         Self {
             id: Default::default(),
@@ -146,7 +140,7 @@ impl<E> Default for DidDocumentBuilder<E> {
     }
 }
 
-impl<E> DidDocumentBuilder<E> {
+impl DidDocumentBuilder {
     pub fn new(id: Did) -> Self {
         Self {
             id,
@@ -229,7 +223,7 @@ impl<E> DidDocumentBuilder<E> {
         self
     }
 
-    pub fn add_service(mut self, service: Service<E>) -> Self {
+    pub fn add_service(mut self, service: Service) -> Self {
         self.service.push(service);
         self
     }
@@ -239,7 +233,7 @@ impl<E> DidDocumentBuilder<E> {
         self
     }
 
-    pub fn build(self) -> DidDocument<E> {
+    pub fn build(self) -> DidDocument {
         let controller = if self.controller.is_empty() {
             None
         } else {
@@ -261,8 +255,8 @@ impl<E> DidDocumentBuilder<E> {
     }
 }
 
-impl<E> From<DidDocument<E>> for DidDocumentBuilder<E> {
-    fn from(did_document: DidDocument<E>) -> Self {
+impl From<DidDocument> for DidDocumentBuilder {
+    fn from(did_document: DidDocument) -> Self {
         let controller = match did_document.controller {
             Some(OneOrList::List(list)) => list,
             _ => Vec::new(),
@@ -316,7 +310,7 @@ mod tests {
         let service_type = "test-service".to_string();
         let service_endpoint = "https://example.com/service";
         let service =
-            ServiceBuilder::<()>::new(service_id, service_endpoint.try_into().unwrap(), ())
+            ServiceBuilder::<HashMap<String, Value>>::new(service_id, service_endpoint.try_into().unwrap(), ())
                 .add_service_type(service_type)
                 .unwrap()
                 .build();

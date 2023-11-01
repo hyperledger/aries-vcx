@@ -65,14 +65,11 @@ impl<C> DidResolvable for DidWebResolver<C>
 where
     C: Connect + Send + Sync + Clone + 'static,
 {
-    type ExtraFieldsService = ();
-    type ExtraFieldsOptions = ();
-
     async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions<Self::ExtraFieldsOptions>,
-    ) -> Result<DidResolutionOutput<()>, GenericError> {
+        options: &DidResolutionOptions,
+    ) -> Result<DidResolutionOutput, GenericError> {
         let method = did.method().ok_or_else(|| {
             DidWebError::InvalidDid("Attempted to resolve unqualified did".to_string())
         })?;

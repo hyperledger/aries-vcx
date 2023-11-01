@@ -1,15 +1,17 @@
+use std::collections::HashMap;
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::shared_types::media_type::MediaType;
 
 #[derive(Debug, Clone, PartialEq, Default, Deserialize)]
-pub struct DidResolutionOptions<E> {
+pub struct DidResolutionOptions {
     accept: Option<MediaType>,
-    extra: E,
+    extra: HashMap<String, Value>
 }
 
-impl<E> DidResolutionOptions<E> {
-    pub fn new(extra: E) -> Self {
+impl DidResolutionOptions {
+    pub fn new(extra: HashMap<String, Value>) -> Self {
         Self {
             accept: None,
             extra,
@@ -25,7 +27,7 @@ impl<E> DidResolutionOptions<E> {
         self.accept.as_ref()
     }
 
-    pub fn extra(&self) -> &E {
+    pub fn extra(&self) -> &HashMap<String, Value> {
         &self.extra
     }
 }

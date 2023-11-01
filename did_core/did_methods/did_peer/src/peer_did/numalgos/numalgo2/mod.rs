@@ -23,7 +23,7 @@ mod verification_method;
 
 impl FromDidDoc for Numalgo2 {
     fn from_did_doc(
-        did_document: DidDocument<ExtraFieldsSov>,
+        did_document: DidDocument,
     ) -> Result<PeerDid<Numalgo2>, DidPeerError> {
         let mut did = String::from("did:peer:2");
         did = append_encoded_key_segments(did, &did_document)?;
@@ -52,7 +52,7 @@ impl ResolvableNumalgo for Numalgo2 {
         &self,
         did: &Did,
         public_key_encoding: PublicKeyEncoding,
-    ) -> Result<DidDocument<ExtraFieldsSov>, DidPeerError> {
+    ) -> Result<DidDocument, DidPeerError> {
         resolve_numalgo2(did, public_key_encoding).map(|builder| builder.build())
     }
 }
