@@ -29,7 +29,7 @@ fn test_service_build_aip1() {
     let first_service = services.get(0).unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());
     assert_eq!(
-        first_service.service_endpoint().clone(),
+        first_service.service_endpoint(),
         SERVICE_ENDPOINT.parse::<Url>().unwrap()
     );
     let first_extra = first_service.extra();
@@ -59,7 +59,7 @@ fn test_service_build_didcommv1() {
     let first_service = services.get(0).unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());
     assert_eq!(
-        first_service.service_endpoint().clone(),
+        first_service.service_endpoint(),
         SERVICE_ENDPOINT.parse::<Url>().unwrap()
     );
     let first_extra = first_service.extra();
@@ -93,7 +93,7 @@ fn test_service_build_didcommv2() {
     let first_service = services.get(0).unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());
     assert_eq!(
-        first_service.service_endpoint().clone(),
+        first_service.service_endpoint(),
         SERVICE_ENDPOINT.parse::<Url>().unwrap()
     );
     let first_extra = first_service.extra();

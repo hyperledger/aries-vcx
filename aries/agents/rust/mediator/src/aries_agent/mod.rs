@@ -226,12 +226,15 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
 
 #[cfg(test)]
 mod test {
-    use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
+    use aries_vcx::{
+        handlers::out_of_band::receiver::oob_invitation_to_legacy_did_doc,
+        utils::encryption_envelope::EncryptionEnvelope,
+    };
     use log::info;
     use serde_json::Value;
+    use test_utils::mockdata::mock_ledger::MockLedger;
 
     use super::AgentBuilder;
-    use crate::aries_agent::utils::oob2did;
 
     #[tokio::test]
     pub async fn test_pack_unpack() {
@@ -245,7 +248,11 @@ mod test {
             )
             .await
             .unwrap();
-        let their_diddoc = oob2did(agent.get_oob_invite().unwrap());
+        let mock_ledger = MockLedger {}; // not good. to be dealt later
+        let their_diddoc =
+            oob_invitation_to_legacy_did_doc(&mock_ledger, &agent.get_oob_invite().unwrap())
+                .await
+                .unwrap();
         let our_service = agent.service.as_ref().unwrap();
         let our_vk = our_service.recipient_keys.first().unwrap();
         let EncryptionEnvelope(packed) = agent

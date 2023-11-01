@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 #![allow(clippy::large_enum_variant)]
 #![allow(clippy::diverging_sub_expression)]
 //this is needed for some large json macro invocations

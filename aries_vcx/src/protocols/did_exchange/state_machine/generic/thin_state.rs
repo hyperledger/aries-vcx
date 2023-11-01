@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ThinState {
     #[serde(rename = "RequestSent")]

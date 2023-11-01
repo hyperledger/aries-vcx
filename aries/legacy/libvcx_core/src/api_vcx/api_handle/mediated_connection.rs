@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use aries_vcx::{
     agency_client::{api::downloaded_message::DownloadedMessage, MessageStatusCode},
-    common::ledger::transactions::into_did_doc,
     handlers::{mediated_connection::MediatedConnection, util::AnyInvitation},
     messages::{
         msg_fields::protocols::connection::{
@@ -11,7 +10,10 @@ use aries_vcx::{
         },
         AriesMessage,
     },
-    protocols::mediated_connection::pairwise_info::PairwiseInfo,
+    protocols::{
+        connection::invitee::any_invitation_into_did_doc,
+        mediated_connection::pairwise_info::PairwiseInfo,
+    },
 };
 use serde_json;
 use uuid::Uuid;
@@ -152,7 +154,8 @@ pub async fn create_connection(source_id: &str) -> LibvcxResult<u32> {
 pub async fn create_connection_with_invite(source_id: &str, details: &str) -> LibvcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Ok(invitation) = serde_json::from_str::<AnyInvitation>(details) {
-        let ddo = into_did_doc(get_main_ledger_read()?.as_ref(), &invitation).await?;
+        let ddo =
+            any_invitation_into_did_doc(get_main_ledger_read()?.as_ref(), &invitation).await?;
         let connection = MediatedConnection::create_with_invite(
             source_id,
             get_main_wallet()?.as_ref(),

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use shared_vcx::maybe_known::MaybeKnown;
+use shared::maybe_known::MaybeKnown;
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{
@@ -12,7 +13,7 @@ use crate::{
 
 pub type Request = MsgParts<RequestContent, RequestDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct RequestContent {
     pub label: String,
     pub goal_code: Option<MaybeKnown<ThreadGoalCode>>,
@@ -22,11 +23,12 @@ pub struct RequestContent {
     pub did_doc: Option<Attachment>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct RequestDecorators {
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -57,9 +59,17 @@ mod tests {
             goal_code: Some(MaybeKnown::Known(ThreadGoalCode::AriesRelBuild)),
             goal: Some("test_goal".to_owned()),
             did: did_doc.id.clone(),
-            did_doc: Some(Attachment::new(AttachmentData::new(AttachmentType::Json(
-                serde_json::to_value(did_doc).unwrap(),
-            )))),
+            did_doc: Some(
+                Attachment::builder()
+                    .data(
+                        AttachmentData::builder()
+                            .content(AttachmentType::Json(
+                                serde_json::to_value(&did_doc).unwrap(),
+                            ))
+                            .build(),
+                    )
+                    .build(),
+            ),
         }
     }
 

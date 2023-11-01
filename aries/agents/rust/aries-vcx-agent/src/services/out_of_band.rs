@@ -1,12 +1,13 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::profile::Profile,
     did_doc_sov::{
         extra_fields::{didcommv1::ExtraFieldsDidCommV1, KeyKind},
         service::{didcommv1::ServiceDidCommV1, ServiceSov},
     },
-    handlers::out_of_band::{receiver::OutOfBandReceiver, sender::OutOfBandSender, GenericOutOfBand},
+    handlers::out_of_band::{
+        receiver::OutOfBandReceiver, sender::OutOfBandSender, GenericOutOfBand,
+    },
     messages::{
         msg_fields::protocols::out_of_band::invitation::{Invitation as OobInvitation, OobService},
         msg_types::{
@@ -17,33 +18,33 @@ use aries_vcx::{
     },
     protocols::did_exchange::state_machine::generate_keypair,
 };
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 use public_key::KeyType;
 use uuid::Uuid;
 
+use super::connection::ServiceEndpoint;
 use crate::{
     storage::{object_cache::ObjectCache, Storage},
     AgentResult,
 };
 
-use super::connection::ServiceEndpoint;
-
 pub struct ServiceOutOfBand {
-    profile: Arc<dyn Profile>,
+    wallet: Arc<IndySdkWallet>,
     service_endpoint: ServiceEndpoint,
     out_of_band: Arc<ObjectCache<GenericOutOfBand>>,
 }
 
 impl ServiceOutOfBand {
-    pub fn new(profile: Arc<dyn Profile>, service_endpoint: ServiceEndpoint) -> Self {
+    pub fn new(wallet: Arc<IndySdkWallet>, service_endpoint: ServiceEndpoint) -> Self {
         Self {
-            profile,
+            wallet,
             service_endpoint,
             out_of_band: Arc::new(ObjectCache::new("out-of-band")),
         }
     }
 
     pub async fn create_invitation(&self) -> AgentResult<AriesMessage> {
-        let public_key = generate_keypair(&self.profile.inject_wallet(), KeyType::Ed25519).await?;
+        let public_key = generate_keypair(self.wallet.as_ref(), KeyType::Ed25519).await?;
         let service = {
             let service_id = Uuid::new_v4().to_string();
             ServiceSov::DIDCommV1(ServiceDidCommV1::new(
@@ -60,8 +61,10 @@ impl ServiceOutOfBand {
                 DidExchangeTypeV1::new_v1_0(),
             )))?;
 
-        self.out_of_band
-            .insert(&sender.get_id(), GenericOutOfBand::Sender(sender.to_owned()))?;
+        self.out_of_band.insert(
+            &sender.get_id(),
+            GenericOutOfBand::Sender(sender.to_owned()),
+        )?;
 
         Ok(sender.to_aries_message())
     }

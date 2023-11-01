@@ -17,18 +17,18 @@ use crate::{
     reader::AttrReader,
 };
 
-pub struct DidSovResolver<'a, T: AttrReader> {
-    ledger: &'a T,
+pub struct DidSovResolver<T: AttrReader> {
+    ledger: T,
 }
 
-impl<'a, T: AttrReader> DidSovResolver<'a, T> {
-    pub fn new(ledger: &'a T) -> Self {
+impl<T: AttrReader> DidSovResolver<T> {
+    pub fn new(ledger: T) -> Self {
         DidSovResolver { ledger }
     }
 }
 
 #[async_trait]
-impl<'a, T: AttrReader> DidResolvable for DidSovResolver<'a, T> {
+impl<T: AttrReader> DidResolvable for DidSovResolver<T> {
     type ExtraFieldsService = ExtraFieldsSov;
     type ExtraFieldsOptions = ();
 
@@ -66,7 +66,7 @@ impl<'a, T: AttrReader> DidResolvable for DidSovResolver<'a, T> {
     }
 }
 
-impl<'a, T: AttrReader> DidSovResolver<'a, T> {
+impl<T: AttrReader> DidSovResolver<T> {
     async fn get_verkey(&self, did: &str) -> Result<String, DidSovError> {
         let nym_response = self.ledger.get_nym(did).await?;
         let nym_json: Value = serde_json::from_str(&nym_response)?;

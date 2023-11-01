@@ -6,12 +6,9 @@ use axum::async_trait;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     decorators::thread::Thread,
-    msg_fields::protocols::{
-        connection::{
-            response::{Response, ResponseContent, ResponseDecorators},
-            ConnectionData,
-        },
-        out_of_band::invitation::{Invitation as OOBInvitation, OobService},
+    msg_fields::protocols::connection::{
+        response::{Response, ResponseContent, ResponseDecorators},
+        ConnectionData,
     },
 };
 use uuid::Uuid;
@@ -52,27 +49,6 @@ pub async fn build_response_content(
         .content(content)
         .decorators(decorators)
         .build())
-}
-
-pub fn oob2did(oob: OOBInvitation) -> AriesDidDoc {
-    let mut did_doc: AriesDidDoc = AriesDidDoc::default();
-    did_doc.set_id(oob.id.clone());
-    let oob_service = oob
-        .content
-        .services
-        .first()
-        .expect("OOB needs a service")
-        .clone();
-
-    match oob_service {
-        OobService::AriesService(service) => {
-            did_doc.set_service_endpoint(service.service_endpoint);
-            did_doc.set_recipient_keys(service.recipient_keys);
-            did_doc.set_routing_keys(service.routing_keys);
-        }
-        _ => panic!("Assuming fully clean AriesService variant only"),
-    }
-    did_doc
 }
 
 pub struct MockTransport;

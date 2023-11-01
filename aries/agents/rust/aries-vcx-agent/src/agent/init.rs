@@ -1,28 +1,38 @@
 use std::sync::Arc;
 
-use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
+use aries_vcx::{
+    common::ledger::{
+        service_didsov::{DidSovServiceType, EndpointDidSov},
+        transactions::{add_new_did, write_endpoint},
+    },
+    global::settings::DEFAULT_LINK_SECRET_ALIAS,
+};
 use aries_vcx_core::{
     self,
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
     wallet::indy::{
         wallet::{create_and_open_wallet, wallet_configure_issuer},
         IndySdkWallet, WalletConfig,
     },
 };
+use did_peer::resolver::PeerDidResolver;
+use did_resolver_registry::ResolverRegistry;
+use did_resolver_sov::resolution::DidSovResolver;
 
 use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},
     error::AgentResult,
     services::{
-        out_of_band::ServiceOutOfBand,
         connection::{ServiceConnections, ServiceEndpoint},
-        did_exchange::ServiceDidExchange,
-        schema::ServiceSchemas,
         credential_definition::ServiceCredentialDefinitions,
-        revocation_registry::ServiceRevocationRegistries,
+        did_exchange::ServiceDidExchange,
         holder::ServiceCredentialsHolder,
         issuer::ServiceCredentialsIssuer,
+        out_of_band::ServiceOutOfBand,
         prover::ServiceProver,
+        revocation_registry::ServiceRevocationRegistries,
+        schema::ServiceSchemas,
         verifier::ServiceVerifier,
     },
 };
@@ -75,7 +85,8 @@ impl Agent {
         };
 
         let anoncreds = IndyCredxAnonCreds;
-        let (ledger_read, ledger_write) = build_ledger_components(vcx_pool_config).unwrap();
+        let (ledger_read, ledger_write) = build_ledger_components(vcx_pool_config.clone()).unwrap();
+        let (ledger_read_2, _) = build_ledger_components(vcx_pool_config).unwrap();
 
         let ledger_read = Arc::new(ledger_read);
         let ledger_write = Arc::new(ledger_write);
@@ -88,24 +99,32 @@ impl Agent {
         // TODO: This setup should be easier
         // The default issuer did can't be used - its verkey is not in base58 - TODO: double-check
         let (public_did, _verkey) = add_new_did(
-            &wallet,
-            &profile.inject_indy_ledger_write(),
+            wallet.as_ref(),
+            ledger_write.as_ref(),
             &config_issuer.institution_did,
             None,
         )
-            .await?;
+        .await?;
         let endpoint = EndpointDidSov::create()
             .set_service_endpoint(init_config.service_endpoint.clone())
             .set_types(Some(vec![DidSovServiceType::DidCommunication]));
-        write_endpoint(&profile.inject_indy_ledger_write(), &public_did, &endpoint).await?;
+        write_endpoint(
+            wallet.as_ref(),
+            ledger_write.as_ref(),
+            &public_did,
+            &endpoint,
+        )
+        .await?;
 
         let did_peer_resolver = PeerDidResolver::new();
-        let did_sov_resolver =
-            DidSovResolver::new(Arc::<ConcreteAttrReader>::new(profile.inject_indy_ledger_read().into()));
+        let did_sov_resolver = DidSovResolver::new(ledger_read_2);
         let did_resolver_registry = Arc::new(
             ResolverRegistry::new()
-                .register_resolver::<PeerDidResolver>("peer".into(), did_peer_resolver.into())
-                .register_resolver::<DidSovResolver>("sov".into(), did_sov_resolver.into()),
+                .register_resolver::<PeerDidResolver>("peer".into(), did_peer_resolver)
+                .register_resolver::<DidSovResolver<DefaultIndyLedgerRead>>(
+                    "sov".into(),
+                    did_sov_resolver,
+                ),
         );
 
         let connections = Arc::new(ServiceConnections::new(
@@ -114,13 +133,14 @@ impl Agent {
             init_config.service_endpoint.clone(),
         ));
         let did_exchange = Arc::new(ServiceDidExchange::new(
-            Arc::clone(&profile),
-            did_resolver_registry.clone(),
+            ledger_read.clone(),
+            wallet.clone(),
+            did_resolver_registry,
             init_config.service_endpoint.clone(),
             public_did,
         ));
         let out_of_band = Arc::new(ServiceOutOfBand::new(
-            Arc::clone(&profile),
+            wallet.clone(),
             init_config.service_endpoint,
         ));
         let schemas = Arc::new(ServiceSchemas::new(

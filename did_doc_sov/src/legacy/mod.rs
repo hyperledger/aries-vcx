@@ -201,7 +201,6 @@ where
     D: Deserializer<'de>,
 {
     let val = Value::deserialize(deserializer)?;
-
     match serde_json::from_value::<LegacyDidDoc>(val.clone()) {
         Ok(legacy_doc) => {
             Ok(convert_legacy_ddo_to_new(legacy_doc).map_err(serde::de::Error::custom)?)

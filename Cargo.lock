@@ -1554,6 +1554,7 @@ dependencies = [
 name = "diddoc_legacy"
 version = "0.61.0"
 dependencies = [
+ "display_as_json",
  "serde",
  "serde_derive",
  "serde_json",

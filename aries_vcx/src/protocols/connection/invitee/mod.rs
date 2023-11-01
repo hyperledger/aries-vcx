@@ -2,12 +2,12 @@ pub mod states;
 
 use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
 use chrono::Utc;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
         connection::{
-            invitation::InvitationContent,
+            invitation::{Invitation, InvitationContent},
             request::{Request, RequestContent, RequestDecorators},
             response::Response,
             ConnectionData,
@@ -26,9 +26,12 @@ use super::{
     Connection,
 };
 use crate::{
-    common::{ledger::transactions::into_did_doc, signing::decode_signed_connection_response},
+    common::{ledger::transactions::get_service, signing::decode_signed_connection_response},
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    handlers::util::{matches_thread_id, AnyInvitation},
+    handlers::{
+        out_of_band::receiver::oob_invitation_to_legacy_did_doc,
+        util::{matches_thread_id, AnyInvitation},
+    },
     protocols::connection::trait_bounds::ThreadId,
 };
 
@@ -61,7 +64,7 @@ impl InviteeConnection<Initial> {
             &invitation
         );
 
-        let did_doc = into_did_doc(indy_ledger, &invitation).await?;
+        let did_doc = any_invitation_into_did_doc(indy_ledger, &invitation).await?;
         let state = Invited::new(did_doc, invitation);
 
         // Convert to `InvitedState`
@@ -239,4 +242,61 @@ where
     pub fn bootstrap_did_doc(&self) -> &AriesDidDoc {
         self.state.bootstrap_did_doc()
     }
+}
+
+pub async fn any_invitation_into_did_doc(
+    indy_ledger: &impl IndyLedgerRead,
+    invitation: &AnyInvitation,
+) -> VcxResult<AriesDidDoc> {
+    let mut did_doc: AriesDidDoc = AriesDidDoc::default();
+    let (service_endpoint, recipient_keys, routing_keys) = match invitation {
+        AnyInvitation::Con(Invitation {
+            content: InvitationContent::Public(content),
+            ..
+        }) => {
+            did_doc.set_id(content.did.to_string());
+            let service = get_service(indy_ledger, &content.did)
+                .await
+                .unwrap_or_else(|err| {
+                    error!(
+                        "Failed to obtain service definition from the ledger: {}",
+                        err
+                    );
+                    AriesService::default()
+                });
+            (
+                service.service_endpoint,
+                service.recipient_keys,
+                service.routing_keys,
+            )
+        }
+        AnyInvitation::Con(Invitation {
+            id,
+            content: InvitationContent::Pairwise(content),
+            ..
+        }) => {
+            did_doc.set_id(id.clone());
+            (
+                content.service_endpoint.clone(),
+                content.recipient_keys.clone(),
+                content.routing_keys.clone(),
+            )
+        }
+        AnyInvitation::Con(Invitation {
+            content: InvitationContent::PairwiseDID(_content),
+            ..
+        }) => {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidDid,
+                "PairwiseDID invitation not supported yet!",
+            ))
+        }
+        AnyInvitation::Oob(invitation) => {
+            return oob_invitation_to_legacy_did_doc(indy_ledger, invitation).await
+        }
+    };
+    did_doc.set_service_endpoint(service_endpoint);
+    did_doc.set_recipient_keys(recipient_keys);
+    did_doc.set_routing_keys(routing_keys);
+    Ok(did_doc)
 }

@@ -1,6 +1,7 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use did_doc::schema::{
     types::uri::Uri,
     verification_method::{VerificationMethod, VerificationMethodKind, VerificationMethodType},
@@ -12,8 +13,7 @@ use did_doc_sov::{
 };
 use did_key::DidKey;
 use did_parser::{Did, DidUrl};
-use did_peer::peer_did::generate::generate_numalgo2;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
 use public_key::{Key, KeyType};
 use serde_json::Value;
@@ -22,12 +22,15 @@ use url::Url;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::{
-        did_exchange::transition::transition_error::TransitionError, mediated_connection::pairwise_info::PairwiseInfo,
+        did_exchange::transition::transition_error::TransitionError,
+        mediated_connection::pairwise_info::PairwiseInfo,
     },
-    utils::from_legacy_did_doc_to_sov,
 };
 
-pub async fn generate_keypair(wallet: &Arc<dyn BaseWallet>, key_type: KeyType) -> Result<Key, AriesVcxError> {
+pub async fn generate_keypair(
+    wallet: &impl BaseWallet,
+    key_type: KeyType,
+) -> Result<Key, AriesVcxError> {
     let pairwise_info = PairwiseInfo::create(wallet).await?;
     Ok(Key::from_base58(&pairwise_info.pw_vk, key_type)?)
 }
@@ -41,12 +44,16 @@ pub fn construct_service(
         .set_routing_keys(routing_keys)
         .set_recipient_keys(recipient_keys)
         .build();
-    let service = ServiceSov::DIDCommV1(ServiceDidCommV1::new(Uri::new("#0")?, service_endpoint.into(), extra)?);
+    let service = ServiceSov::DIDCommV1(ServiceDidCommV1::new(
+        Uri::new("#0")?,
+        service_endpoint.into(),
+        extra,
+    )?);
     Ok(service)
 }
 
 pub async fn create_our_did_document(
-    wallet: &Arc<dyn BaseWallet>,
+    wallet: &impl BaseWallet,
     service_endpoint: Url,
     routing_keys: Vec<String>,
 ) -> Result<(DidDocumentSov, Key), AriesVcxError> {
@@ -59,11 +66,16 @@ pub async fn create_our_did_document(
     )?;
 
     // TODO: Make it easier to generate peer did from keys and service, and generate DDO from it
-    let did_document_temp = did_doc_from_keys(Default::default(), key_ver.clone(), key_enc.clone(), service.clone())?;
-    let peer_did = generate_numalgo2(did_document_temp.into())?;
+    let did_document_temp = did_doc_from_keys(
+        Default::default(),
+        key_ver.clone(),
+        key_enc.clone(),
+        service.clone(),
+    )?;
+    let peer_did = PeerDid::<Numalgo2>::from_did_doc(did_document_temp.into())?;
 
     Ok((
-        did_doc_from_keys(peer_did.clone().into(), key_ver, key_enc.clone(), service)?,
+        did_doc_from_keys(peer_did.into(), key_ver, key_enc.clone(), service)?,
         key_enc,
     ))
 }
@@ -83,12 +95,16 @@ fn did_doc_from_keys(
     )
     .add_public_key_base58(key_ver.base58())
     .build();
-    let vm_ka = VerificationMethod::builder(vm_ka_id, did.clone(), VerificationMethodType::X25519KeyAgreementKey2020)
-        .add_public_key_base58(key_enc.base58())
-        .build();
+    let vm_ka = VerificationMethod::builder(
+        vm_ka_id,
+        did.clone(),
+        VerificationMethodType::X25519KeyAgreementKey2020,
+    )
+    .add_public_key_base58(key_enc.base58())
+    .build();
     Ok(DidDocumentSov::builder(did)
         .add_service(service)
-        .add_verification_method(vm_ver.clone())
+        .add_verification_method(vm_ver)
         // TODO: Include just reference
         .add_key_agreement(VerificationMethodKind::Resolved(vm_ka))
         .build())
@@ -96,9 +112,15 @@ fn did_doc_from_keys(
 
 pub fn ddo_sov_to_attach(ddo: DidDocumentSov) -> Result<Attachment, AriesVcxError> {
     // Interop note: acapy accepts unsigned when using peer dids?
-    Ok(Attachment::new(AttachmentData::new(AttachmentType::Base64(
-        base64::encode_config(&serde_json::to_string(&ddo)?, base64::URL_SAFE_NO_PAD),
-    ))))
+    let content_b64 =
+        base64::engine::Engine::encode(&URL_SAFE_NO_PAD, serde_json::to_string(&ddo)?);
+    Ok(Attachment::builder()
+        .data(
+            AttachmentData::builder()
+                .content(AttachmentType::Base64(content_b64))
+                .build(),
+        )
+        .build())
 }
 
 // TODO: Obviously, extract attachment signing
@@ -106,11 +128,12 @@ pub fn ddo_sov_to_attach(ddo: DidDocumentSov) -> Result<Attachment, AriesVcxErro
 pub async fn jws_sign_attach(
     mut attach: Attachment,
     verkey: Key,
-    wallet: &Arc<dyn BaseWallet>,
+    wallet: &impl BaseWallet,
 ) -> Result<Attachment, AriesVcxError> {
     if let AttachmentType::Base64(attach_base64) = &attach.data.content {
         let did_key: DidKey = verkey.clone().try_into()?;
-        let verkey_b64 = base64::encode_config(verkey.key(), base64::URL_SAFE_NO_PAD);
+        let verkey_b64 = base64::engine::Engine::encode(&URL_SAFE_NO_PAD, verkey.key());
+
         let protected_header = json!({
             "alg": "EdDSA",
             "jwk": {
@@ -124,14 +147,15 @@ pub async fn jws_sign_attach(
             // TODO: Needs to be both protected and unprotected, does it make sense?
             "kid": did_key.to_string(),
         });
-        let b64_protected = base64::encode_config(&protected_header.to_string(), base64::URL_SAFE_NO_PAD);
+        let b64_protected =
+            base64::engine::Engine::encode(&URL_SAFE_NO_PAD, protected_header.to_string());
         let sign_input = format!("{}.{}", b64_protected, attach_base64).into_bytes();
         let signed = wallet.sign(&verkey.base58(), &sign_input).await?;
-        let signature_base64 = base64::encode_config(&signed, base64::URL_SAFE_NO_PAD);
+        let signature_base64 = base64::engine::Engine::encode(&URL_SAFE_NO_PAD, signed);
 
         let jws = {
             let mut jws = HashMap::new();
-            jws.insert("header".to_string(), Value::from(unprotected_header));
+            jws.insert("header".to_string(), unprotected_header);
             jws.insert("protected".to_string(), Value::String(b64_protected));
             jws.insert("signature".to_string(), Value::String(signature_base64));
             jws
@@ -150,10 +174,12 @@ pub fn attach_to_ddo_sov(attachment: Attachment) -> Result<DidDocumentSov, Aries
     match attachment.data.content {
         AttachmentType::Json(value) => serde_json::from_value(value).map_err(Into::into),
         AttachmentType::Base64(ref value) => {
-            let bytes = base64::decode(&value).map_err(|err| {
+            let bytes = base64::Engine::decode(&URL_SAFE_NO_PAD, value).map_err(|err| {
                 AriesVcxError::from_msg(
                     AriesVcxErrorKind::SerializationError,
-                    format!("Attachment base 64 decoding failed; attach: {attachment:?}, err: {err}"),
+                    format!(
+                        "Attachment base 64 decoding failed; attach: {attachment:?}, err: {err}"
+                    ),
                 )
             })?;
             serde_json::from_slice::<DidDocumentSov>(&bytes).map_err(Into::into)

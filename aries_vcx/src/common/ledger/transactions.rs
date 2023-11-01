@@ -7,18 +7,14 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::BaseWallet,
 };
-use bs58;
-use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
-use messages::msg_fields::protocols::{
-    connection::invitation::{Invitation, InvitationContent},
-    out_of_band::invitation::OobService,
-};
+use diddoc_legacy::aries::service::AriesService;
+use messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use serde_json::Value;
+
 use crate::{
-    utils::from_service_sov_to_legacy,
     common::{keys::get_verkey_from_ledger, ledger::service_didsov::EndpointDidSov},
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    handlers::util::AnyInvitation,
+    utils::from_service_sov_to_legacy,
 };
 
 #[derive(Deserialize, Debug)]
@@ -57,7 +53,7 @@ pub enum Reply {
 
 #[derive(Debug, Deserialize)]
 pub struct ReplyV0 {
-    pub result: serde_json::Value,
+    pub result: Value,
 }
 
 #[derive(Debug, Deserialize)]
@@ -67,11 +63,8 @@ pub struct ReplyV1 {
 
 #[derive(Debug, Deserialize)]
 pub struct ReplyDataV1 {
-    pub result: serde_json::Value,
+    pub result: Value,
 }
-
-const DID_KEY_PREFIX: &str = "did:key:";
-const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
 pub async fn resolve_service(
     indy_ledger: &impl IndyLedgerRead,
@@ -98,197 +91,6 @@ pub async fn add_new_did(
     check_response(&res)?;
 
     Ok((did, verkey))
-}
-
-pub async fn resolve_oob_invitation(
-    resolver_registry: &Arc<ResolverRegistry>,
-    invitation: OobInvitation,
-) -> VcxResult<DidDocumentSov> {
-    let mut builder = DidDocumentSov::builder(Default::default());
-
-    let mut resolved_services = vec![];
-    let mut resolved_vms = vec![];
-    let mut resolved_kas = vec![];
-    let mut resolved_dids = vec![];
-
-    for service in invitation.content.services {
-        match service {
-            OobService::SovService(service) => {
-                builder = builder.add_service(service.clone());
-            }
-            OobService::Did(did) => {
-                let parsed_did = Did::parse(did)?;
-                let DidResolutionOutput { did_document, .. } =
-                    resolver_registry.resolve(&parsed_did, &Default::default()).await?;
-                resolved_services.extend(
-                    did_document
-                        .service()
-                        .iter()
-                        .map(|s| ServiceSov::try_from(s.clone()))
-                        .collect::<Result<Vec<_>, _>>()?,
-                );
-                resolved_vms.extend_from_slice(did_document.verification_method());
-                resolved_kas.extend_from_slice(did_document.key_agreement());
-                resolved_dids.push(parsed_did);
-            }
-            OobService::AriesService(service) => {
-                resolved_services.push(from_legacy_service_to_service_sov(service.clone())?)
-            }
-        }
-    }
-
-    for service in resolved_services {
-        builder = builder.add_service(service);
-    }
-
-    for vm in resolved_vms {
-        builder = builder.add_verification_method(vm.clone());
-    }
-
-    for ka in resolved_kas {
-        builder = builder.add_key_agreement(ka.clone());
-    }
-
-    for did in resolved_dids {
-        builder = builder.add_controller(did);
-    }
-
-    Ok(builder.build())
-}
-
-pub async fn into_did_doc(
-    indy_ledger: &impl IndyLedgerRead,
-    invitation: &AnyInvitation,
-) -> VcxResult<AriesDidDoc> {
-    let mut did_doc: AriesDidDoc = AriesDidDoc::default();
-    let (service_endpoint, recipient_keys, routing_keys) = match invitation {
-        AnyInvitation::Con(Invitation {
-            content: InvitationContent::Public(content),
-            ..
-        }) => {
-            did_doc.set_id(content.did.to_string());
-            let service = get_service(indy_ledger, &content.did)
-                .await
-                .unwrap_or_else(|err| {
-                    error!(
-                        "Failed to obtain service definition from the ledger: {}",
-                        err
-                    );
-                    AriesService::default()
-                });
-            (
-                service.service_endpoint,
-                service.recipient_keys,
-                service.routing_keys,
-            )
-        }
-        AnyInvitation::Con(Invitation {
-            id,
-            content: InvitationContent::Pairwise(content),
-            ..
-        }) => {
-            did_doc.set_id(id.clone());
-            (
-                content.service_endpoint.clone(),
-                content.recipient_keys.clone(),
-                content.routing_keys.clone(),
-            )
-        }
-        AnyInvitation::Con(Invitation {
-            content: InvitationContent::PairwiseDID(_content),
-            ..
-        }) => {
-            return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidDid,
-                "PairwiseDID invitation not supported yet!",
-            ))
-        }
-        AnyInvitation::Oob(invitation) => {
-            did_doc.set_id(invitation.id.clone());
-            let service = resolve_service(indy_ledger, &invitation.content.services[0])
-                .await
-                .unwrap_or_else(|err| {
-                    error!(
-                        "Failed to obtain service definition from the ledger: {}",
-                        err
-                    );
-                    AriesService::default()
-                });
-            let recipient_keys =
-                normalize_keys_as_naked(service.recipient_keys).unwrap_or_else(|err| {
-                    error!("Is not did valid: {}", err);
-                    Vec::new()
-                });
-            (
-                service.service_endpoint,
-                recipient_keys,
-                service.routing_keys,
-            )
-        }
-    };
-    did_doc.set_service_endpoint(service_endpoint);
-    did_doc.set_recipient_keys(recipient_keys);
-    did_doc.set_routing_keys(routing_keys);
-    Ok(did_doc)
-}
-
-fn _ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> {
-    let public_key_bytes = bs58::decode(public_key_base58).into_vec().map_err(|_| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidDid,
-            format!(
-                "Could not base58 decode a did:key fingerprint: {}",
-                public_key_base58
-            ),
-        )
-    })?;
-    let mut did_key_bytes = ED25519_MULTIBASE_CODEC.to_vec();
-    did_key_bytes.extend_from_slice(&public_key_bytes);
-    let did_key_bytes_bs58 = bs58::encode(&did_key_bytes).into_string();
-    let did_key = format!("{DID_KEY_PREFIX}z{did_key_bytes_bs58}");
-    Ok(did_key)
-}
-
-fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
-    let mut result = Vec::new();
-    for key in keys_list {
-        if let Some(stripped_didkey) = key.strip_prefix(DID_KEY_PREFIX) {
-            let stripped = if let Some(stripped) = stripped_didkey.strip_prefix('z') {
-                stripped
-            } else {
-                Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidDid,
-                    format!("z prefix is missing: {}", key),
-                ))?
-            };
-            let decoded_value = bs58::decode(stripped).into_vec().map_err(|_| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidDid,
-                    format!(
-                        "Could not decode base58: {} as portion of {}",
-                        stripped, key
-                    ),
-                )
-            })?;
-            let verkey = if let Some(public_key_bytes) =
-                decoded_value.strip_prefix(&ED25519_MULTIBASE_CODEC)
-            {
-                Ok(bs58::encode(public_key_bytes).into_string())
-            } else {
-                Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidDid,
-                    format!(
-                        "Only Ed25519-based did:keys are currently supported, got key: {}",
-                        key
-                    ),
-                ))
-            }?;
-            result.push(verkey);
-        } else {
-            result.push(key);
-        }
-    }
-    Ok(result)
 }
 
 pub async fn get_service(ledger: &impl IndyLedgerRead, did: &String) -> VcxResult<AriesService> {

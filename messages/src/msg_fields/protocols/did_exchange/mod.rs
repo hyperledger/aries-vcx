@@ -7,22 +7,23 @@ pub mod response;
 
 use derive_more::From;
 use serde::{de::Error, Deserialize, Serialize};
-use shared_vcx::misc::serde_ignored::SerdeIgnored as NoContent;
-
-use crate::{
-    misc::utils::{into_msg_with_type, transit_to_aries_msg},
-    msg_fields::traits::DelayedSerde,
-    msg_types::{
-        protocols::did_exchange::{DidExchangeType as DidExchangeKind, DidExchangeTypeV1, DidExchangeTypeV1_0},
-        MsgWithType,
-    },
-};
+use shared::misc::serde_ignored::SerdeIgnored as NoContent;
 
 use self::{
     complete::{Complete, CompleteDecorators},
     problem_report::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
     request::{Request, RequestContent, RequestDecorators},
     response::{Response, ResponseContent, ResponseDecorators},
+};
+use crate::{
+    misc::utils::{into_msg_with_type, transit_to_aries_msg},
+    msg_fields::traits::DelayedSerde,
+    msg_types::{
+        protocols::did_exchange::{
+            DidExchangeType as DidExchangeKind, DidExchangeTypeV1, DidExchangeTypeV1_0,
+        },
+        MsgWithType,
+    },
 };
 
 #[derive(Clone, Debug, From, PartialEq)]
@@ -36,7 +37,10 @@ pub enum DidExchange {
 impl DelayedSerde for DidExchange {
     type MsgType<'a> = (DidExchangeKind, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(
+        msg_type: Self::MsgType<'de>,
+        deserializer: D,
+    ) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
@@ -49,7 +53,9 @@ impl DelayedSerde for DidExchange {
         match kind.map_err(D::Error::custom)? {
             DidExchangeTypeV1_0::Request => Request::deserialize(deserializer).map(From::from),
             DidExchangeTypeV1_0::Response => Response::deserialize(deserializer).map(From::from),
-            DidExchangeTypeV1_0::ProblemReport => ProblemReport::deserialize(deserializer).map(From::from),
+            DidExchangeTypeV1_0::ProblemReport => {
+                ProblemReport::deserialize(deserializer).map(From::from)
+            }
             DidExchangeTypeV1_0::Complete => Complete::deserialize(deserializer).map(From::from),
         }
     }

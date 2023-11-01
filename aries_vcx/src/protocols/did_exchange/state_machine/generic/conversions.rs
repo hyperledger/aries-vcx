@@ -1,9 +1,11 @@
+use super::{GenericDidExchange, RequesterState, ResponderState};
 use crate::protocols::did_exchange::{
     state_machine::{requester::DidExchangeRequester, responder::DidExchangeResponder},
-    states::{completed::Completed, requester::request_sent::RequestSent, responder::response_sent::ResponseSent},
+    states::{
+        completed::Completed, requester::request_sent::RequestSent,
+        responder::response_sent::ResponseSent,
+    },
 };
-
-use super::{GenericDidExchange, RequesterState, ResponderState};
 
 impl From<DidExchangeRequester<RequestSent>> for GenericDidExchange {
     fn from(state: DidExchangeRequester<RequestSent>) -> Self {

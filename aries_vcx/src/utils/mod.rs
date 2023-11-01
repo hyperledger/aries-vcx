@@ -1,19 +1,14 @@
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use did_doc::schema::verification_method::{VerificationMethod, VerificationMethodType};
-use did_doc_sov::extra_fields::didcommv1::ExtraFieldsDidCommV1;
-use did_doc_sov::extra_fields::KeyKind;
-use did_doc_sov::service::didcommv1::ServiceDidCommV1;
-use did_doc_sov::service::ServiceSov;
-use did_doc_sov::DidDocumentSov;
+use did_doc_sov::{
+    extra_fields::{didcommv1::ExtraFieldsDidCommV1, KeyKind},
+    service::{didcommv1::ServiceDidCommV1, ServiceSov},
+    DidDocumentSov,
+};
 use did_key::DidKey;
 use did_parser::Did;
-use diddoc_legacy::aries::service::AriesService;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
 
-#[macro_use]
-#[cfg(feature = "vdrtools")]
-pub mod devsetup;
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 #[cfg(debug_assertions)]
 #[macro_export]
@@ -31,19 +26,6 @@ macro_rules! secret {
     }};
 }
 
-#[cfg(test)]
-macro_rules! map (
-    { $($key:expr => $value:expr),+ } => {
-        {
-            let mut m = std::collections::HashMap::new();
-            $(
-                m.insert($key, $value);
-            )+
-            m
-        }
-     };
-);
-
 pub mod openssl;
 pub mod qualifier;
 
@@ -52,17 +34,22 @@ pub mod encryption_envelope;
 pub mod serialization;
 pub mod validation;
 
-
-// TODO: Get rid of this please!!!
+// TODO: Get rid of this, migrate off the legacy diddoc
 pub fn from_did_doc_sov_to_legacy(ddo: DidDocumentSov) -> VcxResult<AriesDidDoc> {
-    let mut new_ddo = AriesDidDoc::default();
-    new_ddo.id = ddo.id().to_string();
+    let mut new_ddo = AriesDidDoc {
+        id: ddo.id().to_string(),
+        ..Default::default()
+    };
     new_ddo.set_service_endpoint(
         ddo.service()
             .first()
-            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "No service present in DDO"))?
+            .ok_or_else(|| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "No service present in DDO",
+                )
+            })?
             .service_endpoint()
-            .clone()
             .into(),
     );
     let mut recipient_keys = vec![];
@@ -93,7 +80,7 @@ pub fn from_legacy_did_doc_to_sov(ddo: AriesDidDoc) -> VcxResult<DidDocumentSov>
         did.clone(),
         VerificationMethodType::Ed25519VerificationKey2020,
     )
-        .add_public_key_base58(
+    .add_public_key_base58(
         ddo.recipient_keys()?
             .first()
             .ok_or_else(|| {
@@ -104,17 +91,20 @@ pub fn from_legacy_did_doc_to_sov(ddo: AriesDidDoc) -> VcxResult<DidDocumentSov>
             })?
             .to_string(),
     )
-        .build();
+    .build();
     let new_ddo = DidDocumentSov::builder(did.clone())
         .add_service(from_legacy_service_to_service_sov(
             ddo.service
                 .first()
                 .ok_or_else(|| {
-                    AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "No service in the DDO being converted")
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "No service in the DDO being converted",
+                    )
                 })?
                 .clone(),
         )?)
-        .add_controller(did.clone())
+        .add_controller(did)
         .add_verification_method(vm)
         .build();
     Ok(new_ddo)
@@ -160,34 +150,66 @@ pub fn from_legacy_service_to_service_sov(service: AriesService) -> VcxResult<Se
 }
 
 pub fn from_service_sov_to_legacy(service: ServiceSov) -> AriesService {
+    info!(
+        "Converting AnyService to expanded AriesService: {:?}",
+        service
+    );
     match service {
         ServiceSov::AIP1(service) => AriesService {
             id: service.id().to_string(),
-            service_endpoint: service.service_endpoint().clone().into(),
+            service_endpoint: service.service_endpoint().into(),
             ..Default::default()
         },
         ServiceSov::DIDCommV1(service) => {
             let extra = service.extra();
-            let recipient_keys = extra.recipient_keys().iter().map(|key| key.to_string()).collect();
-            let routing_keys = extra.routing_keys().iter().map(|key| key.to_string()).collect();
+            let recipient_keys = extra
+                .recipient_keys()
+                .iter()
+                .map(|key| key.to_string())
+                .collect();
+            let routing_keys = extra
+                .routing_keys()
+                .iter()
+                .map(|key| key.to_string())
+                .collect();
             AriesService {
                 id: service.id().to_string(),
                 recipient_keys,
                 routing_keys,
-                service_endpoint: service.service_endpoint().clone().into(),
+                service_endpoint: service.service_endpoint().into(),
                 ..Default::default()
             }
         }
         ServiceSov::DIDCommV2(service) => {
             let extra = service.extra();
-            let routing_keys = extra.routing_keys().iter().map(|key| key.to_string()).collect();
+            let routing_keys = extra
+                .routing_keys()
+                .iter()
+                .map(|key| key.to_string())
+                .collect();
             AriesService {
                 id: service.id().to_string(),
                 routing_keys,
-                service_endpoint: service.service_endpoint().clone().into(),
+                service_endpoint: service.service_endpoint().into(),
                 ..Default::default()
             }
         }
-        ServiceSov::Legacy(_) => todo!(),
+        ServiceSov::Legacy(service) => AriesService {
+            id: service.id().to_string(),
+            recipient_keys: service
+                .extra()
+                .recipient_keys()
+                .iter()
+                .map(|key| key.to_string())
+                .collect(),
+            routing_keys: service
+                .extra()
+                .routing_keys()
+                .iter()
+                .map(|key| key.to_string())
+                .collect(),
+            service_endpoint: service.service_endpoint().into(),
+            ..Default::default()
+        },
     }
 }

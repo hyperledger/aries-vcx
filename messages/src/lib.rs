@@ -15,8 +15,8 @@ pub mod msg_types;
 use derive_more::From;
 use misc::utils;
 use msg_fields::protocols::{
-    did_exchange::DidExchange,
     cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
+    did_exchange::DidExchange,
     pickup::Pickup,
     present_proof::{v2::PresentProofV2, PresentProof},
 };

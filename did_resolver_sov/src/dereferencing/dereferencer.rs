@@ -17,7 +17,7 @@ use super::utils::dereference_did_document;
 use crate::{reader::AttrReader, resolution::DidSovResolver};
 
 #[async_trait]
-impl<'a, T: AttrReader> DidDereferenceable for DidSovResolver<'a, T> {
+impl<T: AttrReader> DidDereferenceable for DidSovResolver<T> {
     type Output = Cursor<Vec<u8>>;
 
     async fn dereference(
