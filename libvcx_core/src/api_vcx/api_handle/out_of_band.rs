@@ -155,7 +155,7 @@ pub fn extract_a2a_message(handle: u32) -> LibvcxResult<String> {
 
 pub fn to_a2a_message(handle: u32) -> LibvcxResult<String> {
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
-        let msg = oob.to_aries_message();
+        let msg: AriesMessage = oob.as_invitation_msg().into();
         serde_json::to_string(&msg).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::SerializationError,

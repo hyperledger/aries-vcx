@@ -468,7 +468,15 @@ mod connection_serde_tests {
     async fn make_inviter_invited() -> InviterConnection<InviterInvited> {
         let connection_request = Request::builder()
             .id(Uuid::new_v4().to_string())
-            .content(RequestContent::default())
+            .content(
+                RequestContent::builder()
+                    .label("label".into())
+                    .connection(ConnectionData::new(
+                        "did:peer:1234".to_string(),
+                        AriesDidDoc::default(),
+                    ))
+                    .build(),
+            )
             .decorators(RequestDecorators::default())
             .build();
         make_inviter_initial()
