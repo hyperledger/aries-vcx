@@ -3,7 +3,7 @@ use std::convert::Infallible;
 use did_doc::schema::verification_method::VerificationMethodType;
 use thiserror::Error;
 
-use crate::peer_did::numalgos::NumalgoKind;
+use crate::peer_did::numalgos::kind::NumalgoKind;
 
 #[derive(Debug, Error)]
 pub enum DidPeerError {

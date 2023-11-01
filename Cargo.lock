@@ -1420,6 +1420,7 @@ dependencies = [
  "base64",
  "did_doc",
  "did_key",
+ "display_as_json",
  "public_key",
  "serde",
  "serde_json",
@@ -1456,6 +1457,7 @@ dependencies = [
  "did_doc_sov",
  "did_parser",
  "did_resolver",
+ "display_as_json",
  "multibase",
  "once_cell",
  "public_key",
@@ -1574,6 +1576,17 @@ dependencies = [
  "option-ext",
  "redox_users",
  "windows-sys",
+]
+
+[[package]]
+name = "display_as_json"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "syn 1.0.109",
 ]
 
 [[package]]

@@ -1,0 +1,19 @@
+[package]
+name = "display_as_json"
+version = "0.1.0"
+edition = "2018"
+authors = ["Your Name <your.email@example.com>"]
+description = "A custom derive macro to implement Display trait as JSON serialization"
+license = "MIT"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "1.0"
+quote = "1.0"
+
+[dev-dependencies]
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
