@@ -2,9 +2,9 @@ mod fixtures;
 
 use did_peer::{
     error::DidPeerError,
-    peer_did_resolver::{
+    resolver::{
         options::{ExtraFieldsOptions, PublicKeyEncoding},
-        resolver::PeerDidResolver,
+        PeerDidResolver,
     },
 };
 use did_resolver::traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable};
