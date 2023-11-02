@@ -17,7 +17,7 @@ const WALLET_OPTIONS: &str =
 #[async_trait]
 impl Wallet for IndySdkWallet {
     type Record = Record;
-    type RecordId = String;
+    type RecordIdRef<'a> = &'a str;
     type SearchFilter<'a> = &'a str;
 
     async fn add(&self, record: Self::Record) -> VcxCoreResult<()> {
@@ -34,9 +34,9 @@ impl Wallet for IndySdkWallet {
             .map_err(From::from)
     }
 
-    async fn get<R>(&self, id: &Self::RecordId) -> VcxCoreResult<R>
+    async fn get<R>(&self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<R>
     where
-        R: WalletRecord<Self, RecordId = Self::RecordId>,
+        R: WalletRecord<Self>,
     {
         let record = Locator::instance()
             .non_secret_controller
@@ -73,9 +73,9 @@ impl Wallet for IndySdkWallet {
         Ok(())
     }
 
-    async fn delete<R>(&self, id: &Self::RecordId) -> VcxCoreResult<()>
+    async fn delete<R>(&self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<()>
     where
-        R: WalletRecord<Self, RecordId = Self::RecordId>,
+        R: WalletRecord<Self>,
     {
         Locator::instance()
             .non_secret_controller

@@ -10,20 +10,20 @@ use crate::errors::error::VcxCoreResult;
 #[async_trait]
 pub trait Wallet {
     type Record: Send + Sync;
-    type RecordId;
+    type RecordIdRef<'a>;
     type SearchFilter<'a>: Send + Sync;
 
     async fn add(&self, record: Self::Record) -> VcxCoreResult<()>;
 
-    async fn get<R>(&self, id: &Self::RecordId) -> VcxCoreResult<R>
+    async fn get<R>(&self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<R>
     where
-        R: WalletRecord<Self, RecordId = Self::RecordId>;
+        R: WalletRecord<Self>;
 
     async fn update(&self, update: Self::Record) -> VcxCoreResult<()>;
 
-    async fn delete<R>(&self, id: &Self::RecordId) -> VcxCoreResult<()>
+    async fn delete<R>(&self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<()>
     where
-        R: WalletRecord<Self, RecordId = Self::RecordId>;
+        R: WalletRecord<Self>;
 
     async fn search<'a, R>(
         &'a self,
@@ -59,11 +59,11 @@ pub trait Wallet {
 pub trait WalletRecord<W: Wallet + ?Sized> {
     const RECORD_TYPE: &'static str;
 
-    type RecordId;
+    type RecordId<'a>;
 
-    fn into_wallet_record(self, id: Self::RecordId) -> VcxCoreResult<W::Record>;
+    fn into_wallet_record(self, id: Self::RecordId<'_>) -> VcxCoreResult<W::Record>;
 
-    fn as_wallet_record(&self, id: Self::RecordId) -> VcxCoreResult<W::Record>;
+    fn as_wallet_record(&self, id: Self::RecordId<'_>) -> VcxCoreResult<W::Record>;
 
     fn from_wallet_record(record: W::Record) -> VcxCoreResult<Self>
     where

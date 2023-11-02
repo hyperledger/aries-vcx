@@ -47,13 +47,13 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<(Self::RevRegId, Self::RevRegDef, Self::RevReg)>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordId:
+        for<'b> <W as Wallet>::RecordIdRef<'b>:
             From<&'a Self::CredDefId> + From<&'b Self::RevRegId> + Send + Sync,
-        Self::CredDef: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevRegDef: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevRegDefPriv: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevReg: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevRegInfo: WalletRecord<W, RecordId = W::RecordId>;
+        Self::CredDef: WalletRecord<W>,
+        for<'b> Self::RevReg: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
+        for<'b> Self::RevRegDef: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
+        for<'b> Self::RevRegDefPriv: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
+        for<'b> Self::RevRegInfo: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>;
 
     async fn create_and_store_credential_def<W>(
         &self,
@@ -66,13 +66,12 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<(Self::CredDefId, Self::CredDef)>
     where
         W: Wallet + Send + Sync,
-        for<'a> <W as Wallet>::RecordId:
-            From<&'a Self::CredDefId> + From<&'a Self::SchemaId> + Send + Sync,
-        Self::Schema: WalletRecord<W, RecordId = W::RecordId>,
-        Self::SchemaId: WalletRecord<W, RecordId = W::RecordId>,
-        Self::CredDef: WalletRecord<W, RecordId = W::RecordId>,
-        Self::CredDefPriv: WalletRecord<W, RecordId = W::RecordId>,
-        Self::CredKeyProof: WalletRecord<W, RecordId = W::RecordId>;
+        for<'a> <W as Wallet>::RecordIdRef<'a>: From<&'a Self::CredDefId> + Send + Sync,
+        for<'a> Self::Schema: WalletRecord<W, RecordId<'a> = &'a Self::SchemaId>,
+        for<'a> Self::SchemaId: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
+        for<'a> Self::CredDef: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
+        for<'a> Self::CredDefPriv: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
+        for<'a> Self::CredKeyProof: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>;
 
     async fn create_credential_offer<'a, W>(
         &self,
@@ -81,10 +80,10 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<Self::CredOffer>
     where
         W: Wallet + Send + Sync,
-        <W as Wallet>::RecordId: From<&'a Self::CredDefId> + Send + Sync,
-        Self::SchemaId: WalletRecord<W, RecordId = W::RecordId>,
-        Self::CredDef: WalletRecord<W, RecordId = W::RecordId>,
-        Self::CredKeyProof: WalletRecord<W, RecordId = W::RecordId>;
+        for<'b> <W as Wallet>::RecordIdRef<'b>: From<&'a Self::CredDefId> + Send + Sync,
+        Self::SchemaId: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
+        Self::CredDef: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
+        Self::CredKeyProof: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>;
 
     async fn create_credential<'a, W>(
         &self,
@@ -97,17 +96,17 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<(Self::Cred, Option<Self::CredRevId>)>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordId:
+        for<'b> <W as Wallet>::RecordIdRef<'b>:
             From<&'b Self::CredDefId> + From<&'a Self::RevRegId> + Send + Sync,
-        Self::Schema: WalletRecord<W, RecordId = W::RecordId>,
-        Self::SchemaId: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevRegDef: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevRegDefPriv: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevReg: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevRegInfo: WalletRecord<W, RecordId = W::RecordId>,
-        Self::CredDef: WalletRecord<W, RecordId = W::RecordId>,
-        Self::CredDefPriv: WalletRecord<W, RecordId = W::RecordId>,
-        Self::CredKeyProof: WalletRecord<W, RecordId = W::RecordId>;
+        for<'b> Self::Schema: WalletRecord<W, RecordId<'b> = &'b Self::SchemaId>,
+        for<'b> Self::SchemaId: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
+        for<'b> Self::CredDef: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
+        for<'b> Self::CredDefPriv: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
+        for<'b> Self::CredKeyProof: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
+        Self::RevRegDef: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
+        Self::RevRegDefPriv: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
+        Self::RevReg: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
+        Self::RevRegInfo: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>;
 
     async fn create_schema(
         &self,
@@ -117,8 +116,8 @@ pub trait VcIssuer {
         attrs: Self::SchemaAttrNames,
     ) -> VcxCoreResult<(Self::SchemaId, Self::Schema)>;
 
-    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not
-    // PURE Anoncreds)
+    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls
+    // (not // PURE Anoncreds)
     async fn revoke_credential<'a, W>(
         &self,
         wallet: &W,
@@ -127,14 +126,14 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<()>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordId:
+        for<'b> <W as Wallet>::RecordIdRef<'b>:
             From<&'b Self::CredDefId> + From<&'a Self::RevRegId> + Send + Sync,
-        Self::RevRegDef: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevRegDefPriv: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevReg: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevRegInfo: WalletRecord<W, RecordId = W::RecordId>,
-        Self::RevRegDelta: WalletRecord<W, RecordId = W::RecordId>,
-        Self::CredDef: WalletRecord<W, RecordId = W::RecordId>;
+        Self::RevReg: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
+        Self::RevRegDef: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
+        Self::RevRegDefPriv: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
+        Self::RevRegInfo: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
+        Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
+        for<'b> Self::CredDef: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>;
 
     async fn get_revocation_delta<'a, W>(
         &self,
@@ -143,9 +142,8 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<Option<Self::RevRegDelta>>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordId:
-            From<&'b Self::CredDefId> + From<&'a Self::RevRegId> + Send + Sync,
-        Self::RevRegDelta: WalletRecord<W, RecordId = W::RecordId>;
+        for<'b> <W as Wallet>::RecordIdRef<'b>: From<&'a Self::RevRegId> + Send + Sync,
+        Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>;
 
     async fn clear_revocation_delta<'a, W>(
         &self,
@@ -154,9 +152,8 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<()>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordId:
-            From<&'b Self::CredDefId> + From<&'a Self::RevRegId> + Send + Sync,
-        Self::RevRegDelta: WalletRecord<W, RecordId = W::RecordId>;
+        for<'b> <W as Wallet>::RecordIdRef<'b>: From<&'a Self::RevRegId> + Send + Sync,
+        Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>;
 }
 
 #[async_trait]
