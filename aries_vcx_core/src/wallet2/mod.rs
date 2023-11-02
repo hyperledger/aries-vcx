@@ -11,7 +11,6 @@ use crate::errors::error::VcxCoreResult;
 pub trait Wallet {
     type Record: Send + Sync;
     type RecordId;
-    type RecordUpdate<'a>: Send + Sync;
     type SearchFilter<'a>: Send + Sync;
 
     async fn add(&self, record: Self::Record) -> VcxCoreResult<()>;
@@ -20,13 +19,7 @@ pub trait Wallet {
     where
         R: WalletRecord<Self, RecordId = Self::RecordId>;
 
-    async fn update<R>(
-        &self,
-        id: &Self::RecordId,
-        update: Self::RecordUpdate<'_>,
-    ) -> VcxCoreResult<()>
-    where
-        R: WalletRecord<Self, RecordId = Self::RecordId>;
+    async fn update(&self, update: Self::Record) -> VcxCoreResult<()>;
 
     async fn delete<R>(&self, id: &Self::RecordId) -> VcxCoreResult<()>
     where

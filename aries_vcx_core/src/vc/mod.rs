@@ -20,8 +20,6 @@ pub trait VcIssuer {
     type CredOffer: Send + Sync;
     type CredReq: Send + Sync;
     type CredValues: Send + Sync;
-    type CredRevState: Send + Sync;
-    type CredRevStateParts: Send + Sync;
     type Cred: Send + Sync;
     type CredRevId: Send + Sync;
 
@@ -76,29 +74,40 @@ pub trait VcIssuer {
         Self::CredDefPriv: WalletRecord<W, RecordId = W::RecordId>,
         Self::CredKeyProof: WalletRecord<W, RecordId = W::RecordId>;
 
-    async fn create_credential_offer(
+    async fn create_credential_offer<W>(
         &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         cred_def_id: Self::CredDefId,
-    ) -> VcxCoreResult<Self::CredOffer>;
+    ) -> VcxCoreResult<Self::CredOffer>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordId: OtherFrom<Self::CredDefId> + Send + Sync,
+        Self::SchemaId: WalletRecord<W, RecordId = W::RecordId>,
+        Self::CredDef: WalletRecord<W, RecordId = W::RecordId>,
+        Self::CredKeyProof: WalletRecord<W, RecordId = W::RecordId>;
 
-    async fn create_credential(
+    async fn create_credential<W>(
         &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         cred_offer: Self::CredOffer,
         cred_req: Self::CredReq,
         cred_values: Self::CredValues,
         rev_reg_id: Option<Self::RevRegId>,
         tails_dir: Option<String>,
-    ) -> VcxCoreResult<(Self::Cred, Option<Self::CredRevId>)>;
-
-    async fn create_revocation_state(
-        &self,
-        tails_dir: &str,
-        cred_rev_state_parts: Self::CredRevStateParts,
-        timestamp: u64,
-        cred_rev_id: Self::CredRevId,
-    ) -> VcxCoreResult<Self::CredRevState>;
+    ) -> VcxCoreResult<(Self::Cred, Option<Self::CredRevId>)>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordId:
+            OtherFrom<Self::CredDefId> + OtherFrom<Self::RevRegId> + Send + Sync,
+        Self::Schema: WalletRecord<W, RecordId = W::RecordId>,
+        Self::SchemaId: WalletRecord<W, RecordId = W::RecordId>,
+        Self::RevRegDef: WalletRecord<W, RecordId = W::RecordId>,
+        Self::RevRegDefPriv: WalletRecord<W, RecordId = W::RecordId>,
+        Self::RevReg: WalletRecord<W, RecordId = W::RecordId>,
+        Self::RevRegInfo: WalletRecord<W, RecordId = W::RecordId>,
+        Self::CredDef: WalletRecord<W, RecordId = W::RecordId>,
+        Self::CredDefPriv: WalletRecord<W, RecordId = W::RecordId>,
+        Self::CredKeyProof: WalletRecord<W, RecordId = W::RecordId>;
 
     async fn create_schema(
         &self,
@@ -110,25 +119,45 @@ pub trait VcIssuer {
 
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not
     // PURE Anoncreds)
-    async fn revoke_credential(
+    async fn revoke_credential<W>(
         &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         tails_dir: &str,
         rev_reg_id: Self::RevRegId,
         cred_rev_id: Self::CredRevId,
-    ) -> VcxCoreResult<()>;
+    ) -> VcxCoreResult<()>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordId:
+            OtherFrom<Self::CredDefId> + OtherFrom<Self::RevRegId> + Send + Sync,
+        Self::RevRegDef: WalletRecord<W, RecordId = W::RecordId>,
+        Self::RevRegDefPriv: WalletRecord<W, RecordId = W::RecordId>,
+        Self::RevReg: WalletRecord<W, RecordId = W::RecordId>,
+        Self::RevRegInfo: WalletRecord<W, RecordId = W::RecordId>,
+        Self::RevRegDelta: WalletRecord<W, RecordId = W::RecordId>,
+        Self::CredDef: WalletRecord<W, RecordId = W::RecordId>;
 
-    async fn get_revocation_delta(
+    async fn get_revocation_delta<W>(
         &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         rev_reg_id: Self::RevRegId,
-    ) -> VcxCoreResult<Option<Self::RevRegDelta>>;
+    ) -> VcxCoreResult<Option<Self::RevRegDelta>>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordId:
+            OtherFrom<Self::CredDefId> + OtherFrom<Self::RevRegId> + Send + Sync,
+        Self::RevRegDelta: WalletRecord<W, RecordId = W::RecordId>;
 
-    async fn clear_revocation_delta(
+    async fn clear_revocation_delta<W>(
         &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         rev_reg_id: Self::RevRegId,
-    ) -> VcxCoreResult<()>;
+    ) -> VcxCoreResult<()>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordId:
+            OtherFrom<Self::CredDefId> + OtherFrom<Self::RevRegId> + Send + Sync,
+        Self::RevRegDelta: WalletRecord<W, RecordId = W::RecordId>;
 }
 
 #[async_trait]
@@ -143,6 +172,9 @@ pub trait VcProver {
 
     type CredId;
     type Cred;
+    type CredRevId: Send + Sync;
+    type CredRevState: Send + Sync;
+    type CredRevStateParts: Send + Sync;
 
     type RevRegId;
     type RevRegDef;
@@ -186,6 +218,14 @@ pub trait VcProver {
         wallet: &impl Wallet,
         proof_request: Self::PresentationRequest,
     ) -> VcxCoreResult<String>; // Needs a type
+
+    async fn create_revocation_state(
+        &self,
+        tails_dir: &str,
+        cred_rev_state_parts: Self::CredRevStateParts,
+        timestamp: u64,
+        cred_rev_id: Self::CredRevId,
+    ) -> VcxCoreResult<Self::CredRevState>;
 
     async fn create_credential_req(
         &self,

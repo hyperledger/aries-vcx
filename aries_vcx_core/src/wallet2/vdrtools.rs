@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use async_trait::async_trait;
 use futures::stream::BoxStream;
 use indy_api_types::domain::wallet::Record;
@@ -20,7 +18,6 @@ const WALLET_OPTIONS: &str =
 impl Wallet for IndySdkWallet {
     type Record = Record;
     type RecordId = String;
-    type RecordUpdate<'a> = RecordUpdate;
     type SearchFilter<'a> = &'a str;
 
     async fn add(&self, record: Self::Record) -> VcxCoreResult<()> {
@@ -55,39 +52,23 @@ impl Wallet for IndySdkWallet {
         R::from_wallet_record(record)
     }
 
-    async fn update<R>(
-        &self,
-        id: &Self::RecordId,
-        update: Self::RecordUpdate<'_>,
-    ) -> VcxCoreResult<()>
-    where
-        R: WalletRecord<Self, RecordId = Self::RecordId>,
-    {
-        let RecordUpdate { tags, value } = update;
+    async fn update(&self, update: Self::Record) -> VcxCoreResult<()> {
+        let Record {
+            value,
+            tags,
+            id,
+            type_,
+        } = update;
 
-        if let Some(tags) = tags {
-            Locator::instance()
-                .non_secret_controller
-                .update_record_tags(
-                    self.wallet_handle,
-                    R::RECORD_TYPE.into(),
-                    id.to_string(),
-                    tags,
-                )
-                .await?;
-        }
+        Locator::instance()
+            .non_secret_controller
+            .update_record_tags(self.wallet_handle, type_.clone(), id.clone(), tags)
+            .await?;
 
-        if let Some(value) = value {
-            Locator::instance()
-                .non_secret_controller
-                .update_record_value(
-                    self.wallet_handle,
-                    R::RECORD_TYPE.into(),
-                    id.to_string(),
-                    value,
-                )
-                .await?;
-        }
+        Locator::instance()
+            .non_secret_controller
+            .update_record_value(self.wallet_handle, type_, id, value)
+            .await?;
 
         Ok(())
     }
@@ -238,9 +219,4 @@ impl Wallet for IndySdkWallet {
             AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, err.to_string())
         })
     }
-}
-
-pub struct RecordUpdate {
-    pub tags: Option<HashMap<String, String>>,
-    pub value: Option<String>,
 }
