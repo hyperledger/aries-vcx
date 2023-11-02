@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use async_trait::async_trait;
 use indy_credx::{
@@ -7,15 +7,17 @@ use indy_credx::{
     types::{
         AttributeNames, Credential, CredentialDefinition, CredentialDefinitionConfig,
         CredentialDefinitionId, CredentialDefinitionPrivate, CredentialKeyCorrectnessProof,
-        CredentialOffer, CredentialRequest, CredentialRevocationConfig, CredentialValues, DidValue,
-        IssuanceType, RegistryType, RevocationRegistry, RevocationRegistryDefinition,
-        RevocationRegistryDefinitionPrivate, RevocationRegistryDelta, RevocationRegistryId, Schema,
-        SchemaId, SignatureType,
+        CredentialOffer, CredentialRequest, CredentialRequestMetadata, CredentialRevocationConfig,
+        CredentialRevocationState, CredentialValues, DidValue, IssuanceType, LinkSecret,
+        Presentation, PresentationRequest, RegistryType, RevocationRegistry,
+        RevocationRegistryDefinition, RevocationRegistryDefinitionPrivate, RevocationRegistryDelta,
+        RevocationRegistryId, Schema, SchemaId, SignatureType,
     },
+    verifier,
 };
 use serde::{Deserialize, Serialize};
 
-use super::VcIssuer;
+use super::{VcIssuer, VcProver, VcVerifier};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet2::{Wallet, WalletRecord},
@@ -475,9 +477,90 @@ impl VcIssuer for IndyCredxIssuer {
     }
 }
 
+pub struct IndyCredxVerifier;
+
+#[async_trait]
+impl VcVerifier for IndyCredxVerifier {
+    type PresentationRequest = PresentationRequest;
+    type Presentation = Presentation;
+
+    type SchemaId = SchemaId;
+    type Schema = Schema;
+
+    type CredDefId = CredentialDefinitionId;
+    type CredDef = CredentialDefinition;
+
+    type RevRegId = RevocationRegistryId;
+    type RevRegDef = RevocationRegistryDefinition;
+    type RevStates = HashMap<u64, RevocationRegistry>;
+
+    async fn verify_proof(
+        &self,
+        pres_request: &Self::PresentationRequest,
+        presentation: &Self::Presentation,
+        schemas: &HashMap<Self::SchemaId, Self::Schema>,
+        credential_defs: &HashMap<Self::CredDefId, Self::CredDef>,
+        rev_reg_defs: Option<&HashMap<Self::RevRegId, Self::RevRegDef>>,
+        rev_regs: Option<&HashMap<Self::RevRegId, Self::RevStates>>,
+    ) -> VcxCoreResult<bool> {
+        let rev_regs = if let Some(map) = rev_regs {
+            let new_map = map
+                .iter()
+                .map(|(k, v)| (k.clone(), v.iter().map(|(k, v)| (*k, v)).collect()))
+                .collect();
+
+            Some(new_map)
+        } else {
+            None
+        };
+        let output = verifier::verify_presentation(
+            presentation,
+            pres_request,
+            &hashmap_as_ref(schemas),
+            &hashmap_as_ref(credential_defs),
+            rev_reg_defs.map(hashmap_as_ref).as_ref(),
+            rev_regs.as_ref(),
+        )?;
+
+        #[cfg(feature = "legacy_proof")]
+        let output = output
+            || verifier::verify_presentation_legacy(
+                presentation,
+                pres_request,
+                &hashmap_as_ref(schemas),
+                &hashmap_as_ref(credential_defs),
+                rev_reg_defs.map(hashmap_as_ref).as_ref(),
+                rev_regs.as_ref(),
+            )?;
+
+        Ok(output)
+    }
+
+    async fn generate_nonce(&self) -> VcxCoreResult<String> {
+        verifier::generate_nonce()
+            .map_err(From::from)
+            .map(|v| v.to_string())
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RevocationRegistryInfo {
     pub id: RevocationRegistryId,
     pub curr_id: u32,
     pub used_ids: HashSet<u32>,
+}
+
+// common transformation requirement in credx
+fn hashmap_as_ref<T, U>(map: &HashMap<T, U>) -> HashMap<T, &U>
+where
+    T: std::hash::Hash,
+    T: std::cmp::Eq,
+    T: std::clone::Clone,
+{
+    let mut new_map: HashMap<T, &U> = HashMap::new();
+    for (k, v) in map.iter() {
+        new_map.insert(k.clone(), v);
+    }
+
+    new_map
 }

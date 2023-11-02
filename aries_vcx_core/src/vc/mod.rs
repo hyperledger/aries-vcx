@@ -158,37 +158,38 @@ pub trait VcIssuer {
 
 #[async_trait]
 pub trait VcProver {
-    type PresentationRequest;
+    type PresentationRequest: Send + Sync;
 
-    type SchemaId;
-    type Schema;
+    type SchemaId: Send + Sync;
+    type Schema: Send + Sync;
 
-    type CredDefId;
-    type CredDef;
+    type CredDefId: Send + Sync;
+    type CredDef: Send + Sync;
 
-    type CredId;
-    type Cred;
+    type CredId: Send + Sync;
+    type Cred: Send + Sync;
     type CredRevId: Send + Sync;
     type CredRevState: Send + Sync;
     type CredRevStateParts: Send + Sync;
 
-    type RevRegId;
-    type RevRegDef;
-    type RevStates;
+    type RevRegId: Send + Sync;
+    type RevRegDef: Send + Sync;
+    type RevRegDelta: Send + Sync;
+    type RevStates: Send + Sync;
 
-    type CredReq;
-    type CredReqMeta;
-    type CredOffer;
+    type CredReq: Send + Sync;
+    type CredReqMeta: Send + Sync;
+    type CredOffer: Send + Sync;
 
-    type LinkSecretId;
+    type LinkSecretId: Send + Sync;
 
     #[allow(clippy::too_many_arguments)]
-    async fn create_proof(
+    async fn create_proof<W>(
         &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         proof_req: Self::PresentationRequest,
-        requested_credentials_json: &str,
-        master_secret_id: &str,
+        requested_credentials_json: &str, // needs a type
+        link_secret_id: &Self::LinkSecretId,
         schemas_json: &HashMap<Self::SchemaId, Self::Schema>,
         credential_defs_json: &HashMap<Self::CredDefId, Self::CredDef>,
         revoc_states_json: Option<&HashMap<Self::RevRegId, Self::RevStates>>,
@@ -257,23 +258,23 @@ pub trait VcProver {
 
 #[async_trait]
 pub trait VcVerifier {
-    type PresentationRequest;
-    type Presentation;
+    type PresentationRequest: Send + Sync;
+    type Presentation: Send + Sync;
 
-    type SchemaId;
-    type Schema;
+    type SchemaId: Send + Sync;
+    type Schema: Send + Sync;
 
-    type CredDefId;
-    type CredDef;
+    type CredDefId: Send + Sync;
+    type CredDef: Send + Sync;
 
-    type RevRegId;
-    type RevRegDef;
-    type RevStates;
+    type RevRegId: Send + Sync;
+    type RevRegDef: Send + Sync;
+    type RevStates: Send + Sync;
 
     async fn verify_proof(
         &self,
-        proof_request: Self::PresentationRequest,
-        proof: Self::Presentation,
+        pres_request: &Self::PresentationRequest,
+        presentation: &Self::Presentation,
         schemas: &HashMap<Self::SchemaId, Self::Schema>,
         credential_defs: &HashMap<Self::CredDefId, Self::CredDef>,
         rev_reg_defs: Option<&HashMap<Self::RevRegId, Self::RevRegDef>>,
