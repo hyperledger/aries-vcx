@@ -1,18 +1,23 @@
 use std::collections::HashMap;
+
 use aries_vcx::{
     common::proofs::proof_request::PresentationRequestData,
-    handlers::proof_presentation::verifier::Verifier,
-    messages::AriesMessage,
+    handlers::{
+        proof_presentation::verifier::Verifier,
+        util::{matches_opt_thread_id, matches_thread_id},
+    },
+    messages::{
+        msg_fields::protocols::present_proof::{v1::PresentProofV1, PresentProof},
+        AriesMessage,
+    },
     protocols::{
-        proof_presentation::verifier::verification_status::PresentationVerificationStatus,
+        proof_presentation::verifier::{
+            state_machine::VerifierState, verification_status::PresentationVerificationStatus,
+        },
         SendClosure,
     },
 };
-use aries_vcx::handlers::util::{matches_opt_thread_id, matches_thread_id};
 use serde_json;
-use aries_vcx::messages::msg_fields::protocols::present_proof::PresentProof;
-use aries_vcx::messages::msg_fields::protocols::present_proof::v1::PresentProofV1;
-use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 
 use crate::{
     api_vcx::{
@@ -30,6 +35,7 @@ use crate::{
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
 }
+use crate::api_vcx::api_handle::ToU32;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "version", content = "data")]
@@ -71,28 +77,28 @@ pub fn verifier_find_message_to_handle(
         match sm.get_state() {
             VerifierState::Initial => match &message {
                 AriesMessage::PresentProof(PresentProof::V1(
-                                               PresentProofV1::ProposePresentation(_),
-                                           )) => {
+                    PresentProofV1::ProposePresentation(_),
+                )) => {
                     return Some((uid, message));
                 }
                 AriesMessage::PresentProof(PresentProof::V1(
-                                               PresentProofV1::RequestPresentation(_),
-                                           )) => {
+                    PresentProofV1::RequestPresentation(_),
+                )) => {
                     return Some((uid, message));
                 }
                 _ => {}
             },
             VerifierState::PresentationRequestSent => match &message {
                 AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Presentation(
-                                                                presentation,
-                                                            ))) => {
+                    presentation,
+                ))) => {
                     if matches_thread_id!(presentation, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
                 AriesMessage::PresentProof(PresentProof::V1(
-                                               PresentProofV1::ProposePresentation(proposal),
-                                           )) => {
+                    PresentProofV1::ProposePresentation(proposal),
+                )) => {
                     if matches_opt_thread_id!(proposal, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
@@ -124,7 +130,7 @@ pub async fn update_state(
         connection_handle
     );
     if !proof.progressable_by_message() {
-        return Ok(proof.get_state().into());
+        return Ok(proof.get_state().to_u32());
     }
 
     if let Some(message) = message {
@@ -168,7 +174,7 @@ pub async fn update_state(
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
     }
-    let state: u32 = proof.get_state().into();
+    let state: u32 = proof.get_state().to_u32();
     PROOF_MAP.insert(handle, proof)?;
     Ok(state)
 }
@@ -186,7 +192,7 @@ pub async fn update_state_nonmediated(
         connection_handle
     );
     if !proof.progressable_by_message() {
-        return Ok(proof.get_state().into());
+        return Ok(proof.get_state().to_u32());
     }
 
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
@@ -216,13 +222,13 @@ pub async fn update_state_nonmediated(
         send_message(message).await?;
     }
 
-    let state: u32 = proof.get_state().into();
+    let state: u32 = proof.get_state().to_u32();
     PROOF_MAP.insert(handle, proof)?;
     Ok(state)
 }
 
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
-    PROOF_MAP.get(handle, |proof| Ok(proof.get_state().into()))
+    PROOF_MAP.get(handle, |proof| Ok(proof.get_state().to_u32()))
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {

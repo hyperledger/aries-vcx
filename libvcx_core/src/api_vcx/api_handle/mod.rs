@@ -1,9 +1,16 @@
-use aries_vcx::handlers::mediated_connection::ConnectionState;
-use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
-use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use aries_vcx::protocols::mediated_connection::inviter::state_machine::InviterState;
-use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
+use aries_vcx::{
+    handlers::mediated_connection::ConnectionState,
+    protocols::{
+        issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
+        mediated_connection::{
+            invitee::state_machine::InviteeState,
+            inviter::state_machine::InviterState,
+        },
+        proof_presentation::{
+            prover::state_machine::ProverState, verifier::state_machine::VerifierState,
+        },
+    },
+};
 
 pub mod connection;
 pub mod credential;
@@ -17,9 +24,13 @@ pub mod proof;
 pub mod revocation_registry;
 pub mod schema;
 
-impl From<ConnectionState> for u32 {
-    fn from(state: ConnectionState) -> u32 {
-        match state {
+trait ToU32 {
+    fn to_u32(&self) -> u32;
+}
+
+impl ToU32 for ConnectionState {
+    fn to_u32(&self) -> u32 {
+        match self {
             ConnectionState::Inviter(inviter_state) => match inviter_state {
                 InviterState::Initial => 0,
                 InviterState::Invited => 1,
@@ -38,9 +49,9 @@ impl From<ConnectionState> for u32 {
     }
 }
 
-impl From<HolderState> for u32 {
-    fn from(state: HolderState) -> u32 {
-        match state {
+impl ToU32 for HolderState {
+    fn to_u32(&self) -> u32 {
+        match self {
             HolderState::Initial => 0,
             HolderState::ProposalSet => 1,
             HolderState::OfferReceived => 2,
@@ -51,9 +62,9 @@ impl From<HolderState> for u32 {
     }
 }
 
-impl From<IssuerState> for u32 {
-    fn from(state: IssuerState) -> u32 {
-        match state {
+impl ToU32 for IssuerState {
+    fn to_u32(&self) -> u32 {
+        match self {
             IssuerState::Initial => 0,
             IssuerState::ProposalReceived => 1,
             IssuerState::OfferSet => 2,
@@ -65,9 +76,9 @@ impl From<IssuerState> for u32 {
     }
 }
 
-impl From<ProverState> for u32 {
-    fn from(state: ProverState) -> u32 {
-        match state {
+impl ToU32 for ProverState {
+    fn to_u32(&self) -> u32 {
+        match self {
             ProverState::Initial => 0,
             ProverState::PresentationProposalSent => 1,
             ProverState::PresentationRequestReceived => 2,
@@ -80,9 +91,9 @@ impl From<ProverState> for u32 {
     }
 }
 
-impl From<VerifierState> for u32 {
-    fn from(state: VerifierState) -> u32 {
-        match state {
+impl ToU32 for VerifierState {
+    fn to_u32(&self) -> u32 {
+        match self {
             VerifierState::Initial => 0,
             VerifierState::PresentationRequestSet => 1,
             VerifierState::PresentationProposalReceived => 2,

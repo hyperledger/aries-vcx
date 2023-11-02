@@ -72,8 +72,8 @@ pub enum SmConnectionState {
 
 #[derive(Debug, Serialize)]
 struct ConnectionInfo {
-    my: SideConnectionInfo,
-    their: Option<SideConnectionInfo>,
+    my: SideDetails,
+    their: Option<SideDetails>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -84,7 +84,7 @@ pub enum ConnectionState {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct SideConnectionInfo {
+struct SideDetails {
     did: String,
     recipient_keys: Vec<String>,
     routing_keys: Vec<String>,
@@ -277,7 +277,8 @@ impl MediatedConnection {
 
     pub fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
-            SmConnection::Inviter(_sm_inviter) => None, /* TODO: Inviter can remember bootstrap */
+            SmConnection::Inviter(_sm_inviter) => None, /* TODO: Inviter can remember
+                                                                  * bootstrap */
             // agent too, but we don't need it
             SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(),
         }
@@ -1024,7 +1025,7 @@ impl MediatedConnection {
         let pairwise_info = self.pairwise_info();
         let recipient_keys = vec![pairwise_info.pw_vk.clone()];
 
-        let current = SideConnectionInfo {
+        let current = SideDetails {
             did: pairwise_info.pw_did.clone(),
             recipient_keys,
             routing_keys: agent_info.routing_keys(agency_client)?,
@@ -1032,7 +1033,7 @@ impl MediatedConnection {
         };
 
         let remote = match self.their_did_doc() {
-            Some(did_doc) => Some(SideConnectionInfo {
+            Some(did_doc) => Some(SideDetails {
                 did: did_doc.id.clone(),
                 recipient_keys: did_doc.recipient_keys()?,
                 routing_keys: did_doc.routing_keys(),
