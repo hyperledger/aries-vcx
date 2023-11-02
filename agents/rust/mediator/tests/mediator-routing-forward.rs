@@ -89,7 +89,10 @@ async fn test_forward_flow() -> Result<()> {
         .decorators(BasicMessageDecorators::default())
         .id("JustHello".to_string())
         .build();
-
+    info!(
+        "Prepared message {:?}, proceeding to anoncrypt wrap",
+        serde_json::to_string(&message).unwrap()
+    );
     let EncryptionEnvelope(packed_message) = EncryptionEnvelope::create(
         &*agent.get_wallet_ref(),
         &serde_json::to_vec(&message)?,
@@ -99,7 +102,6 @@ async fn test_forward_flow() -> Result<()> {
     .await?;
     // Send forward message to provided endpoint
     let packed_json = serde_json::from_slice(&packed_message)?;
-    info!("Sending anoncrypt packed message{}", packed_json);
     let response = agent_f_aries_transport
         .send_aries_envelope(packed_json, &agent_diddoc)
         .await?;
