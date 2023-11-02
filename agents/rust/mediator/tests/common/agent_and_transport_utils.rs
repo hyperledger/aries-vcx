@@ -80,10 +80,6 @@ pub async fn send_message_and_pop_response_message(
         .await
         .map_err(|e| GenericStringError { msg: e.to_string() })?;
     let packed_json = serde_json::from_slice(&packed_message)?;
-    info!(
-        "Packed: {:?}, sending",
-        serde_json::to_string(&packed_json).unwrap()
-    );
     // Send serialized envelope over transport
     let response_envelope = aries_transport
         .send_aries_envelope(packed_json, their_diddoc)

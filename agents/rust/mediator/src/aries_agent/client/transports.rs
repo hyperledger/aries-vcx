@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use async_trait::async_trait;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use log::info;
+use log::debug;
 use serde_json::Value;
 
 #[derive(thiserror::Error, Debug)]
@@ -44,6 +44,10 @@ impl AriesTransport for AriesReqwest {
         let oob_invited_endpoint = destination
             .get_endpoint()
             .expect("Service needs an endpoint");
+        debug!(
+            "Packed: {:?}, sending",
+            serde_json::to_string(&envelope_json).unwrap()
+        );
         let res = self
             .client
             .post(oob_invited_endpoint)
@@ -57,7 +61,7 @@ impl AriesTransport for AriesReqwest {
             .json()
             .await
             .map_err(AriesTransportError::from_std_error)?;
-        info!("Received aries response{:?}", res_json);
+        debug!("Received response envelope {:?}", res_json);
         Ok(res_json)
     }
 }
