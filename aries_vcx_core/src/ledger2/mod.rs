@@ -18,6 +18,8 @@ pub trait Ledger {
 pub trait LedgerRequest<L: Ledger + ?Sized> {
     fn into_ledger_request(self) -> VcxCoreResult<L::Request>;
 
+    fn as_ledger_request(&self) -> VcxCoreResult<L::Request>;
+
     fn from_ledger_response(response: L::Response) -> VcxCoreResult<Self>
     where
         Self: Sized;

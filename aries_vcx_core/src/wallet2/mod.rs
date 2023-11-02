@@ -63,6 +63,8 @@ pub trait WalletRecord<W: Wallet + ?Sized> {
 
     fn into_wallet_record(self, id: Self::RecordId) -> VcxCoreResult<W::Record>;
 
+    fn as_wallet_record(&self, id: Self::RecordId) -> VcxCoreResult<W::Record>;
+
     fn from_wallet_record(record: W::Record) -> VcxCoreResult<Self>
     where
         Self: Sized;
