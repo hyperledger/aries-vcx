@@ -1,10 +1,10 @@
 use aries_vcx::{
-    handlers::mediated_connection::ConnectionState,
+    handlers::mediated_connection::MediatedConnectionState,
     protocols::{
         issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
         mediated_connection::{
-            invitee::state_machine::InviteeState,
-            inviter::state_machine::InviterState,
+            invitee::state_machine::MediatedInviteeState,
+            inviter::state_machine::MediatedInviterState,
         },
         proof_presentation::{
             prover::state_machine::ProverState, verifier::state_machine::VerifierState,
@@ -28,22 +28,22 @@ trait ToU32 {
     fn to_u32(&self) -> u32;
 }
 
-impl ToU32 for ConnectionState {
+impl ToU32 for MediatedConnectionState {
     fn to_u32(&self) -> u32 {
         match self {
-            ConnectionState::Inviter(inviter_state) => match inviter_state {
-                InviterState::Initial => 0,
-                InviterState::Invited => 1,
-                InviterState::Requested => 2,
-                InviterState::Responded => 3,
-                InviterState::Completed => 4,
+            MediatedConnectionState::Inviter(inviter_state) => match inviter_state {
+                MediatedInviterState::Initial => 0,
+                MediatedInviterState::Invited => 1,
+                MediatedInviterState::Requested => 2,
+                MediatedInviterState::Responded => 3,
+                MediatedInviterState::Completed => 4,
             },
-            ConnectionState::Invitee(invitee_state) => match invitee_state {
-                InviteeState::Initial => 0,
-                InviteeState::Invited => 1,
-                InviteeState::Requested => 2,
-                InviteeState::Responded => 3,
-                InviteeState::Completed => 4,
+            MediatedConnectionState::Invitee(invitee_state) => match invitee_state {
+                MediatedInviteeState::Initial => 0,
+                MediatedInviteeState::Invited => 1,
+                MediatedInviteeState::Requested => 2,
+                MediatedInviteeState::Responded => 3,
+                MediatedInviteeState::Completed => 4,
             },
         }
     }

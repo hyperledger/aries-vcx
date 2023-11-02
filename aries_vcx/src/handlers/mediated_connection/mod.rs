@@ -37,8 +37,12 @@ use crate::{
     protocols::{
         connection::pairwise_info::PairwiseInfo,
         mediated_connection::{
-            invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee},
-            inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter},
+            invitee::state_machine::{
+                MediatedInviteeFullState, MediatedInviteeState, SmMediatedConnectionInvitee,
+            },
+            inviter::state_machine::{
+                MediatedInviterFullState, MediatedInviterState, SmMediatedConnectionInviter,
+            },
         },
         oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg},
         trustping::build_ping_response,
@@ -53,21 +57,21 @@ pub(crate) mod util;
 
 #[derive(Clone, PartialEq)]
 pub struct MediatedConnection {
-    connection_sm: SmConnection,
+    connection_sm: SmMediatedConnection,
     cloud_agent_info: Option<CloudAgentInfo>,
     autohop_enabled: bool,
 }
 
 #[derive(Clone, PartialEq)]
-pub enum SmConnection {
-    Inviter(SmConnectionInviter),
-    Invitee(SmConnectionInvitee),
+pub enum SmMediatedConnection {
+    Inviter(SmMediatedConnectionInviter),
+    Invitee(SmMediatedConnectionInvitee),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SmConnectionState {
-    Inviter(InviterFullState),
-    Invitee(InviteeFullState),
+    Inviter(MediatedInviterFullState),
+    Invitee(MediatedInviteeFullState),
 }
 
 #[derive(Debug, Serialize)]
@@ -77,9 +81,9 @@ struct ConnectionInfo {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum ConnectionState {
-    Inviter(InviterState),
-    Invitee(InviteeState),
+pub enum MediatedConnectionState {
+    Inviter(MediatedInviterState),
+    Invitee(MediatedInviteeState),
 }
 
 #[derive(Debug, Serialize)]
@@ -92,7 +96,7 @@ struct SideDetails {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum Actor {
+pub enum MediatedConnectionActor {
     Inviter,
     Invitee,
 }
@@ -109,7 +113,7 @@ impl MediatedConnection {
         let cloud_agent_info = Some(CloudAgentInfo::create(agency_client, &pairwise_info).await?);
         Ok(Self {
             cloud_agent_info,
-            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(
+            connection_sm: SmMediatedConnection::Inviter(SmMediatedConnectionInviter::new(
                 source_id,
                 pairwise_info,
             )),
@@ -134,7 +138,7 @@ impl MediatedConnection {
         let cloud_agent_info = Some(CloudAgentInfo::create(agency_client, &pairwise_info).await?);
         let mut connection = Self {
             cloud_agent_info,
-            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(
+            connection_sm: SmMediatedConnection::Invitee(SmMediatedConnectionInvitee::new(
                 source_id,
                 pairwise_info,
                 did_doc,
@@ -158,7 +162,7 @@ impl MediatedConnection {
         );
         let mut connection = Self {
             cloud_agent_info: None,
-            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(
+            connection_sm: SmMediatedConnection::Inviter(SmMediatedConnectionInviter::new(
                 &request.id,
                 pairwise_info,
             )),
@@ -181,7 +185,7 @@ impl MediatedConnection {
         match state {
             SmConnectionState::Inviter(state) => Self {
                 cloud_agent_info,
-                connection_sm: SmConnection::Inviter(SmConnectionInviter::from(
+                connection_sm: SmMediatedConnection::Inviter(SmMediatedConnectionInviter::from(
                     source_id,
                     thread_id,
                     pairwise_info,
@@ -191,7 +195,7 @@ impl MediatedConnection {
             },
             SmConnectionState::Invitee(state) => Self {
                 cloud_agent_info,
-                connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(
+                connection_sm: SmMediatedConnection::Invitee(SmMediatedConnectionInvitee::from(
                     source_id,
                     thread_id,
                     pairwise_info,
@@ -204,30 +208,34 @@ impl MediatedConnection {
 
     pub fn source_id(&self) -> String {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.source_id(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.source_id(),
+            SmMediatedConnection::Inviter(sm_inviter) => sm_inviter.source_id(),
+            SmMediatedConnection::Invitee(sm_invitee) => sm_invitee.source_id(),
         }
         .into()
     }
 
     pub fn get_thread_id(&self) -> String {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.get_thread_id(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.get_thread_id(),
+            SmMediatedConnection::Inviter(sm_inviter) => sm_inviter.get_thread_id(),
+            SmMediatedConnection::Invitee(sm_invitee) => sm_invitee.get_thread_id(),
         }
     }
 
-    pub fn get_state(&self) -> ConnectionState {
+    pub fn get_state(&self) -> MediatedConnectionState {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => ConnectionState::Inviter(sm_inviter.get_state()),
-            SmConnection::Invitee(sm_invitee) => ConnectionState::Invitee(sm_invitee.get_state()),
+            SmMediatedConnection::Inviter(sm_inviter) => {
+                MediatedConnectionState::Inviter(sm_inviter.get_state())
+            }
+            SmMediatedConnection::Invitee(sm_invitee) => {
+                MediatedConnectionState::Invitee(sm_invitee.get_state())
+            }
         }
     }
 
     pub fn pairwise_info(&self) -> &PairwiseInfo {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.pairwise_info(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.pairwise_info(),
+            SmMediatedConnection::Inviter(sm_inviter) => sm_inviter.pairwise_info(),
+            SmMediatedConnection::Invitee(sm_invitee) => sm_invitee.pairwise_info(),
         }
     }
 
@@ -237,24 +245,24 @@ impl MediatedConnection {
 
     pub fn remote_did(&self) -> VcxResult<String> {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.remote_did(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_did(),
+            SmMediatedConnection::Inviter(sm_inviter) => sm_inviter.remote_did(),
+            SmMediatedConnection::Invitee(sm_invitee) => sm_invitee.remote_did(),
         }
     }
 
     pub fn remote_vk(&self) -> VcxResult<String> {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.remote_vk(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_vk(),
+            SmMediatedConnection::Inviter(sm_inviter) => sm_inviter.remote_vk(),
+            SmMediatedConnection::Invitee(sm_invitee) => sm_invitee.remote_vk(),
         }
     }
 
     pub fn state_object(&self) -> SmConnectionState {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
+            SmMediatedConnection::Inviter(sm_inviter) => {
                 SmConnectionState::Inviter(sm_inviter.state_object().clone())
             }
-            SmConnection::Invitee(sm_invitee) => {
+            SmMediatedConnection::Invitee(sm_invitee) => {
                 SmConnectionState::Invitee(sm_invitee.state_object().clone())
             }
         }
@@ -262,39 +270,39 @@ impl MediatedConnection {
 
     pub fn get_source_id(&self) -> String {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.source_id(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.source_id(),
+            SmMediatedConnection::Inviter(sm_inviter) => sm_inviter.source_id(),
+            SmMediatedConnection::Invitee(sm_invitee) => sm_invitee.source_id(),
         }
         .to_string()
     }
 
     pub fn their_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.their_did_doc(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.their_did_doc(),
+            SmMediatedConnection::Inviter(sm_inviter) => sm_inviter.their_did_doc(),
+            SmMediatedConnection::Invitee(sm_invitee) => sm_invitee.their_did_doc(),
         }
     }
 
     pub fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
-            SmConnection::Inviter(_sm_inviter) => None, /* TODO: Inviter can remember
+            SmMediatedConnection::Inviter(_sm_inviter) => None, /* TODO: Inviter can remember
                                                                   * bootstrap */
             // agent too, but we don't need it
-            SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(),
+            SmMediatedConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(),
         }
     }
 
     pub fn is_in_null_state(&self) -> bool {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.is_in_null_state(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.is_in_null_state(),
+            SmMediatedConnection::Inviter(sm_inviter) => sm_inviter.is_in_null_state(),
+            SmMediatedConnection::Invitee(sm_invitee) => sm_invitee.is_in_null_state(),
         }
     }
 
     pub fn is_in_final_state(&self) -> bool {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.is_in_final_state(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.is_in_final_state(),
+            SmMediatedConnection::Inviter(sm_inviter) => sm_inviter.is_in_final_state(),
+            SmMediatedConnection::Invitee(sm_invitee) => sm_invitee.is_in_final_state(),
         }
     }
 
@@ -304,14 +312,14 @@ impl MediatedConnection {
             invitation
         );
         self.connection_sm = match &self.connection_sm {
-            SmConnection::Inviter(_sm_inviter) => {
+            SmMediatedConnection::Inviter(_sm_inviter) => {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::NotReady,
                     "Invalid action",
                 ));
             }
-            SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
+            SmMediatedConnection::Invitee(sm_invitee) => {
+                SmMediatedConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
             }
         };
         Ok(())
@@ -328,7 +336,7 @@ impl MediatedConnection {
             request
         );
         let (connection_sm, new_cloud_agent_info) = match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
+            SmMediatedConnection::Inviter(sm_inviter) => {
                 let send_message = self.send_message_closure_connection(wallet);
                 let new_pairwise_info = PairwiseInfo::create(wallet).await?;
                 let new_cloud_agent =
@@ -336,7 +344,7 @@ impl MediatedConnection {
                 let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
                 let new_service_endpoint = agency_client.get_agency_url_full()?;
                 (
-                    SmConnection::Inviter(
+                    SmMediatedConnection::Inviter(
                         sm_inviter
                             .clone()
                             .handle_connection_request(
@@ -352,7 +360,7 @@ impl MediatedConnection {
                     new_cloud_agent,
                 )
             }
-            SmConnection::Invitee(_) => {
+            SmMediatedConnection::Invitee(_) => {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::NotReady,
                     "Invalid action",
@@ -367,8 +375,8 @@ impl MediatedConnection {
     pub async fn send_response(&mut self, wallet: &impl BaseWallet) -> VcxResult<()> {
         trace!("MediatedConnection::send_response >>>");
         let connection_sm = match self.connection_sm.clone() {
-            SmConnection::Inviter(sm_inviter) => {
-                if let InviterFullState::Requested(_) = sm_inviter.state_object() {
+            SmMediatedConnection::Inviter(sm_inviter) => {
+                if let MediatedInviterFullState::Requested(_) = sm_inviter.state_object() {
                     let send_message = self.send_message_closure_connection(wallet);
                     sm_inviter.handle_send_response(send_message).await?
                 } else {
@@ -378,22 +386,22 @@ impl MediatedConnection {
                     ));
                 }
             }
-            SmConnection::Invitee(_) => {
+            SmMediatedConnection::Invitee(_) => {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::NotReady,
                     "Invalid action",
                 ));
             }
         };
-        self.connection_sm = SmConnection::Inviter(connection_sm);
+        self.connection_sm = SmMediatedConnection::Inviter(connection_sm);
         Ok(())
     }
 
     pub fn get_invite_details(&self) -> Option<&AnyInvitation> {
         trace!("MediatedConnection::get_invite_details >>>");
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.get_invitation(),
-            SmConnection::Invitee(_sm_invitee) => None,
+            SmMediatedConnection::Inviter(sm_inviter) => sm_inviter.get_invitation(),
+            SmMediatedConnection::Invitee(_sm_invitee) => None,
         }
     }
 
@@ -402,8 +410,12 @@ impl MediatedConnection {
         messages: HashMap<String, AriesMessage>,
     ) -> Option<(String, AriesMessage)> {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => sm_inviter.find_message_to_update_state(messages),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.find_message_to_update_state(messages),
+            SmMediatedConnection::Inviter(sm_inviter) => {
+                sm_inviter.find_message_to_update_state(messages)
+            }
+            SmMediatedConnection::Invitee(sm_invitee) => {
+                sm_invitee.find_message_to_update_state(messages)
+            }
         }
     }
 
@@ -418,10 +430,10 @@ impl MediatedConnection {
     ) -> BoxFuture<'a, VcxResult<()>> {
         Box::pin(async move {
             let (new_connection_sm, can_autohop) = match &self.connection_sm {
-                SmConnection::Inviter(_) => {
+                SmMediatedConnection::Inviter(_) => {
                     self.step_inviter(wallet, message, &agency_client).await?
                 }
-                SmConnection::Invitee(_) => self.step_invitee(wallet, message).await?,
+                SmMediatedConnection::Invitee(_) => self.step_invitee(wallet, message).await?,
             };
             *self = new_connection_sm;
             if can_autohop && self.autohop_enabled {
@@ -594,7 +606,7 @@ impl MediatedConnection {
         agency_client: &AgencyClient,
     ) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
-            SmConnection::Inviter(sm_inviter) => {
+            SmMediatedConnection::Inviter(sm_inviter) => {
                 let (sm_inviter, new_cloud_agent_info, can_autohop) = match message {
                     Some(message) => match message {
                         AriesMessage::Connection(Connection::Request(request)) => {
@@ -632,7 +644,7 @@ impl MediatedConnection {
                         _ => (sm_inviter.clone(), None, false),
                     },
                     None => {
-                        if let InviterFullState::Requested(_) = sm_inviter.state_object() {
+                        if let MediatedInviterFullState::Requested(_) = sm_inviter.state_object() {
                             let send_message = self.send_message_closure_connection(wallet);
                             (
                                 sm_inviter.handle_send_response(send_message).await?,
@@ -647,13 +659,13 @@ impl MediatedConnection {
 
                 let connection = Self {
                     cloud_agent_info: new_cloud_agent_info.or(self.cloud_agent_info.clone()),
-                    connection_sm: SmConnection::Inviter(sm_inviter),
+                    connection_sm: SmMediatedConnection::Inviter(sm_inviter),
                     autohop_enabled: self.autohop_enabled,
                 };
 
                 Ok((connection, can_autohop))
             }
-            SmConnection::Invitee(_) => Err(AriesVcxError::from_msg(
+            SmMediatedConnection::Invitee(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
                 "Invalid operation, called _step_inviter on Invitee connection.",
             )),
@@ -666,7 +678,7 @@ impl MediatedConnection {
         message: Option<AriesMessage>,
     ) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
-            SmConnection::Invitee(sm_invitee) => {
+            SmMediatedConnection::Invitee(sm_invitee) => {
                 let (sm_invitee, can_autohop) = match message {
                     Some(message) => match message {
                         AriesMessage::Connection(Connection::Invitation(invitation))
@@ -705,13 +717,13 @@ impl MediatedConnection {
                     }
                 };
                 let connection = Self {
-                    connection_sm: SmConnection::Invitee(sm_invitee),
+                    connection_sm: SmMediatedConnection::Invitee(sm_invitee),
                     cloud_agent_info: self.cloud_agent_info.clone(),
                     autohop_enabled: self.autohop_enabled,
                 };
                 Ok((connection, can_autohop))
             }
-            SmConnection::Inviter(_) => Err(AriesVcxError::from_msg(
+            SmMediatedConnection::Inviter(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
                 "Invalid operation, called _step_invitee on Inviter connection.",
             )),
@@ -739,17 +751,17 @@ impl MediatedConnection {
                 "Missing cloud agent info",
             ))?;
         let sm = match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().create_invitation(
+            SmMediatedConnection::Inviter(sm_inviter) => {
+                SmMediatedConnection::Inviter(sm_inviter.clone().create_invitation(
                     cloud_agent_info.routing_keys(agency_client)?,
                     cloud_agent_info.service_endpoint(agency_client)?,
                 )?)
             }
-            SmConnection::Invitee(sm_invitee) => {
+            SmMediatedConnection::Invitee(sm_invitee) => {
                 let send_message =
                     send_message.unwrap_or(self.send_message_closure_connection(wallet));
 
-                SmConnection::Invitee(
+                SmMediatedConnection::Invitee(
                     sm_invitee
                         .clone()
                         .send_connection_request(
@@ -789,7 +801,7 @@ impl MediatedConnection {
         agency_client: &AgencyClient,
     ) -> VcxResult<HashMap<String, AriesMessage>> {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
+            SmMediatedConnection::Inviter(sm_inviter) => {
                 let messages = self
                     .cloud_agent_info()
                     .ok_or(AriesVcxError::from_msg(
@@ -800,7 +812,7 @@ impl MediatedConnection {
                     .await?;
                 Ok(messages)
             }
-            SmConnection::Invitee(sm_invitee) => {
+            SmMediatedConnection::Invitee(sm_invitee) => {
                 let messages = self
                     .cloud_agent_info()
                     .ok_or(AriesVcxError::from_msg(
@@ -820,7 +832,7 @@ impl MediatedConnection {
     ) -> VcxResult<HashMap<String, AriesMessage>> {
         let expected_sender_vk = self.get_expected_sender_vk().await?;
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => Ok(self
+            SmMediatedConnection::Inviter(sm_inviter) => Ok(self
                 .cloud_agent_info()
                 .ok_or(AriesVcxError::from_msg(
                     AriesVcxErrorKind::NoAgentInformation,
@@ -832,7 +844,7 @@ impl MediatedConnection {
                     sm_inviter.pairwise_info(),
                 )
                 .await?),
-            SmConnection::Invitee(sm_invitee) => Ok(self
+            SmMediatedConnection::Invitee(sm_invitee) => Ok(self
                 .cloud_agent_info()
                 .ok_or(AriesVcxError::from_msg(
                     AriesVcxErrorKind::NoAgentInformation,
@@ -1066,9 +1078,9 @@ impl MediatedConnection {
         uids: Option<Vec<String>>,
     ) -> VcxResult<Vec<DownloadedMessage>> {
         match self.get_state() {
-            ConnectionState::Invitee(InviteeState::Initial)
-            | ConnectionState::Inviter(InviterState::Initial)
-            | ConnectionState::Inviter(InviterState::Invited) => {
+            MediatedConnectionState::Invitee(MediatedInviteeState::Initial)
+            | MediatedConnectionState::Inviter(MediatedInviterState::Initial)
+            | MediatedConnectionState::Inviter(MediatedInviterState::Invited) => {
                 let msgs = futures::stream::iter(
                     self.cloud_agent_info()
                         .ok_or(AriesVcxError::from_msg(
