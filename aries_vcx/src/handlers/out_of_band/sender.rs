@@ -138,3 +138,72 @@ impl Display for OutOfBandSender {
         write!(f, "{}", json!(AriesMessage::from(self.oob.clone())))
     }
 }
+
+// #[cfg(test)]
+// mod unit_tests {
+//     use crate::utils::devsetup::SetupMocks;
+//     use messages::diddoc::aries::service::AriesService;
+//     use messages::protocols::connection::did::Did;
+//     use messages::protocols::issuance::credential_offer::CredentialOffer;
+//
+//     use super::*;
+//
+//     fn _create_oob() -> OutOfBandSender {
+//         OutOfBandSender::create()
+//             .set_label("oob-label")
+//             .set_goal("issue-vc")
+//             .set_goal_code(&GoalCode::IssueVC)
+//     }
+//
+//     fn _create_service() -> ServiceOob {
+//         ServiceOob::AriesService(
+//             AriesService::create()
+//                 .set_service_endpoint("http://example.org/agent".into())
+//                 .set_routing_keys(vec!["12345".into()])
+//                 .set_recipient_keys(vec!["abcde".into()]),
+//         )
+//     }
+//
+//     #[test]
+//     fn test_append_aries_service_object_to_oob_services() {
+//         let _setup = SetupMocks::init();
+//
+//         let service = _create_service();
+//         let oob = _create_oob().append_service(&service);
+//         let resolved_service = oob.get_services();
+//
+//         assert_eq!(resolved_service.len(), 1);
+//         assert_eq!(service, resolved_service[0]);
+//     }
+//
+//     #[test]
+//     fn test_append_did_service_object_to_oob_services() {
+//         let _setup = SetupMocks::init();
+//
+//         let service = ServiceOob::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap());
+//         let oob = _create_oob().append_service(&service);
+//         let resolved_service = oob.get_services();
+//
+//         assert_eq!(resolved_service.len(), 1);
+//         assert_eq!(service, resolved_service[0]);
+//     }
+//
+//     #[test]
+//     fn test_oob_sender_to_a2a_message() {
+//         let _setup = SetupMocks::init();
+//
+//         let inserted_offer = CredentialOffer::create();
+//         let basic_msg = A2AMessage::CredentialOffer(inserted_offer.clone());
+//         let oob = _create_oob().append_a2a_message(basic_msg).unwrap();
+//         let oob_msg = oob.to_a2a_message();
+//         assert!(matches!(oob_msg, A2AMessage::OutOfBandInvitation(..)));
+//         if let A2AMessage::OutOfBandInvitation(oob_msg) = oob_msg {
+//             let attachment = oob_msg.requests_attach.content().unwrap();
+//             let attachment: A2AMessage = serde_json::from_str(&attachment).unwrap();
+//             assert!(matches!(attachment, A2AMessage::CredentialOffer(..)));
+//             if let A2AMessage::CredentialOffer(offer) = attachment {
+//                 assert_eq!(offer, inserted_offer)
+//             }
+//         }
+//     }
+// }
