@@ -166,15 +166,16 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
     pub async fn auth_and_get_details(
         &self,
         sender_verkey: &Option<VerKey>,
-    ) -> Result<(String, VerKey, AriesDidDoc), String> {
+    ) -> Result<(String, VerKey, VerKey, AriesDidDoc), String> {
         let auth_pubkey = sender_verkey
             .as_deref()
-            .ok_or("Anonymous sender can't be authenticated")?;
+            .ok_or("Anonymous sender can't be authenticated")?
+            .to_owned();
         let (_sr_no, account_name, our_signing_key, did_doc_json) =
-            self.persistence.get_account_details(auth_pubkey).await?;
+            self.persistence.get_account_details(&auth_pubkey).await?;
         let diddoc =
             serde_json::from_value::<AriesDidDoc>(did_doc_json).map_err(string_from_std_error)?;
-        Ok((account_name, our_signing_key, diddoc))
+        Ok((account_name, auth_pubkey, our_signing_key, diddoc))
     }
     pub async fn handle_connection_req(
         &self,
