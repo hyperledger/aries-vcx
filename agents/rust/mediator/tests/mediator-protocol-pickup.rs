@@ -6,14 +6,13 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediation::{
     didcomm_types::mediator_coord_structs::{
-        KeylistUpdateItem, KeylistUpdateItemAction, KeylistUpdateRequestData, MediateGrantData,
-        MediatorCoordMsgEnum,
+        KeylistUpdateItem, KeylistUpdateItemAction, KeylistUpdateRequestData, MediatorCoordMsgEnum,
     },
     storage::MediatorPersistence,
 };
 use mediator::{
     aries_agent::{
-        transports::{AriesReqwest, AriesTransport},
+        client::transports::{AriesReqwest, AriesTransport},
         utils::oob2did,
         Agent,
     },
@@ -34,46 +33,14 @@ use messages::{
 
 use crate::common::{
     agent_and_transport_utils::{
-        gen_mediator_connected_agent, send_message_and_pop_response_message,
+        gen_mediator_connected_agent, get_mediator_grant_data,
+        send_message_and_pop_response_message,
     },
     prelude::*,
     test_setup::setup_env_logging,
 };
 
 static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
-
-async fn get_mediator_grant_data(
-    agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
-    agent_aries_transport: &mut impl AriesTransport,
-    agent_verkey: &VerKey,
-    mediator_diddoc: &AriesDidDoc,
-) -> MediateGrantData {
-    // prepare request message
-    let message = MediatorCoordMsgEnum::MediateRequest;
-    let message_bytes = serde_json::to_vec(&message).unwrap();
-    // send message and get response
-    let response_message = send_message_and_pop_response_message(
-        &message_bytes,
-        agent,
-        agent_aries_transport,
-        agent_verkey,
-        mediator_diddoc,
-    )
-    .await
-    .unwrap();
-    // extract routing parameters
-    if let MediatorCoordMsgEnum::MediateGrant(grant_data) =
-        serde_json::from_str(&response_message).unwrap()
-    {
-        info!("Grant Data {:?}", grant_data);
-        grant_data
-    } else {
-        panic!(
-            "Should get response that is of type Mediator Grant. Found {:?}",
-            response_message
-        )
-    }
-}
 
 /// Register recipient keys with mediator
 async fn gen_and_register_recipient_key(
@@ -113,7 +80,7 @@ async fn gen_and_register_recipient_key(
     Ok((agent_recipient_key, agent_diddoc))
 }
 
-async fn forward_dummy_anoncrypt_message(
+async fn forward_basic_anoncrypt_message(
     agent_diddoc: &AriesDidDoc,
     message_text: &str,
 ) -> Result<()> {
@@ -146,13 +113,10 @@ async fn forward_dummy_anoncrypt_message(
     // Send forward message to provided endpoint
     let packed_json = serde_json::from_slice(&packed_message)?;
     info!("Sending anoncrypt packed message{}", packed_json);
-    agent_f_aries_transport
-        .push_aries_envelope(packed_json, agent_diddoc)
+    let response_envelope = agent_f_aries_transport
+        .send_aries_envelope(packed_json, agent_diddoc)
         .await?;
-    info!(
-        "Response of forward{:?}",
-        agent_f_aries_transport.pop_aries_envelope()?
-    );
+    info!("Response of forward{:?}", response_envelope);
     Ok(())
 }
 
@@ -182,8 +146,8 @@ async fn test_pickup_flow() -> Result<()> {
     )
     .await?;
     // forward some messages.
-    forward_dummy_anoncrypt_message(&agent_diddoc, "Hi, from AgentF").await?;
-    forward_dummy_anoncrypt_message(&agent_diddoc, "Hi again, from AgentF").await?;
+    forward_basic_anoncrypt_message(&agent_diddoc, "Hi, from AgentF").await?;
+    forward_basic_anoncrypt_message(&agent_diddoc, "Hi again, from AgentF").await?;
     // Pickup flow
     // // Status
     let pickup_status_req = Pickup::StatusRequest(
