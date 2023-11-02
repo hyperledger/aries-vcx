@@ -24,12 +24,14 @@ use strum_macros::{AsRefStr, EnumString};
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
+#[macro_export]
 macro_rules! matches_thread_id {
     ($msg:expr, $id:expr) => {
         $msg.decorators.thread.thid == $id || $msg.decorators.thread.pthid.as_deref() == Some($id)
     };
 }
 
+#[macro_export]
 macro_rules! matches_opt_thread_id {
     ($msg:expr, $id:expr) => {
         match $msg.decorators.thread.as_ref() {
@@ -77,8 +79,8 @@ macro_rules! make_attach_from_str {
 
 pub(crate) use get_attach_as_string;
 pub(crate) use make_attach_from_str;
-pub(crate) use matches_opt_thread_id;
-pub(crate) use matches_thread_id;
+pub use matches_opt_thread_id;
+pub use matches_thread_id;
 
 pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()> {
     let is_match = match message {

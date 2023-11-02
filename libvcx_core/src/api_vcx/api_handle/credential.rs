@@ -1,7 +1,8 @@
+use std::collections::HashMap;
 #[cfg(test)]
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::{
-    handlers::issuance::{holder::Holder, mediated_holder::holder_find_message_to_handle},
+    handlers::issuance::holder::Holder,
     messages::{
         msg_fields::protocols::cred_issuance::{
             v1::{offer_credential::OfferCredentialV1, CredentialIssuanceV1},
@@ -11,6 +12,9 @@ use aries_vcx::{
     },
 };
 use serde_json;
+use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
+use aries_vcx::handlers::util::{matches_opt_thread_id, matches_thread_id};
+use aries_vcx::messages::msg_fields::protocols::notification::Notification;
 #[cfg(test)]
 use test_utils::{
     constants::GET_MESSAGES_DECRYPTED_RESPONSE, mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER,
@@ -124,6 +128,58 @@ pub async fn credential_create_with_msgid(
 
     debug!("inserting credential {} into handle map", source_id);
     Ok((handle, offer))
+}
+
+pub fn holder_find_message_to_handle(
+    sm: &Holder,
+    messages: HashMap<String, AriesMessage>,
+) -> Option<(String, AriesMessage)> {
+    trace!("holder_find_message_to_handle >>>");
+    for (uid, message) in messages {
+        match sm.get_state() {
+            HolderState::ProposalSet => {
+                if let AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                                                            CredentialIssuanceV1::OfferCredential(offer),
+                                                        )) = &message
+                {
+                    if matches_opt_thread_id!(offer, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+            }
+            HolderState::RequestSet => match &message {
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                                                     CredentialIssuanceV1::IssueCredential(credential),
+                                                 )) => {
+                    if matches_thread_id!(credential, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                                                     CredentialIssuanceV1::ProblemReport(problem_report),
+                                                 )) => {
+                    if matches_opt_thread_id!(problem_report, sm.get_thread_id().unwrap().as_str())
+                    {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::ReportProblem(problem_report) => {
+                    if matches_opt_thread_id!(problem_report, sm.get_thread_id().unwrap().as_str())
+                    {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::Notification(Notification::ProblemReport(msg)) => {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                _ => {}
+            },
+            _ => {}
+        };
+    }
+    None
 }
 
 pub async fn update_state(
