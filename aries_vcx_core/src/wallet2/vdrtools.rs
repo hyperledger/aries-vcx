@@ -49,7 +49,7 @@ impl Wallet for IndySdkWallet {
             .await?;
 
         let record = serde_json::from_str(&record)?;
-        R::from_wallet_record(record)
+        R::from_wallet_record(record).map(|(_, r)| r)
     }
 
     async fn update(&self, update: Self::Record) -> VcxCoreResult<()> {
@@ -88,7 +88,7 @@ impl Wallet for IndySdkWallet {
     async fn search<'a, R>(
         &'a self,
         filter: Self::SearchFilter<'_>,
-    ) -> VcxCoreResult<BoxStream<'a, VcxCoreResult<R>>>
+    ) -> VcxCoreResult<BoxStream<'a, VcxCoreResult<(R::RecordId, R)>>>
     where
         R: WalletRecord<Self> + Send + Sync + 'a,
     {

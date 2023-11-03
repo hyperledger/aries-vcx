@@ -28,7 +28,7 @@ pub trait Wallet {
     async fn search<'a, R>(
         &'a self,
         filter: Self::SearchFilter<'_>,
-    ) -> VcxCoreResult<BoxStream<'a, VcxCoreResult<R>>>
+    ) -> VcxCoreResult<BoxStream<'a, VcxCoreResult<(R::RecordId, R)>>>
     where
         R: WalletRecord<Self> + Send + Sync + 'a;
 
@@ -59,13 +59,14 @@ pub trait Wallet {
 pub trait WalletRecord<W: Wallet + ?Sized> {
     const RECORD_TYPE: &'static str;
 
-    type RecordId<'a>: Send + Sync;
+    type RecordIdRef<'a>: Send + Sync;
+    type RecordId: Send + Sync;
 
-    fn into_wallet_record(self, id: Self::RecordId<'_>) -> VcxCoreResult<W::Record>;
+    fn into_wallet_record(self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<W::Record>;
 
-    fn as_wallet_record(&self, id: Self::RecordId<'_>) -> VcxCoreResult<W::Record>;
+    fn as_wallet_record(&self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<W::Record>;
 
-    fn from_wallet_record(record: W::Record) -> VcxCoreResult<Self>
+    fn from_wallet_record(record: W::Record) -> VcxCoreResult<(Self::RecordId, Self)>
     where
         Self: Sized;
 }

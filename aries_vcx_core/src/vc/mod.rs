@@ -51,10 +51,10 @@ pub trait VcIssuer {
         <W as Wallet>::RecordIdRef: Send + Sync,
         Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         Self::CredDef: WalletRecord<W>,
-        for<'b> Self::RevReg: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
-        for<'b> Self::RevRegDef: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
-        for<'b> Self::RevRegDefPriv: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
-        for<'b> Self::RevRegInfo: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>;
+        for<'b> Self::RevReg: WalletRecord<W, RecordIdRef<'b> = &'b Self::RevRegId>,
+        for<'b> Self::RevRegDef: WalletRecord<W, RecordIdRef<'b> = &'b Self::RevRegId>,
+        for<'b> Self::RevRegDefPriv: WalletRecord<W, RecordIdRef<'b> = &'b Self::RevRegId>,
+        for<'b> Self::RevRegInfo: WalletRecord<W, RecordIdRef<'b> = &'b Self::RevRegId>;
 
     async fn create_and_store_credential_def<W>(
         &self,
@@ -69,11 +69,11 @@ pub trait VcIssuer {
         W: Wallet + Send + Sync,
         Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        for<'a> Self::Schema: WalletRecord<W, RecordId<'a> = &'a Self::SchemaId>,
-        for<'a> Self::SchemaId: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
-        for<'a> Self::CredDef: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
-        for<'a> Self::CredDefPriv: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
-        for<'a> Self::CredKeyProof: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>;
+        for<'a> Self::Schema: WalletRecord<W, RecordIdRef<'a> = &'a Self::SchemaId>,
+        for<'a> Self::SchemaId: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
+        for<'a> Self::CredDef: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
+        for<'a> Self::CredDefPriv: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
+        for<'a> Self::CredKeyProof: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>;
 
     async fn create_credential_offer<'a, W>(
         &self,
@@ -84,9 +84,9 @@ pub trait VcIssuer {
         W: Wallet + Send + Sync,
         Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        Self::SchemaId: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
-        Self::CredDef: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
-        Self::CredKeyProof: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>;
+        Self::SchemaId: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
+        Self::CredDef: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
+        Self::CredKeyProof: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>;
 
     async fn create_credential<'a, W>(
         &self,
@@ -102,15 +102,15 @@ pub trait VcIssuer {
         Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        for<'b> Self::Schema: WalletRecord<W, RecordId<'b> = &'b Self::SchemaId>,
-        for<'b> Self::SchemaId: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
-        for<'b> Self::CredDef: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
-        for<'b> Self::CredDefPriv: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
-        for<'b> Self::CredKeyProof: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
-        Self::RevRegDef: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegDefPriv: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevReg: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegInfo: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>;
+        for<'b> Self::Schema: WalletRecord<W, RecordIdRef<'b> = &'b Self::SchemaId>,
+        for<'b> Self::SchemaId: WalletRecord<W, RecordIdRef<'b> = &'b Self::CredDefId>,
+        for<'b> Self::CredDef: WalletRecord<W, RecordIdRef<'b> = &'b Self::CredDefId>,
+        for<'b> Self::CredDefPriv: WalletRecord<W, RecordIdRef<'b> = &'b Self::CredDefId>,
+        for<'b> Self::CredKeyProof: WalletRecord<W, RecordIdRef<'b> = &'b Self::CredDefId>,
+        Self::RevRegDef: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegDefPriv: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevReg: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegInfo: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>;
 
     async fn create_schema(
         &self,
@@ -120,8 +120,6 @@ pub trait VcIssuer {
         attrs: Self::SchemaAttrNames,
     ) -> VcxCoreResult<(Self::SchemaId, Self::Schema)>;
 
-    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls
-    // (not // PURE Anoncreds)
     async fn revoke_credential<'a, W>(
         &self,
         wallet: &W,
@@ -133,12 +131,12 @@ pub trait VcIssuer {
         Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
         Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        Self::RevReg: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegDef: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegDefPriv: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegInfo: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        for<'b> Self::CredDef: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>;
+        Self::RevReg: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegDef: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegDefPriv: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegInfo: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegDelta: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        for<'b> Self::CredDef: WalletRecord<W, RecordIdRef<'b> = &'b Self::CredDefId>;
 
     async fn get_revocation_delta<'a, W>(
         &self,
@@ -149,7 +147,7 @@ pub trait VcIssuer {
         W: Wallet + Send + Sync,
         Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>;
+        Self::RevRegDelta: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>;
 
     async fn clear_revocation_delta<'a, W>(
         &self,
@@ -160,11 +158,12 @@ pub trait VcIssuer {
         W: Wallet + Send + Sync,
         Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>;
+        Self::RevRegDelta: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>;
 }
 
 #[async_trait]
 pub trait VcProver {
+    type Presentation: Send + Sync;
     type PresentationRequest: Send + Sync;
 
     type SchemaId: Send + Sync;
@@ -177,11 +176,12 @@ pub trait VcProver {
     type Cred: Send + Sync;
     type CredRevId: Send + Sync;
     type CredRevState: Send + Sync;
+    // Enables specifying things like `(RevocationRegistry, RevocationRegistryDelta)`
+    // as well something else meant to work with different credentials.
     type CredRevStateParts: Send + Sync;
 
     type RevRegId: Send + Sync;
     type RevRegDef: Send + Sync;
-    type RevRegDelta: Send + Sync;
     type RevStates: Send + Sync;
 
     type CredReq: Send + Sync;
@@ -189,39 +189,37 @@ pub trait VcProver {
     type CredOffer: Send + Sync;
 
     type LinkSecretId: Send + Sync;
+    type LinkSecret: Send + Sync;
 
     #[allow(clippy::too_many_arguments)]
-    async fn create_proof<W>(
+    async fn create_presentation<W>(
         &self,
         wallet: &W,
-        proof_req: Self::PresentationRequest,
-        requested_credentials_json: &str, // needs a type
+        pres_req: Self::PresentationRequest,
+        requested_credentials: &str, // needs a type
         link_secret_id: &Self::LinkSecretId,
-        schemas_json: &HashMap<Self::SchemaId, Self::Schema>,
-        credential_defs_json: &HashMap<Self::CredDefId, Self::CredDef>,
-        revoc_states_json: Option<&HashMap<Self::RevRegId, Self::RevStates>>,
-    ) -> VcxCoreResult<String>;
+        schemas: &HashMap<Self::SchemaId, Self::Schema>,
+        cred_defs: &HashMap<Self::CredDefId, Self::CredDef>,
+        rev_states: Option<&HashMap<Self::RevRegId, Self::RevStates>>,
+    ) -> VcxCoreResult<Self::Presentation>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordIdRef: Send + Sync,
+        Self::CredId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::LinkSecretId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::Cred: WalletRecord<W>,
+        Self::LinkSecret: WalletRecord<W>;
 
-    async fn get_credential(
-        &self,
-        wallet: &impl Wallet,
-        cred_id: &Self::CredId,
-    ) -> VcxCoreResult<Self::Cred>;
-
-    async fn get_credentials<W>(
+    async fn get_credentials_for_proof_req<W>(
         &self,
         wallet: &W,
-        filter_json: Option<W::SearchFilter<'_>>,
+        proof_request: Self::PresentationRequest,
     ) -> VcxCoreResult<String>
     // Needs a type
     where
-        W: Wallet;
-
-    async fn get_credentials_for_proof_req(
-        &self,
-        wallet: &impl Wallet,
-        proof_request: Self::PresentationRequest,
-    ) -> VcxCoreResult<String>; // Needs a type
+        // Bound might be too limiting?
+        for<'a> W: Wallet<SearchFilter<'a> = &'a str> + Send + Sync,
+        Self::Cred: WalletRecord<W, RecordId = String>;
 
     async fn create_revocation_state(
         &self,

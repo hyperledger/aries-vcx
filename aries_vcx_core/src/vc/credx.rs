@@ -1,22 +1,25 @@
 use std::collections::{HashMap, HashSet};
 
 use async_trait::async_trait;
+use futures::StreamExt;
 use indy_credx::{
-    issuer,
+    issuer, prover,
     tails::TailsFileWriter,
     types::{
         AttributeNames, Credential, CredentialDefinition, CredentialDefinitionConfig,
         CredentialDefinitionId, CredentialDefinitionPrivate, CredentialKeyCorrectnessProof,
-        CredentialOffer, CredentialRequest, CredentialRevocationConfig, CredentialValues, DidValue,
-        IssuanceType, Presentation, PresentationRequest, RegistryType, RevocationRegistry,
+        CredentialOffer, CredentialRequest, CredentialRequestMetadata, CredentialRevocationConfig,
+        CredentialRevocationState, CredentialValues, DidValue, IssuanceType, LinkSecret,
+        PresentCredentials, Presentation, PresentationRequest, RegistryType, RevocationRegistry,
         RevocationRegistryDefinition, RevocationRegistryDefinitionPrivate, RevocationRegistryDelta,
         RevocationRegistryId, Schema, SchemaId, SignatureType,
     },
     verifier,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
-use super::{VcIssuer, VcVerifier};
+use super::{VcIssuer, VcProver, VcVerifier};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet2::{Wallet, WalletRecord},
@@ -66,10 +69,10 @@ impl VcIssuer for IndyCredxIssuer {
         <W as Wallet>::RecordIdRef: Send + Sync,
         Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         Self::CredDef: WalletRecord<W>,
-        for<'b> Self::RevReg: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
-        for<'b> Self::RevRegDef: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
-        for<'b> Self::RevRegDefPriv: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
-        for<'b> Self::RevRegInfo: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
+        for<'b> Self::RevReg: WalletRecord<W, RecordIdRef<'b> = &'b Self::RevRegId>,
+        for<'b> Self::RevRegDef: WalletRecord<W, RecordIdRef<'b> = &'b Self::RevRegId>,
+        for<'b> Self::RevRegDefPriv: WalletRecord<W, RecordIdRef<'b> = &'b Self::RevRegId>,
+        for<'b> Self::RevRegInfo: WalletRecord<W, RecordIdRef<'b> = &'b Self::RevRegId>,
     {
         let issuer_did = issuer_did.to_owned().into();
 
@@ -136,11 +139,11 @@ impl VcIssuer for IndyCredxIssuer {
         W: Wallet + Send + Sync,
         Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        for<'a> Self::Schema: WalletRecord<W, RecordId<'a> = &'a Self::SchemaId>,
-        for<'a> Self::SchemaId: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
-        for<'a> Self::CredDef: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
-        for<'a> Self::CredDefPriv: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
-        for<'a> Self::CredKeyProof: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
+        for<'a> Self::Schema: WalletRecord<W, RecordIdRef<'a> = &'a Self::SchemaId>,
+        for<'a> Self::SchemaId: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
+        for<'a> Self::CredDef: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
+        for<'a> Self::CredDefPriv: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
+        for<'a> Self::CredKeyProof: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
     {
         let issuer_did = issuer_did.to_owned().into();
 
@@ -197,9 +200,9 @@ impl VcIssuer for IndyCredxIssuer {
         W: Wallet + Send + Sync,
         Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        Self::SchemaId: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
-        Self::CredDef: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
-        Self::CredKeyProof: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
+        Self::SchemaId: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
+        Self::CredDef: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
+        Self::CredKeyProof: WalletRecord<W, RecordIdRef<'a> = &'a Self::CredDefId>,
     {
         let cred_def: CredentialDefinition = wallet.get(cred_def_id.as_ref()).await?;
         let correctness_proof: CredentialKeyCorrectnessProof =
@@ -226,15 +229,15 @@ impl VcIssuer for IndyCredxIssuer {
         Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        for<'b> Self::Schema: WalletRecord<W, RecordId<'b> = &'b Self::SchemaId>,
-        for<'b> Self::SchemaId: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
-        for<'b> Self::CredDef: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
-        for<'b> Self::CredDefPriv: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
-        for<'b> Self::CredKeyProof: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
-        Self::RevRegDef: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegDefPriv: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevReg: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegInfo: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
+        for<'b> Self::Schema: WalletRecord<W, RecordIdRef<'b> = &'b Self::SchemaId>,
+        for<'b> Self::SchemaId: WalletRecord<W, RecordIdRef<'b> = &'b Self::CredDefId>,
+        for<'b> Self::CredDef: WalletRecord<W, RecordIdRef<'b> = &'b Self::CredDefId>,
+        for<'b> Self::CredDefPriv: WalletRecord<W, RecordIdRef<'b> = &'b Self::CredDefId>,
+        for<'b> Self::CredKeyProof: WalletRecord<W, RecordIdRef<'b> = &'b Self::CredDefId>,
+        Self::RevRegDef: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegDefPriv: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevReg: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegInfo: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
     {
         // TODO: Might need to qualify with offer method or something - look into how vdrtools
         // does     // it
@@ -350,12 +353,12 @@ impl VcIssuer for IndyCredxIssuer {
         Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
         Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        Self::RevReg: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegDef: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegDefPriv: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegInfo: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
-        for<'b> Self::CredDef: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
+        Self::RevReg: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegDef: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegDefPriv: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegInfo: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        Self::RevRegDelta: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
+        for<'b> Self::CredDef: WalletRecord<W, RecordIdRef<'b> = &'b Self::CredDefId>,
     {
         let rev_reg = wallet.get(rev_reg_id.as_ref()).await?;
 
@@ -441,7 +444,7 @@ impl VcIssuer for IndyCredxIssuer {
         W: Wallet + Send + Sync,
         Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
+        Self::RevRegDelta: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
     {
         let res_rev_reg_delta = wallet.get(rev_reg_id.as_ref()).await;
 
@@ -465,7 +468,7 @@ impl VcIssuer for IndyCredxIssuer {
         W: Wallet + Send + Sync,
         Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         <W as Wallet>::RecordIdRef: Send + Sync,
-        Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
+        Self::RevRegDelta: WalletRecord<W, RecordIdRef<'a> = &'a Self::RevRegId>,
     {
         if self
             .get_revocation_delta(wallet, rev_reg_id)
@@ -478,6 +481,328 @@ impl VcIssuer for IndyCredxIssuer {
         }
 
         Ok(())
+    }
+}
+
+pub struct IndyCredxProver;
+
+#[async_trait]
+impl VcProver for IndyCredxProver {
+    type Presentation = Presentation;
+    type PresentationRequest = PresentationRequest;
+
+    type SchemaId = SchemaId;
+    type Schema = Schema;
+
+    type CredDefId = CredentialDefinitionId;
+    type CredDef = CredentialDefinition;
+
+    type CredId = String; // does it need a type?
+    type Cred = Credential;
+    type CredRevId = u32;
+    type CredRevState = CredentialRevocationState;
+    type CredRevStateParts = (RevocationRegistryDefinition, RevocationRegistryDelta);
+
+    type RevRegId = RevocationRegistryId;
+    type RevRegDef = RevocationRegistryDefinition;
+    type RevStates = String; // needs a type
+
+    type CredReq = CredentialRequest;
+    type CredReqMeta = CredentialRequestMetadata;
+    type CredOffer = CredentialOffer;
+
+    type LinkSecretId = String; // does it need a type?
+    type LinkSecret = LinkSecret;
+
+    #[allow(clippy::too_many_arguments)]
+    async fn create_presentation<W>(
+        &self,
+        wallet: &W,
+        pres_req: Self::PresentationRequest,
+        requested_credentials: &str, // needs a type
+        link_secret_id: &Self::LinkSecretId,
+        schemas: &HashMap<Self::SchemaId, Self::Schema>,
+        cred_defs: &HashMap<Self::CredDefId, Self::CredDef>,
+        rev_states: Option<&HashMap<Self::RevRegId, Self::RevStates>>,
+    ) -> VcxCoreResult<Self::Presentation>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordIdRef: Send + Sync,
+        Self::CredId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::LinkSecretId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::Cred: WalletRecord<W>,
+        Self::LinkSecret: WalletRecord<W>,
+    {
+        let requested_credentials: Value = serde_json::from_str(requested_credentials)?;
+        let requested_attributes = requested_credentials
+            .get("requested_attributes")
+            .ok_or_else(bad_json)?;
+
+        let requested_predicates = requested_credentials
+            .get("requested_predicates")
+            .ok_or_else(bad_json)?;
+
+        let self_attested_attributes = requested_credentials.get("self_attested_attributes");
+
+        let mut present_credentials: PresentCredentials = PresentCredentials::new();
+
+        let mut proof_details_by_cred_id: HashMap<
+            String,
+            (
+                Credential,
+                Option<u64>,
+                Option<CredentialRevocationState>,
+                Vec<(String, bool)>,
+                Vec<String>,
+            ),
+        > = HashMap::new();
+
+        let req_attrs = requested_attributes.as_object().ok_or_else(bad_json)?;
+
+        // add cred data and referent details for each requested attribute
+        for (reft, detail) in req_attrs.iter() {
+            let _cred_id = detail.get("cred_id").ok_or_else(bad_json)?;
+            let cred_id = _cred_id.as_str().ok_or_else(bad_json)?.to_owned();
+
+            let revealed = detail
+                .get("revealed")
+                .and_then(Value::as_bool)
+                .ok_or_else(bad_json)?;
+
+            if let Some((_, _, _, req_attr_refts_revealed, _)) =
+                proof_details_by_cred_id.get_mut(&cred_id)
+            {
+                // mapping made for this credential already, add reft and its revealed status
+                req_attr_refts_revealed.push((reft.to_string(), revealed));
+            } else {
+                let credential = wallet.get(cred_id.as_ref()).await?;
+
+                let (timestamp, rev_state) =
+                    get_rev_state(&cred_id, &credential, detail, rev_states)?;
+
+                proof_details_by_cred_id.insert(
+                    cred_id.to_string(),
+                    (
+                        credential,
+                        timestamp,
+                        rev_state,
+                        vec![(reft.to_string(), revealed)],
+                        vec![],
+                    ),
+                );
+            }
+        }
+
+        // add cred data and referent details for each requested predicate
+        for (reft, detail) in requested_predicates
+            .as_object()
+            .ok_or_else(bad_json)?
+            .iter()
+        {
+            let _cred_id = detail.get("cred_id").ok_or_else(bad_json)?;
+            let cred_id = _cred_id.as_str().ok_or_else(bad_json)?.to_owned();
+
+            if let Some((_, _, _, _, req_preds_refts)) = proof_details_by_cred_id.get_mut(&cred_id)
+            {
+                // mapping made for this credential already, add reft
+                req_preds_refts.push(reft.to_string());
+            } else {
+                let credential = wallet.get(cred_id.as_ref()).await?;
+
+                let (timestamp, rev_state) =
+                    get_rev_state(&cred_id, &credential, detail, rev_states)?;
+
+                proof_details_by_cred_id.insert(
+                    cred_id.to_string(),
+                    (
+                        credential,
+                        timestamp,
+                        rev_state,
+                        vec![],
+                        vec![reft.to_string()],
+                    ),
+                );
+            }
+        }
+
+        // add all accumulated requested attributes and requested predicates to credx
+        // [PresentCredential] object
+        for (
+            _cred_id,
+            (credential, timestamp, rev_state, req_attr_refts_revealed, req_preds_refts),
+        ) in proof_details_by_cred_id.iter()
+        {
+            let mut add_cred =
+                present_credentials.add_credential(credential, *timestamp, rev_state.as_ref());
+
+            for (referent, revealed) in req_attr_refts_revealed {
+                add_cred.add_requested_attribute(referent, *revealed);
+            }
+
+            for referent in req_preds_refts {
+                add_cred.add_requested_predicate(referent);
+            }
+        }
+
+        // create self_attested by iterating thru self_attested_value
+        let self_attested = if let Some(self_attested_value) = self_attested_attributes {
+            let mut self_attested_map: HashMap<String, String> = HashMap::new();
+            let self_attested_obj = self_attested_value
+                .as_object()
+                .ok_or_else(bad_json)?
+                .clone();
+            let self_attested_iter = self_attested_obj.iter();
+            for (k, v) in self_attested_iter {
+                self_attested_map
+                    .insert(k.to_string(), v.as_str().ok_or_else(bad_json)?.to_string());
+            }
+
+            if self_attested_map.is_empty() {
+                None
+            } else {
+                Some(self_attested_map)
+            }
+        } else {
+            None
+        };
+
+        let link_secret = wallet.get(link_secret_id.as_ref()).await?;
+
+        let presentation = prover::create_presentation(
+            &pres_req,
+            present_credentials,
+            self_attested,
+            &link_secret,
+            &hashmap_as_ref(&schemas),
+            &hashmap_as_ref(&cred_defs),
+        )?;
+
+        Ok(presentation)
+    }
+
+    async fn get_credentials_for_proof_req<W>(
+        &self,
+        wallet: &W,
+        proof_request: Self::PresentationRequest,
+    ) -> VcxCoreResult<String>
+    // Needs a proper return type
+    where
+        for<'a> W: Wallet<SearchFilter<'a> = &'a str> + Send + Sync,
+        Self::Cred: WalletRecord<W, RecordId = String>,
+    {
+        let (mut requested_attributes, mut requested_predicates, non_revoked) = match proof_request
+        {
+            PresentationRequest::PresentationRequestV1(pr)
+            | PresentationRequest::PresentationRequestV2(pr) => (
+                pr.requested_attributes,
+                pr.requested_predicates,
+                pr.non_revoked,
+            ),
+        };
+
+        let referents: HashSet<String> = requested_attributes
+            .keys()
+            .map(ToOwned::to_owned)
+            .chain(requested_predicates.keys().map(ToOwned::to_owned))
+            .collect();
+
+        let mut cred_by_attr: Value = json!({});
+
+        for reft in referents {
+            let (name, names) = requested_attributes
+                .remove(&reft)
+                .map(|a| (a.name, a.names))
+                .or_else(|| {
+                    requested_predicates
+                        .remove(&reft)
+                        .map(|p| (Some(p.name), None))
+                })
+                .ok_or(AriesVcxCoreError::from_msg(
+                    // should not happen
+                    AriesVcxCoreErrorKind::InvalidState,
+                    format!("Unknown referent: {}", reft),
+                ))?;
+
+            let attr_names = match (name, names) {
+                (Some(name), None) => {
+                    vec![_normalize_attr_name(&name)]
+                }
+                (None, Some(names)) => names
+                    .iter()
+                    .map(String::as_str)
+                    .map(_normalize_attr_name)
+                    .collect(),
+                _ => Err(AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::InvalidInput,
+                    "exactly one of 'name' or 'names' must be present",
+                ))?,
+            };
+
+            let credx_creds =
+                _get_credentials_for_proof_req_for_attr_name(wallet, None, attr_names).await?;
+
+            let mut credentials_json = vec![];
+
+            for (cred_id, credx_cred) in credx_creds {
+                credentials_json.push(json!({
+                    "cred_info": _make_cred_info(&cred_id, &credx_cred)?,
+                    "interval": non_revoked
+                }))
+            }
+
+            cred_by_attr["attrs"][reft] = Value::Array(credentials_json);
+        }
+
+        Ok(serde_json::to_string(&cred_by_attr)?)
+    }
+
+    async fn create_revocation_state(
+        &self,
+        tails_dir: &str,
+        cred_rev_state_parts: Self::CredRevStateParts,
+        timestamp: u64,
+        cred_rev_id: Self::CredRevId,
+    ) -> VcxCoreResult<Self::CredRevState> {
+        todo!()
+    }
+
+    async fn create_credential_req(
+        &self,
+        wallet: &impl Wallet,
+        prover_did: &str,
+        cred_offer: Self::CredOffer,
+        cred_def_json: Self::CredDef,
+        link_secret_id: Self::LinkSecretId,
+    ) -> VcxCoreResult<(Self::CredReq, Self::CredReqMeta)> {
+        todo!()
+    }
+
+    async fn store_credential(
+        &self,
+        wallet: &impl Wallet,
+        cred_id: Option<Self::CredId>,
+        cred_req_metadata: Self::CredReqMeta,
+        cred: Self::CredReq,
+        cred_def: Self::CredDef,
+        rev_reg_def: Option<Self::RevRegDef>,
+    ) -> VcxCoreResult<Self::CredId> {
+        todo!()
+    }
+
+    async fn delete_credential(
+        &self,
+        wallet: &impl Wallet,
+        cred_id: &Self::CredId,
+    ) -> VcxCoreResult<()> {
+        todo!()
+    }
+
+    async fn create_link_secret(
+        &self,
+        wallet: &impl Wallet,
+        link_secret_id: Self::LinkSecretId,
+    ) -> VcxCoreResult<()> {
+        todo!()
     }
 }
 
@@ -569,6 +894,155 @@ where
     new_map
 }
 
+fn get_rev_state(
+    cred_id: &str,
+    credential: &Credential,
+    detail: &Value,
+    rev_states: Option<&HashMap<RevocationRegistryId, String>>,
+) -> VcxCoreResult<(Option<u64>, Option<CredentialRevocationState>)> {
+    let timestamp = detail
+        .get("timestamp")
+        .and_then(|timestamp| timestamp.as_u64());
+    let cred_rev_reg_id = credential.rev_reg_id.as_ref().map(|id| id.0.to_string());
+    let rev_state = if let (Some(timestamp), Some(cred_rev_reg_id)) = (timestamp, cred_rev_reg_id) {
+        let rev_state =
+            rev_states.and_then(|m| m.get(&RevocationRegistryId(cred_rev_reg_id.clone())));
+        let rev_state = rev_state.ok_or(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidJson,
+            format!(
+                "No revocation states provided for credential '{}' with rev_reg_id '{}'",
+                cred_id, cred_rev_reg_id
+            ),
+        ))?;
+
+        let rev_state: Value = serde_json::from_str(rev_state)?;
+        let rev_state =
+            rev_state
+                .get(&timestamp.to_string())
+                .ok_or(AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::InvalidJson,
+                    format!(
+                        "No revocation states provided for credential '{}' with rev_reg_id '{}' \
+                         at timestamp '{}'",
+                        cred_id, cred_rev_reg_id, timestamp
+                    ),
+                ))?;
+
+        let rev_state: CredentialRevocationState = serde_json::from_value(rev_state.clone())?;
+        Some(rev_state)
+    } else {
+        None
+    };
+
+    Ok((timestamp, rev_state))
+}
+
+fn _normalize_attr_name(name: &str) -> String {
+    // "name": string, // attribute name, (case insensitive and ignore spaces)
+    name.replace(' ', "").to_lowercase()
+}
+
+fn bad_json() -> AriesVcxCoreError {
+    AriesVcxCoreError::from_msg(
+        AriesVcxCoreErrorKind::InvalidJson,
+        format!("STOP USING JSON!!!!"),
+    )
+}
+
+async fn _get_credentials_for_proof_req_for_attr_name<W>(
+    wallet: &W,
+    restrictions: Option<&Value>,
+    attr_names: Vec<String>,
+) -> VcxCoreResult<Vec<(String, Credential)>>
+where
+    for<'a> W: Wallet<SearchFilter<'a> = &'a str> + Send + Sync,
+    Credential: WalletRecord<W, RecordId = String>,
+{
+    let mut attrs = Vec::new();
+
+    for name in attr_names {
+        let attr_marker_tag_name = _format_attribute_as_marker_tag_name(&name);
+
+        let wql_attr_query = json!({
+            attr_marker_tag_name: "1"
+        });
+
+        attrs.push(wql_attr_query);
+    }
+
+    let restrictions = restrictions.map(|x| x.to_owned());
+
+    let wql_query = if let Some(restrictions) = restrictions {
+        match restrictions {
+            Value::Array(restrictions) => {
+                let restrictions_wql = json!({ "$or": restrictions });
+                attrs.push(restrictions_wql);
+                json!({ "$and": attrs })
+            }
+            Value::Object(restriction) => {
+                attrs.push(Value::Object(restriction));
+                json!({ "$and": attrs })
+            }
+            _ => Err(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidInput,
+                "Invalid attribute restrictions (must be array or an object)",
+            ))?,
+        }
+    } else {
+        json!({ "$and": attrs })
+    };
+
+    let wql_query = serde_json::to_string(&wql_query)?;
+
+    let mut records = Vec::new();
+    let mut stream = wallet.search(&wql_query).await?;
+
+    while let Some(record) = stream.next().await {
+        records.push(record?);
+    }
+
+    Ok(records)
+}
+
+fn _format_attribute_as_value_tag_name(attribute_name: &str) -> String {
+    format!("attr::{attribute_name}::value")
+}
+
+fn _format_attribute_as_marker_tag_name(attribute_name: &str) -> String {
+    format!("attr::{attribute_name}::marker")
+}
+
+fn _make_cred_info(credential_id: &str, cred: &Credential) -> VcxCoreResult<Value> {
+    let cred_sig = serde_json::to_value(&cred.signature)?;
+
+    let rev_info = cred_sig.get("r_credential");
+
+    let schema_id = &cred.schema_id.0;
+    let cred_def_id = &cred.cred_def_id.0;
+    let rev_reg_id = cred.rev_reg_id.as_ref().map(|x| x.0.to_string());
+    let cred_rev_id = rev_info.and_then(|x| x.get("i")).and_then(|i| {
+        i.as_str()
+            .map(|str_i| str_i.to_string())
+            .or(i.as_i64().map(|int_i| int_i.to_string()))
+    });
+
+    let mut attrs = json!({});
+    for (x, y) in cred.values.0.iter() {
+        attrs[x] = Value::String(y.raw.to_string());
+    }
+
+    let val = json!({
+        "referent": credential_id,
+        "schema_id": schema_id,
+        "cred_def_id": cred_def_id,
+        "rev_reg_id": rev_reg_id,
+        "cred_rev_id": cred_rev_id,
+        "attrs": attrs
+    });
+
+    Ok(val)
+}
+
 /// Just proving that stuff compiles
 #[cfg(test)]
 #[allow(unused, clippy::all)]
@@ -599,53 +1073,29 @@ fn stuff() {
         }
     }
 
-    impl WalletRecord<IndySdkWallet> for RevocationRegistryDelta {
-        const RECORD_TYPE: &'static str = "rev";
-
-        type RecordId<'a> = &'a RevocationRegistryId;
-
-        fn into_wallet_record(
-            self,
-            id: Self::RecordId<'_>,
-        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
-            todo!()
-        }
-
-        fn as_wallet_record(
-            &self,
-            id: Self::RecordId<'_>,
-        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
-            todo!()
-        }
-
-        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
-        where
-            Self: Sized,
-        {
-            todo!()
-        }
-    }
-
     impl WalletRecord<IndySdkWallet> for CredentialDefinition {
-        const RECORD_TYPE: &'static str = "rev";
+        const RECORD_TYPE: &'static str = "cred";
 
-        type RecordId<'a> = &'a CredentialDefinitionId;
+        type RecordIdRef<'a> = &'a RevocationRegistryId;
+        type RecordId = RevocationRegistryId;
 
         fn into_wallet_record(
             self,
-            id: Self::RecordId<'_>,
+            id: Self::RecordIdRef<'_>,
         ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
             todo!()
         }
 
         fn as_wallet_record(
             &self,
-            id: Self::RecordId<'_>,
+            id: Self::RecordIdRef<'_>,
         ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
             todo!()
         }
 
-        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
+        fn from_wallet_record(
+            record: <IndySdkWallet as Wallet>::Record,
+        ) -> VcxCoreResult<(Self::RecordId, Self)>
         where
             Self: Sized,
         {
@@ -656,23 +1106,26 @@ fn stuff() {
     impl WalletRecord<IndySdkWallet> for RevocationRegistry {
         const RECORD_TYPE: &'static str = "rev";
 
-        type RecordId<'a> = &'a RevocationRegistryId;
+        type RecordIdRef<'a> = &'a RevocationRegistryId;
+        type RecordId = RevocationRegistryId;
 
         fn into_wallet_record(
             self,
-            id: Self::RecordId<'_>,
+            id: Self::RecordIdRef<'_>,
         ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
             todo!()
         }
 
         fn as_wallet_record(
             &self,
-            id: Self::RecordId<'_>,
+            id: Self::RecordIdRef<'_>,
         ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
             todo!()
         }
 
-        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
+        fn from_wallet_record(
+            record: <IndySdkWallet as Wallet>::Record,
+        ) -> VcxCoreResult<(Self::RecordId, Self)>
         where
             Self: Sized,
         {
@@ -683,23 +1136,26 @@ fn stuff() {
     impl WalletRecord<IndySdkWallet> for RevocationRegistryDefinition {
         const RECORD_TYPE: &'static str = "rev";
 
-        type RecordId<'a> = &'a RevocationRegistryId;
+        type RecordIdRef<'a> = &'a RevocationRegistryId;
+        type RecordId = RevocationRegistryId;
 
         fn into_wallet_record(
             self,
-            id: Self::RecordId<'_>,
+            id: Self::RecordIdRef<'_>,
         ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
             todo!()
         }
 
         fn as_wallet_record(
             &self,
-            id: Self::RecordId<'_>,
+            id: Self::RecordIdRef<'_>,
         ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
             todo!()
         }
 
-        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
+        fn from_wallet_record(
+            record: <IndySdkWallet as Wallet>::Record,
+        ) -> VcxCoreResult<(Self::RecordId, Self)>
         where
             Self: Sized,
         {
@@ -710,23 +1166,56 @@ fn stuff() {
     impl WalletRecord<IndySdkWallet> for RevocationRegistryDefinitionPrivate {
         const RECORD_TYPE: &'static str = "rev";
 
-        type RecordId<'a> = &'a RevocationRegistryId;
+        type RecordIdRef<'a> = &'a RevocationRegistryId;
+        type RecordId = RevocationRegistryId;
 
         fn into_wallet_record(
             self,
-            id: Self::RecordId<'_>,
+            id: Self::RecordIdRef<'_>,
         ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
             todo!()
         }
 
         fn as_wallet_record(
             &self,
-            id: Self::RecordId<'_>,
+            id: Self::RecordIdRef<'_>,
         ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
             todo!()
         }
 
-        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
+        fn from_wallet_record(
+            record: <IndySdkWallet as Wallet>::Record,
+        ) -> VcxCoreResult<(Self::RecordId, Self)>
+        where
+            Self: Sized,
+        {
+            todo!()
+        }
+    }
+
+    impl WalletRecord<IndySdkWallet> for RevocationRegistryDelta {
+        const RECORD_TYPE: &'static str = "rev";
+
+        type RecordIdRef<'a> = &'a RevocationRegistryId;
+        type RecordId = RevocationRegistryId;
+
+        fn into_wallet_record(
+            self,
+            id: Self::RecordIdRef<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn as_wallet_record(
+            &self,
+            id: Self::RecordIdRef<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn from_wallet_record(
+            record: <IndySdkWallet as Wallet>::Record,
+        ) -> VcxCoreResult<(Self::RecordId, Self)>
         where
             Self: Sized,
         {
@@ -737,23 +1226,26 @@ fn stuff() {
     impl WalletRecord<IndySdkWallet> for RevocationRegistryInfo {
         const RECORD_TYPE: &'static str = "rev";
 
-        type RecordId<'a> = &'a RevocationRegistryId;
+        type RecordIdRef<'a> = &'a RevocationRegistryId;
+        type RecordId = RevocationRegistryId;
 
         fn into_wallet_record(
             self,
-            id: Self::RecordId<'_>,
+            id: Self::RecordIdRef<'_>,
         ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
             todo!()
         }
 
         fn as_wallet_record(
             &self,
-            id: Self::RecordId<'_>,
+            id: Self::RecordIdRef<'_>,
         ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
             todo!()
         }
 
-        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
+        fn from_wallet_record(
+            record: <IndySdkWallet as Wallet>::Record,
+        ) -> VcxCoreResult<(Self::RecordId, Self)>
         where
             Self: Sized,
         {
