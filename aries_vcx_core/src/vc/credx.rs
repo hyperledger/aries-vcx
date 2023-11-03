@@ -1366,12 +1366,12 @@ fn stuff() {
     let prover = IndyCredxProver;
     let wallet = IndySdkWallet::new(WalletHandle(0));
 
-    let rev_reg_id = RevocationRegistryId(String::from("blabla"));
-    let cred_def_id = CredentialDefinitionId(String::from("blabla"));
-
-    let pres_request = serde_json::from_str("").unwrap();
-
     async {
+        let rev_reg_id = RevocationRegistryId(String::from("blabla"));
+        let cred_def_id = CredentialDefinitionId(String::from("blabla"));
+
+        let pres_request = serde_json::from_str("").unwrap();
+
         issuer.get_revocation_delta(&wallet, &rev_reg_id).await;
         issuer
             .create_and_store_revoc_reg(
@@ -1384,6 +1384,8 @@ fn stuff() {
             )
             .await;
 
-        prover.get_credentials_for_proof_req(&wallet, pres_request)
+        prover
+            .get_credentials_for_proof_req(&wallet, pres_request)
+            .await
     };
 }
