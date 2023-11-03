@@ -217,7 +217,7 @@ pub trait VcProver {
     ) -> VcxCoreResult<String>
     // Needs a type
     where
-        // Bound might be too limiting?
+        // Bound too limiting
         for<'a> W: Wallet<SearchFilter<'a> = &'a str> + Send + Sync,
         Self::Cred: WalletRecord<W, RecordId = String>;
 
@@ -229,36 +229,46 @@ pub trait VcProver {
         cred_rev_id: Self::CredRevId,
     ) -> VcxCoreResult<Self::CredRevState>;
 
-    async fn create_credential_req(
+    async fn create_credential_req<W>(
         &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         prover_did: &str,
-        cred_offer: Self::CredOffer,
-        cred_def_json: Self::CredDef,
-        link_secret_id: Self::LinkSecretId,
-    ) -> VcxCoreResult<(Self::CredReq, Self::CredReqMeta)>;
+        cred_offer: &Self::CredOffer,
+        cred_def: &Self::CredDef,
+        link_secret_id: &Self::LinkSecretId,
+    ) -> VcxCoreResult<(Self::CredReq, Self::CredReqMeta)>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordIdRef: Send + Sync,
+        Self::LinkSecretId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::LinkSecret: WalletRecord<W>;
 
-    async fn store_credential(
+    async fn store_credential<W>(
         &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         cred_id: Option<Self::CredId>,
-        cred_req_metadata: Self::CredReqMeta,
-        cred: Self::CredReq,
-        cred_def: Self::CredDef,
-        rev_reg_def: Option<Self::RevRegDef>,
-    ) -> VcxCoreResult<Self::CredId>;
+        cred_req_metadata: &Self::CredReqMeta,
+        cred: &mut Self::Cred,
+        cred_def: &Self::CredDef,
+        rev_reg_def: Option<&Self::RevRegDef>,
+    ) -> VcxCoreResult<Self::CredId>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordIdRef: Send + Sync,
+        Self::LinkSecretId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::LinkSecret: WalletRecord<W>,
+        for<'a> Self::Cred: WalletRecord<W, RecordIdRef<'a> = Self::CredId>;
 
-    async fn delete_credential(
+    async fn create_link_secret<W>(
         &self,
-        wallet: &impl Wallet,
-        cred_id: &Self::CredId,
-    ) -> VcxCoreResult<()>;
-
-    async fn create_link_secret(
-        &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         link_secret_id: Self::LinkSecretId,
-    ) -> VcxCoreResult<()>;
+    ) -> VcxCoreResult<()>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordIdRef: Send + Sync,
+        Self::LinkSecretId: AsRef<<W as Wallet>::RecordIdRef>,
+        for<'a> Self::LinkSecret: WalletRecord<W, RecordIdRef<'a> = Self::LinkSecretId>;
 }
 
 #[async_trait]

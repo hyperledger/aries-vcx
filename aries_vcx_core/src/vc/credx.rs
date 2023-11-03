@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use indy_credx::{
     issuer, prover,
-    tails::TailsFileWriter,
+    tails::{TailsFileReader, TailsFileWriter},
     types::{
         AttributeNames, Credential, CredentialDefinition, CredentialDefinitionConfig,
         CredentialDefinitionId, CredentialDefinitionPrivate, CredentialKeyCorrectnessProof,
@@ -18,6 +18,7 @@ use indy_credx::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use uuid::Uuid;
 
 use super::{VcIssuer, VcProver, VcVerifier};
 use crate::{
@@ -673,8 +674,8 @@ impl VcProver for IndyCredxProver {
             present_credentials,
             self_attested,
             &link_secret,
-            &hashmap_as_ref(&schemas),
-            &hashmap_as_ref(&cred_defs),
+            &hashmap_as_ref(schemas),
+            &hashmap_as_ref(cred_defs),
         )?;
 
         Ok(presentation)
@@ -763,46 +764,164 @@ impl VcProver for IndyCredxProver {
         timestamp: u64,
         cred_rev_id: Self::CredRevId,
     ) -> VcxCoreResult<Self::CredRevState> {
-        todo!()
+        let (rev_reg_def, rev_reg_delta) = cred_rev_state_parts;
+
+        let tails_file_hash = match &rev_reg_def {
+            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => &r.value.tails_hash,
+        };
+
+        let mut tails_file_path = std::path::PathBuf::new();
+        tails_file_path.push(tails_dir);
+        tails_file_path.push(tails_file_hash);
+
+        let tails_path = tails_file_path.to_str().ok_or_else(|| {
+            AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidOption,
+                "tails file is not an unicode string",
+            )
+        })?;
+
+        let tails_reader = TailsFileReader::new(tails_path);
+        let rev_reg_idx: u32 = cred_rev_id;
+
+        let rev_state = prover::create_or_update_revocation_state(
+            tails_reader,
+            &rev_reg_def,
+            &rev_reg_delta,
+            rev_reg_idx,
+            timestamp,
+            None,
+        )?;
+
+        Ok(rev_state)
     }
 
-    async fn create_credential_req(
+    async fn create_credential_req<W>(
         &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         prover_did: &str,
-        cred_offer: Self::CredOffer,
-        cred_def_json: Self::CredDef,
-        link_secret_id: Self::LinkSecretId,
-    ) -> VcxCoreResult<(Self::CredReq, Self::CredReqMeta)> {
-        todo!()
+        cred_offer: &Self::CredOffer,
+        cred_def: &Self::CredDef,
+        link_secret_id: &Self::LinkSecretId,
+    ) -> VcxCoreResult<(Self::CredReq, Self::CredReqMeta)>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordIdRef: Send + Sync,
+        Self::LinkSecretId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::LinkSecret: WalletRecord<W>,
+    {
+        let prover_did = DidValue::new(prover_did, None);
+        let link_secret = wallet.get(link_secret_id.as_ref()).await?;
+
+        let (cred_req, cred_req_metadata) = prover::create_credential_request(
+            &prover_did,
+            cred_def,
+            &link_secret,
+            link_secret_id,
+            cred_offer,
+        )?;
+
+        Ok((cred_req, cred_req_metadata))
     }
 
-    async fn store_credential(
+    async fn store_credential<W>(
         &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         cred_id: Option<Self::CredId>,
-        cred_req_metadata: Self::CredReqMeta,
-        cred: Self::CredReq,
-        cred_def: Self::CredDef,
-        rev_reg_def: Option<Self::RevRegDef>,
-    ) -> VcxCoreResult<Self::CredId> {
-        todo!()
+        cred_req_metadata: &Self::CredReqMeta,
+        cred: &mut Self::Cred,
+        cred_def: &Self::CredDef,
+        rev_reg_def: Option<&Self::RevRegDef>,
+    ) -> VcxCoreResult<Self::CredId>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordIdRef: Send + Sync,
+        Self::LinkSecretId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::LinkSecret: WalletRecord<W>,
+        for<'a> Self::Cred: WalletRecord<W, RecordIdRef<'a> = Self::CredId>,
+    {
+        let link_secret_id = cred_req_metadata.master_secret_name.clone();
+        let link_secret = wallet.get(link_secret_id.as_ref()).await?;
+
+        prover::process_credential(cred, cred_req_metadata, &link_secret, cred_def, rev_reg_def)?;
+
+        let schema_id = &cred.schema_id;
+        let (_schema_method, schema_issuer_did, schema_name, schema_version) =
+            schema_id.parts().ok_or(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidSchema,
+                "Could not process credential.schema_id as parts.",
+            ))?;
+
+        let cred_def_id = &cred.cred_def_id;
+        let (_cred_def_method, issuer_did, _signature_type, _schema_id, _tag) =
+            cred_def_id.parts().ok_or(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidSchema,
+                "Could not process credential.cred_def_id as parts.",
+            ))?;
+
+        let mut tags = json!({
+            "schema_id": schema_id.0,
+            "schema_issuer_did": schema_issuer_did.0,
+            "schema_name": schema_name,
+            "schema_version": schema_version,
+            "issuer_did": issuer_did.0,
+            "cred_def_id": cred_def_id.0
+        });
+
+        if let Some(rev_reg_id) = &cred.rev_reg_id {
+            tags["rev_reg_id"] = serde_json::Value::String(rev_reg_id.0.to_string())
+        }
+
+        for (raw_attr_name, attr_value) in cred.values.0.iter() {
+            let attr_name = _normalize_attr_name(raw_attr_name);
+            // add attribute name and raw value pair
+            let value_tag_name = _format_attribute_as_value_tag_name(&attr_name);
+            tags[value_tag_name] = Value::String(attr_value.raw.to_string());
+
+            // add attribute name and marker (used for checking existent)
+            let marker_tag_name = _format_attribute_as_marker_tag_name(&attr_name);
+            tags[marker_tag_name] = Value::String("1".to_string());
+        }
+
+        let credential_id = cred_id.map_or(Uuid::new_v4().to_string(), String::from);
+        wallet
+            .add(cred.as_wallet_record(credential_id.clone())?)
+            .await?;
+
+        Ok(credential_id)
     }
 
-    async fn delete_credential(
+    /// IMPORTANT: This stores the link secret as the data structure it is, instead of
+    /// storing only the String representation.
+    async fn create_link_secret<W>(
         &self,
-        wallet: &impl Wallet,
-        cred_id: &Self::CredId,
-    ) -> VcxCoreResult<()> {
-        todo!()
-    }
-
-    async fn create_link_secret(
-        &self,
-        wallet: &impl Wallet,
+        wallet: &W,
         link_secret_id: Self::LinkSecretId,
-    ) -> VcxCoreResult<()> {
-        todo!()
+    ) -> VcxCoreResult<()>
+    where
+        W: Wallet + Send + Sync,
+        <W as Wallet>::RecordIdRef: Send + Sync,
+        Self::LinkSecretId: AsRef<<W as Wallet>::RecordIdRef>,
+        for<'a> Self::LinkSecret: WalletRecord<W, RecordIdRef<'a> = Self::LinkSecretId>,
+    {
+        let existing_record = wallet.get::<LinkSecret>(link_secret_id.as_ref()).await.ok();
+
+        if existing_record.is_some() {
+            return Err(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::DuplicationMasterSecret,
+                format!(
+                    "Master secret id: {} already exists in wallet.",
+                    link_secret_id
+                ),
+            ));
+        }
+
+        let secret = prover::create_link_secret()?;
+        wallet
+            .add(secret.into_wallet_record(link_secret_id)?)
+            .await?;
+
+        Ok(())
     }
 }
 
@@ -943,10 +1062,7 @@ fn _normalize_attr_name(name: &str) -> String {
 }
 
 fn bad_json() -> AriesVcxCoreError {
-    AriesVcxCoreError::from_msg(
-        AriesVcxCoreErrorKind::InvalidJson,
-        format!("STOP USING JSON!!!!"),
-    )
+    AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, "STOP USING JSON!!!!")
 }
 
 async fn _get_credentials_for_proof_req_for_attr_name<W>(
