@@ -26,7 +26,7 @@ fn test_service_build_aip1() {
         .build();
     let services = did_doc.service();
     assert_eq!(services.len(), 1);
-    let first_service = services.get(0).unwrap();
+    let first_service = services.first().unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());
     assert_eq!(
         first_service.service_endpoint().clone(),
@@ -56,7 +56,7 @@ fn test_service_build_didcommv1() {
         .build();
     let services = did_doc.service();
     assert_eq!(services.len(), 1);
-    let first_service = services.get(0).unwrap();
+    let first_service = services.first().unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());
     assert_eq!(
         first_service.service_endpoint().clone(),
@@ -90,7 +90,7 @@ fn test_service_build_didcommv2() {
         .build();
     let services = did_doc.service();
     assert_eq!(services.len(), 1);
-    let first_service = services.get(0).unwrap();
+    let first_service = services.first().unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());
     assert_eq!(
         first_service.service_endpoint().clone(),

@@ -65,7 +65,7 @@ impl EncryptionEnvelope {
         let routing_keys = did_doc.routing_keys();
 
         let mut to = recipient_keys
-            .get(0)
+            .first()
             .map(String::from)
             .ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,

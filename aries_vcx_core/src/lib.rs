@@ -25,8 +25,6 @@ extern crate log;
 extern crate derive_builder;
 
 pub mod anoncreds;
-#[cfg(feature = "credx")]
-pub mod credx;
 pub mod errors;
 pub mod global;
 pub mod ledger;

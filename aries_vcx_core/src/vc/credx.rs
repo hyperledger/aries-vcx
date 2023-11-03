@@ -7,9 +7,8 @@ use indy_credx::{
     types::{
         AttributeNames, Credential, CredentialDefinition, CredentialDefinitionConfig,
         CredentialDefinitionId, CredentialDefinitionPrivate, CredentialKeyCorrectnessProof,
-        CredentialOffer, CredentialRequest, CredentialRequestMetadata, CredentialRevocationConfig,
-        CredentialRevocationState, CredentialValues, DidValue, IssuanceType, LinkSecret,
-        Presentation, PresentationRequest, RegistryType, RevocationRegistry,
+        CredentialOffer, CredentialRequest, CredentialRevocationConfig, CredentialValues, DidValue,
+        IssuanceType, Presentation, PresentationRequest, RegistryType, RevocationRegistry,
         RevocationRegistryDefinition, RevocationRegistryDefinitionPrivate, RevocationRegistryDelta,
         RevocationRegistryId, Schema, SchemaId, SignatureType,
     },
@@ -17,7 +16,7 @@ use indy_credx::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{VcIssuer, VcProver, VcVerifier};
+use super::{VcIssuer, VcVerifier};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet2::{Wallet, WalletRecord},
@@ -52,19 +51,20 @@ impl VcIssuer for IndyCredxIssuer {
     type RevRegDelta = RevocationRegistryDelta;
     type RevRegInfo = RevocationRegistryInfo;
 
-    async fn create_and_store_revoc_reg<'a, W>(
+    async fn create_and_store_revoc_reg<W>(
         &self,
         wallet: &W,
         issuer_did: &str,
-        cred_def_id: &'a Self::CredDefId,
+        cred_def_id: &Self::CredDefId,
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
     ) -> VcxCoreResult<(Self::RevRegId, Self::RevRegDef, Self::RevReg)>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>:
-            From<&'a Self::CredDefId> + From<&'b Self::RevRegId> + Send + Sync,
+        Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
+        Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         Self::CredDef: WalletRecord<W>,
         for<'b> Self::RevReg: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
         for<'b> Self::RevRegDef: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
@@ -75,7 +75,7 @@ impl VcIssuer for IndyCredxIssuer {
 
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
-        let cred_def = wallet.get(W::RecordIdRef::from(cred_def_id)).await?;
+        let cred_def = wallet.get(cred_def_id.as_ref()).await?;
 
         let rev_reg_id = issuer::make_revocation_registry_id(
             &issuer_did,
@@ -84,8 +84,8 @@ impl VcIssuer for IndyCredxIssuer {
             RegistryType::CL_ACCUM,
         )?;
 
-        let res_rev_reg = wallet.get(W::RecordIdRef::from(&rev_reg_id)).await;
-        let res_rev_reg_def = wallet.get(W::RecordIdRef::from(&rev_reg_id)).await;
+        let res_rev_reg = wallet.get(rev_reg_id.as_ref()).await;
+        let res_rev_reg_def = wallet.get(rev_reg_id.as_ref()).await;
 
         if let (Ok(rev_reg), Ok(rev_reg_def)) = (res_rev_reg, res_rev_reg_def) {
             return Ok((rev_reg_id, rev_reg, rev_reg_def));
@@ -134,7 +134,8 @@ impl VcIssuer for IndyCredxIssuer {
     ) -> VcxCoreResult<(Self::CredDefId, Self::CredDef)>
     where
         W: Wallet + Send + Sync,
-        for<'a> <W as Wallet>::RecordIdRef<'a>: From<&'a Self::CredDefId> + Send + Sync,
+        Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         for<'a> Self::Schema: WalletRecord<W, RecordId<'a> = &'a Self::SchemaId>,
         for<'a> Self::SchemaId: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
         for<'a> Self::CredDef: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
@@ -158,7 +159,7 @@ impl VcIssuer for IndyCredxIssuer {
         )?;
 
         // If cred def already exists, return it
-        if let Ok(cred_def) = wallet.get(W::RecordIdRef::from(&cred_def_id)).await {
+        if let Ok(cred_def) = wallet.get(cred_def_id.as_ref()).await {
             return Ok((cred_def_id, cred_def));
         }
 
@@ -194,15 +195,16 @@ impl VcIssuer for IndyCredxIssuer {
     ) -> VcxCoreResult<Self::CredOffer>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>: From<&'a Self::CredDefId> + Send + Sync,
+        Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         Self::SchemaId: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
         Self::CredDef: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
         Self::CredKeyProof: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
     {
-        let cred_def: CredentialDefinition = wallet.get(W::RecordIdRef::from(cred_def_id)).await?;
+        let cred_def: CredentialDefinition = wallet.get(cred_def_id.as_ref()).await?;
         let correctness_proof: CredentialKeyCorrectnessProof =
-            wallet.get(W::RecordIdRef::from(cred_def_id)).await?;
-        let schema_id: SchemaId = wallet.get(W::RecordIdRef::from(cred_def_id)).await?;
+            wallet.get(cred_def_id.as_ref()).await?;
+        let schema_id: SchemaId = wallet.get(cred_def_id.as_ref()).await?;
 
         // If cred_def contains schema ID, why take it as an argument here...?
         let offer = issuer::create_credential_offer(&schema_id, &cred_def, &correctness_proof)?;
@@ -221,8 +223,9 @@ impl VcIssuer for IndyCredxIssuer {
     ) -> VcxCoreResult<(Self::Cred, Option<Self::CredRevId>)>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>:
-            From<&'b Self::CredDefId> + From<&'a Self::RevRegId> + Send + Sync,
+        Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         for<'b> Self::Schema: WalletRecord<W, RecordId<'b> = &'b Self::SchemaId>,
         for<'b> Self::SchemaId: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
         for<'b> Self::CredDef: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
@@ -237,19 +240,18 @@ impl VcIssuer for IndyCredxIssuer {
         // does     // it
         let cred_def_id = &cred_offer.cred_def_id;
 
-        let cred_def = wallet.get(W::RecordIdRef::from(cred_def_id)).await?;
+        let cred_def = wallet.get(cred_def_id.as_ref()).await?;
 
-        let cred_def_private = wallet.get(W::RecordIdRef::from(cred_def_id)).await?;
+        let cred_def_private = wallet.get(cred_def_id.as_ref()).await?;
 
         let mut revocation_config_parts = match rev_reg_id {
             Some(rev_reg_id) => {
-                let rev_reg_def = wallet.get(W::RecordIdRef::from(rev_reg_id)).await?;
+                let rev_reg_def = wallet.get(rev_reg_id.as_ref()).await?;
 
-                let rev_reg_def_priv = wallet.get(W::RecordIdRef::from(rev_reg_id)).await?;
+                let rev_reg_def_priv = wallet.get(rev_reg_id.as_ref()).await?;
 
-                let rev_reg = wallet.get(W::RecordIdRef::from(rev_reg_id)).await?;
-                let rev_reg_info: RevocationRegistryInfo =
-                    wallet.get(W::RecordIdRef::from(rev_reg_id)).await?;
+                let rev_reg = wallet.get(rev_reg_id.as_ref()).await?;
+                let rev_reg_info: RevocationRegistryInfo = wallet.get(rev_reg_id.as_ref()).await?;
 
                 Some((rev_reg_def, rev_reg_def_priv, rev_reg, rev_reg_info))
             }
@@ -345,8 +347,9 @@ impl VcIssuer for IndyCredxIssuer {
     ) -> VcxCoreResult<()>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>:
-            From<&'b Self::CredDefId> + From<&'a Self::RevRegId> + Send + Sync,
+        Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         Self::RevReg: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
         Self::RevRegDef: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
         Self::RevRegDefPriv: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
@@ -354,14 +357,13 @@ impl VcIssuer for IndyCredxIssuer {
         Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
         for<'b> Self::CredDef: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
     {
-        let rev_reg = wallet.get(W::RecordIdRef::from(rev_reg_id)).await?;
+        let rev_reg = wallet.get(rev_reg_id.as_ref()).await?;
 
-        let rev_reg_def = wallet.get(W::RecordIdRef::from(rev_reg_id)).await?;
+        let rev_reg_def = wallet.get(rev_reg_id.as_ref()).await?;
 
-        let rev_reg_priv = wallet.get(W::RecordIdRef::from(rev_reg_id)).await?;
+        let rev_reg_priv = wallet.get(rev_reg_id.as_ref()).await?;
 
-        let mut rev_reg_info: RevocationRegistryInfo =
-            wallet.get(W::RecordIdRef::from(rev_reg_id)).await?;
+        let mut rev_reg_info: RevocationRegistryInfo = wallet.get(rev_reg_id.as_ref()).await?;
 
         let (issuance_type, cred_def_id) = match &rev_reg_def {
             RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => {
@@ -369,7 +371,7 @@ impl VcIssuer for IndyCredxIssuer {
             }
         };
 
-        let cred_def = wallet.get(W::RecordIdRef::from(cred_def_id)).await?;
+        let cred_def = wallet.get(cred_def_id.as_ref()).await?;
 
         match issuance_type {
             IssuanceType::ISSUANCE_ON_DEMAND => {
@@ -437,10 +439,11 @@ impl VcIssuer for IndyCredxIssuer {
     ) -> VcxCoreResult<Option<Self::RevRegDelta>>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>: From<&'a Self::RevRegId> + Send + Sync,
+        Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
     {
-        let res_rev_reg_delta = wallet.get(W::RecordIdRef::from(rev_reg_id)).await;
+        let res_rev_reg_delta = wallet.get(rev_reg_id.as_ref()).await;
 
         if let Err(err) = &res_rev_reg_delta {
             warn!(
@@ -460,7 +463,8 @@ impl VcIssuer for IndyCredxIssuer {
     ) -> VcxCoreResult<()>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>: From<&'a Self::RevRegId> + Send + Sync,
+        Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
     {
         if self
@@ -469,7 +473,7 @@ impl VcIssuer for IndyCredxIssuer {
             .is_some()
         {
             wallet
-                .delete::<RevocationRegistryDelta>(W::RecordIdRef::from(rev_reg_id))
+                .delete::<RevocationRegistryDelta>(rev_reg_id.as_ref())
                 .await?;
         }
 
@@ -563,4 +567,215 @@ where
     }
 
     new_map
+}
+
+/// Just proving that stuff compiles
+#[cfg(test)]
+#[allow(unused, clippy::all)]
+#[test]
+fn stuff() {
+    use indy_api_types::WalletHandle;
+
+    use crate::{wallet::indy::IndySdkWallet, wallet2::vdrtools::IndyWalletId};
+
+    // SAFETY:
+    // We're only changing types, but the layout is the same because of #[repr(transparent)].
+    // This is because we can't implement AsRef<str> for the remote types.
+    //
+    // Indy-credx should implement `AsRef<str>` for their ID types, which would make
+    // the usage of this redundant. And they should drop the `Deref<str>` thing as that's
+    // meant for pointer types, not to mimic inheritance.
+    //
+    // Another popular example: https://docs.rs/serde_json/latest/src/serde_json/raw.rs.html#121-124
+    impl AsRef<IndyWalletId> for RevocationRegistryId {
+        fn as_ref(&self) -> &IndyWalletId {
+            unsafe { std::mem::transmute::<&str, &IndyWalletId>(self.0.as_str()) }
+        }
+    }
+
+    impl AsRef<IndyWalletId> for CredentialDefinitionId {
+        fn as_ref(&self) -> &IndyWalletId {
+            unsafe { std::mem::transmute::<&str, &IndyWalletId>(self.0.as_str()) }
+        }
+    }
+
+    impl WalletRecord<IndySdkWallet> for RevocationRegistryDelta {
+        const RECORD_TYPE: &'static str = "rev";
+
+        type RecordId<'a> = &'a RevocationRegistryId;
+
+        fn into_wallet_record(
+            self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn as_wallet_record(
+            &self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
+        where
+            Self: Sized,
+        {
+            todo!()
+        }
+    }
+
+    impl WalletRecord<IndySdkWallet> for CredentialDefinition {
+        const RECORD_TYPE: &'static str = "rev";
+
+        type RecordId<'a> = &'a CredentialDefinitionId;
+
+        fn into_wallet_record(
+            self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn as_wallet_record(
+            &self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
+        where
+            Self: Sized,
+        {
+            todo!()
+        }
+    }
+
+    impl WalletRecord<IndySdkWallet> for RevocationRegistry {
+        const RECORD_TYPE: &'static str = "rev";
+
+        type RecordId<'a> = &'a RevocationRegistryId;
+
+        fn into_wallet_record(
+            self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn as_wallet_record(
+            &self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
+        where
+            Self: Sized,
+        {
+            todo!()
+        }
+    }
+
+    impl WalletRecord<IndySdkWallet> for RevocationRegistryDefinition {
+        const RECORD_TYPE: &'static str = "rev";
+
+        type RecordId<'a> = &'a RevocationRegistryId;
+
+        fn into_wallet_record(
+            self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn as_wallet_record(
+            &self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
+        where
+            Self: Sized,
+        {
+            todo!()
+        }
+    }
+
+    impl WalletRecord<IndySdkWallet> for RevocationRegistryDefinitionPrivate {
+        const RECORD_TYPE: &'static str = "rev";
+
+        type RecordId<'a> = &'a RevocationRegistryId;
+
+        fn into_wallet_record(
+            self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn as_wallet_record(
+            &self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
+        where
+            Self: Sized,
+        {
+            todo!()
+        }
+    }
+
+    impl WalletRecord<IndySdkWallet> for RevocationRegistryInfo {
+        const RECORD_TYPE: &'static str = "rev";
+
+        type RecordId<'a> = &'a RevocationRegistryId;
+
+        fn into_wallet_record(
+            self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn as_wallet_record(
+            &self,
+            id: Self::RecordId<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn from_wallet_record(record: <IndySdkWallet as Wallet>::Record) -> VcxCoreResult<Self>
+        where
+            Self: Sized,
+        {
+            todo!()
+        }
+    }
+
+    let issuer = IndyCredxIssuer;
+    let wallet = IndySdkWallet::new(WalletHandle(0));
+    let rev_reg_id = RevocationRegistryId(String::from("blabla"));
+    let cred_def_id = CredentialDefinitionId(String::from("blabla"));
+    async {
+        issuer.get_revocation_delta(&wallet, &rev_reg_id).await;
+        issuer
+            .create_and_store_revoc_reg(
+                &wallet,
+                "bla",
+                &cred_def_id,
+                "test",
+                10,
+                "404_no_tags_found",
+            )
+            .await
+    };
 }

@@ -127,7 +127,7 @@ fn test_deserialization() {
     )
     .build();
 
-    assert_eq!(did_doc.verification_method().get(0).unwrap().clone(), vm1);
+    assert_eq!(did_doc.verification_method().first().unwrap().clone(), vm1);
     assert_eq!(did_doc.verification_method().get(1).unwrap().clone(), vm2);
 
     assert_eq!(

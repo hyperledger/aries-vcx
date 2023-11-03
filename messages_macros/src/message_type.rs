@@ -102,7 +102,7 @@ fn process_protocol(
 
         // Generate an impl with const PROTOCOL set the to the string literal passed in the macro
         // attribute
-        field_impls.push(quote! {impl #field { const PROTOCOL: &str = #protocol; }});
+        field_impls.push(quote! {impl #field { const PROTOCOL: &'static str = #protocol; }});
     }
 
     quote! {

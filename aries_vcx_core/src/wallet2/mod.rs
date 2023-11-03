@@ -10,18 +10,18 @@ use crate::errors::error::VcxCoreResult;
 #[async_trait]
 pub trait Wallet {
     type Record: Send + Sync;
-    type RecordIdRef<'a>;
+    type RecordIdRef: ?Sized;
     type SearchFilter<'a>: Send + Sync;
 
     async fn add(&self, record: Self::Record) -> VcxCoreResult<()>;
 
-    async fn get<R>(&self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<R>
+    async fn get<R>(&self, id: &Self::RecordIdRef) -> VcxCoreResult<R>
     where
         R: WalletRecord<Self>;
 
     async fn update(&self, update: Self::Record) -> VcxCoreResult<()>;
 
-    async fn delete<R>(&self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<()>
+    async fn delete<R>(&self, id: &Self::RecordIdRef) -> VcxCoreResult<()>
     where
         R: WalletRecord<Self>;
 
@@ -59,7 +59,7 @@ pub trait Wallet {
 pub trait WalletRecord<W: Wallet + ?Sized> {
     const RECORD_TYPE: &'static str;
 
-    type RecordId<'a>;
+    type RecordId<'a>: Send + Sync;
 
     fn into_wallet_record(self, id: Self::RecordId<'_>) -> VcxCoreResult<W::Record>;
 

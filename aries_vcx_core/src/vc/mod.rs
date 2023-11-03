@@ -36,19 +36,20 @@ pub trait VcIssuer {
     type RevRegDelta: Send + Sync;
     type RevRegInfo: Send + Sync;
 
-    async fn create_and_store_revoc_reg<'a, W>(
+    async fn create_and_store_revoc_reg<W>(
         &self,
         wallet: &W,
         issuer_did: &str,
-        cred_def_id: &'a Self::CredDefId,
+        cred_def_id: &Self::CredDefId,
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
     ) -> VcxCoreResult<(Self::RevRegId, Self::RevRegDef, Self::RevReg)>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>:
-            From<&'a Self::CredDefId> + From<&'b Self::RevRegId> + Send + Sync,
+        Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
+        Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
         Self::CredDef: WalletRecord<W>,
         for<'b> Self::RevReg: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
         for<'b> Self::RevRegDef: WalletRecord<W, RecordId<'b> = &'b Self::RevRegId>,
@@ -66,7 +67,8 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<(Self::CredDefId, Self::CredDef)>
     where
         W: Wallet + Send + Sync,
-        for<'a> <W as Wallet>::RecordIdRef<'a>: From<&'a Self::CredDefId> + Send + Sync,
+        Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         for<'a> Self::Schema: WalletRecord<W, RecordId<'a> = &'a Self::SchemaId>,
         for<'a> Self::SchemaId: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
         for<'a> Self::CredDef: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
@@ -80,7 +82,8 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<Self::CredOffer>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>: From<&'a Self::CredDefId> + Send + Sync,
+        Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         Self::SchemaId: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
         Self::CredDef: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>,
         Self::CredKeyProof: WalletRecord<W, RecordId<'a> = &'a Self::CredDefId>;
@@ -96,8 +99,9 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<(Self::Cred, Option<Self::CredRevId>)>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>:
-            From<&'b Self::CredDefId> + From<&'a Self::RevRegId> + Send + Sync,
+        Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         for<'b> Self::Schema: WalletRecord<W, RecordId<'b> = &'b Self::SchemaId>,
         for<'b> Self::SchemaId: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
         for<'b> Self::CredDef: WalletRecord<W, RecordId<'b> = &'b Self::CredDefId>,
@@ -126,8 +130,9 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<()>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>:
-            From<&'b Self::CredDefId> + From<&'a Self::RevRegId> + Send + Sync,
+        Self::CredDefId: AsRef<<W as Wallet>::RecordIdRef>,
+        Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         Self::RevReg: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
         Self::RevRegDef: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
         Self::RevRegDefPriv: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>,
@@ -142,7 +147,8 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<Option<Self::RevRegDelta>>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>: From<&'a Self::RevRegId> + Send + Sync,
+        Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>;
 
     async fn clear_revocation_delta<'a, W>(
@@ -152,7 +158,8 @@ pub trait VcIssuer {
     ) -> VcxCoreResult<()>
     where
         W: Wallet + Send + Sync,
-        for<'b> <W as Wallet>::RecordIdRef<'b>: From<&'a Self::RevRegId> + Send + Sync,
+        Self::RevRegId: AsRef<<W as Wallet>::RecordIdRef>,
+        <W as Wallet>::RecordIdRef: Send + Sync,
         Self::RevRegDelta: WalletRecord<W, RecordId<'a> = &'a Self::RevRegId>;
 }
 

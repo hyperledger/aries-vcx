@@ -198,7 +198,7 @@ impl SmConnectionInvitee {
         ))?;
         did_did
             .recipient_keys()?
-            .get(0)
+            .first()
             .ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
                 "Can't resolve recipient key from the counterparty diddoc.",
@@ -380,7 +380,7 @@ impl SmConnectionInvitee {
 
         let state = match self.state {
             InviteeFullState::Requested(state) => {
-                let remote_vk: String = state.did_doc.recipient_keys()?.get(0).cloned().ok_or(
+                let remote_vk: String = state.did_doc.recipient_keys()?.first().cloned().ok_or(
                     AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidState,
                         "Cannot handle response: remote verkey not found",

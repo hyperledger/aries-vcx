@@ -203,7 +203,7 @@ impl AgencyClient {
         agent_vk: &str,
     ) -> AgencyClientResult<Vec<u8>> {
         debug!("prepare_message_for_connection_agent >> {:?}", messages);
-        let message = messages.get(0).ok_or(AgencyClientError::from_msg(
+        let message = messages.first().ok_or(AgencyClientError::from_msg(
             AgencyClientErrorKind::SerializationError,
             "Cannot get message",
         ))?;

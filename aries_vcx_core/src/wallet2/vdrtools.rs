@@ -17,7 +17,7 @@ const WALLET_OPTIONS: &str =
 #[async_trait]
 impl Wallet for IndySdkWallet {
     type Record = Record;
-    type RecordIdRef<'a> = &'a str;
+    type RecordIdRef = IndyWalletId;
     type SearchFilter<'a> = &'a str;
 
     async fn add(&self, record: Self::Record) -> VcxCoreResult<()> {
@@ -34,7 +34,7 @@ impl Wallet for IndySdkWallet {
             .map_err(From::from)
     }
 
-    async fn get<R>(&self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<R>
+    async fn get<R>(&self, id: &Self::RecordIdRef) -> VcxCoreResult<R>
     where
         R: WalletRecord<Self>,
     {
@@ -43,7 +43,7 @@ impl Wallet for IndySdkWallet {
             .get_record(
                 self.wallet_handle,
                 R::RECORD_TYPE.into(),
-                id.to_string(),
+                id.0.to_string(),
                 WALLET_OPTIONS.into(),
             )
             .await?;
@@ -73,13 +73,13 @@ impl Wallet for IndySdkWallet {
         Ok(())
     }
 
-    async fn delete<R>(&self, id: Self::RecordIdRef<'_>) -> VcxCoreResult<()>
+    async fn delete<R>(&self, id: &Self::RecordIdRef) -> VcxCoreResult<()>
     where
         R: WalletRecord<Self>,
     {
         Locator::instance()
             .non_secret_controller
-            .delete_record(self.wallet_handle, R::RECORD_TYPE.into(), id.to_string())
+            .delete_record(self.wallet_handle, R::RECORD_TYPE.into(), id.0.to_string())
             .await?;
 
         Ok(())
@@ -218,5 +218,14 @@ impl Wallet for IndySdkWallet {
         serde_json::from_slice(&msg).map_err(|err| {
             AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, err.to_string())
         })
+    }
+}
+
+#[repr(transparent)]
+pub struct IndyWalletId(pub str);
+
+impl AsRef<str> for IndyWalletId {
+    fn as_ref(&self) -> &str {
+        &self.0
     }
 }

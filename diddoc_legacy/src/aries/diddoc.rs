@@ -144,7 +144,7 @@ impl AriesDidDoc {
     }
 
     pub fn recipient_keys(&self) -> DiddocResult<Vec<String>> {
-        let service: AriesService = match self.service.get(0).cloned() {
+        let service: AriesService = match self.service.first().cloned() {
             Some(service) => service,
             None => return Ok(Vec::new()),
         };
@@ -160,7 +160,7 @@ impl AriesDidDoc {
     }
 
     pub fn routing_keys(&self) -> Vec<String> {
-        let service: AriesService = match self.service.get(0).cloned() {
+        let service: AriesService = match self.service.first().cloned() {
             Some(service) => service,
             None => return Vec::new(),
         };
@@ -168,11 +168,11 @@ impl AriesDidDoc {
     }
 
     pub fn get_endpoint(&self) -> Option<Url> {
-        self.service.get(0).map(|s| s.service_endpoint.clone())
+        self.service.first().map(|s| s.service_endpoint.clone())
     }
 
     pub fn get_service(&self) -> DiddocResult<AriesService> {
-        let service: &AriesService = self.service.get(0).ok_or(DiddocError::from_msg(
+        let service: &AriesService = self.service.first().ok_or(DiddocError::from_msg(
             DiddocErrorKind::InvalidState,
             format!("No service found on did doc: {self:?}"),
         ))?;
