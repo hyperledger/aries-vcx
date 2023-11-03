@@ -217,8 +217,8 @@ pub trait VcProver {
     ) -> VcxCoreResult<String>
     // Needs a type
     where
-        // Bound too limiting
-        for<'a> W: Wallet<SearchFilter<'a> = &'a str> + Send + Sync,
+        W: Wallet + Send + Sync,
+        for<'a> <W as Wallet>::SearchFilter<'a>: From<&'a str>,
         Self::Cred: WalletRecord<W, RecordId = String>;
 
     async fn create_revocation_state(

@@ -688,7 +688,8 @@ impl VcProver for IndyCredxProver {
     ) -> VcxCoreResult<String>
     // Needs a proper return type
     where
-        for<'a> W: Wallet<SearchFilter<'a> = &'a str> + Send + Sync,
+        W: Wallet + Send + Sync,
+        for<'a> <W as Wallet>::SearchFilter<'a>: From<&'a str>,
         Self::Cred: WalletRecord<W, RecordId = String>,
     {
         let (mut requested_attributes, mut requested_predicates, non_revoked) = match proof_request
@@ -740,7 +741,7 @@ impl VcProver for IndyCredxProver {
             };
 
             let credx_creds =
-                _get_credentials_for_proof_req_for_attr_name(wallet, None, attr_names).await?;
+                _get_credentials_for_proof_req_for_attr_name(wallet, attr_names).await?;
 
             let mut credentials_json = vec![];
 
@@ -1067,11 +1068,11 @@ fn bad_json() -> AriesVcxCoreError {
 
 async fn _get_credentials_for_proof_req_for_attr_name<W>(
     wallet: &W,
-    restrictions: Option<&Value>,
     attr_names: Vec<String>,
 ) -> VcxCoreResult<Vec<(String, Credential)>>
 where
-    for<'a> W: Wallet<SearchFilter<'a> = &'a str> + Send + Sync,
+    W: Wallet + Send + Sync,
+    for<'a> <W as Wallet>::SearchFilter<'a>: From<&'a str>,
     Credential: WalletRecord<W, RecordId = String>,
 {
     let mut attrs = Vec::new();
@@ -1086,32 +1087,10 @@ where
         attrs.push(wql_attr_query);
     }
 
-    let restrictions = restrictions.map(|x| x.to_owned());
-
-    let wql_query = if let Some(restrictions) = restrictions {
-        match restrictions {
-            Value::Array(restrictions) => {
-                let restrictions_wql = json!({ "$or": restrictions });
-                attrs.push(restrictions_wql);
-                json!({ "$and": attrs })
-            }
-            Value::Object(restriction) => {
-                attrs.push(Value::Object(restriction));
-                json!({ "$and": attrs })
-            }
-            _ => Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidInput,
-                "Invalid attribute restrictions (must be array or an object)",
-            ))?,
-        }
-    } else {
-        json!({ "$and": attrs })
-    };
-
-    let wql_query = serde_json::to_string(&wql_query)?;
+    let wql_query = json!({ "$and": attrs }).to_string();
 
     let mut records = Vec::new();
-    let mut stream = wallet.search(&wql_query).await?;
+    let mut stream = wallet.search(From::from(wql_query.as_str())).await?;
 
     while let Some(record) = stream.next().await {
         records.push(record?);
