@@ -18,7 +18,7 @@ const WALLET_OPTIONS: &str =
 impl Wallet for IndySdkWallet {
     type Record = Record;
     type RecordIdRef = IndyWalletId;
-    type SearchFilter<'a> = &'a str;
+    type SearchFilter = String;
 
     async fn add(&self, record: Self::Record) -> VcxCoreResult<()> {
         Locator::instance()
@@ -87,7 +87,7 @@ impl Wallet for IndySdkWallet {
 
     async fn search<'a, R>(
         &'a self,
-        filter: Self::SearchFilter<'_>,
+        filter: Self::SearchFilter,
     ) -> VcxCoreResult<BoxStream<'a, VcxCoreResult<(R::RecordId, R)>>>
     where
         R: WalletRecord<Self> + Send + Sync + 'a,
@@ -97,7 +97,7 @@ impl Wallet for IndySdkWallet {
             .open_search(
                 self.wallet_handle,
                 R::RECORD_TYPE.into(),
-                filter.into(),
+                filter,
                 WALLET_OPTIONS.into(),
             )
             .await?;

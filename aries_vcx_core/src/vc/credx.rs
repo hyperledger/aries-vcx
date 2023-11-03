@@ -684,16 +684,15 @@ impl VcProver for IndyCredxProver {
     async fn get_credentials_for_proof_req<W>(
         &self,
         wallet: &W,
-        proof_request: Self::PresentationRequest,
+        pres_request: Self::PresentationRequest,
     ) -> VcxCoreResult<String>
     // Needs a proper return type
     where
         W: Wallet + Send + Sync,
-        for<'a> <W as Wallet>::SearchFilter<'a>: From<&'a str>,
+        <W as Wallet>::SearchFilter: From<String>,
         Self::Cred: WalletRecord<W, RecordId = String>,
     {
-        let (mut requested_attributes, mut requested_predicates, non_revoked) = match proof_request
-        {
+        let (mut requested_attributes, mut requested_predicates, non_revoked) = match pres_request {
             PresentationRequest::PresentationRequestV1(pr)
             | PresentationRequest::PresentationRequestV2(pr) => (
                 pr.requested_attributes,
@@ -740,10 +739,28 @@ impl VcProver for IndyCredxProver {
                 ))?,
             };
 
-            let credx_creds =
-                _get_credentials_for_proof_req_for_attr_name(wallet, attr_names).await?;
+            let mut attrs = Vec::new();
 
-            let mut credentials_json = vec![];
+            for name in attr_names {
+                let attr_marker_tag_name = _format_attribute_as_marker_tag_name(&name);
+
+                let wql_attr_query = json!({
+                    attr_marker_tag_name: "1"
+                });
+
+                attrs.push(wql_attr_query);
+            }
+
+            let wql_query = json!({ "$and": attrs }).to_string();
+
+            let mut credx_creds = Vec::new();
+            let mut stream = wallet.search::<Credential>(From::from(wql_query)).await?;
+
+            while let Some(record) = stream.next().await {
+                credx_creds.push(record?);
+            }
+
+            let mut credentials_json = Vec::with_capacity(credx_creds.len());
 
             for (cred_id, credx_cred) in credx_creds {
                 credentials_json.push(json!({
@@ -1066,39 +1083,6 @@ fn bad_json() -> AriesVcxCoreError {
     AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, "STOP USING JSON!!!!")
 }
 
-async fn _get_credentials_for_proof_req_for_attr_name<W>(
-    wallet: &W,
-    attr_names: Vec<String>,
-) -> VcxCoreResult<Vec<(String, Credential)>>
-where
-    W: Wallet + Send + Sync,
-    for<'a> <W as Wallet>::SearchFilter<'a>: From<&'a str>,
-    Credential: WalletRecord<W, RecordId = String>,
-{
-    let mut attrs = Vec::new();
-
-    for name in attr_names {
-        let attr_marker_tag_name = _format_attribute_as_marker_tag_name(&name);
-
-        let wql_attr_query = json!({
-            attr_marker_tag_name: "1"
-        });
-
-        attrs.push(wql_attr_query);
-    }
-
-    let wql_query = json!({ "$and": attrs }).to_string();
-
-    let mut records = Vec::new();
-    let mut stream = wallet.search(From::from(wql_query.as_str())).await?;
-
-    while let Some(record) = stream.next().await {
-        records.push(record?);
-    }
-
-    Ok(records)
-}
-
 fn _format_attribute_as_value_tag_name(attribute_name: &str) -> String {
     format!("attr::{attribute_name}::value")
 }
@@ -1165,6 +1149,36 @@ fn stuff() {
     impl AsRef<IndyWalletId> for CredentialDefinitionId {
         fn as_ref(&self) -> &IndyWalletId {
             unsafe { std::mem::transmute::<&str, &IndyWalletId>(self.0.as_str()) }
+        }
+    }
+
+    impl WalletRecord<IndySdkWallet> for Credential {
+        const RECORD_TYPE: &'static str = "cred";
+
+        type RecordIdRef<'a> = &'a str;
+        type RecordId = String;
+
+        fn into_wallet_record(
+            self,
+            id: Self::RecordIdRef<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn as_wallet_record(
+            &self,
+            id: Self::RecordIdRef<'_>,
+        ) -> VcxCoreResult<<IndySdkWallet as Wallet>::Record> {
+            todo!()
+        }
+
+        fn from_wallet_record(
+            record: <IndySdkWallet as Wallet>::Record,
+        ) -> VcxCoreResult<(Self::RecordId, Self)>
+        where
+            Self: Sized,
+        {
+            todo!()
         }
     }
 
@@ -1349,9 +1363,14 @@ fn stuff() {
     }
 
     let issuer = IndyCredxIssuer;
+    let prover = IndyCredxProver;
     let wallet = IndySdkWallet::new(WalletHandle(0));
+
     let rev_reg_id = RevocationRegistryId(String::from("blabla"));
     let cred_def_id = CredentialDefinitionId(String::from("blabla"));
+
+    let pres_request = serde_json::from_str("").unwrap();
+
     async {
         issuer.get_revocation_delta(&wallet, &rev_reg_id).await;
         issuer
@@ -1363,6 +1382,8 @@ fn stuff() {
                 10,
                 "404_no_tags_found",
             )
-            .await
+            .await;
+
+        prover.get_credentials_for_proof_req(&wallet, pres_request)
     };
 }

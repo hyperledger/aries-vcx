@@ -1,3 +1,4 @@
+#[cfg(feature = "credx")]
 pub mod credx;
 
 use std::collections::HashMap;
@@ -213,12 +214,12 @@ pub trait VcProver {
     async fn get_credentials_for_proof_req<W>(
         &self,
         wallet: &W,
-        proof_request: Self::PresentationRequest,
+        pres_request: Self::PresentationRequest,
     ) -> VcxCoreResult<String>
     // Needs a type
     where
         W: Wallet + Send + Sync,
-        for<'a> <W as Wallet>::SearchFilter<'a>: From<&'a str>,
+        <W as Wallet>::SearchFilter: From<String>,
         Self::Cred: WalletRecord<W, RecordId = String>;
 
     async fn create_revocation_state(
