@@ -8,21 +8,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import okhttp3.OkHttpClient
 import org.hyperledger.ariesvcx.ui.theme.DemoTheme
 
 
 sealed class Destination(val route: String) {
     object Home : Destination("home")
     object QRScan : Destination("scan")
+    object Holder : Destination("holder")
 }
 
 class MainActivity : ComponentActivity() {
@@ -61,6 +58,13 @@ fun NavigationAppHost(
 
         composable(Destination.QRScan.route) {
             ScanScreen(
+                demoController = demoController,
+                navController = navController,
+            )
+        }
+
+        composable(Destination.Holder.route) {
+            HolderScreen(
                 demoController = demoController,
                 navController = navController,
             )

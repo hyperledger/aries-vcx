@@ -71,8 +71,9 @@ fun HomeScreen(
             }) {
             Text(text = "Scan QR Code")
         }
-        Button(enabled = (demoState.connectionCompleted),
+        Button(enabled = /*(demoState.connectionCompleted)*/ true,
             onClick = {
+                navController.navigate(Destination.Holder.route)
             }) {
             Text(text = "Receive a credential")
         }
