@@ -58,7 +58,9 @@ pub async fn handle_didcomm(
     State(agent): State<ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>>,
     didcomm_msg: Bytes,
 ) -> Result<Json<Value>, String> {
-    didcomm_handlers::handle_aries(State(agent), didcomm_msg).await
+    didcomm_handlers::handle_aries(State(agent), didcomm_msg)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 pub async fn readme() -> Html<String> {

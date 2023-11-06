@@ -21,7 +21,6 @@ use pickup::handle_pickup_protocol;
 #[serde(untagged)]
 enum GeneralAriesMessage {
     AriesVCXSupported(AriesMessage),
-    XumPickup(mediation::didcomm_types::PickupMsgEnum),
     XumCoord(mediation::didcomm_types::mediator_coord_structs::MediatorCoordMsgEnum),
 }
 pub fn unhandled_aries_message(message: impl Debug) -> String {
@@ -35,7 +34,7 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
     log::info!("processing message {:?}", &didcomm_msg);
     let unpacked = agent.unpack_didcomm(&didcomm_msg).await.unwrap();
     let aries_message: GeneralAriesMessage =
-        serde_json::from_str(&unpacked.message).expect("Decoding unpacked message as AriesMessage");
+        serde_json::from_str(&unpacked.message).map_err(|e| e.to_string())?;
     let packed_response =
         if let GeneralAriesMessage::AriesVCXSupported(AriesMessage::Connection(conn)) =
             aries_message
@@ -47,13 +46,21 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
             handle_routing_forward(agent.clone(), forward).await?;
             return Ok(Json(json!({})));
         } else {
-            let (account_name, our_signing_key, their_diddoc) =
+            // Auth known VerKey then process account related messages
+            let (account_name, auth_pubkey, our_signing_key, their_diddoc) =
                 agent.auth_and_get_details(&unpacked.sender_verkey).await?;
-            let auth_pubkey = unpacked
-                .sender_verkey
-                .expect("Sender key authenticated above, so it must be present..");
             log::info!("Processing message for {:?}", account_name);
             match aries_message {
+                GeneralAriesMessage::AriesVCXSupported(AriesMessage::Pickup(pickup_message)) => {
+                    let pickup_response =
+                        handle_pickup_protocol(&agent, pickup_message, &auth_pubkey).await?;
+                    let aries_response = AriesMessage::Pickup(pickup_response);
+                    let aries_response_bytes =
+                        serde_json::to_vec(&aries_response).map_err(string_from_std_error)?;
+                    agent
+                        .pack_didcomm(&aries_response_bytes, &our_signing_key, &their_diddoc)
+                        .await?
+                }
                 GeneralAriesMessage::AriesVCXSupported(aries_message) => {
                     Err(unhandled_aries_message(aries_message))?
                 }
@@ -65,10 +72,6 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
                     agent
                         .pack_didcomm(&aries_response, &our_signing_key, &their_diddoc)
                         .await?
-                }
-                GeneralAriesMessage::XumPickup(pickup_message) => {
-                    handle_pickup_protocol(agent, pickup_message).await?;
-                    todo!();
                 }
             }
         };

@@ -1,5 +1,6 @@
-/// Aries Agent TUI
 mod tui;
+
+/// Aries Agent TUI
 #[tokio::main]
 async fn main() {
     use mediator::{

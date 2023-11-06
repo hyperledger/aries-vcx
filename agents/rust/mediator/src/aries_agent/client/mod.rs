@@ -22,8 +22,10 @@ use messages::{
     AriesMessage,
 };
 use test_utils::mockdata::mock_ledger::MockLedger;
+pub mod transports;
 
-use super::{transports::AriesTransport, Agent};
+use self::transports::AriesTransport;
+use super::Agent;
 use crate::{aries_agent::utils::oob2did, utils::prelude::*};
 
 // client role utilities
@@ -112,10 +114,9 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             "Sending Connection Request Envelope: {},",
             serde_json::to_string_pretty(&packed_aries_msg_json).unwrap()
         );
-        aries_transport
-            .push_aries_envelope(packed_aries_msg_json, &oob2did(oob_invite))
+        let response_envelope = aries_transport
+            .send_aries_envelope(packed_aries_msg_json, &oob2did(oob_invite))
             .await?;
-        let response_envelope = aries_transport.pop_aries_envelope()?;
         info!(
             "Received Response envelope {:#?}, unpacking",
             serde_json::to_string_pretty(&response_envelope).unwrap()

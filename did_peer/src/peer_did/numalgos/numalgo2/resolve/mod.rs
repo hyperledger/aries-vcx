@@ -5,7 +5,7 @@ use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
 
 use self::helpers::process_elements;
-use crate::{error::DidPeerError, peer_did_resolver::options::PublicKeyEncoding};
+use crate::{error::DidPeerError, resolver::options::PublicKeyEncoding};
 
 pub fn resolve_numalgo2(
     did: &Did,

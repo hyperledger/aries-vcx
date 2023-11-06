@@ -11,7 +11,6 @@ members = [
     "shared_vcx",
     "diddoc_legacy",
     "agents/rust/mediator",
-    "agents/rust/mediator/client-webapi",
     "agents/rust/mediator/client-tui",
     "agents/rust/aries-vcx-agent",
     "wrappers/vcx-napi-rs",
@@ -31,7 +30,8 @@ members = [
     "wallet_migrator",
     "tools/simple_message_relay",
     "tools/test_utils",
-    "tools/libvcx_logger"
+    "tools/libvcx_logger",
+    "tools/display_as_json"
 ]
 
 [workspace.package]

@@ -2,22 +2,15 @@ mod common;
 use std::collections::VecDeque;
 
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use mediation::{
-    didcomm_types::mediator_coord_structs::{
-        KeylistUpdateItem, KeylistUpdateItemAction, KeylistUpdateRequestData, MediateGrantData,
-        MediatorCoordMsgEnum,
-    },
-    storage::MediatorPersistence,
+use mediation::didcomm_types::mediator_coord_structs::{
+    KeylistUpdateItem, KeylistUpdateItemAction, KeylistUpdateRequestData, MediatorCoordMsgEnum,
 };
 use mediator::{
     aries_agent::{
-        transports::{AriesReqwest, AriesTransport},
+        client::transports::{AriesReqwest, AriesTransport},
         utils::oob2did,
-        Agent,
     },
-    utils::{structs::VerKey, GenericStringError},
+    utils::GenericStringError,
 };
 use messages::msg_fields::protocols::{
     basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators},
@@ -26,47 +19,14 @@ use messages::msg_fields::protocols::{
 
 use crate::common::{
     agent_and_transport_utils::{
-        gen_mediator_connected_agent, send_message_and_pop_response_message,
+        gen_mediator_connected_agent, get_mediator_grant_data,
+        send_message_and_pop_response_message,
     },
     prelude::*,
     test_setup::setup_env_logging,
 };
 
 static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
-
-async fn get_mediator_grant_data(
-    agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
-    agent_aries_transport: &mut impl AriesTransport,
-    agent_verkey: &VerKey,
-    mediator_diddoc: &AriesDidDoc,
-) -> MediateGrantData {
-    // prepare request message
-    let message = MediatorCoordMsgEnum::MediateRequest;
-    let message_bytes = serde_json::to_vec(&message).unwrap();
-    // send message and get response
-    let response_message = send_message_and_pop_response_message(
-        &message_bytes,
-        agent,
-        agent_aries_transport,
-        agent_verkey,
-        mediator_diddoc,
-    )
-    .await
-    .unwrap();
-    // extract routing parameters
-
-    if let MediatorCoordMsgEnum::MediateGrant(grant_data) =
-        serde_json::from_str(&response_message).unwrap()
-    {
-        info!("Grant Data {:?}", grant_data);
-        grant_data
-    } else {
-        panic!(
-            "Should get response that is of type Mediator Grant. Found {:?}",
-            response_message
-        )
-    }
-}
 
 #[tokio::test]
 async fn test_forward_flow() -> Result<()> {
@@ -129,7 +89,10 @@ async fn test_forward_flow() -> Result<()> {
         .decorators(BasicMessageDecorators::default())
         .id("JustHello".to_string())
         .build();
-
+    info!(
+        "Prepared message {:?}, proceeding to anoncrypt wrap",
+        serde_json::to_string(&message).unwrap()
+    );
     let EncryptionEnvelope(packed_message) = EncryptionEnvelope::create(
         &*agent.get_wallet_ref(),
         &serde_json::to_vec(&message)?,
@@ -139,14 +102,10 @@ async fn test_forward_flow() -> Result<()> {
     .await?;
     // Send forward message to provided endpoint
     let packed_json = serde_json::from_slice(&packed_message)?;
-    info!("Sending anoncrypt packed message{}", packed_json);
-    agent_f_aries_transport
-        .push_aries_envelope(packed_json, &agent_diddoc)
+    let response = agent_f_aries_transport
+        .send_aries_envelope(packed_json, &agent_diddoc)
         .await?;
-    info!(
-        "Response of forward{:?}",
-        agent_f_aries_transport.pop_aries_envelope()?
-    );
+    info!("Response of forward{:?}", response);
 
     Ok(())
 }

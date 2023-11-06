@@ -10,11 +10,11 @@ use public_key::Key;
 
 use crate::{
     error::DidPeerError,
-    numalgos::numalgo2::{
+    peer_did::numalgos::numalgo2::{
         purpose::ElementPurpose, service_abbreviated::ServiceAbbreviated,
         verification_method::get_verification_methods_by_key,
     },
-    peer_did_resolver::options::PublicKeyEncoding,
+    resolver::options::PublicKeyEncoding,
 };
 
 pub fn process_elements(

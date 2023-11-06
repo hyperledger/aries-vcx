@@ -1,8 +1,6 @@
-pub mod generate;
 pub mod numalgos;
 
 mod parse;
-mod regex;
 mod validate;
 
 pub mod generic;
@@ -10,17 +8,15 @@ pub mod generic;
 use core::fmt;
 use std::{fmt::Display, marker::PhantomData};
 
+use did_doc::schema::did_doc::DidDocument;
+use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
-use numalgos::{
-    numalgo3::Numalgo3,
-    traits::{Numalgo, ToNumalgo3},
-};
 use serde::{
     de::{self, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
 };
 
-use crate::error::DidPeerError;
+use crate::{error::DidPeerError, peer_did::numalgos::Numalgo};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PeerDid<N: Numalgo> {
@@ -46,9 +42,19 @@ impl<N: Numalgo> PeerDid<N> {
     }
 }
 
-impl<N: ToNumalgo3> PeerDid<N> {
-    pub fn to_numalgo3(&self) -> Result<PeerDid<Numalgo3>, DidPeerError> {
-        N::to_numalgo3(self.did())
+pub trait FromDidDoc: Numalgo {
+    fn from_did_doc(
+        did_document: DidDocument<ExtraFieldsSov>,
+    ) -> Result<PeerDid<Self>, DidPeerError>
+    where
+        Self: Sized;
+}
+
+impl<N: Numalgo + FromDidDoc> PeerDid<N> {
+    pub fn from_did_doc(
+        did_document: DidDocument<ExtraFieldsSov>,
+    ) -> Result<PeerDid<N>, DidPeerError> {
+        N::from_did_doc(did_document)
     }
 }
 
@@ -105,7 +111,7 @@ impl<N: Numalgo> From<PeerDid<N>> for Did {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::peer_did::numalgos::numalgo2::Numalgo2;
+    use crate::peer_did::numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3};
 
     const VALID_PEER_DID_NUMALGO2: &str = "did:peer:2\
        .Ez6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH\
@@ -190,14 +196,6 @@ mod tests {
             assert_eq!(
                 peer_did_numalgo3(),
                 peer_did_numalgo2().to_numalgo3().unwrap()
-            );
-        }
-
-        #[test]
-        fn numalgo3() {
-            assert_eq!(
-                peer_did_numalgo3(),
-                peer_did_numalgo3().to_numalgo3().unwrap()
             );
         }
     }

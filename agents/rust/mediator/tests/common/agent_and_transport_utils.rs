@@ -1,12 +1,18 @@
 use std::collections::VecDeque;
 
-use aries_vcx::protocols::connection::invitee::{states::completed::Completed, InviteeConnection};
+use aries_vcx::{
+    protocols::connection::invitee::{states::completed::Completed, InviteeConnection},
+    utils::encryption_envelope::EncryptionEnvelope,
+};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use mediation::storage::MediatorPersistence;
+use mediation::{
+    didcomm_types::mediator_coord_structs::{MediateGrantData, MediatorCoordMsgEnum},
+    storage::MediatorPersistence,
+};
 use mediator::{
     aries_agent::{
-        transports::{AriesReqwest, AriesTransport},
+        client::transports::{AriesReqwest, AriesTransport},
         Agent,
     },
     utils::{structs::VerKey, GenericStringError},
@@ -68,15 +74,53 @@ pub async fn send_message_and_pop_response_message(
     our_verkey: &VerKey,
     their_diddoc: &AriesDidDoc,
 ) -> Result<String> {
-    agent
-        .pack_and_send_didcomm(message_bytes, our_verkey, their_diddoc, aries_transport)
+    // Wrap message in encrypted envelope
+    let EncryptionEnvelope(packed_message) = agent
+        .pack_didcomm(message_bytes, our_verkey, their_diddoc)
         .await
-        .map_err(|err| GenericStringError { msg: err })?;
+        .map_err(|e| GenericStringError { msg: e.to_string() })?;
+    let packed_json = serde_json::from_slice(&packed_message)?;
+    // Send serialized envelope over transport
+    let response_envelope = aries_transport
+        .send_aries_envelope(packed_json, their_diddoc)
+        .await?;
     // unpack
-    let response = aries_transport.pop_aries_envelope()?;
     let unpacked_response = agent
-        .unpack_didcomm(&serde_json::to_vec(&response).unwrap())
+        .unpack_didcomm(&serde_json::to_vec(&response_envelope).unwrap())
         .await
         .unwrap();
     Ok(unpacked_response.message)
+}
+
+pub async fn get_mediator_grant_data(
+    agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
+    agent_aries_transport: &mut impl AriesTransport,
+    agent_verkey: &VerKey,
+    mediator_diddoc: &AriesDidDoc,
+) -> MediateGrantData {
+    // prepare request message
+    let message = MediatorCoordMsgEnum::MediateRequest;
+    let message_bytes = serde_json::to_vec(&message).unwrap();
+    // send message and get response
+    let response_message = send_message_and_pop_response_message(
+        &message_bytes,
+        agent,
+        agent_aries_transport,
+        agent_verkey,
+        mediator_diddoc,
+    )
+    .await
+    .unwrap();
+    // extract routing parameters
+    if let MediatorCoordMsgEnum::MediateGrant(grant_data) =
+        serde_json::from_str(&response_message).unwrap()
+    {
+        info!("Grant Data {:?}", grant_data);
+        grant_data
+    } else {
+        panic!(
+            "Should get response that is of type Mediator Grant. Found {:?}",
+            response_message
+        )
+    }
 }

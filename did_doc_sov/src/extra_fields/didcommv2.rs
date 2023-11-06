@@ -1,8 +1,9 @@
+use display_as_json::Display;
 use serde::{Deserialize, Serialize};
 
 use super::{AcceptType, KeyKind};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default, Display)]
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct ExtraFieldsDidCommV2 {

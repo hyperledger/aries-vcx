@@ -2,7 +2,6 @@ use did_doc::schema::did_doc::DidDocument;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
 
-use super::numalgo3::Numalgo3;
 use crate::{
     error::DidPeerError,
     peer_did::{parse::parse_numalgo, validate::validate, PeerDid},
@@ -33,8 +32,4 @@ pub trait ResolvableNumalgo: Numalgo {
         did: &Did,
         public_key_encoding: PublicKeyEncoding,
     ) -> Result<DidDocument<ExtraFieldsSov>, DidPeerError>;
-}
-
-pub trait ToNumalgo3: Numalgo {
-    fn to_numalgo3(did: &Did) -> Result<PeerDid<Numalgo3>, DidPeerError>;
 }

@@ -2,9 +2,9 @@ mod fixtures;
 
 use did_doc::schema::did_doc::DidDocument;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
-use did_peer::peer_did_resolver::{
+use did_peer::resolver::{
     options::{ExtraFieldsOptions, PublicKeyEncoding},
-    resolver::PeerDidResolver,
+    PeerDidResolver,
 };
 use did_resolver::traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable};
 use tokio::test;

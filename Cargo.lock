@@ -713,6 +713,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ba43ea6f343b788c8764558649e08df62f86c6ef251fdaeb1ffd010a9ae50a2"
 
 [[package]]
+name = "base64-url"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c5b0a88aa36e9f095ee2e2b13fb8c5e4313e022783aedacc123328c0084916d"
+dependencies = [
+ "base64",
+]
+
+[[package]]
 name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -938,23 +947,8 @@ version = "0.1.1"
 dependencies = [
  "aries_vcx_core",
  "axum",
- "client-webapi",
  "cursive",
  "futures",
- "log",
- "mediation",
- "mediator",
- "messages",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "client-webapi"
-version = "0.1.1"
-dependencies = [
- "aries_vcx_core",
- "axum",
  "log",
  "mediation",
  "mediator",
@@ -962,7 +956,6 @@ dependencies = [
  "reqwest",
  "serde_json",
  "tokio",
- "tower-http",
 ]
 
 [[package]]
@@ -1437,6 +1430,7 @@ dependencies = [
  "base64",
  "did_doc",
  "did_key",
+ "display_as_json",
  "public_key",
  "serde",
  "serde_json",
@@ -1473,6 +1467,7 @@ dependencies = [
  "did_doc_sov",
  "did_parser",
  "did_resolver",
+ "display_as_json",
  "multibase",
  "once_cell",
  "public_key",
@@ -1591,6 +1586,17 @@ dependencies = [
  "option-ext",
  "redox_users",
  "windows-sys",
+]
+
+[[package]]
+name = "display_as_json"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -2877,21 +2883,24 @@ dependencies = [
 
 [[package]]
 name = "mediation"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "async-trait",
  "axum",
  "axum-macros",
+ "base64-url",
  "dotenvy",
  "env_logger 0.10.0",
  "futures",
  "log",
+ "messages",
  "reqwest",
  "serde",
  "serde_json",
  "serde_with",
  "sqlx",
  "tokio",
+ "uuid 1.5.0",
 ]
 
 [[package]]
@@ -2904,6 +2913,7 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-macros",
+ "base64-url",
  "chrono",
  "diddoc_legacy",
  "dotenvy",
