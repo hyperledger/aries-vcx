@@ -145,16 +145,16 @@ impl Display for OutOfBandSender {
 //     use messages::diddoc::aries::service::AriesService;
 //     use messages::protocols::connection::did::Did;
 //     use messages::protocols::issuance::credential_offer::CredentialOffer;
-
+//
 //     use super::*;
-
+//
 //     fn _create_oob() -> OutOfBandSender {
 //         OutOfBandSender::create()
 //             .set_label("oob-label")
 //             .set_goal("issue-vc")
 //             .set_goal_code(&GoalCode::IssueVC)
 //     }
-
+//
 //     fn _create_service() -> ServiceOob {
 //         ServiceOob::AriesService(
 //             AriesService::create()
@@ -163,35 +163,35 @@ impl Display for OutOfBandSender {
 //                 .set_recipient_keys(vec!["abcde".into()]),
 //         )
 //     }
-
+//
 //     #[test]
 //     fn test_append_aries_service_object_to_oob_services() {
 //         let _setup = SetupMocks::init();
-
+//
 //         let service = _create_service();
 //         let oob = _create_oob().append_service(&service);
 //         let resolved_service = oob.get_services();
-
+//
 //         assert_eq!(resolved_service.len(), 1);
 //         assert_eq!(service, resolved_service[0]);
 //     }
-
+//
 //     #[test]
 //     fn test_append_did_service_object_to_oob_services() {
 //         let _setup = SetupMocks::init();
-
+//
 //         let service = ServiceOob::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap());
 //         let oob = _create_oob().append_service(&service);
 //         let resolved_service = oob.get_services();
-
+//
 //         assert_eq!(resolved_service.len(), 1);
 //         assert_eq!(service, resolved_service[0]);
 //     }
-
+//
 //     #[test]
 //     fn test_oob_sender_to_a2a_message() {
 //         let _setup = SetupMocks::init();
-
+//
 //         let inserted_offer = CredentialOffer::create();
 //         let basic_msg = A2AMessage::CredentialOffer(inserted_offer.clone());
 //         let oob = _create_oob().append_a2a_message(basic_msg).unwrap();

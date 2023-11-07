@@ -1,9 +1,17 @@
+use std::collections::HashMap;
+
 use aries_vcx::{
     handlers::{
-        issuance::{issuer::Issuer, mediated_issuer::issuer_find_message_to_handle},
-        util::OfferInfo,
+        issuance::issuer::Issuer,
+        util::{matches_opt_thread_id, matches_thread_id, OfferInfo},
     },
-    messages::AriesMessage,
+    messages::{
+        msg_fields::protocols::{
+            cred_issuance::{v1::CredentialIssuanceV1, CredentialIssuance},
+            notification::Notification,
+        },
+        AriesMessage,
+    },
     protocols::{issuance::issuer::state_machine::IssuerState, SendClosure},
 };
 use serde_json;
@@ -14,7 +22,7 @@ use crate::{
         api_global::profile::{get_main_anoncreds, get_main_wallet},
         api_handle::{
             connection, connection::HttpClient, credential_def, mediated_connection,
-            object_cache::ObjectCache, revocation_registry::REV_REG_MAP,
+            object_cache::ObjectCache, revocation_registry::REV_REG_MAP, ToU32,
         },
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -36,6 +44,99 @@ pub fn issuer_credential_create(source_id: String) -> LibvcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.add(Issuer::create(&source_id)?)
 }
 
+pub fn issuer_find_message_to_handle(
+    sm: &Issuer,
+    messages: HashMap<String, AriesMessage>,
+) -> Option<(String, AriesMessage)> {
+    trace!(
+        "issuer_find_messages_to_handle >>> messages: {:?}, state: {:?}",
+        messages,
+        sm
+    );
+
+    for (uid, message) in messages {
+        match sm.get_state() {
+            IssuerState::Initial => {
+                if let AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::ProposeCredential(_),
+                )) = &message
+                {
+                    info!(
+                        "In state IssuerState::OfferSet, found matching message ProposeCredential"
+                    );
+                    return Some((uid, message));
+                }
+            }
+            IssuerState::OfferSet => match &message {
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::RequestCredential(msg),
+                )) => {
+                    info!(
+                        "In state IssuerState::OfferSet, found potentially matching message \
+                         RequestCredential"
+                    );
+                    warn!("Matching for {}", sm.get_thread_id().unwrap().as_str()); // todo: the state machine has "test" thid, and doesnt match msg
+                    warn!("Msg: {msg:?}");
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::ProposeCredential(msg),
+                )) => {
+                    info!(
+                        "In state IssuerState::OfferSet, found potentially matching message \
+                         ProposeCredential"
+                    );
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::ReportProblem(msg) => {
+                    info!("In state IssuerState::OfferSet, found matching message ReportProblem");
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                _ => {}
+            },
+            IssuerState::CredentialSet => match &message {
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::Ack(msg),
+                )) => {
+                    info!(
+                        "In state IssuerState::CredentialSet, found matching message \
+                         CredentialIssuance::Ack"
+                    );
+                    if matches_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::Notification(Notification::Ack(msg)) => {
+                    info!(
+                        "In state IssuerState::CredentialSet, found matching message \
+                         Notification::Ack"
+                    );
+                    if matches_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::ReportProblem(msg) => {
+                    info!(
+                        "In state IssuerState::CredentialSet, found matching message ReportProblem"
+                    );
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                _ => {}
+            },
+            _ => {}
+        };
+    }
+    None
+}
+
 pub async fn update_state(
     handle: u32,
     message: Option<&str>,
@@ -44,7 +145,7 @@ pub async fn update_state(
     trace!("issuer_credential::update_state >>> ");
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     if credential.is_terminal_state() {
-        return Ok(credential.get_state().into());
+        return Ok(credential.get_state().to_u32());
     }
     if let Some(message) = message {
         let msg: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -64,7 +165,7 @@ pub async fn update_state(
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
     }
-    let res: u32 = credential.get_state().into();
+    let res: u32 = credential.get_state().to_u32();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(res)
 }
@@ -77,7 +178,7 @@ pub async fn update_state_with_message_nonmediated(
     trace!("issuer_credential::update_state_nonmediated >>> ");
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     if credential.is_terminal_state() {
-        return Ok(credential.get_state().into());
+        return Ok(credential.get_state().to_u32());
     }
 
     let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -91,13 +192,13 @@ pub async fn update_state_with_message_nonmediated(
     })?;
     credential.process_aries_msg(message).await?;
 
-    let res: u32 = credential.get_state().into();
+    let res: u32 = credential.get_state().to_u32();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(res)
 }
 
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
-    ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_state().into()))
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_state().to_u32()))
 }
 
 pub fn get_credential_status(handle: u32) -> LibvcxResult<u32> {
@@ -249,7 +350,7 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResul
             send_message(connection_handle, msg_issue_credential.into()).await?;
         }
     }
-    let state: u32 = credential.get_state().into();
+    let state: u32 = credential.get_state().to_u32();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)
 }
@@ -274,7 +375,7 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
             send_closure(msg_issue_credential.into()).await?;
         }
     }
-    let state: u32 = credential.get_state().into();
+    let state: u32 = credential.get_state().to_u32();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)
 }

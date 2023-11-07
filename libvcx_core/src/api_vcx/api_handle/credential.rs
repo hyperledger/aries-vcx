@@ -1,14 +1,23 @@
+use std::collections::HashMap;
+
 #[cfg(test)]
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::{
-    handlers::issuance::{holder::Holder, mediated_holder::holder_find_message_to_handle},
+    handlers::{
+        issuance::holder::Holder,
+        util::{matches_opt_thread_id, matches_thread_id},
+    },
     messages::{
-        msg_fields::protocols::cred_issuance::{
-            v1::{offer_credential::OfferCredentialV1, CredentialIssuanceV1},
-            CredentialIssuance,
+        msg_fields::protocols::{
+            cred_issuance::{
+                v1::{offer_credential::OfferCredentialV1, CredentialIssuanceV1},
+                CredentialIssuance,
+            },
+            notification::Notification,
         },
         AriesMessage,
     },
+    protocols::issuance::holder::state_machine::HolderState,
 };
 use serde_json;
 #[cfg(test)]
@@ -22,6 +31,7 @@ use crate::{
         api_handle::{
             mediated_connection::{self, send_message},
             object_cache::ObjectCache,
+            ToU32,
         },
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -126,6 +136,58 @@ pub async fn credential_create_with_msgid(
     Ok((handle, offer))
 }
 
+pub fn holder_find_message_to_handle(
+    sm: &Holder,
+    messages: HashMap<String, AriesMessage>,
+) -> Option<(String, AriesMessage)> {
+    trace!("holder_find_message_to_handle >>>");
+    for (uid, message) in messages {
+        match sm.get_state() {
+            HolderState::ProposalSet => {
+                if let AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::OfferCredential(offer),
+                )) = &message
+                {
+                    if matches_opt_thread_id!(offer, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+            }
+            HolderState::RequestSet => match &message {
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::IssueCredential(credential),
+                )) => {
+                    if matches_thread_id!(credential, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::ProblemReport(problem_report),
+                )) => {
+                    if matches_opt_thread_id!(problem_report, sm.get_thread_id().unwrap().as_str())
+                    {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::ReportProblem(problem_report) => {
+                    if matches_opt_thread_id!(problem_report, sm.get_thread_id().unwrap().as_str())
+                    {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::Notification(Notification::ProblemReport(msg)) => {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                _ => {}
+            },
+            _ => {}
+        };
+    }
+    None
+}
+
 pub async fn update_state(
     credential_handle: u32,
     message: Option<&str>,
@@ -135,7 +197,7 @@ pub async fn update_state(
 
     trace!("credential::update_state >>> ");
     if credential.is_terminal_state() {
-        return Ok(credential.get_state().into());
+        return Ok(credential.get_state().to_u32());
     }
     let (mediator_uid, aries_msg) = if let Some(message) = message {
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -182,7 +244,7 @@ pub async fn update_state(
             }
         }
     }
-    let state = credential.get_state().into();
+    let state = credential.get_state().to_u32();
     HANDLE_MAP.insert(credential_handle, credential)?;
     Ok(state)
 }
@@ -244,7 +306,7 @@ pub async fn delete_credential(handle: u32) -> LibvcxResult<()> {
 }
 
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
-    HANDLE_MAP.get(handle, |credential| Ok(credential.get_state().into()))
+    HANDLE_MAP.get(handle, |credential| Ok(credential.get_state().to_u32()))
 }
 
 pub fn generate_credential_request_msg(

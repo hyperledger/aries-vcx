@@ -38,15 +38,15 @@ use crate::{
 };
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct SmConnectionInviter {
+pub struct SmMediatedConnectionInviter {
     pub source_id: String,
     thread_id: String,
     pub pairwise_info: PairwiseInfo,
-    pub state: InviterFullState,
+    pub state: MediatedInviterFullState,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum InviterFullState {
+pub enum MediatedInviterFullState {
     Initial(InitialState),
     Invited(InvitedState),
     Requested(RequestedState),
@@ -55,7 +55,7 @@ pub enum InviterFullState {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum InviterState {
+pub enum MediatedInviterState {
     Initial,
     Invited,
     Requested,
@@ -63,7 +63,7 @@ pub enum InviterState {
     Completed,
 }
 
-impl PartialEq for SmConnectionInviter {
+impl PartialEq for SmMediatedConnectionInviter {
     fn eq(&self, other: &Self) -> bool {
         self.source_id == other.source_id
             && self.pairwise_info == other.pairwise_info
@@ -71,24 +71,24 @@ impl PartialEq for SmConnectionInviter {
     }
 }
 
-impl From<InviterFullState> for InviterState {
-    fn from(state: InviterFullState) -> InviterState {
+impl From<MediatedInviterFullState> for MediatedInviterState {
+    fn from(state: MediatedInviterFullState) -> MediatedInviterState {
         match state {
-            InviterFullState::Initial(_) => InviterState::Initial,
-            InviterFullState::Invited(_) => InviterState::Invited,
-            InviterFullState::Requested(_) => InviterState::Requested,
-            InviterFullState::Responded(_) => InviterState::Responded,
-            InviterFullState::Completed(_) => InviterState::Completed,
+            MediatedInviterFullState::Initial(_) => MediatedInviterState::Initial,
+            MediatedInviterFullState::Invited(_) => MediatedInviterState::Invited,
+            MediatedInviterFullState::Requested(_) => MediatedInviterState::Requested,
+            MediatedInviterFullState::Responded(_) => MediatedInviterState::Responded,
+            MediatedInviterFullState::Completed(_) => MediatedInviterState::Completed,
         }
     }
 }
 
-impl SmConnectionInviter {
+impl SmMediatedConnectionInviter {
     pub fn new(source_id: &str, pairwise_info: PairwiseInfo) -> Self {
         Self {
             source_id: source_id.to_string(),
             thread_id: Uuid::new_v4().to_string(),
-            state: InviterFullState::Initial(InitialState::new(None)),
+            state: MediatedInviterFullState::Initial(InitialState::new(None)),
             pairwise_info,
         }
     }
@@ -97,7 +97,7 @@ impl SmConnectionInviter {
         source_id: String,
         thread_id: String,
         pairwise_info: PairwiseInfo,
-        state: InviterFullState,
+        state: MediatedInviterFullState,
     ) -> Self {
         Self {
             source_id,
@@ -115,27 +115,27 @@ impl SmConnectionInviter {
         &self.source_id
     }
 
-    pub fn get_state(&self) -> InviterState {
-        InviterState::from(self.state.clone())
+    pub fn get_state(&self) -> MediatedInviterState {
+        MediatedInviterState::from(self.state.clone())
     }
 
-    pub fn state_object(&self) -> &InviterFullState {
+    pub fn state_object(&self) -> &MediatedInviterFullState {
         &self.state
     }
 
     pub fn their_did_doc(&self) -> Option<AriesDidDoc> {
         match self.state {
-            InviterFullState::Initial(_) => None,
-            InviterFullState::Invited(ref _state) => None,
-            InviterFullState::Requested(ref state) => Some(state.did_doc.clone()),
-            InviterFullState::Responded(ref state) => Some(state.did_doc.clone()),
-            InviterFullState::Completed(ref state) => Some(state.did_doc.clone()),
+            MediatedInviterFullState::Initial(_) => None,
+            MediatedInviterFullState::Invited(ref _state) => None,
+            MediatedInviterFullState::Requested(ref state) => Some(state.did_doc.clone()),
+            MediatedInviterFullState::Responded(ref state) => Some(state.did_doc.clone()),
+            MediatedInviterFullState::Completed(ref state) => Some(state.did_doc.clone()),
         }
     }
 
     pub fn get_invitation(&self) -> Option<&AnyInvitation> {
         match self.state {
-            InviterFullState::Invited(ref state) => Some(&state.invitation),
+            MediatedInviterFullState::Invited(ref state) => Some(&state.invitation),
             _ => None,
         }
     }
@@ -159,17 +159,17 @@ impl SmConnectionInviter {
 
     pub fn get_remote_protocols(&self) -> Option<Vec<ProtocolDescriptor>> {
         match self.state {
-            InviterFullState::Completed(ref state) => state.protocols.clone(),
+            MediatedInviterFullState::Completed(ref state) => state.protocols.clone(),
             _ => None,
         }
     }
 
     pub fn is_in_null_state(&self) -> bool {
-        matches!(self.state, InviterFullState::Initial(_))
+        matches!(self.state, MediatedInviterFullState::Initial(_))
     }
 
     pub fn is_in_final_state(&self) -> bool {
-        matches!(self.state, InviterFullState::Completed(_))
+        matches!(self.state, MediatedInviterFullState::Completed(_))
     }
 
     pub fn remote_did(&self) -> VcxResult<String> {
@@ -198,12 +198,12 @@ impl SmConnectionInviter {
 
     pub fn can_progress_state(&self, message: &AriesMessage) -> bool {
         match self.state {
-            InviterFullState::Invited(_) => matches!(
+            MediatedInviterFullState::Invited(_) => matches!(
                 message,
                 AriesMessage::Connection(Connection::Request(_))
                     | AriesMessage::Connection(Connection::ProblemReport(_))
             ),
-            InviterFullState::Responded(_) => matches!(
+            MediatedInviterFullState::Responded(_) => matches!(
                 message,
                 AriesMessage::Notification(_)
                     | AriesMessage::TrustPing(TrustPing::Ping(_))
@@ -219,7 +219,7 @@ impl SmConnectionInviter {
         service_endpoint: Url,
     ) -> VcxResult<Self> {
         let state = match self.state {
-            InviterFullState::Initial(state) => {
+            MediatedInviterFullState::Initial(state) => {
                 let id = self.thread_id.clone();
                 let content = PairwiseInvitationContent::builder()
                     .label(self.source_id.clone())
@@ -232,7 +232,7 @@ impl SmConnectionInviter {
 
                 let invitation = AnyInvitation::Con(invite);
 
-                InviterFullState::Invited((state, invitation).into())
+                MediatedInviterFullState::Invited((state, invitation).into())
             }
             _ => self.state.clone(),
         };
@@ -248,12 +248,12 @@ impl SmConnectionInviter {
         new_service_endpoint: Url,
         send_message: SendClosureConnection<'_>,
     ) -> VcxResult<Self> {
-        if !matches!(self.state, InviterFullState::Initial(_)) {
+        if !matches!(self.state, MediatedInviterFullState::Initial(_)) {
             verify_thread_id(&self.get_thread_id(), &request.clone().into())?;
         };
 
         let (state, thread_id) = match self.state {
-            InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
+            MediatedInviterFullState::Invited(_) | MediatedInviterFullState::Initial(_) => {
                 if let Err(err) = request.content.connection.did_doc.validate() {
                     let content = ProblemReportContent::builder()
                         .explain(err.to_string())
@@ -277,7 +277,7 @@ impl SmConnectionInviter {
                         .await
                         .ok();
                     return Ok(Self {
-                        state: InviterFullState::Initial((problem_report).into()),
+                        state: MediatedInviterFullState::Initial((problem_report).into()),
                         ..self
                     });
                 };
@@ -299,7 +299,7 @@ impl SmConnectionInviter {
                     )
                     .await?;
                 (
-                    InviterFullState::Requested((request, signed_response).into()),
+                    MediatedInviterFullState::Requested((request, signed_response).into()),
                     thread_id,
                 )
             }
@@ -315,8 +315,12 @@ impl SmConnectionInviter {
 
     pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
-            InviterFullState::Responded(_) => InviterFullState::Initial((problem_report).into()),
-            InviterFullState::Invited(_) => InviterFullState::Initial((problem_report).into()),
+            MediatedInviterFullState::Responded(_) => {
+                MediatedInviterFullState::Initial((problem_report).into())
+            }
+            MediatedInviterFullState::Invited(_) => {
+                MediatedInviterFullState::Initial((problem_report).into())
+            }
             _ => self.state,
         };
         Ok(Self { state, ..self })
@@ -327,14 +331,14 @@ impl SmConnectionInviter {
         send_message: SendClosureConnection<'_>,
     ) -> VcxResult<Self> {
         let state = match self.state {
-            InviterFullState::Requested(state) => {
+            MediatedInviterFullState::Requested(state) => {
                 send_message(
                     state.signed_response.clone().into(),
                     self.pairwise_info.pw_vk.clone(),
                     state.did_doc.clone(),
                 )
                 .await?;
-                InviterFullState::Responded(state.into())
+                MediatedInviterFullState::Responded(state.into())
             }
             _ => self.state,
         };
@@ -343,8 +347,8 @@ impl SmConnectionInviter {
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
         let state = match self.state {
-            InviterFullState::Completed(state) => {
-                InviterFullState::Completed((state, disclose.content.protocols).into())
+            MediatedInviterFullState::Completed(state) => {
+                MediatedInviterFullState::Completed((state, disclose.content.protocols).into())
             }
             _ => self.state,
         };
@@ -354,8 +358,8 @@ impl SmConnectionInviter {
     pub async fn handle_confirmation_message(self, msg: &AriesMessage) -> VcxResult<Self> {
         verify_thread_id(&self.get_thread_id(), msg)?;
         match self.state {
-            InviterFullState::Responded(state) => Ok(Self {
-                state: InviterFullState::Completed(state.into()),
+            MediatedInviterFullState::Responded(state) => Ok(Self {
+                state: MediatedInviterFullState::Completed(state.into()),
                 ..self
             }),
             _ => Ok(self),
@@ -375,7 +379,7 @@ impl SmConnectionInviter {
         new_service_endpoint: Url,
     ) -> VcxResult<Response> {
         match &self.state {
-            InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
+            MediatedInviterFullState::Invited(_) | MediatedInviterFullState::Initial(_) => {
                 let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
                 let mut did_doc = AriesDidDoc::default();
                 let did = new_pairwise_info.pw_did.clone();

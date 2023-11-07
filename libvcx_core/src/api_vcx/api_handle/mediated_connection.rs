@@ -23,7 +23,7 @@ use crate::{
             profile::{get_main_ledger_read, get_main_wallet},
             wallet::{wallet_sign, wallet_verify},
         },
-        api_handle::object_cache::ObjectCache,
+        api_handle::{object_cache::ObjectCache, ToU32},
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
@@ -123,7 +123,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 pub fn get_state(handle: u32) -> u32 {
     trace!("get_state >>> handle = {:?}", handle);
     CONNECTION_MAP
-        .get(handle, |connection| Ok(connection.get_state().into()))
+        .get(handle, |connection| Ok(connection.get_state().to_u32()))
         .unwrap_or(0)
 }
 
@@ -226,7 +226,7 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
             Some(message),
         )
         .await?;
-    let state: u32 = connection.get_state().into();
+    let state: u32 = connection.get_state().to_u32();
     CONNECTION_MAP.insert(handle, connection)?;
     Ok(state)
 }
@@ -272,7 +272,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
             .find_message_and_update_state(get_main_wallet()?.as_ref(), &get_main_agency_client()?)
             .await?
     };
-    let state: u32 = connection.get_state().into();
+    let state: u32 = connection.get_state().to_u32();
     CONNECTION_MAP.insert(handle, connection)?;
     Ok(state)
 }

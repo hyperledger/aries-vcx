@@ -1,14 +1,21 @@
+use std::collections::HashMap;
+
 use aries_vcx::{
-    handlers::proof_presentation::{
-        mediated_prover::prover_find_message_to_handle, prover::Prover,
+    handlers::{
+        proof_presentation::prover::Prover,
+        util::{matches_opt_thread_id, matches_thread_id},
     },
     messages::{
-        msg_fields::protocols::present_proof::{
-            v1::{request::RequestPresentationV1, PresentProofV1},
-            PresentProof,
+        msg_fields::protocols::{
+            notification::Notification,
+            present_proof::{
+                v1::{request::RequestPresentationV1, PresentProofV1},
+                PresentProof,
+            },
         },
         AriesMessage,
     },
+    protocols::proof_presentation::prover::state_machine::ProverState,
 };
 use serde_json;
 
@@ -16,7 +23,7 @@ use super::mediated_connection::send_message;
 use crate::{
     api_vcx::{
         api_global::profile::{get_main_anoncreds, get_main_ledger_read, get_main_wallet},
-        api_handle::{mediated_connection, object_cache::ObjectCache},
+        api_handle::{mediated_connection, object_cache::ObjectCache, ToU32},
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
@@ -85,10 +92,73 @@ pub async fn create_with_msgid(
 
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     HANDLE_MAP
-        .get(handle, |proof| Ok(proof.get_state().into()))
+        .get(handle, |proof| Ok(proof.get_state().to_u32()))
         .map_err(|e| {
             LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle, e.to_string())
         })
+}
+
+pub fn prover_find_message_to_handle(
+    sm: &Prover,
+    messages: HashMap<String, AriesMessage>,
+) -> Option<(String, AriesMessage)> {
+    trace!("prover_find_message_to_handle >>> messages: {:?}", messages);
+    for (uid, message) in messages {
+        match sm.get_state() {
+            ProverState::PresentationProposalSent => match &message {
+                AriesMessage::ReportProblem(msg) => {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::Notification(Notification::ProblemReport(msg)) => {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::PresentProof(PresentProof::V1(
+                    PresentProofV1::RequestPresentation(msg),
+                )) => {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                _ => {}
+            },
+            ProverState::PresentationSent => match &message {
+                AriesMessage::Notification(Notification::Ack(msg)) => {
+                    if matches_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::Ack(msg))) => {
+                    if matches_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::ReportProblem(msg) => {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::Notification(Notification::ProblemReport(msg)) => {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                AriesMessage::PresentProof(PresentProof::V1(PresentProofV1::ProblemReport(
+                    msg,
+                ))) => {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
+                        return Some((uid, message));
+                    }
+                }
+                _ => {}
+            },
+            _ => {}
+        };
+    }
+    None
 }
 
 pub async fn update_state(
@@ -104,7 +174,7 @@ pub async fn update_state(
     );
     if !proof.progressable_by_message() {
         trace!("disclosed_proof::update_state >> found no available transition");
-        return Ok(proof.get_state().into());
+        return Ok(proof.get_state().to_u32());
     }
 
     if let Some(message) = message {
@@ -133,7 +203,7 @@ pub async fn update_state(
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
     }
-    let state: u32 = proof.get_state().into();
+    let state: u32 = proof.get_state().to_u32();
     HANDLE_MAP.insert(handle, proof)?;
     Ok(state)
 }

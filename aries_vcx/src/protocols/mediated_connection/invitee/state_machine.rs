@@ -38,15 +38,15 @@ use crate::{
 };
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct SmConnectionInvitee {
+pub struct SmMediatedConnectionInvitee {
     source_id: String,
     thread_id: String,
     pairwise_info: PairwiseInfo,
-    state: InviteeFullState,
+    state: MediatedInviteeFullState,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum InviteeFullState {
+pub enum MediatedInviteeFullState {
     Initial(InitialState),
     Invited(InvitedState),
     Requested(RequestedState),
@@ -55,7 +55,7 @@ pub enum InviteeFullState {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum InviteeState {
+pub enum MediatedInviteeState {
     Initial,
     Invited,
     Requested,
@@ -63,7 +63,7 @@ pub enum InviteeState {
     Completed,
 }
 
-impl PartialEq for SmConnectionInvitee {
+impl PartialEq for SmMediatedConnectionInvitee {
     fn eq(&self, other: &Self) -> bool {
         self.source_id == other.source_id
             && self.pairwise_info == other.pairwise_info
@@ -71,24 +71,24 @@ impl PartialEq for SmConnectionInvitee {
     }
 }
 
-impl From<InviteeFullState> for InviteeState {
-    fn from(state: InviteeFullState) -> InviteeState {
+impl From<MediatedInviteeFullState> for MediatedInviteeState {
+    fn from(state: MediatedInviteeFullState) -> MediatedInviteeState {
         match state {
-            InviteeFullState::Initial(_) => InviteeState::Initial,
-            InviteeFullState::Invited(_) => InviteeState::Invited,
-            InviteeFullState::Requested(_) => InviteeState::Requested,
-            InviteeFullState::Responded(_) => InviteeState::Responded,
-            InviteeFullState::Completed(_) => InviteeState::Completed,
+            MediatedInviteeFullState::Initial(_) => MediatedInviteeState::Initial,
+            MediatedInviteeFullState::Invited(_) => MediatedInviteeState::Invited,
+            MediatedInviteeFullState::Requested(_) => MediatedInviteeState::Requested,
+            MediatedInviteeFullState::Responded(_) => MediatedInviteeState::Responded,
+            MediatedInviteeFullState::Completed(_) => MediatedInviteeState::Completed,
         }
     }
 }
 
-impl SmConnectionInvitee {
+impl SmMediatedConnectionInvitee {
     pub fn new(source_id: &str, pairwise_info: PairwiseInfo, did_doc: AriesDidDoc) -> Self {
-        SmConnectionInvitee {
+        SmMediatedConnectionInvitee {
             source_id: source_id.to_string(),
             thread_id: String::new(),
-            state: InviteeFullState::Initial(InitialState::new(None, Some(did_doc))),
+            state: MediatedInviteeFullState::Initial(InitialState::new(None, Some(did_doc))),
             pairwise_info,
         }
     }
@@ -97,9 +97,9 @@ impl SmConnectionInvitee {
         source_id: String,
         thread_id: String,
         pairwise_info: PairwiseInfo,
-        state: InviteeFullState,
+        state: MediatedInviteeFullState,
     ) -> Self {
-        SmConnectionInvitee {
+        SmMediatedConnectionInvitee {
             source_id,
             thread_id,
             pairwise_info,
@@ -115,45 +115,45 @@ impl SmConnectionInvitee {
         &self.source_id
     }
 
-    pub fn get_state(&self) -> InviteeState {
-        InviteeState::from(self.state.clone())
+    pub fn get_state(&self) -> MediatedInviteeState {
+        MediatedInviteeState::from(self.state.clone())
     }
 
-    pub fn state_object(&self) -> &InviteeFullState {
+    pub fn state_object(&self) -> &MediatedInviteeFullState {
         &self.state
     }
 
     pub fn is_in_null_state(&self) -> bool {
-        matches!(self.state, InviteeFullState::Initial(_))
+        matches!(self.state, MediatedInviteeFullState::Initial(_))
     }
 
     pub fn is_in_final_state(&self) -> bool {
-        matches!(self.state, InviteeFullState::Completed(_))
+        matches!(self.state, MediatedInviteeFullState::Completed(_))
     }
 
     pub fn their_did_doc(&self) -> Option<AriesDidDoc> {
         match self.state {
-            InviteeFullState::Initial(ref state) => state.did_doc.clone(),
-            InviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
-            InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
-            InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
-            InviteeFullState::Completed(ref state) => Some(state.did_doc.clone()),
+            MediatedInviteeFullState::Initial(ref state) => state.did_doc.clone(),
+            MediatedInviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
+            MediatedInviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
+            MediatedInviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
+            MediatedInviteeFullState::Completed(ref state) => Some(state.did_doc.clone()),
         }
     }
 
     pub fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match self.state {
-            InviteeFullState::Initial(ref state) => state.did_doc.clone(),
-            InviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
-            InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
-            InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
-            InviteeFullState::Completed(ref state) => Some(state.bootstrap_did_doc.clone()),
+            MediatedInviteeFullState::Initial(ref state) => state.did_doc.clone(),
+            MediatedInviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
+            MediatedInviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
+            MediatedInviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
+            MediatedInviteeFullState::Completed(ref state) => Some(state.bootstrap_did_doc.clone()),
         }
     }
 
     pub fn get_invitation(&self) -> Option<&AnyInvitation> {
         match self.state {
-            InviteeFullState::Invited(ref state) => Some(&state.invitation),
+            MediatedInviteeFullState::Invited(ref state) => Some(&state.invitation),
             _ => None,
         }
     }
@@ -177,7 +177,7 @@ impl SmConnectionInvitee {
 
     pub fn get_remote_protocols(&self) -> Option<Vec<ProtocolDescriptor>> {
         match self.state {
-            InviteeFullState::Completed(ref state) => state.protocols.clone(),
+            MediatedInviteeFullState::Completed(ref state) => state.protocols.clone(),
             _ => None,
         }
     }
@@ -208,7 +208,7 @@ impl SmConnectionInvitee {
 
     pub fn can_progress_state(&self, message: &AriesMessage) -> bool {
         match self.state {
-            InviteeFullState::Requested(_) => matches!(
+            MediatedInviteeFullState::Requested(_) => matches!(
                 message,
                 AriesMessage::Connection(Connection::Response(_))
                     | AriesMessage::Connection(Connection::ProblemReport(_))
@@ -223,7 +223,7 @@ impl SmConnectionInvitee {
         service_endpoint: Url,
     ) -> VcxResult<(Request, String)> {
         match &self.state {
-            InviteeFullState::Invited(state) => {
+            MediatedInviteeFullState::Invited(state) => {
                 let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
 
                 let id = Uuid::new_v4().to_string();
@@ -279,7 +279,7 @@ impl SmConnectionInvitee {
 
     fn build_connection_ack_msg(&self) -> VcxResult<Ack> {
         match &self.state {
-            InviteeFullState::Responded(_) => {
+            MediatedInviteeFullState::Responded(_) => {
                 let content = AckContent::builder().status(AckStatus::Ok).build();
                 let decorators = AckDecorators::builder()
                     .thread(Thread::builder().thid(self.thread_id.to_owned()).build())
@@ -308,7 +308,7 @@ impl SmConnectionInvitee {
         };
 
         let state = match state {
-            InviteeFullState::Initial(state) => InviteeFullState::Invited(
+            MediatedInviteeFullState::Initial(state) => MediatedInviteeFullState::Invited(
                 (
                     state.clone(),
                     invitation,
@@ -343,7 +343,7 @@ impl SmConnectionInvitee {
         send_message: SendClosureConnection<'_>,
     ) -> VcxResult<Self> {
         let (state, thread_id) = match self.state {
-            InviteeFullState::Invited(ref state) => {
+            MediatedInviteeFullState::Invited(ref state) => {
                 let ddo = self.their_did_doc().ok_or(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidState,
                     "Missing did doc",
@@ -357,7 +357,7 @@ impl SmConnectionInvitee {
                 )
                 .await?;
                 (
-                    InviteeFullState::Requested((state.clone(), request, ddo).into()),
+                    MediatedInviteeFullState::Requested((state.clone(), request, ddo).into()),
                     thread_id,
                 )
             }
@@ -379,7 +379,7 @@ impl SmConnectionInvitee {
         verify_thread_id(&self.get_thread_id(), &response.clone().into())?;
 
         let state = match self.state {
-            InviteeFullState::Requested(state) => {
+            MediatedInviteeFullState::Requested(state) => {
                 let remote_vk: String = state.did_doc.recipient_keys()?.get(0).cloned().ok_or(
                     AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidState,
@@ -412,7 +412,7 @@ impl SmConnectionInvitee {
                                 ),
                             ));
                         }
-                        InviteeFullState::Responded((state, con_data).into())
+                        MediatedInviteeFullState::Responded((state, con_data).into())
                     }
                     Err(err) => {
                         let content = ProblemReportContent::builder()
@@ -437,7 +437,7 @@ impl SmConnectionInvitee {
                         )
                         .await
                         .ok();
-                        InviteeFullState::Initial((state.clone(), problem_report).into())
+                        MediatedInviteeFullState::Initial((state.clone(), problem_report).into())
                     }
                 }
             }
@@ -448,8 +448,8 @@ impl SmConnectionInvitee {
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
         let state = match self.state {
-            InviteeFullState::Completed(state) => {
-                InviteeFullState::Completed((state, disclose.content.protocols).into())
+            MediatedInviteeFullState::Completed(state) => {
+                MediatedInviteeFullState::Completed((state, disclose.content.protocols).into())
             }
             _ => self.state,
         };
@@ -458,11 +458,11 @@ impl SmConnectionInvitee {
 
     pub async fn handle_send_ack(self, send_message: SendClosureConnection<'_>) -> VcxResult<Self> {
         let state = match self.state {
-            InviteeFullState::Responded(ref state) => {
+            MediatedInviteeFullState::Responded(ref state) => {
                 let sender_vk = self.pairwise_info().pw_vk.clone();
                 let did_doc = state.resp_con_data.did_doc.clone();
                 send_message(self.build_connection_ack_msg()?.into(), sender_vk, did_doc).await?;
-                InviteeFullState::Completed((state.clone()).into())
+                MediatedInviteeFullState::Completed((state.clone()).into())
             }
             _ => self.state.clone(),
         };
@@ -471,11 +471,11 @@ impl SmConnectionInvitee {
 
     pub fn handle_problem_report(self, _problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
-            InviteeFullState::Requested(_state) => {
-                InviteeFullState::Initial(InitialState::new(None, None))
+            MediatedInviteeFullState::Requested(_state) => {
+                MediatedInviteeFullState::Initial(InitialState::new(None, None))
             }
-            InviteeFullState::Invited(_state) => {
-                InviteeFullState::Initial(InitialState::new(None, None))
+            MediatedInviteeFullState::Invited(_state) => {
+                MediatedInviteeFullState::Initial(InitialState::new(None, None))
             }
             _ => self.state.clone(),
         };

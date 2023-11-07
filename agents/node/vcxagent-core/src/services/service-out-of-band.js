@@ -1,4 +1,4 @@
-const { OutOfBandSender, OutOfBandReceiver } = require('@hyperledger/node-vcx-wrapper')
+const { OutOfBandSender, OutOfBandReceiver, Connection } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logger, saveConnection, loadConnection }) {
   function _createOobSender (message, label) {
@@ -21,9 +21,8 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
   }
 
   async function createConnectionFromOobMsg (connectionId, oobMsg) {
-    const oob = OutOfBandReceiver.createWithMessage(oobMsg)
-    const connection = await oob.buildConnection()
-    await connection.connect('{}')
+    const connection = await Connection.createWithInvite({ id: 'foo', invite: oobMsg })
+    await connection.connect()
     await saveConnection(connectionId, connection)
   }
 

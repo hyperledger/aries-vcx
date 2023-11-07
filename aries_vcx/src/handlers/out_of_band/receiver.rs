@@ -1,17 +1,11 @@
 use std::{clone::Clone, fmt::Display, str::FromStr};
 
-use agency_client::agency_client::AgencyClient;
-use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
 use base64::{engine::general_purpose, Engine};
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     decorators::attachment::{Attachment, AttachmentType},
     msg_fields::protocols::{
         cred_issuance::v1::offer_credential::OfferCredentialV1,
-        out_of_band::{
-            invitation::{Invitation, OobService},
-            OutOfBand,
-        },
+        out_of_band::{invitation::Invitation, OutOfBand},
         present_proof::v1::request::RequestPresentationV1,
     },
     AriesMessage,
@@ -19,15 +13,7 @@ use messages::{
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{
-    common::ledger::transactions::resolve_service,
-    errors::error::prelude::*,
-    handlers::{
-        mediated_connection::MediatedConnection,
-        util::{AnyInvitation, AttachmentId},
-    },
-    protocols::connection::GenericConnection,
-};
+use crate::{errors::error::prelude::*, handlers::util::AttachmentId};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {
@@ -56,94 +42,6 @@ impl OutOfBandReceiver {
         self.oob.id.clone()
     }
 
-    pub async fn connection_exists<'a>(
-        &self,
-        indy_ledger: &impl IndyLedgerRead,
-        connections: &'a Vec<&'a MediatedConnection>,
-    ) -> VcxResult<Option<&'a MediatedConnection>> {
-        trace!("OutOfBandReceiver::connection_exists >>>");
-        for service in &self.oob.content.services {
-            for connection in connections {
-                match connection.bootstrap_did_doc() {
-                    Some(did_doc) => {
-                        if let OobService::Did(did) = service {
-                            if did == &did_doc.id {
-                                return Ok(Some(connection));
-                            }
-                        };
-                        if did_doc.get_service()? == resolve_service(indy_ledger, service).await? {
-                            return Ok(Some(connection));
-                        };
-                    }
-                    None => break,
-                }
-            }
-        }
-        Ok(None)
-    }
-
-    pub async fn nonmediated_connection_exists<'a, I, T>(
-        &self,
-        indy_ledger: &impl IndyLedgerRead,
-        connections: I,
-    ) -> Option<T>
-    where
-        I: IntoIterator<Item = (T, &'a GenericConnection)> + Clone,
-    {
-        trace!("OutOfBandReceiver::connection_exists >>>");
-
-        for service in &self.oob.content.services {
-            for (idx, connection) in connections.clone() {
-                if Self::connection_matches_service(indy_ledger, connection, service).await {
-                    return Some(idx);
-                }
-            }
-        }
-
-        None
-    }
-
-    async fn connection_matches_service(
-        indy_ledger: &impl IndyLedgerRead,
-        connection: &GenericConnection,
-        service: &OobService,
-    ) -> bool {
-        match connection.bootstrap_did_doc() {
-            None => false,
-            Some(did_doc) => Self::did_doc_matches_service(indy_ledger, service, did_doc).await,
-        }
-    }
-
-    async fn did_doc_matches_service(
-        indy_ledger: &impl IndyLedgerRead,
-        service: &OobService,
-        did_doc: &AriesDidDoc,
-    ) -> bool {
-        // Ugly, but it's best to short-circuit.
-        Self::did_doc_matches_service_did(service, did_doc)
-            || Self::did_doc_matches_resolved_service(indy_ledger, service, did_doc)
-                .await
-                .unwrap_or(false)
-    }
-
-    fn did_doc_matches_service_did(service: &OobService, did_doc: &AriesDidDoc) -> bool {
-        match service {
-            OobService::Did(did) => did == &did_doc.id,
-            _ => false,
-        }
-    }
-
-    async fn did_doc_matches_resolved_service(
-        indy_ledger: &impl IndyLedgerRead,
-        service: &OobService,
-        did_doc: &AriesDidDoc,
-    ) -> VcxResult<bool> {
-        let did_doc_service = did_doc.get_service()?;
-        let oob_service = resolve_service(indy_ledger, service).await?;
-
-        Ok(did_doc_service == oob_service)
-    }
-
     // TODO: There may be multiple A2AMessages in a single OoB msg
     pub fn extract_a2a_message(&self) -> VcxResult<Option<AriesMessage>> {
         trace!("OutOfBandReceiver::extract_a2a_message >>>");
@@ -158,28 +56,6 @@ impl OutOfBandReceiver {
         } else {
             Ok(None)
         }
-    }
-
-    pub async fn build_connection(
-        &self,
-        wallet: &impl BaseWallet,
-        agency_client: &AgencyClient,
-        did_doc: AriesDidDoc,
-        autohop_enabled: bool,
-    ) -> VcxResult<MediatedConnection> {
-        trace!(
-            "OutOfBandReceiver::build_connection >>> autohop_enabled: {}",
-            autohop_enabled
-        );
-        MediatedConnection::create_with_invite(
-            &self.oob.id,
-            wallet,
-            agency_client,
-            AnyInvitation::Oob(self.oob.clone()),
-            did_doc,
-            autohop_enabled,
-        )
-        .await
     }
 
     pub fn to_aries_message(&self) -> AriesMessage {
