@@ -43,7 +43,7 @@ mod tests {
     };
 
     #[test]
-    fn test_status_request() {
+    fn test_key_list_update() {
         let expected = json!(
             {
                 "@id": "123456781",

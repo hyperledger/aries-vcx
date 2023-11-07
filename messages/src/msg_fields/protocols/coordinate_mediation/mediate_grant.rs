@@ -30,7 +30,7 @@ mod tests {
     };
 
     #[test]
-    fn test_status_request() {
+    fn test_mediate_grant() {
         let expected = json!(
             {
                 "@id": "123456781",

@@ -50,11 +50,11 @@ mod tests {
     };
 
     #[test]
-    fn test_status_request() {
+    fn test_keylist() {
         let expected = json!(
             {
                 "@id": "123456781",
-                "@type": "<baseuri>/keylist",
+                "@type": "https://didcomm.org/coordinate-mediation/1.0/keylist",
                 "keys": [
                     {
                         "recipient_key": "did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH"
@@ -70,7 +70,11 @@ mod tests {
         let key_item = KeylistItem::builder()
             .recipient_key("did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH".to_owned())
             .build();
-        let pagination_state = KeylistPagination::builder().count(30).offset(30).build();
+        let pagination_state = KeylistPagination::builder()
+            .count(30)
+            .offset(30)
+            .remaining(100)
+            .build();
         let content = KeylistContent::builder()
             .pagination(pagination_state)
             .keys(vec![key_item])

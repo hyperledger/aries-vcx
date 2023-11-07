@@ -9,7 +9,7 @@ pub type KeylistUpdateResponse =
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct KeylistUpdateResponseContent {
-    pub updates: Vec<KeylistUpdateResponseItem>,
+    pub updated: Vec<KeylistUpdateResponseItem>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
@@ -21,9 +21,13 @@ pub struct KeylistUpdateResponseItem {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum KeylistUpdateItemResult {
+    #[serde(rename = "client_error")]
     ClientError,
+    #[serde(rename = "server_error")]
     ServerError,
+    #[serde(rename = "no_change")]
     NoChange,
+    #[serde(rename = "success")]
     Success,
 }
 
@@ -46,7 +50,7 @@ mod tests {
     };
 
     #[test]
-    fn test_status_request() {
+    fn test_keylist_update_response() {
         let expected = json!(
             {
                 "@id": "123456781",
@@ -66,14 +70,14 @@ mod tests {
             .result(KeylistUpdateItemResult::ClientError)
             .build();
         let content = KeylistUpdateResponseContent::builder()
-            .updates(vec![update_item1])
+            .updated(vec![update_item1])
             .build();
         let decorators = KeylistUpdateResponseDecorators::builder().build();
 
         test_utils::test_msg(
             content,
             decorators,
-            CoordinateMediationTypeV1_0::KeylistUpdate,
+            CoordinateMediationTypeV1_0::KeylistUpdateResponse,
             expected,
         );
     }
