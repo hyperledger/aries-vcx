@@ -16,7 +16,7 @@ pub enum CoordinateMediationType {
 #[transitive(into(CoordinateMediationType, Protocol))]
 #[msg_type(major = 1)]
 pub enum CoordinateMediationTypeV1 {
-    #[msg_type(minor = 0, roles = "Role::Mediator")]
+    #[msg_type(minor = 0, roles = "Role::Mediator, Role::Recipient")]
     V1_0(MsgKindType<CoordinateMediationTypeV1_0>),
 }
 

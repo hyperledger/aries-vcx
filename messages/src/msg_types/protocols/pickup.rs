@@ -16,7 +16,7 @@ pub enum PickupType {
 #[transitive(into(PickupType, Protocol))]
 #[msg_type(major = 2)]
 pub enum PickupTypeV2 {
-    #[msg_type(minor = 0, roles = "Role::Mediator")]
+    #[msg_type(minor = 0, roles = "Role::Mediator, Role::Recipient")]
     V2_0(MsgKindType<PickupTypeV2_0>),
 }
 
