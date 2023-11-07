@@ -1,6 +1,7 @@
 use messages::{
     msg_fields::protocols::{
         connection::{invitation::Invitation, Connection},
+        coordinate_mediation::CoordinateMediation,
         cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
         discover_features::DiscoverFeatures,
         notification::Notification,
@@ -215,6 +216,27 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
             matches_opt_thread_id!(msg, thread_id)
         }
         AriesMessage::Pickup(Pickup::LiveDeliveryChange(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CoordinateMediation(CoordinateMediation::MediateRequest(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CoordinateMediation(CoordinateMediation::MediateDeny(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CoordinateMediation(CoordinateMediation::MediateGrant(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CoordinateMediation(CoordinateMediation::KeylistUpdate(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CoordinateMediation(CoordinateMediation::KeylistUpdateResponse(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CoordinateMediation(CoordinateMediation::KeylistQuery(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CoordinateMediation(CoordinateMediation::Keylist(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
         }
     };

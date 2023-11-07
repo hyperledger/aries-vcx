@@ -1,6 +1,7 @@
 pub mod basic_message;
 pub mod common;
 pub mod connection;
+pub mod coordinate_mediation;
 pub mod cred_issuance;
 pub mod discover_features;
 pub mod notification;

@@ -29,8 +29,8 @@ use crate::{
     msg_fields::{
         protocols::{
             basic_message::BasicMessage, connection::Connection,
-            discover_features::DiscoverFeatures, notification::Notification,
-            out_of_band::OutOfBand, present_proof::v1::PresentProofV1,
+            coordinate_mediation::CoordinateMediation, discover_features::DiscoverFeatures,
+            notification::Notification, out_of_band::OutOfBand, present_proof::v1::PresentProofV1,
             report_problem::ProblemReport, revocation::Revocation, routing::Forward,
             trust_ping::TrustPing,
         },
@@ -68,6 +68,7 @@ pub enum AriesMessage {
     OutOfBand(OutOfBand),
     Notification(Notification),
     Pickup(Pickup),
+    CoordinateMediation(CoordinateMediation),
 }
 
 impl DelayedSerde for AriesMessage {
@@ -180,6 +181,10 @@ impl DelayedSerde for AriesMessage {
             Protocol::PickupType(msg_type) => {
                 Pickup::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
+            Protocol::CoordinateMediationType(msg_type) => {
+                CoordinateMediation::delayed_deserialize((msg_type, kind_str), deserializer)
+                    .map(From::from)
+            }
         }
     }
 
@@ -202,6 +207,7 @@ impl DelayedSerde for AriesMessage {
             Self::OutOfBand(v) => v.delayed_serialize(serializer),
             Self::Notification(v) => v.delayed_serialize(serializer),
             Self::Pickup(v) => v.delayed_serialize(serializer),
+            Self::CoordinateMediation(v) => v.delayed_serialize(serializer),
         }
     }
 }
