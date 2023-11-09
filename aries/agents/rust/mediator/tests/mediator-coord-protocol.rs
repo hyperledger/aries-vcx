@@ -1,9 +1,13 @@
 mod common;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use mediation::didcomm_types::mediator_coord_structs::{
-    KeylistData, KeylistQueryData, KeylistUpdateItem, KeylistUpdateItemAction,
-    KeylistUpdateRequestData, MediatorCoordMsgEnum,
+use messages::{
+    msg_fields::protocols::coordinate_mediation::{
+        keylist_update::{KeylistUpdateItem, KeylistUpdateItemAction},
+        CoordinateMediation, KeylistQuery, KeylistQueryContent, KeylistUpdate,
+        KeylistUpdateContent, MediateRequest, MediateRequestContent,
+    },
+    AriesMessage,
 };
 
 use crate::common::{
@@ -23,8 +27,13 @@ async fn test_mediate_grant() -> Result<()> {
     let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
     // prepare request message
-    let message = MediatorCoordMsgEnum::MediateRequest;
-    let message_bytes = serde_json::to_vec(&message)?;
+    let mediate_request = CoordinateMediation::MediateRequest(
+        MediateRequest::builder()
+            .content(MediateRequestContent::default())
+            .id("mediate-request-test".to_owned())
+            .build(),
+    );
+    let message_bytes = serde_json::to_vec(&AriesMessage::CoordinateMediation(mediate_request))?;
     // send message and get response
     let response_message = send_message_and_pop_response_message(
         &message_bytes,
@@ -35,11 +44,11 @@ async fn test_mediate_grant() -> Result<()> {
     )
     .await?;
     // verify response
-    if let MediatorCoordMsgEnum::MediateGrant(grant_data) =
+    if let AriesMessage::CoordinateMediation(CoordinateMediation::MediateGrant(grant_data)) =
         serde_json::from_str(&response_message).unwrap()
     {
         info!("Grant Data {:?}", grant_data);
-    } else if let MediatorCoordMsgEnum::MediateDeny(deny_data) =
+    } else if let AriesMessage::CoordinateMediation(CoordinateMediation::MediateDeny(deny_data)) =
         serde_json::from_str(&response_message).unwrap()
     {
         info!("Deny Data {:?}", deny_data);
@@ -64,13 +73,19 @@ async fn test_mediate_keylist_update_add() -> Result<()> {
         .get_wallet_ref()
         .create_and_store_my_did(None, None)
         .await?;
-    let message = MediatorCoordMsgEnum::KeylistUpdateRequest(KeylistUpdateRequestData {
-        updates: vec![KeylistUpdateItem {
-            recipient_key: new_vk,
-            action: KeylistUpdateItemAction::Add,
-            result: None,
-        }],
-    });
+    let keylist_update_request = KeylistUpdate::builder()
+        .content(KeylistUpdateContent {
+            updates: vec![KeylistUpdateItem {
+                recipient_key: new_vk,
+                action: KeylistUpdateItemAction::Add,
+            }],
+        })
+        .id("key-add".to_owned())
+        .build();
+
+    let message = AriesMessage::CoordinateMediation(CoordinateMediation::KeylistUpdate(
+        keylist_update_request,
+    ));
     info!("Sending {:?}", serde_json::to_string(&message).unwrap());
     let message_bytes = serde_json::to_vec(&message)?;
     // send message and get response
@@ -83,8 +98,9 @@ async fn test_mediate_keylist_update_add() -> Result<()> {
     )
     .await?;
     // verify response
-    if let MediatorCoordMsgEnum::KeylistUpdateResponse(update_response_data) =
-        serde_json::from_str(&response_message)?
+    if let AriesMessage::CoordinateMediation(CoordinateMediation::KeylistUpdateResponse(
+        update_response_data,
+    )) = serde_json::from_str(&response_message)?
     {
         info!("Received update response {:?}", update_response_data);
     } else {
@@ -108,13 +124,19 @@ async fn test_mediate_keylist_query() -> Result<()> {
         .get_wallet_ref()
         .create_and_store_my_did(None, None)
         .await?;
-    let message = MediatorCoordMsgEnum::KeylistUpdateRequest(KeylistUpdateRequestData {
-        updates: vec![KeylistUpdateItem {
-            recipient_key: new_vk,
-            action: KeylistUpdateItemAction::Add,
-            result: None,
-        }],
-    });
+    let keylist_update_request = KeylistUpdate::builder()
+        .content(KeylistUpdateContent {
+            updates: vec![KeylistUpdateItem {
+                recipient_key: new_vk,
+                action: KeylistUpdateItemAction::Add,
+            }],
+        })
+        .id("key-add".to_owned())
+        .build();
+
+    let message = AriesMessage::CoordinateMediation(CoordinateMediation::KeylistUpdate(
+        keylist_update_request,
+    ));
     let message_bytes = serde_json::to_vec(&message)?;
     // send message and get response
     let _ = send_message_and_pop_response_message(
@@ -127,7 +149,12 @@ async fn test_mediate_keylist_query() -> Result<()> {
     .await?;
     info!("Proceeding to keylist query");
     //prepare request message: list keys
-    let message = MediatorCoordMsgEnum::KeylistQuery(KeylistQueryData {});
+    let keylist_query = KeylistQuery::builder()
+        .content(KeylistQueryContent::default())
+        .id("keylist-query".to_owned())
+        .build();
+    let message =
+        AriesMessage::CoordinateMediation(CoordinateMediation::KeylistQuery(keylist_query));
     info!("Sending {:?}", serde_json::to_string(&message).unwrap());
     let message_bytes = serde_json::to_vec(&message)?;
     // send message and get response
@@ -140,10 +167,10 @@ async fn test_mediate_keylist_query() -> Result<()> {
     )
     .await?;
     // verify
-    if let MediatorCoordMsgEnum::Keylist(KeylistData { keys }) =
+    if let AriesMessage::CoordinateMediation(CoordinateMediation::Keylist(keylist)) =
         serde_json::from_str(&response_message)?
     {
-        info!("Keylist mediator sent {:?}", keys)
+        info!("Keylist mediator sent {:?}", keylist.content)
     } else {
         panic!(
             "Expected message of type Keylist. Found {:?}",
@@ -165,13 +192,19 @@ async fn test_mediate_keylist_update_remove() -> Result<()> {
         .get_wallet_ref()
         .create_and_store_my_did(None, None)
         .await?;
-    let message = MediatorCoordMsgEnum::KeylistUpdateRequest(KeylistUpdateRequestData {
-        updates: vec![KeylistUpdateItem {
-            recipient_key: new_vk.clone(),
-            action: KeylistUpdateItemAction::Add,
-            result: None,
-        }],
-    });
+    let keylist_update_request = KeylistUpdate::builder()
+        .content(KeylistUpdateContent {
+            updates: vec![KeylistUpdateItem {
+                recipient_key: new_vk.clone(),
+                action: KeylistUpdateItemAction::Add,
+            }],
+        })
+        .id("key-add".to_owned())
+        .build();
+
+    let message = AriesMessage::CoordinateMediation(CoordinateMediation::KeylistUpdate(
+        keylist_update_request,
+    ));
     let message_bytes = serde_json::to_vec(&message)?;
     // send message and get response
     let _ = send_message_and_pop_response_message(
@@ -184,13 +217,19 @@ async fn test_mediate_keylist_update_remove() -> Result<()> {
     .await?;
     info!("Proceeding to delete");
     // prepare request message: delete key
-    let message = MediatorCoordMsgEnum::KeylistUpdateRequest(KeylistUpdateRequestData {
-        updates: vec![KeylistUpdateItem {
-            recipient_key: new_vk,
-            action: KeylistUpdateItemAction::Remove,
-            result: None,
-        }],
-    });
+    let keylist_update_request = KeylistUpdate::builder()
+        .content(KeylistUpdateContent {
+            updates: vec![KeylistUpdateItem {
+                recipient_key: new_vk,
+                action: KeylistUpdateItemAction::Remove,
+            }],
+        })
+        .id("key-remove".to_owned())
+        .build();
+
+    let message = AriesMessage::CoordinateMediation(CoordinateMediation::KeylistUpdate(
+        keylist_update_request,
+    ));
     info!("Sending {:?}", serde_json::to_string(&message).unwrap());
     let message_bytes = serde_json::to_vec(&message)?;
     // send message and get response
@@ -202,8 +241,9 @@ async fn test_mediate_keylist_update_remove() -> Result<()> {
         &their_diddoc,
     )
     .await?;
-    if let MediatorCoordMsgEnum::KeylistUpdateResponse(update_response_data) =
-        serde_json::from_str(&response_message)?
+    if let AriesMessage::CoordinateMediation(CoordinateMediation::KeylistUpdateResponse(
+        update_response_data,
+    )) = serde_json::from_str(&response_message)?
     {
         info!("Received update response {:?}", update_response_data);
     } else {
