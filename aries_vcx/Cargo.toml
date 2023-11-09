@@ -14,7 +14,8 @@ doctest = false
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 credx = [
     "aries_vcx_core/credx",
-    "test_utils/vdrtools_wallet"
+    "test_utils/vdrtools_wallet",
+    "test_utils/credx"
 ]
 vdr_proxy_ledger = [
     "aries_vcx_core/vdr_proxy_ledger",
