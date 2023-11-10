@@ -282,7 +282,7 @@ jobs:
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run aries-vcx integration tests"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdrtools_wallet,credx -- --ignored;
+        run: cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdrtools_wallet,credx -- --ignored;
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
@@ -295,7 +295,7 @@ jobs:
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run aries_vcx tests: mysql_test"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" test_mysql -- --include-ignored;
+        run: cargo test --manifest-path="aries_vcx/Cargo.toml" test_mysql -- --include-ignored;
 
   test-integration-aries-vcx-vdrproxy:
     needs: [workflow-setup, build-docker-vdrproxy]
@@ -319,7 +319,7 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
           skip-vdrproxy-setup: false
       - name: "Run aries_vcx tests: vdrproxy_test"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdr_proxy_ledger,credx -- --ignored
+        run: cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdr_proxy_ledger,credx -- --ignored
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -354,7 +354,7 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run resolver tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --examples -p did_doc -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov -p did_resolver_web -p did_doc_sov -p did_key -p did_peer --test "*"
+          cargo test --examples -p did_doc -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov -p did_resolver_web -p did_doc_sov -p did_key -p did_peer --test "*"
 
   test-integration-node-wrapper:
     needs: workflow-setup

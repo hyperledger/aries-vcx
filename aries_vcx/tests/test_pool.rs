@@ -39,7 +39,7 @@ use test_utils::{
 use crate::utils::{
     create_and_publish_test_rev_reg, create_and_write_test_cred_def, create_and_write_test_schema,
     scenarios::attr_names_address_list,
-    test_agent::{create_test_agent, create_test_agent_trustee},
+    test_agent::{create_test_agent, create_test_agent_endorser, create_test_agent_trustee},
 };
 
 pub mod utils;
@@ -136,18 +136,31 @@ async fn test_pool_rotate_verkey() -> Result<(), Box<dyn Error>> {
 #[ignore]
 async fn test_pool_add_get_service() -> Result<(), Box<dyn Error>> {
     let setup = build_setup_profile().await;
-    let did = setup.institution_did.clone();
+    let endorser = create_test_agent_endorser(
+        setup.ledger_write,
+        setup.wallet,
+        &setup.genesis_file_path,
+        &setup.institution_did,
+    )
+    .await?;
+
     let expect_service = AriesService::default();
-    write_endpoint_legacy(&setup.wallet, &setup.ledger_write, &did, &expect_service).await?;
+    write_endpoint_legacy(
+        &endorser.wallet,
+        &endorser.ledger_write,
+        &endorser.institution_did,
+        &expect_service,
+    )
+    .await?;
     thread::sleep(Duration::from_millis(50));
-    let service = get_service(&setup.ledger_read, &did).await?;
+    let service = get_service(&endorser.ledger_read, &endorser.institution_did).await?;
     assert_eq!(expect_service, service);
 
     // clean up written legacy service
     clear_attr(
-        &setup.wallet,
-        &setup.ledger_write,
-        &setup.institution_did,
+        &endorser.wallet,
+        &endorser.ledger_write,
+        &endorser.institution_did,
         "service",
     )
     .await?;
@@ -196,15 +209,28 @@ async fn test_pool_write_new_endorser_did() -> Result<(), Box<dyn Error>> {
 #[ignore]
 async fn test_pool_add_get_service_public() -> Result<(), Box<dyn Error>> {
     let setup = build_setup_profile().await;
-    let did = setup.institution_did.clone();
+    let endorser = create_test_agent_endorser(
+        setup.ledger_write,
+        setup.wallet,
+        &setup.genesis_file_path,
+        &setup.institution_did,
+    )
+    .await?;
+
     let create_service = EndpointDidSov::create()
         .set_service_endpoint("https://example.org".parse()?)
         .set_routing_keys(Some(vec!["did:sov:456".into()]));
-    write_endpoint(&setup.wallet, &setup.ledger_write, &did, &create_service).await?;
+    write_endpoint(
+        &endorser.wallet,
+        &endorser.ledger_write,
+        &endorser.institution_did,
+        &create_service,
+    )
+    .await?;
     thread::sleep(Duration::from_millis(50));
-    let service = get_service(&setup.ledger_read, &did).await?;
+    let service = get_service(&endorser.ledger_read, &endorser.institution_did).await?;
     let expect_recipient_key =
-        get_verkey_from_ledger(&setup.ledger_read, &setup.institution_did).await?;
+        get_verkey_from_ledger(&endorser.ledger_read, &endorser.institution_did).await?;
     let expect_service = AriesService::default()
         .set_service_endpoint("https://example.org".parse()?)
         .set_recipient_keys(vec![expect_recipient_key])
@@ -213,9 +239,9 @@ async fn test_pool_add_get_service_public() -> Result<(), Box<dyn Error>> {
 
     // clean up written endpoint
     clear_attr(
-        &setup.wallet,
-        &setup.ledger_write,
-        &setup.institution_did,
+        &endorser.wallet,
+        &endorser.ledger_write,
+        &endorser.institution_did,
         "endpoint",
     )
     .await?;
