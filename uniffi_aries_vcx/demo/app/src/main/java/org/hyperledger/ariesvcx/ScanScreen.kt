@@ -100,6 +100,7 @@ fun ScanScreen(
     LaunchedEffect(key1 = true) {
         launcher.launch(Manifest.permission.CAMERA)
     }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

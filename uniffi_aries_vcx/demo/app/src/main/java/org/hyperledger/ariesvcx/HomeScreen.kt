@@ -4,9 +4,12 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,13 +37,16 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val file = prepareGenesisFile(context)
-    demoController.subscribeToConnectionComplete { newConn ->
-        scope.launch(Dispatchers.Main) {
-            Toast.makeText(
-                context,
-                "New Connection Created",
-                Toast.LENGTH_SHORT
-            ).show()
+
+    LaunchedEffect(key1 = Unit) {
+        demoController.subscribeToConnectionComplete {
+            scope.launch(Dispatchers.Main) {
+                Toast.makeText(
+                    context,
+                    "New Connection Created",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
 
@@ -71,7 +77,7 @@ fun HomeScreen(
             }) {
             Text(text = "Scan QR Code")
         }
-        Button(enabled = /*(demoState.connectionCompleted)*/ true,
+        Button(enabled = (demoState.connectionCompleted),
             onClick = {
                 navController.navigate(Destination.Holder.route)
             }) {
