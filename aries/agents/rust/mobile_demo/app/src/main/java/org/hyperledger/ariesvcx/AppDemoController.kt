@@ -160,6 +160,9 @@ class AppDemoController : ViewModel() {
 
                     _state.update { it.copy(offerReceived = false) }
                 }
+
+                _state.update { it.copy(offerReceived = true) }
+                onOfferReceived.invoke()
             }
         }
     }
