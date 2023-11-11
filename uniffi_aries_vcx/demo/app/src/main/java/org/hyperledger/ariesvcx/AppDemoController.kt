@@ -40,6 +40,10 @@ class AppDemoController : ViewModel() {
     private val _state = MutableStateFlow(AppUiState())
     val states: StateFlow<AppUiState> = _state.asStateFlow()
 
+    fun getHolder (): Holder? {
+        return holder
+    }
+
     private val walletConfig = WalletConfig(
         walletName = "test_create_wallet_add_uuid_here",
         walletKey = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY",
@@ -126,6 +130,8 @@ class AppDemoController : ViewModel() {
         holder?.prepareCredentialRequest(profile!!, "4xE68b6S5VRFrKMMG1U95M")
         val message = holder?.getMsgCredentialRequest()
         connection?.sendMessage(profile!!, message!!)
+
+        _state.update { it.copy(offerReceived = false) }
     }
 
     suspend fun awaitCredentialPolling() {
@@ -146,13 +152,13 @@ class AppDemoController : ViewModel() {
                 if (holder == null) {
                     Log.d("OFFER", "awaitCredentialPolling: received offer")
                     holder = createFromOffer("", unpackedMessage.message)
-                    _state.update { it.copy(offerReceived = true) }
-                    onOfferReceived.invoke()
-                    processOfferRequest()
                 } else {
                     Log.d("CREDENTIAL", "awaitCredentialPolling: received credential")
                     holder?.processCredential(profile!!, unpackedMessage.message)
                 }
+
+                _state.update { it.copy(offerReceived = true) }
+                onOfferReceived.invoke()
             }
         }
     }
