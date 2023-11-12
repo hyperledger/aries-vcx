@@ -40,9 +40,9 @@ serde_derive = "1"
 lazy_static = "1"
 zeroize = "1"
 regex = "1"
-indy-api-types = { path = "./indy-api-types"}
-indy-utils = { path = "./indy-utils"}
-indy-wallet = { path = "./indy-wallet"}
+indy-api-types = { path = "indy-api-types" }
+indy-utils = { path = "indy-utils" }
+indy-wallet = { path = "indy-wallet" }
 futures = { version = "0.3", default-features = false, features = [ "executor", "alloc", "thread-pool" ] }
 ursa = { version = "0.3.7", optional = true, default-features = false, features = ["cl_native"] }
 

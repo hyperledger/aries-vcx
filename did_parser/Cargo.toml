@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 serde = "1.0.160"
-shared_vcx = { path = "../shared_vcx" } # TODO: Remove as soon as migration to qualified DIDs is complete
+shared_vcx = { path = "../aries/shared_vcx" } # TODO: Remove as soon as migration to qualified DIDs is complete

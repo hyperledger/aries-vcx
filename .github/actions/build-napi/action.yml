@@ -23,7 +23,7 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
         cache: npm
-        cache-dependency-path: ${{ github.workspace }}/wrappers/vcx-napi-rs/package-lock.json
+        cache-dependency-path: ${{ github.workspace }}/aries/wrappers/vcx-napi-rs/package-lock.json
     - name: Install
       uses: actions-rs/toolchain@v1
       if: ${{ !inputs.docker }}
@@ -43,7 +43,7 @@ runs:
         key: ${{ inputs.target }}-cargo-registry
     - name: Install dependencies
       run: npm install
-      working-directory: ${{ github.workspace }}/wrappers/vcx-napi-rs
+      working-directory: ${{ github.workspace }}/aries/wrappers/vcx-napi-rs
       shell: bash
     - name: Build in docker
       uses: addnab/docker-run-action@v3
@@ -55,11 +55,11 @@ runs:
     - name: Build
       run: ${{ inputs.build }}
       if: ${{ !inputs.docker }}
-      working-directory: ${{ github.workspace }}/wrappers/vcx-napi-rs
+      working-directory: ${{ github.workspace }}/aries/wrappers/vcx-napi-rs
       shell: bash
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
         name: bindings-${{ inputs.target }}
-        path: ${{ github.workspace }}/wrappers/vcx-napi-rs/*.node
+        path: ${{ github.workspace }}/aries/wrappers/vcx-napi-rs/*.node
         if-no-files-found: error

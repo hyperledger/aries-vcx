@@ -16,7 +16,7 @@ async-trait = "0.1"
 byteorder = "1"
 futures = { version = "0.3", default-features = false, features = [ "alloc" ] }
 indy-api-types = { path = "../indy-api-types" }
-indy-utils = { path = "../indy-utils"}
+indy-utils = { path = "../indy-utils" }
 libc = "0.2"
 log = "0.4"
 rmp-serde = "1"

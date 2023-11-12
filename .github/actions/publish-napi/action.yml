@@ -18,21 +18,21 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
         cache: npm
-        cache-dependency-path: ${{ github.workspace }}/wrappers/vcx-napi-rs/package-lock.json
+        cache-dependency-path: ${{ github.workspace }}/aries/wrappers/vcx-napi-rs/package-lock.json
     - name: Install dependencies
       run: npm install
-      working-directory: ${{ github.workspace }}/wrappers/vcx-napi-rs
+      working-directory: ${{ github.workspace }}/aries/wrappers/vcx-napi-rs
       shell: bash
     - name: Download napi artifacts
       uses: actions/download-artifact@v3
       with:
-        path: ${{ github.workspace }}/wrappers/vcx-napi-rs/artifacts
+        path: ${{ github.workspace }}/aries/wrappers/vcx-napi-rs/artifacts
     - name: Move artifacts
       run: |
         find . -type d -not -path \*\*/artifacts/bindings-\* -path \*\*/artifacts/\*\* -mindepth 2 -maxdepth 2 -exec rm -rf {} \+
         ls -R artifacts
         npm run artifacts
-      working-directory: ${{ github.workspace }}/wrappers/vcx-napi-rs
+      working-directory: ${{ github.workspace }}/aries/wrappers/vcx-napi-rs
       shell: bash
     - name: Publish
       run: |
@@ -45,7 +45,7 @@ runs:
         else
            echo "New version was not defined, skipping release."
         fi
-      working-directory: ${{ github.workspace }}/wrappers/vcx-napi-rs
+      working-directory: ${{ github.workspace }}/aries/wrappers/vcx-napi-rs
       shell: bash
       env:
         NPMJS_TOKEN: ${{ inputs.npmjs-token }}

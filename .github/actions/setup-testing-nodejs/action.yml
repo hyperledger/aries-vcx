@@ -43,12 +43,12 @@ runs:
         docker-compose -f ./.github/ci/agency/docker-compose.yml up -d
     - name: "Build binding module"
       shell: bash
-      run: (cd wrappers/vcx-napi-rs && npm install && npm run build:napi:debug)
+      run: (cd aries/wrappers/vcx-napi-rs && npm install && npm run build:napi:debug)
     - name: "Transpile TS wrapper"
       shell: bash
-      run: (cd wrappers/node && npm install && npm run compile)
+      run: (cd aries/wrappers/node && npm install && npm run compile)
     - name: "Check wrappers"
       shell: bash
       run: |
-        ls -lah wrappers/vcx-napi-rs
-        ls -lah wrappers/node
+        ls -lah aries/wrappers/vcx-napi-rs
+        ls -lah aries/wrappers/node

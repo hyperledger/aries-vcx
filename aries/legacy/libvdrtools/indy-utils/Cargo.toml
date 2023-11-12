@@ -22,7 +22,7 @@ randombytes_sodium = []
 base64 = {version = "0.21"}
 dirs = "5"
 failure = "0.1"
-indy-api-types = { path = "../indy-api-types"}
+indy-api-types = { path = "../indy-api-types" }
 lazy_static = "1"
 libc = "0.2"
 log = "0.4"

@@ -10,7 +10,7 @@ The repository contains a set of crates to build [Aries](https://github.com/hype
   - [`aries_vcx`](aries_vcx) - Library implementing DIDComm protocols, with focus on verifiable credential issuance and verification.
   - [`messages`](messages) - Library for building and parsing Aries messages.
   - `aries_vcx_core` - Interfaces for interaction with ledgers, wallets and credentials.
-  - [`agents`](agents/rust) - Aries agents built on top of `aries_vcx`.
+  - [`agents`](aries/agents/rust) - Aries agents built on top of `aries_vcx`.
   
 ## General components
   - `did_parser` - Building and parsing [DIDs](https://w3c.github.io/did-core/).

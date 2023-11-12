@@ -13,4 +13,4 @@ proc-macro2 = "1.0.58"
 quote = "1.0.27"
 syn = "2.0.16"
 darling = "0.20.1"
-shared_vcx = { path = "../shared_vcx" }
+shared_vcx = { path = "../aries/shared_vcx" }

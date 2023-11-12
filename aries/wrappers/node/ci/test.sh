@@ -1,5 +1,5 @@
 #!/bin/bash
-cd vcx/wrappers/node/
+cd vcx/aries/wrappers/node/
 npm i
 npm run lint
 npm run compile

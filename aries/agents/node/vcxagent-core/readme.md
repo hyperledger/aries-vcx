@@ -4,7 +4,7 @@ VCX Agent Core is implementation of simple agent with persistent file storage. I
 
 # Try it
 1. First step is to compile and `aries-vcx` and make it available on your system. Follow [instructions](../../../libvcx).
-2. You need to have mediator agent compatible with `aries-vcx`. See more [info](../../../README.md).
+2. You need to have mediator agent compatible with `aries-vcx`. See more [info](../../../../README.md).
 3. Run `npm run demo`. This will run sample scenario where Alice and Faber
     - establish connection, 
     - Faber issues a credential to Alice

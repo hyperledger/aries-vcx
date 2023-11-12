@@ -1,6 +1,6 @@
 export PATH=${PATH}:$(pwd)/vcx/ci/scripts
 OUTPUTDIR=output
-DIR=vcx/wrappers/node
+DIR=vcx/aries/wrappers/node
 CURDIR=$(pwd)
 cd $DIR
 npm i
