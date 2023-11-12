@@ -1,14 +1,12 @@
 use std::{env, io::Write, sync::Once};
 
-#[cfg(target_os = "android")]
-use android_logger::Config;
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use chrono::{
     format::{DelayedFormat, StrftimeItems},
     Local,
 };
 use env_logger::{fmt::Formatter, Builder as EnvLoggerBuilder};
-use log::{info, LevelFilter, Record};
+use log::{LevelFilter, Record};
 
 static TEST_LOGGING_INIT: Once = Once::new();
 
@@ -62,44 +60,24 @@ impl LibvcxDefaultLogger {
 
     pub fn init(pattern: Option<String>) -> VcxCoreResult<()> {
         let pattern = pattern.or(env::var("RUST_LOG").ok());
-        if cfg!(target_os = "android") {
-            #[cfg(target_os = "android")]
-            let log_filter = match pattern.as_ref() {
-                Some(val) => match val.to_lowercase().as_ref() {
-                    "error" => Config::default().with_max_level(log::LevelFilter::Error),
-                    "warn" => Config::default().with_max_level(log::LevelFilter::Warn),
-                    "info" => Config::default().with_max_level(log::LevelFilter::Info),
-                    "debug" => Config::default().with_max_level(log::LevelFilter::Debug),
-                    "trace" => Config::default().with_max_level(log::LevelFilter::Trace),
-                    _ => Config::default().with_max_level(log::LevelFilter::Error),
-                },
-                None => Config::default().with_max_level(log::LevelFilter::Error),
-            };
-
-            //Set logging to off when deploying production android app.
-            #[cfg(target_os = "android")]
-            android_logger::init_once(log_filter);
-            info!("Logging for Android");
-        } else {
-            let formatter = match env::var("RUST_LOG_FORMATTER") {
-                Ok(val) => match val.as_str() {
-                    "text_no_color" => text_no_color_format,
-                    _ => text_format,
-                },
+        let formatter = match env::var("RUST_LOG_FORMATTER") {
+            Ok(val) => match val.as_str() {
+                "text_no_color" => text_no_color_format,
                 _ => text_format,
-            };
-            EnvLoggerBuilder::new()
-                .format(formatter)
-                .filter(None, LevelFilter::Off)
-                .parse_filters(pattern.as_deref().unwrap_or("warn"))
-                .try_init()
-                .map_err(|err| {
-                    AriesVcxCoreError::from_msg(
-                        AriesVcxCoreErrorKind::LoggingError,
-                        format!("Cannot init logger: {:?}", err),
-                    )
-                })?;
-        }
+            },
+            _ => text_format,
+        };
+        EnvLoggerBuilder::new()
+            .format(formatter)
+            .filter(None, LevelFilter::Off)
+            .parse_filters(pattern.as_deref().unwrap_or("warn"))
+            .try_init()
+            .map_err(|err| {
+                AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::LoggingError,
+                    format!("Cannot init logger: {:?}", err),
+                )
+            })?;
         Ok(())
     }
 }

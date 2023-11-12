@@ -13,12 +13,10 @@ mod dbtests {
             IndySdkWallet, WalletConfig, WalletConfigBuilder,
         },
     };
-    use libvcx_logger::LibvcxDefaultLogger;
 
     #[tokio::test]
     #[ignore]
     async fn test_mysql_init_issuer_with_mysql_wallet() -> Result<(), Box<dyn Error>> {
-        LibvcxDefaultLogger::init_testing_logger();
         let db_name = format!("mysqltest_{}", uuid::Uuid::new_v4()).replace('-', "_");
         let storage_config = json!({
             "read_host": "localhost",
