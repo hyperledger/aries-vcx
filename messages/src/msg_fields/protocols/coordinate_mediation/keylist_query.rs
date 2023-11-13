@@ -3,7 +3,7 @@ use typed_builder::TypedBuilder;
 
 use crate::{decorators::thread::Thread, msg_parts::MsgParts};
 
-pub type KeylistQuery = MsgParts<KeylistQueryContent, KeylistQueryDecorators>;
+pub type KeylistQuery = MsgParts<KeylistQueryContent>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct KeylistQueryContent {
@@ -34,6 +34,7 @@ pub struct KeylistQueryDecorators {
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;
+    use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
 
     use super::*;
     use crate::{
@@ -59,11 +60,10 @@ mod tests {
         let content = KeylistQueryContent::builder()
             .paginate(paginate_params)
             .build();
-        let decorators = KeylistQueryDecorators::builder().build();
 
         test_utils::test_msg(
             content,
-            decorators,
+            NoDecorators,
             CoordinateMediationTypeV1_0::KeylistQuery,
             expected,
         );

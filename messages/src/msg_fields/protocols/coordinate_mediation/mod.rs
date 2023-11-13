@@ -100,12 +100,12 @@ impl DelayedSerde for CoordinateMediation {
     }
 }
 
-transit_to_aries_msg!(MediateRequestContent: MediateRequestDecorators, CoordinateMediation);
+transit_to_aries_msg!(MediateRequestContent, CoordinateMediation);
 transit_to_aries_msg!(MediateDenyContent: MediateDenyDecorators, CoordinateMediation);
 transit_to_aries_msg!(MediateGrantContent: MediateGrantDecorators, CoordinateMediation);
-transit_to_aries_msg!(KeylistUpdateContent: KeylistUpdateDecorators, CoordinateMediation);
+transit_to_aries_msg!(KeylistUpdateContent, CoordinateMediation);
 transit_to_aries_msg!(KeylistUpdateResponseContent: KeylistUpdateResponseDecorators, CoordinateMediation);
-transit_to_aries_msg!(KeylistQueryContent: KeylistQueryDecorators, CoordinateMediation);
+transit_to_aries_msg!(KeylistQueryContent, CoordinateMediation);
 transit_to_aries_msg!(KeylistContent: KeylistDecorators, CoordinateMediation);
 
 into_msg_with_type!(MediateRequest, CoordinateMediationTypeV1_0, MediateRequest);

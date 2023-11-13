@@ -3,7 +3,7 @@ use typed_builder::TypedBuilder;
 
 use crate::{decorators::thread::Thread, msg_parts::MsgParts};
 
-pub type KeylistUpdate = MsgParts<KeylistUpdateContent, KeylistUpdateDecorators>;
+pub type KeylistUpdate = MsgParts<KeylistUpdateContent>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct KeylistUpdateContent {
@@ -36,6 +36,7 @@ pub struct KeylistUpdateDecorators {
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;
+    use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
 
     use super::*;
     use crate::{
@@ -63,11 +64,9 @@ mod tests {
         let content = KeylistUpdateContent::builder()
             .updates(vec![update_item1])
             .build();
-        let decorators = KeylistUpdateDecorators::builder().build();
-
         test_utils::test_msg(
             content,
-            decorators,
+            NoDecorators,
             CoordinateMediationTypeV1_0::KeylistUpdate,
             expected,
         );

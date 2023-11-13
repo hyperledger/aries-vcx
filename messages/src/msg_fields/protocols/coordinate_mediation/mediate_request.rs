@@ -3,7 +3,7 @@ use typed_builder::TypedBuilder;
 
 use crate::{decorators::thread::Thread, msg_parts::MsgParts};
 
-pub type MediateRequest = MsgParts<MediateRequestContent, MediateRequestDecorators>;
+pub type MediateRequest = MsgParts<MediateRequestContent>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct MediateRequestContent {}
@@ -20,6 +20,7 @@ pub struct MediateRequestDecorators {
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;
+    use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
 
     use super::*;
     use crate::{
@@ -35,11 +36,9 @@ mod tests {
             }
         );
         let content = MediateRequestContent::builder().build();
-        let decorators = MediateRequestDecorators::builder().build();
-
         test_utils::test_msg(
             content,
-            decorators,
+            NoDecorators,
             CoordinateMediationTypeV1_0::MediateRequest,
             expected,
         );

@@ -219,7 +219,7 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
             matches_opt_thread_id!(msg, thread_id)
         }
         AriesMessage::CoordinateMediation(CoordinateMediation::MediateRequest(msg)) => {
-            matches_opt_thread_id!(msg, thread_id)
+            msg.id == thread_id
         }
         AriesMessage::CoordinateMediation(CoordinateMediation::MediateDeny(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
@@ -228,13 +228,13 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
             matches_opt_thread_id!(msg, thread_id)
         }
         AriesMessage::CoordinateMediation(CoordinateMediation::KeylistUpdate(msg)) => {
-            matches_opt_thread_id!(msg, thread_id)
+            msg.id == thread_id
         }
         AriesMessage::CoordinateMediation(CoordinateMediation::KeylistUpdateResponse(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
         }
         AriesMessage::CoordinateMediation(CoordinateMediation::KeylistQuery(msg)) => {
-            matches_opt_thread_id!(msg, thread_id)
+            msg.id == thread_id
         }
         AriesMessage::CoordinateMediation(CoordinateMediation::Keylist(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
