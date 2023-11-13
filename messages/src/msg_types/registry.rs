@@ -9,6 +9,7 @@ use crate::msg_types::{
     protocols::{
         basic_message::BasicMessageTypeV1,
         connection::ConnectionTypeV1,
+        coordinate_mediation::CoordinateMediationTypeV1,
         cred_issuance::{CredentialIssuanceTypeV1, CredentialIssuanceTypeV2},
         discover_features::DiscoverFeaturesTypeV1,
         notification::NotificationTypeV1,
@@ -93,6 +94,8 @@ lazy_static! {
         map_insert(&mut m, extract_parts!(RevocationTypeV2::new_v2_0()));
         map_insert(&mut m, extract_parts!(TrustPingTypeV1::new_v1_0()));
         map_insert(&mut m, extract_parts!(PickupTypeV2::new_v2_0()));
+        map_insert(&mut m, extract_parts!(CoordinateMediationTypeV1::new_v1_0()));
+
 
         m
     };

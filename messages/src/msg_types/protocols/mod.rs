@@ -6,10 +6,11 @@ use shared_vcx::misc::utils::CowStr;
 
 use self::{
     basic_message::BasicMessageType, connection::ConnectionType,
-    cred_issuance::CredentialIssuanceType, discover_features::DiscoverFeaturesType,
-    notification::NotificationType, out_of_band::OutOfBandType, pickup::PickupType,
-    present_proof::PresentProofType, report_problem::ReportProblemType, revocation::RevocationType,
-    routing::RoutingType, signature::SignatureType, trust_ping::TrustPingType,
+    coordinate_mediation::CoordinateMediationType, cred_issuance::CredentialIssuanceType,
+    discover_features::DiscoverFeaturesType, notification::NotificationType,
+    out_of_band::OutOfBandType, pickup::PickupType, present_proof::PresentProofType,
+    report_problem::ReportProblemType, revocation::RevocationType, routing::RoutingType,
+    signature::SignatureType, trust_ping::TrustPingType,
 };
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
@@ -18,6 +19,7 @@ use crate::{
 
 pub mod basic_message;
 pub mod connection;
+pub mod coordinate_mediation;
 pub mod cred_issuance;
 pub mod discover_features;
 pub mod notification;
@@ -60,6 +62,7 @@ pub enum Protocol {
     OutOfBandType(OutOfBandType),
     NotificationType(NotificationType),
     PickupType(PickupType),
+    CoordinateMediationType(CoordinateMediationType),
 }
 
 /// Utility macro to avoid harder to read and error prone calling
@@ -96,6 +99,7 @@ impl Protocol {
         match_protocol!(OutOfBandType, protocol, major, minor);
         match_protocol!(NotificationType, protocol, major, minor);
         match_protocol!(PickupType, protocol, major, minor);
+        match_protocol!(CoordinateMediationType, protocol, major, minor);
 
         Err(MsgTypeError::unknown_protocol(protocol.to_owned()))
     }
@@ -116,6 +120,7 @@ impl Protocol {
             Self::OutOfBandType(v) => v.as_protocol_parts(),
             Self::NotificationType(v) => v.as_protocol_parts(),
             Self::PickupType(v) => v.as_protocol_parts(),
+            Self::CoordinateMediationType(v) => v.as_protocol_parts(),
         }
     }
 
