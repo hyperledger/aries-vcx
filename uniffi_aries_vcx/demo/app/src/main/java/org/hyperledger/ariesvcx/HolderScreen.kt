@@ -40,18 +40,6 @@ fun HolderScreen(
         demoController.awaitCredentialPolling()
     }
 
-    LaunchedEffect(Unit) {
-        demoController.subscribeToShowDialog {
-            scope.launch(Dispatchers.Main) {
-                Toast.makeText(
-                    context,
-                    "New Offer Received",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
-    }
-
     if (demoState.offerReceived) {
         AlertDialog(
             onDismissRequest = { },
