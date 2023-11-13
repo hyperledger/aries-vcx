@@ -20,15 +20,9 @@ pub struct KeylistItem {
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct KeylistPagination {
-    #[builder(default, setter(strip_option))]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    count: Option<u64>,
-    #[builder(default, setter(strip_option))]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    offset: Option<u64>,
-    #[builder(default, setter(strip_option))]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    remaining: Option<u64>,
+    count: u64,
+    offset: u64,
+    remaining: u64,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
