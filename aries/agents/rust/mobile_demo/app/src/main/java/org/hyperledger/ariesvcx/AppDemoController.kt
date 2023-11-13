@@ -151,7 +151,6 @@ class AppDemoController : ViewModel() {
                 if (!_state.value.offerReceived) {
                     Log.d("OFFER", "awaitCredentialPolling: received OFFER")
                     holder = createFromOffer("", unpackedMessage.message)
-
                     _state.update { it.copy(offerReceived = true) }
                     onOfferReceived.invoke()
                 } else {
@@ -160,9 +159,6 @@ class AppDemoController : ViewModel() {
 
                     _state.update { it.copy(offerReceived = false) }
                 }
-
-                _state.update { it.copy(offerReceived = true) }
-                onOfferReceived.invoke()
             }
         }
     }
