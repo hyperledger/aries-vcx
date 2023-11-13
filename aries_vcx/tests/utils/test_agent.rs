@@ -1,12 +1,14 @@
 #![allow(clippy::diverging_sub_expression)]
 
-use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
+use aries_vcx::{
+    common::ledger::transactions::write_endorser_did, global::settings::DEFAULT_LINK_SECRET_ALIAS,
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     ledger::base_ledger::{
         AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
     },
-    wallet::base_wallet::BaseWallet,
+    wallet::{base_wallet::BaseWallet, indy::wallet::get_verkey_from_wallet},
 };
 use test_utils::{
     constants::TRUSTEE_SEED,
@@ -80,4 +82,39 @@ pub async fn create_test_agent(
     impl BaseWallet,
 > {
     create_test_agent_from_seed(&generate_random_seed(), genesis_file_path).await
+}
+
+pub async fn create_test_agent_endorser<LW, W>(
+    ledger_write: LW,
+    trustee_wallet: W,
+    genesis_file_path: &str,
+    trustee_did: &str,
+) -> Result<
+    TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    Box<dyn std::error::Error>,
+>
+where
+    LW: IndyLedgerWrite + AnoncredsLedgerWrite,
+    W: BaseWallet,
+{
+    let acme = create_test_agent(genesis_file_path.to_string()).await;
+    let acme_vk =
+        get_verkey_from_wallet(acme.wallet.get_wallet_handle(), &acme.institution_did).await?;
+
+    write_endorser_did(
+        &trustee_wallet,
+        &ledger_write,
+        trustee_did,
+        &acme.institution_did,
+        &acme_vk,
+        None,
+    )
+    .await?;
+
+    Ok(acme)
 }

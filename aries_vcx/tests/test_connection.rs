@@ -30,7 +30,7 @@ use crate::utils::{
         create_connections_via_oob_invite, create_connections_via_pairwise_invite,
         create_connections_via_public_invite,
     },
-    test_agent::{create_test_agent, create_test_agent_trustee},
+    test_agent::{create_test_agent, create_test_agent_endorser, create_test_agent_trustee},
 };
 
 pub mod utils;
@@ -179,19 +179,28 @@ async fn test_agency_pool_establish_connection_via_pairwise_invite() -> Result<(
 #[ignore]
 async fn test_agency_pool_establish_connection_via_out_of_band() -> Result<(), Box<dyn Error>> {
     let setup = SetupPoolDirectory::init().await;
-    let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
-    let mut consumer = create_test_agent(setup.genesis_file_path).await;
-    create_service(&institution).await;
+    let institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
 
-    let (consumer_to_institution, institution_to_consumer) =
-        create_connections_via_oob_invite(&mut consumer, &mut institution).await;
+    let mut endorser = create_test_agent_endorser(
+        institution.ledger_write,
+        institution.wallet,
+        &setup.genesis_file_path,
+        &institution.institution_did,
+    )
+    .await?;
+
+    let mut consumer = create_test_agent(setup.genesis_file_path).await;
+    create_service(&endorser).await;
+
+    let (consumer_to_endorser, endorser_to_consumer) =
+        create_connections_via_oob_invite(&mut consumer, &mut endorser).await;
 
     let basic_message = build_basic_message("Hello TestAgent".to_string());
     if let AriesMessage::BasicMessage(message) = send_and_receive_message(
         &consumer,
-        &institution,
-        &institution_to_consumer,
-        &consumer_to_institution,
+        &endorser,
+        &endorser_to_consumer,
+        &consumer_to_endorser,
         &basic_message.clone().into(),
     )
     .await
