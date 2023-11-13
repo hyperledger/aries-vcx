@@ -55,6 +55,10 @@ fun ScanScreen(
 
     scannedQRCodeText?.let { text ->
         val encoded = Uri.parse(text)?.getQueryParameter("c_i")
+        if (encoded == null) {
+            scannedQRCodeText = null
+            return@let
+        }
         val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
 
         AlertDialog(

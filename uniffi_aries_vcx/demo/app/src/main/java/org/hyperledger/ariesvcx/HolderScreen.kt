@@ -36,32 +36,6 @@ fun HolderScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    var credentialOffer by remember {
-        mutableStateOf<String?>(null)
-    }
-
-    credentialOffer?.let {
-        AlertDialog(
-            onDismissRequest = { credentialOffer = null },
-            title = { Text("Accept this invitation?") },
-            text = { Text(credentialOffer!!) },
-            confirmButton = {
-                TextButton(onClick = {
-                    scope.launch {
-                        demoController.processOfferRequest()
-                    }
-                }) {
-                    Text("Accept")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { credentialOffer = null }) {
-                    Text("Cancel")
-                }
-            },
-        )
-    }
-
     LaunchedEffect(Unit) {
         demoController.awaitCredentialPolling()
     }
@@ -76,6 +50,28 @@ fun HolderScreen(
                 ).show()
             }
         }
+    }
+
+    if (demoState.offerReceived) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Accept this invitation?") },
+            text = { Text(demoController.getHolder()?.getAttributes()!!) },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch {
+                        demoController.processOfferRequest()
+                    }
+                }) {
+                    Text("Accept")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {  }) {
+                    Text("Cancel")
+                }
+            },
+        )
     }
 
     Column(

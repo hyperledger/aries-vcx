@@ -127,11 +127,12 @@ class AppDemoController : ViewModel() {
     }
 
     fun processOfferRequest() {
-        holder?.prepareCredentialRequest(profile!!, "4xE68b6S5VRFrKMMG1U95M")
-        val message = holder?.getMsgCredentialRequest()
-        connection?.sendMessage(profile!!, message!!)
-
-        _state.update { it.copy(offerReceived = false) }
+        viewModelScope.launch {
+            holder?.prepareCredentialRequest(profile!!, "4xE68b6S5VRFrKMMG1U95M")
+            Log.d("HOLDER", "processOfferRequest: ${holder?.getState()}")
+            val message = holder?.getMsgCredentialRequest()
+            connection?.sendMessage(profile!!, message!!)
+        }
     }
 
     suspend fun awaitCredentialPolling() {
@@ -152,13 +153,12 @@ class AppDemoController : ViewModel() {
                 if (holder == null) {
                     Log.d("OFFER", "awaitCredentialPolling: received offer")
                     holder = createFromOffer("", unpackedMessage.message)
+                    _state.update { it.copy(offerReceived = true) }
+                    onOfferReceived.invoke()
                 } else {
                     Log.d("CREDENTIAL", "awaitCredentialPolling: received credential")
                     holder?.processCredential(profile!!, unpackedMessage.message)
                 }
-
-                _state.update { it.copy(offerReceived = true) }
-                onOfferReceived.invoke()
             }
         }
     }

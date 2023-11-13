@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     aries_vcx_core::{
-        anoncreds::credx_anoncreds::IndyCredxAnonCreds,
+        anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
         ledger::{
             base_ledger::TxnAuthrAgrmtOptions,
             indy_vdr_ledger::{indyvdr_build_ledger_read, IndyVdrLedgerRead},
@@ -55,6 +55,15 @@ pub fn new_indy_profile(
 ) -> VcxUniFFIResult<Arc<ProfileHolder>> {
     block_on(async {
         let wh = create_and_open_wallet(&wallet_config).await?;
+        let wallet = IndySdkWallet::new(wh);
+
+        let anoncreds = IndyCredxAnonCreds;
+
+        anoncreds
+            .prover_create_link_secret(&wallet, "main")
+            .await
+            .ok();
+
         let indy_vdr_config = PoolConfig::default();
         let cache_config = InMemoryResponseCacherConfig::builder()
             .ttl(std::time::Duration::from_secs(60))
@@ -62,8 +71,7 @@ pub fn new_indy_profile(
             .build();
         let ledger_pool = IndyVdrLedgerPool::new(genesis_file_path, indy_vdr_config, vec![])?;
         let request_submitter = IndyVdrSubmitter::new(ledger_pool);
-        let ledger_read = indyvdr_build_ledger_read(request_submitter, cache_config)?;
-        let wallet = IndySdkWallet::new(wh);
+        let ledger_read = indyvdr_build_ledger_read(request_submitter.clone(), cache_config)?;
         let profile = UniffiProfile {
             anoncreds: IndyCredxAnonCreds,
             wallet,
