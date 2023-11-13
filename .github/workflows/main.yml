@@ -374,13 +374,13 @@ jobs:
       - name: "Run wrapper integration tests"
         run: (cd wrappers/node && npm run test:integration)
       - name: "Install vcxagent-core dependencies"
-        run: (cd agents/node/vcxagent-core && npm install)
+        run: (cd aries/agents/node/vcxagent-core && npm install)
       - name: "Run demo"
-        run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run demo)
+        run: (cd aries/agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run demo)
       - name: "Run demo with revocation"
-        run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run demo:revocation)
+        run: (cd aries/agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run demo:revocation)
       - name: "Run integration tests"
-        run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run test:integration)
+        run: (cd aries/agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run test:integration)
 
 
 
@@ -431,7 +431,7 @@ jobs:
         run: |
           if [[ "$PUBLISH_VERSION" ]]
           then
-            NPMJS_TOKEN=${{ secrets.NPMJS_TOKEN }} PUBLISH_VERSION=${{ env.PUBLISH_VERSION }} ./agents/node/vcxagent-core/publish.sh
+            NPMJS_TOKEN=${{ secrets.NPMJS_TOKEN }} PUBLISH_VERSION=${{ env.PUBLISH_VERSION }} ./aries/agents/node/vcxagent-core/publish.sh
           else
              echo "New version was not defined, skipping release."
           fi
