@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "sovrin-networks": "git+https://github.com/AbsaOSS/sovrin-networks#0.1.0",
-    "@hyperledger/node-vcx-wrapper": "file:../../../wrappers/node",
+    "@hyperledger/node-vcx-wrapper": "file:../../../../wrappers/node",
     "@hyperledger/vcxagent-core": "file:../vcxagent-core",
     "command-line-args": "^5.1.1",
     "command-line-usage": "^5.0.5",
