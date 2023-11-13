@@ -3,6 +3,7 @@ use typed_builder::TypedBuilder;
 
 use crate::{decorators::thread::Thread, msg_parts::MsgParts};
 
+/// https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md#key-list-query
 pub type KeylistQuery = MsgParts<KeylistQueryContent>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]

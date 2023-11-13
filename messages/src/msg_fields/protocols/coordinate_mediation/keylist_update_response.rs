@@ -4,6 +4,7 @@ use typed_builder::TypedBuilder;
 use super::keylist_update::KeylistUpdateItemAction;
 use crate::{decorators::thread::Thread, msg_parts::MsgParts};
 
+/// https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md#keylist-update-response
 pub type KeylistUpdateResponse =
     MsgParts<KeylistUpdateResponseContent, KeylistUpdateResponseDecorators>;
 
