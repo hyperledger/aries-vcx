@@ -10,8 +10,8 @@ members = [
     "messages",
     "shared_vcx",
     "diddoc_legacy",
-    "agents/rust/mediator",
-    "agents/rust/mediator/client-tui",
+    "aries/agents/rust/mediator",
+    "aries/agents/rust/mediator/client-tui",
     "agents/rust/aries-vcx-agent",
     "wrappers/vcx-napi-rs",
     "aries_vcx_core",
@@ -31,12 +31,15 @@ members = [
     "tools/simple_message_relay",
     "tools/test_utils",
     "tools/libvcx_logger",
-    "tools/display_as_json"
+    "tools/display_as_json",
 ]
 
 [workspace.package]
 version = "0.61.0"
-authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
+authors = [
+    "Absa Group Limited",
+    "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>",
+]
 description = "Library to work with Aries protocols & collection of supporting components"
 license = "Apache-2.0"
 edition = "2021"
@@ -72,5 +75,3 @@ unused_import_braces = "warn"
 unused_lifetimes = "warn"
 unused_qualifications = "warn"
 let_underscore_drop = "allow"
-
-
