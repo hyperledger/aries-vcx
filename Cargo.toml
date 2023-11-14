@@ -12,7 +12,7 @@ members = [
     "diddoc_legacy",
     "aries/agents/rust/mediator",
     "aries/agents/rust/mediator/client-tui",
-    "aries/agents/rust/aries-vcx-agent",
+    "agents/rust/aries-vcx-agent",
     "wrappers/vcx-napi-rs",
     "aries_vcx_core",
     "uniffi_aries_vcx/core",
