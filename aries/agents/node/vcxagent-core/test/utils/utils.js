@@ -42,7 +42,7 @@ async function executeFunctionWithServer (f1, f2) {
     server = app.listen(port)
 
     const { alice, faber, pwInfo } = await f1(endpoint)
-    await sleep(500)
+    await sleep(800)
     assert(encryptedMsg, "It seems that no message has yet arrived on faber's endpoint, try to increase timeout")
     const { message } = await faber.unpackMsg(encryptedMsg)
     return await f2(alice, faber, pwInfo, message)
