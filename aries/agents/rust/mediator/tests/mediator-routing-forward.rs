@@ -2,25 +2,14 @@ mod common;
 use std::collections::VecDeque;
 
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
-use mediation::didcomm_types::mediator_coord_structs::{
-    KeylistUpdateItem, KeylistUpdateItemAction, KeylistUpdateRequestData, MediatorCoordMsgEnum,
-};
-use mediator::{
-    aries_agent::{
-        client::transports::{AriesReqwest, AriesTransport},
-        utils::oob2did,
-    },
-    utils::GenericStringError,
-};
-use messages::msg_fields::protocols::{
-    basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators},
-    out_of_band::invitation::Invitation as OOBInvitation,
+use mediator::aries_agent::client::transports::{AriesReqwest, AriesTransport};
+use messages::msg_fields::protocols::basic_message::{
+    BasicMessage, BasicMessageContent, BasicMessageDecorators,
 };
 
 use crate::common::{
     agent_and_transport_utils::{
-        gen_mediator_connected_agent, get_mediator_grant_data,
-        send_message_and_pop_response_message,
+        gen_and_register_recipient_key, gen_mediator_connected_agent, get_mediator_grant_data,
     },
     prelude::*,
     test_setup::setup_env_logging,
@@ -45,29 +34,9 @@ async fn test_forward_flow() -> Result<()> {
     agent
         .init_service(grant_data.routing_keys, grant_data.endpoint.parse()?)
         .await?;
-    let agent_invite: OOBInvitation = agent
-        .get_oob_invite()
-        .map_err(|e| GenericStringError { msg: e.to_string() })?;
-    let agent_diddoc = oob2did(agent_invite);
-    let agent_recipient_key = agent_diddoc
-        .recipient_keys()
-        .unwrap()
-        .first()
-        .unwrap()
-        .clone();
     // register recipient key with mediator
-    let message = MediatorCoordMsgEnum::KeylistUpdateRequest(KeylistUpdateRequestData {
-        updates: vec![KeylistUpdateItem {
-            recipient_key: agent_recipient_key,
-            action: KeylistUpdateItemAction::Add,
-            result: None,
-        }],
-    });
-    info!("Sending {:?}", serde_json::to_string(&message).unwrap());
-    let message_bytes = serde_json::to_vec(&message)?;
-    let _response_message = send_message_and_pop_response_message(
-        &message_bytes,
-        &agent,
+    let (_agent_recipient_key, agent_diddoc) = gen_and_register_recipient_key(
+        &mut agent,
         &mut agent_aries_transport,
         &agent_verkey,
         &mediator_diddoc,

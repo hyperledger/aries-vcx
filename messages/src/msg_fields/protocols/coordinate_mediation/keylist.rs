@@ -11,7 +11,7 @@ pub struct KeylistContent {
     pub keys: Vec<KeylistItem>,
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pagination: Option<KeylistPagination>,
+    pub pagination: Option<KeylistPagination>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]

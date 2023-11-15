@@ -1,14 +1,17 @@
 use axum::{extract::State, Json};
-use mediation::didcomm_types::mediator_coord_structs::{MediateGrantData, MediatorCoordMsgEnum};
+use messages::msg_fields::protocols::coordinate_mediation::{
+    CoordinateMediation, MediateGrant, MediateGrantContent, MediateGrantDecorators,
+};
+use uuid::Uuid;
 
 use super::utils::prelude::*;
 
 pub async fn handle_mediation_coord(
     agent: &ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>,
-    coord_msg: MediatorCoordMsgEnum,
+    coord_msg: CoordinateMediation,
     auth_pubkey: &str,
-) -> Result<MediatorCoordMsgEnum, String> {
-    if let MediatorCoordMsgEnum::MediateRequest = coord_msg {
+) -> Result<CoordinateMediation, String> {
+    if let CoordinateMediation::MediateRequest(_mediate_request) = coord_msg {
         let service = agent
             .get_service_ref()
             .ok_or("Mediation agent must have service defined.")?;
@@ -21,10 +24,16 @@ pub async fn handle_mediation_coord(
                 .expect("Service must have recipient key")
                 .to_owned(),
         );
-        let coord_response = MediatorCoordMsgEnum::MediateGrant(MediateGrantData {
+        let mediate_grant_content = MediateGrantContent {
             endpoint: service.service_endpoint.to_string(),
             routing_keys,
-        });
+        };
+        let mediate_grant = MediateGrant::builder()
+            .content(mediate_grant_content)
+            .decorators(MediateGrantDecorators::default())
+            .id(Uuid::new_v4().to_string())
+            .build();
+        let coord_response = CoordinateMediation::MediateGrant(mediate_grant);
         return Ok(coord_response);
     };
     let Json(coord_response) = mediation::routes::coordination::handle_coord_authenticated(
