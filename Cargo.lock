@@ -2899,7 +2899,6 @@ dependencies = [
  "serde_json",
  "serde_with",
  "sqlx",
- "thiserror",
  "tokio",
  "uuid 1.5.0",
 ]
