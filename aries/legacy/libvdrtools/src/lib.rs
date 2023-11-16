@@ -86,9 +86,8 @@ impl Locator {
 
         let did_controller = DidController::new(wallet_service.clone(), crypto_service.clone());
 
-        let wallet_controller =
-            WalletController::new(wallet_service.clone(), crypto_service.clone());
-        let non_secret_controller = NonSecretsController::new(wallet_service.clone());
+        let wallet_controller = WalletController::new(wallet_service.clone(), crypto_service);
+        let non_secret_controller = NonSecretsController::new(wallet_service);
 
         let res = Locator {
             crypto_controller,

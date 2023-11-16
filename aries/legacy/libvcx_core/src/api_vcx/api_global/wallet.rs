@@ -55,7 +55,7 @@ fn setup_global_wallet(wallet_handle: WalletHandle) -> LibvcxResult<()> {
     // new way
     let base_wallet_impl = build_component_base_wallet(wallet_handle);
     let mut b_wallet = GLOBAL_BASE_WALLET.write()?;
-    *b_wallet = Some(base_wallet_impl.clone());
+    *b_wallet = Some(base_wallet_impl);
     // anoncreds
     let base_anoncreds_impl = Arc::new(IndyCredxAnonCreds);
     let mut b_anoncreds = GLOBAL_BASE_ANONCREDS.write()?;
