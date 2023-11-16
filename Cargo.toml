@@ -8,7 +8,7 @@ members = [
     "aries/legacy/libvdrtools",
     "messages_macros",
     "messages",
-    "aries/shared_vcx",
+    "aries/shared",
     "aries/legacy/diddoc_legacy",
     "aries/agents/rust/mediator",
     "aries/agents/rust/mediator/client-tui",

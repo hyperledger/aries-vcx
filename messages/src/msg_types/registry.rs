@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use lazy_static::lazy_static;
-use shared_vcx::maybe_known::MaybeKnown;
+use shared::maybe_known::MaybeKnown;
 
 use super::{role::Role, Protocol};
 use crate::msg_types::{

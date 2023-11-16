@@ -11,7 +11,7 @@ use aries_vcx::{
 };
 use async_trait::async_trait;
 use rand::Rng;
-use shared_vcx::http_client::post_message;
+use shared::http_client::post_message;
 use url::Url;
 
 use crate::{

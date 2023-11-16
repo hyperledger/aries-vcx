@@ -21,7 +21,7 @@ pub struct MediateRequestDecorators {
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;
-    use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
+    use shared::misc::serde_ignored::SerdeIgnored as NoDecorators;
 
     use super::*;
     use crate::{

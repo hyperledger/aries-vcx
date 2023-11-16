@@ -5,7 +5,7 @@ pub mod query;
 
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use shared_vcx::maybe_known::MaybeKnown;
+use shared::maybe_known::MaybeKnown;
 use typed_builder::TypedBuilder;
 
 use self::{

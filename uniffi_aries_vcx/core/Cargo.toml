@@ -28,7 +28,7 @@ serde_json = "1.0.91"
 serde = { version = "1.0.188", features = ["derive"] }
 async-trait = "0.1.64"
 diddoc_legacy = { path = "../../aries/legacy/diddoc_legacy" }
-shared_vcx = { path = "../../aries/shared_vcx" }
+shared = { path = "../../aries/shared" }
 url = "2.3.1"
 
 [build-dependencies]

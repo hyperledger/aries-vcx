@@ -48,7 +48,7 @@ pub enum RequestCredentialAttachmentFormatType {
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;
-    use shared_vcx::maybe_known::MaybeKnown;
+    use shared::maybe_known::MaybeKnown;
 
     use super::*;
     use crate::{

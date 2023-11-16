@@ -1,7 +1,7 @@
 use std::sync::PoisonError;
 
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
-use shared_vcx::errors::http_error::HttpError;
+use shared::errors::http_error::HttpError;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},

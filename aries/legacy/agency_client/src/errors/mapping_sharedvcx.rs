@@ -1,4 +1,4 @@
-use shared_vcx::errors::validation::{ValidationError, ValidationErrorKind};
+use shared::errors::validation::{ValidationError, ValidationErrorKind};
 
 use crate::errors::error::{AgencyClientError, AgencyClientErrorKind};
 

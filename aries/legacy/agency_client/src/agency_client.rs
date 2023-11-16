@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use shared_vcx::validation::{did::validate_did, verkey::validate_verkey};
+use shared::validation::{did::validate_did, verkey::validate_verkey};
 use url::Url;
 
 use crate::{

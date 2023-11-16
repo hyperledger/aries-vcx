@@ -1,7 +1,7 @@
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::AriesMessage;
-use shared_vcx::http_client::post_message;
+use shared::http_client::post_message;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},

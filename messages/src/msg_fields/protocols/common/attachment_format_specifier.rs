@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use shared_vcx::maybe_known::MaybeKnown;
+use shared::maybe_known::MaybeKnown;
 use typed_builder::TypedBuilder;
 
 /// Specifies that a particular Attachment, with the id of `attach_id`, has the format of `format`.

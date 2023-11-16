@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use shared_vcx::misc::serde_ignored::SerdeIgnored;
+use shared::misc::serde_ignored::SerdeIgnored;
 use typed_builder::TypedBuilder;
 
 use crate::{

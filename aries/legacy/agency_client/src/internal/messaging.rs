@@ -1,7 +1,7 @@
 use core::u8;
 
 use serde_json::Value;
-use shared_vcx::http_client::post_message;
+use shared::http_client::post_message;
 
 use crate::{
     agency_client::AgencyClient,

@@ -7,7 +7,7 @@ pub struct VcxHttpClient;
 #[async_trait]
 impl Transport for VcxHttpClient {
     async fn send_message(&self, msg: Vec<u8>, service_endpoint: Url) -> VcxResult<()> {
-        shared_vcx::http_client::post_message(msg, service_endpoint).await?;
+        shared::http_client::post_message(msg, service_endpoint).await?;
         Ok(())
     }
 }

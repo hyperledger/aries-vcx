@@ -1,5 +1,5 @@
 [package]
-name = "shared_vcx"
+name = "shared"
 edition.workspace = true
 version.workspace = true
 authors.workspace = true

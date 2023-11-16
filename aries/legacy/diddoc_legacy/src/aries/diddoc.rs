@@ -1,4 +1,4 @@
-use shared_vcx::validation::verkey::validate_verkey;
+use shared::validation::verkey::validate_verkey;
 use url::Url;
 
 use crate::{

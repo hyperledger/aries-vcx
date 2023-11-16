@@ -7,7 +7,7 @@ use serde::{
     ser::{Error as SerError, SerializeMap},
     Deserialize, Deserializer, Serialize, Serializer,
 };
-use shared_vcx::misc::utils::CowStr;
+use shared::misc::utils::CowStr;
 use strum_macros::{AsRefStr, EnumString};
 use typed_builder::TypedBuilder;
 use url::Url;

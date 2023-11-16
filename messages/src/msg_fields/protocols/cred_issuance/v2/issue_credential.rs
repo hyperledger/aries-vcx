@@ -51,7 +51,7 @@ pub enum IssueCredentialAttachmentFormatType {
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;
-    use shared_vcx::maybe_known::MaybeKnown;
+    use shared::maybe_known::MaybeKnown;
 
     use super::*;
     use crate::{
@@ -99,7 +99,7 @@ mod tests {
         let content = IssueCredentialV2Content::builder()
             .formats(vec![AttachmentFormatSpecifier {
                 attach_id: "1".to_owned(),
-                format: shared_vcx::maybe_known::MaybeKnown::Known(
+                format: shared::maybe_known::MaybeKnown::Known(
                     IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0,
                 ),
             }])

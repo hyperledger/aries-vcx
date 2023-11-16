@@ -23,8 +23,8 @@ into_msg_with_type!(Forward, RoutingTypeV1_0, Forward);
 
 mod tests {
     use serde_json::json;
-    // Bind `shared_vcx::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
-    use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
+    // Bind `shared::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
+    use shared::misc::serde_ignored::SerdeIgnored as NoDecorators;
 
     use super::*;
     use crate::misc::test_utils;

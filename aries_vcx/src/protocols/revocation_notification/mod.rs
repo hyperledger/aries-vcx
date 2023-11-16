@@ -10,7 +10,7 @@ pub mod test_utils {
         },
         AriesMessage,
     };
-    use shared_vcx::maybe_known::MaybeKnown;
+    use shared::maybe_known::MaybeKnown;
     use test_utils::constants::REV_REG_ID;
     use uuid::Uuid;
 

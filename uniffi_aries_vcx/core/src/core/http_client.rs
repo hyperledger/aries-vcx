@@ -1,6 +1,6 @@
 use aries_vcx::{errors::error::VcxResult, transport::Transport};
 use async_trait::async_trait;
-use shared_vcx::http_client::post_message;
+use shared::http_client::post_message;
 use url::Url;
 pub struct HttpClient;
 

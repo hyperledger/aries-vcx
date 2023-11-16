@@ -1,4 +1,4 @@
-use shared_vcx::validation::{did::validate_did, verkey::validate_verkey};
+use shared::validation::{did::validate_did, verkey::validate_verkey};
 
 use crate::{
     errors::error::AgencyClientResult,

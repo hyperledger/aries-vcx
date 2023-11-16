@@ -20,4 +20,4 @@ url = { version = "2.3", features = ["serde"] }
 uuid = { version = "0.8", default-features = false, features = ["v4"]}
 thiserror = "1.0.37"
 async-trait = "0.1.73"
-shared_vcx = { path = "../../shared_vcx" }
+shared = { path = "../../shared" }
