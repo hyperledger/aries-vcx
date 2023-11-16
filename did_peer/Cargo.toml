@@ -10,7 +10,7 @@ did_parser = { path = "../did_parser" }
 did_doc = { path = "../did_doc" }
 did_doc_sov = { path = "../did_doc_sov" }
 did_resolver = { path = "../did_resolver" }
-public_key = { path = "../aries/public_key" }
+public_key = { path = "../public_key" }
 thiserror = "1.0.40"
 regex = "1.8.4"
 serde = { version = "1.0.164", features = ["derive"] }

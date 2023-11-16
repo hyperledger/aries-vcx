@@ -25,7 +25,7 @@ members = [
     "did_resolver_registry",
     "did_resolver_sov",
     "did_resolver_web",
-    "aries/public_key",
+    "public_key",
     "indy_ledger_response_parser",
     "tools/wallet_migrator",
     "tools/simple_message_relay",
