@@ -339,7 +339,7 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run libvcx_core integration tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx_core/Cargo.toml" -- --include-ignored;
+          RUST_TEST_THREADS=1 cargo test --manifest-path="aries/legacy/libvcx_core/Cargo.toml" -- --include-ignored;
 
   test-integration-did-crate:
     needs: workflow-setup
@@ -372,7 +372,7 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
           node-version: ${{ matrix.node-version }}
       - name: "Run wrapper integration tests"
-        run: (cd wrappers/node && npm run test:integration)
+        run: (cd aries/wrappers/node && npm run test:integration)
       - name: "Install vcxagent-core dependencies"
         run: (cd aries/agents/node/vcxagent-core && npm install)
       - name: "Run demo"
@@ -406,7 +406,7 @@ jobs:
         run: |
           if [[ "$PUBLISH_VERSION" ]]
           then
-            NPMJS_TOKEN=${{ secrets.NPMJS_TOKEN }} PUBLISH_VERSION=${{ env.PUBLISH_VERSION }} ./wrappers/node/publish.sh
+            NPMJS_TOKEN=${{ secrets.NPMJS_TOKEN }} PUBLISH_VERSION=${{ env.PUBLISH_VERSION }} ./aries/wrappers/node/publish.sh
           else
              echo "New version was not defined, skipping release."
           fi
@@ -460,7 +460,7 @@ jobs:
               env
               unset CC
               unset CXX
-              cd wrappers/vcx-napi-rs
+              cd aries/wrappers/vcx-napi-rs
               npm run build:napi
               strip *.node
           - host: macos-latest

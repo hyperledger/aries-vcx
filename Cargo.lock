@@ -208,7 +208,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "shared_vcx",
+ "shared",
  "thiserror",
  "url",
  "uuid 0.8.2",
@@ -331,7 +331,7 @@ dependencies = [
  "log",
  "serde",
  "serde_json",
- "shared_vcx",
+ "shared",
  "thiserror",
  "url",
  "uuid 1.5.0",
@@ -364,7 +364,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "sha2",
- "shared_vcx",
+ "shared",
  "strum 0.25.0",
  "strum_macros 0.25.2",
  "test_utils",
@@ -1453,7 +1453,7 @@ name = "did_parser"
 version = "0.1.0"
 dependencies = [
  "serde",
- "shared_vcx",
+ "shared",
 ]
 
 [[package]]
@@ -1544,7 +1544,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "shared_vcx",
+ "shared",
  "thiserror",
  "url",
 ]
@@ -2743,7 +2743,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "shared_vcx",
+ "shared",
  "test_utils",
  "thiserror",
  "time 0.3.20",
@@ -2954,7 +2954,7 @@ dependencies = [
  "messages_macros",
  "serde",
  "serde_json",
- "shared_vcx",
+ "shared",
  "strum 0.24.1",
  "strum_macros 0.24.3",
  "thiserror",
@@ -2970,7 +2970,7 @@ dependencies = [
  "darling 0.20.3",
  "proc-macro2",
  "quote",
- "shared_vcx",
+ "shared",
  "syn 2.0.38",
 ]
 
@@ -4143,7 +4143,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "shared_vcx"
+name = "shared"
 version = "0.61.0"
 dependencies = [
  "bs58 0.4.0",
@@ -5059,7 +5059,7 @@ dependencies = [
  "once_cell",
  "serde",
  "serde_json",
- "shared_vcx",
+ "shared",
  "thiserror",
  "tokio",
  "uniffi",

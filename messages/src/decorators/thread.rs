@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use shared_vcx::maybe_known::MaybeKnown;
+use shared::maybe_known::MaybeKnown;
 use typed_builder::TypedBuilder;
 
 /// Struct representing the `~thread` decorator from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0008-message-id-and-threading/README.md>).

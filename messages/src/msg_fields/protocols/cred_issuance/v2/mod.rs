@@ -11,7 +11,7 @@ use std::str::FromStr;
 
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use shared_vcx::misc::utils::CowStr;
+use shared::misc::utils::CowStr;
 
 use self::{
     ack::{AckCredentialV2, AckCredentialV2Content},

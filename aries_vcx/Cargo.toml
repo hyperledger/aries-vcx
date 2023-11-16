@@ -33,11 +33,11 @@ backtrace_errors = ["backtrace"]
 legacy_proof = ["aries_vcx_core/legacy_proof"]
 
 [dependencies]
-agency_client = { path = "../agency_client" }
+agency_client = { path = "../aries/legacy/agency_client" }
 messages = { path = "../messages" }
-diddoc_legacy = { path = "../diddoc_legacy" }
+diddoc_legacy = { path = "../aries/legacy/diddoc_legacy" }
 aries_vcx_core = { path = "../aries_vcx_core" }
-shared_vcx = { path = "../shared_vcx" }
+shared = { path = "../aries/shared" }
 bs58 = "0.5.0"
 async-trait = "0.1.53"
 env_logger = "0.10.0"
@@ -66,6 +66,6 @@ backtrace = { optional = true, version = "0.3" }
 [dev-dependencies]
 test_utils = { path = "../tools/test_utils" }
 libvcx_logger = { path = "../tools/libvcx_logger" }
-wallet_migrator = { path = "../wallet_migrator" }
+wallet_migrator = { path = "../tools/wallet_migrator" }
 async-channel = "1.7.1"
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }

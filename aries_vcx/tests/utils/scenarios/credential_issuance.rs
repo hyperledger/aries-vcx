@@ -84,7 +84,7 @@ pub fn create_holder_from_proposal(proposal: ProposeCredentialV1) -> Holder {
 pub fn create_issuer_from_proposal(proposal: ProposeCredentialV1) -> Issuer {
     let issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", &proposal).unwrap();
     assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
-    assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
+    assert_eq!(proposal, issuer.get_proposal().unwrap());
     issuer
 }
 

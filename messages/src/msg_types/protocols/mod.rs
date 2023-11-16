@@ -2,7 +2,7 @@ use std::{fmt::Display, str::FromStr};
 
 use derive_more::{From, TryInto};
 use serde::{Deserialize, Serialize};
-use shared_vcx::misc::utils::CowStr;
+use shared::misc::utils::CowStr;
 
 use self::{
     basic_message::BasicMessageType, connection::ConnectionType,

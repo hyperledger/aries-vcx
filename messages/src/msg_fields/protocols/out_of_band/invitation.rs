@@ -1,6 +1,6 @@
 use diddoc_legacy::aries::service::AriesService;
 use serde::{Deserialize, Serialize};
-use shared_vcx::maybe_known::MaybeKnown;
+use shared::maybe_known::MaybeKnown;
 use typed_builder::TypedBuilder;
 
 use super::OobGoalCode;

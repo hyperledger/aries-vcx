@@ -13,11 +13,11 @@ vdr_proxy_ledger = ["credx", "dep:indy-vdr-proxy-client"]
 legacy_proof = []
 
 [dependencies]
-agency_client = { path = "../agency_client" }
+agency_client = { path = "../aries/legacy/agency_client" }
 indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", default-features = false, features = ["log"] }
 indy-credx = { git = "https://github.com/hyperledger/indy-shared-rs", tag = "v1.1.0", optional = true }
-libvdrtools = { path = "../libvdrtools", optional = true }
-indy-api-types = { path = "../libvdrtools/indy-api-types", optional = true }
+libvdrtools = { path = "../aries/legacy/libvdrtools", optional = true }
+indy-api-types = { path = "../aries/legacy/libvdrtools/indy-api-types", optional = true }
 async-trait = "0.1.68"
 futures = { version = "0.3", default-features = false }
 serde_json = "1.0.95"

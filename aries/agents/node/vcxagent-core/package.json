@@ -47,7 +47,7 @@
     "test:integration:connection": "jest --forceExit --env=node --runInBand test/connection.spec.js"
   },
   "dependencies": {
-    "@hyperledger/node-vcx-wrapper": "file:../../../../wrappers/node",
+    "@hyperledger/node-vcx-wrapper": "file:../../../wrappers/node",
     "axios": "^1.6.0",
     "ffi-napi": "^4.0.3",
     "fs-extra": "^4.0.3",

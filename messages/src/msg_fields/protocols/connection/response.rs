@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use shared_vcx::misc::utils::CowStr;
+use shared::misc::utils::CowStr;
 use typed_builder::TypedBuilder;
 
 use crate::{

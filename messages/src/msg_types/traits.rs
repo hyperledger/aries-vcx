@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use shared_vcx::maybe_known::MaybeKnown;
+use shared::maybe_known::MaybeKnown;
 
 use crate::{error::MsgTypeResult, msg_types::role::Role};
 

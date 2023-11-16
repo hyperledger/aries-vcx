@@ -114,8 +114,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         if let Some(service) = &self.service {
             let invitation = OutOfBandSender::create()
                 .append_service(&OobService::AriesService(service.clone()))
-                .oob
-                .clone();
+                .oob;
             Ok(invitation)
         } else {
             Err("No service to create invite for".to_owned())

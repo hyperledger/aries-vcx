@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-// Bind `shared_vcx::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
-use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
+// Bind `shared::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
+use shared::misc::serde_ignored::SerdeIgnored as NoDecorators;
 use typed_builder::TypedBuilder;
 
 /// Struct representing a complete message (apart from the `@type` field) as defined in a protocol

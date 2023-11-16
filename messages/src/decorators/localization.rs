@@ -5,7 +5,7 @@ use serde::{
     ser::{Error, SerializeMap},
     Deserialize, Serialize, Serializer,
 };
-use shared_vcx::misc::utils::CowStr;
+use shared::misc::utils::CowStr;
 use typed_builder::TypedBuilder;
 use url::Url;
 

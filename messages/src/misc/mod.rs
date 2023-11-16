@@ -2,7 +2,7 @@ mod mime_type;
 pub(crate) mod utils;
 
 pub use mime_type::MimeType;
-pub use shared_vcx::misc::{serde_ignored::SerdeIgnored as NoDecorators, utils::CowStr};
+pub use shared::misc::{serde_ignored::SerdeIgnored as NoDecorators, utils::CowStr};
 
 #[cfg(test)]
 
@@ -10,7 +10,7 @@ pub mod test_utils {
     use chrono::{DateTime, Utc};
     use serde::{Deserialize, Serialize};
     use serde_json::{json, Value};
-    use shared_vcx::misc::utils::CowStr;
+    use shared::misc::utils::CowStr;
 
     use super::utils;
     use crate::{
