@@ -227,7 +227,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
 #[cfg(test)]
 mod test {
     use aries_vcx::{
-        handlers::out_of_band::receiver::oob_invitation_to_legacy_did_doc,
+        protocols::oob::oob_invitation_to_legacy_did_doc,
         utils::encryption_envelope::EncryptionEnvelope,
     };
     use log::info;

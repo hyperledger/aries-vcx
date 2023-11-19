@@ -1,8 +1,10 @@
 use std::collections::VecDeque;
 
 use aries_vcx::{
-    handlers::out_of_band::receiver::oob_invitation_to_legacy_did_doc,
-    protocols::connection::invitee::{states::completed::Completed, InviteeConnection},
+    protocols::{
+        connection::invitee::{states::completed::Completed, InviteeConnection},
+        oob::oob_invitation_to_legacy_did_doc,
+    },
     utils::encryption_envelope::EncryptionEnvelope,
 };
 use aries_vcx_core::wallet::base_wallet::BaseWallet;

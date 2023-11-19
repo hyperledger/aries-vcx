@@ -1,3 +1,5 @@
+use std::{borrow::Borrow, marker::PhantomData};
+
 use async_trait::async_trait;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_resolver::{
@@ -17,18 +19,37 @@ use crate::{
     reader::AttrReader,
 };
 
-pub struct DidSovResolver<T: AttrReader> {
+pub struct DidSovResolver<T, A>
+where
+    T: Borrow<A> + Sync + Send,
+    A: AttrReader,
+{
     ledger: T,
+    _marker: PhantomData<A>,
 }
 
-impl<T: AttrReader> DidSovResolver<T> {
+impl<T, A> DidSovResolver<T, A>
+where
+    T: Borrow<A> + Sync + Send,
+    A: AttrReader,
+{
+    // todo: Creating instance can be non-ergonomic, as compiler will ask you to specify
+    //       the full type of DidSovResolver<T, A> explicitly, and the type can be quite long.
+    //       Consider improving the DX in the future.
     pub fn new(ledger: T) -> Self {
-        DidSovResolver { ledger }
+        DidSovResolver {
+            ledger,
+            _marker: PhantomData,
+        }
     }
 }
 
 #[async_trait]
-impl<T: AttrReader> DidResolvable for DidSovResolver<T> {
+impl<T, A> DidResolvable for DidSovResolver<T, A>
+where
+    T: Borrow<A> + Sync + Send,
+    A: AttrReader,
+{
     type ExtraFieldsService = ExtraFieldsSov;
     type ExtraFieldsOptions = ();
 
@@ -58,7 +79,7 @@ impl<T: AttrReader> DidResolvable for DidSovResolver<T> {
             )));
         }
         let did = parsed_did.did();
-        let ledger_response = self.ledger.get_attr(did, "endpoint").await?;
+        let ledger_response = self.ledger.borrow().get_attr(did, "endpoint").await?;
         let verkey = self.get_verkey(did).await?;
         ledger_response_to_ddo(did, &ledger_response, verkey)
             .await
@@ -66,9 +87,13 @@ impl<T: AttrReader> DidResolvable for DidSovResolver<T> {
     }
 }
 
-impl<T: AttrReader> DidSovResolver<T> {
+impl<T, A> DidSovResolver<T, A>
+where
+    T: Borrow<A> + Sync + Send,
+    A: AttrReader,
+{
     async fn get_verkey(&self, did: &str) -> Result<String, DidSovError> {
-        let nym_response = self.ledger.get_nym(did).await?;
+        let nym_response = self.ledger.borrow().get_nym(did).await?;
         let nym_json: Value = serde_json::from_str(&nym_response)?;
         let nym_data = nym_json["result"]["data"]
             .as_str()

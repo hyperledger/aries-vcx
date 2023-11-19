@@ -93,10 +93,6 @@ async fn did_exchange_test() {
     .await
     .unwrap();
 
-    // let extra = ExtraFieldsDidCommV2::builder().build();
-    // let service = ServiceSov::DIDCommV2(
-    //     ServiceDidCommV2::new(Default::default(), url.clone().into(), extra).unwrap(),
-    // );
     let TransitionResult {
         state: responder,
         output: response,

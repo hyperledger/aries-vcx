@@ -6,7 +6,9 @@ use did_parser::Did;
 use did_peer::resolver::PeerDidResolver;
 use did_resolver::traits::resolvable::DidResolvable;
 use did_resolver_registry::ResolverRegistry;
-use helpers::{construct_request, did_doc_from_did, verify_handshake_protocol};
+use helpers::{
+    construct_request, did_doc_from_did, oob_invitation_to_diddoc, verify_handshake_protocol,
+};
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
@@ -24,7 +26,6 @@ use uuid::Uuid;
 use super::DidExchangeRequester;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
-    handlers::out_of_band::receiver::oob_invitation_to_diddoc,
     protocols::did_exchange::{
         state_machine::helpers::{attach_to_ddo_sov, create_our_did_document, to_transition_error},
         states::{completed::Completed, requester::request_sent::RequestSent},

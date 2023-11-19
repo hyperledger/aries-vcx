@@ -1,5 +1,5 @@
 use aries_vcx::{
-    handlers::{out_of_band::receiver::oob_invitation_to_legacy_did_doc, util::AnyInvitation},
+    handlers::util::AnyInvitation,
     protocols::{
         connection::invitee::{
             states::{
@@ -9,6 +9,7 @@ use aries_vcx::{
             InviteeConnection,
         },
         mediated_connection::pairwise_info::PairwiseInfo,
+        oob::oob_invitation_to_legacy_did_doc,
     },
     utils::encryption_envelope::EncryptionEnvelope,
 };

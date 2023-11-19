@@ -86,7 +86,6 @@ impl Agent {
 
         let anoncreds = IndyCredxAnonCreds;
         let (ledger_read, ledger_write) = build_ledger_components(vcx_pool_config.clone()).unwrap();
-        let (ledger_read_2, _) = build_ledger_components(vcx_pool_config).unwrap();
 
         let ledger_read = Arc::new(ledger_read);
         let ledger_write = Arc::new(ledger_write);
@@ -117,14 +116,12 @@ impl Agent {
         .await?;
 
         let did_peer_resolver = PeerDidResolver::new();
-        let did_sov_resolver = DidSovResolver::new(ledger_read_2);
+        let did_sov_resolver: DidSovResolver<Arc<DefaultIndyLedgerRead>, DefaultIndyLedgerRead> =
+            DidSovResolver::new(ledger_read.clone());
         let did_resolver_registry = Arc::new(
             ResolverRegistry::new()
-                .register_resolver::<PeerDidResolver>("peer".into(), did_peer_resolver)
-                .register_resolver::<DidSovResolver<DefaultIndyLedgerRead>>(
-                    "sov".into(),
-                    did_sov_resolver,
-                ),
+                .register_resolver("peer".into(), did_peer_resolver)
+                .register_resolver("sov".into(), did_sov_resolver),
         );
 
         let connections = Arc::new(ServiceConnections::new(

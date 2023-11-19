@@ -4,14 +4,11 @@ use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::B
 use did_doc_sov::DidDocumentSov;
 use did_parser::Did;
 use did_resolver_registry::ResolverRegistry;
-use messages::{
-    msg_fields::protocols::{
-        did_exchange::{
-            complete::Complete, problem_report::ProblemReport, request::Request, response::Response,
-        },
-        out_of_band::invitation::Invitation,
+use messages::msg_fields::protocols::{
+    did_exchange::{
+        complete::Complete, problem_report::ProblemReport, request::Request, response::Response,
     },
-    AriesMessage,
+    out_of_band::invitation::Invitation,
 };
 use public_key::Key;
 pub use thin_state::ThinState;
@@ -27,7 +24,6 @@ use crate::{
         },
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
     },
-    transport::Transport,
 };
 
 mod conversions;
@@ -145,51 +141,6 @@ impl GenericDidExchange {
             GenericDidExchange::Requester(RequesterState::RequestSent(state)),
             output,
         ))
-    }
-
-    pub async fn send_message<T>(
-        &self,
-        wallet: &impl BaseWallet,
-        message: &AriesMessage,
-        transport: &T,
-    ) -> Result<(), AriesVcxError>
-    where
-        T: Transport,
-    {
-        match self {
-            GenericDidExchange::Requester(requester_state) => match requester_state {
-                RequesterState::RequestSent(request_sent_state) => {
-                    request_sent_state
-                        .send_message(wallet, message, transport)
-                        .await
-                }
-                RequesterState::Completed(completed_state) => {
-                    completed_state
-                        .send_message(wallet, message, transport)
-                        .await
-                }
-                RequesterState::Abandoned(_) => Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to send message in abandoned state",
-                )),
-            },
-            GenericDidExchange::Responder(responder_state) => match responder_state {
-                ResponderState::ResponseSent(response_sent_state) => {
-                    response_sent_state
-                        .send_message(wallet, message, transport)
-                        .await
-                }
-                ResponderState::Completed(completed_state) => {
-                    completed_state
-                        .send_message(wallet, message, transport)
-                        .await
-                }
-                ResponderState::Abandoned(_) => Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to send message in abandoned state",
-                )),
-            },
-        }
     }
 
     pub async fn handle_request(

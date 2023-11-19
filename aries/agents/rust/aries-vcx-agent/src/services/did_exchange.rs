@@ -11,12 +11,14 @@ use aries_vcx::{
         resolve_key_from_invitation,
         state_machine::generic::{GenericDidExchange, ThinState},
     },
+    transport::Transport,
 };
 use aries_vcx_core::{ledger::indy_vdr_ledger::DefaultIndyLedgerRead, wallet::indy::IndySdkWallet};
 use did_resolver_registry::ResolverRegistry;
 
 use super::connection::ServiceEndpoint;
 use crate::{
+    helper::{get_their_endpoint, pairwise_encrypt},
     http::VcxHttpClient,
     storage::{object_cache::ObjectCache, Storage},
     AgentError, AgentErrorKind, AgentResult,
@@ -67,8 +69,12 @@ impl ServiceDidExchange {
                 )
             })?
             .thid;
-        requester
-            .send_message(self.wallet.as_ref(), &request.into(), &VcxHttpClient)
+        let ddo_their = requester.their_did_doc();
+        let ddo_our = requester.our_did_document();
+        let encryption_envelope =
+            pairwise_encrypt(ddo_our, ddo_their, self.wallet.as_ref(), &request.into()).await?;
+        VcxHttpClient
+            .send_message(encryption_envelope.0, get_their_endpoint(ddo_their)?)
             .await?;
         self.did_exchange.insert(&request_id, requester.clone())
     }
@@ -104,8 +110,12 @@ impl ServiceDidExchange {
             invitation_key,
         )
         .await?;
-        responder
-            .send_message(self.wallet.as_ref(), &response.into(), &VcxHttpClient)
+        let ddo_their = responder.their_did_doc();
+        let ddo_our = responder.our_did_document();
+        let encryption_envelope =
+            pairwise_encrypt(ddo_our, ddo_their, self.wallet.as_ref(), &response.into()).await?;
+        VcxHttpClient
+            .send_message(encryption_envelope.0, get_their_endpoint(ddo_their)?)
             .await?;
         self.did_exchange.insert(&request_id, responder.clone())
     }
@@ -117,8 +127,12 @@ impl ServiceDidExchange {
             .get(&thread_id)?
             .handle_response(response)
             .await?;
-        requester
-            .send_message(self.wallet.as_ref(), &complete.into(), &VcxHttpClient)
+        let ddo_their = requester.their_did_doc();
+        let ddo_our = requester.our_did_document();
+        let encryption_envelope =
+            pairwise_encrypt(ddo_our, ddo_their, self.wallet.as_ref(), &complete.into()).await?;
+        VcxHttpClient
+            .send_message(encryption_envelope.0, get_their_endpoint(ddo_their)?)
             .await?;
         self.did_exchange.insert(&thread_id, requester.clone())
     }

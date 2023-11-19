@@ -28,11 +28,8 @@ use super::{
 use crate::{
     common::{ledger::transactions::get_service, signing::decode_signed_connection_response},
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    handlers::{
-        out_of_band::receiver::oob_invitation_to_legacy_did_doc,
-        util::{matches_thread_id, AnyInvitation},
-    },
-    protocols::connection::trait_bounds::ThreadId,
+    handlers::util::{matches_thread_id, AnyInvitation},
+    protocols::{connection::trait_bounds::ThreadId, oob::oob_invitation_to_legacy_did_doc},
 };
 
 /// Convenience alias
