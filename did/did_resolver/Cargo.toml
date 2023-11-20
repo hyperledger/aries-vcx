@@ -1,0 +1,14 @@
+[package]
+name = "did_resolver"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+
+[dependencies]
+did_parser = { path = "../did_parser" }
+did_doc = { path = "../../did_document/did_doc" }
+async-trait = "0.1.68"
+chrono = { version = "0.4.24", default-features = false, features = ["serde"] }
+serde = { version = "1.0.160", default-features = false, features = ["derive"] }
