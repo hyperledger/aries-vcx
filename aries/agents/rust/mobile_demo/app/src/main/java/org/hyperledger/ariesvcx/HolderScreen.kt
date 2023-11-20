@@ -31,6 +31,10 @@ fun HolderScreen(
         demoController.awaitCredentialPolling()
     }
 
+    LaunchedEffect(Unit) {
+        demoController.awaitCredentialPolling()
+    }
+
     if (demoState.offerReceived) {
         AlertDialog(
             onDismissRequest = { },

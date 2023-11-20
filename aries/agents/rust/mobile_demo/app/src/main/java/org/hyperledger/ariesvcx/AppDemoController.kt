@@ -151,6 +151,7 @@ class AppDemoController : ViewModel() {
                 if (!_state.value.offerReceived) {
                     Log.d("OFFER", "awaitCredentialPolling: received OFFER")
                     holder = createFromOffer("", unpackedMessage.message)
+
                     _state.update { it.copy(offerReceived = true) }
                     onOfferReceived.invoke()
                 } else {
