@@ -8,7 +8,7 @@ pub struct AgentError {
 
 impl std::fmt::Display for AgentError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::result::Result<(), std::fmt::Error> {
-        f.write_str(&format!("{}: {}", self.kind.to_string(), self.message.to_string()))
+        f.write_str(&format!("{}: {}", self.kind, self.message))
     }
 }
 

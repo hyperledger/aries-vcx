@@ -46,7 +46,10 @@ mod tests {
 
     #[test]
     fn test_version_resolution_didexchange() {
-        test_utils::test_msg_type_resolution("https://didcomm.org/didexchange/1.255", DidExchangeTypeV1::new_v1_0())
+        test_utils::test_msg_type_resolution(
+            "https://didcomm.org/didexchange/1.255",
+            DidExchangeTypeV1::new_v1_0(),
+        )
     }
 
     #[test]

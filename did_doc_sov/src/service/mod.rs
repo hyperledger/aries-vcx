@@ -72,7 +72,7 @@ impl ServiceSov {
         }
     }
 
-    pub fn service_endpoint(&self) -> &Url {
+    pub fn service_endpoint(&self) -> Url {
         match self {
             ServiceSov::AIP1(service) => service.service_endpoint(),
             ServiceSov::DIDCommV1(service) => service.service_endpoint(),
@@ -129,28 +129,28 @@ impl TryFrom<ServiceSov> for Service<ExtraFieldsSov> {
         match service {
             ServiceSov::AIP1(service) => Ok(Service::builder(
                 service.id().clone(),
-                service.service_endpoint().clone(),
+                service.service_endpoint(),
                 ExtraFieldsSov::AIP1(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?
             .build()),
             ServiceSov::DIDCommV1(service) => Ok(Service::builder(
                 service.id().clone(),
-                service.service_endpoint().clone(),
+                service.service_endpoint(),
                 ExtraFieldsSov::DIDCommV1(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?
             .build()),
             ServiceSov::DIDCommV2(service) => Ok(Service::builder(
                 service.id().clone(),
-                service.service_endpoint().clone(),
+                service.service_endpoint(),
                 ExtraFieldsSov::DIDCommV2(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?
             .build()),
             ServiceSov::Legacy(service) => Ok(Service::builder(
                 service.id().clone(),
-                service.service_endpoint().clone(),
+                service.service_endpoint(),
                 ExtraFieldsSov::Legacy(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?

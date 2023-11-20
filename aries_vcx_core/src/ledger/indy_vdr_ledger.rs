@@ -695,6 +695,7 @@ pub fn indyvdr_build_ledger_write(
     IndyVdrLedgerWrite::new(config_write)
 }
 
+#[derive(Clone)]
 pub struct VcxPoolConfig {
     pub genesis_file_path: String,
     pub indy_vdr_config: Option<PoolConfig>,

@@ -1,7 +1,10 @@
 use std::collections::VecDeque;
 
 use aries_vcx::{
-    protocols::connection::invitee::{states::completed::Completed, InviteeConnection},
+    protocols::{
+        connection::invitee::{states::completed::Completed, InviteeConnection},
+        oob::oob_invitation_to_legacy_did_doc,
+    },
     utils::encryption_envelope::EncryptionEnvelope,
 };
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
@@ -10,7 +13,6 @@ use mediation::storage::MediatorPersistence;
 use mediator::{
     aries_agent::{
         client::transports::{AriesReqwest, AriesTransport},
-        utils::oob2did,
         Agent,
     },
     utils::{structs::VerKey, GenericStringError},
@@ -27,6 +29,7 @@ use messages::{
     AriesMessage,
 };
 use reqwest::header::ACCEPT;
+use test_utils::mockdata::mock_ledger::MockLedger;
 
 use super::prelude::*;
 
@@ -109,7 +112,10 @@ pub async fn gen_and_register_recipient_key(
     let agent_invite: OOBInvitation = agent
         .get_oob_invite()
         .map_err(|e| GenericStringError { msg: e.to_string() })?;
-    let agent_diddoc = oob2did(agent_invite);
+    let mock_ledger = MockLedger {};
+    let agent_diddoc = oob_invitation_to_legacy_did_doc(&mock_ledger, &agent_invite)
+        .await
+        .unwrap();
     let agent_recipient_key = agent_diddoc
         .recipient_keys()
         .unwrap()

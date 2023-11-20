@@ -2,7 +2,6 @@ use did_doc_sov::{extra_fields::KeyKind, DidDocumentSov};
 
 const LEGACY_DID_DOC_JSON: &str = r#"
 {
-   "@context": "https://w3id.org/did/v1",
    "id": "2ZHFFhzA2XtTD6hJqzL7ux",
    "publicKey": [
        {

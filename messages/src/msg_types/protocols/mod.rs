@@ -6,7 +6,8 @@ use shared::misc::utils::CowStr;
 
 use self::{
     basic_message::BasicMessageType, connection::ConnectionType,
-    coordinate_mediation::CoordinateMediationType, did_exchange::DidExchangeType, cred_issuance::CredentialIssuanceType, discover_features::DiscoverFeaturesType,
+    coordinate_mediation::CoordinateMediationType, cred_issuance::CredentialIssuanceType,
+    did_exchange::DidExchangeType, discover_features::DiscoverFeaturesType,
     notification::NotificationType, out_of_band::OutOfBandType, pickup::PickupType,
     present_proof::PresentProofType, report_problem::ReportProblemType, revocation::RevocationType,
     routing::RoutingType, signature::SignatureType, trust_ping::TrustPingType,

@@ -41,8 +41,8 @@ impl ServiceDidCommV2 {
         ServiceType::DIDCommV2
     }
 
-    pub fn service_endpoint(&self) -> &Url {
-        self.service.service_endpoint()
+    pub fn service_endpoint(&self) -> Url {
+        self.service.service_endpoint().clone()
     }
 
     pub fn extra(&self) -> &ExtraFieldsDidCommV2 {

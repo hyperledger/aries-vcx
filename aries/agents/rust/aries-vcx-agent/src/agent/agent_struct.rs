@@ -6,13 +6,12 @@ use aries_vcx_core::{
     wallet::indy::IndySdkWallet,
 };
 
-use crate::services::did_exchange::ServiceDidExchange;
-use crate::services::out_of_band::ServiceOutOfBand;
 use crate::{
     agent::agent_config::AgentConfig,
     services::{
         connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
-        holder::ServiceCredentialsHolder, issuer::ServiceCredentialsIssuer, prover::ServiceProver,
+        did_exchange::ServiceDidExchange, holder::ServiceCredentialsHolder,
+        issuer::ServiceCredentialsIssuer, out_of_band::ServiceOutOfBand, prover::ServiceProver,
         revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
         verifier::ServiceVerifier,
     },
@@ -103,6 +102,6 @@ impl Agent {
     }
 
     pub fn public_did(&self) -> &str {
-        self.did_exchange.public_did().as_ref()
+        self.did_exchange.public_did()
     }
 }

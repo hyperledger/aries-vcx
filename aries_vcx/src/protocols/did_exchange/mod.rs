@@ -3,7 +3,9 @@ use std::sync::Arc;
 use did_doc_sov::extra_fields::KeyKind;
 use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 use did_resolver_registry::ResolverRegistry;
-use messages::msg_fields::protocols::out_of_band::invitation::{Invitation as OobInvitation, OobService};
+use messages::msg_fields::protocols::out_of_band::invitation::{
+    Invitation as OobInvitation, OobService,
+};
 use public_key::{Key, KeyType};
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
@@ -35,7 +37,10 @@ pub async fn resolve_key_from_invitation(
                 .resolve(&did.clone().try_into()?, &Default::default())
                 .await
                 .map_err(|err| {
-                    AriesVcxError::from_msg(AriesVcxErrorKind::InvalidDid, format!("DID resolution failed: {err}"))
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidDid,
+                        format!("DID resolution failed: {err}"),
+                    )
                 })?;
             Ok(did_document
                 .verification_method()

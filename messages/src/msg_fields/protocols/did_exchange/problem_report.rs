@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{localization::MsgLocalization, thread::Thread, timing::Timing},
@@ -7,7 +8,7 @@ use crate::{
 
 pub type ProblemReport = MsgParts<ProblemReportContent, ProblemReportDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct ProblemReportContent {
     #[serde(rename = "problem-code")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -25,13 +26,15 @@ pub enum ProblemCode {
     ResponseProcessingError,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ProblemReportDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~l10n")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub localization: Option<MsgLocalization>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -56,8 +59,8 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{
-            localization::tests::make_extended_msg_localization, thread::tests::make_extended_thread,
-            timing::tests::make_extended_timing,
+            localization::tests::make_extended_msg_localization,
+            thread::tests::make_extended_thread, timing::tests::make_extended_timing,
         },
         misc::test_utils,
         msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
@@ -73,7 +76,12 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, DidExchangeTypeV1_0::ProblemReport, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            DidExchangeTypeV1_0::ProblemReport,
+            expected,
+        );
     }
 
     #[test]
@@ -94,6 +102,11 @@ mod tests {
             "~l10n": decorators.localization
         });
 
-        test_utils::test_msg(content, decorators, DidExchangeTypeV1_0::ProblemReport, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            DidExchangeTypeV1_0::ProblemReport,
+            expected,
+        );
     }
 }

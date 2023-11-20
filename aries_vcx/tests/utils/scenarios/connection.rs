@@ -1,9 +1,8 @@
 use aries_vcx::{
-    common::ledger::transactions::into_did_doc,
     errors::error::VcxResult,
     handlers::{out_of_band::sender::OutOfBandSender, util::AnyInvitation},
     protocols::{
-        connection::{Connection, GenericConnection},
+        connection::{invitee::any_invitation_into_did_doc, Connection, GenericConnection},
         mediated_connection::pairwise_info::PairwiseInfo,
     },
     transport::Transport,
@@ -114,7 +113,9 @@ pub async fn create_connections_via_oob_invite(
         )))
         .unwrap();
     let invitation = AnyInvitation::Oob(oob_sender.oob.clone());
-    let ddo = into_did_doc(&alice.ledger_read, &invitation).await.unwrap();
+    let ddo = any_invitation_into_did_doc(&alice.ledger_read, &invitation)
+        .await
+        .unwrap();
     // TODO: Create a key and write on ledger instead
     let inviter_pairwise_info = PairwiseInfo {
         pw_did: ddo.clone().id,
@@ -148,7 +149,7 @@ pub async fn create_connections_via_public_invite(
             .content(content)
             .build(),
     );
-    let ddo = into_did_doc(&alice.ledger_read, &public_invite)
+    let ddo = any_invitation_into_did_doc(&alice.ledger_read, &public_invite)
         .await
         .unwrap();
     // TODO: Create a key and write on ledger instead

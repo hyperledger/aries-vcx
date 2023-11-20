@@ -1,11 +1,20 @@
-mod conversions;
-mod thin_state;
+use std::sync::Arc;
 
+use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
 use did_doc_sov::DidDocumentSov;
-use messages::msg_fields::protocols::did_exchange::{
-    complete::Complete, problem_report::ProblemReport, request::Request, response::Response,
+use did_parser::Did;
+use did_resolver_registry::ResolverRegistry;
+use messages::msg_fields::protocols::{
+    did_exchange::{
+        complete::Complete, problem_report::ProblemReport, request::Request, response::Response,
+    },
+    out_of_band::invitation::Invitation,
 };
+use public_key::Key;
+pub use thin_state::ThinState;
+use url::Url;
 
+use super::{requester::DidExchangeRequester, responder::DidExchangeResponder};
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::{
@@ -17,12 +26,8 @@ use crate::{
     },
 };
 
-use super::{
-    requester::{ConstructRequestConfig, DidExchangeRequester},
-    responder::{DidExchangeResponder, ReceiveRequestConfig},
-};
-
-pub use thin_state::ThinState;
+mod conversions;
+mod thin_state;
 
 #[derive(Debug, Clone)]
 pub enum GenericDidExchange {
@@ -50,12 +55,14 @@ impl GenericDidExchange {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(request_sent_state) => request_sent_state.our_did_doc(),
                 RequesterState::Completed(completed_state) => completed_state.our_did_doc(),
-                RequesterState::Abandoned(abandoned_state) => todo!(),
+                RequesterState::Abandoned(_abandoned_state) => todo!(),
             },
             GenericDidExchange::Responder(responder_state) => match responder_state {
-                ResponderState::ResponseSent(response_sent_state) => response_sent_state.our_did_doc(),
+                ResponderState::ResponseSent(response_sent_state) => {
+                    response_sent_state.our_did_doc()
+                }
                 ResponderState::Completed(completed_state) => completed_state.our_did_doc(),
-                ResponderState::Abandoned(abandoned_state) => todo!(),
+                ResponderState::Abandoned(_abandoned_state) => todo!(),
             },
         }
     }
@@ -63,14 +70,18 @@ impl GenericDidExchange {
     pub fn their_did_doc(&self) -> &DidDocumentSov {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
-                RequesterState::RequestSent(request_sent_state) => request_sent_state.their_did_doc(),
+                RequesterState::RequestSent(request_sent_state) => {
+                    request_sent_state.their_did_doc()
+                }
                 RequesterState::Completed(completed_state) => completed_state.their_did_doc(),
-                RequesterState::Abandoned(abandoned_state) => todo!(),
+                RequesterState::Abandoned(_abandoned_state) => todo!(),
             },
             GenericDidExchange::Responder(responder_state) => match responder_state {
-                ResponderState::ResponseSent(response_sent_state) => response_sent_state.their_did_doc(),
+                ResponderState::ResponseSent(response_sent_state) => {
+                    response_sent_state.their_did_doc()
+                }
                 ResponderState::Completed(completed_state) => completed_state.their_did_doc(),
-                ResponderState::Abandoned(abandoned_state) => todo!(),
+                ResponderState::Abandoned(_abandoned_state) => todo!(),
             },
         }
     }
@@ -78,45 +89,102 @@ impl GenericDidExchange {
     pub fn invitation_id(&self) -> &str {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
-                RequesterState::RequestSent(request_sent_state) => request_sent_state.get_invitation_id(),
+                RequesterState::RequestSent(request_sent_state) => {
+                    request_sent_state.get_invitation_id()
+                }
                 RequesterState::Completed(completed_state) => completed_state.get_invitation_id(),
                 RequesterState::Abandoned(_) => todo!(),
             },
             GenericDidExchange::Responder(responder_state) => match responder_state {
-                ResponderState::ResponseSent(response_sent_state) => response_sent_state.get_invitation_id(),
+                ResponderState::ResponseSent(response_sent_state) => {
+                    response_sent_state.get_invitation_id()
+                }
                 ResponderState::Completed(completed_state) => completed_state.get_invitation_id(),
-                ResponderState::Abandoned(abandoned_state) => todo!(),
+                ResponderState::Abandoned(_abandoned_state) => todo!(),
             },
         }
     }
 
-    pub async fn construct_request(config: ConstructRequestConfig) -> Result<(Self, Request), AriesVcxError> {
-        let TransitionResult { state, output } = DidExchangeRequester::<RequestSent>::construct_request(config).await?;
+    pub async fn construct_request_public(
+        ledger: &impl IndyLedgerRead,
+        their_did: Did,
+        our_did: Did,
+    ) -> Result<(Self, Request), AriesVcxError> {
+        let TransitionResult { state, output } =
+            DidExchangeRequester::<RequestSent>::construct_request_public(
+                ledger, their_did, our_did,
+            )
+            .await?;
         Ok((
             GenericDidExchange::Requester(RequesterState::RequestSent(state)),
             output,
         ))
     }
 
-    pub async fn handle_request(config: ReceiveRequestConfig) -> Result<(Self, Response), AriesVcxError> {
-        let TransitionResult { state, output } = DidExchangeResponder::<ResponseSent>::receive_request(config).await?;
+    pub async fn construct_request_pairwise(
+        wallet: &impl BaseWallet,
+        invitation: Invitation,
+        resolver_registry: Arc<ResolverRegistry>,
+        service_endpoint: Url,
+        routing_keys: Vec<String>,
+    ) -> Result<(Self, Request), AriesVcxError> {
+        let TransitionResult { state, output } =
+            DidExchangeRequester::<RequestSent>::construct_request_pairwise(
+                wallet,
+                invitation,
+                resolver_registry,
+                service_endpoint,
+                routing_keys,
+            )
+            .await?;
+        Ok((
+            GenericDidExchange::Requester(RequesterState::RequestSent(state)),
+            output,
+        ))
+    }
+
+    pub async fn handle_request(
+        wallet: &impl BaseWallet,
+        resolver_registry: Arc<ResolverRegistry>,
+        request: Request,
+        service_endpoint: Url,
+        routing_keys: Vec<String>,
+        invitation_id: String,
+        invitation_key: Key,
+    ) -> Result<(Self, Response), AriesVcxError> {
+        let TransitionResult { state, output } =
+            DidExchangeResponder::<ResponseSent>::receive_request(
+                wallet,
+                resolver_registry,
+                request,
+                service_endpoint,
+                routing_keys,
+                invitation_id,
+                invitation_key,
+            )
+            .await?;
         Ok((
             GenericDidExchange::Responder(ResponderState::ResponseSent(state)),
             output,
         ))
     }
 
-    pub async fn handle_response(self, response: Response) -> Result<(Self, Complete), (Self, AriesVcxError)> {
+    pub async fn handle_response(
+        self,
+        response: Response,
+    ) -> Result<(Self, Complete), (Self, AriesVcxError)> {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(request_sent_state) => {
                     match request_sent_state.receive_response(response).await {
-                        Ok(TransitionResult { state, output }) => {
-                            Ok((GenericDidExchange::Requester(RequesterState::Completed(state)), output))
-                        }
-                        Err(TransitionError { state, error }) => {
-                            Err((GenericDidExchange::Requester(RequesterState::RequestSent(state)), error))
-                        }
+                        Ok(TransitionResult { state, output }) => Ok((
+                            GenericDidExchange::Requester(RequesterState::Completed(state)),
+                            output,
+                        )),
+                        Err(TransitionError { state, error }) => Err((
+                            GenericDidExchange::Requester(RequesterState::RequestSent(state)),
+                            error,
+                        )),
                     }
                 }
                 RequesterState::Completed(completed_state) => Err((
@@ -149,7 +217,9 @@ impl GenericDidExchange {
             GenericDidExchange::Responder(responder_state) => match responder_state {
                 ResponderState::ResponseSent(response_sent_state) => {
                     match response_sent_state.receive_complete(complete) {
-                        Ok(state) => Ok(GenericDidExchange::Responder(ResponderState::Completed(state))),
+                        Ok(state) => Ok(GenericDidExchange::Responder(ResponderState::Completed(
+                            state,
+                        ))),
                         Err(TransitionError { state, error }) => Err((
                             GenericDidExchange::Responder(ResponderState::ResponseSent(state)),
                             error,
@@ -181,12 +251,17 @@ impl GenericDidExchange {
         }
     }
 
-    pub fn handle_problem_report(self, problem_report: ProblemReport) -> Result<Self, (Self, AriesVcxError)> {
+    pub fn handle_problem_report(
+        self,
+        problem_report: ProblemReport,
+    ) -> Result<Self, (Self, AriesVcxError)> {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
-                RequesterState::RequestSent(request_sent_state) => Ok(GenericDidExchange::Requester(
-                    RequesterState::Abandoned(request_sent_state.receive_problem_report(problem_report)),
-                )),
+                RequesterState::RequestSent(request_sent_state) => {
+                    Ok(GenericDidExchange::Requester(RequesterState::Abandoned(
+                        request_sent_state.receive_problem_report(problem_report),
+                    )))
+                }
                 RequesterState::Completed(completed_state) => Err((
                     GenericDidExchange::Requester(RequesterState::Completed(completed_state)),
                     AriesVcxError::from_msg(
@@ -199,9 +274,11 @@ impl GenericDidExchange {
                 )),
             },
             GenericDidExchange::Responder(responder_state) => match responder_state {
-                ResponderState::ResponseSent(response_sent_state) => Ok(GenericDidExchange::Responder(
-                    ResponderState::Abandoned(response_sent_state.receive_problem_report(problem_report)),
-                )),
+                ResponderState::ResponseSent(response_sent_state) => {
+                    Ok(GenericDidExchange::Responder(ResponderState::Abandoned(
+                        response_sent_state.receive_problem_report(problem_report),
+                    )))
+                }
                 ResponderState::Completed(completed_state) => Err((
                     GenericDidExchange::Responder(ResponderState::Completed(completed_state)),
                     AriesVcxError::from_msg(

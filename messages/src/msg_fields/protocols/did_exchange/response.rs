@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{attachment::Attachment, thread::Thread, timing::Timing},
@@ -7,17 +8,18 @@ use crate::{
 
 pub type Response = MsgParts<ResponseContent, ResponseDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ResponseContent {
     pub did: String, // TODO: Use Did
     #[serde(rename = "did_doc~attach")]
     pub did_doc: Option<Attachment>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, TypedBuilder)]
 pub struct ResponseDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -45,9 +47,17 @@ mod tests {
         let did_doc = AriesDidDoc::default();
         ResponseContent {
             did: did_doc.id.clone(),
-            did_doc: Some(Attachment::new(AttachmentData::new(AttachmentType::Json(
-                serde_json::to_value(did_doc).unwrap(),
-            )))),
+            did_doc: Some(
+                Attachment::builder()
+                    .data(
+                        AttachmentData::builder()
+                            .content(AttachmentType::Json(
+                                serde_json::to_value(&did_doc).unwrap(),
+                            ))
+                            .build(),
+                    )
+                    .build(),
+            ),
         }
     }
 

@@ -1,7 +1,5 @@
 pub mod scenarios;
 pub mod test_agent;
-pub mod test_macros;
-
 use std::time::Duration;
 
 use aries_vcx::{

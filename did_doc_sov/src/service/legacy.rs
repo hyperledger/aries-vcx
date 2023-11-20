@@ -44,8 +44,8 @@ impl ServiceLegacy {
         ServiceType::Legacy
     }
 
-    pub fn service_endpoint(&self) -> &Url {
-        &self.service_endpoint
+    pub fn service_endpoint(&self) -> Url {
+        self.service_endpoint.clone()
     }
 
     pub fn extra(&self) -> &ExtraFieldsLegacy {

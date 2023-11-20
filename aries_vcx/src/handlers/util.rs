@@ -240,10 +240,14 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
         AriesMessage::CoordinateMediation(CoordinateMediation::Keylist(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
         }
-        AriesMessage::DidExchange(DidExchange::Request(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::DidExchange(DidExchange::Request(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
         AriesMessage::DidExchange(DidExchange::Response(msg)) => matches_thread_id!(msg, thread_id),
         AriesMessage::DidExchange(DidExchange::Complete(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::DidExchange(DidExchange::ProblemReport(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::DidExchange(DidExchange::ProblemReport(msg)) => {
+            matches_thread_id!(msg, thread_id)
+        }
     };
 
     if !is_match {
