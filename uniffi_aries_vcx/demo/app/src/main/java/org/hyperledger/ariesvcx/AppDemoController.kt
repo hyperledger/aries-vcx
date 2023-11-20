@@ -150,14 +150,19 @@ class AppDemoController : ViewModel() {
                     message
                 )
 
-                if (holder == null) {
-                    Log.d("OFFER", "awaitCredentialPolling: received offer")
+                Log.d("MESSAGE", "$unpackedMessage.message")
+
+                if (!_state.value.offerReceived) {
+                    Log.d("OFFER", "awaitCredentialPolling: received OFFER")
                     holder = createFromOffer("", unpackedMessage.message)
+
                     _state.update { it.copy(offerReceived = true) }
                     onOfferReceived.invoke()
                 } else {
-                    Log.d("CREDENTIAL", "awaitCredentialPolling: received credential")
+                    Log.d("CREDENTIAL", "awaitCredentialPolling: received CREDENTIAL")
                     holder?.processCredential(profile!!, unpackedMessage.message)
+
+                    _state.update { it.copy(offerReceived = false) }
                 }
             }
         }
