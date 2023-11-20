@@ -3,6 +3,7 @@ pub mod common;
 pub mod connection;
 pub mod coordinate_mediation;
 pub mod cred_issuance;
+pub mod did_exchange;
 pub mod discover_features;
 pub mod notification;
 pub mod out_of_band;

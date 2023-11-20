@@ -70,7 +70,9 @@ impl OutOfBandSender {
 
     pub fn append_handshake_protocol(mut self, protocol: Protocol) -> VcxResult<Self> {
         let new_protocol = match protocol {
-            Protocol::ConnectionType(_) => MaybeKnown::Known(protocol),
+            Protocol::ConnectionType(_) | Protocol::DidExchangeType(_) => {
+                MaybeKnown::Known(protocol)
+            }
             _ => {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::ActionNotSupported,

@@ -17,7 +17,14 @@ use crate::{
 
 pub mod options;
 
+#[derive(Default)]
 pub struct PeerDidResolver;
+
+impl PeerDidResolver {
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 #[async_trait]
 impl DidResolvable for PeerDidResolver {

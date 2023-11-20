@@ -290,6 +290,7 @@ async fn test_pool_multiple_service_formats() -> Result<(), Box<dyn Error>> {
         .set_recipient_keys(vec!["did:sov:123".into()])
         .set_routing_keys(vec!["did:sov:456".into()]);
     write_endpoint_legacy(&setup.wallet, &setup.ledger_write, &did, &service_1).await?;
+    thread::sleep(Duration::from_millis(50));
 
     // Get service and verify it is in the old format
     let service = get_service(&setup.ledger_read, &did).await?;
@@ -302,7 +303,6 @@ async fn test_pool_multiple_service_formats() -> Result<(), Box<dyn Error>> {
         .set_service_endpoint(endpoint_url_2.parse()?)
         .set_routing_keys(Some(routing_keys_2.clone()));
     write_endpoint(&setup.wallet, &setup.ledger_write, &did, &service_2).await?;
-
     thread::sleep(Duration::from_millis(50));
 
     // Get service and verify it is in the new format

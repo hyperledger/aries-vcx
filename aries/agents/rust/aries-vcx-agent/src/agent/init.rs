@@ -1,14 +1,24 @@
 use std::sync::Arc;
 
-use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
+use aries_vcx::{
+    common::ledger::{
+        service_didsov::{DidSovServiceType, EndpointDidSov},
+        transactions::{add_new_did, write_endpoint},
+    },
+    global::settings::DEFAULT_LINK_SECRET_ALIAS,
+};
 use aries_vcx_core::{
     self,
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
     wallet::indy::{
         wallet::{create_and_open_wallet, wallet_configure_issuer},
         IndySdkWallet, WalletConfig,
     },
 };
+use did_peer::resolver::PeerDidResolver;
+use did_resolver_registry::ResolverRegistry;
+use did_resolver_sov::resolution::DidSovResolver;
 
 use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},
@@ -16,8 +26,10 @@ use crate::{
     services::{
         connection::{ServiceConnections, ServiceEndpoint},
         credential_definition::ServiceCredentialDefinitions,
+        did_exchange::ServiceDidExchange,
         holder::ServiceCredentialsHolder,
         issuer::ServiceCredentialsIssuer,
+        out_of_band::ServiceOutOfBand,
         prover::ServiceProver,
         revocation_registry::ServiceRevocationRegistries,
         schema::ServiceSchemas,
@@ -73,7 +85,7 @@ impl Agent {
         };
 
         let anoncreds = IndyCredxAnonCreds;
-        let (ledger_read, ledger_write) = build_ledger_components(vcx_pool_config).unwrap();
+        let (ledger_read, ledger_write) = build_ledger_components(vcx_pool_config.clone()).unwrap();
 
         let ledger_read = Arc::new(ledger_read);
         let ledger_write = Arc::new(ledger_write);
@@ -83,8 +95,48 @@ impl Agent {
             .await
             .unwrap();
 
+        // TODO: This setup should be easier
+        // The default issuer did can't be used - its verkey is not in base58 - TODO: double-check
+        let (public_did, _verkey) = add_new_did(
+            wallet.as_ref(),
+            ledger_write.as_ref(),
+            &config_issuer.institution_did,
+            None,
+        )
+        .await?;
+        let endpoint = EndpointDidSov::create()
+            .set_service_endpoint(init_config.service_endpoint.clone())
+            .set_types(Some(vec![DidSovServiceType::DidCommunication]));
+        write_endpoint(
+            wallet.as_ref(),
+            ledger_write.as_ref(),
+            &public_did,
+            &endpoint,
+        )
+        .await?;
+
+        let did_peer_resolver = PeerDidResolver::new();
+        let did_sov_resolver: DidSovResolver<Arc<DefaultIndyLedgerRead>, DefaultIndyLedgerRead> =
+            DidSovResolver::new(ledger_read.clone());
+        let did_resolver_registry = Arc::new(
+            ResolverRegistry::new()
+                .register_resolver("peer".into(), did_peer_resolver)
+                .register_resolver("sov".into(), did_sov_resolver),
+        );
+
         let connections = Arc::new(ServiceConnections::new(
             ledger_read.clone(),
+            wallet.clone(),
+            init_config.service_endpoint.clone(),
+        ));
+        let did_exchange = Arc::new(ServiceDidExchange::new(
+            ledger_read.clone(),
+            wallet.clone(),
+            did_resolver_registry,
+            init_config.service_endpoint.clone(),
+            public_did,
+        ));
+        let out_of_band = Arc::new(ServiceOutOfBand::new(
             wallet.clone(),
             init_config.service_endpoint,
         ));
@@ -137,6 +189,8 @@ impl Agent {
             anoncreds,
             wallet,
             connections,
+            did_exchange,
+            out_of_band,
             schemas,
             cred_defs,
             rev_regs,

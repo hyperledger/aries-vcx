@@ -1,4 +1,6 @@
+use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
 use chrono::Utc;
+use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::out_of_band::{
@@ -9,7 +11,13 @@ use messages::{
 };
 use uuid::Uuid;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::{
+    common::ledger::transactions::resolve_service,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+};
+
+const DID_KEY_PREFIX: &str = "did:key:";
+const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
 pub fn build_handshake_reuse_msg(oob_invitation: &Invitation) -> HandshakeReuse {
     let id = Uuid::new_v4().to_string();
@@ -54,6 +62,81 @@ pub fn build_handshake_reuse_accepted_msg(
         .id(Uuid::new_v4().to_string())
         .decorators(decorators)
         .build())
+}
+
+pub async fn oob_invitation_to_legacy_did_doc(
+    indy_ledger: &impl IndyLedgerRead,
+    invitation: &Invitation,
+) -> VcxResult<AriesDidDoc> {
+    let mut did_doc: AriesDidDoc = AriesDidDoc::default();
+    let (service_endpoint, recipient_keys, routing_keys) = {
+        did_doc.set_id(invitation.id.clone());
+        let service = resolve_service(indy_ledger, &invitation.content.services[0])
+            .await
+            .unwrap_or_else(|err| {
+                error!("Failed to obtain service definition from the ledger: {err}");
+                AriesService::default()
+            });
+        let recipient_keys =
+            normalize_keys_as_naked(&service.recipient_keys).unwrap_or_else(|err| {
+                error!(
+                    "Failed to normalize keys of service {} as naked keys: {err}",
+                    &service
+                );
+                Vec::new()
+            });
+        (
+            service.service_endpoint,
+            recipient_keys,
+            service.routing_keys,
+        )
+    };
+    did_doc.set_service_endpoint(service_endpoint);
+    did_doc.set_recipient_keys(recipient_keys);
+    did_doc.set_routing_keys(routing_keys);
+    Ok(did_doc)
+}
+
+fn normalize_keys_as_naked(keys_list: &Vec<String>) -> VcxResult<Vec<String>> {
+    let mut result = Vec::new();
+    for key in keys_list {
+        if let Some(stripped_didkey) = key.strip_prefix(DID_KEY_PREFIX) {
+            let stripped = if let Some(stripped) = stripped_didkey.strip_prefix('z') {
+                stripped
+            } else {
+                Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidDid,
+                    format!("z prefix is missing: {}", key),
+                ))?
+            };
+            let decoded_value = bs58::decode(stripped).into_vec().map_err(|_| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidDid,
+                    format!(
+                        "Could not decode base58: {} as portion of {}",
+                        stripped, key
+                    ),
+                )
+            })?;
+            let verkey = if let Some(public_key_bytes) =
+                decoded_value.strip_prefix(&ED25519_MULTIBASE_CODEC)
+            {
+                Ok(bs58::encode(public_key_bytes).into_string())
+            } else {
+                Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidDid,
+                    format!(
+                        "Only Ed25519-based did:keys are currently supported, got key: {}",
+                        key
+                    ),
+                ))
+            }?;
+            result.push(verkey);
+        } else {
+            result.push(key.clone());
+        }
+    }
+    Ok(result)
 }
 
 // #[cfg(test)]

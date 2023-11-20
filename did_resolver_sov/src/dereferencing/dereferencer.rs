@@ -1,4 +1,4 @@
-use std::io::Cursor;
+use std::{borrow::Borrow, io::Cursor};
 
 use async_trait::async_trait;
 use did_resolver::{
@@ -17,7 +17,11 @@ use super::utils::dereference_did_document;
 use crate::{reader::AttrReader, resolution::DidSovResolver};
 
 #[async_trait]
-impl<'a, T: AttrReader> DidDereferenceable for DidSovResolver<'a, T> {
+impl<T, A> DidDereferenceable for DidSovResolver<T, A>
+where
+    T: Borrow<A> + Sync + Send,
+    A: AttrReader,
+{
     type Output = Cursor<Vec<u8>>;
 
     async fn dereference(

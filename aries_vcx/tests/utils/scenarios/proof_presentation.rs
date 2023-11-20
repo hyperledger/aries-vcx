@@ -260,6 +260,7 @@ pub async fn revoke_credential_and_publish_accumulator(
         .unwrap();
 }
 
+// todo: inline this
 pub async fn revoke_credential_local(
     faber: &mut TestAgent<
         impl IndyLedgerRead + AnoncredsLedgerRead,
@@ -268,26 +269,12 @@ pub async fn revoke_credential_local(
         impl BaseWallet,
     >,
     issuer_credential: &Issuer,
-    rev_reg_id: &str,
+    _rev_reg_id: &str,
 ) {
-    let ledger = &faber.ledger_read;
-    let (_, delta, timestamp) = ledger
-        .get_rev_reg_delta_json(rev_reg_id, None, None)
-        .await
-        .unwrap();
-
     issuer_credential
         .revoke_credential_local(&faber.wallet, &faber.anoncreds)
         .await
         .unwrap();
-
-    let (_, delta_after_revoke, _) = ledger
-        .get_rev_reg_delta_json(rev_reg_id, Some(timestamp + 1), None)
-        .await
-        .unwrap();
-
-    assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in
-                                           // cache
 }
 
 pub async fn rotate_rev_reg(

@@ -61,6 +61,16 @@ impl DidDocumentSov {
         self.did_doc.key_agreement()
     }
 
+    pub fn resolved_key_agreement(&self) -> impl Iterator<Item = &VerificationMethod> {
+        self.did_doc
+            .key_agreement()
+            .iter()
+            .filter_map(|vm| match vm {
+                VerificationMethodKind::Resolved(resolved) => Some(resolved),
+                VerificationMethodKind::Resolvable(reference) => self.dereference_key(reference),
+            })
+    }
+
     pub fn capability_invocation(&self) -> &[VerificationMethodKind] {
         self.did_doc.capability_invocation()
     }

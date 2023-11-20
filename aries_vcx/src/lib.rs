@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 #![allow(clippy::large_enum_variant)]
 #![allow(clippy::diverging_sub_expression)]
 //this is needed for some large json macro invocations
@@ -21,6 +22,10 @@ extern crate serde_json;
 extern crate derive_builder;
 
 pub extern crate aries_vcx_core;
+pub extern crate did_doc;
+pub extern crate did_doc_sov;
+pub extern crate did_parser;
+pub extern crate did_peer;
 pub extern crate messages;
 
 #[macro_use]

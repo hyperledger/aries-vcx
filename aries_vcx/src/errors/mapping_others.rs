@@ -33,6 +33,48 @@ impl From<HttpError> for AriesVcxError {
     }
 }
 
+impl From<did_parser::ParseError> for AriesVcxError {
+    fn from(err: did_parser::ParseError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+impl From<did_doc::error::DidDocumentBuilderError> for AriesVcxError {
+    fn from(err: did_doc::error::DidDocumentBuilderError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+impl From<did_doc_sov::error::DidDocumentSovError> for AriesVcxError {
+    fn from(err: did_doc_sov::error::DidDocumentSovError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+impl From<did_peer::error::DidPeerError> for AriesVcxError {
+    fn from(err: did_peer::error::DidPeerError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+impl From<did_resolver::error::GenericError> for AriesVcxError {
+    fn from(err: did_resolver::error::GenericError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+impl From<public_key::PublicKeyError> for AriesVcxError {
+    fn from(err: public_key::PublicKeyError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+impl From<did_key::error::DidKeyError> for AriesVcxError {
+    fn from(err: did_key::error::DidKeyError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
 // TODO
 impl From<AriesVcxCoreError> for AriesVcxError {
     fn from(err: AriesVcxCoreError) -> Self {

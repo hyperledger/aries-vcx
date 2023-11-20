@@ -1,6 +1,5 @@
 extern crate derive_builder;
 extern crate serde;
-
 extern crate serde_json;
 #[macro_use]
 extern crate log;
@@ -10,6 +9,7 @@ extern crate uuid;
 
 mod agent;
 mod error;
+pub mod helper;
 mod http;
 mod services;
 mod storage;

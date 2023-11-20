@@ -36,7 +36,7 @@ async fn write_service_on_ledger_and_resolve_did_doc() {
         &profile.institution_did,
     )
     .await;
-    let resolver = DidSovResolver::new(&profile.ledger_read);
+    let resolver = DidSovResolver::new(profile.ledger_read);
     let did = format!("did:sov:{}", profile.institution_did);
 
     let did_doc = resolver
@@ -53,7 +53,7 @@ async fn write_service_on_ledger_and_resolve_did_doc() {
 #[tokio::test]
 async fn test_error_handling_during_resolution() {
     let profile = build_setup_profile().await;
-    let resolver = DidSovResolver::new(&profile.ledger_read);
+    let resolver = DidSovResolver::new(profile.ledger_read);
     let did = format!("did:unknownmethod:{}", profile.institution_did);
 
     let result = resolver

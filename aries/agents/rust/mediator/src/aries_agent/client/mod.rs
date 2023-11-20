@@ -9,6 +9,7 @@ use aries_vcx::{
             InviteeConnection,
         },
         mediated_connection::pairwise_info::PairwiseInfo,
+        oob::oob_invitation_to_legacy_did_doc,
     },
     utils::encryption_envelope::EncryptionEnvelope,
 };
@@ -26,7 +27,7 @@ pub mod transports;
 
 use self::transports::AriesTransport;
 use super::Agent;
-use crate::{aries_agent::utils::oob2did, utils::prelude::*};
+use crate::utils::prelude::*;
 
 // client role utilities
 impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
@@ -114,8 +115,10 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             "Sending Connection Request Envelope: {},",
             serde_json::to_string_pretty(&packed_aries_msg_json).unwrap()
         );
+        let mock_ledger = MockLedger {}; // not good. to be dealt later
+        let legacy_did_doc = oob_invitation_to_legacy_did_doc(&mock_ledger, &oob_invite).await?;
         let response_envelope = aries_transport
-            .send_aries_envelope(packed_aries_msg_json, &oob2did(oob_invite))
+            .send_aries_envelope(packed_aries_msg_json, &legacy_did_doc)
             .await?;
         info!(
             "Received Response envelope {:#?}, unpacking",

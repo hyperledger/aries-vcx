@@ -20,7 +20,7 @@ pub enum ServiceType {
     AIP1,
     #[serde(rename = "did-communication")]
     DIDCommV1,
-    #[serde(rename = "DIDComm")]
+    #[serde(rename = "DIDCommMessaging")]
     DIDCommV2,
     #[serde(rename = "IndyAgent")]
     Legacy,
@@ -31,7 +31,14 @@ impl Display for ServiceType {
         match self {
             ServiceType::AIP1 => write!(f, "endpoint"),
             ServiceType::DIDCommV1 => write!(f, "did-communication"),
-            ServiceType::DIDCommV2 => write!(f, "DIDComm"),
+            // Interop note: AFJ useses DIDComm, Acapy uses DIDCommMessaging
+            // Not matching spec:
+            // * did:sov method - https://sovrin-foundation.github.io/sovrin/spec/did-method-spec-template.html#crud-operation-definitions
+            // Matching spec:
+            // * did:peer method - https://identity.foundation/peer-did-method-spec/#multi-key-creation
+            // * did core - https://www.w3.org/TR/did-spec-registries/#didcommmessaging
+            // * didcommv2 - https://identity.foundation/didcomm-messaging/spec/#service-endpoint
+            ServiceType::DIDCommV2 => write!(f, "DIDCommMessaging"),
             ServiceType::Legacy => write!(f, "IndyAgent"),
         }
     }
@@ -65,7 +72,7 @@ impl ServiceSov {
         }
     }
 
-    pub fn service_endpoint(&self) -> &Url {
+    pub fn service_endpoint(&self) -> Url {
         match self {
             ServiceSov::AIP1(service) => service.service_endpoint(),
             ServiceSov::DIDCommV1(service) => service.service_endpoint(),
@@ -122,28 +129,28 @@ impl TryFrom<ServiceSov> for Service<ExtraFieldsSov> {
         match service {
             ServiceSov::AIP1(service) => Ok(Service::builder(
                 service.id().clone(),
-                service.service_endpoint().clone(),
+                service.service_endpoint(),
                 ExtraFieldsSov::AIP1(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?
             .build()),
             ServiceSov::DIDCommV1(service) => Ok(Service::builder(
                 service.id().clone(),
-                service.service_endpoint().clone(),
+                service.service_endpoint(),
                 ExtraFieldsSov::DIDCommV1(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?
             .build()),
             ServiceSov::DIDCommV2(service) => Ok(Service::builder(
                 service.id().clone(),
-                service.service_endpoint().clone(),
+                service.service_endpoint(),
                 ExtraFieldsSov::DIDCommV2(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?
             .build()),
             ServiceSov::Legacy(service) => Ok(Service::builder(
                 service.id().clone(),
-                service.service_endpoint().clone(),
+                service.service_endpoint(),
                 ExtraFieldsSov::Legacy(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?

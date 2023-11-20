@@ -38,6 +38,14 @@ messages = { path = "../messages" }
 diddoc_legacy = { path = "../aries/legacy/diddoc_legacy" }
 aries_vcx_core = { path = "../aries_vcx_core" }
 shared = { path = "../aries/shared" }
+did_parser = { path = "../did_parser" }
+did_resolver = { path = "../did_resolver" }
+did_doc = { path = "../did_doc" }
+did_key = { path = "../did_key" }
+public_key = { path = "../public_key" }
+did_doc_sov = { path = "../did_doc_sov" }
+did_peer = { path = "../did_peer" }
+did_resolver_registry = { path = "../did_resolver_registry" }
 bs58 = "0.5.0"
 async-trait = "0.1.53"
 env_logger = "0.10.0"

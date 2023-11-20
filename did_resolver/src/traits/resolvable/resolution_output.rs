@@ -10,9 +10,9 @@ use crate::shared_types::did_document_metadata::DidDocumentMetadata;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct DidResolutionOutput<E: Default> {
-    did_document: DidDocument<E>,
-    did_resolution_metadata: DidResolutionMetadata,
-    did_document_metadata: DidDocumentMetadata,
+    pub did_document: DidDocument<E>,
+    pub did_resolution_metadata: DidResolutionMetadata,
+    pub did_document_metadata: DidDocumentMetadata,
 }
 
 impl<E: Default> DidResolutionOutput<E> {
