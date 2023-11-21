@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 use std::sync::Arc;
 
-use axum::{extract::State, http::StatusCode, Json};
 use log::info;
+use mediation::storage::MediatorPersistence;
 use messages::{
     decorators::attachment::{Attachment, AttachmentData, AttachmentType},
     msg_fields::protocols::pickup::{
@@ -13,32 +13,29 @@ use messages::{
 };
 use uuid::Uuid;
 
-use crate::storage::MediatorPersistence;
-
 pub async fn handle_pickup_authenticated<T: MediatorPersistence>(
-    State(storage): State<Arc<T>>,
-    Json(pickup_message): Json<Pickup>,
+    storage: Arc<T>,
+    pickup_message: Pickup,
     auth_pubkey: &str,
-) -> (StatusCode, Json<Pickup>) {
+) -> Pickup {
     match &pickup_message {
-        Pickup::StatusRequest(status_request) => (
-            StatusCode::OK,
-            handle_pickup_status_req(&status_request.content, storage, auth_pubkey).await,
-        ),
+        Pickup::StatusRequest(status_request) => {
+            handle_pickup_status_req(&status_request.content, storage, auth_pubkey).await
+        }
         // Why is client sending us status? That's server's job.
-        Pickup::Status(_status) => (
-            StatusCode::BAD_REQUEST,
-            handle_pickup_default_status(storage, auth_pubkey).await,
-        ),
+        Pickup::Status(_status) =>
+        // StatusCode::BAD_REQUEST,
+        {
+            handle_pickup_default_status(storage, auth_pubkey).await
+        }
+
         Pickup::DeliveryRequest(delivery_request) => {
             handle_pickup_delivery_req(&delivery_request.content, storage, auth_pubkey).await
         }
         _ => {
             info!("Received {:#?}", &pickup_message);
-            (
-                StatusCode::NOT_IMPLEMENTED,
-                handle_pickup_default_status(storage, auth_pubkey).await,
-            )
+            // StatusCode::NOT_IMPLEMENTED,
+            handle_pickup_default_status(storage, auth_pubkey).await
         }
     }
 }
@@ -47,7 +44,7 @@ async fn handle_pickup_status_req<T: MediatorPersistence>(
     status_request: &StatusRequestContent,
     storage: Arc<T>,
     auth_pubkey: &str,
-) -> Json<Pickup> {
+) -> Pickup {
     info!("Received {:#?}", &status_request);
     let message_count = storage
         .retrieve_pending_message_count(auth_pubkey, status_request.recipient_key.as_ref())
@@ -70,14 +67,14 @@ async fn handle_pickup_status_req<T: MediatorPersistence>(
         .build();
 
     info!("Sending {:#?}", &status);
-    Json(Pickup::Status(status))
+    Pickup::Status(status)
 }
 
 async fn handle_pickup_delivery_req<T: MediatorPersistence>(
     delivery_request: &DeliveryRequestContent,
     storage: Arc<T>,
     auth_pubkey: &str,
-) -> (StatusCode, Json<Pickup>) {
+) -> Pickup {
     info!("Received {:#?}", &delivery_request);
     let messages = storage
         .retrieve_pending_messages(
@@ -104,24 +101,18 @@ async fn handle_pickup_delivery_req<T: MediatorPersistence>(
         })
         .collect();
     if !attach.is_empty() {
-        (
-            StatusCode::OK,
-            Json(Pickup::Delivery(
-                Delivery::builder()
-                    .content(DeliveryContent {
-                        recipient_key: delivery_request.recipient_key.to_owned(),
-                        attach,
-                    })
-                    .id(Uuid::new_v4().to_string())
-                    .build(),
-            )),
+        Pickup::Delivery(
+            Delivery::builder()
+                .content(DeliveryContent {
+                    recipient_key: delivery_request.recipient_key.to_owned(),
+                    attach,
+                })
+                .id(Uuid::new_v4().to_string())
+                .build(),
         )
     } else {
         // send default status message instead
-        (
-            StatusCode::OK,
-            handle_pickup_default_status(storage, auth_pubkey).await,
-        )
+        handle_pickup_default_status(storage, auth_pubkey).await
     }
 }
 // Returns global status message for user (not restricted to recipient key)
@@ -144,7 +135,7 @@ async fn handle_pickup_delivery_req<T: MediatorPersistence>(
 async fn handle_pickup_default_status(
     storage: Arc<impl MediatorPersistence>,
     auth_pubkey: &str,
-) -> Json<Pickup> {
+) -> Pickup {
     info!("Default behavior: responding with status");
     let status_request = StatusRequestContent::builder().build();
     handle_pickup_status_req(&status_request, storage, auth_pubkey).await
