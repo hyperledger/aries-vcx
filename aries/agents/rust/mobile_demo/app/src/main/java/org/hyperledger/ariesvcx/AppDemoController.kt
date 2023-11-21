@@ -44,6 +44,10 @@ class AppDemoController : ViewModel() {
         return holder
     }
 
+    fun getProfileHolder (): ProfileHolder {
+        return profile!!
+    }
+
     private val walletConfig = WalletConfig(
         walletName = "test_create_wallet_add_uuid_here",
         walletKey = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY",

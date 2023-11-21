@@ -11,6 +11,6 @@ use aries_vcx::{
 use handlers::{connection::*, holder::*};
 
 use crate::{
-    core::{profile::*, unpack_message::*},
+    core::{anoncreds::*, profile::*, unpack_message::*},
     errors::error::*,
 };

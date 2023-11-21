@@ -177,4 +177,7 @@ namespace vcx {
 
     [Throws=VcxUniFFIError]
     Holder create_with_proposal(string source_id, string propose_credential);
+
+    [Throws=VcxUniFFIError]
+    string get_credentials(ProfileHolder profile);
 };
