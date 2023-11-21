@@ -3,8 +3,8 @@
 
 use std::sync::Arc;
 
-use axum::{extract::State, Json};
 use log::{debug, info};
+use mediation::storage::MediatorPersistence;
 use messages::{
     decorators::thread::Thread,
     msg_fields::protocols::{
@@ -14,12 +14,7 @@ use messages::{
 };
 use uuid::Uuid;
 
-use crate::storage::MediatorPersistence;
-
-pub async fn handle_forward<T>(
-    State(storage): State<Arc<T>>,
-    Json(forward_msg): Json<Forward>,
-) -> Json<Ack>
+pub async fn handle_forward<T>(storage: Arc<T>, forward_msg: Forward) -> Ack
 where
     T: MediatorPersistence,
 {
@@ -45,10 +40,9 @@ where
     let ack_deco = AckDecorators::builder()
         .thread(Thread::builder().thid(forward_msg.id).build())
         .build();
-    let ack = Ack::builder()
+    Ack::builder()
         .content(ack_content)
         .decorators(ack_deco)
         .id(Uuid::new_v4().to_string())
-        .build();
-    Json(ack)
+        .build()
 }
