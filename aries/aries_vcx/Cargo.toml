@@ -33,19 +33,19 @@ backtrace_errors = ["backtrace"]
 legacy_proof = ["aries_vcx_core/legacy_proof"]
 
 [dependencies]
-agency_client = { path = "../legacy/agency_client" }
+agency_client = { path = "../misc/legacy/agency_client" }
 messages = { path = "../messages" }
-diddoc_legacy = { path = "../legacy/diddoc_legacy" }
+diddoc_legacy = { path = "../misc/legacy/diddoc_legacy" }
 aries_vcx_core = { path = "../aries_vcx_core" }
-shared = { path = "../shared" }
-did_parser = { path = "../../did/did_parser" }
-did_resolver = { path = "../../did/did_resolver" }
-did_doc = { path = "../../did_document/did_doc" }
-did_key = { path = "../../did/did_methods/did_key" }
-public_key = { path = "../../did/public_key" }
-did_doc_sov = { path = "../../did_document/did_doc_sov" }
-did_peer = { path = "../../did/did_methods/did_peer" }
-did_resolver_registry = { path = "../../did/did_resolver_registry" }
+shared = { path = "../misc/shared" }
+did_parser = { path = "../../did_core/did_parser" }
+did_resolver = { path = "../../did_core/did_resolver" }
+did_doc = { path = "../../did_core/did_doc" }
+did_key = { path = "../../did_core/did_methods/did_key" }
+public_key = { path = "../../did_core/public_key" }
+did_doc_sov = { path = "../../did_core/did_doc_sov" }
+did_peer = { path = "../../did_core/did_methods/did_peer" }
+did_resolver_registry = { path = "../../did_core/did_resolver_registry" }
 bs58 = "0.5.0"
 async-trait = "0.1.53"
 env_logger = "0.10.0"
@@ -72,8 +72,8 @@ url = { version = "2.3", features = ["serde"] }
 backtrace = { optional = true, version = "0.3" }
 
 [dev-dependencies]
-test_utils = { path = "../tools/test_utils" }
-libvcx_logger = { path = "../legacy/libvcx_logger" }
-wallet_migrator = { path = "../tools/wallet_migrator" }
+test_utils = { path = "../misc/test_utils" }
+libvcx_logger = { path = "../misc/legacy/libvcx_logger" }
+wallet_migrator = { path = "../misc/wallet_migrator" }
 async-channel = "1.7.1"
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }

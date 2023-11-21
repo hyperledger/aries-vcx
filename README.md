@@ -15,14 +15,14 @@ The repository contains Rust crates to build
 - [`agents`](agents/rust) - Aries agents built on top of `aries_vcx`.
 
 ## Did document implementation
-  - [`did_doc`](did_document/did_doc) - Building and parsing [DID Documents](https://w3c.github.io/did-core/)
+  - [`did_doc`](did_core/did_doc) - Building and parsing [DID Documents](https://w3c.github.io/did-core/)
 
 ## Did methods implementation
-  - [`did_parser`](did/did_parser) - Building and parsing  [DIDs](https://w3c.github.io/did-core/)
-  - [`did_peer`](did/did_methods/did_peer) - https://identity.foundation/peer-did-method-spec/
-  - [`did_sov`](did/did_methods/did_resolver_sov) - https://sovrin-foundation.github.io/sovrin/spec/did-method-spec-template.html
-  - [`did_web`](did/did_methods/did_resolver_web) - https://w3c-ccg.github.io/did-method-web/
-  - [`did_key`](did/did_methods/did_key) - https://w3c-ccg.github.io/did-method-key/
+  - [`did_parser`](did_core/did_parser) - Building and parsing  [DIDs](https://w3c.github.io/did-core/)
+  - [`did_peer`](did_core/did_methods/did_peer) - https://identity.foundation/peer-did-method-spec/
+  - [`did_sov`](did_core/did_methods/did_resolver_sov) - https://sovrin-foundation.github.io/sovrin/spec/did-method-spec-template.html
+  - [`did_web`](did_core/did_methods/did_resolver_web) - https://w3c-ccg.github.io/did-method-web/
+  - [`did_key`](did_core/did_methods/did_key) - https://w3c-ccg.github.io/did-method-key/
 
 # Contact
 Do you have a question ❓Are you considering using our components? 🚀 We'll be excited to hear from you. 👋

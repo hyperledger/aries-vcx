@@ -15,8 +15,8 @@ credx = ["aries_vcx_core/credx"]
 
 [dependencies]
 aries_vcx_core = { path = "../../aries_vcx_core" }
-agency_client = { path = "../../legacy/agency_client" }
-libvcx_logger = { path = "../../legacy/libvcx_logger" }
+agency_client = { path = "../legacy/agency_client" }
+libvcx_logger = { path = "../legacy/libvcx_logger" }
 lazy_static = "1"
 serde_json = "1"
 log = "0.4"

@@ -23,17 +23,17 @@ serde = "1.0.97"
 serde_json = "1.0.40"
 serde_derive = "1.0.97"
 futures = { version = "0.3", default-features = false }
-aries_vcx = { path = "../../aries_vcx", features = ["credx", "vdrtools_wallet"] }
-aries_vcx_core = { path = "../../aries_vcx_core" }
+aries_vcx = { path = "../../../aries_vcx", features = ["credx", "vdrtools_wallet"] }
+aries_vcx_core = { path = "../../../aries_vcx_core" }
 diddoc_legacy = { path = "../diddoc_legacy" }
 thiserror = "1.0.37"
 uuid = { version = "1.4.1", default-features = false, features = ["v4"] }
 agency_client = { path = "../agency_client" }
 async-trait = "0.1.61"
 url = "2.3.1"
-wallet_migrator = { path = "../../tools/wallet_migrator" }
+wallet_migrator = { path = "../../wallet_migrator" }
 shared = { path = "../../shared" }
 
 [dev-dependencies]
-test_utils = {path = "../../tools/test_utils" }
+test_utils = {path = "../../test_utils" }
 tokio = { version = "1.20", features = [ "rt", "macros" ] }

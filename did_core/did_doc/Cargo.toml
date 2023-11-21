@@ -6,8 +6,8 @@ edition = "2021"
 [dependencies]
 base64 = "0.21.2"
 bs58 = "0.5.0"
-did_parser = { path = "../../did/did_parser" }
-public_key = { path = "../../did/public_key" }
+did_parser = { path = "../did_parser" }
+public_key = { path = "../public_key" }
 hex = "0.4.3"
 multibase = "0.9.1"
 pem = "2.0.1"

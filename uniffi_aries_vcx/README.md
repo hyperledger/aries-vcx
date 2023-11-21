@@ -54,7 +54,7 @@ NB: Before running the demo application you need to generate the language bindin
 
 # Testing the simple message relay on Android
 
-Aries-VCX supports connection to [tools/simple_message_relay](/tools/simple_message_relay/) on android. You need to setup the agent with instructions [here](/tools/simple_message_relay/README.md#service-setup) and exposing a public endpoint as explained [here](/tools/simple_message_relay/README.md#public-endpoints).
+Aries-VCX supports connection to [tools/simple_message_relay](/misc/simple_message_relay/) on android. You need to setup the agent with instructions [here](/misc/simple_message_relay/README.md#service-setup) and exposing a public endpoint as explained [here](/misc/simple_message_relay/README.md#public-endpoints).
 
 The demo app needs this endpoint to establish communication with the peer.
 

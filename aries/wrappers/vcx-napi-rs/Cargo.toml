@@ -12,14 +12,14 @@ crate-type = ["cdylib"]
 doctest = false
 
 [dependencies]
-libvcx_core = { path = "../../legacy/libvcx_core" }
-wallet_migrator = { path = "../../tools/wallet_migrator" }
+libvcx_core = { path = "../../misc/legacy/libvcx_core" }
+wallet_migrator = { path = "../../misc/wallet_migrator" }
 log = "0.4.16"
 napi = { version = "2.10.14", default-features = false, features = [ "async" ] }
 napi-derive = { version = "2.10.1" }
 uuid = { version = "1.5.0", default-features = false, features = ["v4"] }
 chrono = "0.4.23"
-libvcx_logger = { path = "../../legacy/libvcx_logger" }
+libvcx_logger = { path = "../../misc/legacy/libvcx_logger" }
 
 [build-dependencies]
 napi-build = "2.0.1"

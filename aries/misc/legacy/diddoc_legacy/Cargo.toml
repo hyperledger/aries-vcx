@@ -15,7 +15,7 @@ serde_derive = "1.0.97"
 url = { version = "2.3", features = ["serde"] }
 thiserror = "1.0.37"
 shared = { path = "../../shared" }
-display_as_json = { path = "../../../tools/display_as_json" }
+display_as_json = { path = "../../../../misc/display_as_json" }
 
 [dev-dependencies]
 serde_json = "1.0.91"

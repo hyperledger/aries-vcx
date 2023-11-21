@@ -27,8 +27,8 @@ thiserror = "1.0.38"
 serde_json = "1.0.91"
 serde = { version = "1.0.188", features = ["derive"] }
 async-trait = "0.1.64"
-diddoc_legacy = { path = "../../aries/legacy/diddoc_legacy" }
-shared = { path = "../../aries/shared" }
+diddoc_legacy = { path = "../../aries/misc/legacy/diddoc_legacy" }
+shared = { path = "../../aries/misc/shared" }
 url = "2.3.1"
 
 [build-dependencies]

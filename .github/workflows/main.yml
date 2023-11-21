@@ -339,7 +339,7 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run libvcx_core integration tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --manifest-path="aries/legacy/libvcx_core/Cargo.toml" -- --include-ignored;
+          RUST_TEST_THREADS=1 cargo test --manifest-path="aries/misc/legacy/libvcx_core/Cargo.toml" -- --include-ignored;
 
   test-integration-did-crate:
     needs: workflow-setup
