@@ -1,0 +1,26 @@
+[package]
+name = "test_utils"
+version.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+vdrtools_wallet = ["aries_vcx_core/vdrtools_wallet"]
+vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "credx"]
+credx = ["aries_vcx_core/credx"]
+
+[dependencies]
+aries_vcx_core = { path = "../../aries_vcx_core" }
+agency_client = { path = "../legacy/agency_client" }
+libvcx_logger = { path = "../legacy/libvcx_logger" }
+lazy_static = "1"
+serde_json = "1"
+log = "0.4"
+chrono = "0.4"
+rand = "0.8"
+uuid = { version = "1", default-features = false, features = ["v4"] }
+async-trait = "0.1"

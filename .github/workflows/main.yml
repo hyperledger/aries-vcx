@@ -282,7 +282,7 @@ jobs:
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run aries-vcx integration tests"
-        run: cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdrtools_wallet,credx -- --ignored;
+        run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F vdrtools_wallet,credx -- --ignored;
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
@@ -295,7 +295,7 @@ jobs:
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run aries_vcx tests: mysql_test"
-        run: cargo test --manifest-path="aries_vcx/Cargo.toml" test_mysql -- --include-ignored;
+        run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" test_mysql -- --include-ignored;
 
   test-integration-aries-vcx-vdrproxy:
     needs: [workflow-setup, build-docker-vdrproxy]
@@ -319,7 +319,7 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
           skip-vdrproxy-setup: false
       - name: "Run aries_vcx tests: vdrproxy_test"
-        run: cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdr_proxy_ledger,credx -- --ignored
+        run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F vdr_proxy_ledger,credx -- --ignored
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -339,7 +339,7 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run libvcx_core integration tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --manifest-path="aries/legacy/libvcx_core/Cargo.toml" -- --include-ignored;
+          RUST_TEST_THREADS=1 cargo test --manifest-path="aries/misc/legacy/libvcx_core/Cargo.toml" -- --include-ignored;
 
   test-integration-did-crate:
     needs: workflow-setup

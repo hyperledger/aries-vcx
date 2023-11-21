@@ -55,8 +55,8 @@ runs:
         fi;
 
         REPO_VERSION_MOST_RECENT=$(git describe --tags --always --abbrev=0)
-        REPO_VERSION_DESIRED=$(cargo pkgid --manifest-path aries_vcx/Cargo.toml | cut -d# -f2)
-        echo "Highest released version was: $REPO_VERSION_MOST_RECENT, desired version (specified in aries_vcx/Cargo.toml) is $REPO_VERSION_DESIRED"
+        REPO_VERSION_DESIRED=$(cargo pkgid --manifest-path aries/aries_vcx/Cargo.toml | cut -d# -f2)
+        echo "Highest released version was: $REPO_VERSION_MOST_RECENT, desired version (specified in aries/aries_vcx/Cargo.toml) is $REPO_VERSION_DESIRED"
 
         RELEASE="false"
         PRERELEASE="false"
