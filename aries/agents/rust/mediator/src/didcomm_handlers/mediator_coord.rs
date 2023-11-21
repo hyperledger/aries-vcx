@@ -1,4 +1,3 @@
-use axum::{extract::State, Json};
 use messages::msg_fields::protocols::coordinate_mediation::{
     CoordinateMediation, MediateGrant, MediateGrantContent, MediateGrantDecorators,
 };
@@ -36,9 +35,9 @@ pub async fn handle_mediation_coord(
         let coord_response = CoordinateMediation::MediateGrant(mediate_grant);
         return Ok(coord_response);
     };
-    let Json(coord_response) = mediation::routes::coordination::handle_coord_authenticated(
-        State(agent.get_persistence_ref()),
-        Json(coord_msg),
+    let coord_response = crate::mediation::coordination::handle_coord_authenticated(
+        agent.get_persistence_ref(),
+        coord_msg,
         auth_pubkey,
     )
     .await;
