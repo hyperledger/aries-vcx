@@ -36,10 +36,8 @@ pub trait MediatorPersistence: Send + Sync + 'static {
         recipient_key: Option<&String>,
     ) -> Result<Vec<(String, Vec<u8>)>, String>;
     // async fn mark_messages_received(&self, message_id: Vec<u32>);
-    #[cfg(feature = "mediator_persistence_extras")]
     /// Returns vector of (account_name, auth_pubkey)
     async fn list_accounts(&self) -> Result<Vec<(String, String)>, String>;
-    #[cfg(feature = "mediator_persistence_extras")]
     /// Returns account details (sr.no, account_name, our_signing_key, did_doc)
     async fn get_account_details(
         &self,

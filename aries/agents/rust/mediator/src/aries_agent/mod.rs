@@ -15,7 +15,6 @@ use aries_vcx_core::{
     WalletHandle,
 };
 use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
-use mediation::storage::{get_persistence, MediatorPersistence};
 use messages::{
     msg_fields::protocols::{
         connection::{request::Request, response::Response, Connection},
@@ -25,7 +24,10 @@ use messages::{
 };
 use serde_json::json;
 
-use crate::utils::{prelude::*, structs::VerKey};
+use crate::{
+    persistence::{get_persistence, MediatorPersistence},
+    utils::{prelude::*, structs::VerKey},
+};
 
 #[cfg(any(test, feature = "client"))]
 pub mod client;

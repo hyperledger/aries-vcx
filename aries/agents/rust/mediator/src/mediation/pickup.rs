@@ -3,7 +3,6 @@
 use std::sync::Arc;
 
 use log::info;
-use mediation::storage::MediatorPersistence;
 use messages::{
     decorators::attachment::{Attachment, AttachmentData, AttachmentType},
     msg_fields::protocols::pickup::{
@@ -12,6 +11,8 @@ use messages::{
     },
 };
 use uuid::Uuid;
+
+use crate::persistence::MediatorPersistence;
 
 pub async fn handle_pickup_authenticated<T: MediatorPersistence>(
     storage: Arc<T>,

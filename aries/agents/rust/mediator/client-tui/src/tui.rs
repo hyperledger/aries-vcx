@@ -14,8 +14,7 @@ use cursive::{
 };
 use futures::executor::block_on;
 use log::info;
-use mediation::storage::MediatorPersistence;
-use mediator::aries_agent::Agent;
+use mediator::{aries_agent::Agent, persistence::MediatorPersistence};
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 
 pub async fn init_tui<T: BaseWallet + 'static, P: MediatorPersistence>(agent: Agent<T, P>) {

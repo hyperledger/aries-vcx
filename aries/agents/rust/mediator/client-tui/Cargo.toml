@@ -13,7 +13,6 @@ axum = "0.6.20"
 cursive = { version = "0.20.0", features = ["crossterm-backend"] }
 futures = "0.3.28"
 log = "0.4.20"
-mediation = { path = "../mediation" }
 mediator = { path = ".." }
 messages = { path = "../../../../messages" }
 reqwest = "0.11.22"

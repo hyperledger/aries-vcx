@@ -3,7 +3,6 @@
 
 use std::sync::Arc;
 
-use mediation::storage::MediatorPersistence;
 use messages::msg_fields::protocols::coordinate_mediation::{
     keylist::KeylistItem,
     keylist_update::{KeylistUpdateItem, KeylistUpdateItemAction},
@@ -14,6 +13,8 @@ use messages::msg_fields::protocols::coordinate_mediation::{
     MediateGrant, MediateGrantContent, MediateGrantDecorators,
 };
 use uuid::Uuid;
+
+use crate::persistence::MediatorPersistence;
 
 pub async fn handle_coord_authenticated(
     storage: Arc<impl MediatorPersistence>,

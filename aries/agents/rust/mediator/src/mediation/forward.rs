@@ -4,7 +4,6 @@
 use std::sync::Arc;
 
 use log::{debug, info};
-use mediation::storage::MediatorPersistence;
 use messages::{
     decorators::thread::Thread,
     msg_fields::protocols::{
@@ -13,6 +12,8 @@ use messages::{
     },
 };
 use uuid::Uuid;
+
+use crate::persistence::MediatorPersistence;
 
 pub async fn handle_forward<T>(storage: Arc<T>, forward_msg: Forward) -> Ack
 where
