@@ -9,12 +9,12 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use mediation::storage::MediatorPersistence;
 use serde_json::Value;
 
 use crate::{
     aries_agent::{Agent, ArcAgent},
     didcomm_handlers,
+    persistence::MediatorPersistence,
 };
 
 pub async fn oob_invite_qr(

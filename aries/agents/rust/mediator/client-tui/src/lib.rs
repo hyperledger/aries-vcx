@@ -1,8 +1,10 @@
 use std::collections::VecDeque;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use mediation::storage::MediatorPersistence;
-use mediator::aries_agent::{client::transports::AriesReqwest, ArcAgent};
+use mediator::{
+    aries_agent::{client::transports::AriesReqwest, ArcAgent},
+    persistence::MediatorPersistence,
+};
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use serde_json::{json, Value};
 

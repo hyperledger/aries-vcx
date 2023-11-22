@@ -67,7 +67,6 @@ impl MediatorPersistence for sqlx::MySqlPool {
             };
         Ok(account_id)
     }
-    #[cfg(feature = "mediator_persistence_extras")]
     async fn list_accounts(&self) -> Result<Vec<(String, String)>, String> {
         let list: Vec<(String, String)> =
             sqlx::query("SELECT account_name, auth_pubkey FROM accounts;")
@@ -79,7 +78,6 @@ impl MediatorPersistence for sqlx::MySqlPool {
                 .collect();
         Ok(list)
     }
-    #[cfg(feature = "mediator_persistence_extras")]
     async fn get_account_details(
         &self,
         auth_pubkey: &str,

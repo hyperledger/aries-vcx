@@ -9,12 +9,12 @@ use aries_vcx::{
 };
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use mediation::storage::MediatorPersistence;
 use mediator::{
     aries_agent::{
         client::transports::{AriesReqwest, AriesTransport},
         Agent,
     },
+    persistence::MediatorPersistence,
     utils::{structs::VerKey, GenericStringError},
 };
 use messages::{
