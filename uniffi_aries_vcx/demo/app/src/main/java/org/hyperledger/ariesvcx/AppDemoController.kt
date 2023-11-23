@@ -122,12 +122,8 @@ class AppDemoController : ViewModel() {
         onConnectionComplete = onComplete
     }
 
-    fun subscribeToShowDialog(onShowDialog: () -> Unit) {
-        onOfferReceived = onShowDialog
-    }
-
-    fun processOfferRequest() {
-        viewModelScope.launch {
+    suspend fun processOfferRequest() {
+        withContext(Dispatchers.IO) {
             holder?.prepareCredentialRequest(profile!!, "4xE68b6S5VRFrKMMG1U95M")
             Log.d("HOLDER", "processOfferRequest: ${holder?.getState()}")
             val message = holder?.getMsgCredentialRequest()

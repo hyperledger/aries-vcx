@@ -26,11 +26,6 @@ fun HolderScreen(
 ) {
     val demoState by demoController.states.collectAsState()
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-
-    LaunchedEffect(Unit) {
-        demoController.awaitCredentialPolling()
-    }
 
     LaunchedEffect(Unit) {
         demoController.awaitCredentialPolling()
@@ -39,7 +34,7 @@ fun HolderScreen(
     if (demoState.offerReceived) {
         AlertDialog(
             onDismissRequest = { },
-            title = { Text("Accept this invitation?") },
+            title = { Text("Accept this credential?") },
             text = { Text(demoController.getHolder()?.getAttributes()!!) },
             confirmButton = {
                 TextButton(onClick = {

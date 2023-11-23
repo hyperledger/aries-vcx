@@ -10,7 +10,7 @@ import java.io.FileWriter
 fun prepareGenesisFile(context: Context): File {
     val file = File(context.filesDir, "genesis")
     if (!file.exists()) {
-        val transactions = context.resources.openRawResource(R.raw.transactions).bufferedReader()
+        val transactions = context.resources.openRawResource(R.raw.bcovrin_transactions).bufferedReader()
             .use { it.readText() }
         val bufferedWriter = BufferedWriter(FileWriter(file))
         bufferedWriter.write(transactions)
