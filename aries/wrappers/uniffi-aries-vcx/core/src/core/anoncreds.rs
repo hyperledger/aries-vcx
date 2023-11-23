@@ -10,7 +10,7 @@ pub fn get_credentials(profile_holder: Arc<ProfileHolder>) -> VcxUniFFIResult<St
         let credentials = profile_holder
             .inner
             .anoncreds()
-            .prover_get_credentials(profile_holder.inner.wallet(), Some(""))
+            .prover_get_credentials(profile_holder.inner.wallet(), Some("{}"))
             .await?;
         Ok(credentials)
     })

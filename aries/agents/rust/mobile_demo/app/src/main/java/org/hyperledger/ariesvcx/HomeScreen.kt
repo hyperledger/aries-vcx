@@ -83,7 +83,7 @@ fun HomeScreen(
             }) {
             Text(text = "Receive a credential")
         }
-        Button(enabled = (true),
+        Button(enabled = (demoState.connectionCompleted),
             onClick = {
                 navController.navigate(Destination.Credential.route)
             }) {

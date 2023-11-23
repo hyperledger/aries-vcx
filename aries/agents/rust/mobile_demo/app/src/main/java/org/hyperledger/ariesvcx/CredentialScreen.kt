@@ -1,5 +1,6 @@
 package org.hyperledger.ariesvcx
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +17,7 @@ fun CredentialScreen(
     demoController: AppDemoController,
     navController: NavHostController,
 ) {
+    Log.d("LOG", "CredentialScreen: ${getCredentials(demoController.getProfileHolder())}")
     Column(
         modifier = Modifier
             .fillMaxSize()
