@@ -30,6 +30,8 @@ async-trait = "0.1.64"
 diddoc_legacy = { path = "../../../misc/legacy/diddoc_legacy" }
 shared = { path = "../../../misc/shared" }
 url = "2.3.1"
+android_logger = "0.13.3"
+log = "0.4.16"
 
 [build-dependencies]
 uniffi = { version = "0.23.0", features = ["build", "cli"] }
