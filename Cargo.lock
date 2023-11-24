@@ -395,6 +395,7 @@ version = "0.1.0"
 dependencies = [
  "agency_client",
  "async-trait",
+ "bs58 0.5.0",
  "derive_builder",
  "futures",
  "indy-api-types",
