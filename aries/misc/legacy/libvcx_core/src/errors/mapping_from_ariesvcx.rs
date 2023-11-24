@@ -73,6 +73,7 @@ impl From<AriesVcxErrorKind> for LibvcxErrorKind {
             AriesVcxErrorKind::WalletAlreadyOpen => LibvcxErrorKind::WalletAlreadyOpen,
             AriesVcxErrorKind::DuplicationMasterSecret => LibvcxErrorKind::DuplicationMasterSecret,
             AriesVcxErrorKind::DuplicationDid => LibvcxErrorKind::DuplicationDid,
+            AriesVcxErrorKind::WalletUnexpected => LibvcxErrorKind::WalletUnexpected,
             AriesVcxErrorKind::LoggingError => LibvcxErrorKind::LoggingError,
             AriesVcxErrorKind::EncodeError => LibvcxErrorKind::EncodeError,
             AriesVcxErrorKind::UnknownError => LibvcxErrorKind::UnknownError,

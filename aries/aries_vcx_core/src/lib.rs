@@ -30,6 +30,7 @@ pub mod global;
 pub mod ledger;
 pub mod utils;
 pub mod wallet;
+pub mod wallet2;
 
 pub use indy_ledger_response_parser::ResponseParser;
 pub use indy_vdr::config::PoolConfig;
