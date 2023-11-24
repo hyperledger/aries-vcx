@@ -6,7 +6,7 @@ use vdrtools::Locator;
 
 use super::{indy_tags::IndyTags, SEARCH_OPTIONS, WALLET_OPTIONS};
 use crate::{
-    errors::error::{AriesVcxCoreError, VcxCoreResult},
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::{
         base_wallet::{
             record::Record, record_category::RecordCategory, search_filter::SearchFilter,
@@ -23,7 +23,7 @@ impl RecordWallet for IndySdkWallet {
         let tags_map = if record.tags().is_empty() {
             None
         } else {
-            Some(IndyTags::from_entry_tags(record.tags().clone()).into_inner())
+            Some(IndyTags::from_record_tags(record.tags().clone()).into_inner())
         };
 
         Ok(Locator::instance()
@@ -66,7 +66,7 @@ impl RecordWallet for IndySdkWallet {
                 self.wallet_handle,
                 category.to_string(),
                 name.into(),
-                IndyTags::from_entry_tags(new_tags).into_inner(),
+                IndyTags::from_record_tags(new_tags).into_inner(),
             )
             .await?)
     }
@@ -95,6 +95,7 @@ impl RecordWallet for IndySdkWallet {
             .await?)
     }
 
+    #[allow(unreachable_patterns)]
     async fn search_record(
         &self,
         category: RecordCategory,
@@ -103,6 +104,10 @@ impl RecordWallet for IndySdkWallet {
         let json_filter = search_filter
             .map(|filter| match filter {
                 SearchFilter::JsonFilter(inner) => Ok::<String, AriesVcxCoreError>(inner),
+                _ => Err(AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::InvalidInput,
+                    "filter type not supported",
+                )),
             })
             .transpose()?;
 

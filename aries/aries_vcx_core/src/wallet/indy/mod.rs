@@ -107,6 +107,28 @@ impl Record {
     }
 }
 
+// impl From<IndyRecord> for Record {
+//     fn from(ir: IndyRecord) -> Self {
+//         Self::builder()
+//             .name(ir.id)
+//             .category(ir.type_)
+//             .value(ir.value)
+//             .tags(IndyTags::new(ir.tags).into_record_tags())
+//             .build()
+//     }
+// }
+
+// impl From<Record> for IndyRecord {
+//     fn from(record: Record) -> Self {
+//         Self {
+//             id: record.name().into(),
+//             type_: record.category().into(),
+//             value: record.value().into(),
+//             tags: IndyTags::from_record_tags(record.tags().to_owned()).into_inner(),
+//         }
+//     }
+// }
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RestoreWalletConfigs {
     pub wallet_name: String,
@@ -127,8 +149,9 @@ impl BaseWallet for IndySdkWallet {}
 #[cfg(test)]
 pub mod tests {
     use super::IndySdkWallet;
+    use crate::wallet::base_wallet::BaseWallet;
 
-    pub async fn dev_setup_indy_wallet() -> IndySdkWallet {
+    pub async fn dev_setup_indy_wallet() -> Box<dyn BaseWallet> {
         use crate::wallet::indy::{wallet::create_and_open_wallet, WalletConfig};
 
         let config_wallet = WalletConfig {
@@ -143,6 +166,6 @@ pub mod tests {
         };
         let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
 
-        IndySdkWallet::new(wallet_handle)
+        Box::new(IndySdkWallet::new(wallet_handle))
     }
 }

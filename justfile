@@ -35,7 +35,10 @@ check-aries-vcx-core-credx:
     cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F vdrtools_wallet,credx --tests
 
 test-unit test_name="":
-    RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --exclude mediator -- {{test_name}}
+    RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --exclude mediator --exclude aries_vcx_core -- --ignored {{test_name}}
+
+test-integration-aries-vcx-core:
+    cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F {{features}}
 
 test-integration-aries-vcx test_name="":
     cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F vdrtools_wallet,credx -- --ignored {{test_name}}
