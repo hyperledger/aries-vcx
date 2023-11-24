@@ -151,6 +151,7 @@ impl From<AriesVcxCoreError> for AriesVcxError {
                 AriesVcxErrorKind::DuplicationMasterSecret
             }
             AriesVcxCoreErrorKind::DuplicationDid => AriesVcxErrorKind::DuplicationDid,
+            AriesVcxCoreErrorKind::WalletUnexpected => AriesVcxErrorKind::WalletUnexpected,
             AriesVcxCoreErrorKind::LoggingError => AriesVcxErrorKind::LoggingError,
             AriesVcxCoreErrorKind::EncodeError => AriesVcxErrorKind::EncodeError,
             AriesVcxCoreErrorKind::UnknownError => AriesVcxErrorKind::UnknownError,
@@ -247,6 +248,7 @@ impl From<AriesVcxError> for AriesVcxCoreError {
             AriesVcxErrorKind::DuplicationMasterSecret => {
                 AriesVcxCoreErrorKind::DuplicationMasterSecret
             }
+            AriesVcxErrorKind::WalletUnexpected => AriesVcxCoreErrorKind::WalletUnexpected,
             AriesVcxErrorKind::DuplicationDid => AriesVcxCoreErrorKind::DuplicationDid,
             AriesVcxErrorKind::LoggingError => AriesVcxCoreErrorKind::LoggingError,
             AriesVcxErrorKind::EncodeError => AriesVcxCoreErrorKind::EncodeError,

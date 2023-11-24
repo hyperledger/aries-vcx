@@ -124,6 +124,9 @@ pub enum AriesVcxCoreErrorKind {
     #[error("Attempted to add a DID to wallet when that DID already exists in wallet")]
     DuplicationDid,
 
+    #[error("Unexpected wallet error")]
+    WalletUnexpected,
+
     // Logger
     #[error("Logging Error")]
     LoggingError,
