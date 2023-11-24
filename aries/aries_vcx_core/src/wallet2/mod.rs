@@ -2,6 +2,9 @@ use async_trait::async_trait;
 
 use crate::errors::error::VcxCoreResult;
 
+#[cfg(feature = "askar_wallet")]
+pub mod askar_wallet;
+
 pub enum SigType {
     EdDSA,
     ES256,
