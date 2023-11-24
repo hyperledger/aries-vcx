@@ -12,8 +12,11 @@ vdr_proxy_ledger = ["credx", "dep:indy-vdr-proxy-client"]
 # Feature flag to allow legacy proof verification
 legacy_proof = []
 
+askar_wallet = ["dep:aries-askar"]
+
 [dependencies]
 agency_client = { path = "../misc/legacy/agency_client" }
+aries-askar = { git = "https://github.com/hyperledger/aries-askar.git", tag = "v0.3.0", optional = true }
 bs58 = { version = "0.5" }
 indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", default-features = false, features = ["log"] }
 indy-credx = { git = "https://github.com/hyperledger/indy-shared-rs", tag = "v1.1.0", optional = true }

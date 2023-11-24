@@ -1,5 +1,7 @@
 pub mod error;
 mod mapping_agency_client;
+#[cfg(feature = "askar_wallet")]
+mod mapping_askar;
 #[cfg(feature = "credx")]
 mod mapping_credx;
 #[cfg(feature = "vdrtools_wallet")]
