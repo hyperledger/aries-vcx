@@ -2,6 +2,9 @@ use async_trait::async_trait;
 
 use crate::errors::error::VcxCoreResult;
 
+#[cfg(feature = "askar_wallet")]
+pub mod askar_wallet;
+
 pub enum SigType {
     EdDSA,
     ES256,
@@ -30,14 +33,19 @@ pub trait DidWallet {
     type DidKey;
     type KeyAttrs;
     type FindDidKeyAttrs;
+    type CreatedKey;
 
-    async fn create_key(&self, key_attrs: Self::KeyAttrs) -> VcxCoreResult<()>;
+    async fn create_key(&self, key_attrs: Self::KeyAttrs) -> VcxCoreResult<Self::CreatedKey>;
 
     async fn create_did(&self, attrs: Self::DidAttrs) -> VcxCoreResult<Self::CreatedDid>;
 
     async fn did_key(&self, attrs: Self::FindDidKeyAttrs) -> VcxCoreResult<Self::DidKey>;
 
-    async fn replace_did_key(&self, did: &str, new_key_name: &str) -> VcxCoreResult<Self::DidKey>;
+    async fn replace_did_key(
+        &self,
+        attrs: Self::FindDidKeyAttrs,
+        new_key_name: &str,
+    ) -> VcxCoreResult<Self::DidKey>;
 
     async fn sign(&self, verkey: &str, msg: &[u8], sig_type: SigType) -> VcxCoreResult<Vec<u8>>;
 
