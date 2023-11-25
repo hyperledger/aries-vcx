@@ -1,6 +1,10 @@
 package org.hyperledger.ariesvcx
 
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +22,8 @@ import org.hyperledger.ariesvcx.utils.await
 data class AppUiState(
     val profileReady: Boolean = false,
     val connectionInvitationReceived: Boolean = false,
-    val connectionCompleted: Boolean = false
+    val connectionCompleted: Boolean = false,
+    val offerReceived: Boolean = false
 )
 
 class AppDemoController : ViewModel() {
@@ -26,12 +31,18 @@ class AppDemoController : ViewModel() {
 
     private var profile: ProfileHolder? = null
     private var connection: Connection? = null
+    private var holder: Holder? = null
 
     private var onConnectionComplete: (connection: Connection) -> Unit = {}
+    private var onOfferReceived: () -> Unit = {}
 
     // Expose screen UI state
     private val _state = MutableStateFlow(AppUiState())
     val states: StateFlow<AppUiState> = _state.asStateFlow()
+
+    fun getHolder (): Holder? {
+        return holder
+    }
 
     private val walletConfig = WalletConfig(
         walletName = "test_create_wallet_add_uuid_here",
@@ -88,7 +99,7 @@ class AppDemoController : ViewModel() {
             val relayResponse = httpClient.newCall(pollRelayRequest).await()
             if (relayResponse.code == 200) {
                 val message = relayResponse.body!!.string()
-
+                Log.d("MESSAGE", "awaitConnectionCompletion: $message")
                 val unpackedMessage = unpackMessage(
                     profile!!,
                     message
@@ -101,7 +112,7 @@ class AppDemoController : ViewModel() {
                 Log.d("AppDemoController", "connection state: ${connection!!.getState()}")
 
                 _state.update { it.copy(connectionCompleted = true) }
-                onConnectionComplete(connection!!)
+                onConnectionComplete.invoke(connection!!)
                 break
             }
         }
@@ -109,5 +120,47 @@ class AppDemoController : ViewModel() {
 
     fun subscribeToConnectionComplete(onComplete: (connection: Connection) -> Unit) {
         onConnectionComplete = onComplete
+    }
+
+    suspend fun processOfferRequest() {
+        withContext(Dispatchers.IO) {
+            holder?.prepareCredentialRequest(profile!!, "4xE68b6S5VRFrKMMG1U95M")
+            Log.d("HOLDER", "processOfferRequest: ${holder?.getState()}")
+            val message = holder?.getMsgCredentialRequest()
+            connection?.sendMessage(profile!!, message!!)
+        }
+    }
+
+    suspend fun awaitCredentialPolling() {
+        val pollRelayRequest = Request.Builder()
+            .url("$BASE_RELAY_ENDPOINT/pop_user_message/$RELAY_USER_ID")
+            .build()
+        while(true) {
+            delay(2000)
+            val relayResponse = httpClient.newCall(pollRelayRequest).await()
+            if (relayResponse.code == 200) {
+                val message = relayResponse.body!!.string()
+
+                val unpackedMessage = unpackMessage(
+                    profile!!,
+                    message
+                )
+
+                Log.d("MESSAGE", "$unpackedMessage.message")
+
+                if (!_state.value.offerReceived) {
+                    Log.d("OFFER", "awaitCredentialPolling: received OFFER")
+                    holder = createFromOffer("", unpackedMessage.message)
+
+                    _state.update { it.copy(offerReceived = true) }
+                    onOfferReceived.invoke()
+                } else {
+                    Log.d("CREDENTIAL", "awaitCredentialPolling: received CREDENTIAL")
+                    holder?.processCredential(profile!!, unpackedMessage.message)
+
+                    _state.update { it.copy(offerReceived = false) }
+                }
+            }
+        }
     }
 }

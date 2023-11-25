@@ -240,7 +240,7 @@ impl Connection {
 
     pub fn send_message(
         &self,
-        profile_holder: Arc<ProfileHolder>,
+        profile: Arc<ProfileHolder>,
         message: String,
     ) -> VcxUniFFIResult<()> {
         let message = serde_json::from_str(&message)?;
@@ -248,7 +248,7 @@ impl Connection {
 
         block_on(async {
             handler
-                .send_message(profile_holder.inner.wallet(), &message, &HttpClient)
+                .send_message(profile.inner.wallet(), &message, &HttpClient)
                 .await?;
             Ok(())
         })

@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
-    handlers::issuance::holder::Holder as VcxHolder,
+    handlers::issuance::holder::Holder as VcxHolder, messages::AriesMessage,
     protocols::issuance::holder::state_machine::HolderState as VcxHolderState,
 };
 
@@ -97,9 +97,9 @@ impl Holder {
     pub fn get_msg_credential_request(&self) -> VcxUniFFIResult<String> {
         let handler = self.handler.lock()?;
 
-        Ok(serde_json::to_string(
-            &handler.clone().get_msg_credential_request()?,
-        )?)
+        Ok(serde_json::to_string(&AriesMessage::from(
+            handler.clone().get_msg_credential_request()?,
+        ))?)
     }
 
     pub fn decline_offer(&self, comment: Option<String>) -> VcxUniFFIResult<String> {

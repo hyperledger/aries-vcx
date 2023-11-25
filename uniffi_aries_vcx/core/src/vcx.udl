@@ -66,6 +66,9 @@ interface Connection {
 
     [Throws=VcxUniFFIError]
     void send_ack(ProfileHolder profile);
+
+    [Throws=VcxUniFFIError]
+    void send_message(ProfileHolder profile, string message);
 };
 
 interface Holder {
