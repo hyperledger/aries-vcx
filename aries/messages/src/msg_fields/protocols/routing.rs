@@ -5,11 +5,12 @@ use serde_json::Value;
 use typed_builder::TypedBuilder;
 
 use crate::{
-    misc::utils::into_msg_with_type, msg_parts::MsgParts,
+    misc::{utils::into_msg_with_type, NoDecorators},
+    msg_parts::MsgParts,
     msg_types::protocols::routing::RoutingTypeV1_0,
 };
 
-pub type Forward = MsgParts<ForwardContent>;
+pub type Forward = MsgParts<ForwardContent, NoDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ForwardContent {

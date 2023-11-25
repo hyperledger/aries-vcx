@@ -37,7 +37,7 @@ pub struct RequestDecorators {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
-mod tests {
+pub mod tests {
     use diddoc_legacy::aries::diddoc::AriesDidDoc;
     use serde_json::json;
 
@@ -52,7 +52,7 @@ mod tests {
         msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
     };
 
-    fn request_content() -> RequestContent {
+    pub fn request_content() -> RequestContent {
         let did_doc = AriesDidDoc::default();
         RequestContent {
             label: "test_request_label".to_owned(),

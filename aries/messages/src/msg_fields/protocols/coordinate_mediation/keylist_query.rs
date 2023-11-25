@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
-use crate::{decorators::thread::Thread, msg_parts::MsgParts};
+use crate::{decorators::thread::Thread, misc::NoDecorators, msg_parts::MsgParts};
 
 /// https://github.com/hyperledger/aries-rfcs/blob/main/features/0211-route-coordination/README.md#key-list-query
-pub type KeylistQuery = MsgParts<KeylistQueryContent>;
+pub type KeylistQuery = MsgParts<KeylistQueryContent, NoDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct KeylistQueryContent {

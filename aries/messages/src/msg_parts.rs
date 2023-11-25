@@ -1,6 +1,6 @@
+use display_as_json::Display;
 use serde::{Deserialize, Serialize};
 // Bind `shared::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
-use shared::misc::serde_ignored::SerdeIgnored as NoDecorators;
 use typed_builder::TypedBuilder;
 
 /// Struct representing a complete message (apart from the `@type` field) as defined in a protocol
@@ -14,9 +14,9 @@ use typed_builder::TypedBuilder;
 /// `~attach` used in some messages that are in fact part of the protocol itself and are
 /// instrumental to the message processing, not an appendix to the message (such as `~thread` or
 /// `~timing`).
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder, Display)]
 #[builder(build_method(vis = "", name = __build))]
-pub struct MsgParts<C, D = NoDecorators> {
+pub struct MsgParts<C, D> {
     /// All standalone messages have an `id` field.
     #[serde(rename = "@id")]
     pub id: String,
@@ -63,5 +63,26 @@ impl<C, D> MsgPartsBuilder<C, D, ((String,), (C,), (D,))> {
         MsgParts<C, D>: Into<T>,
     {
         self.__build().into()
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+pub mod tests {
+    use crate::msg_fields::protocols::did_exchange::request::{
+        tests::request_content, Request, RequestDecorators,
+    };
+
+    #[test]
+    fn test_print_message() {
+        let msg: Request = Request::builder()
+            .id("test_id".to_owned())
+            .content(request_content())
+            .decorators(RequestDecorators::default())
+            .build();
+        let printed = format!("{}", msg);
+        let expected = r#"{"@id":"test_id","label":"test_request_label","goal_code":"aries.rel.build","goal":"test_goal","did":"","did_doc~attach":{"data":{"json":{"@context":"https://w3id.org/did/v1","authentication":[],"id":"","publicKey":[],"service":[{"id":"did:example:123456789abcdefghi;indy","priority":0,"recipientKeys":[],"routingKeys":[],"serviceEndpoint":"https://dummy.dummy/dummy","type":"IndyAgent"}]}}}}"#;
+        assert_eq!(expected, printed);
     }
 }
