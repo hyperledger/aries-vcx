@@ -4,7 +4,7 @@ set -ex
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 
 # Required env vars
-ARIES_VCX_ROOT=$(dirname $(dirname $SCRIPT_DIR))
+ARIES_VCX_ROOT=$(dirname $(dirname $(dirname $(dirname $SCRIPT_DIR))))
 ANDROID_BUILD_DEPS_DIR=${ARIES_VCX_ROOT}/target/android_build_deps
 LANGUAGE="kotlin"
 TARGET="aarch64-linux-android"
@@ -12,8 +12,8 @@ TARGET_NICKNAME="arm64"
 ABI="arm64-v8a"
 
 generate_bindings() {
-    export UNIFFI_ROOT="${ARIES_VCX_ROOT}/uniffi_aries_vcx"
-    export ANDROID_DEMO_DIR="${UNIFFI_ROOT}/demo"
+    export UNIFFI_ROOT="${ARIES_VCX_ROOT}/aries/wrappers/uniffi-aries-vcx"
+    export ANDROID_DEMO_DIR="${ARIES_VCX_ROOT}/aries/agents/rust/mobile_demo"
 
     pushd "${UNIFFI_ROOT}/core"
         cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/vcx.udl --language ${LANGUAGE}
@@ -65,8 +65,8 @@ setup_linked_dependencies() {
 }
 
 build_uniffi_for_demo() {
-    export UNIFFI_ROOT="${ARIES_VCX_ROOT}/uniffi_aries_vcx"
-    export ANDROID_DEMO_DIR="${UNIFFI_ROOT}/demo"
+    export UNIFFI_ROOT="${ARIES_VCX_ROOT}/aries/wrappers/uniffi-aries-vcx"
+    export ANDROID_DEMO_DIR="${ARIES_VCX_ROOT}/aries/agents/rust/mobile_demo"
     export ABI_PATH=${ANDROID_DEMO_DIR}/app/src/main/jniLibs/${ABI}
     mkdir -p ${ABI_PATH}
 
