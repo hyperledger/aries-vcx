@@ -1,7 +1,6 @@
 use agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx_core::{global::settings::VERKEY, wallet::base_wallet::BaseWallet};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use futures::TryFutureExt;
 use messages::{
     msg_fields::protocols::routing::{Forward, ForwardContent},
     AriesMessage,
@@ -19,39 +18,48 @@ impl EncryptionEnvelope {
     pub async fn create(
         wallet: &impl BaseWallet,
         message: &[u8],
-        pw_verkey: Option<&str>,
+        sender_vk: Option<&str>,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<EncryptionEnvelope> {
         trace!(
             "EncryptionEnvelope::create >>> message: {:?}, pw_verkey: {:?}, did_doc: {:?}",
             message,
-            pw_verkey,
+            sender_vk,
             did_doc
         );
 
-        EncryptionEnvelope::encrypt_for_pairwise(wallet, message, pw_verkey, did_doc)
-            .and_then(|message| async move {
-                EncryptionEnvelope::wrap_into_forward_messages(wallet, message, did_doc).await
-            })
-            .await
-            .map(EncryptionEnvelope)
+        let recipient_keys = json!(did_doc.recipient_keys()?).to_string();
+        let routing_keys = did_doc.routing_keys();
+        let message = EncryptionEnvelope::encrypt_for_pairwise(
+            wallet,
+            message,
+            sender_vk,
+            recipient_keys.clone(),
+        )
+        .await?;
+        EncryptionEnvelope::wrap_into_forward_messages(
+            wallet,
+            message,
+            recipient_keys,
+            routing_keys,
+        )
+        .await
+        .map(EncryptionEnvelope)
     }
 
     async fn encrypt_for_pairwise(
         wallet: &impl BaseWallet,
         message: &[u8],
-        pw_verkey: Option<&str>,
-        did_doc: &AriesDidDoc,
+        sender_vk: Option<&str>,
+        recipient_key: String,
     ) -> VcxResult<Vec<u8>> {
-        let receiver_keys = json!(did_doc.recipient_keys()?).to_string();
-
         debug!(
-            "Encrypting for pairwise; pw_verkey: {:?}, receiver_keys: {:?}",
-            pw_verkey, receiver_keys
+            "Encrypting for pairwise; sender_vk: {:?}, recipient_key: {}",
+            sender_vk, recipient_key
         );
 
         wallet
-            .pack_message(pw_verkey, &receiver_keys, message)
+            .pack_message(sender_vk, &recipient_key, message)
             .await
             .map_err(|err| err.into())
     }
@@ -59,23 +67,20 @@ impl EncryptionEnvelope {
     async fn wrap_into_forward_messages(
         wallet: &impl BaseWallet,
         mut message: Vec<u8>,
-        did_doc: &AriesDidDoc,
+        recipient_key: String,
+        routing_keys: Vec<String>,
     ) -> VcxResult<Vec<u8>> {
-        let recipient_keys = did_doc.recipient_keys()?;
-        let routing_keys = did_doc.routing_keys();
-
-        let mut to = recipient_keys
-            .get(0)
-            .map(String::from)
-            .ok_or(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidState,
-                format!("Recipient Key not found in DIDDoc: {:?}", did_doc),
-            ))?;
+        let mut forward_to_key = recipient_key.clone();
 
         for routing_key in routing_keys.iter() {
-            message =
-                EncryptionEnvelope::wrap_into_forward(wallet, message, &to, routing_key).await?;
-            to = routing_key.clone();
+            message = EncryptionEnvelope::wrap_into_forward(
+                wallet,
+                message,
+                &forward_to_key,
+                routing_key,
+            )
+            .await?;
+            forward_to_key = routing_key.clone();
         }
 
         Ok(message)
@@ -84,11 +89,11 @@ impl EncryptionEnvelope {
     async fn wrap_into_forward(
         wallet: &impl BaseWallet,
         message: Vec<u8>,
-        to: &str,
+        forward_to_key: &str,
         routing_key: &str,
     ) -> VcxResult<Vec<u8>> {
         let content = ForwardContent::builder()
-            .to(to.to_string())
+            .to(forward_to_key.to_string())
             .msg(serde_json::from_slice(&message)?)
             .build();
 
