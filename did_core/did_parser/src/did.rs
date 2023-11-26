@@ -48,6 +48,12 @@ impl Did {
     }
 }
 
+impl AsRef<Did> for Did {
+    fn as_ref(&self) -> &Did {
+        self
+    }
+}
+
 impl TryFrom<String> for Did {
     type Error = ParseError;
 

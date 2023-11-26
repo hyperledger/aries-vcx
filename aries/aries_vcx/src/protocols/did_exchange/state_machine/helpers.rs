@@ -2,23 +2,36 @@ use std::collections::HashMap;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use did_doc::schema::{
-    types::uri::Uri,
-    verification_method::{VerificationMethod, VerificationMethodKind, VerificationMethodType},
-};
-use did_doc_sov::{
-    extra_fields::{didcommv1::ExtraFieldsDidCommV1, SovKeyKind},
-    service::{didcommv1::ServiceDidCommV1},
+use chrono::Utc;
+use did_doc::{
+    did_doc_sov::{
+        extra_fields::{didcommv1::ExtraFieldsDidCommV1, ServiceKeyKind},
+        service::didcommv1::ServiceDidCommV1,
+    },
+    schema::{
+        did_doc::DidDocument,
+        service::Service,
+        types::uri::Uri,
+        verification_method::{VerificationMethod, VerificationMethodType},
+    },
 };
 use did_key::DidKey;
 use did_parser::{Did, DidUrl};
 use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
-use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
+use messages::{
+    decorators::{
+        attachment::{Attachment, AttachmentData, AttachmentType},
+        thread::Thread,
+        timing::Timing,
+    },
+    msg_fields::protocols::did_exchange::response::{
+        Response, ResponseContent, ResponseDecorators,
+    },
+};
 use public_key::{Key, KeyType};
 use serde_json::Value;
 use url::Url;
-use did_doc::schema::did_doc::DidDocument;
-use did_doc::schema::service::Service;
+use uuid::Uuid;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
@@ -27,6 +40,26 @@ use crate::{
         mediated_connection::pairwise_info::PairwiseInfo,
     },
 };
+
+pub fn construct_response(
+    request_id: String,
+    our_did_document: &DidDocument,
+    signed_attach: Attachment,
+) -> Response {
+    let content = ResponseContent::builder()
+        .did(our_did_document.id().to_string())
+        .did_doc(Some(signed_attach))
+        .build();
+    let decorators = ResponseDecorators::builder()
+        .thread(Thread::builder().thid(request_id).build())
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
+    Response::builder()
+        .id(Uuid::new_v4().to_string())
+        .content(content)
+        .decorators(decorators)
+        .build()
+}
 
 pub async fn generate_keypair(
     wallet: &impl BaseWallet,
@@ -49,28 +82,32 @@ pub async fn create_our_did_document(
         service_endpoint.into(),
         ExtraFieldsDidCommV1::builder()
             .set_routing_keys(
-                routing_keys.into_iter().map(SovKeyKind::Value).collect()
+                routing_keys
+                    .into_iter()
+                    .map(ServiceKeyKind::Value)
+                    .collect(),
             )
-            .set_recipient_keys(
-                vec![SovKeyKind::DidKey(key_enc.clone().try_into()?)]
-            )
+            .set_recipient_keys(vec![ServiceKeyKind::DidKey(key_enc.clone().try_into()?)])
             .build(),
-    ).into();
+    )
+    .try_into()?;
 
+    info!("Prepared service for peer:did:2 generation: {} ", service);
     let mut did_document = did_doc_from_keys(
         Default::default(),
         key_ver.clone(),
         key_enc.clone(),
-        service.clone(),
+        service,
     )?;
-    let peer_did = PeerDid::<Numalgo2>::from_did_doc(did_document.into())?;
-    Ok((
-        did_document.set_id(peer_did.did().clone())?,
-        key_enc,
-    ))
+    info!(
+        "Created did document for peer:did:2 generation: {} ",
+        did_document
+    );
+    let peer_did = PeerDid::<Numalgo2>::from_did_doc(did_document.clone())?;
+    did_document.set_id(peer_did.did().clone());
+    Ok((did_document, key_enc))
 }
 
-// todo: add unit tests
 fn did_doc_from_keys(
     did: Did,
     key_ver: Key,
@@ -89,7 +126,7 @@ fn did_doc_from_keys(
     let vm_ka = VerificationMethod::builder(
         vm_ka_id,
         did.clone(),
-        VerificationMethodType::X25519KeyAgreementKey2020,
+        VerificationMethodType::Ed25519VerificationKey2020,
     )
     .add_public_key_base58(key_enc.base58())
     .build();
@@ -161,7 +198,7 @@ pub async fn jws_sign_attach(
     }
 }
 
-pub fn attach_to_ddo_sov(attachment: Attachment) -> Result<DidDocumentSov, AriesVcxError> {
+pub fn attach_to_ddo_sov(attachment: Attachment) -> Result<DidDocument, AriesVcxError> {
     match attachment.data.content {
         AttachmentType::Json(value) => serde_json::from_value(value).map_err(Into::into),
         AttachmentType::Base64(ref value) => {
@@ -173,7 +210,7 @@ pub fn attach_to_ddo_sov(attachment: Attachment) -> Result<DidDocumentSov, Aries
                     ),
                 )
             })?;
-            serde_json::from_slice::<DidDocumentSov>(&bytes).map_err(Into::into)
+            serde_json::from_slice::<DidDocument>(&bytes).map_err(Into::into)
         }
         _ => Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
@@ -192,44 +229,85 @@ where
     }
 }
 
-
-// todo: this is new test, yet to run it after we get stuff compiling
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::collections::HashMap;
+    use did_doc::schema::{utils::OneOrList, verification_method::VerificationMethodKind};
 
-    #[tokio::test] // Use tokio::test if your generate_keypair function is async
+    use super::*;
+
+    #[tokio::test]
     async fn test_did_doc_from_keys() {
-        // Assuming generate_keypair and other functions are available in your context
-        let key_ver = Key::new("7MV7mTpzQekW39mXdPXKnRJn79kkzMvmtaSHZWUSbvt5".into(), KeyType::Ed25519).unwrap();
-        let key_enc = Key::new("tyntrez7bCthPqvZUDGwhYB1bSe9HzpLdSeHFpuSwst".into(), KeyType::Ed25519).unwrap();
+        let key_ver = Key::new(
+            "7MV7mTpzQekW39mXdPXKnRJn79kkzMvmtaSHZWUSbvt5".into(),
+            KeyType::Ed25519,
+        )
+        .unwrap();
+        let key_enc = Key::new(
+            "tyntrez7bCthPqvZUDGwhYB1bSe9HzpLdSeHFpuSwst".into(),
+            KeyType::Ed25519,
+        )
+        .unwrap();
 
         let service_endpoint = Url::parse("http://example.com").unwrap();
         let routing_keys = vec!["routing_key1".to_string(), "routing_key2".to_string()];
         let service: Service = ServiceDidCommV1::new(
-            Uri::new("#0")?,
-            service_endpoint.into(),
+            Uri::new("#service-0").unwrap(),
+            service_endpoint.clone().into(),
             ExtraFieldsDidCommV1::builder()
                 .set_routing_keys(
-                    routing_keys.into_iter().map(SovKeyKind::Value).collect()
+                    routing_keys
+                        .into_iter()
+                        .map(ServiceKeyKind::Value)
+                        .collect(),
                 )
-                .set_recipient_keys(
-                    vec![SovKeyKind::DidKey(key_enc.clone().try_into()?)]
-                )
+                .set_recipient_keys(vec![ServiceKeyKind::DidKey(
+                    key_enc.clone().try_into().unwrap(),
+                )])
                 .build(),
-        ).try_into().unwrap();
+        )
+        .try_into()
+        .unwrap();
 
         let did = Did::default();
 
-        let result = did_doc_from_keys(did.clone(), key_ver.clone(), key_enc.clone(), service.clone());
+        let result = did_doc_from_keys(did, key_ver.clone(), key_enc.clone(), service);
 
         assert!(result.is_ok());
         let did_doc = result.unwrap();
 
-        assert_eq!(did_doc.services().len(), 1);
-        assert_eq!(did_doc.verification_methods().len(), 1);
-        assert_eq!(did_doc.key_agreements().len(), 1);
-        // ...other assertions as needed
+        assert_eq!(did_doc.service().len(), 1);
+        let ddo_service = did_doc.service().first().unwrap();
+        assert_eq!(&ddo_service.id().to_string(), "#service-0");
+        assert_eq!(
+            ddo_service.service_type(),
+            &OneOrList::List(vec![String::from("did-communication")])
+        );
+        assert_eq!(&ddo_service.service_endpoint().inner(), &service_endpoint);
+        assert_eq!(
+            ddo_service
+                .extra_field_as_as::<Vec<String>>("recipientKeys")
+                .unwrap(),
+            vec!["did:key:z6s8D3GAEHVteQMfhS4qBibNXjqS5D79NykfpGdF2VLmAtEysDRs6PEVBChSTTZ"]
+        );
+        assert_eq!(
+            ddo_service
+                .extra_field_as_as::<Vec<String>>("routingKeys")
+                .unwrap(),
+            vec!["routing_key1", "routing_key2"]
+        );
+
+        assert_eq!(did_doc.verification_method().len(), 1);
+        let verification_method = did_doc.verification_method().first().unwrap();
+        assert_eq!(verification_method.public_key().unwrap(), key_ver);
+
+        assert_eq!(did_doc.key_agreement().len(), 1);
+        match did_doc.key_agreement().first().unwrap() {
+            VerificationMethodKind::Resolved(key_agreement) => {
+                assert_eq!(key_agreement.public_key().unwrap(), key_enc);
+            }
+            VerificationMethodKind::Resolvable(_) => {
+                panic!("Key agreement was expected to have embedded key");
+            }
+        }
     }
 }

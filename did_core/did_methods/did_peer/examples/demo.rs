@@ -2,17 +2,16 @@ use std::error::Error;
 
 use did_doc::schema::{
     did_doc::DidDocument,
-    service::ServiceBuilder,
-    types::{uri::Uri, url::Url},
     verification_method::{VerificationMethod, VerificationMethodType},
 };
-use did_doc_sov::extra_fields::{didcommv1::ExtraFieldsDidCommV1, ExtraFieldsSov, SovKeyKind};
 use did_parser::{Did, DidUrl};
 use did_peer::peer_did::{
-    numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
+    numalgos::{
+        numalgo2::{resolve::resolve_numalgo2, Numalgo2},
+        numalgo3::Numalgo3,
+    },
     PeerDid,
 };
-use did_peer::peer_did::numalgos::numalgo2::resolve::resolve_numalgo2;
 
 fn main() -> Result<(), Box<dyn Error>> {
     demo()
@@ -46,7 +45,10 @@ fn demo() -> Result<(), Box<dyn Error>> {
         peer_did_3_v2
     );
 
-    resolve_numalgo2(peer_did_2, did_peer::resolver::options::PublicKeyEncoding::Base58)?;
+    resolve_numalgo2(
+        &peer_did_2,
+        did_peer::resolver::options::PublicKeyEncoding::Base58,
+    )?;
 
     Ok(())
 }

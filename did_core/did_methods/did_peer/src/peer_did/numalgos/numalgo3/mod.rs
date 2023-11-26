@@ -16,9 +16,7 @@ impl Numalgo for Numalgo3 {
 }
 
 impl FromDidDoc for Numalgo3 {
-    fn from_did_doc(
-        did_document: DidDocument,
-    ) -> Result<PeerDid<Numalgo3>, DidPeerError> {
+    fn from_did_doc(did_document: DidDocument) -> Result<PeerDid<Numalgo3>, DidPeerError> {
         PeerDid::<Numalgo2>::from_did_doc(did_document)?.to_numalgo3()
     }
 }
@@ -36,10 +34,10 @@ mod tests {
             .Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
             .Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V\
             .Vz6MkgoLTnTypo3tDRwCkZXSccTPHRLhF4ZnjhueYAFpEX6vg\
-            .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0".to_string()).unwrap();
+            .SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0".to_string()).unwrap();
         assert_eq!(
             PeerDid::<Numalgo3>::parse(
-                "did:peer:3.0e857e93798921e83cfc2ef8bee9cafc25f15f4c9c7bee5ed9a9c62b56a62cca"
+                "did:peer:3.dc2ccfb083931f616e8967dd60017899bcf626134ee2e51a45ebf8d4f245f330"
                     .to_string()
             )
             .unwrap(),

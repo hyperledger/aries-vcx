@@ -1,95 +1,98 @@
-use std::collections::HashMap;
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
-use did_doc::did_parser::DidUrl;
 use did_key::DidKey;
+use did_parser::DidUrl;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
-use crate::error::DidDocumentSovError;
+use crate::did_doc_sov::error::DidDocumentSovError;
 
 pub mod aip1;
 pub mod didcommv1;
 pub mod didcommv2;
 pub mod legacy;
 
-pub fn convert_to_hashmap<T: Serialize>(value: &T) -> Result<HashMap<String, Value>, DidDocumentSovError> {
+pub fn convert_to_hashmap<T: Serialize>(
+    value: &T,
+) -> Result<HashMap<String, Value>, DidDocumentSovError> {
     let serialized_value = serde_json::to_value(value)?;
 
     match serialized_value {
         Value::Object(map) => Ok(map.into_iter().collect()),
-        _ => Err(DidDocumentSovError::ParsingError("Expected JSON object".to_string())),
+        _ => Err(DidDocumentSovError::ParsingError(
+            "Expected JSON object".to_string(),
+        )),
     }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub enum SovAcceptType {
+pub enum ServiceAcceptType {
     DIDCommV1,
     DIDCommV2,
     Other(String),
 }
 
-impl From<&str> for SovAcceptType {
+impl From<&str> for ServiceAcceptType {
     fn from(s: &str) -> Self {
         match s {
-            "didcomm/aip2;env=rfc19" => SovAcceptType::DIDCommV1,
-            "didcomm/v2" => SovAcceptType::DIDCommV2,
-            _ => SovAcceptType::Other(s.to_string()),
+            "didcomm/aip2;env=rfc19" => ServiceAcceptType::DIDCommV1,
+            "didcomm/v2" => ServiceAcceptType::DIDCommV2,
+            _ => ServiceAcceptType::Other(s.to_string()),
         }
     }
 }
 
-impl Display for SovAcceptType {
+impl Display for ServiceAcceptType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SovAcceptType::DIDCommV1 => write!(f, "didcomm/aip2;env=rfc19"),
-            SovAcceptType::DIDCommV2 => write!(f, "didcomm/v2"),
-            SovAcceptType::Other(other) => write!(f, "{}", other),
+            ServiceAcceptType::DIDCommV1 => write!(f, "didcomm/aip2;env=rfc19"),
+            ServiceAcceptType::DIDCommV2 => write!(f, "didcomm/v2"),
+            ServiceAcceptType::Other(other) => write!(f, "{}", other),
         }
     }
 }
 
-impl<'de> Deserialize<'de> for SovAcceptType {
+impl<'de> Deserialize<'de> for ServiceAcceptType {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
         match s.as_str() {
-            "didcomm/aip2;env=rfc19" => Ok(SovAcceptType::DIDCommV1),
-            "didcomm/v2" => Ok(SovAcceptType::DIDCommV2),
-            _ => Ok(SovAcceptType::Other(s)),
+            "didcomm/aip2;env=rfc19" => Ok(ServiceAcceptType::DIDCommV1),
+            "didcomm/v2" => Ok(ServiceAcceptType::DIDCommV2),
+            _ => Ok(ServiceAcceptType::Other(s)),
         }
     }
 }
 
-impl Serialize for SovAcceptType {
+impl Serialize for ServiceAcceptType {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
         match self {
-            SovAcceptType::DIDCommV1 => serializer.serialize_str("didcomm/aip2;env=rfc19"),
-            SovAcceptType::DIDCommV2 => serializer.serialize_str("didcomm/v2"),
-            SovAcceptType::Other(other) => serializer.serialize_str(other),
+            ServiceAcceptType::DIDCommV1 => serializer.serialize_str("didcomm/aip2;env=rfc19"),
+            ServiceAcceptType::DIDCommV2 => serializer.serialize_str("didcomm/v2"),
+            ServiceAcceptType::Other(other) => serializer.serialize_str(other),
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
-pub enum SovKeyKind {
+pub enum ServiceKeyKind {
     DidKey(DidKey),
     Reference(DidUrl),
     Value(String),
 }
 
-impl Display for SovKeyKind {
+impl Display for ServiceKeyKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SovKeyKind::Reference(did_url) => write!(f, "{}", did_url),
-            SovKeyKind::Value(value) => write!(f, "{}", value),
-            SovKeyKind::DidKey(did_key) => write!(f, "{}", did_key),
+            ServiceKeyKind::Reference(did_url) => write!(f, "{}", did_url),
+            ServiceKeyKind::Value(value) => write!(f, "{}", value),
+            ServiceKeyKind::DidKey(did_key) => write!(f, "{}", did_key),
         }
     }
 }
@@ -110,7 +113,7 @@ impl Default for ExtraFieldsSov {
 }
 
 impl ExtraFieldsSov {
-    pub fn recipient_keys(&self) -> Result<&[SovKeyKind], DidDocumentSovError> {
+    pub fn recipient_keys(&self) -> Result<&[ServiceKeyKind], DidDocumentSovError> {
         match self {
             ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.recipient_keys()),
             ExtraFieldsSov::Legacy(extra) => Ok(extra.recipient_keys()),
@@ -120,7 +123,7 @@ impl ExtraFieldsSov {
         }
     }
 
-    pub fn routing_keys(&self) -> Result<&[SovKeyKind], DidDocumentSovError> {
+    pub fn routing_keys(&self) -> Result<&[ServiceKeyKind], DidDocumentSovError> {
         match self {
             ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.routing_keys()),
             ExtraFieldsSov::DIDCommV2(extra) => Ok(extra.routing_keys()),
@@ -129,19 +132,19 @@ impl ExtraFieldsSov {
         }
     }
 
-    pub fn first_recipient_key(&self) -> Result<&SovKeyKind, DidDocumentSovError> {
+    pub fn first_recipient_key(&self) -> Result<&ServiceKeyKind, DidDocumentSovError> {
         self.recipient_keys()?
             .first()
             .ok_or(DidDocumentSovError::EmptyCollection("recipient_keys"))
     }
 
-    pub fn first_routing_key(&self) -> Result<&SovKeyKind, DidDocumentSovError> {
+    pub fn first_routing_key(&self) -> Result<&ServiceKeyKind, DidDocumentSovError> {
         self.routing_keys()?
             .first()
             .ok_or(DidDocumentSovError::EmptyCollection("routing_keys"))
     }
 
-    pub fn accept(&self) -> Result<&[SovAcceptType], DidDocumentSovError> {
+    pub fn accept(&self) -> Result<&[ServiceAcceptType], DidDocumentSovError> {
         match self {
             ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.accept()),
             ExtraFieldsSov::DIDCommV2(extra) => Ok(extra.accept()),

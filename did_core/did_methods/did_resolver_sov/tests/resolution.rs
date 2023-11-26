@@ -5,10 +5,7 @@ use aries_vcx::common::ledger::{
     transactions::write_endpoint,
 };
 use aries_vcx_core::{ledger::base_ledger::IndyLedgerWrite, wallet::base_wallet::BaseWallet};
-use did_resolver::{
-    did_parser::Did,
-    traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable},
-};
+use did_resolver::{did_parser::Did, traits::resolvable::DidResolvable};
 use did_resolver_sov::resolution::DidSovResolver;
 use test_utils::devsetup::build_setup_profile;
 
@@ -40,10 +37,7 @@ async fn write_service_on_ledger_and_resolve_did_doc() {
     let did = format!("did:sov:{}", profile.institution_did);
 
     let did_doc = resolver
-        .resolve(
-            &Did::parse(did.clone()).unwrap(),
-            &DidResolutionOptions::default(),
-        )
+        .resolve(&Did::parse(did.clone()).unwrap(), &())
         .await
         .unwrap();
 
@@ -57,10 +51,7 @@ async fn test_error_handling_during_resolution() {
     let did = format!("did:unknownmethod:{}", profile.institution_did);
 
     let result = resolver
-        .resolve(
-            &Did::parse(did.clone()).unwrap(),
-            &DidResolutionOptions::default(),
-        )
+        .resolve(&Did::parse(did.clone()).unwrap(), &())
         .await;
 
     assert!(result.is_err());

@@ -1,10 +1,6 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    did_doc_sov::{
-        extra_fields::{didcommv1::ExtraFieldsDidCommV1, SovKeyKind},
-        service::{didcommv1::ServiceDidCommV1, ServiceSov},
-    },
     handlers::out_of_band::{
         receiver::OutOfBandReceiver, sender::OutOfBandSender, GenericOutOfBand,
     },
@@ -16,11 +12,10 @@ use aries_vcx::{
         },
         AriesMessage,
     },
-    protocols::did_exchange::state_machine::generate_keypair,
+    protocols::did_exchange::state_machine::create_our_did_document,
 };
 use aries_vcx_core::wallet::indy::IndySdkWallet;
-use public_key::KeyType;
-use uuid::Uuid;
+use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 
 use super::connection::ServiceEndpoint;
 use crate::{
@@ -44,19 +39,13 @@ impl ServiceOutOfBand {
     }
 
     pub async fn create_invitation(&self) -> AgentResult<AriesMessage> {
-        let public_key = generate_keypair(self.wallet.as_ref(), KeyType::Ed25519).await?;
-        let service = {
-            let service_id = Uuid::new_v4().to_string();
-            ServiceSov::DIDCommV1(ServiceDidCommV1::new(
-                service_id.parse()?,
-                self.service_endpoint.to_owned().into(),
-                ExtraFieldsDidCommV1::builder()
-                    .set_recipient_keys(vec![SovKeyKind::DidKey(public_key.try_into()?)])
-                    .build(),
-            )?)
-        };
+        let (our_did_document, _our_verkey) =
+            create_our_did_document(self.wallet.as_ref(), self.service_endpoint.clone(), vec![])
+                .await?;
+        let peer_did = PeerDid::<Numalgo2>::from_did_doc(our_did_document)?;
+
         let sender = OutOfBandSender::create()
-            .append_service(&OobService::SovService(service))
+            .append_service(&OobService::Did(peer_did.to_string()))
             .append_handshake_protocol(Protocol::DidExchangeType(DidExchangeType::V1(
                 DidExchangeTypeV1::new_v1_0(),
             )))?;

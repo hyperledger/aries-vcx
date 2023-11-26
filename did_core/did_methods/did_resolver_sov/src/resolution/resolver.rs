@@ -1,15 +1,10 @@
 use std::{borrow::Borrow, marker::PhantomData};
 
 use async_trait::async_trait;
-use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_resolver::{
     did_parser::Did,
     error::GenericError,
-    shared_types::media_type::MediaType,
-    traits::resolvable::{
-        resolution_options::DidResolutionOptions, resolution_output::DidResolutionOutput,
-        DidResolvable,
-    },
+    traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };
 use serde_json::Value;
 
@@ -50,18 +45,14 @@ where
     T: Borrow<A> + Sync + Send,
     A: AttrReader,
 {
+    type DidResolutionOptions = ();
+
     async fn resolve(
         &self,
         parsed_did: &Did,
-        options: &DidResolutionOptions,
+        _options: &Self::DidResolutionOptions,
     ) -> Result<DidResolutionOutput, GenericError> {
-        if let Some(accept) = options.accept() {
-            if accept != &MediaType::DidJson {
-                return Err(Box::new(DidSovError::RepresentationNotSupported(
-                    accept.to_string(),
-                )));
-            }
-        }
+        log::info!("DidSovResolver::resolve >> Resolving did: {}", parsed_did);
         let method = parsed_did.method().ok_or_else(|| {
             DidSovError::InvalidDid("Attempted to resolve unqualified did".to_string())
         })?;
@@ -91,6 +82,7 @@ where
 {
     async fn get_verkey(&self, did: &str) -> Result<String, DidSovError> {
         let nym_response = self.ledger.borrow().get_nym(did).await?;
+        log::info!("get_verkey >> nym_response: {}", nym_response);
         let nym_json: Value = serde_json::from_str(&nym_response)?;
         let nym_data = nym_json["result"]["data"]
             .as_str()

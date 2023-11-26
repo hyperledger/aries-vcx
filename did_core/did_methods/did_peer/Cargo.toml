@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 did_parser = { path = "../../did_parser" }
 did_doc = { path = "../../did_doc" }
-did_doc_sov = { path = "../../did_doc_sov" }
 did_resolver = { path = "../../did_resolver" }
 public_key = { path = "../../public_key" }
 thiserror = "1.0.40"
@@ -26,3 +25,4 @@ display_as_json = { path = "../../../misc/display_as_json" }
 
 [dev-dependencies]
 tokio = { version = "1.27.0", default-features = false, features = ["macros", "rt"] }
+pretty_assertions = "1.4.0"

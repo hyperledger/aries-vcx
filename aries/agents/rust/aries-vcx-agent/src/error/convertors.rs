@@ -1,8 +1,7 @@
 use std::convert::From;
 
 use aries_vcx::{
-    did_doc::error::DidDocumentBuilderError,
-    did_doc_sov::error::DidDocumentSovError,
+    did_doc::{did_doc_sov::error::DidDocumentSovError, error::DidDocumentBuilderError},
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::state_machine::generic::GenericDidExchange,
 };
@@ -59,6 +58,14 @@ impl From<aries_vcx::did_parser::ParseError> for AgentError {
     fn from(err: aries_vcx::did_parser::ParseError) -> Self {
         let kind = AgentErrorKind::GenericAriesVcxError;
         let message = format!("DidParseError; err: {:?}", err.to_string());
+        AgentError { message, kind }
+    }
+}
+
+impl From<did_peer::error::DidPeerError> for AgentError {
+    fn from(err: did_peer::error::DidPeerError) -> Self {
+        let kind = AgentErrorKind::GenericAriesVcxError;
+        let message = format!("DidPeerError; err: {:?}", err.to_string());
         AgentError { message, kind }
     }
 }

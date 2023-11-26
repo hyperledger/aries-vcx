@@ -89,7 +89,7 @@ pub async fn send_message_and_pop_response_message(
     let EncryptionEnvelope(packed_message) = agent
         .pack_didcomm(message_bytes, our_verkey, their_diddoc)
         .await
-        .map_err(|e| GenericStringError { msg: e.to_string() })?;
+        .map_err(|e| GenericStringError { msg: e })?;
     let packed_json = serde_json::from_slice(&packed_message)?;
     // Send serialized envelope over transport
     let response_envelope = aries_transport
@@ -111,7 +111,7 @@ pub async fn gen_and_register_recipient_key(
 ) -> Result<(VerKey, AriesDidDoc)> {
     let agent_invite: OOBInvitation = agent
         .get_oob_invite()
-        .map_err(|e| GenericStringError { msg: e.to_string() })?;
+        .map_err(|e| GenericStringError { msg: e })?;
     let mock_ledger = MockLedger {};
     let agent_diddoc = oob_invitation_to_legacy_did_doc(&mock_ledger, &agent_invite)
         .await

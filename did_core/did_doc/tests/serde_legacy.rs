@@ -1,4 +1,7 @@
-use did_doc_sov::{extra_fields::SovKeyKind, DidDocumentSov};
+use did_doc::{
+    did_doc_sov::extra_fields::ServiceKeyKind,
+    schema::{did_doc::DidDocument, legacy::deserialize_legacy_or_new_diddoc_str},
+};
 
 const LEGACY_DID_DOC_JSON: &str = r#"
 {
@@ -41,8 +44,8 @@ const DID_PEER: &str = "did:peer:2.Vz6MkfJTyeCL8MGvZntdpXzpitL6bM6uwCFz8xcYar18x
 
 #[test]
 fn test_deserialization_legacy() {
-    let did_doc: DidDocumentSov = serde_json::from_str(LEGACY_DID_DOC_JSON).unwrap();
-    println!("{:#?}", serde_json::to_string_pretty(&did_doc).unwrap());
+    let did_doc: DidDocument =
+        deserialize_legacy_or_new_diddoc_str(LEGACY_DID_DOC_JSON.into()).unwrap();
     assert_eq!(did_doc.id().to_string(), DID_PEER);
     assert_eq!(did_doc.verification_method().len(), 1);
     assert_eq!(did_doc.authentication().len(), 0);
@@ -71,8 +74,13 @@ fn test_deserialization_legacy() {
         "http://localhost:8080/agency/msg"
     );
 
-    let recipient_key = match service.extra().first_recipient_key().unwrap() {
-        SovKeyKind::Reference(did_url) => did_doc
+    let recipient_key = match service
+        .extra_field_as_as::<Vec<ServiceKeyKind>>("recipientKeys")
+        .unwrap()
+        .first()
+        .unwrap()
+    {
+        ServiceKeyKind::Reference(did_url) => did_doc
             .dereference_key(did_url)
             .unwrap()
             .public_key()
@@ -81,6 +89,12 @@ fn test_deserialization_legacy() {
         _ => panic!("Expected reference"),
     };
     assert_eq!(recipient_key, VERKEY_BASE58);
-    assert_eq!(service.extra().priority().unwrap(), 0);
-    assert_eq!(service.extra().routing_keys().unwrap().len(), 2);
+    assert_eq!(service.extra_field_as_as::<u32>("priority").unwrap(), 0);
+    assert_eq!(
+        service
+            .extra_field_as_as::<Vec<String>>("routingKeys")
+            .unwrap()
+            .len(),
+        2
+    );
 }

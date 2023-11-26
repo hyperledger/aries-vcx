@@ -2,8 +2,6 @@ use url::ParseError;
 
 use crate::schema::verification_method::VerificationMethodType;
 
-// todo: eliminate CustomError
-
 #[derive(Debug)]
 pub enum DidDocumentBuilderError {
     CustomError(String),

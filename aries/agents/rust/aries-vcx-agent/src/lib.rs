@@ -9,7 +9,6 @@ extern crate uuid;
 
 mod agent;
 mod error;
-pub mod helper;
 mod http;
 mod services;
 mod storage;

@@ -130,7 +130,6 @@ impl Agent {
             init_config.service_endpoint.clone(),
         ));
         let did_exchange = Arc::new(ServiceDidExchange::new(
-            ledger_read.clone(),
             wallet.clone(),
             did_resolver_registry,
             init_config.service_endpoint.clone(),

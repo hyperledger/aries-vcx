@@ -7,16 +7,12 @@ use did_resolver::{
     did_doc::schema::did_doc::DidDocument,
     did_parser::Did,
     error::GenericError,
-    traits::resolvable::{
-        resolution_options::DidResolutionOptions, resolution_output::DidResolutionOutput,
-        DidResolvable,
-    },
+    traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };
 use error::DidResolverRegistryError;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-// TODO: Use serde_json::Map instead
 pub type GenericResolver = dyn DidResolvableAdaptorTrait + Send + Sync;
 
 #[derive(Default)]
@@ -24,7 +20,6 @@ pub struct ResolverRegistry {
     resolvers: HashMap<String, Box<GenericResolver>>,
 }
 
-// todo: what is this for?
 pub struct DidResolvableAdaptor<T: DidResolvable> {
     inner: T,
 }
@@ -34,22 +29,27 @@ pub trait DidResolvableAdaptorTrait: Send + Sync {
     async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions,
+        options: HashMap<String, Value>,
     ) -> Result<DidResolutionOutput, GenericError>;
 }
 
 #[async_trait]
-impl<T: DidResolvable + Send + Sync> DidResolvableAdaptorTrait for DidResolvableAdaptor<T> {
+impl<T: DidResolvable + Send + Sync> DidResolvableAdaptorTrait for DidResolvableAdaptor<T>
+where
+    T::DidResolutionOptions: Send + Sync + Serialize + for<'de> Deserialize<'de>,
+{
     async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions,
+        options: HashMap<String, Value>,
     ) -> Result<DidResolutionOutput, GenericError> {
-        let options_inner = options.extra().clone();
-        let result_inner = self
-            .inner
-            .resolve(did, &DidResolutionOptions::new(options_inner))
-            .await?;
+        let options: T::DidResolutionOptions = if options.is_empty() {
+            Default::default()
+        } else {
+            let json_map = options.into_iter().collect();
+            serde_json::from_value(Value::Object(json_map))?
+        };
+        let result_inner = self.inner.resolve(did, &options).await?;
 
         let did_document_inner_hashmap = serde_json::to_value(result_inner.did_document())
             .unwrap()
@@ -73,7 +73,10 @@ impl ResolverRegistry {
     }
 
     pub fn register_resolver<T>(mut self, method: String, resolver: T) -> Self
-    where T: DidResolvable + 'static + Send + Sync,
+    where
+        T: DidResolvable + 'static + Send + Sync,
+        for<'de> <T as DidResolvable>::DidResolutionOptions:
+            Send + Sync + Serialize + Deserialize<'de>,
     {
         let adaptor = DidResolvableAdaptor { inner: resolver };
         self.resolvers.insert(method, Box::new(adaptor));
@@ -88,13 +91,13 @@ impl ResolverRegistry {
     pub async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions,
+        options: &HashMap<String, Value>,
     ) -> Result<DidResolutionOutput, GenericError> {
         let method = did
             .method()
             .ok_or(DidResolverRegistryError::UnsupportedMethod)?;
         match self.resolvers.get(method) {
-            Some(resolver) => resolver.resolve(did, options).await,
+            Some(resolver) => resolver.resolve(did, options.clone()).await,
             None => Err(Box::new(DidResolverRegistryError::UnsupportedMethod)),
         }
     }
@@ -106,7 +109,7 @@ mod tests {
 
     use async_trait::async_trait;
     use did_resolver::did_doc::schema::did_doc::DidDocumentBuilder;
-    use mockall::{automock, predicate::eq};
+    use mockall::automock;
 
     use super::*;
 
@@ -115,13 +118,12 @@ mod tests {
     #[async_trait]
     #[automock]
     impl DidResolvable for DummyDidResolver {
-        type ExtraFieldsService = ();
-        type ExtraFieldsOptions = ();
+        type DidResolutionOptions = ();
 
         async fn resolve(
             &self,
             did: &Did,
-            _options: &DidResolutionOptions,
+            _options: &Self::DidResolutionOptions,
         ) -> Result<DidResolutionOutput, GenericError> {
             Ok(DidResolutionOutput::builder(
                 DidDocumentBuilder::new(Did::parse(did.did().to_string()).unwrap()).build(),
@@ -149,7 +151,7 @@ mod tests {
         let mut mock_resolver = MockDummyDidResolver::new();
         mock_resolver
             .expect_resolve()
-            .with(eq(did.clone()), eq(DidResolutionOptions::default()))
+            // .with(eq(did.clone()), eq(DidResolutionOptions::default()))
             .times(1)
             .return_once(move |_, _| {
                 let future = async move {
@@ -161,9 +163,7 @@ mod tests {
         let registry = ResolverRegistry::new()
             .register_resolver::<MockDummyDidResolver>(method, mock_resolver);
 
-        let result = registry
-            .resolve(&did, &DidResolutionOptions::default())
-            .await;
+        let result = registry.resolve(&did, &HashMap::new()).await;
         assert!(result.is_err());
 
         let error = result.unwrap_err();
@@ -182,7 +182,7 @@ mod tests {
         let mut mock_resolver = MockDummyDidResolver::new();
         mock_resolver
             .expect_resolve()
-            .with(eq(parsed_did.clone()), eq(DidResolutionOptions::default()))
+            // .with(eq(parsed_did.clone()), eq(DidResolutionOptions::default()))
             .times(1)
             .return_once(move |_, _| {
                 let future = async move {
@@ -199,9 +199,7 @@ mod tests {
         let registry = ResolverRegistry::new()
             .register_resolver::<MockDummyDidResolver>(method, mock_resolver);
 
-        let result = registry
-            .resolve(&parsed_did, &DidResolutionOptions::default())
-            .await;
+        let result = registry.resolve(&parsed_did, &HashMap::new()).await;
         assert!(result.is_ok());
     }
 
@@ -228,9 +226,7 @@ mod tests {
         let did = Did::parse("did:unknown:1234".to_string()).unwrap();
 
         let registry = ResolverRegistry::new();
-        let result = registry
-            .resolve(&did, &DidResolutionOptions::default())
-            .await;
+        let result = registry.resolve(&did, &HashMap::new()).await;
 
         assert!(result.is_err());
         let error = result.unwrap_err();
@@ -252,11 +248,11 @@ mod tests {
         let mut mock_resolver = MockDummyDidResolver::new();
         mock_resolver
             .expect_resolve()
-            .with(eq(parsed_did.clone()), eq(DidResolutionOptions::default()))
+            // .with(eq(parsed_did.clone()), eq(DidResolutionOptions::default()))
             .times(1)
             .return_once(move |_, _| {
                 let future = async move {
-                    Ok::<DidResolutionOutput<()>, GenericError>(
+                    Ok::<DidResolutionOutput, GenericError>(
                         DidResolutionOutput::builder(
                             DidDocumentBuilder::new(Did::parse(did.to_string()).unwrap()).build(),
                         )
@@ -268,9 +264,7 @@ mod tests {
 
         let mut registry = ResolverRegistry::new();
 
-        let result_before = registry
-            .resolve(&parsed_did, &DidResolutionOptions::default())
-            .await;
+        let result_before = registry.resolve(&parsed_did, &HashMap::new()).await;
         assert!(result_before.is_err());
         let error_before = result_before.unwrap_err();
         assert!(
@@ -283,9 +277,7 @@ mod tests {
 
         registry = registry.register_resolver::<MockDummyDidResolver>(method, mock_resolver);
 
-        let result_after = registry
-            .resolve(&parsed_did, &DidResolutionOptions::default())
-            .await;
+        let result_after = registry.resolve(&parsed_did, &HashMap::new()).await;
         assert!(result_after.is_ok());
     }
 }

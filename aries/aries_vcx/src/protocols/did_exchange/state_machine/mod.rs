@@ -7,7 +7,8 @@ pub mod responder;
 use std::marker::PhantomData;
 
 use chrono::Utc;
-pub use helpers::generate_keypair;
+use did_doc::schema::did_doc::DidDocument;
+pub use helpers::{create_our_did_document, generate_keypair};
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::did_exchange::problem_report::{
@@ -15,13 +16,9 @@ use messages::{
     },
 };
 use uuid::Uuid;
-use did_doc::schema::did_doc::DidDocument;
 
 use super::{
-    states::{
-        abandoned::Abandoned,
-        traits::{InvitationId, ThreadId},
-    },
+    states::{abandoned::Abandoned, traits::ThreadId},
     transition::transition_result::TransitionResult,
 };
 
@@ -88,12 +85,6 @@ impl<I, S: ThreadId> DidExchange<I, S> {
             our_did_document: self.our_did_document,
             their_did_document: self.their_did_document,
         }
-    }
-}
-
-impl<I, S: InvitationId> DidExchange<I, S> {
-    pub fn get_invitation_id(&self) -> &str {
-        self.state.invitation_id()
     }
 }
 

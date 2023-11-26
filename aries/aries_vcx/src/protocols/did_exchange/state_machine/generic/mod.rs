@@ -1,18 +1,15 @@
 use std::sync::Arc;
 
-use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use did_doc::schema::did_doc::DidDocument;
 use did_parser::Did;
+use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 use did_resolver_registry::ResolverRegistry;
-use messages::msg_fields::protocols::{
-    did_exchange::{
-        complete::Complete, problem_report::ProblemReport, request::Request, response::Response,
-    },
-    out_of_band::invitation::Invitation,
+use messages::msg_fields::protocols::did_exchange::{
+    complete::Complete, problem_report::ProblemReport, request::Request, response::Response,
 };
 use public_key::Key;
 pub use thin_state::ThinState;
-use url::Url;
-use did_doc::schema::did_doc::DidDocument;
 
 use super::{requester::DidExchangeRequester, responder::DidExchangeResponder};
 use crate::{
@@ -86,33 +83,16 @@ impl GenericDidExchange {
         }
     }
 
-    pub fn invitation_id(&self) -> &str {
-        match self {
-            GenericDidExchange::Requester(requester_state) => match requester_state {
-                RequesterState::RequestSent(request_sent_state) => {
-                    request_sent_state.get_invitation_id()
-                }
-                RequesterState::Completed(completed_state) => completed_state.get_invitation_id(),
-                RequesterState::Abandoned(_) => todo!(),
-            },
-            GenericDidExchange::Responder(responder_state) => match responder_state {
-                ResponderState::ResponseSent(response_sent_state) => {
-                    response_sent_state.get_invitation_id()
-                }
-                ResponderState::Completed(completed_state) => completed_state.get_invitation_id(),
-                ResponderState::Abandoned(_abandoned_state) => todo!(),
-            },
-        }
-    }
-
-    pub async fn construct_request_public(
+    pub async fn construct_request(
         resolver_registry: Arc<ResolverRegistry>,
-        their_did: Did,
-        our_did: Did,
+        their_did: &Did,
+        our_peer_did: &PeerDid<Numalgo2>,
     ) -> Result<(Self, Request), AriesVcxError> {
         let TransitionResult { state, output } =
             DidExchangeRequester::<RequestSent>::construct_request(
-                resolver_registry, their_did, our_did,
+                resolver_registry,
+                their_did,
+                our_peer_did,
             )
             .await?;
         Ok((
@@ -121,35 +101,11 @@ impl GenericDidExchange {
         ))
     }
 
-    // pub async fn construct_request_pairwise(
-    //     wallet: &impl BaseWallet,
-    //     invitation: Invitation,
-    //     resolver_registry: Arc<ResolverRegistry>,
-    //     service_endpoint: Url,
-    //     routing_keys: Vec<String>,
-    // ) -> Result<(Self, Request), AriesVcxError> {
-    //     let TransitionResult { state, output } =
-    //         DidExchangeRequester::<RequestSent>::construct_from_invitation(
-    //             wallet,
-    //             invitation,
-    //             resolver_registry,
-    //             service_endpoint,
-    //             routing_keys,
-    //         )
-    //         .await?;
-    //     Ok((
-    //         GenericDidExchange::Requester(RequesterState::RequestSent(state)),
-    //         output,
-    //     ))
-    // }
-
     pub async fn handle_request(
         wallet: &impl BaseWallet,
         resolver_registry: Arc<ResolverRegistry>,
         request: Request,
-        service_endpoint: Url,
-        routing_keys: Vec<String>,
-        invitation_id: String,
+        our_peer_did: &PeerDid<Numalgo2>,
         invitation_key: Key,
     ) -> Result<(Self, Response), AriesVcxError> {
         let TransitionResult { state, output } =
@@ -157,9 +113,7 @@ impl GenericDidExchange {
                 wallet,
                 resolver_registry,
                 request,
-                service_endpoint,
-                routing_keys,
-                invitation_id,
+                our_peer_did,
                 invitation_key,
             )
             .await?;

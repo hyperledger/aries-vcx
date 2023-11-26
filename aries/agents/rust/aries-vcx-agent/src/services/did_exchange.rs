@@ -1,26 +1,31 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    messages::msg_fields::protocols::{
-        did_exchange::{
-            complete::Complete, problem_report::ProblemReport, request::Request, response::Response,
+    messages::{
+        msg_fields::protocols::{
+            did_exchange::{
+                complete::Complete, problem_report::ProblemReport, request::Request,
+                response::Response,
+            },
+            out_of_band::invitation::Invitation as OobInvitation,
         },
-        out_of_band::invitation::Invitation as OobInvitation,
+        AriesMessage,
     },
     protocols::did_exchange::{
-        resolve_key_from_invitation,
-        state_machine::generic::{GenericDidExchange, ThinState},
+        resolve_enc_key_from_invitation,
+        state_machine::{
+            create_our_did_document,
+            generic::{GenericDidExchange, ThinState},
+        },
     },
     transport::Transport,
+    utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx::messages::AriesMessage;
-use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
-use aries_vcx_core::{ledger::indy_vdr_ledger::DefaultIndyLedgerRead, wallet::indy::IndySdkWallet};
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_core::wallet::{base_wallet::BaseWallet, indy::IndySdkWallet};
+use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::did_resolver::did_doc::schema::did_doc::DidDocument;
 use url::Url;
-use aries_vcx::utils::from_did_document_to_legacy;
 
 use super::connection::ServiceEndpoint;
 use crate::{
@@ -30,7 +35,6 @@ use crate::{
 };
 
 pub struct ServiceDidExchange {
-    ledger_read: Arc<DefaultIndyLedgerRead>,
     wallet: Arc<IndySdkWallet>,
     resolver_registry: Arc<ResolverRegistry>,
     service_endpoint: ServiceEndpoint,
@@ -40,14 +44,12 @@ pub struct ServiceDidExchange {
 
 impl ServiceDidExchange {
     pub fn new(
-        ledger_read: Arc<DefaultIndyLedgerRead>,
         wallet: Arc<IndySdkWallet>,
         resolver_registry: Arc<ResolverRegistry>,
         service_endpoint: ServiceEndpoint,
         public_did: String,
     ) -> Self {
         Self {
-            ledger_read,
             wallet,
             service_endpoint,
             resolver_registry,
@@ -56,11 +58,16 @@ impl ServiceDidExchange {
         }
     }
 
-    pub async fn send_request_public(&self, their_did: String) -> AgentResult<String> {
-        let (requester, request) = GenericDidExchange::construct_request_public(
+    pub async fn send_request(&self, their_did: String) -> AgentResult<String> {
+        let (our_did_document, _our_verkey) =
+            create_our_did_document(self.wallet.as_ref(), self.service_endpoint.clone(), vec![])
+                .await?;
+
+        let our_peer_did = PeerDid::<Numalgo2>::from_did_doc(our_did_document.clone())?;
+        let (requester, request) = GenericDidExchange::construct_request(
             self.resolver_registry.clone(),
-            format!("did:sov:{}", their_did).parse()?,
-            format!("did:sov:{}", self.public_did).parse()?,
+            &format!("did:sov:{}", their_did).parse()?,
+            &our_peer_did,
         )
         .await?;
         let request_id = request
@@ -104,14 +111,17 @@ impl ServiceDidExchange {
             })?
             .thid;
         let invitation_key =
-            resolve_key_from_invitation(&invitation, &self.resolver_registry).await?;
+            resolve_enc_key_from_invitation(&invitation, &self.resolver_registry).await?;
+        let (our_did_document, _our_verkey) =
+            create_our_did_document(self.wallet.as_ref(), self.service_endpoint.clone(), vec![])
+                .await?;
+        let peer_did_invitee = PeerDid::<Numalgo2>::from_did_doc(our_did_document.clone())?;
+
         let (responder, response) = GenericDidExchange::handle_request(
             self.wallet.as_ref(),
             self.resolver_registry.clone(),
             request,
-            self.service_endpoint.clone(),
-            vec![],
-            invitation.id.clone(),
+            &peer_did_invitee,
             invitation_key,
         )
         .await?;
@@ -164,12 +174,8 @@ impl ServiceDidExchange {
         self.did_exchange.contains_key(thread_id)
     }
 
-    pub fn invitation_id(&self, thread_id: &str) -> AgentResult<String> {
-        Ok(self
-            .did_exchange
-            .get(thread_id)?
-            .invitation_id()
-            .to_string())
+    pub fn invitation_id(&self, _thread_id: &str) -> AgentResult<String> {
+        unimplemented!()
     }
 
     pub fn public_did(&self) -> &str {
@@ -195,23 +201,74 @@ pub async fn pairwise_encrypt(
     wallet: &impl BaseWallet,
     message: &AriesMessage,
 ) -> AgentResult<EncryptionEnvelope> {
-    let sender_verkey = our_did_doc
-        .resolved_key_agreement()
-        .next()
+    let service = our_did_doc
+        .service()
+        .first()
         .ok_or_else(|| {
             AgentError::from_msg(
                 AgentErrorKind::InvalidState,
-                "No key agreement method found in our did document",
+                "No Service object found on our did document",
             )
         })?
-        .public_key()?
-        .base58();
-    EncryptionEnvelope::create(
+        .clone();
+    // todo: hacky, assuming we have full base58 key inlined which we possibly don't
+    //       The recipient key might have to be dereferenced
+    let sender_vk = service
+        .extra_field_as_as::<Vec<String>>("recipient_keys")
+        .map_err(|err| {
+            AgentError::from_msg(
+                AgentErrorKind::InvalidState,
+                &format!(
+                    "Recipient key field found in our did document but had unexpected format, \
+                     err: {err:?}"
+                ),
+            )
+        })?
+        .first()
+        .ok_or_else(|| {
+            AgentError::from_msg(
+                AgentErrorKind::InvalidState,
+                "Recipient key field but did not have any keys",
+            )
+        })?
+        .clone();
+
+    let service = their_did_doc
+        .service()
+        .first()
+        .ok_or_else(|| AgentError::from_msg(AgentErrorKind::InvalidState, "No service found"))?;
+    // todo: hacky, assuming we have full base58 key inlined which we probably don't
+    let recipient_key = service
+        .extra_field_as_as::<Vec<String>>("recipient_keys")
+        .map_err(|err| {
+            AgentError::from_msg(
+                AgentErrorKind::InvalidState,
+                &format!("No recipient_keys found: {}", err),
+            )
+        })?
+        .first()
+        .ok_or_else(|| {
+            AgentError::from_msg(AgentErrorKind::InvalidState, "No recipient_keys found")
+        })?
+        .clone();
+
+    // todo: again, not considering possibility of having didurl as value, assuming inlined key
+    let routing_keys = service
+        .extra_field_as_as::<Vec<String>>("routing_keys")
+        .map_err(|err| {
+            AgentError::from_msg(
+                AgentErrorKind::InvalidState,
+                &format!("No routing_keys found: {}", err),
+            )
+        })?;
+
+    EncryptionEnvelope::create2(
         wallet,
         serde_json::json!(message).to_string().as_bytes(),
-        Some(&sender_verkey),
-        &from_did_document_to_legacy(their_did_doc.clone())?,
+        Some(&sender_vk),
+        recipient_key,
+        routing_keys,
     )
-        .await
-        .map_err(|err| err.into())
+    .await
+    .map_err(|err| err.into())
 }

@@ -9,6 +9,15 @@ pub enum OneOrList<T> {
     List(Vec<T>),
 }
 
+impl OneOrList<String> {
+    pub fn first(&self) -> Option<String> {
+        match self {
+            OneOrList::One(s) => Some(s.clone()),
+            OneOrList::List(s) => s.first().cloned(),
+        }
+    }
+}
+
 impl<T: Display + Debug> Display for OneOrList<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

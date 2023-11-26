@@ -1,6 +1,7 @@
-use std::{collections::HashMap, fmt::Display};
-use display_as_json::Display;
+use std::collections::HashMap;
+
 use did_parser::{Did, DidUrl};
+use display_as_json::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -107,7 +108,7 @@ impl DidDocument {
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct DidDocumentBuilder {
     id: Did,
     also_known_as: Vec<Uri>,
@@ -120,24 +121,6 @@ pub struct DidDocumentBuilder {
     capability_delegation: Vec<VerificationMethodKind>,
     service: Vec<Service>,
     extra: HashMap<String, Value>,
-}
-
-impl Default for DidDocumentBuilder {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            also_known_as: Default::default(),
-            controller: Default::default(),
-            verification_method: Default::default(),
-            authentication: Default::default(),
-            assertion_method: Default::default(),
-            key_agreement: Default::default(),
-            capability_invocation: Default::default(),
-            capability_delegation: Default::default(),
-            service: Default::default(),
-            extra: Default::default(),
-        }
-    }
 }
 
 impl DidDocumentBuilder {
@@ -281,7 +264,7 @@ impl From<DidDocument> for DidDocumentBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::{service::ServiceBuilder, verification_method::VerificationMethodType};
+    use crate::schema::verification_method::VerificationMethodType;
 
     #[test]
     fn test_did_document_builder() {
@@ -307,13 +290,13 @@ mod tests {
         .build();
 
         let service_id = Uri::new("did:example:123456789abcdefghi;service-1").unwrap();
-        let service_type = "test-service".to_string();
         let service_endpoint = "https://example.com/service";
-        let service =
-            ServiceBuilder::<HashMap<String, Value>>::new(service_id, service_endpoint.try_into().unwrap(), ())
-                .add_service_type(service_type)
-                .unwrap()
-                .build();
+        let service = Service::new(
+            service_id,
+            service_endpoint.try_into().unwrap(),
+            OneOrList::One("test-service".to_string()),
+            HashMap::default(),
+        );
 
         let document = DidDocumentBuilder::new(id.clone())
             .add_also_known_as(also_known_as.clone())

@@ -16,3 +16,5 @@ serde_json = "1.0.95"
 uniresid = { version = "0.1.4", default-features = false, features = ["serde"] }
 url = { version = "2.3.1", features = ["serde"] }
 display_as_json = { path = "../../misc/display_as_json" }
+did_key = { path = "../did_methods/did_key" }
+thiserror = "1.0.40"

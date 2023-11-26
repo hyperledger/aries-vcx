@@ -2,18 +2,15 @@ mod fixtures;
 
 use did_peer::{
     error::DidPeerError,
-    resolver::{
-        options::{ExtraFieldsOptions, PublicKeyEncoding},
-        PeerDidResolver,
-    },
+    resolver::{options::PublicKeyEncoding, PeerDidResolutionOptions, PeerDidResolver},
 };
-use did_resolver::traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable};
+use did_resolver::traits::resolvable::DidResolvable;
 use tokio::test;
 
 async fn resolve_error(peer_did: &str) -> DidPeerError {
-    let options = DidResolutionOptions::new(
-        ExtraFieldsOptions::new().set_public_key_encoding(PublicKeyEncoding::Multibase),
-    );
+    let options = PeerDidResolutionOptions {
+        encoding: Some(PublicKeyEncoding::Multibase),
+    };
     *PeerDidResolver
         .resolve(&peer_did.parse().unwrap(), &options)
         .await

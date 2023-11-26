@@ -71,7 +71,6 @@ pub async fn resolve_service(
 ) -> VcxResult<AriesService> {
     match service {
         OobService::AriesService(service) => Ok(service.clone()),
-        // OobService::SovService(service) => Ok(from_service_sov_to_legacy(service.to_owned())),
         OobService::Did(did) => get_service(indy_ledger, did).await,
     }
 }

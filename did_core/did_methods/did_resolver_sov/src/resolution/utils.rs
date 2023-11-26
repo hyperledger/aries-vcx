@@ -4,6 +4,7 @@ use did_resolver::{
         did_doc::DidDocument,
         service::Service,
         types::uri::Uri,
+        utils::OneOrList,
         verification_method::{VerificationMethod, VerificationMethodType},
     },
     did_parser::Did,
@@ -66,31 +67,28 @@ pub(super) async fn ledger_response_to_ddo(
     resp: &str,
     verkey: String,
 ) -> Result<DidResolutionOutput, DidSovError> {
+    log::info!("ledger_response_to_ddo >> did: {did}, verkey: {verkey}, resp: {resp}");
     let (service_id, ddo_id) = prepare_ids(did)?;
 
     let service_data = get_data_from_response(resp)?;
+    log::info!("ledger_response_to_ddo >> service_data: {service_data:?}");
     let endpoint: EndpointDidSov = serde_json::from_value(service_data["endpoint"].clone())?;
 
     let txn_time = get_txn_time_from_response(resp)?;
     let datetime = unix_to_datetime(txn_time);
 
-    let service = {
-        let service_types: Vec<String> = endpoint
-            .types
-            .into_iter()
-            .filter(|t| *t != DidSovServiceType::Unknown)
-            .map(|t| t.to_string())
-            .collect();
-        let mut builder = Service::builder(
-            service_id,
-            endpoint.endpoint.as_str().try_into()?,
-            Default::default(),
-        );
-        for service_type in service_types {
-            builder = builder.add_service_type(service_type)?;
-        }
-        builder.build()
-    };
+    let service_types: Vec<String> = endpoint
+        .types
+        .into_iter()
+        .filter(|t| *t != DidSovServiceType::Unknown)
+        .map(|t| t.to_string())
+        .collect();
+    let service = Service::new(
+        service_id,
+        endpoint.endpoint.as_str().try_into()?,
+        OneOrList::List(service_types),
+        Default::default(),
+    );
 
     // TODO: Use multibase instead of base58
     let verification_method = VerificationMethod::builder(
@@ -184,9 +182,7 @@ mod tests {
             }
         }"#;
         let verkey = "9wvq2i4xUa5umXoThe83CDgx1e5bsjZKJL4DEWvTP9qe".to_string();
-        let resolution_output = ledger_response_to_ddo::<()>(did, resp, verkey)
-            .await
-            .unwrap();
+        let resolution_output = ledger_response_to_ddo(did, resp, verkey).await.unwrap();
         let ddo = resolution_output.did_document();
         assert_eq!(ddo.id().to_string(), "did:example:1234567890");
         assert_eq!(ddo.service()[0].id().to_string(), "did:example:1234567890");

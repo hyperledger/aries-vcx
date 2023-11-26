@@ -23,7 +23,6 @@ members = [
     "did_core/did_doc",
     "did_core/did_methods/did_peer",
     "did_core/did_methods/did_key",
-    "did_core/did_doc_sov",
     "did_core/did_parser",
     "did_core/did_resolver",
     "did_core/did_resolver_registry",

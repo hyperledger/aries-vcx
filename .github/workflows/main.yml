@@ -363,7 +363,7 @@ jobs:
           default: true
       - name: "Run resolver tests"
         run: |
-          cargo test --examples -p did_doc -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov -p did_resolver_web -p did_doc_sov -p did_key -p did_peer --test "*"
+          cargo test --examples -p did_doc -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov -p did_resolver_web -p did_key -p did_peer --test "*"
 
   test-integration-node-wrapper:
     needs: workflow-setup

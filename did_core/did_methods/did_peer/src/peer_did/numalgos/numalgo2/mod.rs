@@ -1,5 +1,4 @@
 use did_doc::schema::did_doc::DidDocument;
-use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
 use encoding::{append_encoded_key_segments, append_encoded_service_segment};
 use sha256::digest;
@@ -22,9 +21,7 @@ mod service_abbreviated;
 mod verification_method;
 
 impl FromDidDoc for Numalgo2 {
-    fn from_did_doc(
-        did_document: DidDocument,
-    ) -> Result<PeerDid<Numalgo2>, DidPeerError> {
+    fn from_did_doc(did_document: DidDocument) -> Result<PeerDid<Numalgo2>, DidPeerError> {
         let mut did = String::from("did:peer:2");
         did = append_encoded_key_segments(did, &did_document)?;
         did = append_encoded_service_segment(did, &did_document)?;
@@ -37,12 +34,6 @@ impl PeerDid<Numalgo2> {
         let numalgoless_id = self.did().id().chars().skip(2).collect::<String>();
         let numalgoless_id_hashed = digest(numalgoless_id);
         PeerDid::<Numalgo3>::parse(format!("did:peer:3.{}", numalgoless_id_hashed))
-    }
-}
-
-impl From<PeerDid<Numalgo2>> for Did {
-    fn from(peer_did: PeerDid<Numalgo2>) -> Self {
-        peer_did.did().to_owned()
     }
 }
 

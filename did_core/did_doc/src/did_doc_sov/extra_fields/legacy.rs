@@ -1,7 +1,7 @@
 use display_as_json::Display;
 use serde::{Deserialize, Serialize};
 
-use super::SovKeyKind;
+use super::ServiceKeyKind;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default, Display)]
 #[serde(rename_all = "camelCase")]
@@ -10,17 +10,17 @@ pub struct ExtraFieldsLegacy {
     #[serde(default)]
     priority: u32,
     #[serde(default)]
-    recipient_keys: Vec<SovKeyKind>,
+    recipient_keys: Vec<ServiceKeyKind>,
     #[serde(default)]
-    routing_keys: Vec<SovKeyKind>,
+    routing_keys: Vec<ServiceKeyKind>,
 }
 
 impl ExtraFieldsLegacy {
-    pub fn recipient_keys(&self) -> &[SovKeyKind] {
+    pub fn recipient_keys(&self) -> &[ServiceKeyKind] {
         self.recipient_keys.as_ref()
     }
 
-    pub fn routing_keys(&self) -> &[SovKeyKind] {
+    pub fn routing_keys(&self) -> &[ServiceKeyKind] {
         self.routing_keys.as_ref()
     }
 

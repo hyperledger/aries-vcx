@@ -13,13 +13,12 @@ use did_resolver::{
         resolvable::resolution_output::DidResolutionOutput,
     },
 };
-use serde::Serialize;
 
 use crate::error::DidSovError;
 
 pub fn service_by_id<F>(services: &[Service], predicate: F) -> Option<&Service>
 where
-    F: Fn(&str) -> bool
+    F: Fn(&str) -> bool,
 {
     services.iter().find(|svc| predicate(svc.id().as_ref()))
 }
@@ -93,7 +92,8 @@ pub(crate) fn dereference_did_document(
 mod tests {
     use did_resolver::{
         did_doc::schema::{
-            did_doc::DidDocumentBuilder, verification_method::VerificationMethodType,
+            did_doc::DidDocumentBuilder, utils::OneOrList,
+            verification_method::VerificationMethodType,
         },
         did_parser::DidUrl,
         traits::resolvable::resolution_output::DidResolutionOutput,
@@ -114,23 +114,19 @@ mod tests {
         .add_public_key_base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string())
         .build();
 
-        let agent_service = Service::builder(
+        let agent_service = Service::new(
             "did:example:123456789abcdefghi#agent".parse().unwrap(),
             "https://agent.example.com/8377464".try_into().unwrap(),
-            Default::default()
-        )
-        .add_service_type("AgentService".to_string())
-        .unwrap()
-        .build();
+            OneOrList::One("AgentService".to_string()),
+            Default::default(),
+        );
 
-        let messaging_service = Service::builder(
+        let messaging_service = Service::new(
             "did:example:123456789abcdefghi#messages".parse().unwrap(),
             "https://example.com/messages/8377464".try_into().unwrap(),
-            Default::default()
-        )
-        .add_service_type("MessagingService".to_string())
-        .unwrap()
-        .build();
+            OneOrList::One("MessagingService".to_string()),
+            Default::default(),
+        );
 
         DidDocument::builder(Default::default())
             .add_verification_method(verification_method)
@@ -202,14 +198,12 @@ mod tests {
     fn test_dereference_did_document_ambiguous() {
         let did_document = {
             let did_document_builder = example_did_document_builder();
-            let additional_service = Service::builder(
+            let additional_service = Service::new(
                 "did:example:123456789abcdefghi#keys-1".parse().unwrap(),
                 "https://example.com/duplicated/8377464".try_into().unwrap(),
+                OneOrList::One("DuplicatedService".to_string()),
                 Default::default(),
-            )
-            .add_service_type("DuplicatedService".to_string())
-            .unwrap()
-            .build();
+            );
             did_document_builder.add_service(additional_service).build()
         };
 

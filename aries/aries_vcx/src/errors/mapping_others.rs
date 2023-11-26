@@ -45,8 +45,8 @@ impl From<did_doc::error::DidDocumentBuilderError> for AriesVcxError {
     }
 }
 
-impl From<did_doc_sov::error::DidDocumentSovError> for AriesVcxError {
-    fn from(err: did_doc_sov::error::DidDocumentSovError) -> Self {
+impl From<did_doc::did_doc_sov::error::DidDocumentSovError> for AriesVcxError {
+    fn from(err: did_doc::did_doc_sov::error::DidDocumentSovError) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
     }
 }
