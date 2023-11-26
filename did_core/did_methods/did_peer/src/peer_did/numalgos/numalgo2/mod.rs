@@ -40,6 +40,12 @@ impl PeerDid<Numalgo2> {
     }
 }
 
+impl From<PeerDid<Numalgo2>> for Did {
+    fn from(peer_did: PeerDid<Numalgo2>) -> Self {
+        peer_did.did().to_owned()
+    }
+}
+
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct Numalgo2;
 

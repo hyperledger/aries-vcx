@@ -12,6 +12,7 @@ use did_peer::peer_did::{
     numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
     PeerDid,
 };
+use did_peer::peer_did::numalgos::numalgo2::resolve::resolve_numalgo2;
 
 fn main() -> Result<(), Box<dyn Error>> {
     demo()
@@ -44,6 +45,8 @@ fn demo() -> Result<(), Box<dyn Error>> {
         "as did:peer numalgo(2) converted to numalgo(3): {}",
         peer_did_3_v2
     );
+
+    resolve_numalgo2(peer_did_2, did_peer::resolver::options::PublicKeyEncoding::Base58)?;
 
     Ok(())
 }
