@@ -7,6 +7,7 @@ use log::info;
 use sqlx::{mysql::MySqlPoolOptions, MySqlPool, Row};
 
 use super::super::MediatorPersistence;
+use crate::persistence::{errors::GetAccountDetailsError, AccountDetails};
 
 pub async fn get_db_pool() -> MySqlPool {
     let _ = dotenvy::dotenv();
@@ -81,18 +82,30 @@ impl MediatorPersistence for sqlx::MySqlPool {
     async fn get_account_details(
         &self,
         auth_pubkey: &str,
-    ) -> Result<(u64, String, String, serde_json::Value), String> {
+    ) -> Result<AccountDetails, GetAccountDetailsError> {
         let row = sqlx::query("SELECT * FROM accounts WHERE auth_pubkey = ?;")
             .bind(auth_pubkey)
             .fetch_one(self)
             .await
-            .map_err(|e| e.to_string())?;
-        Ok((
-            row.get("seq_num"),
-            row.get("account_name"),
-            row.get("our_signing_key"),
-            row.get::<serde_json::Value, &str>("did_doc"),
-        ))
+            .map_err(|e| match e {
+                sqlx::error::Error::RowNotFound => GetAccountDetailsError::NotFound,
+                _ => GetAccountDetailsError::LowerLayerError(Box::new(e)),
+            })?;
+        let account_details = AccountDetails {
+            account_name: row
+                .try_get("seq_num")
+                .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?,
+            auth_pubkey: row
+                .try_get("auth_pubkey")
+                .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?,
+            our_signing_key: row
+                .try_get("our_signing_key")
+                .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?,
+            did_doc_json: row
+                .try_get::<serde_json::Value, &str>("did_doc")
+                .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?,
+        };
+        Ok(account_details)
     }
 
     // async fn vaporize_account(&self, auth_pubkey: String) {

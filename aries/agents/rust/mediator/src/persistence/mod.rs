@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod database;
+pub mod errors;
 use async_trait::async_trait;
 /// Database backend is used for default implementation of MediatorPersistence trait
 pub use database::get_db_pool as get_persistence;
+
+use self::errors::GetAccountDetailsError;
+use crate::utils::structs::VerKey;
 
 #[async_trait]
 pub trait MediatorPersistence: Send + Sync + 'static {
@@ -42,5 +46,14 @@ pub trait MediatorPersistence: Send + Sync + 'static {
     async fn get_account_details(
         &self,
         auth_pubkey: &str,
-    ) -> Result<(u64, String, String, serde_json::Value), String>;
+    ) -> Result<AccountDetails, GetAccountDetailsError>;
+}
+
+pub struct AccountDetails {
+    // A human readable string name for the account
+    // (not to be used for any other purpose)
+    pub account_name: String,
+    pub auth_pubkey: VerKey,
+    pub our_signing_key: VerKey,
+    pub did_doc_json: serde_json::Value,
 }

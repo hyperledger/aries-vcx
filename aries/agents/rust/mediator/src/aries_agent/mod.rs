@@ -151,11 +151,19 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             .as_deref()
             .ok_or("Anonymous sender can't be authenticated")?
             .to_owned();
-        let (_sr_no, account_name, our_signing_key, did_doc_json) =
-            self.persistence.get_account_details(&auth_pubkey).await?;
-        let diddoc =
-            serde_json::from_value::<AriesDidDoc>(did_doc_json).map_err(string_from_std_error)?;
-        Ok((account_name, auth_pubkey, our_signing_key, diddoc))
+        let account_details = self
+            .persistence
+            .get_account_details(&auth_pubkey)
+            .await
+            .map_err(string_from_std_error)?;
+        let diddoc = serde_json::from_value::<AriesDidDoc>(account_details.did_doc_json)
+            .map_err(string_from_std_error)?;
+        Ok((
+            account_details.account_name,
+            account_details.auth_pubkey,
+            account_details.our_signing_key,
+            diddoc,
+        ))
     }
     pub async fn handle_connection_req(
         &self,
