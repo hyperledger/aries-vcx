@@ -17,7 +17,7 @@ path = "uniffi-bindgen.rs"
 
 [dependencies]
 uniffi = { version = "0.23.0", features = ["cli"] }
-aries_vcx = { path = "../../aries/aries_vcx", features = [
+aries_vcx = { path = "../../../aries_vcx", features = [
     "vdrtools_wallet",
     "credx",
 ] }
@@ -27,8 +27,8 @@ thiserror = "1.0.38"
 serde_json = "1.0.91"
 serde = { version = "1.0.188", features = ["derive"] }
 async-trait = "0.1.64"
-diddoc_legacy = { path = "../../aries/misc/legacy/diddoc_legacy" }
-shared = { path = "../../aries/misc/shared" }
+diddoc_legacy = { path = "../../../misc/legacy/diddoc_legacy" }
+shared = { path = "../../../misc/shared" }
 url = "2.3.1"
 
 [build-dependencies]

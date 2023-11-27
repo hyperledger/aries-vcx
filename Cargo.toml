@@ -13,6 +13,7 @@ members = [
     "aries/agents/rust/mediator",
     "aries/agents/rust/mediator/client-tui",
     "aries/agents/rust/aries-vcx-agent",
+    "aries/wrappers/uniffi-aries-vcx/core",
     "aries/wrappers/vcx-napi-rs",
     "aries/aries_vcx_core",
     "aries/misc/indy_ledger_response_parser",
@@ -31,7 +32,6 @@ members = [
     "did_core/public_key",
     "misc/simple_message_relay",
     "misc/display_as_json",
-    "uniffi_aries_vcx/core",
 ]
 
 [workspace.package]
