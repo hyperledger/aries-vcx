@@ -6,6 +6,7 @@ pub mod errors;
 use async_trait::async_trait;
 /// Database backend is used for default implementation of MediatorPersistence trait
 pub use database::get_db_pool as get_persistence;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 
 use self::errors::GetAccountDetailsError;
 use crate::utils::structs::VerKey;
@@ -55,5 +56,5 @@ pub struct AccountDetails {
     pub account_name: String,
     pub auth_pubkey: VerKey,
     pub our_signing_key: VerKey,
-    pub did_doc_json: serde_json::Value,
+    pub their_did_doc: AriesDidDoc,
 }

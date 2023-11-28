@@ -32,7 +32,7 @@ pub enum ListAccountsError {
 pub enum GetAccountDetailsError {
     #[error("No account found matching given input")]
     NotFound,
-    #[error("Couldn't decode retrieved data to expected account details structure")]
+    #[error("Couldn't decode retrieved data to expected account details structure: {0}")]
     DecodeError(String),
     #[error(transparent)]
     LowerLayerError(#[from] Box<dyn std::error::Error>),

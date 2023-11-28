@@ -156,13 +156,11 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             .get_account_details(&auth_pubkey)
             .await
             .map_err(string_from_std_error)?;
-        let diddoc = serde_json::from_value::<AriesDidDoc>(account_details.did_doc_json)
-            .map_err(string_from_std_error)?;
         Ok((
             account_details.account_name,
             account_details.auth_pubkey,
             account_details.our_signing_key,
-            diddoc,
+            account_details.their_did_doc,
         ))
     }
     pub async fn handle_connection_req(

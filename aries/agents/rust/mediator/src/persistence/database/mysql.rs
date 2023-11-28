@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use futures::TryStreamExt;
 use log::info;
 use sqlx::{mysql::MySqlPoolOptions, MySqlPool, Row};
@@ -91,18 +92,23 @@ impl MediatorPersistence for sqlx::MySqlPool {
                 sqlx::error::Error::RowNotFound => GetAccountDetailsError::NotFound,
                 _ => GetAccountDetailsError::LowerLayerError(Box::new(e)),
             })?;
+        let account_name = row
+            .try_get("account_name")
+            .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
+        let auth_pubkey = row
+            .try_get("auth_pubkey")
+            .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
+        let our_signing_key = row
+            .try_get("our_signing_key")
+            .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
+        let did_doc_json = row
+            .try_get::<serde_json::Value, &str>("did_doc")
+            .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
         let account_details = AccountDetails {
-            account_name: row
-                .try_get("seq_num")
-                .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?,
-            auth_pubkey: row
-                .try_get("auth_pubkey")
-                .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?,
-            our_signing_key: row
-                .try_get("our_signing_key")
-                .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?,
-            did_doc_json: row
-                .try_get::<serde_json::Value, &str>("did_doc")
+            account_name,
+            auth_pubkey,
+            our_signing_key,
+            their_did_doc: serde_json::from_value::<AriesDidDoc>(did_doc_json)
                 .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?,
         };
         Ok(account_details)
