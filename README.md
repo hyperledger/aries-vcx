@@ -12,7 +12,7 @@ The repository contains Rust crates to build
 - [`aries_vcx`](aries/aries_vcx) - Library implementing DIDComm protocols, with focus on verifiable credential issuance and verification.
 - [`messages`](aries/messages) - Library for building and parsing Aries (DIDComm v1) messages.
 - [`aries_vcx_core`](aries/aries_vcx_core) - Interfaces for interaction with ledgers, wallets and credentials.
-- [`agents`](agents/rust) - Aries agents built on top of `aries_vcx`.
+- [`agents`](aries/agents/rust) - Aries agents built on top of `aries_vcx`.
 
 ## Did document implementation
   - [`did_doc`](did_core/did_doc) - Building and parsing [DID Documents](https://w3c.github.io/did-core/)
