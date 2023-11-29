@@ -65,24 +65,3 @@ impl<C, D> MsgPartsBuilder<C, D, ((String,), (C,), (D,))> {
         self.__build().into()
     }
 }
-
-#[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::field_reassign_with_default)]
-pub mod tests {
-    use crate::msg_fields::protocols::did_exchange::request::{
-        tests::request_content, Request, RequestDecorators,
-    };
-
-    #[test]
-    fn test_print_message() {
-        let msg: Request = Request::builder()
-            .id("test_id".to_owned())
-            .content(request_content())
-            .decorators(RequestDecorators::default())
-            .build();
-        let printed_json = format!("{}", msg);
-        let parsed_request: Request = serde_json::from_str(&printed_json).unwrap();
-        assert_eq!(msg, parsed_request);
-    }
-}

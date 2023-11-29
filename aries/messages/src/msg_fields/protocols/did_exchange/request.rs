@@ -37,7 +37,7 @@ pub struct RequestDecorators {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
-pub mod tests {
+mod tests {
     use diddoc_legacy::aries::diddoc::AriesDidDoc;
     use serde_json::json;
 
@@ -49,6 +49,7 @@ pub mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
+        msg_fields::protocols::did_exchange::request::{Request, RequestDecorators},
         msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
     };
 
@@ -71,6 +72,18 @@ pub mod tests {
                     .build(),
             ),
         }
+    }
+
+    #[test]
+    fn test_print_message() {
+        let msg: Request = Request::builder()
+            .id("test_id".to_owned())
+            .content(request_content())
+            .decorators(RequestDecorators::default())
+            .build();
+        let printed_json = format!("{}", msg);
+        let parsed_request: Request = serde_json::from_str(&printed_json).unwrap();
+        assert_eq!(msg, parsed_request);
     }
 
     #[test]
