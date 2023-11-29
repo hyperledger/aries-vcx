@@ -54,7 +54,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         .await
         .unwrap();
         let client_conn = client_conn
-            .prepare_request("http://response.http.alt".parse().unwrap(), vec![])
+            .prepare_request("didcomm:transport/queue".parse().unwrap(), vec![])
             .await
             .unwrap();
         // Extract the actual connection request message to be sent
