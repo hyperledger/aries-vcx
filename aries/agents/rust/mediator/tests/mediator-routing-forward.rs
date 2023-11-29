@@ -1,5 +1,4 @@
 mod common;
-use std::collections::VecDeque;
 
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
 use mediator::aries_agent::client::transports::{AriesReqwest, AriesTransport};
@@ -44,7 +43,6 @@ async fn test_forward_flow() -> Result<()> {
     .await?;
     // Prepare forwarding agent transport
     let mut agent_f_aries_transport = AriesReqwest {
-        response_queue: VecDeque::new(),
         client: reqwest::Client::new(),
     };
     // Prepare message and wrap into anoncrypt forward message

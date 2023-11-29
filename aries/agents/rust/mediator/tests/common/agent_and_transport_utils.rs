@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use aries_vcx::{
     protocols::{
         connection::invitee::{states::completed::Completed, InviteeConnection},
@@ -68,7 +66,6 @@ pub async fn gen_mediator_connected_agent() -> Result<(
 )> {
     let agent = mediator::aries_agent::AgentBuilder::new_demo_agent().await?;
     let mut aries_transport = AriesReqwest {
-        response_queue: VecDeque::new(),
         client: reqwest::Client::new(),
     };
     let completed_connection = didcomm_connection(&agent, &mut aries_transport).await?;

@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use async_trait::async_trait;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use log::debug;
@@ -30,7 +28,6 @@ pub trait AriesTransport {
 }
 
 pub struct AriesReqwest {
-    pub response_queue: VecDeque<Value>,
     pub client: reqwest::Client,
 }
 

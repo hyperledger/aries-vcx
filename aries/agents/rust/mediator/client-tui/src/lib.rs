@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use mediator::{
     aries_agent::{client::transports::AriesReqwest, ArcAgent},
@@ -13,7 +11,6 @@ pub async fn handle_register(
     oob_invite: OOBInvitation,
 ) -> Result<Value, String> {
     let mut aries_transport = AriesReqwest {
-        response_queue: VecDeque::new(),
         client: reqwest::Client::new(),
     };
     let state = agent
