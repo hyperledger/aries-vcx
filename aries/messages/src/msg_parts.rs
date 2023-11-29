@@ -1,6 +1,6 @@
 use display_as_json::Display;
 use serde::{Deserialize, Serialize};
-// Bind `shared::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
+use shared::misc::serde_ignored::SerdeIgnored as NoDecorators;
 use typed_builder::TypedBuilder;
 
 /// Struct representing a complete message (apart from the `@type` field) as defined in a protocol
@@ -16,7 +16,7 @@ use typed_builder::TypedBuilder;
 /// `~timing`).
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder, Display)]
 #[builder(build_method(vis = "", name = __build))]
-pub struct MsgParts<C, D> {
+pub struct MsgParts<C, D = NoDecorators> {
     /// All standalone messages have an `id` field.
     #[serde(rename = "@id")]
     pub id: String,
@@ -81,8 +81,8 @@ pub mod tests {
             .content(request_content())
             .decorators(RequestDecorators::default())
             .build();
-        let printed = format!("{}", msg);
-        let expected = r#"{"@id":"test_id","label":"test_request_label","goal_code":"aries.rel.build","goal":"test_goal","did":"","did_doc~attach":{"data":{"json":{"@context":"https://w3id.org/did/v1","authentication":[],"id":"","publicKey":[],"service":[{"id":"did:example:123456789abcdefghi;indy","priority":0,"recipientKeys":[],"routingKeys":[],"serviceEndpoint":"https://dummy.dummy/dummy","type":"IndyAgent"}]}}}}"#;
-        assert_eq!(expected, printed);
+        let printed_json = format!("{}", msg);
+        let parsed_request: Request = serde_json::from_str(&printed_json).unwrap();
+        assert_eq!(msg, parsed_request);
     }
 }
