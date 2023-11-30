@@ -2938,6 +2938,7 @@ dependencies = [
  "did_doc_sov",
  "did_parser",
  "diddoc_legacy",
+ "display_as_json",
  "isolang",
  "lazy_static",
  "messages_macros",

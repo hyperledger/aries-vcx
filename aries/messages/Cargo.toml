@@ -26,3 +26,4 @@ diddoc_legacy = { path = "../misc/legacy/diddoc_legacy" }
 shared = { path = "../misc/shared" }
 did_parser = { path = "../../did_core/did_parser" }
 did_doc_sov = { path = "../../did_core/did_doc_sov" }
+display_as_json = { path = "../../misc/display_as_json" }

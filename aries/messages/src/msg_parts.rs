@@ -1,5 +1,5 @@
+use display_as_json::Display;
 use serde::{Deserialize, Serialize};
-// Bind `shared::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
 use shared::misc::serde_ignored::SerdeIgnored as NoDecorators;
 use typed_builder::TypedBuilder;
 
@@ -14,7 +14,7 @@ use typed_builder::TypedBuilder;
 /// `~attach` used in some messages that are in fact part of the protocol itself and are
 /// instrumental to the message processing, not an appendix to the message (such as `~thread` or
 /// `~timing`).
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder, Display)]
 #[builder(build_method(vis = "", name = __build))]
 pub struct MsgParts<C, D = NoDecorators> {
     /// All standalone messages have an `id` field.

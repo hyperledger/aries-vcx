@@ -49,10 +49,11 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
+        msg_fields::protocols::did_exchange::request::{Request, RequestDecorators},
         msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
     };
 
-    fn request_content() -> RequestContent {
+    pub fn request_content() -> RequestContent {
         let did_doc = AriesDidDoc::default();
         RequestContent {
             label: "test_request_label".to_owned(),
@@ -71,6 +72,18 @@ mod tests {
                     .build(),
             ),
         }
+    }
+
+    #[test]
+    fn test_print_message() {
+        let msg: Request = Request::builder()
+            .id("test_id".to_owned())
+            .content(request_content())
+            .decorators(RequestDecorators::default())
+            .build();
+        let printed_json = format!("{}", msg);
+        let parsed_request: Request = serde_json::from_str(&printed_json).unwrap();
+        assert_eq!(msg, parsed_request);
     }
 
     #[test]
