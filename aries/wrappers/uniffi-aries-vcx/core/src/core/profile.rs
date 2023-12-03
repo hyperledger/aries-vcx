@@ -15,9 +15,9 @@ use aries_vcx::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
 };
 
-use crate::{errors::error::VcxUniFFIResult, runtime::block_on};
-
 use super::logging::enable_logging;
+
+use crate::{errors::error::VcxUniFFIResult, runtime::block_on};
 
 #[derive(Debug)]
 pub struct UniffiProfile {
