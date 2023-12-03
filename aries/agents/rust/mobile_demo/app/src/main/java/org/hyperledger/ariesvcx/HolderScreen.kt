@@ -40,6 +40,7 @@ fun HolderScreen(
                 TextButton(onClick = {
                     scope.launch {
                         demoController.processOfferRequest()
+                        navController.navigate(Destination.Credential.route)
                     }
                 }) {
                     Text("Accept")

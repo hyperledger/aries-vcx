@@ -16,7 +16,6 @@ use aries_vcx::{
 };
 
 use super::logging::enable_logging;
-
 use crate::{errors::error::VcxUniFFIResult, runtime::block_on};
 
 #[derive(Debug)]
