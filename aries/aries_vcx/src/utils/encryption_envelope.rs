@@ -217,7 +217,7 @@ impl EncryptionEnvelope {
                             sender_vk, expected_vk
                         );
                         return Err(AriesVcxError::from_msg(
-                            AriesVcxErrorKind::InvalidJson,
+                            AriesVcxErrorKind::AuthenticationError,
                             format!(
                                 "Message did not pass authentication check. Expected sender \
                                  verkey was {}, but actually was {}",
@@ -229,7 +229,7 @@ impl EncryptionEnvelope {
                 None => {
                     error!("auth_unpack  message was authcrypted");
                     return Err(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidJson,
+                        AriesVcxErrorKind::AuthenticationError,
                         "Can't authenticate message because it was anoncrypted.",
                     ));
                 }
@@ -388,9 +388,12 @@ pub mod unit_tests {
         .await
         .unwrap();
 
-        let data_unpacked =
-            EncryptionEnvelope::auth_unpack(&setup.wallet, envelope.0, &sender_key_alice)
-                .await
-                .unwrap_err();
+        let err =
+            EncryptionEnvelope::auth_unpack(&setup.wallet, envelope.0, &sender_key_alice).await;
+        assert!(err.is_err());
+        assert_eq!(
+            err.unwrap_err().kind(),
+            AriesVcxErrorKind::AuthenticationError
+        );
     }
 }

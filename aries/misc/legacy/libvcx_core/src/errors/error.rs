@@ -96,6 +96,8 @@ pub enum LibvcxErrorKind {
     InvalidProofRequest,
     #[error("The proof was rejected")]
     ProofRejected,
+    #[error("Authentication error")]
+    AuthenticationError,
 
     // Schema
     #[error("Could not create schema")]
