@@ -28,13 +28,15 @@ impl EncryptionEnvelope {
             did_doc
         );
 
-        let recipient_key = did_doc.recipient_keys()?
-            .first()
-            .cloned()
-            .ok_or(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidState,
-                format!("No recipient key found in DIDDoc: {:?}", did_doc),
-            ))?;
+        let recipient_key =
+            did_doc
+                .recipient_keys()?
+                .first()
+                .cloned()
+                .ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    format!("No recipient key found in DIDDoc: {:?}", did_doc),
+                ))?;
         let routing_keys = did_doc.routing_keys();
         let message = EncryptionEnvelope::encrypt_for_pairwise(
             wallet,
@@ -43,14 +45,9 @@ impl EncryptionEnvelope {
             recipient_key.clone(),
         )
         .await?;
-        EncryptionEnvelope::wrap_into_forward_messages(
-            wallet,
-            message,
-            recipient_key,
-            routing_keys,
-        )
-        .await
-        .map(EncryptionEnvelope)
+        EncryptionEnvelope::wrap_into_forward_messages(wallet, message, recipient_key, routing_keys)
+            .await
+            .map(EncryptionEnvelope)
     }
 
     async fn encrypt_for_pairwise(
@@ -89,7 +86,7 @@ impl EncryptionEnvelope {
                 &forward_to_key,
                 routing_key,
             )
-                .await?;
+            .await?;
             forward_to_key = routing_key.clone();
         }
         Ok(message)
