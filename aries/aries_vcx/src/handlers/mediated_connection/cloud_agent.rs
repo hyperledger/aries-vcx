@@ -269,7 +269,7 @@ impl CloudAgentInfo {
         message: &DownloadedMessageEncrypted,
         expected_sender_vk: &str,
     ) -> VcxResult<AriesMessage> {
-        EncryptionEnvelope::auth_unpack(
+        EncryptionEnvelope::auth_unpack_aries_msg(
             &wallet.to_base_wallet(),
             message.payload()?,
             expected_sender_vk,
@@ -283,7 +283,7 @@ impl CloudAgentInfo {
         message: &DownloadedMessageEncrypted,
     ) -> VcxResult<AriesMessage> {
         Ok(
-            EncryptionEnvelope::anon_unpack(&wallet.to_base_wallet(), message.payload()?)
+            EncryptionEnvelope::anon_unpack_aries_msg(&wallet.to_base_wallet(), message.payload()?)
                 .await?
                 .0,
         )

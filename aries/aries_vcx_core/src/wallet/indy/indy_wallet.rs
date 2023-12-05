@@ -130,11 +130,11 @@ impl BaseWallet for IndySdkWallet {
     }
 
     async fn sign(&self, my_vk: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
-        wallet::indy::signing::sign(self.wallet_handle, my_vk, msg).await
+        wallet::indy::signing::vdrtools_sign(self.wallet_handle, my_vk, msg).await
     }
 
     async fn verify(&self, vk: &str, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
-        wallet::indy::signing::verify(vk, msg, signature).await
+        wallet::indy::signing::vdrtools_verify(vk, msg, signature).await
     }
 
     async fn pack_message(
@@ -143,12 +143,18 @@ impl BaseWallet for IndySdkWallet {
         receiver_keys: &str,
         msg: &[u8],
     ) -> VcxCoreResult<Vec<u8>> {
-        wallet::indy::signing::pack_message(self.wallet_handle, sender_vk, receiver_keys, msg).await
+        wallet::indy::signing::vdrtools_pack_message(
+            self.wallet_handle,
+            sender_vk,
+            receiver_keys,
+            msg,
+        )
+        .await
     }
 
     async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {
         let unpack_json_bytes =
-            wallet::indy::signing::unpack_message(self.wallet_handle, msg).await?;
+            wallet::indy::signing::vdrtools_unpack_message(self.wallet_handle, msg).await?;
         serde_json::from_slice(&unpack_json_bytes[..]).map_err(|err| {
             AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, err.to_string())
         })

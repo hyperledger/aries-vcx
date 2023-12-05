@@ -5,7 +5,11 @@ use crate::{
     WalletHandle,
 };
 
-pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
+pub async fn vdrtools_sign(
+    wallet_handle: WalletHandle,
+    my_vk: &str,
+    msg: &[u8],
+) -> VcxCoreResult<Vec<u8>> {
     let res = Locator::instance()
         .crypto_controller
         .crypto_sign(wallet_handle, my_vk, msg)
@@ -14,7 +18,7 @@ pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxCo
     Ok(res)
 }
 
-pub async fn verify(vk: &str, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
+pub async fn vdrtools_verify(vk: &str, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
     let res = Locator::instance()
         .crypto_controller
         .crypto_verify(vk, msg, signature)
@@ -23,7 +27,7 @@ pub async fn verify(vk: &str, msg: &[u8], signature: &[u8]) -> VcxCoreResult<boo
     Ok(res)
 }
 
-pub async fn pack_message(
+pub async fn vdrtools_pack_message(
     wallet_handle: WalletHandle,
     sender_vk: Option<&str>,
     receiver_keys: &str,
@@ -62,7 +66,10 @@ pub async fn pack_message(
     Ok(res)
 }
 
-pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
+pub async fn vdrtools_unpack_message(
+    wallet_handle: WalletHandle,
+    msg: &[u8],
+) -> VcxCoreResult<Vec<u8>> {
     let res = Locator::instance()
         .crypto_controller
         .unpack_msg(serde_json::from_slice(msg)?, wallet_handle)
