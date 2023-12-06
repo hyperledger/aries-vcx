@@ -4,12 +4,11 @@ use url::Url;
 use crate::schema::{
     service::{
         extra_fields::didcommv2::ExtraFieldsDidCommV2,
-        typed::TypedService,
+        typed::{ServiceType, TypedService},
     },
     types::uri::Uri,
     utils::OneOrList,
 };
-use crate::schema::service::typed::ServiceType;
 
 #[derive(Serialize, Clone, Debug, PartialEq)]
 pub struct ServiceDidCommV2 {

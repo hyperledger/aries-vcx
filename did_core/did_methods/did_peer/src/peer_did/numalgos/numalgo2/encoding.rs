@@ -201,10 +201,9 @@ mod tests {
 
     use super::*;
     use crate::{
-        peer_did::numalgos::numalgo2::resolve::resolve_numalgo2,
+        helpers::convert_to_hashmap, peer_did::numalgos::numalgo2::resolve::resolve_numalgo2,
         resolver::options::PublicKeyEncoding,
     };
-    use crate::helpers::convert_to_hashmap;
 
     fn create_verification_method(
         did_full: String,

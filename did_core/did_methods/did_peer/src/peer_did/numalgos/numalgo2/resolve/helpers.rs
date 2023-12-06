@@ -1,10 +1,7 @@
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{
     did_doc::DidDocumentBuilder,
-    service::{
-        extra_fields::didcommv2::ExtraFieldsDidCommV2,
-        Service,
-    },
+    service::{extra_fields::didcommv2::ExtraFieldsDidCommV2, Service},
     types::uri::Uri,
     utils::OneOrList,
 };
@@ -13,13 +10,13 @@ use public_key::Key;
 
 use crate::{
     error::DidPeerError,
+    helpers::convert_to_hashmap,
     peer_did::numalgos::numalgo2::{
         purpose::ElementPurpose, service_abbreviated::ServiceAbbreviatedDidPeer2,
         verification_method::get_verification_methods_by_key,
     },
     resolver::options::PublicKeyEncoding,
 };
-use crate::helpers::convert_to_hashmap;
 
 pub fn didpeer_elements_to_diddoc(
     mut did_doc_builder: DidDocumentBuilder,

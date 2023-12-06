@@ -8,13 +8,13 @@ use crate::{
     schema::{
         service::{
             extra_fields::didcommv1::ExtraFieldsDidCommV1,
-            Service, typed::TypedService,
+            typed::{ServiceType, TypedService},
+            Service,
         },
         types::uri::Uri,
         utils::OneOrList,
     },
 };
-use crate::schema::service::typed::ServiceType;
 
 #[derive(Serialize, Clone, Debug, PartialEq)]
 pub struct ServiceDidCommV1 {

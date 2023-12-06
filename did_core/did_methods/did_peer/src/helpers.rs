@@ -1,7 +1,8 @@
 use std::collections::HashMap;
+
+use did_doc::error::DidDocumentSovError;
 use serde::Serialize;
 use serde_json::Value;
-use did_doc::error::DidDocumentSovError;
 
 pub fn convert_to_hashmap<T: Serialize>(
     value: &T,

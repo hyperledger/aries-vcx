@@ -196,7 +196,7 @@ pub async fn jws_sign_attach(
     }
 }
 
-pub fn attach_to_ddo_sov(attachment: Attachment) -> Result<DidDocument, AriesVcxError> {
+pub fn attachment_to_diddoc(attachment: Attachment) -> Result<DidDocument, AriesVcxError> {
     match attachment.data.content {
         AttachmentType::Json(value) => serde_json::from_value(value).map_err(Into::into),
         AttachmentType::Base64(ref value) => {

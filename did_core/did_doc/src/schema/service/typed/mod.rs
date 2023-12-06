@@ -1,9 +1,10 @@
 pub mod didcommv1;
 pub mod didcommv2;
 
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 use url::Url;
-use std::fmt::Display;
 
 use crate::schema::{types::uri::Uri, utils::OneOrList};
 

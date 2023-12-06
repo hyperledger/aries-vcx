@@ -26,7 +26,7 @@ use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::{
         state_machine::{
-            helpers::{attach_to_ddo_sov, to_transition_error},
+            helpers::{attachment_to_diddoc, to_transition_error},
             requester::helpers::construct_request,
         },
         states::{completed::Completed, requester::request_sent::RequestSent},
@@ -80,7 +80,7 @@ impl DidExchangeRequester<RequestSent> {
             });
         }
         let did_document = if let Some(ddo) = response.content.did_doc {
-            attach_to_ddo_sov(ddo).map_err(to_transition_error(self.clone()))?
+            attachment_to_diddoc(ddo).map_err(to_transition_error(self.clone()))?
         } else {
             PeerDidResolver::new()
                 .resolve(

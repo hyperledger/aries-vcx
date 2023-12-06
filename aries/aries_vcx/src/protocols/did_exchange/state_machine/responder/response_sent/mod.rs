@@ -20,7 +20,7 @@ use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::{
         state_machine::helpers::{
-            attach_to_ddo_sov, construct_response, ddo_to_attach, jws_sign_attach,
+            attachment_to_diddoc, construct_response, ddo_to_attach, jws_sign_attach,
         },
         states::{completed::Completed, responder::response_sent::ResponseSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
@@ -97,7 +97,7 @@ async fn resolve_their_ddo(
         .content
         .did_doc
         .clone()
-        .map(attach_to_ddo_sov)
+        .map(attachment_to_diddoc)
         .transpose()?
         .unwrap_or(
             resolver_registry

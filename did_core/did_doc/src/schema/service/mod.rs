@@ -85,12 +85,12 @@ mod tests {
     use crate::schema::{
         service::{
             extra_fields::{ServiceAcceptType, ServiceKeyKind},
+            typed::ServiceType,
             Service,
         },
         types::uri::Uri,
         utils::OneOrList,
     };
-    use crate::schema::service::typed::ServiceType;
 
     #[test]
     fn test_service_builder() {
