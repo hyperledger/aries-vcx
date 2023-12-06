@@ -2,7 +2,7 @@ use std::{collections::HashMap, error::Error};
 
 use did_doc::schema::{
     did_doc::DidDocument,
-    service::Service,
+    service::{typed::ServiceType, Service},
     types::uri::Uri,
     utils::OneOrList,
     verification_method::{VerificationMethod, VerificationMethodType},
@@ -19,7 +19,7 @@ fn demo() -> Result<(), Box<dyn Error>> {
     let service = Service::new(
         Uri::new("xyz://example.org")?,
         Url::parse("http://example.org")?,
-        OneOrList::One("DIDCommMessaging".to_string()),
+        OneOrList::One(ServiceType::DIDCommV2),
         HashMap::new(),
     );
 

@@ -1,9 +1,9 @@
 pub mod didcommv1;
 pub mod didcommv2;
 
-use std::fmt::Display;
+use std::{fmt, fmt::Display};
 
-use serde::{Deserialize, Serialize};
+use serde::{de, de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use url::Url;
 
 use crate::schema::{types::uri::Uri, utils::OneOrList};
@@ -36,16 +36,18 @@ impl<E> TypedService<E> {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
+const SERVICE_TYPE_AIP1: &str = "endpoint";
+const SERVICE_TYPE_DIDCOMMV1: &str = "did-communication";
+const SERVICE_TYPE_DIDCOMMV2: &str = "DIDCommMessaging";
+const SERVICE_TYPE_LEGACY: &str = "IndyAgent";
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum ServiceType {
-    #[serde(rename = "endpoint")]
     AIP1,
-    #[serde(rename = "did-communication")]
     DIDCommV1,
-    #[serde(rename = "DIDCommMessaging")]
     DIDCommV2,
-    #[serde(rename = "IndyAgent")]
     Legacy,
+    Other(String),
 }
 
 impl Display for ServiceType {
@@ -62,6 +64,105 @@ impl Display for ServiceType {
             // * didcommv2 - https://identity.foundation/didcomm-messaging/spec/#service-endpoint
             ServiceType::DIDCommV2 => write!(f, "DIDCommMessaging"),
             ServiceType::Legacy => write!(f, "IndyAgent"),
+            ServiceType::Other(other) => write!(f, "{}", other),
         }
+    }
+}
+
+impl Serialize for ServiceType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            ServiceType::AIP1 => serializer.serialize_str(SERVICE_TYPE_AIP1),
+            ServiceType::DIDCommV1 => serializer.serialize_str(SERVICE_TYPE_DIDCOMMV1),
+            ServiceType::DIDCommV2 => serializer.serialize_str(SERVICE_TYPE_DIDCOMMV2),
+            ServiceType::Legacy => serializer.serialize_str(SERVICE_TYPE_LEGACY),
+            ServiceType::Other(ref value) => serializer.serialize_str(value),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ServiceType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct StringVisitor;
+
+        impl<'de> Visitor<'de> for StringVisitor {
+            type Value = ServiceType;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a string")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                match value {
+                    SERVICE_TYPE_AIP1 => Ok(ServiceType::AIP1),
+                    SERVICE_TYPE_DIDCOMMV1 => Ok(ServiceType::DIDCommV1),
+                    SERVICE_TYPE_DIDCOMMV2 => Ok(ServiceType::DIDCommV2),
+                    SERVICE_TYPE_LEGACY => Ok(ServiceType::Legacy),
+                    _ => Ok(ServiceType::Other(value.to_owned())),
+                }
+            }
+        }
+
+        deserializer.deserialize_str(StringVisitor)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_service_type_serialize() {
+        let service_type = ServiceType::AIP1;
+        let serialized = serde_json::to_string(&service_type).unwrap();
+        assert_eq!(serialized, "\"endpoint\"");
+
+        let service_type = ServiceType::DIDCommV1;
+        let serialized = serde_json::to_string(&service_type).unwrap();
+        assert_eq!(serialized, "\"did-communication\"");
+
+        let service_type = ServiceType::DIDCommV2;
+        let serialized = serde_json::to_string(&service_type).unwrap();
+        assert_eq!(serialized, "\"DIDCommMessaging\"");
+
+        let service_type = ServiceType::Legacy;
+        let serialized = serde_json::to_string(&service_type).unwrap();
+        assert_eq!(serialized, "\"IndyAgent\"");
+
+        let service_type = ServiceType::Other("Other".to_string());
+        let serialized = serde_json::to_string(&service_type).unwrap();
+        assert_eq!(serialized, "\"Other\"");
+    }
+
+    #[test]
+    fn test_service_type_deserialize() {
+        let service_type = ServiceType::AIP1;
+        let deserialized: ServiceType = serde_json::from_str("\"endpoint\"").unwrap();
+        assert_eq!(deserialized, service_type);
+
+        let service_type = ServiceType::DIDCommV1;
+        let deserialized: ServiceType = serde_json::from_str("\"did-communication\"").unwrap();
+        assert_eq!(deserialized, service_type);
+
+        let service_type = ServiceType::DIDCommV2;
+        let deserialized: ServiceType = serde_json::from_str("\"DIDCommMessaging\"").unwrap();
+        assert_eq!(deserialized, service_type);
+
+        let service_type = ServiceType::Legacy;
+        let deserialized: ServiceType = serde_json::from_str("\"IndyAgent\"").unwrap();
+        assert_eq!(deserialized, service_type);
+
+        let service_type = ServiceType::Other("Other".to_string());
+        let deserialized: ServiceType = serde_json::from_str("\"Other\"").unwrap();
+        assert_eq!(deserialized, service_type);
     }
 }

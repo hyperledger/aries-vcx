@@ -1,7 +1,7 @@
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{
     did_doc::DidDocumentBuilder,
-    service::{extra_fields::didcommv2::ExtraFieldsDidCommV2, Service},
+    service::{extra_fields::didcommv2::ExtraFieldsDidCommV2, typed::ServiceType, Service},
     types::uri::Uri,
     utils::OneOrList,
 };
@@ -123,19 +123,19 @@ fn process_key_element(
 fn deabbreviate_service(service: ServiceAbbreviatedDidPeer2, index: usize) -> Service {
     let service_type = match service.service_type().clone() {
         OneOrList::One(service_type) => {
-            if service_type == "dm" {
-                OneOrList::One("DIDCommMessaging".to_string())
-            } else {
-                OneOrList::One(service_type)
-            }
+            let typed: ServiceType = serde_json::from_str(&service_type).unwrap(); // todo: patrik: address unwrap
+            OneOrList::One(typed)
         }
-        OneOrList::List(mut service_types) => {
-            service_types.iter_mut().for_each(|service_type| {
-                if *service_type == "dm" {
-                    *service_type = "DIDCommMessaging".to_string();
-                }
-            });
-            OneOrList::List(service_types)
+        OneOrList::List(service_types) => {
+            let typed: Vec<ServiceType> = service_types
+                .iter()
+                .map(|service_type| match service_type.as_str() {
+                    "dm" => ServiceType::DIDCommV2,
+                    _ => serde_json::from_str(service_type).unwrap(), /* todo: patrik: address
+                                                                       * unwrap */
+                })
+                .collect();
+            OneOrList::List(typed)
         }
     };
 
@@ -152,7 +152,7 @@ fn deabbreviate_service(service: ServiceAbbreviatedDidPeer2, index: usize) -> Se
 fn build_service_aip1(
     service: ServiceAbbreviatedDidPeer2,
     id: Uri,
-    service_type: OneOrList<String>,
+    service_type: OneOrList<ServiceType>,
 ) -> Service {
     Service::new(
         id,
@@ -165,7 +165,7 @@ fn build_service_aip1(
 fn build_service_didcommv2(
     service: ServiceAbbreviatedDidPeer2,
     id: Uri,
-    service_type: OneOrList<String>,
+    service_type: OneOrList<ServiceType>,
 ) -> Service {
     let extra = ExtraFieldsDidCommV2::builder()
         .set_routing_keys(service.routing_keys().to_owned())

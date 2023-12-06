@@ -1,11 +1,13 @@
 use std::{thread, time::Duration};
 
 use aries_vcx::common::ledger::{
-    service_didsov::{DidSovServiceType, EndpointDidSov},
-    transactions::write_endpoint_legacy_2,
+    service_didsov::DidSovEndpointAttrib, transactions::write_endpoint,
 };
 use aries_vcx_core::{ledger::base_ledger::IndyLedgerWrite, wallet::base_wallet::BaseWallet};
-use did_resolver::{did_parser::Did, traits::resolvable::DidResolvable};
+use did_resolver::{
+    did_doc::schema::service::typed::ServiceType, did_parser::Did,
+    traits::resolvable::DidResolvable,
+};
 use did_resolver_sov::resolution::DidSovResolver;
 use test_utils::devsetup::build_setup_profile;
 
@@ -14,11 +16,11 @@ async fn write_test_endpoint(
     ledger_write: &impl IndyLedgerWrite,
     did: &str,
 ) {
-    let endpoint = EndpointDidSov::create()
+    let endpoint = DidSovEndpointAttrib::create()
         .set_service_endpoint("http://localhost:8080".parse().unwrap())
         .set_routing_keys(Some(vec!["key1".to_string(), "key2".to_string()]))
-        .set_types(Some(vec![DidSovServiceType::Endpoint]));
-    write_endpoint_legacy_2(wallet, ledger_write, did, &endpoint)
+        .set_types(Some(vec![ServiceType::AIP1.to_string()]));
+    write_endpoint(wallet, ledger_write, did, &endpoint)
         .await
         .unwrap();
     thread::sleep(Duration::from_millis(50));

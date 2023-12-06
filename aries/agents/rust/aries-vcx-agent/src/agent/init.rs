@@ -2,9 +2,10 @@ use std::sync::Arc;
 
 use aries_vcx::{
     common::ledger::{
-        service_didsov::{DidSovServiceType, EndpointDidSov},
-        transactions::{add_new_did, write_endpoint_legacy_2},
+        service_didsov::DidSovEndpointAttrib,
+        transactions::{add_new_did, write_endpoint},
     },
+    did_doc::schema::service::typed::ServiceType,
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
 };
 use aries_vcx_core::{
@@ -104,10 +105,10 @@ impl Agent {
             None,
         )
         .await?;
-        let endpoint = EndpointDidSov::create()
+        let endpoint = DidSovEndpointAttrib::create()
             .set_service_endpoint(init_config.service_endpoint.clone())
-            .set_types(Some(vec![DidSovServiceType::DidCommunication]));
-        write_endpoint_legacy_2(
+            .set_types(Some(vec![ServiceType::DIDCommV1.to_string()]));
+        write_endpoint(
             wallet.as_ref(),
             ledger_write.as_ref(),
             &public_did,

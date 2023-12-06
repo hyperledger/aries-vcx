@@ -2,7 +2,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use did_resolver::{
     did_doc::schema::{
         did_doc::DidDocument,
-        service::Service,
+        service::{typed::ServiceType, Service},
         types::uri::Uri,
         utils::OneOrList,
         verification_method::{VerificationMethod, VerificationMethodType},
@@ -77,11 +77,15 @@ pub(super) async fn ledger_response_to_ddo(
     let txn_time = get_txn_time_from_response(resp)?;
     let datetime = unix_to_datetime(txn_time);
 
-    let service_types: Vec<String> = endpoint
+    let service_types: Vec<ServiceType> = endpoint
         .types
         .into_iter()
-        .filter(|t| *t != DidSovServiceType::Unknown)
-        .map(|t| t.to_string())
+        .map(|t| match t {
+            DidSovServiceType::Endpoint => ServiceType::AIP1,
+            DidSovServiceType::DidCommunication => ServiceType::DIDCommV1,
+            DidSovServiceType::DIDComm => ServiceType::DIDCommV2,
+            DidSovServiceType::Unknown => ServiceType::Other("Unknown".to_string()),
+        })
         .collect();
     let service = Service::new(
         service_id,

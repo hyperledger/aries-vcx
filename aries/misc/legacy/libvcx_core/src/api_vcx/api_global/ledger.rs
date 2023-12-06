@@ -1,13 +1,17 @@
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 use aries_vcx::{
     aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions,
     common::ledger::{
-        service_didsov::{DidSovServiceType, EndpointDidSov},
+        service_didsov::DidSovEndpointAttrib,
         transactions::{
-            clear_attr, get_attr, get_service, write_endorser_did, write_endpoint_legacy,
-            write_endpoint_legacy_2,
+            clear_attr, get_attr, get_service, write_endorser_did, write_endpoint_from_service,
+            write_endpoint_legacy,
         },
+    },
+    did_doc::schema::{
+        service::{typed::ServiceType, Service},
+        utils::OneOrList,
     },
 };
 use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
@@ -88,26 +92,47 @@ pub async fn ledger_write_endpoint(
     target_did: &str,
     routing_keys: Vec<String>,
     endpoint: String,
-) -> LibvcxResult<EndpointDidSov> {
+) -> LibvcxResult<DidSovEndpointAttrib> {
     let wallet = get_main_wallet()?;
-    let service =
-        EndpointDidSov::create()
-            .set_service_endpoint(Url::from_str(&endpoint).map_err(|err| {
-                LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string())
-            })?)
-            .set_types(Some(vec![
-                DidSovServiceType::Endpoint,
-                DidSovServiceType::DidCommunication,
-            ]))
-            .set_routing_keys(Some(routing_keys));
-    write_endpoint_legacy_2(
+    // let service =
+    //     DidSovEndpointAttrib::create()
+    //         .set_service_endpoint(Url::from_str(&endpoint).map_err(|err| {
+    //             LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string())
+    //         })?)
+    //         .set_types(Some(vec![
+    //             DidSovServiceType::Endpoint,
+    //             DidSovServiceType::DidCommunication,
+    //         ]))
+    //         .set_routing_keys(Some(routing_keys));
+
+    // write_endpoint(
+    //     wallet.as_ref(),
+    //     get_main_ledger_write()?.as_ref(),
+    //     target_did,
+    //     &service,
+    // )
+
+    let endpoint = Url::from_str(&endpoint)
+        .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?;
+    let mut sov_service_extras = HashMap::new();
+    sov_service_extras.insert(
+        "routingKeys".to_string(),
+        serde_json::to_value(routing_keys)?,
+    );
+    let service = Service::new(
+        "#service-0".parse().unwrap(),
+        endpoint,
+        OneOrList::List(vec![ServiceType::AIP1, ServiceType::DIDCommV1]),
+        sov_service_extras,
+    );
+    let (_res, endpoint_attrib) = write_endpoint_from_service(
         wallet.as_ref(),
         get_main_ledger_write()?.as_ref(),
         target_did,
         &service,
     )
     .await?;
-    Ok(service)
+    Ok(endpoint_attrib)
 }
 
 pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> {

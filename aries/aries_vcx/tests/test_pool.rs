@@ -6,10 +6,10 @@ use aries_vcx::{
     common::{
         keys::{get_verkey_from_ledger, rotate_verkey},
         ledger::{
-            service_didsov::EndpointDidSov,
+            service_didsov::DidSovEndpointAttrib,
             transactions::{
                 add_attr, add_new_did, clear_attr, get_attr, get_service, write_endorser_did,
-                write_endpoint_legacy, write_endpoint_legacy_2,
+                write_endpoint, write_endpoint_legacy,
             },
         },
         primitives::{
@@ -217,10 +217,10 @@ async fn test_pool_add_get_service_public() -> Result<(), Box<dyn Error>> {
     )
     .await?;
 
-    let create_service = EndpointDidSov::create()
+    let create_service = DidSovEndpointAttrib::create()
         .set_service_endpoint("https://example.org".parse()?)
         .set_routing_keys(Some(vec!["did:sov:456".into()]));
-    write_endpoint_legacy_2(
+    write_endpoint(
         &endorser.wallet,
         &endorser.ledger_write,
         &endorser.institution_did,
@@ -253,10 +253,10 @@ async fn test_pool_add_get_service_public() -> Result<(), Box<dyn Error>> {
 async fn test_pool_add_get_service_public_none_routing_keys() -> Result<(), Box<dyn Error>> {
     let setup = build_setup_profile().await;
     let did = setup.institution_did.clone();
-    let create_service = EndpointDidSov::create()
+    let create_service = DidSovEndpointAttrib::create()
         .set_service_endpoint("https://example.org".parse()?)
         .set_routing_keys(None);
-    write_endpoint_legacy_2(&setup.wallet, &setup.ledger_write, &did, &create_service).await?;
+    write_endpoint(&setup.wallet, &setup.ledger_write, &did, &create_service).await?;
     thread::sleep(Duration::from_millis(50));
     let service = get_service(&setup.ledger_read, &did).await?;
     let expect_recipient_key =
@@ -299,10 +299,10 @@ async fn test_pool_multiple_service_formats() -> Result<(), Box<dyn Error>> {
     // Write new service format
     let endpoint_url_2 = "https://example2.org";
     let routing_keys_2 = vec![];
-    let service_2 = EndpointDidSov::create()
+    let service_2 = DidSovEndpointAttrib::create()
         .set_service_endpoint(endpoint_url_2.parse()?)
         .set_routing_keys(Some(routing_keys_2.clone()));
-    write_endpoint_legacy_2(&setup.wallet, &setup.ledger_write, &did, &service_2).await?;
+    write_endpoint(&setup.wallet, &setup.ledger_write, &did, &service_2).await?;
     thread::sleep(Duration::from_millis(50));
 
     // Get service and verify it is in the new format

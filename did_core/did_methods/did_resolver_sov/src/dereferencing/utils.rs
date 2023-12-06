@@ -92,7 +92,7 @@ pub(crate) fn dereference_did_document(
 mod tests {
     use did_resolver::{
         did_doc::schema::{
-            did_doc::DidDocumentBuilder, utils::OneOrList,
+            did_doc::DidDocumentBuilder, service::typed::ServiceType, utils::OneOrList,
             verification_method::VerificationMethodType,
         },
         did_parser::DidUrl,
@@ -117,14 +117,14 @@ mod tests {
         let agent_service = Service::new(
             "did:example:123456789abcdefghi#agent".parse().unwrap(),
             "https://agent.example.com/8377464".try_into().unwrap(),
-            OneOrList::One("AgentService".to_string()),
+            OneOrList::One(ServiceType::Other("AgentService".to_string())),
             Default::default(),
         );
 
         let messaging_service = Service::new(
             "did:example:123456789abcdefghi#messages".parse().unwrap(),
             "https://example.com/messages/8377464".try_into().unwrap(),
-            OneOrList::One("MessagingService".to_string()),
+            OneOrList::One(ServiceType::Other("MessagingService".to_string())),
             Default::default(),
         );
 
@@ -201,7 +201,7 @@ mod tests {
             let additional_service = Service::new(
                 "did:example:123456789abcdefghi#keys-1".parse().unwrap(),
                 "https://example.com/duplicated/8377464".try_into().unwrap(),
-                OneOrList::One("DuplicatedService".to_string()),
+                OneOrList::One(ServiceType::Other("DuplicatedService".to_string())),
                 Default::default(),
             );
             did_document_builder.add_service(additional_service).build()

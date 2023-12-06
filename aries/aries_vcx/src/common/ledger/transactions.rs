@@ -13,7 +13,7 @@ use messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use serde_json::Value;
 
 use crate::{
-    common::{keys::get_verkey_from_ledger, ledger::service_didsov::EndpointDidSov},
+    common::{keys::get_verkey_from_ledger, ledger::service_didsov::DidSovEndpointAttrib},
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
 };
 
@@ -101,7 +101,7 @@ pub async fn get_service(ledger: &impl IndyLedgerRead, did: &String) -> VcxResul
     let attr_resp = ledger.get_attr(&did_raw, "endpoint").await?;
     let data = get_data_from_response(&attr_resp)?;
     if data["endpoint"].is_object() {
-        let endpoint: EndpointDidSov = serde_json::from_value(data["endpoint"].clone())?;
+        let endpoint: DidSovEndpointAttrib = serde_json::from_value(data["endpoint"].clone())?;
         let recipient_keys = vec![get_verkey_from_ledger(ledger, &did_raw).await?];
         let endpoint_url = endpoint.endpoint;
 
@@ -177,11 +177,11 @@ pub async fn write_endpoint_legacy(
     Ok(res)
 }
 
-pub async fn write_endpoint_legacy_2(
+pub async fn write_endpoint(
     wallet: &impl BaseWallet,
     indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
-    service: &EndpointDidSov,
+    service: &DidSovEndpointAttrib,
 ) -> VcxResult<String> {
     let attrib_json = json!({ "endpoint": service }).to_string();
     let res = indy_ledger_write
@@ -191,18 +191,25 @@ pub async fn write_endpoint_legacy_2(
     Ok(res)
 }
 
-pub async fn write_endpoint(
+fn _service_to_didsov_endpoint_attribute(service: &Service) -> DidSovEndpointAttrib {
+    let routing_keys = service.extra_field_as_as::<Vec<String>>("routingKeys").ok();
+    let service_types = service.service_types();
+    let types_str: Vec<String> = service_types.iter().map(|t| t.to_string()).collect();
+    DidSovEndpointAttrib::create()
+        .set_routing_keys(routing_keys)
+        .set_types(Some(types_str))
+        .set_service_endpoint(service.service_endpoint().clone())
+}
+
+pub async fn write_endpoint_from_service(
     wallet: &impl BaseWallet,
     indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
     service: &Service,
-) -> VcxResult<String> {
-    let attrib_json = json!({ "endpoint": service }).to_string();
-    let res = indy_ledger_write
-        .add_attr(wallet, did, &attrib_json)
-        .await?;
-    check_response(&res)?;
-    Ok(res)
+) -> VcxResult<(String, DidSovEndpointAttrib)> {
+    let attribute = _service_to_didsov_endpoint_attribute(service);
+    let res = write_endpoint(wallet, indy_ledger_write, did, &attribute).await?;
+    Ok((res, attribute))
 }
 
 pub async fn add_attr(

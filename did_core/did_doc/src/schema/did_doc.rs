@@ -293,7 +293,7 @@ mod tests {
         let service = Service::new(
             service_id,
             service_endpoint.try_into().unwrap(),
-            OneOrList::One("test-service".to_string()),
+            OneOrList::One(ServiceType::Other("test-service".to_string())),
             HashMap::default(),
         );
 
@@ -376,6 +376,7 @@ mod tests {
 
     use crate::schema::{
         did_doc::DidDocument,
+        service::typed::ServiceType,
         types::{jsonwebkey::JsonWebKey, uri::Uri},
         verification_method::{VerificationMethod, VerificationMethodKind},
     };

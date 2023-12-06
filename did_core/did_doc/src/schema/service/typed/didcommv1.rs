@@ -100,7 +100,7 @@ impl TryFrom<ServiceDidCommV1> for Service {
         Ok(Service::new(
             did_comm_service.id().clone(),
             did_comm_service.service_endpoint(),
-            OneOrList::List(vec![ServiceType::DIDCommV1.to_string()]),
+            OneOrList::List(vec![ServiceType::DIDCommV1]),
             extra_fields,
         ))
     }

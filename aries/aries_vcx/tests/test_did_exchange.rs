@@ -3,7 +3,7 @@ extern crate log;
 use std::{error::Error, sync::Arc, thread, time::Duration};
 
 use aries_vcx::{
-    common::ledger::transactions::write_endpoint,
+    common::ledger::transactions::write_endpoint_from_service,
     protocols::did_exchange::{
         resolve_enc_key_from_invitation,
         state_machine::{
@@ -16,7 +16,9 @@ use aries_vcx::{
     },
 };
 use aries_vcx_core::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
-use did_doc::schema::{service::typed::didcommv1::ServiceDidCommV1, types::uri::Uri};
+use did_doc::schema::{
+    did_doc::DidDocument, service::typed::didcommv1::ServiceDidCommV1, types::uri::Uri,
+};
 use did_parser::Did;
 use did_peer::{
     peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
@@ -37,6 +39,24 @@ use crate::utils::test_agent::{
 
 pub mod utils;
 
+fn assert_verification_method(a: DidDocument, b: DidDocument) {
+    let a_key = a
+        .verification_method()
+        .first()
+        .unwrap()
+        .public_key()
+        .unwrap()
+        .base58();
+    let b_key = b
+        .verification_method()
+        .first()
+        .unwrap()
+        .public_key()
+        .unwrap()
+        .base58();
+    assert_eq!(a_key, b_key);
+}
+
 #[tokio::test]
 #[ignore]
 async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
@@ -46,7 +66,6 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     // todo: patrik: update create_test_agent_endorser_2 to not consume trustee agent
     let agent_inviter =
         create_test_agent_endorser_2(&setup.genesis_file_path, agent_trustee).await?;
-    // todo: patrik: what does it take to get rid of this custom aries-vcx struct?
     let create_service = ServiceDidCommV1::new_2(
         Uri::new("#service-0").unwrap(),
         dummy_url.clone(),
@@ -54,11 +73,11 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         vec![],
         vec![],
     );
-    write_endpoint(
+    write_endpoint_from_service(
         &agent_inviter.wallet,
         &agent_inviter.ledger_write,
         &agent_inviter.institution_did,
-        &create_service.try_into()?, // does this compile?
+        &create_service.try_into()?,
     )
     .await?;
     thread::sleep(Duration::from_millis(100));
@@ -107,7 +126,8 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     let did_inviter: Did = invitation_get_first_did_service(&invitation)?;
 
     let TransitionResult {
-        output: request, ..
+        state: requester,
+        output: request,
     } = DidExchangeRequester::<RequestSent>::construct_request(
         resolver_registry.clone(),
         &did_inviter,
@@ -126,7 +146,8 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     info!("Inviter prepares their peer:did: {peer_did_inviter}");
 
     let TransitionResult {
-        output: _response, ..
+        output: response,
+        state: responder,
     } = DidExchangeResponder::<ResponseSent>::receive_request(
         &agent_inviter.wallet,
         resolver_registry,
@@ -136,52 +157,31 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     )
     .await
     .unwrap();
-    // todo: patrik: enable rest of the test
-    // let TransitionResult {
-    //     state: requester,
-    //     output: complete,
-    // } = requester.receive_response(response).await.unwrap();
-    //
-    // let responder = responder.receive_complete(complete).unwrap();
-    //
-    // let responder_key = responder
-    //     .our_did_doc()
-    //     .verification_method()
-    //     .first()
-    //     .unwrap()
-    //     .public_key()
-    //     .unwrap()
-    //     .base58();
-    // assert_eq!(
-    //     requester
-    //         .their_did_doc()
-    //         .verification_method()
-    //         .first()
-    //         .unwrap()
-    //         .public_key()
-    //         .unwrap()
-    //         .base58(),
-    //     responder_key
-    // );
-    //
-    // let requester_key = requester
-    //     .our_did_doc()
-    //     .verification_method()
-    //     .first()
-    //     .unwrap()
-    //     .public_key()
-    //     .unwrap()
-    //     .base58();
-    // assert_eq!(
-    //     responder
-    //         .their_did_doc()
-    //         .verification_method()
-    //         .first()
-    //         .unwrap()
-    //         .public_key()
-    //         .unwrap()
-    //         .base58(),
-    //     requester_key
-    // );
+
+    let TransitionResult {
+        state: requester,
+        output: complete,
+    } = requester.receive_response(response).await.unwrap();
+
+    let responder = responder.receive_complete(complete).unwrap();
+
+    assert_verification_method(
+        requester.our_did_doc().clone(),
+        responder.their_did_doc().clone(),
+    );
+    assert_verification_method(
+        responder.our_did_doc().clone(),
+        requester.their_did_doc().clone(),
+    );
+
+    info!(
+        "Requester look of counterparty diddoc {}",
+        requester.their_did_doc()
+    );
+    info!(
+        "Responder look of counterparty diddoc {}",
+        responder.their_did_doc()
+    );
+
     Ok(())
 }

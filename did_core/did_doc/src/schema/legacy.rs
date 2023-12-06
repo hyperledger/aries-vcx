@@ -121,7 +121,7 @@ fn collect_encoded_services(legacy_ddo: &LegacyDidDoc) -> Vec<String> {
             .extra_field_as_as::<Vec<String>>("recipientKeys")
             .unwrap_or(vec![]);
         let service_endpoint = service.service_endpoint().to_string();
-        let service_type = service.service_type().first().unwrap().to_string();
+        let service_type = service.service_types().first().unwrap().to_string();
         let service = json!({
             "priority": priority,
             "r": routing_keys,

@@ -5,6 +5,7 @@ use did_doc::schema::{
     did_doc::DidDocument,
     service::{
         extra_fields::{ServiceAcceptType, ServiceKeyKind},
+        typed::ServiceType,
         Service,
     },
     utils::OneOrList,
@@ -159,27 +160,32 @@ fn abbreviate_service(service: &Service) -> Result<ServiceAbbreviatedDidPeer2, D
             })
             .unwrap_or_else(|| Ok(vec![]))
     }?;
-    let mut service_type = service.service_type().clone();
-    service_type = match service_type {
-        OneOrList::List(mut service_types) => {
-            service_types.iter_mut().for_each(|value| {
-                if value == "DIDCommMessaging" {
-                    *value = "dm".to_string();
-                }
-            });
-            OneOrList::List(service_types)
+    let service_type = service.service_type().clone();
+    let service_types_abbreviated = match service_type {
+        OneOrList::List(service_types) => {
+            let abbreviated_list = service_types
+                .iter()
+                .map(|value| {
+                    if value == &ServiceType::DIDCommV2 {
+                        "dm".to_string()
+                    } else {
+                        value.to_string()
+                    }
+                })
+                .collect();
+            OneOrList::List(abbreviated_list)
         }
         OneOrList::One(service_type) => {
-            if service_type == "DIDCommMessaging" {
+            if service_type == ServiceType::DIDCommV2 {
                 OneOrList::One("dm".to_string())
             } else {
-                OneOrList::One(service_type)
+                OneOrList::One(service_type.to_string())
             }
         }
     };
     Ok(ServiceAbbreviatedDidPeer2::new(
         Some(service.id().to_string()),
-        service_type,
+        service_types_abbreviated,
         service_endpoint,
         routing_keys,
         accept,
@@ -262,7 +268,7 @@ mod tests {
         let service = Service::new(
             Uri::new("#service-0").unwrap(),
             "https://example.com/endpoint".parse().unwrap(),
-            OneOrList::One("DIDCommMessaging".to_string()),
+            OneOrList::One(ServiceType::DIDCommV2),
             convert_to_hashmap(&extra).unwrap(),
         );
 

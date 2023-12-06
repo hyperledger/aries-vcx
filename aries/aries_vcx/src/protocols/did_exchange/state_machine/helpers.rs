@@ -230,7 +230,8 @@ where
 #[cfg(test)]
 mod tests {
     use did_doc::schema::{
-        service::extra_fields::didcommv1::ExtraFieldsDidCommV1, utils::OneOrList,
+        service::{extra_fields::didcommv1::ExtraFieldsDidCommV1, typed::ServiceType},
+        utils::OneOrList,
         verification_method::VerificationMethodKind,
     };
 
@@ -281,7 +282,7 @@ mod tests {
         assert_eq!(&ddo_service.id().to_string(), "#service-0");
         assert_eq!(
             ddo_service.service_type(),
-            &OneOrList::List(vec![String::from("did-communication")])
+            &OneOrList::List(vec![ServiceType::DIDCommV1])
         );
         assert_eq!(ddo_service.service_endpoint(), &service_endpoint);
         assert_eq!(

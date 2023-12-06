@@ -10,7 +10,7 @@ use url::Url;
 
 use crate::{
     error::DidDocumentBuilderError,
-    schema::{types::uri::Uri, utils::OneOrList},
+    schema::{service::typed::ServiceType, types::uri::Uri, utils::OneOrList},
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Display)]
@@ -18,7 +18,7 @@ use crate::{
 pub struct Service {
     id: Uri,
     #[serde(rename = "type")]
-    service_type: OneOrList<String>,
+    service_type: OneOrList<ServiceType>,
     service_endpoint: Url,
     #[serde(flatten)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
@@ -29,7 +29,7 @@ impl Service {
     pub fn new(
         id: Uri,
         service_endpoint: Url,
-        service_type: OneOrList<String>,
+        service_type: OneOrList<ServiceType>,
         extra: HashMap<String, Value>,
     ) -> Service {
         Service {
@@ -44,8 +44,15 @@ impl Service {
         &self.id
     }
 
-    pub fn service_type(&self) -> &OneOrList<String> {
+    pub fn service_type(&self) -> &OneOrList<ServiceType> {
         &self.service_type
+    }
+
+    pub fn service_types(&self) -> Vec<ServiceType> {
+        match &self.service_type {
+            OneOrList::One(service_type) => vec![service_type.clone()],
+            OneOrList::List(service_types) => service_types.clone(),
+        }
     }
 
     pub fn service_endpoint(&self) -> &Url {
@@ -96,18 +103,18 @@ mod tests {
     fn test_service_builder() {
         let uri_id = Uri::new("http://example.com").unwrap();
         let service_endpoint = "http://example.com/endpoint";
-        let service_type = "DIDCommMessaging".to_string();
+        let service_type = OneOrList::One(ServiceType::DIDCommV2);
 
         let service = Service::new(
             uri_id.clone(),
             service_endpoint.try_into().unwrap(),
-            OneOrList::One(service_type.clone()),
+            service_type.clone(),
             HashMap::default(),
         );
 
         assert_eq!(service.id(), &uri_id);
         assert_eq!(service.service_endpoint().as_ref(), service_endpoint);
-        assert_eq!(service.service_type(), &OneOrList::One(service_type));
+        assert_eq!(service.service_type(), &service_type);
     }
 
     #[test]
@@ -125,10 +132,7 @@ mod tests {
             service.service_endpoint().to_string(),
             "https://example.com/endpoint"
         );
-        assert_eq!(
-            service.service_type().first().unwrap(),
-            ServiceType::AIP1.to_string()
-        );
+        assert_eq!(service.service_types().first().unwrap(), &ServiceType::AIP1);
     }
 
     #[test]
@@ -153,8 +157,8 @@ mod tests {
 
         assert_eq!(service.id().to_string(), "service-0");
         assert_eq!(
-            service.service_type().first().unwrap(),
-            ServiceType::DIDCommV1.to_string()
+            service.service_types().first().unwrap(),
+            &ServiceType::DIDCommV1
         );
         assert_eq!(
             service.service_endpoint().to_string(),
@@ -215,8 +219,8 @@ mod tests {
 
         assert_eq!(service.id().to_string(), "service-0");
         assert_eq!(
-            service.service_type().first().unwrap(),
-            ServiceType::DIDCommV2.to_string()
+            service.service_types().first().unwrap(),
+            &ServiceType::DIDCommV2
         );
         assert_eq!(
             service.service_endpoint().to_string(),
