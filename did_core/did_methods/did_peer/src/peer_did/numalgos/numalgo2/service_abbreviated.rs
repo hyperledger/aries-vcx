@@ -1,8 +1,9 @@
 use did_doc::{
     did_doc_sov::extra_fields::{ServiceAcceptType, ServiceKeyKind},
-    schema::{types::url::Url, utils::OneOrList},
+    schema::utils::OneOrList,
 };
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ServiceAbbreviatedDidPeer2 {
@@ -45,8 +46,8 @@ impl ServiceAbbreviatedDidPeer2 {
         &self.service_type
     }
 
-    pub fn service_endpoint(&self) -> &str {
-        self.service_endpoint.as_ref()
+    pub fn service_endpoint(&self) -> &Url {
+        &self.service_endpoint
     }
 
     pub fn routing_keys(&self) -> &[ServiceKeyKind] {

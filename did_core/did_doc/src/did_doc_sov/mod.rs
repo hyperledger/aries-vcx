@@ -5,11 +5,9 @@ pub mod extra_fields;
 pub mod service;
 
 use serde::{Deserialize, Serialize};
+use url::Url;
 
-use crate::schema::{
-    types::{uri::Uri, url::Url},
-    utils::OneOrList,
-};
+use crate::schema::{types::uri::Uri, utils::OneOrList};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct TypedService<E> {

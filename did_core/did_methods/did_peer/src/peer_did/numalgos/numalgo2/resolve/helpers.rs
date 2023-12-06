@@ -77,7 +77,7 @@ fn process_service_element(
     let decoded = STANDARD_NO_PAD.decode(element)?;
     let service: ServiceAbbreviatedDidPeer2 = serde_json::from_slice(&decoded)?;
 
-    did_doc_builder = did_doc_builder.add_service(deabbreviate_service(service, *service_index)?);
+    did_doc_builder = did_doc_builder.add_service(deabbreviate_service(service, *service_index));
     *service_index += 1;
 
     Ok(did_doc_builder)
@@ -117,10 +117,7 @@ fn process_key_element(
     Ok(did_doc_builder)
 }
 
-fn deabbreviate_service(
-    service: ServiceAbbreviatedDidPeer2,
-    index: usize,
-) -> Result<Service, DidPeerError> {
+fn deabbreviate_service(service: ServiceAbbreviatedDidPeer2, index: usize) -> Service {
     let service_type = match service.service_type().clone() {
         OneOrList::One(service_type) => {
             if service_type == "dm" {
@@ -139,8 +136,9 @@ fn deabbreviate_service(
         }
     };
 
-    let id = format!("#service-{}", index).parse()?;
+    let id = format!("#service-{}", index).parse().unwrap(); // never panics; if Uri crate had builder we could do this safely
 
+    // todo: patrik: should be based on service type
     if service.routing_keys().is_empty() {
         build_service_aip1(service, id, service_type)
     } else {
@@ -152,30 +150,32 @@ fn build_service_aip1(
     service: ServiceAbbreviatedDidPeer2,
     id: Uri,
     service_type: OneOrList<String>,
-) -> Result<Service, DidPeerError> {
-    Ok(Service::new(
+) -> Service {
+    Service::new(
         id,
-        service.service_endpoint().parse()?,
+        service.service_endpoint().clone(),
         service_type,
         Default::default(),
-    ))
+    )
 }
 
 fn build_service_didcommv2(
     service: ServiceAbbreviatedDidPeer2,
     id: Uri,
     service_type: OneOrList<String>,
-) -> Result<Service, DidPeerError> {
+) -> Service {
     let extra = ExtraFieldsDidCommV2::builder()
         .set_routing_keys(service.routing_keys().to_owned())
         .set_accept(service.accept().to_owned())
         .build();
-    Ok(Service::new(
+    // todo: patrik: mind the unwrap, i believe this method can be removed altogether, see th
+    // callsite
+    Service::new(
         id,
-        service.service_endpoint().parse()?,
+        service.service_endpoint().clone(),
         service_type,
-        convert_to_hashmap(&extra)?,
-    ))
+        convert_to_hashmap(&extra).unwrap(),
+    )
 }
 
 #[cfg(test)]

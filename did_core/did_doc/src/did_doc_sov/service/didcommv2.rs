@@ -1,12 +1,10 @@
 use serde::Serialize;
+use url::Url;
 
 use super::ServiceType;
 use crate::{
     did_doc_sov::{extra_fields::didcommv2::ExtraFieldsDidCommV2, TypedService},
-    schema::{
-        types::{uri::Uri, url::Url},
-        utils::OneOrList,
-    },
+    schema::{types::uri::Uri, utils::OneOrList},
 };
 
 #[derive(Serialize, Clone, Debug, PartialEq)]

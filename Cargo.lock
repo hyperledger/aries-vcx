@@ -1480,6 +1480,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "unsigned-varint",
+ "url",
 ]
 
 [[package]]

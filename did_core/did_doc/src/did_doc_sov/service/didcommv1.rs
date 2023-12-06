@@ -1,17 +1,14 @@
 use std::collections::HashMap;
 
 use serde::Serialize;
+use url::Url;
 
 use super::ServiceType;
 use crate::{
     did_doc_sov::{
         error::DidDocumentSovError, extra_fields::didcommv1::ExtraFieldsDidCommV1, TypedService,
     },
-    schema::{
-        service::Service,
-        types::{uri::Uri, url::Url},
-        utils::OneOrList,
-    },
+    schema::{service::Service, types::uri::Uri, utils::OneOrList},
 };
 
 #[derive(Serialize, Clone, Debug, PartialEq)]

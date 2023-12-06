@@ -192,7 +192,7 @@ pub fn get_first_endpoint(did_document: &DidDocument) -> AgentResult<Url> {
         AgentErrorKind::InvalidState,
         "No service found",
     ))?;
-    Ok(service.service_endpoint().inner())
+    Ok(service.service_endpoint().clone())
 }
 
 pub async fn pairwise_encrypt(

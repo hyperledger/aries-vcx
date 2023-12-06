@@ -85,7 +85,7 @@ pub(super) async fn ledger_response_to_ddo(
         .collect();
     let service = Service::new(
         service_id,
-        endpoint.endpoint.as_str().try_into()?,
+        endpoint.endpoint,
         OneOrList::List(service_types),
         Default::default(),
     );

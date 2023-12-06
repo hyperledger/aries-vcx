@@ -79,7 +79,7 @@ pub async fn create_our_did_document(
 
     let service: Service = ServiceDidCommV1::new(
         Uri::new("#0")?,
-        service_endpoint.into(),
+        service_endpoint,
         ExtraFieldsDidCommV1::builder()
             .set_routing_keys(
                 routing_keys
@@ -252,7 +252,7 @@ mod tests {
         let routing_keys = vec!["routing_key1".to_string(), "routing_key2".to_string()];
         let service: Service = ServiceDidCommV1::new(
             Uri::new("#service-0").unwrap(),
-            service_endpoint.clone().into(),
+            service_endpoint.clone(),
             ExtraFieldsDidCommV1::builder()
                 .set_routing_keys(
                     routing_keys
@@ -282,7 +282,7 @@ mod tests {
             ddo_service.service_type(),
             &OneOrList::List(vec![String::from("did-communication")])
         );
-        assert_eq!(&ddo_service.service_endpoint().inner(), &service_endpoint);
+        assert_eq!(ddo_service.service_endpoint(), &service_endpoint);
         assert_eq!(
             ddo_service
                 .extra_field_as_as::<Vec<String>>("recipientKeys")

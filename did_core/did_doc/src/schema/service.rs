@@ -3,11 +3,9 @@ use std::collections::HashMap;
 use display_as_json::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use url::Url;
 
-use super::{
-    types::{uri::Uri, url::Url},
-    utils::OneOrList,
-};
+use super::{types::uri::Uri, utils::OneOrList};
 use crate::error::DidDocumentBuilderError;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Display)]
