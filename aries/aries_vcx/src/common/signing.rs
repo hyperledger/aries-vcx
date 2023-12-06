@@ -8,6 +8,18 @@ use time;
 
 use crate::errors::error::prelude::*;
 
+// Utility function to handle both padded and unpadded Base64URL data
+fn base64url_decode(encoded: &str) -> VcxResult<Vec<u8>> {
+    general_purpose::URL_SAFE_NO_PAD.decode(encoded).or_else(|_|
+        general_purpose::URL_SAFE.decode(encoded)
+    ).map_err(|err| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
+            format!("Cannot decode Base64URL data: {:?}", err),
+        )
+    })
+}
+
 async fn get_signature_data(
     wallet: &impl BaseWallet,
     data: String,
@@ -52,14 +64,7 @@ pub async fn decode_signed_connection_response(
             )
         })?;
 
-    let sig_data = general_purpose::URL_SAFE
-        .decode(response.connection_sig.sig_data.as_bytes())
-        .map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Cannot decode ConnectionResponse: {:?}", err),
-            )
-        })?;
+    let sig_data = base64url_decode(&response.connection_sig.sig_data)?;
 
     if !wallet.verify(their_vk, &sig_data, &signature).await? {
         return Err(AriesVcxError::from_msg(
@@ -146,3 +151,22 @@ pub async fn decode_signed_connection_response(
 //         .await;
 //     }
 // }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use base64::{self, engine::general_purpose, Engine};
+
+    #[tokio::test]
+    async fn test_decode_padded_and_unpadded_sig_data() {
+        let data = b"example data for testing";
+        let encoded_padded = general_purpose::URL_SAFE.encode(data);
+        let encoded_unpadded = general_purpose::URL_SAFE_NO_PAD.encode(data);
+
+        let decoded_padded = base64url_decode(&encoded_padded).unwrap();
+        let decoded_unpadded = base64url_decode(&encoded_unpadded).unwrap();
+
+        assert_eq!(decoded_padded, data.to_vec());
+        assert_eq!(decoded_unpadded, data.to_vec());
+    }
+}
