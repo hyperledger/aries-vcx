@@ -20,6 +20,7 @@ sealed class Destination(val route: String) {
     object Home : Destination("home")
     object QRScan : Destination("scan")
     object Holder : Destination("holder")
+    object Credential : Destination("credential")
 }
 
 class MainActivity : ComponentActivity() {
@@ -65,6 +66,13 @@ fun NavigationAppHost(
 
         composable(Destination.Holder.route) {
             HolderScreen(
+                demoController = demoController,
+                navController = navController,
+            )
+        }
+
+        composable(Destination.Credential.route) {
+            CredentialScreen(
                 demoController = demoController,
                 navController = navController,
             )

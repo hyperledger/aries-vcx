@@ -15,6 +15,7 @@ use aries_vcx::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
 };
 
+use super::logging::enable_logging;
 use crate::{errors::error::VcxUniFFIResult, runtime::block_on};
 
 #[derive(Debug)]
@@ -53,6 +54,9 @@ pub fn new_indy_profile(
     wallet_config: WalletConfig,
     genesis_file_path: String,
 ) -> VcxUniFFIResult<Arc<ProfileHolder>> {
+    // Enable android logging
+    enable_logging();
+
     block_on(async {
         let wh = create_and_open_wallet(&wallet_config).await?;
         let wallet = IndySdkWallet::new(wh);

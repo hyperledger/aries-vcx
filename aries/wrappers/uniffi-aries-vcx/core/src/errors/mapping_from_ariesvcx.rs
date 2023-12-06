@@ -6,7 +6,7 @@ impl From<AriesVcxError> for VcxUniFFIError {
     fn from(e: AriesVcxError) -> Self {
         let default = e;
         VcxUniFFIError::AriesVcxError {
-            error_msg: default.to_string(),
+            error_msg: format!("AriesVcxError: {default}"),
         }
     }
 }
@@ -15,7 +15,7 @@ impl From<AriesVcxCoreError> for VcxUniFFIError {
     fn from(e: AriesVcxCoreError) -> Self {
         let default = e;
         VcxUniFFIError::AriesVcxError {
-            error_msg: default.to_string(),
+            error_msg: format!("AriesVcxCoreError: {default}"),
         }
     }
 }

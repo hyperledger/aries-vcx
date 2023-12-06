@@ -83,5 +83,11 @@ fun HomeScreen(
             }) {
             Text(text = "Receive a credential")
         }
+        Button(enabled = (demoState.connectionCompleted),
+            onClick = {
+                navController.navigate(Destination.Credential.route)
+            }) {
+            Text(text = "Show credentials")
+        }
     }
 }
