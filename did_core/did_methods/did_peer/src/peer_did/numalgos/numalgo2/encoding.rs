@@ -1,14 +1,14 @@
 use std::cmp::Ordering;
 
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
-use did_doc::{
-    did_doc_sov::extra_fields::{ServiceAcceptType, ServiceKeyKind},
-    schema::{
-        did_doc::DidDocument,
-        service::Service,
-        utils::OneOrList,
-        verification_method::{VerificationMethod, VerificationMethodKind},
+use did_doc::schema::{
+    did_doc::DidDocument,
+    service::{
+        extra_fields::{ServiceAcceptType, ServiceKeyKind},
+        Service,
     },
+    utils::OneOrList,
+    verification_method::{VerificationMethod, VerificationMethodKind},
 };
 use public_key::Key;
 use serde_json::from_value;
@@ -188,15 +188,13 @@ fn abbreviate_service(service: &Service) -> Result<ServiceAbbreviatedDidPeer2, D
 
 #[cfg(test)]
 mod tests {
-    use did_doc::{
-        did_doc_sov::extra_fields::{
-            convert_to_hashmap, didcommv2::ExtraFieldsDidCommV2, ServiceKeyKind,
+    use did_doc::schema::{
+        service::{
+            extra_fields::{didcommv2::ExtraFieldsDidCommV2, ServiceKeyKind},
+            Service,
         },
-        schema::{
-            service::Service,
-            types::uri::Uri,
-            verification_method::{VerificationMethod, VerificationMethodType},
-        },
+        types::uri::Uri,
+        verification_method::{VerificationMethod, VerificationMethodType},
     };
     use did_parser::{Did, DidUrl};
     use pretty_assertions::assert_eq;
@@ -206,6 +204,7 @@ mod tests {
         peer_did::numalgos::numalgo2::resolve::resolve_numalgo2,
         resolver::options::PublicKeyEncoding,
     };
+    use crate::helpers::convert_to_hashmap;
 
     fn create_verification_method(
         did_full: String,

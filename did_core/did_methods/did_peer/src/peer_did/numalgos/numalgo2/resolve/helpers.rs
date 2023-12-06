@@ -1,7 +1,12 @@
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
-use did_doc::{
-    did_doc_sov::extra_fields::{convert_to_hashmap, didcommv2::ExtraFieldsDidCommV2},
-    schema::{did_doc::DidDocumentBuilder, service::Service, types::uri::Uri, utils::OneOrList},
+use did_doc::schema::{
+    did_doc::DidDocumentBuilder,
+    service::{
+        extra_fields::didcommv2::ExtraFieldsDidCommV2,
+        Service,
+    },
+    types::uri::Uri,
+    utils::OneOrList,
 };
 use did_parser::Did;
 use public_key::Key;
@@ -14,6 +19,7 @@ use crate::{
     },
     resolver::options::PublicKeyEncoding,
 };
+use crate::helpers::convert_to_hashmap;
 
 pub fn didpeer_elements_to_diddoc(
     mut did_doc_builder: DidDocumentBuilder,

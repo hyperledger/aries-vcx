@@ -1,6 +1,6 @@
-use did_doc::{
-    did_doc_sov::extra_fields::{ServiceAcceptType, ServiceKeyKind},
-    schema::utils::OneOrList,
+use did_doc::schema::{
+    service::extra_fields::{ServiceAcceptType, ServiceKeyKind},
+    utils::OneOrList,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;

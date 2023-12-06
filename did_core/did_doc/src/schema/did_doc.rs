@@ -6,12 +6,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::{
-    service::Service,
     types::uri::Uri,
     utils::OneOrList,
     verification_method::{VerificationMethod, VerificationMethodKind},
 };
-use crate::error::DidDocumentBuilderError;
+use crate::{error::DidDocumentBuilderError, schema::service::Service};
 
 pub type ControllerAlias = OneOrList<Did>;
 

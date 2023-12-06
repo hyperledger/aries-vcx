@@ -1,3 +1,6 @@
+pub mod extra_fields;
+pub mod typed;
+
 use std::collections::HashMap;
 
 use display_as_json::Display;
@@ -5,8 +8,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
 
-use super::{types::uri::Uri, utils::OneOrList};
-use crate::error::DidDocumentBuilderError;
+use crate::{
+    error::DidDocumentBuilderError,
+    schema::{types::uri::Uri, utils::OneOrList},
+};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Display)]
 #[serde(rename_all = "camelCase")]
@@ -73,13 +78,19 @@ impl Service {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use did_parser::DidUrl;
 
-    use super::*;
-    use crate::did_doc_sov::{
-        extra_fields::{ServiceAcceptType, ServiceKeyKind},
-        service::ServiceType,
+    use crate::schema::{
+        service::{
+            extra_fields::{ServiceAcceptType, ServiceKeyKind},
+            Service,
+        },
+        types::uri::Uri,
+        utils::OneOrList,
     };
+    use crate::schema::service::typed::ServiceType;
 
     #[test]
     fn test_service_builder() {

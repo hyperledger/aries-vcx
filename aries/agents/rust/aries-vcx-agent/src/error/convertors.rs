@@ -1,7 +1,7 @@
 use std::convert::From;
 
 use aries_vcx::{
-    did_doc::{did_doc_sov::error::DidDocumentSovError, error::DidDocumentBuilderError},
+    did_doc::error::{DidDocumentBuilderError, DidDocumentSovError},
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::state_machine::generic::GenericDidExchange,
 };

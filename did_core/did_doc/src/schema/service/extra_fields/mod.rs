@@ -1,29 +1,15 @@
-use std::{collections::HashMap, fmt::Display};
-
-use did_key::DidKey;
-use did_parser::DidUrl;
-use serde::{Deserialize, Deserializer, Serialize};
-use serde_json::Value;
-
-use crate::did_doc_sov::error::DidDocumentSovError;
-
 pub mod aip1;
 pub mod didcommv1;
 pub mod didcommv2;
 pub mod legacy;
 
-pub fn convert_to_hashmap<T: Serialize>(
-    value: &T,
-) -> Result<HashMap<String, Value>, DidDocumentSovError> {
-    let serialized_value = serde_json::to_value(value)?;
+use std::fmt::Display;
 
-    match serialized_value {
-        Value::Object(map) => Ok(map.into_iter().collect()),
-        _ => Err(DidDocumentSovError::ParsingError(
-            "Expected JSON object".to_string(),
-        )),
-    }
-}
+use did_key::DidKey;
+use did_parser::DidUrl;
+use serde::{Deserialize, Deserializer, Serialize};
+
+use crate::error::DidDocumentSovError;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum ServiceAcceptType {

@@ -1,7 +1,7 @@
 use display_as_json::Display;
 use serde::{Deserialize, Serialize};
 
-use super::{ServiceAcceptType, ServiceKeyKind};
+use crate::schema::service::extra_fields::{ServiceAcceptType, ServiceKeyKind};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default, Display)]
 #[serde(rename_all = "camelCase")]

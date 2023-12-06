@@ -3,17 +3,15 @@ use std::collections::HashMap;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use chrono::Utc;
-use did_doc::{
-    did_doc_sov::{
+use did_doc::schema::{
+    did_doc::DidDocument,
+    service::{
         extra_fields::{didcommv1::ExtraFieldsDidCommV1, ServiceKeyKind},
-        service::didcommv1::ServiceDidCommV1,
+        typed::didcommv1::ServiceDidCommV1,
+        Service,
     },
-    schema::{
-        did_doc::DidDocument,
-        service::Service,
-        types::uri::Uri,
-        verification_method::{VerificationMethod, VerificationMethodType},
-    },
+    types::uri::Uri,
+    verification_method::{VerificationMethod, VerificationMethodType},
 };
 use did_key::DidKey;
 use did_parser::{Did, DidUrl};
@@ -231,7 +229,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use did_doc::schema::{utils::OneOrList, verification_method::VerificationMethodKind};
+    use did_doc::schema::{
+        service::extra_fields::didcommv1::ExtraFieldsDidCommV1, utils::OneOrList,
+        verification_method::VerificationMethodKind,
+    };
 
     use super::*;
 

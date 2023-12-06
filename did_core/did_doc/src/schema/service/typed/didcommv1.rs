@@ -3,13 +3,18 @@ use std::collections::HashMap;
 use serde::Serialize;
 use url::Url;
 
-use super::ServiceType;
 use crate::{
-    did_doc_sov::{
-        error::DidDocumentSovError, extra_fields::didcommv1::ExtraFieldsDidCommV1, TypedService,
+    error::DidDocumentSovError,
+    schema::{
+        service::{
+            extra_fields::didcommv1::ExtraFieldsDidCommV1,
+            Service, typed::TypedService,
+        },
+        types::uri::Uri,
+        utils::OneOrList,
     },
-    schema::{service::Service, types::uri::Uri, utils::OneOrList},
 };
+use crate::schema::service::typed::ServiceType;
 
 #[derive(Serialize, Clone, Debug, PartialEq)]
 pub struct ServiceDidCommV1 {

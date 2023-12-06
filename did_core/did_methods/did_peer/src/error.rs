@@ -1,8 +1,6 @@
 use std::convert::Infallible;
 
-use did_doc::{
-    did_doc_sov::error::DidDocumentSovError, schema::verification_method::VerificationMethodType,
-};
+use did_doc::{error::DidDocumentSovError, schema::verification_method::VerificationMethodType};
 
 use crate::peer_did::numalgos::kind::NumalgoKind;
 
