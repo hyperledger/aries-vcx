@@ -22,7 +22,7 @@ impl EncryptionEnvelope {
         did_doc: &AriesDidDoc,
     ) -> VcxResult<EncryptionEnvelope> {
         trace!(
-            "EncryptionEnvelope::create >>> message: {:?}, pw_verkey: {:?}, did_doc: {:?}",
+            "EncryptionEnvelope::create >>> message: {:?}, sender_vk: {:?}, did_doc: {:?}",
             message,
             sender_vk,
             did_doc
