@@ -10,14 +10,15 @@ use crate::errors::error::prelude::*;
 
 // Utility function to handle both padded and unpadded Base64URL data
 fn base64url_decode(encoded: &str) -> VcxResult<Vec<u8>> {
-    general_purpose::URL_SAFE_NO_PAD.decode(encoded).or_else(|_|
-        general_purpose::URL_SAFE.decode(encoded)
-    ).map_err(|err| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
-            format!("Cannot decode Base64URL data: {:?}", err),
-        )
-    })
+    general_purpose::URL_SAFE_NO_PAD
+        .decode(encoded)
+        .or_else(|_| general_purpose::URL_SAFE.decode(encoded))
+        .map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot decode Base64URL data: {:?}", err),
+            )
+        })
 }
 
 async fn get_signature_data(
