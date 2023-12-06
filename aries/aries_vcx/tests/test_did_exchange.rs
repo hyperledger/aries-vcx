@@ -3,10 +3,7 @@ extern crate log;
 use std::{error::Error, sync::Arc, thread, time::Duration};
 
 use aries_vcx::{
-    common::ledger::{
-        service_didsov::{DidSovServiceType, EndpointDidSov},
-        transactions::write_endpoint,
-    },
+    common::ledger::transactions::write_endpoint,
     protocols::did_exchange::{
         resolve_enc_key_from_invitation,
         state_machine::{
@@ -19,6 +16,7 @@ use aries_vcx::{
     },
 };
 use aries_vcx_core::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
+use did_doc::schema::{service::typed::didcommv1::ServiceDidCommV1, types::uri::Uri};
 use did_parser::Did;
 use did_peer::{
     peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
@@ -49,17 +47,18 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     let agent_inviter =
         create_test_agent_endorser_2(&setup.genesis_file_path, agent_trustee).await?;
     // todo: patrik: what does it take to get rid of this custom aries-vcx struct?
-    let create_service = EndpointDidSov::create()
-        .set_service_endpoint("https://example.org".parse()?)
-        .set_types(Some(vec![
-            DidSovServiceType::DidCommunication,
-            DidSovServiceType::Endpoint,
-        ]));
+    let create_service = ServiceDidCommV1::new_2(
+        Uri::new("#service-0").unwrap(),
+        dummy_url.clone(),
+        0,
+        vec![],
+        vec![],
+    );
     write_endpoint(
         &agent_inviter.wallet,
         &agent_inviter.ledger_write,
         &agent_inviter.institution_did,
-        &create_service,
+        &create_service.try_into()?, // does this compile?
     )
     .await?;
     thread::sleep(Duration::from_millis(100));

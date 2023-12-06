@@ -5,8 +5,8 @@ use aries_vcx::{
     common::ledger::{
         service_didsov::{DidSovServiceType, EndpointDidSov},
         transactions::{
-            clear_attr, get_attr, get_service, write_endorser_did, write_endpoint,
-            write_endpoint_legacy,
+            clear_attr, get_attr, get_service, write_endorser_did, write_endpoint_legacy,
+            write_endpoint_legacy_2,
         },
     },
 };
@@ -100,7 +100,7 @@ pub async fn ledger_write_endpoint(
                 DidSovServiceType::DidCommunication,
             ]))
             .set_routing_keys(Some(routing_keys));
-    write_endpoint(
+    write_endpoint_legacy_2(
         wallet.as_ref(),
         get_main_ledger_write()?.as_ref(),
         target_did,

@@ -2,7 +2,7 @@ use std::{thread, time::Duration};
 
 use aries_vcx::common::ledger::{
     service_didsov::{DidSovServiceType, EndpointDidSov},
-    transactions::write_endpoint,
+    transactions::write_endpoint_legacy_2,
 };
 use aries_vcx_core::{ledger::base_ledger::IndyLedgerWrite, wallet::base_wallet::BaseWallet};
 use did_resolver::{did_parser::Did, traits::resolvable::DidResolvable};
@@ -18,7 +18,7 @@ async fn write_test_endpoint(
         .set_service_endpoint("http://localhost:8080".parse().unwrap())
         .set_routing_keys(Some(vec!["key1".to_string(), "key2".to_string()]))
         .set_types(Some(vec![DidSovServiceType::Endpoint]));
-    write_endpoint(wallet, ledger_write, did, &endpoint)
+    write_endpoint_legacy_2(wallet, ledger_write, did, &endpoint)
         .await
         .unwrap();
     thread::sleep(Duration::from_millis(50));

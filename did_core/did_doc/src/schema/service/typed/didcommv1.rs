@@ -7,7 +7,7 @@ use crate::{
     error::DidDocumentSovError,
     schema::{
         service::{
-            extra_fields::didcommv1::ExtraFieldsDidCommV1,
+            extra_fields::{didcommv1::ExtraFieldsDidCommV1, ServiceKeyKind},
             typed::{ServiceType, TypedService},
             Service,
         },
@@ -23,7 +23,31 @@ pub struct ServiceDidCommV1 {
 }
 
 impl ServiceDidCommV1 {
+    // remove this in favor of new_2, we should keep "ExtraFields" type internal only
+    // exposing any new types is burden on the user
     pub fn new(id: Uri, service_endpoint: Url, extra: ExtraFieldsDidCommV1) -> Self {
+        Self {
+            service: TypedService::<ExtraFieldsDidCommV1> {
+                id,
+                service_type: OneOrList::One(ServiceType::DIDCommV1.to_string()),
+                service_endpoint,
+                extra,
+            },
+        }
+    }
+
+    pub fn new_2(
+        id: Uri,
+        service_endpoint: Url,
+        priority: u32,
+        recipient_keys: Vec<ServiceKeyKind>,
+        routing_keys: Vec<ServiceKeyKind>,
+    ) -> Self {
+        let extra = ExtraFieldsDidCommV1::builder()
+            .set_priority(priority)
+            .set_recipient_keys(recipient_keys)
+            .set_routing_keys(routing_keys)
+            .build();
         Self {
             service: TypedService::<ExtraFieldsDidCommV1> {
                 id,

@@ -7,6 +7,7 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::BaseWallet,
 };
+use did_doc::schema::service::Service;
 use diddoc_legacy::aries::service::AriesService;
 use messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use serde_json::Value;
@@ -176,11 +177,25 @@ pub async fn write_endpoint_legacy(
     Ok(res)
 }
 
-pub async fn write_endpoint(
+pub async fn write_endpoint_legacy_2(
     wallet: &impl BaseWallet,
     indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
     service: &EndpointDidSov,
+) -> VcxResult<String> {
+    let attrib_json = json!({ "endpoint": service }).to_string();
+    let res = indy_ledger_write
+        .add_attr(wallet, did, &attrib_json)
+        .await?;
+    check_response(&res)?;
+    Ok(res)
+}
+
+pub async fn write_endpoint(
+    wallet: &impl BaseWallet,
+    indy_ledger_write: &impl IndyLedgerWrite,
+    did: &str,
+    service: &Service,
 ) -> VcxResult<String> {
     let attrib_json = json!({ "endpoint": service }).to_string();
     let res = indy_ledger_write
