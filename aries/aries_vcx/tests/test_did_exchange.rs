@@ -120,7 +120,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
 
     let (our_did_document, _our_verkey) =
         create_our_did_document(&agent_invitee.wallet, dummy_url.clone(), vec![]).await?;
-    info!("Inviter prepares did document: {our_did_document}");
+    info!("Invitee prepares did document: {our_did_document}");
     let peer_did_invitee = PeerDid::<Numalgo2>::from_did_doc(our_did_document.clone())?;
     info!("Invitee prepares their peer:did: {peer_did_invitee}");
     let did_inviter: Did = invitation_get_first_did_service(&invitation)?;

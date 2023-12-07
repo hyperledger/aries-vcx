@@ -96,7 +96,7 @@ mod unit_tests {
                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
                 "3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU"
             ],
-            "types": ["endpoint", "did-communication", "DIDComm"]
+            "types": ["endpoint", "did-communication", "DIDCommMessaging"]
         });
         assert_eq!(expected, json!(&service1));
     }
@@ -111,7 +111,7 @@ mod unit_tests {
                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
                 "3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU"
             ],
-            "types": ["endpoint", "did-communication", "DIDComm"]
+            "types": ["endpoint", "did-communication", "DIDCommMessaging"]
         })
         .to_string();
 
