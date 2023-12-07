@@ -136,8 +136,7 @@ fn deabbreviate_service(service: ServiceAbbreviatedDidPeer2, index: usize) -> Se
                 .iter()
                 .map(|service_type| match service_type.as_str() {
                     "dm" => ServiceType::DIDCommV2,
-                    _ => serde_json::from_str(service_type).unwrap(), /* todo: patrik: address
-                                                                       * unwrap */
+                    _ => ServiceType::from_str(service_type).unwrap(), // todo: patrik: the unwrap
                 })
                 .collect();
             OneOrList::List(typed)

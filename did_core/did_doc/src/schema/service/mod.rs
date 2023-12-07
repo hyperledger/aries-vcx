@@ -272,6 +272,6 @@ mod tests {
 
         let accept = service.extra_field_accept().unwrap();
         assert_eq!(accept.len(), 1);
-        assert_eq!(accept.first().unwrap(), &ServiceAcceptType::DIDCommV1);
+        assert_eq!(accept.first().unwrap(), &ServiceAcceptType::DIDCommV2);
     }
 }
