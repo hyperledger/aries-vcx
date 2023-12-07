@@ -32,20 +32,6 @@ pub struct Service {
     extra: HashMap<String, Value>,
 }
 
-// macro_rules! extra_field {
-//     ($func_name:ident, $field_name:ident, $type:ty) => {
-//         pub fn $func_name(&self) -> Result<Option<$type>, DidDocumentBuilderError> {
-//             match self.extra_field_as_as::<$type>(stringify!($field_name)) {
-//                 Ok(value) => Ok(Some(value)),
-//                 Err(err) => match err {
-//                     DidDocumentBuilderError::MissingField(_) => Ok(None),
-//                     _ => Err(err),
-//                 },
-//             }
-//         }
-//     };
-// }
-
 impl Service {
     pub fn new(
         id: Uri,
@@ -129,6 +115,50 @@ impl Service {
             }
             None => None,
         }
+    }
+
+    pub fn add_extra_field_as<T: serde::Serialize>(
+        &mut self,
+        key: &str,
+        value: T,
+    ) -> Result<(), DidDocumentBuilderError> {
+        let value = serde_json::to_value(value).map_err(|_err| {
+            DidDocumentBuilderError::CustomError(format!(
+                "Failed to serialize extra field {} as {}",
+                key,
+                std::any::type_name::<T>()
+            ))
+        })?;
+        self.extra.insert(key.to_string(), value);
+        Ok(())
+    }
+
+    pub fn add_extra_field_routing_keys(
+        &mut self,
+        routing_keys: Vec<ServiceKeyKind>,
+    ) -> Result<(), DidDocumentBuilderError> {
+        self.add_extra_field_as("routingKeys", routing_keys)
+    }
+
+    pub fn add_extra_field_recipient_keys(
+        &mut self,
+        recipient_keys: Vec<ServiceKeyKind>,
+    ) -> Result<(), DidDocumentBuilderError> {
+        self.add_extra_field_as("recipientKeys", recipient_keys)
+    }
+
+    pub fn add_extra_field_accept(
+        &mut self,
+        accept: Vec<ServiceAcceptType>,
+    ) -> Result<(), DidDocumentBuilderError> {
+        self.add_extra_field_as("accept", accept)
+    }
+
+    pub fn add_extra_field_priority(
+        &mut self,
+        priority: u32,
+    ) -> Result<(), DidDocumentBuilderError> {
+        self.add_extra_field_as("priority", priority)
     }
 }
 

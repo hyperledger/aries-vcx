@@ -3,8 +3,7 @@ use std::{collections::HashMap, str::FromStr};
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{
     did_doc::DidDocumentBuilder,
-    service::{extra_fields::didcommv2::ExtraFieldsDidCommV2, typed::ServiceType, Service},
-    types::uri::Uri,
+    service::{typed::ServiceType, Service},
     utils::OneOrList,
 };
 use did_parser::Did;
@@ -12,7 +11,6 @@ use public_key::Key;
 
 use crate::{
     error::DidPeerError,
-    helpers::convert_to_hashmap,
     peer_did::numalgos::numalgo2::{
         purpose::ElementPurpose, service_abbreviated::ServiceAbbreviatedDidPeer2,
         verification_method::get_verification_methods_by_key,
@@ -123,10 +121,10 @@ fn process_key_element(
 }
 
 fn deabbreviate_service(
-    service: ServiceAbbreviatedDidPeer2,
+    abbreviated: ServiceAbbreviatedDidPeer2,
     index: usize,
 ) -> Result<Service, DidPeerError> {
-    let service_type = match service.service_type().clone() {
+    let service_type = match abbreviated.service_type().clone() {
         OneOrList::One(service_type) => {
             let typed = match service_type.as_str() {
                 "dm" => ServiceType::DIDCommV2,
@@ -149,20 +147,16 @@ fn deabbreviate_service(
 
     let id = format!("#service-{}", index).parse()?;
 
-    let mut extra = HashMap::new();
-    let routing_keys = service.routing_keys();
-    if routing_keys.len() > 0 {
-        extra.insert(
-            "routing_keys".to_string(),
-            serde_json::to_value(routing_keys)?,
-        );
+    let mut service = Service::new(id, abbreviated.service_endpoint().clone(), service_type, HashMap::default());
+    let routing_keys = abbreviated.routing_keys();
+    if !routing_keys.is_empty(){
+        service.add_extra_field_routing_keys(routing_keys.to_vec())?;
     }
-    let accept = service.accept();
-    if accept.len() > 0 {
-        extra.insert("accept".to_string(), serde_json::to_value(accept)?);
+    let accept = abbreviated.accept();
+    if !accept.is_empty() {
+        service.add_extra_field_accept(accept.to_vec())?;
     }
-
-    Service::new(id, service.service_endpoint().clone(), service_type, extra)
+    Ok(service)
 }
 
 #[cfg(test)]
