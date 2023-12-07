@@ -82,7 +82,7 @@ fn process_service_element(
     let decoded = STANDARD_NO_PAD.decode(element)?;
     let service: ServiceAbbreviatedDidPeer2 = serde_json::from_slice(&decoded)?;
 
-    did_doc_builder = did_doc_builder.add_service(deabbreviate_service(service, *service_index));
+    did_doc_builder = did_doc_builder.add_service(deabbreviate_service(service, *service_index)?);
     *service_index += 1;
 
     Ok(did_doc_builder)
@@ -122,35 +122,36 @@ fn process_key_element(
     Ok(did_doc_builder)
 }
 
-fn deabbreviate_service(service: ServiceAbbreviatedDidPeer2, index: usize) -> Service {
+fn deabbreviate_service(service: ServiceAbbreviatedDidPeer2, index: usize) -> Result<Service, DidPeerError> {
     let service_type = match service.service_type().clone() {
         OneOrList::One(service_type) => {
             let typed = match service_type.as_str() {
                 "dm" => ServiceType::DIDCommV2,
-                _ => ServiceType::from_str(&service_type).unwrap(), // todo: patrik: the unwrap
+                _ => ServiceType::from_str(&service_type)?,
             };
             OneOrList::One(typed)
         }
         OneOrList::List(service_types) => {
-            let typed: Vec<ServiceType> = service_types
-                .iter()
-                .map(|service_type| match service_type.as_str() {
+            let mut typed = Vec::new();
+            for service_type in service_types.iter() {
+                let service = match service_type.as_str() {
                     "dm" => ServiceType::DIDCommV2,
-                    _ => ServiceType::from_str(service_type).unwrap(), // todo: patrik: the unwrap
-                })
-                .collect();
+                    _ => ServiceType::from_str(service_type)?,
+                };
+                typed.push(service);
+            }
             OneOrList::List(typed)
         }
     };
 
-    let id = format!("#service-{}", index).parse().unwrap(); // never panics; if Uri crate had builder we could do this safely
+    let id = format!("#service-{}", index).parse()?;
 
     // todo: patrik: should be based on service type
-    if service.routing_keys().is_empty() {
+    Ok(if service.routing_keys().is_empty() {
         build_service_aip1(service, id, service_type)
     } else {
         build_service_didcommv2(service, id, service_type)
-    }
+    })
 }
 
 fn build_service_aip1(
