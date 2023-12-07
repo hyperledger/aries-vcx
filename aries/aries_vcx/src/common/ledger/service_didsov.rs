@@ -88,6 +88,7 @@ mod unit_tests {
                 ServiceType::AIP1.to_string(),
                 ServiceType::DIDCommV1.to_string(),
                 ServiceType::DIDCommV2.to_string(),
+                ServiceType::Other("foobar".to_string()),
             ]));
 
         let expected = json!({
@@ -96,7 +97,7 @@ mod unit_tests {
                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
                 "3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU"
             ],
-            "types": ["endpoint", "did-communication", "DIDCommMessaging"]
+            "types": ["endpoint", "did-communication", "DIDCommMessaging", "foobar"]
         });
         assert_eq!(expected, json!(&service1));
     }
@@ -104,14 +105,13 @@ mod unit_tests {
     #[test]
     fn test_didsov_service_deserialization() {
         SetupMocks::init();
-
         let data = json!({
             "endpoint": "http://localhost:8080",
             "routingKeys": [
                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
                 "3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU"
             ],
-            "types": ["endpoint", "did-communication", "DIDCommMessaging"]
+            "types": ["endpoint", "did-communication", "DIDCommMessaging", "foobar"]
         })
         .to_string();
 
@@ -123,7 +123,8 @@ mod unit_tests {
             Some(vec![
                 ServiceType::AIP1.to_string(),
                 ServiceType::DIDCommV1.to_string(),
-                ServiceType::DIDCommV2.to_string()
+                ServiceType::DIDCommV2.to_string(),
+                ServiceType::Other("foobar".to_string())
             ])
         );
     }
