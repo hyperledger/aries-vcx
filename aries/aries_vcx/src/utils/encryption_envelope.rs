@@ -250,7 +250,6 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_pack_unpack_anon() {
         let setup = build_setup_profile().await;
-        // let (_, sender_key) = setup.wallet.create_and_store_my_did(None, None).await.unwrap();
         let (_, recipient_key) = setup
             .wallet
             .create_and_store_my_did(None, None)
@@ -262,7 +261,7 @@ pub mod unit_tests {
         let envelope = EncryptionEnvelope::create2(
             &setup.wallet,
             data_original.as_bytes(),
-            None, // Some(&sender_key),
+            None,
             recipient_key,
             [].to_vec(),
         )
