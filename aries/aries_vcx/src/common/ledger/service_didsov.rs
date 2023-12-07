@@ -8,7 +8,7 @@ pub const SERVICE_TYPE: &str = "IndyAgent";
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[serde(rename_all = "camelCase")]
-pub struct DidSovEndpointAttrib {
+pub struct EndpointDidSov {
     pub endpoint: Url,
     #[serde(default)]
     pub routing_keys: Option<Vec<String>>,
@@ -16,7 +16,7 @@ pub struct DidSovEndpointAttrib {
     pub types: Option<Vec<String>>,
 }
 
-impl DidSovEndpointAttrib {
+impl EndpointDidSov {
     pub fn create() -> Self {
         Self::default()
     }
@@ -37,9 +37,9 @@ impl DidSovEndpointAttrib {
     }
 }
 
-impl Default for DidSovEndpointAttrib {
-    fn default() -> DidSovEndpointAttrib {
-        DidSovEndpointAttrib {
+impl Default for EndpointDidSov {
+    fn default() -> EndpointDidSov {
+        EndpointDidSov {
             endpoint: "https://dummy.dummy/dummy".parse().expect("valid url"),
             routing_keys: Some(Vec::new()),
             types: None,
@@ -53,23 +53,23 @@ mod unit_tests {
     use did_doc::schema::service::typed::ServiceType;
     use diddoc_legacy::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
 
-    use crate::common::ledger::service_didsov::DidSovEndpointAttrib;
+    use crate::common::ledger::service_didsov::EndpointDidSov;
 
     #[test]
     fn test_service_comparison() {
-        let service1 = DidSovEndpointAttrib::create()
+        let service1 = EndpointDidSov::create()
             .set_service_endpoint(_service_endpoint())
             .set_routing_keys(Some(_routing_keys()));
 
-        let service2 = DidSovEndpointAttrib::create()
+        let service2 = EndpointDidSov::create()
             .set_service_endpoint(_service_endpoint())
             .set_routing_keys(Some(_routing_keys()));
 
-        let service3 = DidSovEndpointAttrib::create()
+        let service3 = EndpointDidSov::create()
             .set_service_endpoint("http://bogus_endpoint.com".parse().expect("valid url"))
             .set_routing_keys(Some(_routing_keys()));
 
-        let service4 = DidSovEndpointAttrib::create()
+        let service4 = EndpointDidSov::create()
             .set_service_endpoint(_service_endpoint())
             .set_routing_keys(Some(_routing_keys()));
 
@@ -81,7 +81,7 @@ mod unit_tests {
     #[test]
     fn test_didsov_service_serialization() {
         SetupMocks::init();
-        let service1 = DidSovEndpointAttrib::create()
+        let service1 = EndpointDidSov::create()
             .set_service_endpoint(_service_endpoint())
             .set_routing_keys(Some(_routing_keys()))
             .set_types(Some(vec![
@@ -115,7 +115,7 @@ mod unit_tests {
         })
         .to_string();
 
-        let deserialized: DidSovEndpointAttrib = serde_json::from_str(&data).unwrap();
+        let deserialized: EndpointDidSov = serde_json::from_str(&data).unwrap();
         assert_eq!(deserialized.endpoint, _service_endpoint());
         assert_eq!(deserialized.routing_keys, Some(_routing_keys()));
         assert_eq!(

@@ -147,9 +147,14 @@ fn deabbreviate_service(
 
     let id = format!("#service-{}", index).parse()?;
 
-    let mut service = Service::new(id, abbreviated.service_endpoint().clone(), service_type, HashMap::default());
+    let mut service = Service::new(
+        id,
+        abbreviated.service_endpoint().clone(),
+        service_type,
+        HashMap::default(),
+    );
     let routing_keys = abbreviated.routing_keys();
-    if !routing_keys.is_empty(){
+    if !routing_keys.is_empty() {
         service.add_extra_field_routing_keys(routing_keys.to_vec())?;
     }
     let accept = abbreviated.accept();

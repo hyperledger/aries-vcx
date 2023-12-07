@@ -3,7 +3,7 @@ use std::{collections::HashMap, str::FromStr};
 use aries_vcx::{
     aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions,
     common::ledger::{
-        service_didsov::DidSovEndpointAttrib,
+        service_didsov::EndpointDidSov,
         transactions::{
             clear_attr, get_attr, get_service, write_endorser_did, write_endpoint_from_service,
             write_endpoint_legacy,
@@ -92,7 +92,7 @@ pub async fn ledger_write_endpoint(
     target_did: &str,
     routing_keys: Vec<String>,
     endpoint: String,
-) -> LibvcxResult<DidSovEndpointAttrib> {
+) -> LibvcxResult<EndpointDidSov> {
     let wallet = get_main_wallet()?;
     // let service =
     //     DidSovEndpointAttrib::create()

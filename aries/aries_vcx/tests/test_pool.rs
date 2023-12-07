@@ -6,7 +6,7 @@ use aries_vcx::{
     common::{
         keys::{get_verkey_from_ledger, rotate_verkey},
         ledger::{
-            service_didsov::DidSovEndpointAttrib,
+            service_didsov::EndpointDidSov,
             transactions::{
                 add_attr, add_new_did, clear_attr, get_attr, get_service, write_endorser_did,
                 write_endpoint, write_endpoint_legacy,
@@ -217,7 +217,7 @@ async fn test_pool_add_get_service_public() -> Result<(), Box<dyn Error>> {
     )
     .await?;
 
-    let create_service = DidSovEndpointAttrib::create()
+    let create_service = EndpointDidSov::create()
         .set_service_endpoint("https://example.org".parse()?)
         .set_routing_keys(Some(vec!["did:sov:456".into()]));
     write_endpoint(
@@ -253,7 +253,7 @@ async fn test_pool_add_get_service_public() -> Result<(), Box<dyn Error>> {
 async fn test_pool_add_get_service_public_none_routing_keys() -> Result<(), Box<dyn Error>> {
     let setup = build_setup_profile().await;
     let did = setup.institution_did.clone();
-    let create_service = DidSovEndpointAttrib::create()
+    let create_service = EndpointDidSov::create()
         .set_service_endpoint("https://example.org".parse()?)
         .set_routing_keys(None);
     write_endpoint(&setup.wallet, &setup.ledger_write, &did, &create_service).await?;
@@ -299,7 +299,7 @@ async fn test_pool_multiple_service_formats() -> Result<(), Box<dyn Error>> {
     // Write new service format
     let endpoint_url_2 = "https://example2.org";
     let routing_keys_2 = vec![];
-    let service_2 = DidSovEndpointAttrib::create()
+    let service_2 = EndpointDidSov::create()
         .set_service_endpoint(endpoint_url_2.parse()?)
         .set_routing_keys(Some(routing_keys_2.clone()));
     write_endpoint(&setup.wallet, &setup.ledger_write, &did, &service_2).await?;

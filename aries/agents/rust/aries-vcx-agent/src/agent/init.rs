@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     common::ledger::{
-        service_didsov::DidSovEndpointAttrib,
+        service_didsov::EndpointDidSov,
         transactions::{add_new_did, write_endpoint},
     },
     did_doc::schema::service::typed::ServiceType,
@@ -105,7 +105,7 @@ impl Agent {
             None,
         )
         .await?;
-        let endpoint = DidSovEndpointAttrib::create()
+        let endpoint = EndpointDidSov::create()
             .set_service_endpoint(init_config.service_endpoint.clone())
             .set_types(Some(vec![ServiceType::DIDCommV1.to_string()]));
         write_endpoint(
