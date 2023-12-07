@@ -23,20 +23,7 @@ pub struct ServiceDidCommV1 {
 }
 
 impl ServiceDidCommV1 {
-    // remove this in favor of new_2, we should keep "ExtraFields" type internal only
-    // exposing any new types is burden on the user
-    pub fn new(id: Uri, service_endpoint: Url, extra: ExtraFieldsDidCommV1) -> Self {
-        Self {
-            service: TypedService::<ExtraFieldsDidCommV1> {
-                id,
-                service_type: OneOrList::One(ServiceType::DIDCommV1.to_string()),
-                service_endpoint,
-                extra,
-            },
-        }
-    }
-
-    pub fn new_2(
+    pub fn new(
         id: Uri,
         service_endpoint: Url,
         priority: u32,

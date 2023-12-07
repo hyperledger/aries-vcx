@@ -214,7 +214,7 @@ pub async fn pairwise_encrypt(
     // todo: hacky, assuming we have full base58 key inlined which we possibly don't
     //       The recipient key might have to be dereferenced
     let sender_vk = service
-        .extra_field_as_as::<Vec<String>>("recipientKeys")
+        .extra_field_recipient_keys()
         .map_err(|err| {
             AgentError::from_msg(
                 AgentErrorKind::InvalidState,
@@ -239,7 +239,7 @@ pub async fn pairwise_encrypt(
         .ok_or_else(|| AgentError::from_msg(AgentErrorKind::InvalidState, "No service found"))?;
     // todo: hacky, assuming we have full base58 key inlined which we probably don't
     let recipient_key = service
-        .extra_field_as_as::<Vec<String>>("recipientKeys")
+        .extra_field_recipient_keys()
         .map_err(|err| {
             AgentError::from_msg(
                 AgentErrorKind::InvalidState,
@@ -253,21 +253,19 @@ pub async fn pairwise_encrypt(
         .clone();
 
     // todo: again, not considering possibility of having didurl as value, assuming inlined key
-    let routing_keys = service
-        .extra_field_as_as::<Vec<String>>("routingKeys")
-        .map_err(|err| {
-            AgentError::from_msg(
-                AgentErrorKind::InvalidState,
-                &format!("No routing_keys found: {}", err),
-            )
-        })?;
+    let routing_keys = service.extra_field_routing_keys().map_err(|err| {
+        AgentError::from_msg(
+            AgentErrorKind::InvalidState,
+            &format!("No routing_keys found: {}", err),
+        )
+    })?;
 
     EncryptionEnvelope::create2(
         wallet,
         serde_json::json!(message).to_string().as_bytes(),
-        Some(&sender_vk),
-        recipient_key,
-        routing_keys,
+        Some(&sender_vk.to_string()),
+        recipient_key.to_string(),
+        routing_keys.iter().map(|k| k.to_string()).collect(),
     )
     .await
     .map_err(|err| err.into())

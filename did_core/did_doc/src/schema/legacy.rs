@@ -113,13 +113,9 @@ fn collect_authentication_fingerprints(legacy_ddo: &LegacyDidDoc) -> Result<Vec<
 fn collect_encoded_services(legacy_ddo: &LegacyDidDoc) -> Vec<String> {
     let mut encoded_services = vec![];
     for service in &legacy_ddo.service {
-        let priority = service.extra_field_as_as("priority").unwrap_or(0);
-        let routing_keys = service
-            .extra_field_as_as::<Vec<String>>("routingKeys")
-            .unwrap_or(vec![]);
-        let recipient_keys = service
-            .extra_field_as_as::<Vec<String>>("recipientKeys")
-            .unwrap_or(vec![]);
+        let priority = service.extra_field_priority().unwrap_or(0);
+        let routing_keys = service.extra_field_routing_keys().unwrap_or(vec![]);
+        let recipient_keys = service.extra_field_recipient_keys().unwrap_or(vec![]);
         let service_endpoint = service.service_endpoint().to_string();
         let service_type = service.service_types().first().unwrap().to_string();
         let service = json!({
@@ -285,7 +281,7 @@ mod tests {
         );
 
         let recipient_key = match service
-            .extra_field_as_as::<Vec<ServiceKeyKind>>("recipientKeys")
+            .extra_field_recipient_keys()
             .unwrap()
             .first()
             .unwrap()
@@ -299,13 +295,7 @@ mod tests {
             _ => panic!("Expected reference"),
         };
         assert_eq!(recipient_key, VERKEY_BASE58);
-        assert_eq!(service.extra_field_as_as::<u32>("priority").unwrap(), 0);
-        assert_eq!(
-            service
-                .extra_field_as_as::<Vec<String>>("routingKeys")
-                .unwrap()
-                .len(),
-            2
-        );
+        assert_eq!(service.extra_field_priority().unwrap(), 0);
+        assert_eq!(service.extra_field_routing_keys().unwrap().len(), 2);
     }
 }

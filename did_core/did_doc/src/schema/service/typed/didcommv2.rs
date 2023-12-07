@@ -3,7 +3,7 @@ use url::Url;
 
 use crate::schema::{
     service::{
-        extra_fields::didcommv2::ExtraFieldsDidCommV2,
+        extra_fields::{didcommv2::ExtraFieldsDidCommV2, ServiceAcceptType, ServiceKeyKind},
         typed::{ServiceType, TypedService},
     },
     types::uri::Uri,
@@ -17,7 +17,16 @@ pub struct ServiceDidCommV2 {
 }
 
 impl ServiceDidCommV2 {
-    pub fn new(id: Uri, service_endpoint: Url, extra: ExtraFieldsDidCommV2) -> Self {
+    pub fn new(
+        id: Uri,
+        service_endpoint: Url,
+        routing_keys: Vec<ServiceKeyKind>,
+        accept: Vec<ServiceAcceptType>,
+    ) -> Self {
+        let extra: ExtraFieldsDidCommV2 = ExtraFieldsDidCommV2::builder()
+            .set_routing_keys(routing_keys)
+            .set_accept(accept)
+            .build();
         Self {
             service: TypedService::<ExtraFieldsDidCommV2> {
                 id,

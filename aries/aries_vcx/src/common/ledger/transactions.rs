@@ -192,7 +192,11 @@ pub async fn write_endpoint(
 }
 
 fn _service_to_didsov_endpoint_attribute(service: &Service) -> DidSovEndpointAttrib {
-    let routing_keys = service.extra_field_as_as::<Vec<String>>("routingKeys").ok();
+    let routing_keys: Option<Vec<String>> = service
+        .extra_field_routing_keys()
+        .ok()
+        .map(|keys| keys.iter().map(|key| key.to_string()).collect());
+
     let service_types = service.service_types();
     let types_str: Vec<String> = service_types.iter().map(|t| t.to_string()).collect();
     DidSovEndpointAttrib::create()

@@ -5,11 +5,7 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use chrono::Utc;
 use did_doc::schema::{
     did_doc::DidDocument,
-    service::{
-        extra_fields::{didcommv1::ExtraFieldsDidCommV1, ServiceKeyKind},
-        typed::didcommv1::ServiceDidCommV1,
-        Service,
-    },
+    service::{extra_fields::ServiceKeyKind, typed::didcommv1::ServiceDidCommV1, Service},
     types::uri::Uri,
     verification_method::{VerificationMethod, VerificationMethodType},
 };
@@ -78,15 +74,12 @@ pub async fn create_our_did_document(
     let service: Service = ServiceDidCommV1::new(
         Uri::new("#0")?,
         service_endpoint,
-        ExtraFieldsDidCommV1::builder()
-            .set_routing_keys(
-                routing_keys
-                    .into_iter()
-                    .map(ServiceKeyKind::Value)
-                    .collect(),
-            )
-            .set_recipient_keys(vec![ServiceKeyKind::DidKey(key_enc.clone().try_into()?)])
-            .build(),
+        0,
+        vec![ServiceKeyKind::DidKey(key_enc.clone().try_into()?)],
+        routing_keys
+            .into_iter()
+            .map(ServiceKeyKind::Value)
+            .collect(),
     )
     .try_into()?;
 
@@ -230,9 +223,7 @@ where
 #[cfg(test)]
 mod tests {
     use did_doc::schema::{
-        service::{extra_fields::didcommv1::ExtraFieldsDidCommV1, typed::ServiceType},
-        utils::OneOrList,
-        verification_method::VerificationMethodKind,
+        service::typed::ServiceType, utils::OneOrList, verification_method::VerificationMethodKind,
     };
 
     use super::*;
@@ -250,22 +241,18 @@ mod tests {
         )
         .unwrap();
 
+        let recipient_keys = vec![ServiceKeyKind::DidKey(key_enc.clone().try_into().unwrap())];
         let service_endpoint = Url::parse("http://example.com").unwrap();
-        let routing_keys = vec!["routing_key1".to_string(), "routing_key2".to_string()];
+        let routing_keys = vec![
+            ServiceKeyKind::Value("routing_key1".into()),
+            ServiceKeyKind::Value("routing_key2".into()),
+        ];
         let service: Service = ServiceDidCommV1::new(
             Uri::new("#service-0").unwrap(),
             service_endpoint.clone(),
-            ExtraFieldsDidCommV1::builder()
-                .set_routing_keys(
-                    routing_keys
-                        .into_iter()
-                        .map(ServiceKeyKind::Value)
-                        .collect(),
-                )
-                .set_recipient_keys(vec![ServiceKeyKind::DidKey(
-                    key_enc.clone().try_into().unwrap(),
-                )])
-                .build(),
+            0,
+            recipient_keys,
+            routing_keys,
         )
         .try_into()
         .unwrap();
@@ -285,17 +272,24 @@ mod tests {
             &OneOrList::List(vec![ServiceType::DIDCommV1])
         );
         assert_eq!(ddo_service.service_endpoint(), &service_endpoint);
+        let recipient_keys = ddo_service
+            .extra_field_recipient_keys()
+            .map(|keys| {
+                keys.into_iter()
+                    .map(|key| key.to_string())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap();
         assert_eq!(
-            ddo_service
-                .extra_field_as_as::<Vec<String>>("recipientKeys")
-                .unwrap(),
+            recipient_keys,
             vec!["did:key:z6s8D3GAEHVteQMfhS4qBibNXjqS5D79NykfpGdF2VLmAtEysDRs6PEVBChSTTZ"]
         );
         assert_eq!(
-            ddo_service
-                .extra_field_as_as::<Vec<String>>("routingKeys")
-                .unwrap(),
-            vec!["routing_key1", "routing_key2"]
+            ddo_service.extra_field_routing_keys().unwrap(),
+            vec![
+                ServiceKeyKind::Value("routing_key1".into()),
+                ServiceKeyKind::Value("routing_key2".into())
+            ]
         );
 
         assert_eq!(did_doc.verification_method().len(), 1);

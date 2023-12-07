@@ -1,4 +1,5 @@
 use std::str::FromStr;
+
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{
     did_doc::DidDocumentBuilder,
@@ -126,7 +127,7 @@ fn deabbreviate_service(service: ServiceAbbreviatedDidPeer2, index: usize) -> Se
         OneOrList::One(service_type) => {
             let typed = match service_type.as_str() {
                 "dm" => ServiceType::DIDCommV2,
-                _ => ServiceType::from_str(&service_type).unwrap() // todo: patrik: the unwrap
+                _ => ServiceType::from_str(&service_type).unwrap(), // todo: patrik: the unwrap
             };
             OneOrList::One(typed)
         }

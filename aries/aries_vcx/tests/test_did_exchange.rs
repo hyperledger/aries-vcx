@@ -66,7 +66,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     // todo: patrik: update create_test_agent_endorser_2 to not consume trustee agent
     let agent_inviter =
         create_test_agent_endorser_2(&setup.genesis_file_path, agent_trustee).await?;
-    let create_service = ServiceDidCommV1::new_2(
+    let create_service = ServiceDidCommV1::new(
         Uri::new("#service-0").unwrap(),
         dummy_url.clone(),
         0,

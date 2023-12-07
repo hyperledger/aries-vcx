@@ -1,6 +1,3 @@
-pub mod extra_fields;
-pub mod typed;
-
 use std::collections::HashMap;
 
 use display_as_json::Display;
@@ -10,8 +7,18 @@ use url::Url;
 
 use crate::{
     error::DidDocumentBuilderError,
-    schema::{service::typed::ServiceType, types::uri::Uri, utils::OneOrList},
+    schema::{
+        service::{
+            extra_fields::{ServiceAcceptType, ServiceKeyKind},
+            typed::ServiceType,
+        },
+        types::uri::Uri,
+        utils::OneOrList,
+    },
 };
+
+pub mod extra_fields;
+pub mod typed;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Display)]
 #[serde(rename_all = "camelCase")]
@@ -24,6 +31,20 @@ pub struct Service {
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     extra: HashMap<String, Value>,
 }
+
+// macro_rules! extra_field {
+//     ($func_name:ident, $field_name:ident, $type:ty) => {
+//         pub fn $func_name(&self) -> Result<Option<$type>, DidDocumentBuilderError> {
+//             match self.extra_field_as_as::<$type>(stringify!($field_name)) {
+//                 Ok(value) => Ok(Some(value)),
+//                 Err(err) => match err {
+//                     DidDocumentBuilderError::MissingField(_) => Ok(None),
+//                     _ => Err(err),
+//                 },
+//             }
+//         }
+//     };
+// }
 
 impl Service {
     pub fn new(
@@ -63,22 +84,50 @@ impl Service {
         &self.extra
     }
 
-    pub fn extra_field_as_as<T: for<'de> serde::Deserialize<'de>>(
+    pub fn extra_field_priority(&self) -> Result<u32, DidDocumentBuilderError> {
+        self._expected_extra_field_type::<u32>("priority")
+    }
+
+    pub fn extra_field_routing_keys(&self) -> Result<Vec<ServiceKeyKind>, DidDocumentBuilderError> {
+        self._expected_extra_field_type::<Vec<ServiceKeyKind>>("routingKeys")
+    }
+
+    pub fn extra_field_recipient_keys(
+        &self,
+    ) -> Result<Vec<ServiceKeyKind>, DidDocumentBuilderError> {
+        self._expected_extra_field_type::<Vec<ServiceKeyKind>>("recipientKeys")
+    }
+
+    pub fn extra_field_accept(&self) -> Result<Vec<ServiceAcceptType>, DidDocumentBuilderError> {
+        self._expected_extra_field_type::<Vec<ServiceAcceptType>>("accept")
+    }
+
+    fn _expected_extra_field_type<T: for<'de> serde::Deserialize<'de>>(
         &self,
         key: &str,
     ) -> Result<T, DidDocumentBuilderError> {
+        match self.extra_field_as_as::<T>(key) {
+            None => Err(DidDocumentBuilderError::MissingField(String::from(key))),
+            Some(value) => value,
+        }
+    }
+
+    pub fn extra_field_as_as<T: for<'de> serde::Deserialize<'de>>(
+        &self,
+        key: &str,
+    ) -> Option<Result<T, DidDocumentBuilderError>> {
         match self.extra.get(key) {
-            None => Err(DidDocumentBuilderError::CustomError(format!(
-                "Extra field {} not found",
-                key
-            ))),
-            Some(value) => serde_json::from_value::<T>(value.clone()).map_err(|_err| {
-                DidDocumentBuilderError::CustomError(format!(
-                    "Extra field {} is not of type {}",
-                    key,
-                    std::any::type_name::<T>()
-                ))
-            }),
+            Some(value) => {
+                let result = serde_json::from_value::<T>(value.clone()).map_err(|_err| {
+                    DidDocumentBuilderError::CustomError(format!(
+                        "Extra field {} is not of type {}",
+                        key,
+                        std::any::type_name::<T>()
+                    ))
+                });
+                Some(result)
+            }
+            None => None,
         }
     }
 }
@@ -165,9 +214,7 @@ mod tests {
             "https://example.com/endpoint"
         );
 
-        let recipient_keys = service
-            .extra_field_as_as::<Vec<ServiceKeyKind>>("recipientKeys")
-            .unwrap();
+        let recipient_keys = service.extra_field_recipient_keys().unwrap();
         assert_eq!(recipient_keys.len(), 1);
         assert_eq!(
             recipient_keys.first().unwrap(),
@@ -179,9 +226,7 @@ mod tests {
             )
         );
 
-        let routing_keys = service
-            .extra_field_as_as::<Vec<ServiceKeyKind>>("routingKeys")
-            .unwrap();
+        let routing_keys = service.extra_field_routing_keys().unwrap();
         assert_eq!(routing_keys.len(), 1);
         assert_eq!(
             routing_keys.first().unwrap(),
@@ -193,13 +238,11 @@ mod tests {
             )
         );
 
-        let accept = service
-            .extra_field_as_as::<Vec<ServiceAcceptType>>("accept")
-            .unwrap();
+        let accept = service.extra_field_accept().unwrap();
         assert_eq!(accept.len(), 1);
         assert_eq!(accept.first().unwrap(), &ServiceAcceptType::DIDCommV1);
 
-        let priority = service.extra_field_as_as::<u32>("priority").unwrap();
+        let priority = service.extra_field_priority().unwrap();
         assert_eq!(priority, 0);
     }
 
@@ -227,9 +270,7 @@ mod tests {
             "https://example.com/endpoint"
         );
 
-        let accept = service
-            .extra_field_as_as::<Vec<ServiceAcceptType>>("accept")
-            .unwrap();
+        let accept = service.extra_field_accept().unwrap();
         assert_eq!(accept.len(), 1);
         assert_eq!(accept.first().unwrap(), &ServiceAcceptType::DIDCommV1);
     }
