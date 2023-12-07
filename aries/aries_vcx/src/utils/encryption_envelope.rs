@@ -28,23 +28,26 @@ impl EncryptionEnvelope {
             did_doc
         );
 
-        let recipient_keys = json!(did_doc.recipient_keys()?).to_string();
+        let recipient_key =
+            did_doc
+                .recipient_keys()?
+                .first()
+                .cloned()
+                .ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    format!("No recipient key found in DIDDoc: {:?}", did_doc),
+                ))?;
         let routing_keys = did_doc.routing_keys();
         let message = EncryptionEnvelope::encrypt_for_pairwise(
             wallet,
             message,
             sender_vk,
-            recipient_keys.clone(),
+            recipient_key.clone(),
         )
         .await?;
-        EncryptionEnvelope::wrap_into_forward_messages(
-            wallet,
-            message,
-            recipient_keys,
-            routing_keys,
-        )
-        .await
-        .map(EncryptionEnvelope)
+        EncryptionEnvelope::wrap_into_forward_messages(wallet, message, recipient_key, routing_keys)
+            .await
+            .map(EncryptionEnvelope)
     }
 
     async fn encrypt_for_pairwise(
@@ -57,9 +60,9 @@ impl EncryptionEnvelope {
             "Encrypting for pairwise; sender_vk: {:?}, recipient_key: {}",
             sender_vk, recipient_key
         );
-
+        let recipient_keys = json!([recipient_key.clone()]).to_string();
         wallet
-            .pack_message(sender_vk, &recipient_key, message)
+            .pack_message(sender_vk, &recipient_keys, message)
             .await
             .map_err(|err| err.into())
     }
@@ -70,9 +73,13 @@ impl EncryptionEnvelope {
         recipient_key: String,
         routing_keys: Vec<String>,
     ) -> VcxResult<Vec<u8>> {
-        let mut forward_to_key = recipient_key.clone();
+        let mut forward_to_key = recipient_key;
 
         for routing_key in routing_keys.iter() {
+            debug!(
+                "Wrapping message in forward message; forward_to_key: {}, routing_key: {}",
+                forward_to_key, routing_key
+            );
             message = EncryptionEnvelope::wrap_into_forward(
                 wallet,
                 message,
@@ -82,7 +89,6 @@ impl EncryptionEnvelope {
             .await?;
             forward_to_key = routing_key.clone();
         }
-
         Ok(message)
     }
 
