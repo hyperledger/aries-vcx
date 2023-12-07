@@ -10,8 +10,6 @@ use crate::schema::{
     verification_method::{VerificationMethod, VerificationMethodType},
 };
 
-// TODO: Remove defaults if it turns out they are not needed. Preserved based on the original
-// legacy DDO implementation.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, display_as_json::Display)]
 #[serde(deny_unknown_fields)]
 pub struct LegacyDidDoc {

@@ -88,7 +88,7 @@ mod unit_tests {
                 ServiceType::AIP1.to_string(),
                 ServiceType::DIDCommV1.to_string(),
                 ServiceType::DIDCommV2.to_string(),
-                ServiceType::Other("foobar".to_string()),
+                "foobar".to_string(),
             ]));
 
         let expected = json!({
@@ -124,7 +124,7 @@ mod unit_tests {
                 ServiceType::AIP1.to_string(),
                 ServiceType::DIDCommV1.to_string(),
                 ServiceType::DIDCommV2.to_string(),
-                ServiceType::Other("foobar".to_string())
+                "foobar".to_string()
             ])
         );
     }

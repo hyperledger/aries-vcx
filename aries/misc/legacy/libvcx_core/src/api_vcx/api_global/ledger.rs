@@ -94,24 +94,6 @@ pub async fn ledger_write_endpoint(
     endpoint: String,
 ) -> LibvcxResult<EndpointDidSov> {
     let wallet = get_main_wallet()?;
-    // let service =
-    //     DidSovEndpointAttrib::create()
-    //         .set_service_endpoint(Url::from_str(&endpoint).map_err(|err| {
-    //             LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string())
-    //         })?)
-    //         .set_types(Some(vec![
-    //             DidSovServiceType::Endpoint,
-    //             DidSovServiceType::DidCommunication,
-    //         ]))
-    //         .set_routing_keys(Some(routing_keys));
-
-    // write_endpoint(
-    //     wallet.as_ref(),
-    //     get_main_ledger_write()?.as_ref(),
-    //     target_did,
-    //     &service,
-    // )
-
     let endpoint = Url::from_str(&endpoint)
         .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?;
     let mut sov_service_extras = HashMap::new();
@@ -123,7 +105,7 @@ pub async fn ledger_write_endpoint(
         "#service-0".parse().unwrap(),
         endpoint,
         OneOrList::List(vec![ServiceType::AIP1, ServiceType::DIDCommV1]),
-        sov_service_extras,
+        HashMap::new(),
     );
     let (_res, endpoint_attrib) = write_endpoint_from_service(
         wallet.as_ref(),

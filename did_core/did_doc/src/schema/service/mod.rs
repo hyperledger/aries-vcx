@@ -167,6 +167,7 @@ mod tests {
     use std::collections::HashMap;
 
     use did_parser::DidUrl;
+    use serde_json::json;
 
     use crate::schema::{
         service::{
@@ -198,13 +199,13 @@ mod tests {
 
     #[test]
     fn test_serde_service_aip1() {
-        let service_aip1: &str = r#"
-        {
+        let service_aip1 = json!({
             "id": "service-0",
             "type": "endpoint",
             "serviceEndpoint": "https://example.com/endpoint"
-        }"#;
-        let service = serde_json::from_str::<Service>(service_aip1).unwrap();
+        })
+        .to_string();
+        let service = serde_json::from_str::<Service>(&service_aip1).unwrap();
 
         assert_eq!(service.id().to_string(), "service-0");
         assert_eq!(
@@ -216,23 +217,17 @@ mod tests {
 
     #[test]
     fn test_serde_service_didcomm1() {
-        let service_didcomm1: &str = r#"
-        {
+        let service_didcomm1 = json!({
             "id": "service-0",
             "type": "did-communication",
             "priority": 0,
-            "recipientKeys": [
-                "did:sov:HR6vs6GEZ8rHaVgjg2WodM#key-agreement-1"
-            ],
-            "routingKeys": [
-                "did:sov:HR6vs6GEZ8rHaVgjg2WodM#key-agreement-2"
-            ],
-            "accept": [
-                "didcomm/aip2;env=rfc19"
-            ],
+            "recipientKeys": ["did:sov:HR6vs6GEZ8rHaVgjg2WodM#key-agreement-1"],
+            "routingKeys": [ "did:sov:HR6vs6GEZ8rHaVgjg2WodM#key-agreement-2"],
+            "accept": ["didcomm/aip2;env=rfc19"],
             "serviceEndpoint": "https://example.com/endpoint"
-        }"#;
-        let service = serde_json::from_str::<Service>(service_didcomm1).unwrap();
+        })
+        .to_string();
+        let service = serde_json::from_str::<Service>(&service_didcomm1).unwrap();
 
         assert_eq!(service.id().to_string(), "service-0");
         assert_eq!(
@@ -278,17 +273,15 @@ mod tests {
 
     #[test]
     fn test_serde_service_didcomm2() {
-        let service_didcomm2: &str = r#"
-        {
+        let service_didcomm2 = json!({
           "id": "service-0",
           "type": "DIDCommMessaging",
-          "accept": [
-            "didcomm/v2"
-          ],
+          "accept": [ "didcomm/v2"],
           "routingKeys": [],
           "serviceEndpoint": "https://example.com/endpoint"
-        }"#;
-        let service = serde_json::from_str::<Service>(service_didcomm2).unwrap();
+        })
+        .to_string();
+        let service = serde_json::from_str::<Service>(&service_didcomm2).unwrap();
 
         assert_eq!(service.id().to_string(), "service-0");
         assert_eq!(

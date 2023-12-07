@@ -35,8 +35,6 @@ pub struct PeerDidResolutionOptions {
 impl DidResolvable for PeerDidResolver {
     type DidResolutionOptions = PeerDidResolutionOptions;
 
-    // todo: Make PublicKeyEncoding configurable via options extra fields
-    //       Perhaps revert some of the associated fields & generics for the resolver
     async fn resolve(
         &self,
         did: &Did,
