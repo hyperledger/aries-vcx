@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{
@@ -122,7 +122,10 @@ fn process_key_element(
     Ok(did_doc_builder)
 }
 
-fn deabbreviate_service(service: ServiceAbbreviatedDidPeer2, index: usize) -> Result<Service, DidPeerError> {
+fn deabbreviate_service(
+    service: ServiceAbbreviatedDidPeer2,
+    index: usize,
+) -> Result<Service, DidPeerError> {
     let service_type = match service.service_type().clone() {
         OneOrList::One(service_type) => {
             let typed = match service_type.as_str() {
@@ -146,44 +149,20 @@ fn deabbreviate_service(service: ServiceAbbreviatedDidPeer2, index: usize) -> Re
 
     let id = format!("#service-{}", index).parse()?;
 
-    // todo: patrik: should be based on service type
-    Ok(if service.routing_keys().is_empty() {
-        build_service_aip1(service, id, service_type)
-    } else {
-        build_service_didcommv2(service, id, service_type)
-    })
-}
+    let mut extra = HashMap::new();
+    let routing_keys = service.routing_keys();
+    if routing_keys.len() > 0 {
+        extra.insert(
+            "routing_keys".to_string(),
+            serde_json::to_value(routing_keys)?,
+        );
+    }
+    let accept = service.accept();
+    if accept.len() > 0 {
+        extra.insert("accept".to_string(), serde_json::to_value(accept)?);
+    }
 
-fn build_service_aip1(
-    service: ServiceAbbreviatedDidPeer2,
-    id: Uri,
-    service_type: OneOrList<ServiceType>,
-) -> Service {
-    Service::new(
-        id,
-        service.service_endpoint().clone(),
-        service_type,
-        Default::default(),
-    )
-}
-
-fn build_service_didcommv2(
-    service: ServiceAbbreviatedDidPeer2,
-    id: Uri,
-    service_type: OneOrList<ServiceType>,
-) -> Service {
-    let extra = ExtraFieldsDidCommV2::builder()
-        .set_routing_keys(service.routing_keys().to_owned())
-        .set_accept(service.accept().to_owned())
-        .build();
-    // todo: patrik: mind the unwrap, i believe this method can be removed altogether, see th
-    // callsite
-    Service::new(
-        id,
-        service.service_endpoint().clone(),
-        service_type,
-        convert_to_hashmap(&extra).unwrap(),
-    )
+    Service::new(id, service.service_endpoint().clone(), service_type, extra)
 }
 
 #[cfg(test)]
