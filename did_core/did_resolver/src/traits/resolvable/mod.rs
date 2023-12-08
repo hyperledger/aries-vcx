@@ -1,6 +1,5 @@
 pub mod resolution_error;
 pub mod resolution_metadata;
-pub mod resolution_options;
 pub mod resolution_output;
 
 use async_trait::async_trait;
