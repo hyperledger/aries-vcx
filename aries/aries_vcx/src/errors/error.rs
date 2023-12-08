@@ -13,6 +13,8 @@ pub enum AriesVcxErrorKind {
     InvalidState,
     #[error("Invalid Configuration")]
     InvalidConfiguration,
+    #[error("Authentication error")]
+    AuthenticationError,
     #[error("Invalid JSON string")]
     InvalidJson,
     #[error("Invalid Option")]

@@ -64,7 +64,7 @@ async fn decrypt_message(
     received: Vec<u8>,
     consumer_to_institution: &GenericConnection,
 ) -> AriesMessage {
-    EncryptionEnvelope::auth_unpack(
+    EncryptionEnvelope::auth_unpack_aries_msg(
         &consumer.wallet,
         received,
         &consumer_to_institution.remote_vk().unwrap(),
