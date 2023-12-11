@@ -1074,6 +1074,7 @@ impl MediatedConnection {
     ) -> VcxResult<Vec<DownloadedMessage>> {
         match self.get_state() {
             MediatedConnectionState::Invitee(MediatedInviteeState::Initial)
+            | MediatedConnectionState::Invitee(MediatedInviteeState::Requested)
             | MediatedConnectionState::Inviter(MediatedInviterState::Initial)
             | MediatedConnectionState::Inviter(MediatedInviterState::Invited) => {
                 let msgs = futures::stream::iter(
