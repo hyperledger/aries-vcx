@@ -1,10 +1,12 @@
-use aries_askar::kms::KeyAlg;
+use aries_askar::crypto::alg::Chacha20Types;
+use aries_askar::kms::{KeyAlg, LocalKey};
 use async_trait::async_trait;
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
-use crate::wallet2::{DidWallet, SigType};
+use crate::wallet2::{DidWallet, Key, SigType, UnpackedMessage};
 use crate::{errors::error::VcxCoreResult, wallet2::DidData};
 
+use super::packing::Packing;
 use super::{AskarWallet, RngMethod};
 
 #[async_trait]
@@ -119,6 +121,46 @@ impl DidWallet for AskarWallet {
 
         Ok(false)
     }
+
+    async fn pack_message(
+        &self,
+        sender_vk: Option<String>,
+        recipient_keys: Vec<Key>,
+        msg: &[u8],
+    ) -> VcxCoreResult<Vec<u8>> {
+        if recipient_keys.is_empty() {
+            return Err(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidInput,
+                "recipient keys should not be empty",
+            ));
+        }
+
+        let enc_key = LocalKey::generate(KeyAlg::Chacha20(Chacha20Types::C20P), true)?;
+        let packing = Packing::new();
+
+        let base64_data = if let Some(sender_verkey_name) = sender_vk {
+            let mut session = self.backend.session(self.profile.clone()).await?;
+
+            let my_key = self
+                .fetch_local_key(&mut session, &sender_verkey_name)
+                .await?;
+            packing.pack_authcrypt(&enc_key, recipient_keys, my_key)?
+        } else {
+            packing.pack_anoncrypt(&enc_key, recipient_keys)?
+        };
+
+        Ok(packing.pack_all(&base64_data, enc_key, msg)?)
+    }
+
+    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackedMessage> {
+        let msg_jwe = serde_json::from_slice(msg)?;
+
+        let packing = Packing::new();
+
+        let mut session = self.backend.session(self.profile.clone()).await?;
+
+        Ok(packing.unpack(msg_jwe, &mut session).await?)
+    }
 }
 
 #[cfg(test)]
@@ -126,7 +168,9 @@ mod test {
     use super::*;
 
     use crate::errors::error::AriesVcxCoreErrorKind;
+    use crate::wallet2::askar_wallet::askar_utils::local_key_to_public_key_bytes;
     use crate::wallet2::askar_wallet::test_helper::create_test_wallet;
+    use crate::wallet2::utils::bytes_to_bs58;
 
     #[tokio::test]
     async fn test_askar_should_sign_and_verify() {
@@ -183,5 +227,80 @@ mod test {
         let new_data = wallet.did_key(&first_data.did).await.unwrap();
 
         assert_eq!(res, new_data);
+    }
+
+    #[tokio::test]
+    async fn test_askar_should_pack_and_unpack_authcrypt() {
+        let wallet = create_test_wallet().await;
+
+        let mut session = wallet
+            .backend
+            .session(wallet.profile.clone())
+            .await
+            .unwrap();
+
+        let key_name = "sender_key";
+        let sender_key = LocalKey::generate(KeyAlg::X25519, true).unwrap();
+        session
+            .insert_key(key_name, &sender_key, None, None, None)
+            .await
+            .unwrap();
+
+        let msg = "send me";
+
+        let recipient_key = LocalKey::generate(KeyAlg::X25519, true).unwrap();
+
+        // Kid is base58 pubkey, we need to use it as a name in askar to be able to retrieve the key. Somewhat awkward.
+        // Also does not align with `create_and_store_my_did` which generates keys with names using only first 16 bytes of (pub)key
+        let kid = bytes_to_bs58(&local_key_to_public_key_bytes(&recipient_key).unwrap());
+        session
+            .insert_key(&kid, &recipient_key, None, None, None)
+            .await
+            .unwrap();
+
+        let rec_key = Key { pubkey_bs58: kid };
+
+        let packed = wallet
+            .pack_message(Some(key_name.into()), vec![rec_key], msg.as_bytes())
+            .await
+            .unwrap();
+
+        let unpacked = wallet.unpack_message(&packed).await.unwrap();
+
+        assert_eq!(msg, unpacked.message);
+    }
+
+    #[tokio::test]
+    async fn test_askar_should_pack_and_unpack_anoncrypt() {
+        let wallet = create_test_wallet().await;
+
+        let mut session = wallet
+            .backend
+            .session(wallet.profile.clone())
+            .await
+            .unwrap();
+
+        let msg = "send me";
+
+        let recipient_key = LocalKey::generate(KeyAlg::X25519, true).unwrap();
+
+        // Kid is base58 pubkey, we need to use it as a name in askar to be able to retrieve the key. Somewhat awkward.
+        // Also does not align with `create_and_store_my_did` which generates keys with names using only first 16 bytes of (pub)key
+        let kid = bytes_to_bs58(&local_key_to_public_key_bytes(&recipient_key).unwrap());
+        session
+            .insert_key(&kid, &recipient_key, None, None, None)
+            .await
+            .unwrap();
+
+        let rec_key = Key { pubkey_bs58: kid };
+
+        let packed = wallet
+            .pack_message(None, vec![rec_key], msg.as_bytes())
+            .await
+            .unwrap();
+
+        let unpacked = wallet.unpack_message(&packed).await.unwrap();
+
+        assert_eq!(msg, unpacked.message);
     }
 }
