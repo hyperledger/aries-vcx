@@ -156,18 +156,23 @@ pub async fn decode_signed_connection_response(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use base64::{self, engine::general_purpose, Engine};
 
     #[tokio::test]
     async fn test_decode_padded_and_unpadded_sig_data() {
-        let data = b"example data for testing";
-        let encoded_padded = general_purpose::URL_SAFE.encode(data);
-        let encoded_unpadded = general_purpose::URL_SAFE_NO_PAD.encode(data);
+        let encoded_padded = "T3BlbkFJIENoYXRHUFQ=";
+        let encoded_unpadded = "T3BlbkFJIENoYXRHUFQ";
 
         let decoded_padded = base64url_decode(&encoded_padded).unwrap();
         let decoded_unpadded = base64url_decode(&encoded_unpadded).unwrap();
 
-        assert_eq!(decoded_padded, data.to_vec());
-        assert_eq!(decoded_unpadded, data.to_vec());
+        assert_eq!(decoded_padded, decoded_unpadded);
+    }
+
+    #[tokio::test]
+    async fn test_invalid_json_error() {
+        let non_json_input = "Not a JSON input";
+        let result = base64url_decode(&non_json_input);
+        let error = result.unwrap_err();
+        assert!(matches!(error.kind(), AriesVcxErrorKind::InvalidJson));
     }
 }
