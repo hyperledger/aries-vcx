@@ -62,7 +62,7 @@ async fn test_forward_flow() -> Result<()> {
         "Prepared message {:?}, proceeding to anoncrypt wrap",
         serde_json::to_string(&message).unwrap()
     );
-    let EncryptionEnvelope(packed_message) = EncryptionEnvelope::create(
+    let EncryptionEnvelope(packed_message) = EncryptionEnvelope::create_from_legacy(
         &*agent.get_wallet_ref(),
         &serde_json::to_vec(&message)?,
         None,

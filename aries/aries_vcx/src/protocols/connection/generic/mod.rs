@@ -180,7 +180,7 @@ impl GenericConnection {
             AriesVcxErrorKind::NotReady,
             "No DidDoc present",
         ))?;
-        EncryptionEnvelope::create(
+        EncryptionEnvelope::create_from_legacy(
             wallet,
             json!(message).to_string().as_bytes(),
             Some(sender_verkey),

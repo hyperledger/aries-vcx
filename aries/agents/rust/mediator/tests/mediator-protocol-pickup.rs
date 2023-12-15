@@ -50,7 +50,7 @@ async fn forward_basic_anoncrypt_message(
         .id("JustHello".to_string())
         .build();
 
-    let EncryptionEnvelope(packed_message) = EncryptionEnvelope::create(
+    let EncryptionEnvelope(packed_message) = EncryptionEnvelope::create_from_legacy(
         &*agent_f.get_wallet_ref(),
         &serde_json::to_vec(&message)?,
         None,

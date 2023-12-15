@@ -201,72 +201,17 @@ pub async fn pairwise_encrypt(
     wallet: &impl BaseWallet,
     message: &AriesMessage,
 ) -> AgentResult<EncryptionEnvelope> {
-    let service = our_did_doc
-        .service()
-        .first()
-        .ok_or_else(|| {
-            AgentError::from_msg(
-                AgentErrorKind::InvalidState,
-                "No Service object found on our did document",
-            )
-        })?
-        .clone();
-    // todo: hacky, assuming we have full base58 key inlined which we possibly don't
-    //       The recipient key might have to be dereferenced
-    let sender_vk = service
-        .extra_field_recipient_keys()
-        .map_err(|err| {
-            AgentError::from_msg(
-                AgentErrorKind::InvalidState,
-                &format!(
-                    "Recipient key field found in our did document but had unexpected format, \
-                     err: {err:?}"
-                ),
-            )
-        })?
-        .first()
-        .ok_or_else(|| {
-            AgentError::from_msg(
-                AgentErrorKind::InvalidState,
-                "Recipient key field but did not have any keys",
-            )
-        })?
-        .clone();
-
-    let service = their_did_doc
-        .service()
-        .first()
-        .ok_or_else(|| AgentError::from_msg(AgentErrorKind::InvalidState, "No service found"))?;
-    // todo: hacky, assuming we have full base58 key inlined which we probably don't
-    let recipient_key = service
-        .extra_field_recipient_keys()
-        .map_err(|err| {
-            AgentError::from_msg(
-                AgentErrorKind::InvalidState,
-                &format!("No recipient_keys found: {}", err),
-            )
-        })?
-        .first()
-        .ok_or_else(|| {
-            AgentError::from_msg(AgentErrorKind::InvalidState, "No recipient_keys found")
-        })?
-        .clone();
-
-    // todo: again, not considering possibility of having didurl as value, assuming inlined key
-    let routing_keys = service.extra_field_routing_keys().map_err(|err| {
-        AgentError::from_msg(
-            AgentErrorKind::InvalidState,
-            &format!("No routing_keys found: {}", err),
-        )
-    })?;
-
-    EncryptionEnvelope::create2(
+    EncryptionEnvelope::create(
         wallet,
         serde_json::json!(message).to_string().as_bytes(),
-        Some(&sender_vk.to_string()),
-        recipient_key.to_string(),
-        routing_keys.iter().map(|k| k.to_string()).collect(),
+        our_did_doc,
+        their_did_doc,
     )
     .await
-    .map_err(|err| err.into())
+    .map_err(|err| {
+        AgentError::from_msg(
+            AgentErrorKind::InvalidState,
+            &format!("Failed to pairwise encrypt message due err: {}", err),
+        )
+    })
 }

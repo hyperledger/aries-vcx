@@ -100,7 +100,7 @@ where
         message: &AriesMessage,
     ) -> VcxResult<EncryptionEnvelope> {
         let sender_verkey = &self.pairwise_info().pw_vk;
-        EncryptionEnvelope::create(
+        EncryptionEnvelope::create_from_legacy(
             wallet,
             json!(message).to_string().as_bytes(),
             Some(sender_verkey),

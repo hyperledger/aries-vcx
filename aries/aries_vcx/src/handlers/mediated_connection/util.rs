@@ -20,7 +20,7 @@ pub async fn send_message(
         &did_doc
     );
 
-    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(
+    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create_from_legacy(
         wallet,
         json!(message).to_string().as_bytes(),
         Some(&sender_verkey),

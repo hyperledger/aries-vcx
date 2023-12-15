@@ -138,9 +138,14 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         our_vk: &VerKey,
         their_diddoc: &AriesDidDoc,
     ) -> Result<EncryptionEnvelope, String> {
-        EncryptionEnvelope::create(self.wallet.as_ref(), message, Some(our_vk), their_diddoc)
-            .await
-            .map_err(string_from_std_error)
+        EncryptionEnvelope::create_from_legacy(
+            self.wallet.as_ref(),
+            message,
+            Some(our_vk),
+            their_diddoc,
+        )
+        .await
+        .map_err(string_from_std_error)
     }
 
     pub async fn auth_and_get_details(
@@ -197,7 +202,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         .map_err(|e| e.to_string())?;
         let aries_response = AriesMessage::Connection(Connection::Response(response));
         let their_diddoc = request.content.connection.did_doc;
-        let packed_response_envelope = EncryptionEnvelope::create(
+        let packed_response_envelope = EncryptionEnvelope::create_from_legacy(
             self.wallet.as_ref(),
             json!(aries_response).to_string().as_bytes(),
             Some(&old_vk),
