@@ -477,6 +477,7 @@ dependencies = [
  "indy-vdr",
  "indy-vdr-proxy-client",
  "lazy_static",
+ "libc",
  "libvdrtools",
  "log",
  "lru",

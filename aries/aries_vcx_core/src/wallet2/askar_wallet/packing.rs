@@ -19,7 +19,7 @@ use crate::{
 };
 
 use super::askar_utils::{local_key_to_private_key_bytes, local_key_to_public_key_bytes};
-use aries_askar::kms::KeyAlg::X25519;
+use aries_askar::kms::KeyAlg::Ed25519;
 
 pub const PROTECTED_HEADER_ENC: &str = "xchacha20poly1305_ietf";
 pub const PROTECTED_HEADER_TYP: &str = "JWM/1.0";
@@ -171,14 +171,15 @@ impl Packing {
 
         let private_bytes = local_key_to_private_key_bytes(&local_key)?;
         let public_bytes = local_key_to_public_key_bytes(&local_key)?;
+        let all_bytes = [private_bytes, public_bytes.clone()].concat();
 
         let sender_vk_vec =
             self.crypto_box
-                .sealedbox_decrypt(&private_bytes, &public_bytes, &sender_vk_enc)?;
+                .sealedbox_decrypt(&all_bytes, &public_bytes, &sender_vk_enc)?;
 
         let cek_vec =
             self.crypto_box
-                .box_decrypt(&private_bytes, &sender_vk_vec, &encrypted_key, &iv)?;
+                .box_decrypt(&all_bytes, &sender_vk_vec, &encrypted_key, &iv)?;
 
         let sender_vk = bytes_to_bs58(&sender_vk_vec);
 
@@ -196,10 +197,11 @@ impl Packing {
 
         let private_bytes = local_key_to_private_key_bytes(&local_key)?;
         let public_bytes = local_key_to_public_key_bytes(&local_key)?;
+        let all_bytes = [private_bytes, public_bytes.clone()].concat();
 
         let cek_vec =
             self.crypto_box
-                .sealedbox_decrypt(&private_bytes, &public_bytes, &encrypted_key)?;
+                .sealedbox_decrypt(&all_bytes, &public_bytes, &encrypted_key)?;
         let enc_key = LocalKey::from_secret_bytes(KeyAlg::Chacha20(Chacha20Types::C20P), &cek_vec)?;
 
         Ok((enc_key, None))
@@ -261,7 +263,7 @@ impl Packing {
     }
 
     fn check_supported_key_alg(&self, key: &LocalKey) -> VcxCoreResult<()> {
-        let supported_algs = vec![X25519];
+        let supported_algs = vec![Ed25519];
 
         if !supported_algs.contains(&key.algorithm()) {
             let msg = format!(
@@ -288,6 +290,7 @@ impl Packing {
     ) -> VcxCoreResult<Vec<Recipient>> {
         let my_secret_bytes = local_key_to_private_key_bytes(&sender_local_key)?;
         let my_public_bytes = local_key_to_public_key_bytes(&sender_local_key)?;
+        let my_all_bytes = [my_secret_bytes, my_public_bytes.clone()].concat();
 
         let enc_key_secret = local_key_to_private_key_bytes(enc_key)?;
 
@@ -296,11 +299,9 @@ impl Packing {
         for recipient_key in recipient_keys {
             let recipient_pubkey = bs58_to_bytes(&recipient_key.pubkey_bs58)?;
 
-            let (enc_cek, nonce) = self.crypto_box.box_encrypt(
-                &my_secret_bytes,
-                &recipient_pubkey,
-                &enc_key_secret,
-            )?;
+            let (enc_cek, nonce) =
+                self.crypto_box
+                    .box_encrypt(&my_all_bytes, &recipient_pubkey, &enc_key_secret)?;
 
             let enc_sender = self
                 .crypto_box

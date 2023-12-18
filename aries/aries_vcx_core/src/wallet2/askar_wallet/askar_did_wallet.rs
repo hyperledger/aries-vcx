@@ -240,7 +240,7 @@ mod test {
             .unwrap();
 
         let key_name = "sender_key";
-        let sender_key = LocalKey::generate(KeyAlg::X25519, true).unwrap();
+        let sender_key = LocalKey::generate(KeyAlg::Ed25519, true).unwrap();
         session
             .insert_key(key_name, &sender_key, None, None, None)
             .await
@@ -248,7 +248,7 @@ mod test {
 
         let msg = "send me";
 
-        let recipient_key = LocalKey::generate(KeyAlg::X25519, true).unwrap();
+        let recipient_key = LocalKey::generate(KeyAlg::Ed25519, true).unwrap();
 
         // Kid is base58 pubkey, we need to use it as a name in askar to be able to retrieve the key. Somewhat awkward.
         // Also does not align with `create_and_store_my_did` which generates keys with names using only first 16 bytes of (pub)key
@@ -282,7 +282,7 @@ mod test {
 
         let msg = "send me";
 
-        let recipient_key = LocalKey::generate(KeyAlg::X25519, true).unwrap();
+        let recipient_key = LocalKey::generate(KeyAlg::Ed25519, true).unwrap();
 
         // Kid is base58 pubkey, we need to use it as a name in askar to be able to retrieve the key. Somewhat awkward.
         // Also does not align with `create_and_store_my_did` which generates keys with names using only first 16 bytes of (pub)key
