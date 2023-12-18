@@ -5,9 +5,7 @@ use sha256::digest;
 use crate::{
     error::DidPeerError,
     peer_did::{
-        numalgos::{
-            numalgo2::helpers::didpeer_elements_to_diddoc, numalgo3::Numalgo3, Numalgo,
-        },
+        numalgos::{numalgo2::helpers::didpeer_elements_to_diddoc, numalgo3::Numalgo3, Numalgo},
         FromDidDoc, PeerDid,
     },
     resolver::options::PublicKeyEncoding,

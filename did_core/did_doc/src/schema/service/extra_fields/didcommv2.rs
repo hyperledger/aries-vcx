@@ -7,6 +7,7 @@ use crate::schema::service::extra_fields::{ServiceAcceptType, ServiceKeyKind};
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct ExtraFieldsDidCommV2 {
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     routing_keys: Vec<ServiceKeyKind>,
     #[serde(default)]
     accept: Vec<ServiceAcceptType>,

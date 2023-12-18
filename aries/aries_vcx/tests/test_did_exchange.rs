@@ -13,11 +13,14 @@ use aries_vcx::{
         },
         states::{requester::request_sent::RequestSent, responder::response_sent::ResponseSent},
         transition::transition_result::TransitionResult,
-    }
+    },
+    utils::{didcomm_utils::resolve_base58_key_agreement, encryption_envelope::EncryptionEnvelope},
 };
 use aries_vcx_core::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
 use did_doc::schema::{
-    did_doc::DidDocument, service::typed::didcommv1::ServiceDidCommV1, types::uri::Uri,
+    did_doc::{diddoc_resolve_first_key_agreement, DidDocument},
+    service::typed::didcommv1::ServiceDidCommV1,
+    types::uri::Uri,
 };
 use did_parser::Did;
 use did_peer::{
@@ -39,21 +42,9 @@ use crate::utils::test_agent::{
 
 pub mod utils;
 
-fn assert_verification_method(a: DidDocument, b: DidDocument) {
-    let a_key = a
-        .verification_method()
-        .first()
-        .unwrap()
-        .public_key()
-        .unwrap()
-        .base58();
-    let b_key = b
-        .verification_method()
-        .first()
-        .unwrap()
-        .public_key()
-        .unwrap()
-        .base58();
+fn assert_key_agreement(a: DidDocument, b: DidDocument) {
+    let a_key = diddoc_resolve_first_key_agreement(&a).unwrap();
+    let b_key = diddoc_resolve_first_key_agreement(&b).unwrap();
     assert_eq!(a_key, b_key);
 }
 
@@ -171,11 +162,13 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
 
     let responder = responder.receive_complete(complete).unwrap();
 
-    assert_verification_method(
+    info!("Asserting did document of requester");
+    assert_key_agreement(
         requester.our_did_doc().clone(),
         responder.their_did_doc().clone(),
     );
-    assert_verification_method(
+    info!("Asserting did document of responder");
+    assert_key_agreement(
         responder.our_did_doc().clone(),
         requester.their_did_doc().clone(),
     );
@@ -189,21 +182,22 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         requester.their_did_doc()
     );
 
-    // let data= "Hello world";
-    // let m = EncryptionEnvelope::create(
-    //     &agent_invitee.wallet,
-    //     data.as_bytes(),
-    //     &requester.our_did_doc(),
-    //     &requester.their_did_doc()
-    // ).await?;
-    //
-    // info!("Encrypted message: {:?}", m);
-    //
-    // let unpacked = EncryptionEnvelope::auth_unpack(
-    //     &agent_invitee.wallet,
-    //     m.0,
-    //     "disabled"
-    // ).await?;
+    let data = "Hello world";
+    let m = EncryptionEnvelope::create(
+        &agent_invitee.wallet,
+        data.as_bytes(),
+        requester.our_did_doc(),
+        requester.their_did_doc(),
+    )
+    .await?;
+
+    info!("Encrypted message: {:?}", m);
+
+    let expected_sender_vk = resolve_base58_key_agreement(&requesters_did_document)?;
+    let unpacked =
+        EncryptionEnvelope::auth_unpack(&agent_invitee.wallet, m.0, &expected_sender_vk).await?;
+
+    info!("Unpacked message: {:?}", unpacked);
 
     Ok(())
 }

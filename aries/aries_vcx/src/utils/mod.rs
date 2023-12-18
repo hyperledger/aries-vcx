@@ -20,6 +20,6 @@ pub mod qualifier;
 
 #[macro_use]
 pub mod encryption_envelope;
-mod didcomm_utils;
+pub mod didcomm_utils;
 pub mod serialization;
 pub mod validation;

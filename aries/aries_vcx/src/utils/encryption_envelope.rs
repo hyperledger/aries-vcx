@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::{
     errors::error::prelude::*,
-    utils::didcomm_utils::{get_routing_keys, get_sender_verkey},
+    utils::didcomm_utils::{get_routing_keys, resolve_base58_key_agreement},
 };
 
 #[derive(Debug)]
@@ -50,8 +50,8 @@ impl EncryptionEnvelope {
         their_did_doc: &DidDocument,
     ) -> VcxResult<EncryptionEnvelope> {
         // get first service, from service get (possibly resolve) recipient key and routing keys
-        let sender_vk = get_sender_verkey(our_did_doc)?;
-        let recipient_key = get_sender_verkey(their_did_doc)?;
+        let sender_vk = resolve_base58_key_agreement(our_did_doc)?;
+        let recipient_key = resolve_base58_key_agreement(their_did_doc)?;
         let routing_keys = get_routing_keys(their_did_doc)?;
 
         EncryptionEnvelope::create_from_keys(

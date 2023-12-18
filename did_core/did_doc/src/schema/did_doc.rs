@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use did_parser::{Did, DidUrl};
 use display_as_json::Display;
+use public_key::Key;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -105,6 +106,32 @@ impl DidDocument {
     pub fn validate(&self) -> Result<(), DidDocumentBuilderError> {
         Ok(())
     }
+}
+
+pub fn diddoc_resolve_first_key_agreement(
+    did_document: &DidDocument,
+) -> Result<Key, DidDocumentBuilderError> {
+    let vm = did_document.key_agreement().first().ok_or_else(|| {
+        DidDocumentBuilderError::CustomError(
+            "Expected to find key agreement on did document".to_string(),
+        )
+    })?;
+
+    let key = match vm {
+        VerificationMethodKind::Resolved(verification_method) => {
+            verification_method.public_key()?
+        }
+        VerificationMethodKind::Resolvable(reference) => {
+            match did_document.dereference_key(reference) {
+                None => Err(DidDocumentBuilderError::CustomError(format!(
+                    "Unable to dereference key: {}",
+                    reference
+                )))?,
+                Some(verification_method) => verification_method.public_key()?,
+            }
+        }
+    };
+    Ok(key)
 }
 
 #[derive(Default, Debug)]

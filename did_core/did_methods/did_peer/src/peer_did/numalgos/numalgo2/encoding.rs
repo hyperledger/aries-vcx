@@ -128,15 +128,15 @@ mod tests {
     use did_doc::schema::{
         service::{
             extra_fields::{didcommv2::ExtraFieldsDidCommV2, ServiceKeyKind},
+            typed::ServiceType,
             Service,
         },
         types::uri::Uri,
+        utils::OneOrList,
         verification_method::{VerificationMethod, VerificationMethodType},
     };
     use did_parser::DidUrl;
     use pretty_assertions::assert_eq;
-    use did_doc::schema::service::typed::ServiceType;
-    use did_doc::schema::utils::OneOrList;
 
     use super::*;
     use crate::{

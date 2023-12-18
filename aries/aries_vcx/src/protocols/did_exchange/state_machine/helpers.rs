@@ -68,14 +68,13 @@ pub async fn create_our_did_document(
     service_endpoint: Url,
     routing_keys: Vec<String>,
 ) -> Result<(DidDocument, Key), AriesVcxError> {
-    let key_ver = generate_keypair(wallet, KeyType::Ed25519).await?;
     let key_enc = generate_keypair(wallet, KeyType::Ed25519).await?;
 
     let service: Service = ServiceDidCommV1::new(
         Uri::new("#0")?,
         service_endpoint,
         0,
-        vec![ServiceKeyKind::DidKey(key_enc.clone().try_into()?)],
+        vec![],
         routing_keys
             .into_iter()
             .map(ServiceKeyKind::Value)
@@ -84,12 +83,7 @@ pub async fn create_our_did_document(
     .try_into()?;
 
     info!("Prepared service for peer:did:2 generation: {} ", service);
-    let mut did_document = did_doc_from_keys(
-        Default::default(),
-        key_ver.clone(),
-        key_enc.clone(),
-        service,
-    )?;
+    let mut did_document = did_doc_from_keys(Default::default(), key_enc.clone(), service)?;
     info!(
         "Created did document for peer:did:2 generation: {} ",
         did_document
@@ -101,19 +95,10 @@ pub async fn create_our_did_document(
 
 fn did_doc_from_keys(
     did: Did,
-    key_ver: Key,
     key_enc: Key,
     service: Service,
 ) -> Result<DidDocument, AriesVcxError> {
-    let vm_ver_id = DidUrl::from_fragment(key_ver.short_prefixless_fingerprint())?;
     let vm_ka_id = DidUrl::from_fragment(key_enc.short_prefixless_fingerprint())?;
-    let vm_ver = VerificationMethod::builder(
-        vm_ver_id,
-        did.clone(),
-        VerificationMethodType::Ed25519VerificationKey2020,
-    )
-    .add_public_key_base58(key_ver.base58())
-    .build();
     let vm_ka = VerificationMethod::builder(
         vm_ka_id,
         did.clone(),
@@ -123,8 +108,6 @@ fn did_doc_from_keys(
     .build();
     Ok(DidDocument::builder(did)
         .add_service(service)
-        .add_verification_method(vm_ver)
-        // TODO: Include just reference
         .add_key_agreement(vm_ka)
         .build())
 }
@@ -230,18 +213,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_did_doc_from_keys() {
-        let key_ver = Key::new(
-            "7MV7mTpzQekW39mXdPXKnRJn79kkzMvmtaSHZWUSbvt5".into(),
-            KeyType::Ed25519,
-        )
-        .unwrap();
         let key_enc = Key::new(
             "tyntrez7bCthPqvZUDGwhYB1bSe9HzpLdSeHFpuSwst".into(),
             KeyType::Ed25519,
         )
         .unwrap();
 
-        let recipient_keys = vec![ServiceKeyKind::DidKey(key_enc.clone().try_into().unwrap())];
         let service_endpoint = Url::parse("http://example.com").unwrap();
         let routing_keys = vec![
             ServiceKeyKind::Value("routing_key1".into()),
@@ -251,7 +228,7 @@ mod tests {
             Uri::new("#service-0").unwrap(),
             service_endpoint.clone(),
             0,
-            recipient_keys,
+            vec![],
             routing_keys,
         )
         .try_into()
@@ -259,7 +236,7 @@ mod tests {
 
         let did = Did::default();
 
-        let result = did_doc_from_keys(did, key_ver.clone(), key_enc.clone(), service);
+        let result = did_doc_from_keys(did, key_enc.clone(), service);
 
         assert!(result.is_ok());
         let did_doc = result.unwrap();
@@ -281,10 +258,6 @@ mod tests {
             })
             .unwrap();
         assert_eq!(
-            recipient_keys,
-            vec!["did:key:z6s8D3GAEHVteQMfhS4qBibNXjqS5D79NykfpGdF2VLmAtEysDRs6PEVBChSTTZ"]
-        );
-        assert_eq!(
             ddo_service.extra_field_routing_keys().unwrap(),
             vec![
                 ServiceKeyKind::Value("routing_key1".into()),
@@ -292,10 +265,7 @@ mod tests {
             ]
         );
 
-        assert_eq!(did_doc.verification_method().len(), 1);
-        let verification_method = did_doc.verification_method().first().unwrap();
-        assert_eq!(verification_method.public_key().unwrap(), key_ver);
-
+        println!("did_doc: {}", did_doc);
         assert_eq!(did_doc.key_agreement().len(), 1);
         match did_doc.key_agreement().first().unwrap() {
             VerificationMethodKind::Resolved(key_agreement) => {
