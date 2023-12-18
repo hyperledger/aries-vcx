@@ -1,25 +1,12 @@
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use base64::{
-    self, alphabet,
-    engine::{general_purpose, DecodePaddingMode, GeneralPurpose, GeneralPurposeConfig},
-    Engine,
-};
+use base64::{self, engine::general_purpose, Engine};
 use messages::msg_fields::protocols::connection::{
     response::{ConnectionSignature, ResponseContent},
     ConnectionData,
 };
 use time;
 
-use crate::errors::error::prelude::*;
-
-/// A default [GeneralPurposeConfig] configuration with a [decode_padding_mode] of
-/// [DecodePaddingMode::Indifferent]
-pub const LENIENT_PAD: GeneralPurposeConfig =
-    GeneralPurposeConfig::new().with_decode_padding_mode(DecodePaddingMode::Indifferent);
-
-/// A [GeneralPurpose] engine using the [alphabet::URL_SAFE] base64 alphabet and
-/// [DecodePaddingMode::Indifferent] config to decode both padded and unpadded.
-pub const URL_SAFE_LENIENT: GeneralPurpose = GeneralPurpose::new(&alphabet::URL_SAFE, LENIENT_PAD);
+use crate::{errors::error::prelude::*, utils::base64::URL_SAFE_LENIENT};
 
 // Utility function to handle both padded and unpadded Base64URL data
 fn base64url_decode(encoded: &str) -> VcxResult<Vec<u8>> {

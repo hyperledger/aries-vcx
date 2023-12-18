@@ -26,6 +26,7 @@ macro_rules! secret {
     }};
 }
 
+pub mod base64;
 pub mod openssl;
 pub mod qualifier;
 
