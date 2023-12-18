@@ -1,5 +1,9 @@
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use base64::{self, engine::general_purpose, Engine};
+use base64::{
+    self, alphabet,
+    engine::{general_purpose, DecodePaddingMode, GeneralPurpose, GeneralPurposeConfig},
+    Engine,
+};
 use messages::msg_fields::protocols::connection::{
     response::{ConnectionSignature, ResponseContent},
     ConnectionData,
@@ -8,17 +12,23 @@ use time;
 
 use crate::errors::error::prelude::*;
 
+/// A default [GeneralPurposeConfig] configuration with a [decode_padding_mode] of
+/// [DecodePaddingMode::Indifferent]
+pub const LENIENT_PAD: GeneralPurposeConfig =
+    GeneralPurposeConfig::new().with_decode_padding_mode(DecodePaddingMode::Indifferent);
+
+/// A [GeneralPurpose] engine using the [alphabet::URL_SAFE] base64 alphabet and
+/// [DecodePaddingMode::Indifferent] config to decode both padded and unpadded.
+pub const URL_SAFE_LENIENT: GeneralPurpose = GeneralPurpose::new(&alphabet::URL_SAFE, LENIENT_PAD);
+
 // Utility function to handle both padded and unpadded Base64URL data
 fn base64url_decode(encoded: &str) -> VcxResult<Vec<u8>> {
-    general_purpose::URL_SAFE_NO_PAD
-        .decode(encoded)
-        .or_else(|_| general_purpose::URL_SAFE.decode(encoded))
-        .map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Cannot decode Base64URL data: {:?}", err),
-            )
-        })
+    URL_SAFE_LENIENT.decode(encoded).map_err(|err| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
+            format!("Cannot decode Base64URL data: {:?}", err),
+        )
+    })
 }
 
 async fn get_signature_data(
@@ -162,8 +172,8 @@ mod tests {
         let encoded_padded = "T3BlbkFJIENoYXRHUFQ=";
         let encoded_unpadded = "T3BlbkFJIENoYXRHUFQ";
 
-        let decoded_padded = base64url_decode(&encoded_padded).unwrap();
-        let decoded_unpadded = base64url_decode(&encoded_unpadded).unwrap();
+        let decoded_padded = base64url_decode(encoded_padded).unwrap();
+        let decoded_unpadded = base64url_decode(encoded_unpadded).unwrap();
 
         assert_eq!(decoded_padded, decoded_unpadded);
     }
@@ -171,7 +181,7 @@ mod tests {
     #[tokio::test]
     async fn test_invalid_json_error() {
         let non_json_input = "Not a JSON input";
-        let result = base64url_decode(&non_json_input);
+        let result = base64url_decode(non_json_input);
         let error = result.unwrap_err();
         assert!(matches!(error.kind(), AriesVcxErrorKind::InvalidJson));
     }
