@@ -3,21 +3,15 @@ use std::cmp::Ordering;
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{
     did_doc::DidDocument,
-    service::{
-        extra_fields::{ServiceAcceptType, ServiceKeyKind},
-        typed::ServiceType,
-        Service,
-    },
-    utils::OneOrList,
     verification_method::{VerificationMethod, VerificationMethodKind},
 };
 use public_key::Key;
-use serde_json::from_value;
 
 use crate::{
     error::DidPeerError,
     peer_did::numalgos::numalgo2::{
-        purpose::ElementPurpose, service_abbreviated::ServiceAbbreviatedDidPeer2,
+        purpose::ElementPurpose,
+        service_abbreviation::{abbreviate_service, ServiceAbbreviatedDidPeer2},
         verification_method::get_key_by_verification_method,
     },
 };
@@ -129,69 +123,6 @@ fn append_key_to_did(mut did: String, key: Key, purpose: ElementPurpose) -> Stri
     did
 }
 
-fn abbreviate_service(service: &Service) -> Result<ServiceAbbreviatedDidPeer2, DidPeerError> {
-    let service_endpoint = service.service_endpoint().clone();
-    let routing_keys = {
-        service
-            .extra()
-            .get("routingKeys")
-            .map(|value| {
-                from_value::<Vec<ServiceKeyKind>>(value.clone()).map_err(|_| {
-                    DidPeerError::ParsingError(format!(
-                        "Could not parse routing keys as Vector of Strings. Value of \
-                         routing_keys: {}",
-                        value
-                    ))
-                })
-            })
-            .unwrap_or_else(|| Ok(vec![]))
-    }?;
-    let accept = {
-        service
-            .extra()
-            .get("accept")
-            .map(|value| {
-                from_value::<Vec<ServiceAcceptType>>(value.clone()).map_err(|_| {
-                    DidPeerError::ParsingError(format!(
-                        "Could not parse accept as Vector of Strings. Value of accept: {}",
-                        value
-                    ))
-                })
-            })
-            .unwrap_or_else(|| Ok(vec![]))
-    }?;
-    let service_type = service.service_type().clone();
-    let service_types_abbreviated = match service_type {
-        OneOrList::List(service_types) => {
-            let abbreviated_list = service_types
-                .iter()
-                .map(|value| {
-                    if value == &ServiceType::DIDCommV2 {
-                        "dm".to_string()
-                    } else {
-                        value.to_string()
-                    }
-                })
-                .collect();
-            OneOrList::List(abbreviated_list)
-        }
-        OneOrList::One(service_type) => {
-            if service_type == ServiceType::DIDCommV2 {
-                OneOrList::One("dm".to_string())
-            } else {
-                OneOrList::One(service_type.to_string())
-            }
-        }
-    };
-    Ok(ServiceAbbreviatedDidPeer2::new(
-        Some(service.id().to_string()),
-        service_types_abbreviated,
-        service_endpoint,
-        routing_keys,
-        accept,
-    ))
-}
-
 #[cfg(test)]
 mod tests {
     use did_doc::schema::{
@@ -202,12 +133,15 @@ mod tests {
         types::uri::Uri,
         verification_method::{VerificationMethod, VerificationMethodType},
     };
-    use did_parser::{Did, DidUrl};
+    use did_parser::DidUrl;
     use pretty_assertions::assert_eq;
+    use did_doc::schema::service::typed::ServiceType;
+    use did_doc::schema::utils::OneOrList;
 
     use super::*;
     use crate::{
-        helpers::convert_to_hashmap, peer_did::numalgos::numalgo2::resolve::resolve_numalgo2,
+        helpers::convert_to_hashmap,
+        peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
         resolver::options::PublicKeyEncoding,
     };
 
@@ -278,16 +212,17 @@ mod tests {
 
         let did = append_encoded_service_segment(did.to_string(), &did_document).unwrap();
 
-        let ddo = resolve_numalgo2(&did.parse::<Did>().unwrap(), PublicKeyEncoding::Base58)
+        let did_parsed = PeerDid::<Numalgo2>::parse(did.clone()).unwrap();
+        let ddo = did_parsed
+            .to_did_doc_builder(PublicKeyEncoding::Base58)
             .unwrap()
             .build();
 
-        let ddo_expected = resolve_numalgo2(
-            &did_expected.parse::<Did>().unwrap(),
-            PublicKeyEncoding::Base58,
-        )
-        .unwrap()
-        .build();
+        let did_expected_parsed = PeerDid::<Numalgo2>::parse(did_expected.clone()).unwrap();
+        let ddo_expected = did_expected_parsed
+            .to_did_doc_builder(PublicKeyEncoding::Base58)
+            .unwrap()
+            .build();
 
         assert_eq!(ddo, ddo_expected);
         assert_eq!(did, did_expected);

@@ -13,7 +13,7 @@ use aries_vcx::{
         },
         states::{requester::request_sent::RequestSent, responder::response_sent::ResponseSent},
         transition::transition_result::TransitionResult,
-    },
+    }
 };
 use aries_vcx_core::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
 use did_doc::schema::{
@@ -22,7 +22,7 @@ use did_doc::schema::{
 use did_parser::Did;
 use did_peer::{
     peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-    resolver::PeerDidResolver,
+    resolver::{options::PublicKeyEncoding, PeerDidResolver},
 };
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::resolution::DidSovResolver;
@@ -118,11 +118,11 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         invitation
     );
 
-    let (our_did_document, _our_verkey) =
+    let (requesters_did_document, _our_verkey) =
         create_our_did_document(&agent_invitee.wallet, dummy_url.clone(), vec![]).await?;
-    info!("Invitee prepares did document: {our_did_document}");
-    let peer_did_invitee = PeerDid::<Numalgo2>::from_did_doc(our_did_document.clone())?;
-    info!("Invitee prepares their peer:did: {peer_did_invitee}");
+    info!("Requester prepares did document: {requesters_did_document}");
+    let requesters_peer_did = PeerDid::<Numalgo2>::from_did_doc(requesters_did_document.clone())?;
+    info!("Requester prepares their peer:did: {requesters_peer_did}");
     let did_inviter: Did = invitation_get_first_did_service(&invitation)?;
 
     let TransitionResult {
@@ -131,7 +131,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     } = DidExchangeRequester::<RequestSent>::construct_request(
         resolver_registry.clone(),
         &did_inviter,
-        &peer_did_invitee,
+        &requesters_peer_did,
     )
     .await
     .unwrap();
@@ -140,10 +140,16 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         &request
     );
 
-    let (our_did_document, _our_verkey) =
+    let (responders_did_document, _our_verkey) =
         create_our_did_document(&agent_invitee.wallet, dummy_url.clone(), vec![]).await?;
-    let peer_did_inviter = PeerDid::<Numalgo2>::from_did_doc(our_did_document.clone())?;
-    info!("Inviter prepares their peer:did: {peer_did_inviter}");
+    info!("Responder prepares did document: {responders_did_document}");
+    let responders_peer_did = PeerDid::<Numalgo2>::from_did_doc(responders_did_document.clone())?;
+    info!("Responder prepares their peer:did: {responders_peer_did}");
+
+    let check_diddoc: DidDocument = responders_peer_did
+        .to_did_doc_builder(PublicKeyEncoding::Base58)?
+        .build();
+    info!("Responder decodes constructed peer:did as did document: {check_diddoc}");
 
     let TransitionResult {
         output: response,
@@ -152,7 +158,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         &agent_inviter.wallet,
         resolver_registry,
         request,
-        &peer_did_inviter,
+        &responders_peer_did,
         invitation_key,
     )
     .await
@@ -175,13 +181,29 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     );
 
     info!(
-        "Requester look of counterparty diddoc {}",
-        requester.their_did_doc()
+        "Requesters did document (requesters view): {}",
+        requester.our_did_doc()
     );
     info!(
-        "Responder look of counterparty diddoc {}",
-        responder.their_did_doc()
+        "Responders did document (requesters view): {}",
+        requester.their_did_doc()
     );
+
+    // let data= "Hello world";
+    // let m = EncryptionEnvelope::create(
+    //     &agent_invitee.wallet,
+    //     data.as_bytes(),
+    //     &requester.our_did_doc(),
+    //     &requester.their_did_doc()
+    // ).await?;
+    //
+    // info!("Encrypted message: {:?}", m);
+    //
+    // let unpacked = EncryptionEnvelope::auth_unpack(
+    //     &agent_invitee.wallet,
+    //     m.0,
+    //     "disabled"
+    // ).await?;
 
     Ok(())
 }

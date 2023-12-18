@@ -10,9 +10,7 @@ use did_resolver::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    error::DidPeerError,
-    peer_did::{generic::AnyPeerDid, numalgos::numalgo2::resolve::resolve_numalgo2},
-    resolver::options::PublicKeyEncoding,
+    error::DidPeerError, peer_did::generic::AnyPeerDid, resolver::options::PublicKeyEncoding,
 };
 
 pub mod options;
@@ -43,12 +41,10 @@ impl DidResolvable for PeerDidResolver {
         let peer_did = AnyPeerDid::parse(did.to_owned())?;
         match peer_did {
             AnyPeerDid::Numalgo2(peer_did) => {
-                let did_doc = resolve_numalgo2(
-                    peer_did.did(),
-                    options.encoding.unwrap_or(PublicKeyEncoding::Multibase),
-                )?
-                .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
-                .build();
+                let did_doc = peer_did
+                    .to_did_doc_builder(options.encoding.unwrap_or(PublicKeyEncoding::Multibase))?
+                    .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
+                    .build();
                 let resolution_metadata = DidResolutionMetadata::builder()
                     .content_type("application/did+json".to_string())
                     .build();

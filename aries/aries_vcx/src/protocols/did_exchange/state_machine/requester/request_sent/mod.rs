@@ -3,10 +3,7 @@ use std::sync::Arc;
 use chrono::Utc;
 use did_parser::Did;
 use did_peer::{
-    peer_did::{
-        numalgos::numalgo2::{resolve::resolve_numalgo2, Numalgo2},
-        PeerDid,
-    },
+    peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
     resolver::{options::PublicKeyEncoding, PeerDidResolver},
 };
 use did_resolver::traits::resolvable::DidResolvable;
@@ -45,7 +42,9 @@ impl DidExchangeRequester<RequestSent> {
             .await?
             .did_document()
             .clone();
-        let our_did_document = resolve_numalgo2(our_peer_did, PublicKeyEncoding::Base58)?.build();
+        let our_did_document = our_peer_did
+            .to_did_doc_builder(PublicKeyEncoding::Base58)?
+            .build();
         let invitation_id = Uuid::new_v4().to_string();
 
         let request = construct_request(invitation_id.clone(), our_peer_did.to_string());

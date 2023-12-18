@@ -6,10 +6,7 @@ use did_doc::schema::{
 };
 use did_parser::{Did, DidUrl};
 use did_peer::peer_did::{
-    numalgos::{
-        numalgo2::{resolve::resolve_numalgo2, Numalgo2},
-        numalgo3::Numalgo3,
-    },
+    numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
     PeerDid,
 };
 
@@ -45,10 +42,13 @@ fn demo() -> Result<(), Box<dyn Error>> {
         peer_did_3_v2
     );
 
-    resolve_numalgo2(
-        &peer_did_2,
-        did_peer::resolver::options::PublicKeyEncoding::Base58,
-    )?;
+    let decoded_did_doc = peer_did_2
+        .to_did_doc_builder(did_peer::resolver::options::PublicKeyEncoding::Base58)?
+        .build();
+    println!(
+        "Decoded did document: \n{}",
+        serde_json::to_string_pretty(&decoded_did_doc)?
+    );
 
     Ok(())
 }

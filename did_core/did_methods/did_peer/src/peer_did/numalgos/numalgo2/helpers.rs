@@ -1,10 +1,6 @@
-use std::{collections::HashMap, str::FromStr};
-
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{
     did_doc::DidDocumentBuilder,
-    service::{typed::ServiceType, Service},
-    utils::OneOrList,
 };
 use did_parser::Did;
 use public_key::Key;
@@ -12,7 +8,8 @@ use public_key::Key;
 use crate::{
     error::DidPeerError,
     peer_did::numalgos::numalgo2::{
-        purpose::ElementPurpose, service_abbreviated::ServiceAbbreviatedDidPeer2,
+        purpose::ElementPurpose,
+        service_abbreviation::{deabbreviate_service, ServiceAbbreviatedDidPeer2},
         verification_method::get_verification_methods_by_key,
     },
     resolver::options::PublicKeyEncoding,
@@ -118,50 +115,6 @@ fn process_key_element(
     }
 
     Ok(did_doc_builder)
-}
-
-fn deabbreviate_service(
-    abbreviated: ServiceAbbreviatedDidPeer2,
-    index: usize,
-) -> Result<Service, DidPeerError> {
-    let service_type = match abbreviated.service_type().clone() {
-        OneOrList::One(service_type) => {
-            let typed = match service_type.as_str() {
-                "dm" => ServiceType::DIDCommV2,
-                _ => ServiceType::from_str(&service_type)?,
-            };
-            OneOrList::One(typed)
-        }
-        OneOrList::List(service_types) => {
-            let mut typed = Vec::new();
-            for service_type in service_types.iter() {
-                let service = match service_type.as_str() {
-                    "dm" => ServiceType::DIDCommV2,
-                    _ => ServiceType::from_str(service_type)?,
-                };
-                typed.push(service);
-            }
-            OneOrList::List(typed)
-        }
-    };
-
-    let id = format!("#service-{}", index).parse()?;
-
-    let mut service = Service::new(
-        id,
-        abbreviated.service_endpoint().clone(),
-        service_type,
-        HashMap::default(),
-    );
-    let routing_keys = abbreviated.routing_keys();
-    if !routing_keys.is_empty() {
-        service.add_extra_field_routing_keys(routing_keys.to_vec())?;
-    }
-    let accept = abbreviated.accept();
-    if !accept.is_empty() {
-        service.add_extra_field_accept(accept.to_vec())?;
-    }
-    Ok(service)
 }
 
 #[cfg(test)]
@@ -289,112 +242,4 @@ mod tests {
         )
         .is_err());
     }
-
-    // todo: patrik: restore?
-    // #[test]
-    // fn test_deabbreviate_service_aip1() {
-    //     let service_abbreviated =
-    //         ServiceAbbreviated::from_parts("dm", "https://example.com/endpoint", &[], &[]);
-    //     let index = 0;
-    //
-    //     let service = deabbreviate_service(service_abbreviated, index).unwrap();
-    //
-    //     assert_eq!(
-    //         service.service_type().clone(),
-    //         OneOrList::One("DIDCommMessaging".to_string())
-    //     );
-    //     assert_eq!(service.id().to_string(), "#didcommmessaging-0");
-    //
-    //     // todo: why is this supposed to build AIP1 if the service specifies type
-    // DIDCommMessaging?     //       should probably return error  in runtime upon
-    // deserialization     assert!(matches!(service.extra(), ExtraFieldsSov::AIP1(_)));
-    // }
-
-    // todo: patrik: restore?
-    // #[test]
-    // fn test_deabbreviate_service_didcommv2() {
-    //     let routing_keys = vec![SovKeyKind::Value("key1".to_string())];
-    //     let service_abbreviated = ServiceAbbreviated::from_parts(
-    //         "dm",
-    //         "https://example.com/endpoint",
-    //         &routing_keys,
-    //         &[],
-    //     );
-    //     let index = 0;
-    //
-    //     let service = deabbreviate_service(service_abbreviated, index).unwrap();
-    //
-    //     assert_eq!(
-    //         service.service_type().clone(),
-    //         OneOrList::One("DIDCommMessaging".to_string())
-    //     );
-    //     assert_eq!(service.id().to_string(), "#didcommmessaging-0");
-    //
-    //     match service.extra() {
-    //         ExtraFieldsSov::DIDCommV2(extra) => {
-    //             assert_eq!(extra.routing_keys(), &routing_keys);
-    //         }
-    //         _ => panic!("Expected ExtraFieldsSov::DIDCommV2"),
-    //     }
-    // }
-
-    // todo: patrik: restore?
-    // #[test]
-    // fn test_build_service_aip1() {
-    //     let routing_keys = vec![SovKeyKind::Value("key1".to_string())];
-    //     let service_abbreviated = ServiceAbbreviated::from_parts(
-    //         "dm",
-    //         "https://example.com/endpoint",
-    //         routing_keys.as_ref(),
-    //         vec![].as_ref(),
-    //     );
-    //
-    //     let id = Uri::new("did:peer:2").unwrap();
-    //     let service_type = "DIDCommMessaging".to_string();
-    //
-    //     let service = build_service_aip1(service_abbreviated, id, service_type).unwrap();
-    //
-    //     assert_eq!(service.id().to_string(), "did:peer:2");
-    //     assert_eq!(
-    //         service.service_type().clone(),
-    //         OneOrList::One("DIDCommMessaging".to_string())
-    //     );
-    //
-    //     match service.extra() {
-    //         ExtraFieldsSov::AIP1(_) => { /* This is expected */ }
-    //         _ => panic!("Expected ExtraFieldsSov::AIP1"),
-    //     }
-    // }
-
-    // todo: patrik: restore?
-    // #[test]
-    // fn test_build_service_didcommv2() {
-    //     let routing_keys = vec![SovKeyKind::Value("key1".to_string())];
-    //     let accept = vec![SovAcceptType::DIDCommV2];
-    //     let service_abbreviated = ServiceAbbreviated::from_parts(
-    //         "dm",
-    //         "https://example.com/endpoint",
-    //         routing_keys.as_ref(),
-    //         accept.as_ref(),
-    //     );
-    //
-    //     let id = Uri::new("did:peer:2").unwrap();
-    //     let service_type = "DIDCommMessaging".to_string();
-    //
-    //     let service = build_service_didcommv2(service_abbreviated, id, service_type).unwrap();
-    //
-    //     assert_eq!(service.id().to_string(), "did:peer:2");
-    //     assert_eq!(
-    //         service.service_type().clone(),
-    //         OneOrList::One("DIDCommMessaging".to_string())
-    //     );
-    //
-    //     match service.extra() {
-    //         ExtraFieldsSov::DIDCommV2(extra) => {
-    //             assert_eq!(extra.routing_keys(), &routing_keys);
-    //             assert_eq!(extra.accept(), &accept);
-    //         }
-    //         _ => panic!("Expected ExtraFieldsSov::DIDCommV2"),
-    //     }
-    // }
 }

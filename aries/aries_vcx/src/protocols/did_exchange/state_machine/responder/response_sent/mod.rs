@@ -3,10 +3,7 @@ use std::sync::Arc;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use did_doc::schema::did_doc::DidDocument;
 use did_peer::{
-    peer_did::{
-        numalgos::numalgo2::{resolve::resolve_numalgo2, Numalgo2},
-        PeerDid,
-    },
+    peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
     resolver::options::PublicKeyEncoding,
 };
 use did_resolver_registry::ResolverRegistry;
@@ -36,7 +33,9 @@ impl DidExchangeResponder<ResponseSent> {
         invitation_key: Key,
     ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, Response>, AriesVcxError> {
         let their_ddo = resolve_their_ddo(&resolver_registry, &request).await?;
-        let our_did_document = resolve_numalgo2(our_peer_did, PublicKeyEncoding::Base58)?.build();
+        let our_did_document = our_peer_did
+            .to_did_doc_builder(PublicKeyEncoding::Base58)?
+            .build();
 
         // TODO: Response should sign the new *did* with invitation_key only if key was rotated
         //       In practice if the invitation was public, we definitely will be rotating to
