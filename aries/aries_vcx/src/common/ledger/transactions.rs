@@ -83,14 +83,21 @@ pub async fn add_new_did(
     submitter_did: &str,
     role: Option<&str>,
 ) -> VcxResult<(String, String)> {
-    let (did, verkey) = wallet.create_and_store_my_did(None, None).await?;
+    let did_data = wallet.create_and_store_my_did(None, None).await?;
 
     let res = indy_ledger_write
-        .publish_nym(wallet, submitter_did, &did, Some(&verkey), None, role)
+        .publish_nym(
+            wallet,
+            submitter_did,
+            did_data.get_did(),
+            Some(&did_data.get_verkey().base58()),
+            None,
+            role,
+        )
         .await?;
     check_response(&res)?;
 
-    Ok((did, verkey))
+    Ok((did_data.get_did().into(), did_data.get_verkey().base58()))
 }
 
 pub async fn get_service(ledger: &impl IndyLedgerRead, did: &String) -> VcxResult<AriesService> {

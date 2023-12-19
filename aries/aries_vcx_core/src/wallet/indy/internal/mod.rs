@@ -1,4 +1,5 @@
-use vdrtools::{Locator, SearchHandle, WalletHandle};
+use indy_api_types::SearchHandle;
+use vdrtools::{Locator, WalletHandle};
 
 use crate::errors::error::VcxCoreResult;
 
@@ -87,79 +88,6 @@ pub(crate) async fn update_wallet_record_value(
     Locator::instance()
         .non_secret_controller
         .update_record_value(wallet_handle, xtype.into(), id.into(), value.into())
-        .await?;
-
-    Ok(())
-}
-
-pub(crate) async fn add_wallet_record_tags(
-    wallet_handle: WalletHandle,
-    xtype: &str,
-    id: &str,
-    tags: &str,
-) -> VcxCoreResult<()> {
-    trace!(
-        "add_record_tags >>> xtype: {}, id: {}, tags: {:?}",
-        secret!(&xtype),
-        secret!(&id),
-        secret!(&tags)
-    );
-
-    Locator::instance()
-        .non_secret_controller
-        .add_record_tags(
-            wallet_handle,
-            xtype.into(),
-            id.into(),
-            serde_json::from_str(tags)?,
-        )
-        .await?;
-
-    Ok(())
-}
-
-pub(crate) async fn update_wallet_record_tags(
-    wallet_handle: WalletHandle,
-    xtype: &str,
-    id: &str,
-    tags: &str,
-) -> VcxCoreResult<()> {
-    trace!(
-        "update_record_tags >>> xtype: {}, id: {}, tags: {}",
-        secret!(&xtype),
-        secret!(&id),
-        secret!(&tags)
-    );
-
-    Locator::instance()
-        .non_secret_controller
-        .update_record_tags(
-            wallet_handle,
-            xtype.into(),
-            id.into(),
-            serde_json::from_str(tags)?,
-        )
-        .await?;
-
-    Ok(())
-}
-
-pub(crate) async fn delete_wallet_record_tags(
-    wallet_handle: WalletHandle,
-    xtype: &str,
-    id: &str,
-    tag_names: &str,
-) -> VcxCoreResult<()> {
-    trace!(
-        "delete_record_tags >>> xtype: {}, id: {}, tag_names: {}",
-        secret!(&xtype),
-        secret!(&id),
-        secret!(&tag_names)
-    );
-
-    Locator::instance()
-        .non_secret_controller
-        .delete_record_tags(wallet_handle, xtype.into(), id.into(), tag_names.into())
         .await?;
 
     Ok(())

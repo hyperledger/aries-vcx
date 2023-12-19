@@ -7,7 +7,7 @@ mod dbtests {
 
     use aries_vcx::global::settings;
     use aries_vcx_core::wallet::{
-        base_wallet::BaseWallet,
+        base_wallet::DidWallet,
         indy::{
             wallet::{close_wallet, create_and_open_wallet, wallet_configure_issuer},
             IndySdkWallet, WalletConfig,
@@ -46,7 +46,7 @@ mod dbtests {
         let wallet_handle = create_and_open_wallet(&config_wallet).await?;
         let _config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await?;
 
-        let (_, _) = IndySdkWallet::new(wallet_handle)
+        IndySdkWallet::new(wallet_handle)
             .create_and_store_my_did(None, None)
             .await?;
         close_wallet(wallet_handle).await?;

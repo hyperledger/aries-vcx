@@ -7,26 +7,29 @@ use vdrtools::Locator;
 use super::{SEARCH_OPTIONS, WALLET_OPTIONS};
 use crate::{
     errors::error::{AriesVcxCoreError, VcxCoreResult},
-    wallet::indy::IndySdkWallet,
-    wallet2::{entry_tag::EntryTags, Record, RecordWallet, SearchFilter},
+    wallet::{
+        base_wallet::{Record, RecordWallet, SearchFilter},
+        entry_tag::EntryTags,
+        indy::IndySdkWallet,
+    },
 };
 
 #[async_trait]
 impl RecordWallet for IndySdkWallet {
     async fn add_record(&self, record: Record) -> VcxCoreResult<()> {
-        let tags_map = if record.tags.is_empty() {
+        let tags_map = if record.get_tags().is_empty() {
             None
         } else {
-            Some(record.tags.into())
+            Some(record.get_tags().clone().into())
         };
 
         Ok(Locator::instance()
             .non_secret_controller
             .add_record(
                 self.wallet_handle,
-                record.category,
-                record.name,
-                record.value,
+                record.get_category().into(),
+                record.get_name().into(),
+                record.get_value().into(),
                 tags_map,
             )
             .await?)

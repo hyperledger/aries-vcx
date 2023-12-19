@@ -26,6 +26,8 @@ futures = { version = "0.3", default-features = false }
 aries_vcx = { path = "../../../aries_vcx", features = ["credx", "vdrtools_wallet"] }
 aries_vcx_core = { path = "../../../aries_vcx_core" }
 diddoc_legacy = { path = "../diddoc_legacy" }
+public_key = { path = "../../../../did_core/public_key" }
+indy-api-types = { path = "../libvdrtools/indy-api-types" }
 thiserror = "1.0.37"
 uuid = { version = "1.4.1", default-features = false, features = ["v4"] }
 agency_client = { path = "../agency_client" }

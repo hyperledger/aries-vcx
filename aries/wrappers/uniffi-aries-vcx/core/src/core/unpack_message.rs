@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aries_vcx::aries_vcx_core::wallet::{base_wallet::BaseWallet, structs_io::UnpackMessageOutput};
+use aries_vcx::aries_vcx_core::wallet::{base_wallet::DidWallet, structs_io::UnpackMessageOutput};
 
 use super::profile::ProfileHolder;
 use crate::{errors::error::VcxUniFFIResult, runtime::block_on};

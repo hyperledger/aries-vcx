@@ -27,7 +27,7 @@ use aries_vcx_core::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
         indy::pool::test_utils::get_temp_file_path,
     },
-    wallet::{base_wallet::BaseWallet, indy::wallet::get_verkey_from_wallet},
+    wallet::base_wallet::{BaseWallet, DidWallet},
 };
 use diddoc_legacy::aries::service::AriesService;
 use serde_json::json;
@@ -124,11 +124,11 @@ async fn test_pool_rotate_verkey() -> Result<(), Box<dyn Error>> {
     .await?;
     rotate_verkey(&setup.wallet, &setup.ledger_write, &did).await?;
     tokio::time::sleep(Duration::from_millis(1000)).await;
-    let local_verkey = setup.wallet.key_for_local_did(&did).await?;
+    let local_verkey = setup.wallet.did_key(&did).await?;
 
     let ledger_verkey = get_verkey_from_ledger(&setup.ledger_read, &did).await?;
     assert_ne!(verkey, ledger_verkey);
-    assert_eq!(local_verkey, ledger_verkey);
+    assert_eq!(local_verkey.base58(), ledger_verkey);
     Ok(())
 }
 
@@ -173,8 +173,7 @@ async fn test_pool_write_new_endorser_did() -> Result<(), Box<dyn Error>> {
     let setup = SetupPoolDirectory::init().await;
     let faber = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
     let acme = create_test_agent(setup.genesis_file_path.clone()).await;
-    let acme_vk =
-        get_verkey_from_wallet(acme.wallet.get_wallet_handle(), &acme.institution_did).await?;
+    let acme_vk = acme.wallet.did_key(&acme.institution_did).await?;
 
     let attrib_json = json!({ "attrib_name": "foo"}).to_string();
     assert!(add_attr(
@@ -190,7 +189,7 @@ async fn test_pool_write_new_endorser_did() -> Result<(), Box<dyn Error>> {
         &faber.ledger_write,
         &faber.institution_did,
         &acme.institution_did,
-        &acme_vk,
+        &acme_vk.base58(),
         None,
     )
     .await?;

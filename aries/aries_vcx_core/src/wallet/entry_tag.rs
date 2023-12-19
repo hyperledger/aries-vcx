@@ -1,4 +1,6 @@
-use serde::{Deserialize, Serialize};
+use serde::{ser::SerializeMap, Deserialize, Serialize};
+
+use crate::errors::error::AriesVcxCoreError;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Ord)]
 pub enum EntryTag {
@@ -9,6 +11,23 @@ pub enum EntryTag {
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct EntryTags {
     inner: Vec<EntryTag>,
+}
+
+impl Serialize for EntryTags {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut map = serializer.serialize_map(Some(self.inner.len()))?;
+        for tag in self.inner.iter() {
+            match tag {
+                EntryTag::Encrypted(key, val) | EntryTag::Plaintext(key, val) => {
+                    map.serialize_entry(&key, &val)?
+                }
+            }
+        }
+        map.end()
+    }
 }
 
 impl EntryTags {
@@ -58,5 +77,17 @@ impl From<Vec<EntryTag>> for EntryTags {
 impl From<EntryTags> for Vec<EntryTag> {
     fn from(value: EntryTags) -> Self {
         value.inner
+    }
+}
+
+impl TryFrom<EntryTags> for Option<String> {
+    type Error = AriesVcxCoreError;
+
+    fn try_from(tags: EntryTags) -> Result<Self, Self::Error> {
+        if tags.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(serde_json::to_string(&tags)?))
+        }
     }
 }

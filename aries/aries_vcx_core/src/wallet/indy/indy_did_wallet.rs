@@ -1,11 +1,14 @@
 use async_trait::async_trait;
-use public_key::KeyType;
+use public_key::{Key, KeyType};
 use vdrtools::{DidMethod, DidValue, KeyInfo, Locator, MyDidInfo};
 
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::{indy::IndySdkWallet, structs_io::UnpackMessageOutput},
-    wallet2::{DidData, DidWallet, Key},
+    wallet::{
+        base_wallet::{DidData, DidWallet},
+        indy::IndySdkWallet,
+        structs_io::UnpackMessageOutput,
+    },
 };
 
 #[async_trait]
@@ -13,26 +16,24 @@ impl DidWallet for IndySdkWallet {
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,
-        method_name: Option<&str>,
+        did_method_name: Option<&str>,
     ) -> VcxCoreResult<DidData> {
-        let res = Locator::instance()
+        let (did, vk) = Locator::instance()
             .did_controller
             .create_and_store_my_did(
                 self.wallet_handle,
                 MyDidInfo {
-                    method_name: method_name.map(|m| DidMethod(m.into())),
+                    method_name: did_method_name.map(|m| DidMethod(m.into())),
                     seed: seed.map(Into::into),
                     ..MyDidInfo::default()
                 },
             )
             .await?;
 
-        Ok(DidData {
-            did: res.0,
-            verkey: Key::from_base58(&res.1, KeyType::Ed25519).map_err(|err| {
-                AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::WalletError, err)
-            })?,
-        })
+        let verkey = Key::from_base58(&vk, KeyType::Ed25519)
+            .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::WalletError, err))?;
+
+        Ok(DidData::new(&did, verkey))
     }
 
     async fn did_key(&self, did: &str) -> VcxCoreResult<Key> {

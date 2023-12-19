@@ -92,12 +92,12 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         routing_keys: Vec<String>,
         service_endpoint: url::Url,
     ) -> Result<(), AriesVcxCoreError> {
-        let (_, vk) = self.wallet.create_and_store_my_did(None, None).await?;
+        let did_data = self.wallet.create_and_store_my_did(None, None).await?;
         let service = AriesService {
             id: "#inline".to_owned(),
             type_: "did-communication".to_owned(),
             priority: 0,
-            recipient_keys: vec![vk],
+            recipient_keys: vec![did_data.get_verkey().base58()],
             routing_keys,
             service_endpoint,
         };
@@ -170,7 +170,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             .thread
             .map(|t| t.thid)
             .unwrap_or(request.id);
-        let (did, vk) = self
+        let did_data = self
             .wallet
             .create_and_store_my_did(None, None)
             .await
@@ -188,8 +188,8 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             self.wallet.as_ref(),
             thread_id,
             old_vk.clone(),
-            did,
-            vk.clone(),
+            did_data.get_did().into(),
+            did_data.get_verkey().base58(),
             self.service.as_ref().unwrap().service_endpoint.clone(),
             self.service.as_ref().unwrap().routing_keys.clone(),
         )
@@ -209,7 +209,8 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         let auth_pubkey = their_keys
             .first()
             .ok_or("No recipient key for client :/ ?".to_owned())?;
-        self.create_account(auth_pubkey, &vk, &their_diddoc).await?;
+        self.create_account(auth_pubkey, &did_data.get_verkey().base58(), &their_diddoc)
+            .await?;
         Ok(packed_response_envelope)
     }
 

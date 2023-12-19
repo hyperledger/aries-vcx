@@ -10,7 +10,7 @@ use aries_vcx::agency_client::{
     MessageStatusCode,
 };
 use aries_vcx_core::wallet::{
-    agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet,
+    agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::DidWallet,
 };
 
 use super::profile::get_main_wallet;
@@ -81,12 +81,12 @@ pub async fn provision_cloud_agent(
     let wallet = get_main_wallet()?;
     let mut client = get_main_agency_client()?;
     let seed = agency_config.agent_seed.as_deref();
-    let (my_did, my_vk) = wallet.create_and_store_my_did(seed, None).await?;
+    let did_data = wallet.create_and_store_my_did(seed, None).await?;
     client
         .provision_cloud_agent(
             wallet.to_base_agency_client_wallet(),
-            &my_did,
-            &my_vk,
+            did_data.get_did(),
+            &did_data.get_verkey().base58(),
             &agency_config.agency_did,
             &agency_config.agency_verkey,
             agency_config.agency_endpoint.clone(),

@@ -1,6 +1,6 @@
 mod common;
 
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_core::wallet::base_wallet::DidWallet;
 use messages::{
     msg_fields::protocols::coordinate_mediation::{
         keylist_update::{KeylistUpdateItem, KeylistUpdateItemAction},
@@ -69,14 +69,14 @@ async fn test_mediate_keylist_update_add() -> Result<()> {
     let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
     // prepare request message
-    let (_, new_vk) = agent
+    let did_data = agent
         .get_wallet_ref()
         .create_and_store_my_did(None, None)
         .await?;
     let keylist_update_request = KeylistUpdate::builder()
         .content(KeylistUpdateContent {
             updates: vec![KeylistUpdateItem {
-                recipient_key: new_vk,
+                recipient_key: did_data.get_verkey().base58(),
                 action: KeylistUpdateItemAction::Add,
             }],
         })
@@ -120,14 +120,14 @@ async fn test_mediate_keylist_query() -> Result<()> {
     let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
     // prepare request message: add key
-    let (_, new_vk) = agent
+    let did_data = agent
         .get_wallet_ref()
         .create_and_store_my_did(None, None)
         .await?;
     let keylist_update_request = KeylistUpdate::builder()
         .content(KeylistUpdateContent {
             updates: vec![KeylistUpdateItem {
-                recipient_key: new_vk,
+                recipient_key: did_data.get_verkey().base58(),
                 action: KeylistUpdateItemAction::Add,
             }],
         })
@@ -188,14 +188,14 @@ async fn test_mediate_keylist_update_remove() -> Result<()> {
     let (agent, mut aries_transport, our_verkey, their_diddoc) =
         gen_mediator_connected_agent().await?;
     // prepare request message: add key
-    let (_, new_vk) = agent
+    let did_data = agent
         .get_wallet_ref()
         .create_and_store_my_did(None, None)
         .await?;
     let keylist_update_request = KeylistUpdate::builder()
         .content(KeylistUpdateContent {
             updates: vec![KeylistUpdateItem {
-                recipient_key: new_vk.clone(),
+                recipient_key: did_data.get_verkey().base58(),
                 action: KeylistUpdateItemAction::Add,
             }],
         })
@@ -220,7 +220,7 @@ async fn test_mediate_keylist_update_remove() -> Result<()> {
     let keylist_update_request = KeylistUpdate::builder()
         .content(KeylistUpdateContent {
             updates: vec![KeylistUpdateItem {
-                recipient_key: new_vk,
+                recipient_key: did_data.get_verkey().base58(),
                 action: KeylistUpdateItemAction::Remove,
             }],
         })

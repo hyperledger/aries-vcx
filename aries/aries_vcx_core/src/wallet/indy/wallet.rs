@@ -232,7 +232,7 @@ pub async fn wallet_configure_issuer(
     wallet_handle: WalletHandle,
     key_seed: &str,
 ) -> VcxCoreResult<IssuerConfig> {
-    let (institution_did, _institution_verkey) =
+    let (institution_did, _vk) =
         create_and_store_my_did(wallet_handle, Some(key_seed), None).await?;
 
     Ok(IssuerConfig { institution_did })

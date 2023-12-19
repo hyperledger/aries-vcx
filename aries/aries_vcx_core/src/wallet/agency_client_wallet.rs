@@ -1,18 +1,19 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use agency_client::{
     errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
     wallet::base_agency_client_wallet::BaseAgencyClientWallet,
 };
 use async_trait::async_trait;
-#[cfg(feature = "vdrtools_wallet")]
-use vdrtools::WalletHandle;
+use public_key::{Key, KeyType};
 
-use super::structs_io::UnpackMessageOutput;
+use super::{
+    base_wallet::{BaseWallet, DidData, DidWallet, Record, RecordWallet, SearchFilter},
+    structs_io::UnpackMessageOutput,
+};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    utils::async_fn_iterator::AsyncFnIterator,
-    wallet::base_wallet::BaseWallet,
+    wallet::entry_tag::EntryTags,
 };
 
 #[derive(Debug)]
@@ -20,147 +21,112 @@ pub struct AgencyClientWallet {
     inner: Arc<dyn BaseAgencyClientWallet>,
 }
 
-/// Implementation of [BaseWallet] for [AgencyClientWallet] such that a [BaseAgencyClientWallet]
-/// can be converted to a [BaseWallet] for packing and unpacking messages, and vice versa.
+impl BaseWallet for AgencyClientWallet {}
+
 #[allow(unused_variables)]
 #[async_trait]
-impl BaseWallet for AgencyClientWallet {
+impl RecordWallet for AgencyClientWallet {
+    async fn add_record(&self, record: Record) -> VcxCoreResult<()> {
+        Err(unimplemented_agency_client_wallet_method("add_record"))
+    }
+
+    async fn get_record(&self, name: &str, category: &str) -> VcxCoreResult<Record> {
+        Err(unimplemented_agency_client_wallet_method("get_record"))
+    }
+
+    async fn update_record_tags(
+        &self,
+        name: &str,
+        category: &str,
+        new_tags: EntryTags,
+    ) -> VcxCoreResult<()> {
+        Err(unimplemented_agency_client_wallet_method(
+            "update_record_tags",
+        ))
+    }
+
+    async fn update_record_value(
+        &self,
+        name: &str,
+        category: &str,
+        new_value: &str,
+    ) -> VcxCoreResult<()> {
+        Err(unimplemented_agency_client_wallet_method(
+            "update_record_value",
+        ))
+    }
+
+    async fn delete_record(&self, name: &str, category: &str) -> VcxCoreResult<()> {
+        Err(unimplemented_agency_client_wallet_method("delete_record"))
+    }
+
+    async fn search_record(
+        &self,
+        category: &str,
+        search_filter: Option<SearchFilter>,
+    ) -> VcxCoreResult<Vec<Record>> {
+        Err(unimplemented_agency_client_wallet_method("search_record"))
+    }
+}
+
+#[async_trait]
+#[allow(unused_variables)]
+impl DidWallet for AgencyClientWallet {
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,
         method_name: Option<&str>,
-    ) -> VcxCoreResult<(String, String)> {
+    ) -> VcxCoreResult<DidData> {
         Err(unimplemented_agency_client_wallet_method(
-            "create_and_store_my_did",
+            "create_nad_store_my_did",
         ))
     }
 
-    async fn key_for_local_did(&self, did: &str) -> VcxCoreResult<String> {
+    async fn did_key(&self, name: &str) -> VcxCoreResult<Key> {
+        Err(unimplemented_agency_client_wallet_method("did_key"))
+    }
+
+    async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxCoreResult<Key> {
         Err(unimplemented_agency_client_wallet_method(
-            "get_verkey_from_wallet",
+            "replace_did_key_start",
         ))
     }
 
-    async fn replace_did_keys_start(&self, target_did: &str) -> VcxCoreResult<String> {
-        Err(unimplemented_agency_client_wallet_method(
-            "replace_did_keys_start",
-        ))
-    }
-
-    async fn replace_did_keys_apply(&self, target_did: &str) -> VcxCoreResult<()> {
+    async fn replace_did_key_apply(&self, did: &str) -> VcxCoreResult<()> {
         Err(unimplemented_agency_client_wallet_method(
             "replace_did_key_apply",
         ))
     }
 
-    async fn add_wallet_record(
-        &self,
-        xtype: &str,
-        id: &str,
-        value: &str,
-        tags: Option<HashMap<String, String>>,
-    ) -> VcxCoreResult<()> {
-        Err(unimplemented_agency_client_wallet_method(
-            "add_wallet_record",
-        ))
-    }
-
-    async fn get_wallet_record(
-        &self,
-        xtype: &str,
-        id: &str,
-        options: &str,
-    ) -> VcxCoreResult<String> {
-        Err(unimplemented_agency_client_wallet_method(
-            "get_wallet_record",
-        ))
-    }
-
-    async fn get_wallet_record_value(&self, xtype: &str, id: &str) -> VcxCoreResult<String> {
-        Err(unimplemented_agency_client_wallet_method(
-            "get_wallet_record_value",
-        ))
-    }
-
-    async fn delete_wallet_record(&self, xtype: &str, id: &str) -> VcxCoreResult<()> {
-        Err(unimplemented_agency_client_wallet_method(
-            "delete_wallet_record",
-        ))
-    }
-
-    async fn update_wallet_record_value(
-        &self,
-        xtype: &str,
-        id: &str,
-        value: &str,
-    ) -> VcxCoreResult<()> {
-        Err(unimplemented_agency_client_wallet_method(
-            "update_wallet_record_value",
-        ))
-    }
-
-    async fn add_wallet_record_tags(
-        &self,
-        xtype: &str,
-        id: &str,
-        tags: HashMap<String, String>,
-    ) -> VcxCoreResult<()> {
-        Err(unimplemented_agency_client_wallet_method(
-            "add_wallet_record_tags",
-        ))
-    }
-
-    async fn delete_wallet_record_tags(
-        &self,
-        xtype: &str,
-        id: &str,
-        tag_names: &str,
-    ) -> VcxCoreResult<()> {
-        Err(unimplemented_agency_client_wallet_method(
-            "delete_wallet_record_tags",
-        ))
-    }
-
-    async fn update_wallet_record_tags(
-        &self,
-        xtype: &str,
-        id: &str,
-        tags: HashMap<String, String>,
-    ) -> VcxCoreResult<()> {
-        Err(unimplemented_agency_client_wallet_method(
-            "update_wallet_record_tags",
-        ))
-    }
-
-    async fn iterate_wallet_records(
-        &self,
-        xtype: &str,
-        query: &str,
-        options: &str,
-    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>>> {
-        Err(unimplemented_agency_client_wallet_method(
-            "iterate_wallet_records",
-        ))
-    }
-
-    async fn sign(&self, my_vk: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
+    async fn sign(&self, key: &Key, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
         Err(unimplemented_agency_client_wallet_method("sign"))
     }
 
-    async fn verify(&self, vk: &str, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
+    async fn verify(&self, key: &Key, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
         Err(unimplemented_agency_client_wallet_method("verify"))
     }
 
     async fn pack_message(
         &self,
-        sender_vk: Option<&str>,
-        receiver_keys: &str,
+        sender_vk: Option<Key>,
+        receiver_keys: Vec<Key>,
         msg: &[u8],
     ) -> VcxCoreResult<Vec<u8>> {
-        Ok(self
+        let receiver_list: Vec<String> =
+            receiver_keys.into_iter().map(|key| key.base58()).collect();
+
+        let list_json = serde_json::to_string(&receiver_list)?;
+
+        let res = self
             .inner
-            .pack_message(sender_vk, receiver_keys, msg)
-            .await?)
+            .pack_message(
+                sender_vk.map(|key| key.base58()).as_deref(),
+                &list_json,
+                msg,
+            )
+            .await?;
+
+        Ok(res)
     }
 
     async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {
@@ -168,11 +134,6 @@ impl BaseWallet for AgencyClientWallet {
         serde_json::from_slice(&unpack_json_bytes[..]).map_err(|err| {
             AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, err.to_string())
         })
-    }
-
-    #[cfg(feature = "vdrtools_wallet")]
-    fn get_wallet_handle(&self) -> WalletHandle {
-        unimplemented!("AgencyClientWallet::get_wallet_handle - this was not expected to be called")
     }
 }
 
@@ -211,8 +172,38 @@ impl BaseAgencyClientWallet for BaseWalletAgencyClientWallet {
         receiver_keys: &str,
         msg: &[u8],
     ) -> AgencyClientResult<Vec<u8>> {
+        let receiver_list = serde_json::from_str::<Vec<String>>(receiver_keys).map_err(|e| {
+            AgencyClientError::from_msg(
+                AgencyClientErrorKind::UnknownError,
+                format!("A VCXError occured while calling pack_message: {e:?}"),
+            )
+        })?;
+
+        let keys = receiver_list
+            .into_iter()
+            .map(|item| {
+                Key::from_base58(&item, KeyType::Ed25519).map_err(|e| {
+                    AgencyClientError::from_msg(
+                        AgencyClientErrorKind::NotBase58,
+                        format!("Invalid receiver key: {e:?}"),
+                    )
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let sender_key = sender_vk
+            .map(|item| {
+                Key::from_base58(item, KeyType::Ed25519).map_err(|e| {
+                    AgencyClientError::from_msg(
+                        AgencyClientErrorKind::NotBase58,
+                        format!("Invalid receiver key: {e:?}"),
+                    )
+                })
+            })
+            .transpose()?;
+
         self.inner
-            .pack_message(sender_vk, receiver_keys, msg)
+            .pack_message(sender_key, keys, msg)
             .await
             .map_err(|e| {
                 AgencyClientError::from_msg(

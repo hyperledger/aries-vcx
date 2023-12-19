@@ -150,7 +150,7 @@ pub async fn jws_sign_attach(
         let b64_protected =
             base64::engine::Engine::encode(&URL_SAFE_NO_PAD, protected_header.to_string());
         let sign_input = format!("{}.{}", b64_protected, attach_base64).into_bytes();
-        let signed = wallet.sign(&verkey.base58(), &sign_input).await?;
+        let signed = wallet.sign(&verkey, &sign_input).await?;
         let signature_base64 = base64::engine::Engine::encode(&URL_SAFE_NO_PAD, signed);
 
         let jws = {

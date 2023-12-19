@@ -1,146 +1,113 @@
-use std::collections::HashMap;
-
 use async_trait::async_trait;
+use public_key::{Key, KeyType};
 
-use super::structs_io::UnpackMessageOutput;
-#[cfg(feature = "vdrtools_wallet")]
-use crate::WalletHandle;
+use super::{
+    base_wallet::{
+        BaseWallet, DidData, DidWallet, Record, RecordBuilder, RecordWallet, SearchFilter,
+    },
+    structs_io::UnpackMessageOutput,
+};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    utils::{
-        async_fn_iterator::AsyncFnIterator,
-        {self},
-    },
-    wallet::base_wallet::BaseWallet,
+    utils::{self},
+    wallet::entry_tag::EntryTags,
 };
 
 #[derive(Debug)]
 pub struct MockWallet;
 
-// NOTE : currently matches the expected results if did_mocks and indy_mocks are enabled
-/// Implementation of [BaseAnoncreds] which responds with mock data
-#[allow(unused)]
+impl BaseWallet for MockWallet {}
+
 #[async_trait]
-impl BaseWallet for MockWallet {
-    #[cfg(feature = "vdrtools_wallet")]
-    fn get_wallet_handle(&self) -> WalletHandle {
-        WalletHandle(1)
+#[allow(unused_variables)]
+impl RecordWallet for MockWallet {
+    async fn add_record(&self, record: Record) -> VcxCoreResult<()> {
+        Ok(())
     }
 
+    async fn get_record(&self, name: &str, category: &str) -> VcxCoreResult<Record> {
+        Ok(RecordBuilder::default()
+            .name("123".into())
+            .category("record type".into())
+            .value("record value".into())
+            .build()?)
+    }
+
+    async fn update_record_value(
+        &self,
+        name: &str,
+        category: &str,
+        new_value: &str,
+    ) -> VcxCoreResult<()> {
+        Ok(())
+    }
+
+    async fn update_record_tags(
+        &self,
+        name: &str,
+        category: &str,
+        new_tags: EntryTags,
+    ) -> VcxCoreResult<()> {
+        Ok(())
+    }
+
+    async fn delete_record(&self, name: &str, category: &str) -> VcxCoreResult<()> {
+        Ok(())
+    }
+
+    async fn search_record(
+        &self,
+        category: &str,
+        search_filter: Option<SearchFilter>,
+    ) -> VcxCoreResult<Vec<Record>> {
+        Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::UnimplementedFeature,
+            "unimplemented mock method: search_record",
+        ))
+    }
+}
+
+#[async_trait]
+#[allow(unused_variables)]
+impl DidWallet for MockWallet {
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,
         method_name: Option<&str>,
-    ) -> VcxCoreResult<(String, String)> {
-        Ok((
-            utils::constants::DID.to_string(),
-            utils::constants::VERKEY.to_string(),
+    ) -> VcxCoreResult<DidData> {
+        Ok(DidData::new(
+            utils::constants::DID,
+            Key::new(utils::constants::VERKEY.into(), KeyType::Ed25519).unwrap(),
         ))
     }
 
-    async fn key_for_local_did(&self, did: &str) -> VcxCoreResult<String> {
-        Ok(utils::constants::VERKEY.to_string())
+    async fn did_key(&self, name: &str) -> VcxCoreResult<Key> {
+        Ok(Key::new(utils::constants::VERKEY.into(), KeyType::Ed25519).unwrap())
     }
 
-    async fn replace_did_keys_start(&self, target_did: &str) -> VcxCoreResult<String> {
-        Ok(utils::constants::VERKEY.to_string())
+    async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxCoreResult<Key> {
+        Ok(Key::new(utils::constants::VERKEY.into(), KeyType::Ed25519).unwrap())
     }
 
-    async fn replace_did_keys_apply(&self, target_did: &str) -> VcxCoreResult<()> {
+    async fn replace_did_key_apply(&self, did: &str) -> VcxCoreResult<()> {
         Ok(())
     }
 
-    async fn add_wallet_record(
-        &self,
-        xtype: &str,
-        id: &str,
-        value: &str,
-        tags: Option<HashMap<String, String>>,
-    ) -> VcxCoreResult<()> {
-        Ok(())
-    }
-
-    async fn get_wallet_record(
-        &self,
-        xtype: &str,
-        id: &str,
-        options: &str,
-    ) -> VcxCoreResult<String> {
-        Ok(r#"{"id":"123","type":"record type","value":"record value","tags":null}"#.to_string())
-    }
-
-    async fn get_wallet_record_value(&self, xtype: &str, id: &str) -> VcxCoreResult<String> {
-        Ok(r#""record value""#.to_owned())
-    }
-
-    async fn delete_wallet_record(&self, xtype: &str, id: &str) -> VcxCoreResult<()> {
-        Ok(())
-    }
-
-    async fn update_wallet_record_value(
-        &self,
-        xtype: &str,
-        id: &str,
-        value: &str,
-    ) -> VcxCoreResult<()> {
-        Ok(())
-    }
-
-    async fn add_wallet_record_tags(
-        &self,
-        xtype: &str,
-        id: &str,
-        tags: HashMap<String, String>,
-    ) -> VcxCoreResult<()> {
-        Ok(())
-    }
-
-    async fn update_wallet_record_tags(
-        &self,
-        xtype: &str,
-        id: &str,
-        tags: HashMap<String, String>,
-    ) -> VcxCoreResult<()> {
-        Ok(())
-    }
-
-    async fn delete_wallet_record_tags(
-        &self,
-        xtype: &str,
-        id: &str,
-        tag_names: &str,
-    ) -> VcxCoreResult<()> {
-        Ok(())
-    }
-
-    async fn iterate_wallet_records(
-        &self,
-        xtype: &str,
-        query: &str,
-        options: &str,
-    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>>> {
-        // not needed yet
-        Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::UnimplementedFeature,
-            "unimplemented mock method: iterate_wallet_records",
-        ))
-    }
-
-    async fn sign(&self, my_vk: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
+    async fn sign(&self, key: &Key, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
         Ok(Vec::from(msg))
     }
 
-    async fn verify(&self, vk: &str, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
+    async fn verify(&self, key: &Key, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
         Ok(true)
     }
 
     async fn pack_message(
         &self,
-        sender_vk: Option<&str>,
-        receiver_keys: &str,
+        sender_vk: Option<Key>,
+        receiver_keys: Vec<Key>,
         msg: &[u8],
     ) -> VcxCoreResult<Vec<u8>> {
-        Ok(msg.to_vec())
+        Ok(Vec::from(msg))
     }
 
     async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {

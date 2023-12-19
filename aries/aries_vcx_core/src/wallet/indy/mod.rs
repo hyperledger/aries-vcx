@@ -1,18 +1,10 @@
-use std::thread;
-
-use async_trait::async_trait;
-use futures::executor::block_on;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use typed_builder::TypedBuilder;
 
-use crate::{
-    errors::error::{AriesVcxCoreError, VcxCoreResult},
-    utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
-    SearchHandle, WalletHandle,
-};
+use crate::{errors::error::AriesVcxCoreError, WalletHandle};
 
-pub mod indy_wallet;
+pub mod indy_did_wallet;
+pub mod indy_record_wallet;
 pub mod internal;
 pub mod signing;
 pub mod wallet;
@@ -27,59 +19,9 @@ impl IndySdkWallet {
     pub fn new(wallet_handle: WalletHandle) -> Self {
         IndySdkWallet { wallet_handle }
     }
-}
 
-struct IndyWalletRecordIterator {
-    wallet_handle: WalletHandle,
-    search_handle: SearchHandle,
-}
-
-impl IndyWalletRecordIterator {
-    fn new(wallet_handle: WalletHandle, search_handle: SearchHandle) -> Self {
-        IndyWalletRecordIterator {
-            wallet_handle,
-            search_handle,
-        }
-    }
-
-    async fn fetch_next_records(&self) -> VcxCoreResult<Option<String>> {
-        let indy_res_json =
-            internal::fetch_next_records_wallet(self.wallet_handle, self.search_handle, 1).await?;
-
-        let indy_res: Value = serde_json::from_str(&indy_res_json)?;
-
-        let records = (&indy_res).try_get("records")?;
-
-        let item: Option<VcxCoreResult<String>> = records
-            .as_array()
-            .and_then(|arr| arr.first())
-            .map(|item| serde_json::to_string(item).map_err(AriesVcxCoreError::from));
-
-        item.transpose()
-    }
-}
-
-/// Implementation of a generic [AsyncFnIterator] iterator for indy/vdrtools wallet record
-/// iteration. Wraps over the vdrtools record [SearchHandle] functionality
-#[async_trait]
-impl AsyncFnIterator for IndyWalletRecordIterator {
-    type Item = VcxCoreResult<String>;
-
-    async fn next(&mut self) -> Option<Self::Item> {
-        let records = self.fetch_next_records().await;
-        records.transpose()
-    }
-}
-
-impl Drop for IndyWalletRecordIterator {
-    fn drop(&mut self) {
-        let search_handle = self.search_handle;
-
-        thread::spawn(move || {
-            block_on(async {
-                internal::close_search_wallet(search_handle).await.ok();
-            });
-        });
+    pub fn get_wallet_handle(&self) -> WalletHandle {
+        self.wallet_handle
     }
 }
 
@@ -133,6 +75,19 @@ pub struct WalletRecord {
     tags: Option<String>,
 }
 
+impl TryFrom<Record> for WalletRecord {
+    type Error = AriesVcxCoreError;
+
+    fn try_from(record: Record) -> Result<Self, Self::Error> {
+        Ok(Self {
+            id: Some(record.get_name().into()),
+            record_type: Some(record.get_category().into()),
+            value: Some(record.get_value().into()),
+            tags: record.get_tags().clone().try_into()?,
+        })
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RestoreWalletConfigs {
     pub wallet_name: String,
@@ -141,4 +96,63 @@ pub struct RestoreWalletConfigs {
     pub backup_key: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wallet_key_derivation: Option<String>,
+}
+
+use std::collections::HashMap;
+
+use super::{
+    base_wallet::{BaseWallet, Record},
+    entry_tag::{EntryTag, EntryTags},
+};
+
+const WALLET_OPTIONS: &str =
+    r#"{"retrieveType": true, "retrieveValue": true, "retrieveTags": true}"#;
+
+const SEARCH_OPTIONS: &str = r#"{"retrieveType": true, "retrieveValue": true, "retrieveTags": true, "retrieveRecords": true}"#;
+
+impl BaseWallet for IndySdkWallet {}
+
+impl From<EntryTag> for (String, String) {
+    fn from(value: EntryTag) -> Self {
+        match value {
+            EntryTag::Encrypted(key, val) => (key, val),
+            EntryTag::Plaintext(key, val) => (format!("~{}", key), val),
+        }
+    }
+}
+
+impl From<(String, String)> for EntryTag {
+    fn from(value: (String, String)) -> Self {
+        if value.0.starts_with('~') {
+            EntryTag::Plaintext(value.0.trim_start_matches('~').into(), value.1)
+        } else {
+            EntryTag::Encrypted(value.0, value.1)
+        }
+    }
+}
+
+impl From<EntryTags> for HashMap<String, String> {
+    fn from(value: EntryTags) -> Self {
+        let tags: Vec<EntryTag> = value.into();
+        tags.into_iter().fold(Self::new(), |mut memo, item| {
+            let (key, value) = item.into();
+
+            memo.insert(key, value);
+            memo
+        })
+    }
+}
+
+impl From<HashMap<String, String>> for EntryTags {
+    fn from(value: HashMap<String, String>) -> Self {
+        let mut items: Vec<EntryTag> = value
+            .into_iter()
+            .map(|(key, value)| (key, value))
+            .map(From::from)
+            .collect();
+
+        items.sort();
+
+        Self::new(items)
+    }
 }

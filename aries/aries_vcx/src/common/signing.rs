@@ -4,6 +4,7 @@ use messages::msg_fields::protocols::connection::{
     response::{ConnectionSignature, ResponseContent},
     ConnectionData,
 };
+use public_key::{Key, KeyType};
 use time;
 
 use crate::{errors::error::prelude::*, utils::base64::URL_SAFE_LENIENT};
@@ -27,7 +28,9 @@ async fn get_signature_data(
     let mut sig_data = now.to_be_bytes().to_vec();
     sig_data.extend(data.as_bytes());
 
-    let signature = wallet.sign(key, &sig_data).await?;
+    let signature = wallet
+        .sign(&Key::from_base58(key, KeyType::Ed25519)?, &sig_data)
+        .await?;
 
     Ok((signature, sig_data))
 }
@@ -64,7 +67,14 @@ pub async fn decode_signed_connection_response(
 
     let sig_data = base64url_decode(&response.connection_sig.sig_data)?;
 
-    if !wallet.verify(their_vk, &sig_data, &signature).await? {
+    if !wallet
+        .verify(
+            &Key::from_base58(their_vk, KeyType::Ed25519)?,
+            &sig_data,
+            &signature,
+        )
+        .await?
+    {
         return Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
             "ConnectionResponse signature is invalid for original Invite recipient key",
