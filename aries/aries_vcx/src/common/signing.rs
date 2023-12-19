@@ -6,7 +6,17 @@ use messages::msg_fields::protocols::connection::{
 };
 use time;
 
-use crate::errors::error::prelude::*;
+use crate::{errors::error::prelude::*, utils::base64::URL_SAFE_LENIENT};
+
+// Utility function to handle both padded and unpadded Base64URL data
+fn base64url_decode(encoded: &str) -> VcxResult<Vec<u8>> {
+    URL_SAFE_LENIENT.decode(encoded).map_err(|err| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
+            format!("Cannot decode Base64URL data: {:?}", err),
+        )
+    })
+}
 
 async fn get_signature_data(
     wallet: &impl BaseWallet,
@@ -52,14 +62,7 @@ pub async fn decode_signed_connection_response(
             )
         })?;
 
-    let sig_data = general_purpose::URL_SAFE
-        .decode(response.connection_sig.sig_data.as_bytes())
-        .map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Cannot decode ConnectionResponse: {:?}", err),
-            )
-        })?;
+    let sig_data = base64url_decode(&response.connection_sig.sig_data)?;
 
     if !wallet.verify(their_vk, &sig_data, &signature).await? {
         return Err(AriesVcxError::from_msg(
@@ -146,3 +149,27 @@ pub async fn decode_signed_connection_response(
 //         .await;
 //     }
 // }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_decode_padded_and_unpadded_sig_data() {
+        let encoded_padded = "T3BlbkFJIENoYXRHUFQ=";
+        let encoded_unpadded = "T3BlbkFJIENoYXRHUFQ";
+
+        let decoded_padded = base64url_decode(encoded_padded).unwrap();
+        let decoded_unpadded = base64url_decode(encoded_unpadded).unwrap();
+
+        assert_eq!(decoded_padded, decoded_unpadded);
+    }
+
+    #[tokio::test]
+    async fn test_invalid_json_error() {
+        let non_json_input = "Not a JSON input";
+        let result = base64url_decode(non_json_input);
+        let error = result.unwrap_err();
+        assert!(matches!(error.kind(), AriesVcxErrorKind::InvalidJson));
+    }
+}
