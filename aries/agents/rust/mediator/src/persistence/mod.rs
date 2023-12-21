@@ -8,7 +8,7 @@ use async_trait::async_trait;
 pub use database::get_db_pool as get_persistence;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 
-use self::errors::GetAccountDetailsError;
+use self::errors::{GetAccountDetailsError, ListAccountsError};
 use crate::utils::structs::VerKey;
 
 #[async_trait]
@@ -42,7 +42,7 @@ pub trait MediatorPersistence: Send + Sync + 'static {
     ) -> Result<Vec<(String, Vec<u8>)>, String>;
     // async fn mark_messages_received(&self, message_id: Vec<u32>);
     /// Returns vector of (account_name, auth_pubkey)
-    async fn list_accounts(&self) -> Result<Vec<(String, String)>, String>;
+    async fn list_accounts(&self) -> Result<Vec<(String, String)>, ListAccountsError>;
     /// Returns account details (sr.no, account_name, our_signing_key, did_doc)
     async fn get_account_details(
         &self,

@@ -1,14 +1,21 @@
 // Copyright 2023 Naian G.
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::anyhow;
 use async_trait::async_trait;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use futures::TryStreamExt;
 use log::info;
-use sqlx::{mysql::MySqlPoolOptions, MySqlPool, Row};
+use sqlx::{
+    mysql::{MySqlPoolOptions, MySqlRow},
+    MySqlPool, Row,
+};
 
 use super::super::MediatorPersistence;
-use crate::persistence::{errors::GetAccountDetailsError, AccountDetails};
+use crate::persistence::{
+    errors::{GetAccountDetailsError, ListAccountsError},
+    AccountDetails,
+};
 
 pub async fn get_db_pool() -> MySqlPool {
     let _ = dotenvy::dotenv();
@@ -69,16 +76,20 @@ impl MediatorPersistence for sqlx::MySqlPool {
             };
         Ok(account_id)
     }
-    async fn list_accounts(&self) -> Result<Vec<(String, String)>, String> {
-        let list: Vec<(String, String)> =
+    async fn list_accounts(&self) -> Result<Vec<(String, String)>, ListAccountsError> {
+        let accounts_rows: Vec<MySqlRow> =
             sqlx::query("SELECT account_name, auth_pubkey FROM accounts;")
                 .fetch_all(self)
                 .await
-                .map_err(|e| e.to_string())?
-                .iter()
-                .map(|row| (row.get("account_name"), row.get("auth_pubkey")))
-                .collect();
-        Ok(list)
+                .map_err(|e| anyhow!(e))?;
+        let mut vec_tup = vec![];
+        for row in accounts_rows {
+            vec_tup.push((
+                row.try_get("account_name").map_err(|e| anyhow!(e))?,
+                row.try_get("auth_pubkey").map_err(|e| anyhow!(e))?,
+            ))
+        }
+        Ok(vec_tup)
     }
     async fn get_account_details(
         &self,

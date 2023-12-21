@@ -25,7 +25,7 @@ pub enum GetAccountIdError {
 #[derive(Error, Debug)]
 pub enum ListAccountsError {
     #[error(transparent)]
-    LowerLayerError(#[from] Box<dyn std::error::Error>),
+    LowerLayerError(#[from] anyhow::Error),
 }
 
 #[derive(Error, Debug)]
