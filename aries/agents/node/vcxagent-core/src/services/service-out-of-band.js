@@ -1,21 +1,16 @@
-const { OutOfBandSender, OutOfBandReceiver } = require('@hyperledger/node-vcx-wrapper')
+const { OutOfBandSender } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ loadConnection }) {
-  function _createOobSender (message, label) {
-    const oob = OutOfBandSender.create({ label })
+  async function createOobMessageWithDid (message, label, publicDid) {
+    const oobSender = OutOfBandSender.create({ label })
     if (message) {
       const msgParsed = JSON.parse(message)
       const msgType = msgParsed['@type']
       if (!msgType) {
         throw Error(`Message appended to OOB message must have @type. Invalid message: ${msgParsed}`)
       }
-      oob.appendMessage(message)
+      oobSender.appendMessage(message)
     }
-    return oob
-  }
-
-  async function createOobMessageWithDid (message, label, publicDid) {
-    const oobSender = _createOobSender(message, label)
     oobSender.appendServiceDid(publicDid)
     return oobSender.toMessage()
   }
@@ -25,25 +20,8 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ loadC
     await connection.sendHandshakeReuse(oobMsg)
   }
 
-  async function connectionExists (connectionIds, oobMsg) {
-    const connections = await connectionIds.reduce(async (filtered, cid) => {
-      let connection
-      try {
-        connection = await loadConnection(cid)
-        filtered.push(connection)
-        return filtered
-      } catch {}
-    }, [])
-    const oobReceiver = OutOfBandReceiver.createWithMessage(oobMsg)
-    if (connections && await oobReceiver.connectionExists(connections)) {
-      return true
-    }
-    return false
-  }
-
   return {
     createOobMessageWithDid,
-    connectionExists,
     reuseConnectionFromOobMsg
   }
 }
