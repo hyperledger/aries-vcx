@@ -1,7 +1,7 @@
 const { CredentialDef } = require('@hyperledger/node-vcx-wrapper')
 
-module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef({ logger, saveCredDef, loadCredDef, listCredDefIds }) {
-  async function createCredentialDefinitionV2(issuerDid, schemaId, credDefId, supportRevocation, tag = 'tag1') {
+module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef ({ logger, saveCredDef, loadCredDef, listCredDefIds }) {
+  async function createCredentialDefinitionV2 (issuerDid, schemaId, credDefId, supportRevocation, tag = 'tag1') {
     const data = {
       issuerDid,
       supportRevocation,
@@ -17,11 +17,11 @@ module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef(
     return credDef
   }
 
-  async function listIds() {
+  async function listIds () {
     return listCredDefIds()
   }
 
-  async function printInfo(credDefIds) {
+  async function printInfo (credDefIds) {
     for (const id of credDefIds) {
       const credDef = await loadCredDef(id)
       const serCredDef = credDef.serialize()
@@ -29,7 +29,7 @@ module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef(
     }
   }
 
-  async function getCredDefId(credDefId) {
+  async function getCredDefId (credDefId) {
     const credDef = await loadCredDef(credDefId)
     logger.info(`Getting credDefId for credential definition ${credDefId}`)
     return credDef.getCredDefId()

@@ -1,6 +1,6 @@
-const { OutOfBandSender, OutOfBandReceiver, Connection } = require('@hyperledger/node-vcx-wrapper')
+const { OutOfBandSender, OutOfBandReceiver } = require('@hyperledger/node-vcx-wrapper')
 
-module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logger, saveConnection, loadConnection }) {
+module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ loadConnection }) {
   function _createOobSender (message, label) {
     const oob = OutOfBandSender.create({ label })
     if (message) {
@@ -18,12 +18,6 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
     const oobSender = _createOobSender(message, label)
     oobSender.appendServiceDid(publicDid)
     return oobSender.toMessage()
-  }
-
-  async function createConnectionFromOobMsg (connectionId, oobMsg) {
-    const connection = await Connection.createWithInvite({ id: 'foo', invite: oobMsg })
-    await connection.connect()
-    await saveConnection(connectionId, connection)
   }
 
   async function reuseConnectionFromOobMsg (connectionId, oobMsg) {
@@ -49,7 +43,6 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
 
   return {
     createOobMessageWithDid,
-    createConnectionFromOobMsg,
     connectionExists,
     reuseConnectionFromOobMsg
   }

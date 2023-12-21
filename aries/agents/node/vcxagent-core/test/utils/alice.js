@@ -22,7 +22,7 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
   }
   const vcxAgent = await createVcxAgent(aliceAgentConfig)
 
-  async function acceptInvite (invite) {
+  async function acceptInvitationAndMediate (invite) {
     logger.info(`Alice establishing connection with Faber using invite ${invite}`)
     await vcxAgent.agentInitVcx()
 
@@ -33,13 +33,21 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function createNonmediatedConnectionFromInvite (invite) {
+  async function acceptInvitation (invite) {
     logger.info(`Alice establishing connection with Faber using invite ${invite}`)
     await vcxAgent.agentInitVcx()
 
     await vcxAgent.serviceNonmediatedConnections.inviteeConnectionCreateFromInvite(connectionId, invite)
-    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Requested)
+    const connection = await vcxAgent.serviceNonmediatedConnections.getState(connectionId)
+    expect(await connection.getState()).toBe(ConnectionStateType.Requested)
 
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function sendConnectionHandshakeReuse (oobMsg) {
+    logger.debug(`sendConnectionHandshakeReuse >> oobMsg = ${oobMsg}`)
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceOutOfBand.reuseConnectionFromOobMsg(connectionId, oobMsg)
     await vcxAgent.agentShutdownVcx()
   }
 
@@ -49,26 +57,6 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
 
     await vcxAgent.serviceNonmediatedConnections.inviteeConnectionProcessResponse(connectionId, response)
     expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Finished)
-
-    await vcxAgent.agentShutdownVcx()
-  }
-
-  async function createConnectionUsingOobMessage (oobMsg) {
-    logger.info('createConnectionUsingOobMessage >> Alice going to create connection using oob message')
-    logger.debug(`createConnectionUsingOobMessage >> oobMsg = ${oobMsg}`)
-    await vcxAgent.agentInitVcx()
-
-    await vcxAgent.serviceOutOfBand.createConnectionFromOobMsg(connectionId, oobMsg)
-
-    await vcxAgent.agentShutdownVcx()
-  }
-
-  async function createNonmediatedConnectionUsingOobMessage (oobMsg) {
-    logger.info('createNonmediatedConnectionUsingOobMessage >> Alice going to create connection using oob message')
-    logger.debug(`createNonmediatedConnectionUsingOobMessage >> oobMsg = ${oobMsg}`)
-    await vcxAgent.agentInitVcx()
-
-    await vcxAgent.serviceOutOfBand.createNonmediatedConnectionFromOobMsg(connectionId, oobMsg)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -242,10 +230,10 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     sendMessage,
     nonmediatedConnectionSendMessage,
     signData,
-    acceptInvite,
-    createNonmediatedConnectionFromInvite,
+    acceptInvitationAndMediate,
+    acceptInvitation,
+    sendConnectionHandshakeReuse,
     nonmediatedConnectionProcessResponse,
-    createConnectionUsingOobMessage,
     acceptOobCredentialOffer,
     updateConnection,
     handleMessage,

@@ -50,6 +50,18 @@ describe('test out of band communication', () => {
     expect(payloadAlice.content).toBe('Hello Alice')
   })
 
+  it('Alice reuses a connection already established by Faber', async () => {
+    const { alice, faber } = await createPairedAliceAndFaberViaOobMsg()
+    const msg = await faber.createOobMessageWithDid()
+    await alice.sendConnectionHandshakeReuse(msg)
+    const msgsFaber = await faber.downloadReceivedMessagesV2()
+    expect(msgsFaber.length).toBe(1)
+    const payloadFaber = JSON.parse(msgsFaber[0].decryptedMsg)
+    expect(payloadFaber['@id']).toBeDefined()
+    expect(payloadFaber['@type']).toBeDefined()
+    console.log(JSON.stringify(payloadFaber))
+  })
+
   it('Faber issues credential via OOB', async () => {
     try {
       const { alice, faber } = await createAliceAndFaber()

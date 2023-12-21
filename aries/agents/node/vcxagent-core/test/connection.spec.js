@@ -48,7 +48,7 @@ describe('test establishing and exchanging messages via nonmediated connections'
       const service = await faber.readServiceFromLedger()
       expect(service.recipientKeys[0]).toBe(pwInfo.pw_vk)
 
-      await alice.createNonmediatedConnectionFromInvite(invite)
+      await alice.acceptInvitation(invite)
 
       const { message: request } = await faber.unpackMsg(faberEncryptedMsg)
       await faber.createNonmediatedConnectionFromRequest(request, pwInfo)
@@ -111,7 +111,7 @@ describe('test establishing and exchanging messages via nonmediated connections'
       const { alice, faber } = await createAliceAndFaber({ aliceEndpoint, faberEndpoint })
 
       const invite = await faber.createNonmediatedConnectionWithInvite()
-      await alice.createNonmediatedConnectionFromInvite(invite)
+      await alice.acceptInvitation(invite)
 
       const { message: request } = await faber.unpackMsg(faberEncryptedMsg)
       await faber.nonmediatedConnectionProcessRequest(request)
@@ -175,7 +175,7 @@ describe('test establishing and exchanging messages via nonmediated connections'
 
       const pwInfo = await faber.publishService(faberEndpoint)
       const msg = await faber.createOobMessageWithDid()
-      await alice.createNonmediatedConnectionFromInvite(msg)
+      await alice.acceptInvitation(msg)
 
       const { message: request } = await faber.unpackMsg(faberEncryptedMsg)
       await faber.createNonmediatedConnectionFromRequest(request, pwInfo)
@@ -227,7 +227,7 @@ describe('test establishing and exchanging messages via nonmediated connections'
 
       const pwInfo = await faber.publishService(faberEndpoint)
       const msg = await faber.createOobMessageWithDid()
-      await alice.createConnectionUsingOobMessage(msg)
+      await alice.acceptInvitationAndMediate(msg)
 
       const { message: request } = await faber.unpackMsg(faberEncryptedMsg)
       await faber.createNonmediatedConnectionFromRequest(request, pwInfo)
