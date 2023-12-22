@@ -17,7 +17,7 @@ module.exports.createPairedAliceAndFaber = async function createPairedAliceAndFa
   const alice = await createAlice()
   const faber = await createFaber()
   const invite = await faber.createInvite()
-  await alice.acceptInvite(invite)
+  await alice.acceptInvitationAndMediate(invite)
   await faber.updateConnection(MediatedConnectionStateType.Responded)
   await alice.updateConnection(MediatedConnectionStateType.Finished)
   await faber.updateConnection(MediatedConnectionStateType.Finished)
@@ -64,7 +64,7 @@ module.exports.createPairedAliceAndFaberViaPublicInvite = async function createP
     const faber = await createFaber()
     const pwInfo = await faber.publishService(endpoint)
     const invite = await faber.createPublicInvite()
-    await alice.acceptInvite(invite)
+    await alice.acceptInvitationAndMediate(invite)
     return { alice, faber, pwInfo }
   }
   const f2 = async (alice, faber, pwInfo, message) => {
@@ -82,7 +82,7 @@ module.exports.createPairedAliceAndFaberViaOobMsg = async function createPairedA
     const faber = await createFaber()
     const pwInfo = await faber.publishService(endpoint)
     const msg = await faber.createOobMessageWithDid()
-    await alice.createConnectionUsingOobMessage(msg)
+    await alice.acceptInvitationAndMediate(msg)
     await alice.updateConnection(MediatedConnectionStateType.Requested)
     return { alice, faber, pwInfo }
   }
@@ -98,7 +98,7 @@ module.exports.createPairedAliceAndFaberViaOobMsg = async function createPairedA
 module.exports.connectViaOobMessage = async function connectViaOobMessage (alice, faber, msg) {
   const f1 = async (endpoint) => {
     const pwInfo = await faber.publishService(endpoint)
-    await alice.createConnectionUsingOobMessage(msg)
+    await alice.acceptInvitationAndMediate(msg)
     await alice.updateConnection(MediatedConnectionStateType.Requested)
     return { alice, faber, pwInfo }
   }

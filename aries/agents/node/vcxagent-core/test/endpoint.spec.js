@@ -36,7 +36,7 @@ describe('test connecting via unmediated endpoint', () => {
       })
       server = app.listen(port)
 
-      await alice.acceptInvite(invite)
+      await alice.acceptInvitationAndMediate(invite)
       const { message } = await faber.unpackMsg(encryptedMsg)
       await faber.createConnectionFromReceivedRequestV2(pwInfo, message)
       await alice.updateConnection(ConnectionStateType.Finished)

@@ -17,7 +17,7 @@ const mkdirp = require('mkdirp')
 
 const tailsDir = '/tmp/tails'
 
-async function runFaber(options) {
+async function runFaber (options) {
   logger.info(`Starting Faber. Revocation enabled=${options.revocation}`)
   mkdirp.sync(tailsDir)
   initRustLogger(process.env.RUST_LOG || 'vcx=error')
@@ -195,7 +195,7 @@ const usage = [
   }
 ]
 
-function areOptionsValid(_options) {
+function areOptionsValid (_options) {
   return true
 }
 

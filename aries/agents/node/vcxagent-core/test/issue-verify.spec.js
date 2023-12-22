@@ -17,7 +17,7 @@ const TAILS_DIR = '/tmp/faber/tails'
 
 jest.setTimeout(1000 * 60 * 4)
 
-beforeAll(async () => {1
+beforeAll(async () => {
   initRustLogger(process.env.RUST_LOG || 'vcx=error')
   mkdirp(TAILS_DIR)
 })

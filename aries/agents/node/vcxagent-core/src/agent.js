@@ -24,7 +24,7 @@ const { createStorageService } = require('./storage/storage-service')
 const { waitUntilAgencyIsReady, getAgencyConfig } = require('./common')
 const path = require('path')
 
-async function createVcxAgent({ agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, endpointInfo, logger }) {
+async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, endpointInfo, logger }) {
   genesisPath = genesisPath || path.join(__dirname, '/../resources/docker.txn')
 
   await waitUntilAgencyIsReady(agencyUrl, logger)
@@ -38,7 +38,7 @@ async function createVcxAgent({ agentName, genesisPath, agencyUrl, seed, walletE
   const agentProvision = await storageService.loadAgentProvision()
   const issuerDid = agentProvision.issuerConfig.institution_did
 
-  async function agentInitVcx() {
+  async function agentInitVcx () {
     logger.info(`Initializing ${agentName} vcx session.`)
 
     logger.silly(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
@@ -50,17 +50,17 @@ async function createVcxAgent({ agentName, genesisPath, agencyUrl, seed, walletE
     await openMainPool({ genesis_path: genesisPath })
   }
 
-  async function agentShutdownVcx() {
+  async function agentShutdownVcx () {
     logger.debug(`Shutting down ${agentName} vcx session.`)
     shutdownVcx()
   }
 
-  async function updateWebhookUrl(webhookUrl) {
+  async function updateWebhookUrl (webhookUrl) {
     logger.info(`Updating webhook url to ${webhookUrl}`)
     await vcxUpdateWebhookUrl({ webhookUrl })
   }
 
-  async function acceptTaa() {
+  async function acceptTaa () {
     const taa = await getLedgerAuthorAgreement()
     const taaJson = JSON.parse(taa)
     const acceptanceMechanism = Object.keys(taaJson.aml)[0]
@@ -68,7 +68,7 @@ async function createVcxAgent({ agentName, genesisPath, agencyUrl, seed, walletE
     await setActiveTxnAuthorAgreementMeta(taaJson.text, taaJson.version, acceptanceMechanism)
   }
 
-  function getInstitutionDid() {
+  function getInstitutionDid () {
     return issuerDid
   }
 
@@ -136,8 +136,6 @@ async function createVcxAgent({ agentName, genesisPath, agencyUrl, seed, walletE
     listProofIds: storageService.listProofKeys
   })
   const serviceOutOfBand = createServiceOutOfBand({
-    logger,
-    saveConnection: storageService.saveConnection,
     loadConnection: storageService.loadConnection
   })
 
