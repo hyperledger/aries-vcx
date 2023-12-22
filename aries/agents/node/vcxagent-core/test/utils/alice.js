@@ -38,8 +38,8 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     await vcxAgent.agentInitVcx()
 
     await vcxAgent.serviceNonmediatedConnections.inviteeConnectionCreateFromInvite(connectionId, invite)
-    const connection = await vcxAgent.serviceNonmediatedConnections.getState(connectionId)
-    expect(await connection.getState()).toBe(ConnectionStateType.Requested)
+    const state = await vcxAgent.serviceNonmediatedConnections.getState(connectionId)
+    expect(state).toBe(ConnectionStateType.Requested)
 
     await vcxAgent.agentShutdownVcx()
   }
