@@ -1470,6 +1470,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "did_parser_nom"
+version = "0.1.0"
+dependencies = [
+ "nom",
+ "serde",
+]
+
+[[package]]
 name = "did_peer"
 version = "0.1.0"
 dependencies = [
