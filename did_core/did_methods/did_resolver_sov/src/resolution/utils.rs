@@ -68,31 +68,41 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
 ) -> Result<DidResolutionOutput<E>, DidSovError> {
     let (service_id, ddo_id) = prepare_ids(did)?;
 
-    let service_data = get_data_from_response(resp)?;
-    let endpoint: EndpointDidSov = serde_json::from_value(service_data["endpoint"].clone())?;
+    let service_data = get_data_from_response(resp);
 
-    let txn_time = get_txn_time_from_response(resp)?;
-    let datetime = unix_to_datetime(txn_time);
+    let txn_time = get_txn_time_from_response(resp);
 
-    let service = {
+    // Initialize DID document builder
+    let mut ddo_builder = DidDocument::builder(ddo_id);
+
+    // Process endpoint data if available
+    if let Ok(service_data) = service_data {
+        let endpoint: EndpointDidSov = serde_json::from_value(service_data["endpoint"].clone())?;
         let service_types: Vec<String> = endpoint
             .types
             .into_iter()
             .filter(|t| *t != DidSovServiceType::Unknown)
             .map(|t| t.to_string())
             .collect();
-        let mut builder = Service::builder(
-            service_id,
-            endpoint.endpoint.as_str().try_into()?,
-            Default::default(),
-        );
-        for service_type in service_types {
-            builder = builder.add_service_type(service_type)?;
-        }
-        builder.build()
-    };
 
-    // TODO: Use multibase instead of base58
+        let service = {
+            let mut builder = Service::builder(
+                service_id,
+                endpoint.endpoint.as_str().try_into()?,
+                Default::default(),
+            );
+            for service_type in service_types {
+                builder = builder.add_service_type(service_type)?;
+            }
+
+            builder.build()
+        };
+
+        // Add service to DID document
+        ddo_builder = ddo_builder.add_service(service);
+    }
+
+    // Continue building DID document
     let verification_method = VerificationMethod::builder(
         did.to_string().try_into()?,
         did.to_string().try_into()?,
@@ -101,16 +111,18 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
     .add_public_key_base58(verkey)
     .build();
 
-    let ddo = DidDocument::builder(ddo_id)
-        .add_service(service)
-        .add_verification_method(verification_method)
-        .build();
+    ddo_builder = ddo_builder.add_verification_method(verification_method);
+
+    let ddo = ddo_builder.build();
 
     let ddo_metadata = {
         let mut metadata_builder = DidDocumentMetadata::builder().deactivated(false);
-        if let Some(datetime) = datetime {
-            metadata_builder = metadata_builder.updated(datetime);
-        };
+        if let Ok(txn_time) = txn_time {
+            let datetime = unix_to_datetime(txn_time);
+            if let Some(datetime) = datetime {
+                metadata_builder = metadata_builder.updated(datetime);
+            };
+        }
         metadata_builder.build()
     };
 
