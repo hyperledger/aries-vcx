@@ -1,20 +1,13 @@
 use std::sync::Arc;
 
-use chrono::Utc;
 use did_parser::Did;
 use did_peer::{
     peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-    resolver::{options::PublicKeyEncoding, PeerDidResolver},
+    resolver::options::PublicKeyEncoding,
 };
-use did_resolver::traits::resolvable::DidResolvable;
 use did_resolver_registry::ResolverRegistry;
-use messages::{
-    decorators::{thread::Thread, timing::Timing},
-    msg_fields::protocols::did_exchange::{
-        complete::{Complete as CompleteMessage, Complete, CompleteDecorators},
-        request::Request,
-        response::Response,
-    },
+use messages::msg_fields::protocols::did_exchange::{
+    complete::Complete as CompleteMessage, request::Request, response::Response,
 };
 use uuid::Uuid;
 
@@ -24,7 +17,7 @@ use crate::{
     protocols::did_exchange::{
         state_machine::{
             helpers::{attachment_to_diddoc, to_transition_error},
-            requester::helpers::construct_request,
+            requester::helpers::{construct_didexchange_complete, construct_request},
         },
         states::{completed::Completed, requester::request_sent::RequestSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
@@ -79,33 +72,17 @@ impl DidExchangeRequester<RequestSent> {
         let did_document = if let Some(ddo) = response.content.did_doc {
             attachment_to_diddoc(ddo).map_err(to_transition_error(self.clone()))?
         } else {
-            PeerDidResolver::new()
-                .resolve(
-                    &response
-                        .content
-                        .did
-                        .parse()
-                        .map_err(to_transition_error(self.clone()))?,
-                    &Default::default(),
-                )
-                .await
+            let peer_did = PeerDid::<Numalgo2>::parse(response.content.did)
+                .map_err(to_transition_error(self.clone()))?;
+            peer_did
+                .to_did_doc(PublicKeyEncoding::Base58)
                 .map_err(to_transition_error(self.clone()))?
-                .did_document()
-                .to_owned()
         };
-        let decorators = CompleteDecorators::builder()
-            .thread(
-                Thread::builder()
-                    .thid(self.state.request_id.clone())
-                    .pthid(self.state.invitation_id.clone())
-                    .build(),
-            )
-            .timing(Timing::builder().out_time(Utc::now()).build())
-            .build();
-        let complete_message = Complete::builder()
-            .id(Uuid::new_v4().to_string())
-            .decorators(decorators)
-            .build();
+
+        let complete_message = construct_didexchange_complete(
+            self.state.request_id.clone(),
+            self.state.invitation_id.clone(),
+        );
 
         Ok(TransitionResult {
             state: DidExchangeRequester::from_parts(

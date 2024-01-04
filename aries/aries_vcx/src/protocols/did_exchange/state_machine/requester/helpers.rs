@@ -6,7 +6,10 @@ use messages::{
         timing::Timing,
     },
     msg_fields::protocols::{
-        did_exchange::request::{Request, RequestContent, RequestDecorators},
+        did_exchange::{
+            complete::{Complete, CompleteDecorators},
+            request::{Request, RequestContent, RequestDecorators},
+        },
         out_of_band::invitation::{Invitation, OobService},
     },
 };
@@ -36,6 +39,22 @@ pub fn construct_request(invitation_id: String, our_did: String) -> Request {
     Request::builder()
         .id(request_id)
         .content(content)
+        .decorators(decorators)
+        .build()
+}
+
+pub fn construct_didexchange_complete(request_id: String, invitation_id: String) -> Complete {
+    let decorators = CompleteDecorators::builder()
+        .thread(
+            Thread::builder()
+                .thid(request_id)
+                .pthid(invitation_id)
+                .build(),
+        )
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
+    Complete::builder()
+        .id(Uuid::new_v4().to_string())
         .decorators(decorators)
         .build()
 }
