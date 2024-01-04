@@ -18,9 +18,7 @@ use aries_vcx::{
 };
 use aries_vcx_core::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
 use did_doc::schema::{
-    did_doc::{diddoc_resolve_first_key_agreement, DidDocument},
-    service::typed::didcommv1::ServiceDidCommV1,
-    types::uri::Uri,
+    did_doc::DidDocument, service::typed::didcommv1::ServiceDidCommV1, types::uri::Uri,
 };
 use did_parser::Did;
 use did_peer::{
@@ -43,8 +41,8 @@ use crate::utils::test_agent::{
 pub mod utils;
 
 fn assert_key_agreement(a: DidDocument, b: DidDocument) {
-    let a_key = diddoc_resolve_first_key_agreement(&a).unwrap();
-    let b_key = diddoc_resolve_first_key_agreement(&b).unwrap();
+    let a_key = resolve_base58_key_agreement(&a).unwrap();
+    let b_key = resolve_base58_key_agreement(&b).unwrap();
     assert_eq!(a_key, b_key);
 }
 

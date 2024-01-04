@@ -249,14 +249,6 @@ mod tests {
             &OneOrList::List(vec![ServiceType::DIDCommV1])
         );
         assert_eq!(ddo_service.service_endpoint(), &service_endpoint);
-        let recipient_keys = ddo_service
-            .extra_field_recipient_keys()
-            .map(|keys| {
-                keys.into_iter()
-                    .map(|key| key.to_string())
-                    .collect::<Vec<_>>()
-            })
-            .unwrap();
         assert_eq!(
             ddo_service.extra_field_routing_keys().unwrap(),
             vec![

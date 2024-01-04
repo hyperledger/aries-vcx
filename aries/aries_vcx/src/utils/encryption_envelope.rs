@@ -49,7 +49,6 @@ impl EncryptionEnvelope {
         our_did_doc: &DidDocument,
         their_did_doc: &DidDocument,
     ) -> VcxResult<EncryptionEnvelope> {
-        // get first service, from service get (possibly resolve) recipient key and routing keys
         let sender_vk = resolve_base58_key_agreement(our_did_doc)?;
         let recipient_key = resolve_base58_key_agreement(their_did_doc)?;
         let routing_keys = get_routing_keys(their_did_doc)?;

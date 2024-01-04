@@ -1,6 +1,6 @@
 use did_doc::schema::{
-    did_doc::{diddoc_resolve_first_key_agreement, DidDocument},
-    service::extra_fields::ServiceKeyKind,
+    did_doc::DidDocument, service::extra_fields::ServiceKeyKind,
+    verification_method::VerificationMethodType,
 };
 use public_key::Key;
 
@@ -35,38 +35,14 @@ fn resolve_service_key_to_typed_key(
 }
 
 pub fn resolve_base58_key_agreement(did_document: &DidDocument) -> VcxResult<String> {
-    // note: we possibly don't want to support this, instead rely on key_agreement field
-    // let service = did_document
-    //     .service()
-    //     .first()
-    //     .ok_or_else(|| {
-    //         AriesVcxError::from_msg(
-    //             AriesVcxErrorKind::InvalidState,
-    //             "No Service object found on our did document",
-    //         )
-    //     })?
-    //     .clone();
-    // let key_base58 = match service.extra_field_recipient_keys() {
-    //     Ok(recipient_keys) => {
-    //         match recipient_keys.first() {
-    //             None => {
-    //                 return Err(AriesVcxError::from_msg(
-    //                     AriesVcxErrorKind::InvalidState,
-    //                     "Recipient key field but did not have any keys",
-    //                 ))
-    //             }
-    //             Some(key) => {
-    //                 // service_key_to_naked_key(&key, did_document)?
-    //                 unimplemented!("Support for 'recipientKeys' has been dropped")
-    //             }
-    //         }
-    //     }
-    //     Err(_err) => {
-    //
-    //     }
-    // };
-    let key_base58 = diddoc_resolve_first_key_agreement(did_document)?;
-    Ok(key_base58.base58())
+    let key_types = [
+        VerificationMethodType::Ed25519VerificationKey2018,
+        VerificationMethodType::Ed25519VerificationKey2020,
+        VerificationMethodType::X25519KeyAgreementKey2019,
+        VerificationMethodType::X25519KeyAgreementKey2020,
+    ];
+    let key_base58 = did_document.find_key_agreement_of_type(&key_types)?;
+    Ok(key_base58.public_key()?.base58())
 }
 
 pub fn get_routing_keys(our_did_doc: &DidDocument) -> VcxResult<Vec<String>> {
