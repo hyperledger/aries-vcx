@@ -18,7 +18,9 @@ use aries_vcx::{
 };
 use aries_vcx_core::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
 use did_doc::schema::{
-    did_doc::DidDocument, service::typed::didcommv1::ServiceDidCommV1, types::uri::Uri,
+    did_doc::DidDocument,
+    service::typed::{didcommv1::ServiceDidCommV1, ServiceType},
+    types::uri::Uri,
 };
 use did_parser::Did;
 use did_peer::{
@@ -179,11 +181,15 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     );
 
     let data = "Hello world";
+    let service = requester
+        .their_did_doc()
+        .get_service_of_type(&ServiceType::DIDCommV1)?;
     let m = EncryptionEnvelope::create(
         &agent_invitee.wallet,
         data.as_bytes(),
         requester.our_did_doc(),
         requester.their_did_doc(),
+        service.id(),
     )
     .await?;
 

@@ -47,6 +47,13 @@ impl Service {
         &self.id
     }
 
+    pub fn contains_service_type(&self, tested_service_type: &ServiceType) -> bool {
+        match &self.service_type {
+            OneOrList::One(service_type) => tested_service_type == service_type,
+            OneOrList::List(service_types) => service_types.contains(tested_service_type),
+        }
+    }
+
     pub fn service_type(&self) -> &OneOrList<ServiceType> {
         &self.service_type
     }

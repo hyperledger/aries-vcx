@@ -1,6 +1,6 @@
 use agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx_core::{global::settings::VERKEY, wallet::base_wallet::BaseWallet};
-use did_doc::schema::did_doc::DidDocument;
+use did_doc::schema::{did_doc::DidDocument, types::uri::Uri};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     msg_fields::protocols::routing::{Forward, ForwardContent},
@@ -43,15 +43,28 @@ impl EncryptionEnvelope {
         Self::create_from_keys(wallet, data, sender_vk, recipient_key, routing_keys).await
     }
 
+    /// Create encrypted message based on key agreement keys of our did document, counterparties
+    /// did document and their specific service, identified by id, which must be part of their
+    /// did document
+    ///
+    /// # Arguments
+    ///
+    /// * `our_did_doc` - Our did_document, which the counterparty should already be in possession
+    ///   of
+    /// * `their_did_doc` - The did document of the counterparty, the recipient of the encrypted
+    ///   message
+    /// * `their_service_id` - Id of service where message will be sent. The counterparty did
+    ///   document must contain Service object identified with such value.
     pub async fn create(
         wallet: &impl BaseWallet,
         data: &[u8],
         our_did_doc: &DidDocument,
         their_did_doc: &DidDocument,
+        their_service_id: &Uri,
     ) -> VcxResult<EncryptionEnvelope> {
         let sender_vk = resolve_base58_key_agreement(our_did_doc)?;
         let recipient_key = resolve_base58_key_agreement(their_did_doc)?;
-        let routing_keys = get_routing_keys(their_did_doc)?;
+        let routing_keys = get_routing_keys(their_did_doc, their_service_id)?;
 
         EncryptionEnvelope::create_from_keys(
             wallet,

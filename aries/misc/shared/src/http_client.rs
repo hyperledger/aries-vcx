@@ -21,6 +21,7 @@ lazy_static! {
     };
 }
 
+// todo: take Url by reference
 pub async fn post_message(body_content: Vec<u8>, url: Url) -> HttpResult<Vec<u8>> {
     debug!("post_message >> http client sending request POST {}", &url);
 

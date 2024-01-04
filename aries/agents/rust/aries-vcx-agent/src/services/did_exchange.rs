@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
+    did_doc::schema::{service::typed::ServiceType, types::uri::Uri},
     messages::{
         msg_fields::protocols::{
             did_exchange::{
@@ -25,7 +26,6 @@ use aries_vcx_core::wallet::{base_wallet::BaseWallet, indy::IndySdkWallet};
 use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::did_resolver::did_doc::schema::did_doc::DidDocument;
-use url::Url;
 
 use super::connection::ServiceEndpoint;
 use crate::{
@@ -83,10 +83,17 @@ impl ServiceDidExchange {
             .thid;
         let ddo_their = requester.their_did_doc();
         let ddo_our = requester.our_did_document();
-        let encryption_envelope =
-            pairwise_encrypt(ddo_our, ddo_their, self.wallet.as_ref(), &request.into()).await?;
+        let service = ddo_their.get_service_of_type(&ServiceType::DIDCommV1)?;
+        let encryption_envelope = pairwise_encrypt(
+            ddo_our,
+            ddo_their,
+            self.wallet.as_ref(),
+            &request.into(),
+            service.id(),
+        )
+        .await?;
         VcxHttpClient
-            .send_message(encryption_envelope.0, get_first_endpoint(ddo_their)?)
+            .send_message(encryption_envelope.0, service.service_endpoint().clone())
             .await?;
         self.did_exchange.insert(&request_id, requester.clone())
     }
@@ -127,10 +134,17 @@ impl ServiceDidExchange {
         .await?;
         let ddo_their = responder.their_did_doc();
         let ddo_our = responder.our_did_document();
-        let encryption_envelope =
-            pairwise_encrypt(ddo_our, ddo_their, self.wallet.as_ref(), &response.into()).await?;
+        let service = ddo_their.get_service_of_type(&ServiceType::DIDCommV1)?;
+        let encryption_envelope = pairwise_encrypt(
+            ddo_our,
+            ddo_their,
+            self.wallet.as_ref(),
+            &response.into(),
+            service.id(),
+        )
+        .await?;
         VcxHttpClient
-            .send_message(encryption_envelope.0, get_first_endpoint(ddo_their)?)
+            .send_message(encryption_envelope.0, service.service_endpoint().clone())
             .await?;
         self.did_exchange.insert(&request_id, responder.clone())
     }
@@ -144,10 +158,17 @@ impl ServiceDidExchange {
             .await?;
         let ddo_their = requester.their_did_doc();
         let ddo_our = requester.our_did_document();
-        let encryption_envelope =
-            pairwise_encrypt(ddo_our, ddo_their, self.wallet.as_ref(), &complete.into()).await?;
+        let service = ddo_their.get_service_of_type(&ServiceType::DIDCommV1)?;
+        let encryption_envelope = pairwise_encrypt(
+            ddo_our,
+            ddo_their,
+            self.wallet.as_ref(),
+            &complete.into(),
+            service.id(),
+        )
+        .await?;
         VcxHttpClient
-            .send_message(encryption_envelope.0, get_first_endpoint(ddo_their)?)
+            .send_message(encryption_envelope.0, service.service_endpoint().clone())
             .await?;
         self.did_exchange.insert(&thread_id, requester.clone())
     }
@@ -187,25 +208,19 @@ impl ServiceDidExchange {
     }
 }
 
-pub fn get_first_endpoint(did_document: &DidDocument) -> AgentResult<Url> {
-    let service = did_document.service().first().ok_or(AgentError::from_msg(
-        AgentErrorKind::InvalidState,
-        "No service found",
-    ))?;
-    Ok(service.service_endpoint().clone())
-}
-
 pub async fn pairwise_encrypt(
     our_did_doc: &DidDocument,
     their_did_doc: &DidDocument,
     wallet: &impl BaseWallet,
     message: &AriesMessage,
+    their_service_id: &Uri,
 ) -> AgentResult<EncryptionEnvelope> {
     EncryptionEnvelope::create(
         wallet,
         serde_json::json!(message).to_string().as_bytes(),
         our_did_doc,
         their_did_doc,
+        their_service_id,
     )
     .await
     .map_err(|err| {

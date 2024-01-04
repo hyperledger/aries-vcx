@@ -1,5 +1,5 @@
 use did_doc::schema::{
-    did_doc::DidDocument, service::service_key_kind::ServiceKeyKind,
+    did_doc::DidDocument, service::service_key_kind::ServiceKeyKind, types::uri::Uri,
     verification_method::VerificationMethodType,
 };
 use public_key::Key;
@@ -41,27 +41,18 @@ pub fn resolve_base58_key_agreement(did_document: &DidDocument) -> VcxResult<Str
         VerificationMethodType::X25519KeyAgreementKey2019,
         VerificationMethodType::X25519KeyAgreementKey2020,
     ];
-    let key_base58 = did_document.find_key_agreement_of_type(&key_types)?;
+    let key_base58 = did_document.get_key_agreement_of_type(&key_types)?;
     Ok(key_base58.public_key()?.base58())
 }
 
-pub fn get_routing_keys(our_did_doc: &DidDocument) -> VcxResult<Vec<String>> {
-    let service = our_did_doc
-        .service()
-        .first()
-        .ok_or_else(|| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidState,
-                "No Service object found on our did document",
-            )
-        })?
-        .clone();
+pub fn get_routing_keys(their_did_doc: &DidDocument, service_id: &Uri) -> VcxResult<Vec<String>> {
+    let service = their_did_doc.get_service_by_id(service_id)?;
     match service.extra_field_routing_keys() {
         Ok(routing_keys) => {
             let mut naked_routing_keys = Vec::new();
             for key in routing_keys.iter() {
                 naked_routing_keys
-                    .push(resolve_service_key_to_typed_key(key, our_did_doc)?.base58());
+                    .push(resolve_service_key_to_typed_key(key, their_did_doc)?.base58());
             }
             Ok(naked_routing_keys)
         }

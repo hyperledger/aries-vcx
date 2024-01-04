@@ -6,6 +6,8 @@ use crate::{
     error::DidDocumentBuilderError,
     schema::{
         did_doc::DidDocument,
+        service::{typed::ServiceType, Service},
+        types::uri::Uri,
         verification_method::{VerificationMethod, VerificationMethodKind, VerificationMethodType},
     },
 };
@@ -36,7 +38,7 @@ impl<T: Display + Debug> Display for OneOrList<T> {
 }
 
 impl DidDocument {
-    pub fn find_key_agreement_of_type(
+    pub fn get_key_agreement_of_type(
         &self,
         key_types: &[VerificationMethodType],
     ) -> Result<VerificationMethod, DidDocumentBuilderError> {
@@ -64,6 +66,33 @@ impl DidDocument {
         Err(DidDocumentBuilderError::CustomError(
             "No supported key_agreement keys have been found".to_string(),
         ))
+    }
+
+    pub fn get_service_of_type(
+        &self,
+        service_type: &ServiceType,
+    ) -> Result<Service, DidDocumentBuilderError> {
+        for service in self.service() {
+            if service.contains_service_type(service_type) {
+                return Ok(service.clone());
+            }
+        }
+        Err(DidDocumentBuilderError::CustomError(format!(
+            "No service of type {}",
+            service_type
+        )))
+    }
+
+    pub fn get_service_by_id(&self, id: &Uri) -> Result<Service, DidDocumentBuilderError> {
+        for service in self.service() {
+            if service.id() == id {
+                return Ok(service.clone());
+            }
+        }
+        Err(DidDocumentBuilderError::CustomError(format!(
+            "No service found by id {}",
+            id
+        )))
     }
 }
 
@@ -106,7 +135,7 @@ mod tests {
             VerificationMethodType::Ed25519VerificationKey2020,
             VerificationMethodType::X25519KeyAgreementKey2020,
         ];
-        let key = did_document.find_key_agreement_of_type(methods).unwrap();
+        let key = did_document.get_key_agreement_of_type(methods).unwrap();
         assert_eq!(key.id().to_string(), "#bar")
     }
 
@@ -115,7 +144,7 @@ mod tests {
         let did_document: DidDocument = serde_json::from_str(DID_DOC).unwrap();
         let methods = &vec![VerificationMethodType::Bls12381G1Key2020];
         let err = did_document
-            .find_key_agreement_of_type(methods)
+            .get_key_agreement_of_type(methods)
             .expect_err("expected error");
         assert!(err
             .to_string()
