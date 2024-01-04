@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use did_doc::schema::did_doc::DidDocumentBuilder;
 use did_parser::Did;
 use did_resolver::{
     error::GenericError,
@@ -41,8 +42,11 @@ impl DidResolvable for PeerDidResolver {
         let peer_did = AnyPeerDid::parse(did.to_owned())?;
         match peer_did {
             AnyPeerDid::Numalgo2(peer_did) => {
-                let did_doc = peer_did
-                    .to_did_doc_builder(options.encoding.unwrap_or(PublicKeyEncoding::Multibase))?
+                // todo: add modifier methods on DidDocument itself.
+                let builder: DidDocumentBuilder = peer_did
+                    .to_did_doc(options.encoding.unwrap_or(PublicKeyEncoding::Multibase))?
+                    .into();
+                let did_doc = builder
                     .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
                     .build();
                 let resolution_metadata = DidResolutionMetadata::builder()

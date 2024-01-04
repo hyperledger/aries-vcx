@@ -33,15 +33,14 @@ impl PeerDid<Numalgo2> {
         PeerDid::<Numalgo3>::parse(format!("did:peer:3.{}", numalgoless_id_hashed))
     }
 
-    pub fn to_did_doc_builder(
+    pub fn to_did_doc(
         &self,
         public_key_encoding: PublicKeyEncoding,
-    ) -> Result<DidDocumentBuilder, DidPeerError> {
-        // resolve_numalgo2(self.did(), public_key_encoding)
+    ) -> Result<DidDocument, DidPeerError> {
         let mut did_doc_builder: DidDocumentBuilder = DidDocument::builder(self.did().clone());
         did_doc_builder =
             didpeer_elements_to_diddoc(did_doc_builder, self.did(), public_key_encoding)?;
-        Ok(did_doc_builder)
+        Ok(did_doc_builder.build())
     }
 }
 
@@ -102,10 +101,7 @@ mod test {
         });
         let ddo_original: DidDocument = from_value(value).unwrap();
         let did_peer: PeerDid<Numalgo2> = PeerDid::from_did_doc(ddo_original.clone()).unwrap();
-        let ddo_decoded: DidDocument = did_peer
-            .to_did_doc_builder(PublicKeyEncoding::Base58)
-            .unwrap()
-            .build();
+        let ddo_decoded: DidDocument = did_peer.to_did_doc(PublicKeyEncoding::Base58).unwrap();
         assert_eq!(ddo_original, ddo_decoded);
     }
 }

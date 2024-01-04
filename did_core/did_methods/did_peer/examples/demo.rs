@@ -42,9 +42,8 @@ fn demo() -> Result<(), Box<dyn Error>> {
         peer_did_3_v2
     );
 
-    let decoded_did_doc = peer_did_2
-        .to_did_doc_builder(did_peer::resolver::options::PublicKeyEncoding::Base58)?
-        .build();
+    let decoded_did_doc =
+        peer_did_2.to_did_doc(did_peer::resolver::options::PublicKeyEncoding::Base58)?;
     println!(
         "Decoded did document: \n{}",
         serde_json::to_string_pretty(&decoded_did_doc)?

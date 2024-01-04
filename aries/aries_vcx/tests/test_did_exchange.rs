@@ -135,9 +135,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     let responders_peer_did = PeerDid::<Numalgo2>::from_did_doc(responders_did_document.clone())?;
     info!("Responder prepares their peer:did: {responders_peer_did}");
 
-    let check_diddoc: DidDocument = responders_peer_did
-        .to_did_doc_builder(PublicKeyEncoding::Base58)?
-        .build();
+    let check_diddoc: DidDocument = responders_peer_did.to_did_doc(PublicKeyEncoding::Base58)?;
     info!("Responder decodes constructed peer:did as did document: {check_diddoc}");
 
     let TransitionResult {

@@ -42,9 +42,7 @@ impl DidExchangeRequester<RequestSent> {
             .await?
             .did_document()
             .clone();
-        let our_did_document = our_peer_did
-            .to_did_doc_builder(PublicKeyEncoding::Base58)?
-            .build();
+        let our_did_document = our_peer_did.to_did_doc(PublicKeyEncoding::Base58)?;
         let invitation_id = Uuid::new_v4().to_string();
 
         let request = construct_request(invitation_id.clone(), our_peer_did.to_string());

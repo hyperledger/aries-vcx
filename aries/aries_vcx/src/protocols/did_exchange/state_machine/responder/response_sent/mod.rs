@@ -33,9 +33,7 @@ impl DidExchangeResponder<ResponseSent> {
         invitation_key: Key,
     ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, Response>, AriesVcxError> {
         let their_ddo = resolve_their_ddo(&resolver_registry, &request).await?;
-        let our_did_document = our_peer_did
-            .to_did_doc_builder(PublicKeyEncoding::Base58)?
-            .build();
+        let our_did_document = our_peer_did.to_did_doc(PublicKeyEncoding::Base58)?;
 
         // TODO: Response should sign the new *did* with invitation_key only if key was rotated
         //       In practice if the invitation was public, we definitely will be rotating to

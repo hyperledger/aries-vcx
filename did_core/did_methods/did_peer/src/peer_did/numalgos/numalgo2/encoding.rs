@@ -213,16 +213,12 @@ mod tests {
         let did = append_encoded_service_segment(did.to_string(), &did_document).unwrap();
 
         let did_parsed = PeerDid::<Numalgo2>::parse(did.clone()).unwrap();
-        let ddo = did_parsed
-            .to_did_doc_builder(PublicKeyEncoding::Base58)
-            .unwrap()
-            .build();
+        let ddo = did_parsed.to_did_doc(PublicKeyEncoding::Base58).unwrap();
 
         let did_expected_parsed = PeerDid::<Numalgo2>::parse(did_expected.clone()).unwrap();
         let ddo_expected = did_expected_parsed
-            .to_did_doc_builder(PublicKeyEncoding::Base58)
-            .unwrap()
-            .build();
+            .to_did_doc(PublicKeyEncoding::Base58)
+            .unwrap();
 
         assert_eq!(ddo, ddo_expected);
         assert_eq!(did, did_expected);
