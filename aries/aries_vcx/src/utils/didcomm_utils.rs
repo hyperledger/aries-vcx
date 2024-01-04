@@ -1,5 +1,5 @@
 use did_doc::schema::{
-    did_doc::DidDocument, service::extra_fields::ServiceKeyKind,
+    did_doc::DidDocument, service::service_key_kind::ServiceKeyKind,
     verification_method::VerificationMethodType,
 };
 use public_key::Key;

@@ -205,7 +205,7 @@ pub fn deserialize_legacy_or_new_diddoc_str(val: String) -> Result<DidDocument, 
 mod tests {
     use crate::schema::{
         did_doc::DidDocument, legacy::deserialize_legacy_or_new_diddoc_str,
-        service::extra_fields::ServiceKeyKind,
+        service::service_key_kind::ServiceKeyKind,
     };
 
     const LEGACY_DID_DOC_JSON: &str = r#"

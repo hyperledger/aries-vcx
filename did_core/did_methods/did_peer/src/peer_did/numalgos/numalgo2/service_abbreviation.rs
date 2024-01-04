@@ -2,9 +2,8 @@ use std::{collections::HashMap, str::FromStr};
 
 use did_doc::schema::{
     service::{
-        extra_fields::{ServiceAcceptType, ServiceKeyKind},
-        typed::ServiceType,
-        Service,
+        service_accept_type::ServiceAcceptType, service_key_kind::ServiceKeyKind,
+        typed::ServiceType, Service,
     },
     utils::OneOrList,
 };
@@ -183,9 +182,8 @@ pub(crate) fn deabbreviate_service(
 mod tests {
     use did_doc::schema::{
         service::{
-            extra_fields::{ServiceAcceptType, ServiceKeyKind},
-            typed::ServiceType,
-            Service,
+            service_accept_type::ServiceAcceptType, service_key_kind::ServiceKeyKind,
+            typed::ServiceType, Service,
         },
         utils::OneOrList,
     };

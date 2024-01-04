@@ -5,7 +5,7 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use chrono::Utc;
 use did_doc::schema::{
     did_doc::DidDocument,
-    service::{extra_fields::ServiceKeyKind, typed::didcommv1::ServiceDidCommV1, Service},
+    service::{service_key_kind::ServiceKeyKind, typed::didcommv1::ServiceDidCommV1, Service},
     types::uri::Uri,
     verification_method::{VerificationMethod, VerificationMethodType},
 };

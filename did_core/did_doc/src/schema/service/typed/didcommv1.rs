@@ -1,13 +1,16 @@
 use std::collections::HashMap;
 
-use serde::Serialize;
+use display_as_json::Display;
+use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 use url::Url;
 
 use crate::{
     error::DidDocumentSovError,
     schema::{
         service::{
-            extra_fields::{didcommv1::ExtraFieldsDidCommV1, ServiceAcceptType, ServiceKeyKind},
+            service_accept_type::ServiceAcceptType,
+            service_key_kind::ServiceKeyKind,
             typed::{ServiceType, TypedService},
             Service,
         },
@@ -20,6 +23,17 @@ use crate::{
 pub struct ServiceDidCommV1 {
     #[serde(flatten)]
     service: TypedService<ExtraFieldsDidCommV1>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default, Display, TypedBuilder)]
+#[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
+pub struct ExtraFieldsDidCommV1 {
+    priority: u32,
+    recipient_keys: Vec<ServiceKeyKind>,
+    routing_keys: Vec<ServiceKeyKind>,
+    #[serde(default)]
+    accept: Vec<ServiceAcceptType>,
 }
 
 impl ServiceDidCommV1 {
@@ -91,5 +105,23 @@ impl TryFrom<ServiceDidCommV1> for Service {
             OneOrList::List(vec![ServiceType::DIDCommV1]),
             extra_fields,
         ))
+    }
+}
+
+impl ExtraFieldsDidCommV1 {
+    pub fn priority(&self) -> u32 {
+        self.priority
+    }
+
+    pub fn recipient_keys(&self) -> &[ServiceKeyKind] {
+        self.recipient_keys.as_ref()
+    }
+
+    pub fn routing_keys(&self) -> &[ServiceKeyKind] {
+        self.routing_keys.as_ref()
+    }
+
+    pub fn accept(&self) -> &[ServiceAcceptType] {
+        self.accept.as_ref()
     }
 }

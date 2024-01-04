@@ -127,8 +127,8 @@ fn append_key_to_did(mut did: String, key: Key, purpose: ElementPurpose) -> Stri
 mod tests {
     use did_doc::schema::{
         service::{
-            extra_fields::{didcommv2::ExtraFieldsDidCommV2, ServiceKeyKind},
-            typed::ServiceType,
+            service_key_kind::ServiceKeyKind,
+            typed::{didcommv2::ExtraFieldsDidCommV2, ServiceType},
             Service,
         },
         types::uri::Uri,

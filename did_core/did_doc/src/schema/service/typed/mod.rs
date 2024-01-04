@@ -1,3 +1,4 @@
+pub mod aip1;
 pub mod didcommv1;
 pub mod didcommv2;
 

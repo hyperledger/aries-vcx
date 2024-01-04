@@ -3,21 +3,17 @@ use std::collections::HashMap;
 use display_as_json::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use service_accept_type::ServiceAcceptType;
+use service_key_kind::ServiceKeyKind;
 use url::Url;
 
 use crate::{
     error::DidDocumentBuilderError,
-    schema::{
-        service::{
-            extra_fields::{ServiceAcceptType, ServiceKeyKind},
-            typed::ServiceType,
-        },
-        types::uri::Uri,
-        utils::OneOrList,
-    },
+    schema::{service::typed::ServiceType, types::uri::Uri, utils::OneOrList},
 };
 
-pub mod extra_fields;
+pub mod service_accept_type;
+pub mod service_key_kind;
 pub mod typed;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Display)]
@@ -171,9 +167,8 @@ mod tests {
 
     use crate::schema::{
         service::{
-            extra_fields::{ServiceAcceptType, ServiceKeyKind},
-            typed::ServiceType,
-            Service,
+            service_accept_type::ServiceAcceptType, service_key_kind::ServiceKeyKind,
+            typed::ServiceType, Service,
         },
         types::uri::Uri,
         utils::OneOrList,
