@@ -32,7 +32,7 @@ impl DidExchangeResponder<ResponseSent> {
         our_peer_did: &PeerDid<Numalgo2>,
         invitation_key: Key,
     ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, Response>, AriesVcxError> {
-        let their_ddo = resolve_their_ddo(&resolver_registry, &request).await?;
+        let their_ddo = resolve_ddo_from_request(&resolver_registry, &request).await?;
         let our_did_document = our_peer_did.to_did_doc(PublicKeyEncoding::Base58)?;
         // TODO: Response should sign the new *did* with invitation_key only if key was rotated
         //       In practice if the invitation was public, we definitely will be rotating to
@@ -85,7 +85,7 @@ impl DidExchangeResponder<ResponseSent> {
     }
 }
 
-async fn resolve_their_ddo(
+async fn resolve_ddo_from_request(
     resolver_registry: &Arc<ResolverRegistry>,
     request: &Request,
 ) -> Result<DidDocument, AriesVcxError> {
