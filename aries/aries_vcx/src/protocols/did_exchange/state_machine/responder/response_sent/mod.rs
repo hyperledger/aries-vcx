@@ -34,14 +34,13 @@ impl DidExchangeResponder<ResponseSent> {
     ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, Response>, AriesVcxError> {
         let their_ddo = resolve_their_ddo(&resolver_registry, &request).await?;
         let our_did_document = our_peer_did.to_did_doc(PublicKeyEncoding::Base58)?;
-
         // TODO: Response should sign the new *did* with invitation_key only if key was rotated
         //       In practice if the invitation was public, we definitely will be rotating to
-        //       peer:did if the invitation was peer2peer, we probably keep our original invitation
-        // keys       The outstanding question is how, and on what level, we gonna do this
-        // detection TODO: Check amendment made to did-exchange protocol in terms of
-        // rotating keys. When keys       are rotated, there's a new decorator which conveys
-        // that
+        //       peer:did
+        //       If the invitation was peer2peer, we probably keep our original invitation keys
+        //       The outstanding question is how, and on what level, we gonna do this detection
+        // TODO: Check amendment made to did-exchange protocol in terms of rotating keys.
+        //       When keys are rotated, there's a new decorator which conveys that
         let signed_attach = jws_sign_attach(
             ddo_to_attach(our_did_document.clone())?,
             invitation_key,
