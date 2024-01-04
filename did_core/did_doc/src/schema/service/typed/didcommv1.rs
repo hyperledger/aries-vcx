@@ -7,7 +7,7 @@ use crate::{
     error::DidDocumentSovError,
     schema::{
         service::{
-            extra_fields::{didcommv1::ExtraFieldsDidCommV1, ServiceKeyKind},
+            extra_fields::{didcommv1::ExtraFieldsDidCommV1, ServiceAcceptType, ServiceKeyKind},
             typed::{ServiceType, TypedService},
             Service,
         },
@@ -31,9 +31,10 @@ impl ServiceDidCommV1 {
         routing_keys: Vec<ServiceKeyKind>,
     ) -> Self {
         let extra = ExtraFieldsDidCommV1::builder()
-            .set_priority(priority)
-            .set_recipient_keys(recipient_keys)
-            .set_routing_keys(routing_keys)
+            .priority(priority)
+            .recipient_keys(recipient_keys)
+            .routing_keys(routing_keys)
+            .accept(vec![ServiceAcceptType::DIDCommV1])
             .build();
         Self {
             service: TypedService::<ExtraFieldsDidCommV1> {

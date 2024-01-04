@@ -24,8 +24,8 @@ impl ServiceDidCommV2 {
         accept: Vec<ServiceAcceptType>,
     ) -> Self {
         let extra: ExtraFieldsDidCommV2 = ExtraFieldsDidCommV2::builder()
-            .set_routing_keys(routing_keys)
-            .set_accept(accept)
+            .routing_keys(routing_keys)
+            .accept(accept)
             .build();
         Self {
             service: TypedService::<ExtraFieldsDidCommV2> {

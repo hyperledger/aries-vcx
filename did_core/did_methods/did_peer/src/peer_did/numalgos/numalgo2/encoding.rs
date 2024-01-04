@@ -193,10 +193,10 @@ mod tests {
         let did_expected = format!("{}.S{}", did, service);
 
         let extra = ExtraFieldsDidCommV2::builder()
-            .set_routing_keys(vec![ServiceKeyKind::Reference(
+            .routing_keys(vec![ServiceKeyKind::Reference(
                 "did:example:somemediator#somekey".parse().unwrap(),
             )])
-            .add_accept("didcomm/aip2;env=rfc587".into())
+            .accept(vec!["didcomm/aip2;env=rfc587".into()])
             .build();
 
         let service = Service::new(
