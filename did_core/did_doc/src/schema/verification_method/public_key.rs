@@ -37,7 +37,7 @@ impl PublicKeyField {
                 let multibase = Multibase::from_str(public_key_multibase)?;
                 Ok(multibase.as_ref().to_vec())
             }
-            PublicKeyField::Jwk { public_key_jwk } => public_key_jwk.to_vec(),
+            PublicKeyField::Jwk { public_key_jwk } => Ok(public_key_jwk.to_vec()?),
             PublicKeyField::Base58 { public_key_base58 } => {
                 Ok(bs58::decode(public_key_base58).into_vec()?)
             }

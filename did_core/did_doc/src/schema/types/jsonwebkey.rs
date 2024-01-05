@@ -7,8 +7,6 @@ use std::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::error::DidDocumentBuilderError;
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 // TODO: Introduce proper custom type
 // Unfortunately only supports curves from the original RFC
@@ -24,17 +22,18 @@ pub struct JsonWebKey {
 }
 
 impl JsonWebKey {
-    pub fn new(jwk: &str) -> Result<Self, DidDocumentBuilderError> {
-        Ok(serde_json::from_str(jwk)?)
+    // todo: More future-proof way would be creating custom error type, but seems as overkill atm?
+    pub fn new(jwk: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_str(jwk)
     }
 
-    pub fn to_vec(&self) -> Result<Vec<u8>, DidDocumentBuilderError> {
-        serde_json::to_vec(self).map_err(|e| e.into())
+    pub fn to_vec(&self) -> Result<Vec<u8>, serde_json::Error> {
+        serde_json::to_vec(self)
     }
 }
 
 impl FromStr for JsonWebKey {
-    type Err = DidDocumentBuilderError;
+    type Err = serde_json::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::new(s)
