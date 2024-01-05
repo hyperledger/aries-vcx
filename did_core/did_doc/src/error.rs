@@ -7,7 +7,7 @@ use crate::schema::verification_method::VerificationMethodType;
 pub enum DidDocumentBuilderError {
     CustomError(String),
     InvalidInput(String),
-    MissingField(String),
+    MissingField(&'static str),
     UnsupportedPublicKeyField(&'static str),
     JsonError(serde_json::Error),
     PemError(pem::PemError),

@@ -93,10 +93,10 @@ impl Service {
 
     fn _expected_extra_field_type<T: for<'de> serde::Deserialize<'de>>(
         &self,
-        key: &str,
+        key: &'static str,
     ) -> Result<T, DidDocumentBuilderError> {
         match self.extra_field_as_as::<T>(key) {
-            None => Err(DidDocumentBuilderError::MissingField(String::from(key))),
+            None => Err(DidDocumentBuilderError::MissingField(key)),
             Some(value) => value,
         }
     }
