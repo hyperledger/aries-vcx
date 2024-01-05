@@ -15,6 +15,7 @@ pub enum DidDocumentBuilderError {
     Base58DecodeError(bs58::decode::Error),
     Base64DecodeError(base64::DecodeError),
     HexDecodeError(hex::FromHexError),
+    JwkDecodeError(serde_json::Error),
     MultibaseError(MultibaseWrapperError),
     UnsupportedVerificationMethodType(VerificationMethodType),
     PublicKeyError(public_key::PublicKeyError),
@@ -58,6 +59,9 @@ impl std::fmt::Display for DidDocumentBuilderError {
             }
             DidDocumentBuilderError::MultibaseError(error) => {
                 write!(f, "Multibase error: {}", error)
+            }
+            DidDocumentBuilderError::JwkDecodeError(error) => {
+                write!(f, "JWK decode error: {}", error)
             }
         }
     }
