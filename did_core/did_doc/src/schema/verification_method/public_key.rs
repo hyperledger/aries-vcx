@@ -115,4 +115,34 @@ mod tests {
             PUBLIC_KEY_BYTES.to_vec()
         );
     }
+
+    #[test]
+    fn test_b58_fails() {
+        let public_key_field = PublicKeyField::Base58 {
+            public_key_base58: "abcdefghijkl".to_string(),
+        };
+        let err = public_key_field.key_decoded().unwrap_err();
+        // println!("display: {}", err);
+        // println!("debug: {:?}", err);
+        // println!("pretty display: {:#?}", err);
+        // println!("source in debug: {:?}", err.source());
+        assert!(
+            matches!(err, DidDocumentBuilderError::Base58DecodeError(_)),
+            "Expected Base58DecodeError, got {:?}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_pem_fails() {
+        let public_key_field = PublicKeyField::Pem {
+            public_key_pem: "abcdefghijkl".to_string(),
+        };
+        let err = public_key_field.key_decoded().unwrap_err();
+        assert!(
+            matches!(err, DidDocumentBuilderError::PemError(_)),
+            "Expected PemError, got {:?}",
+            err
+        );
+    }
 }
