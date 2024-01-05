@@ -6,7 +6,7 @@ use typed_builder::TypedBuilder;
 use url::Url;
 
 use crate::{
-    error::DidDocumentSovError,
+    error::DidDocumentBuilderError,
     schema::{
         service::{
             service_accept_type::ServiceAcceptType,
@@ -78,7 +78,7 @@ impl ServiceDidCommV1 {
 }
 
 impl TryFrom<ServiceDidCommV1> for Service {
-    type Error = DidDocumentSovError;
+    type Error = DidDocumentBuilderError;
 
     fn try_from(did_comm_service: ServiceDidCommV1) -> Result<Self, Self::Error> {
         let mut extra_fields = HashMap::new();

@@ -45,12 +45,6 @@ impl From<did_doc::error::DidDocumentBuilderError> for AriesVcxError {
     }
 }
 
-impl From<did_doc::error::DidDocumentSovError> for AriesVcxError {
-    fn from(err: did_doc::error::DidDocumentSovError) -> Self {
-        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
-    }
-}
-
 impl From<did_peer::error::DidPeerError> for AriesVcxError {
     fn from(err: did_peer::error::DidPeerError) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())

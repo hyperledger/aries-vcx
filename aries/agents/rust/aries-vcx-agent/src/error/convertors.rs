@@ -1,7 +1,7 @@
 use std::convert::From;
 
 use aries_vcx::{
-    did_doc::error::{DidDocumentBuilderError, DidDocumentSovError},
+    did_doc::error::DidDocumentBuilderError,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::state_machine::generic::GenericDidExchange,
 };
@@ -29,19 +29,10 @@ impl From<serde_json::Error> for AgentError {
     }
 }
 
-// TODO
 impl From<AriesVcxCoreError> for AgentError {
     fn from(err: AriesVcxCoreError) -> Self {
         let kind = AgentErrorKind::GenericAriesVcxError;
         let message = format!("AriesVcxCore Error; err: {:?}", err.to_string());
-        AgentError { message, kind }
-    }
-}
-
-impl From<DidDocumentSovError> for AgentError {
-    fn from(err: DidDocumentSovError) -> Self {
-        let kind = AgentErrorKind::GenericAriesVcxError;
-        let message = format!("DidDocumentSovError; err: {:?}", err.to_string());
         AgentError { message, kind }
     }
 }

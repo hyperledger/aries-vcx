@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 
-use did_doc::{error::DidDocumentSovError, schema::verification_method::VerificationMethodType};
+use did_doc::schema::verification_method::VerificationMethodType;
 
 use crate::peer_did::numalgos::kind::NumalgoKind;
 
@@ -18,8 +18,6 @@ pub enum DidPeerError {
     InvalidKeyReference(String),
     #[error("Invalid service: {0}")]
     InvalidService(String),
-    #[error("Sovrin DID document builder error: {0}")]
-    DidDocumentSovBuilderError(#[from] DidDocumentSovError),
     #[error("Unsupported numalgo: {0}")]
     UnsupportedNumalgo(NumalgoKind),
     #[error("Invalid numalgo character: {0}")]
