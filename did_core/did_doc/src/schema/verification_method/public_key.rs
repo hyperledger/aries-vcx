@@ -38,6 +38,9 @@ impl PublicKeyField {
                     .map_err(DidDocumentBuilderError::MultibaseError)?;
                 Ok(multibase.as_ref().to_vec())
             }
+            // todo: we should not use ? because that gets DidDocumentBuilderError "into convertors" convert
+            //       that into generic DidDocumentBuilderError::JsonError - if encodings such as b58, b64 have custom errors
+            //       why would jwk have generic JsonError?
             PublicKeyField::Jwk { public_key_jwk } => Ok(public_key_jwk.to_vec()?),
             PublicKeyField::Base58 { public_key_base58 } => {
                 Ok(bs58::decode(public_key_base58).into_vec()?)
