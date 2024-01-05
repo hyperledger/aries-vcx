@@ -117,6 +117,7 @@ fn process_key_element(
 
 #[cfg(test)]
 mod tests {
+    use did_doc::schema::service::typed::ServiceType;
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -193,10 +194,7 @@ mod tests {
         assert_eq!(built_ddo.service().len(), 1);
         let service = built_ddo.service().first().unwrap();
         assert_eq!(service.id().to_string(), "#service-0".to_string());
-        assert_eq!(
-            service.service_type().to_string(),
-            "DIDCommMessaging".to_string()
-        );
+        assert_eq!(service.service_types(), vec!(ServiceType::DIDCommV2));
         assert_eq!(
             service.service_endpoint().to_string(),
             "https://example.com/endpoint".to_string()

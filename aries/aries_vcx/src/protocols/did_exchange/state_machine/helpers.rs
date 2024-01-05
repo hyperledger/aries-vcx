@@ -246,7 +246,7 @@ mod tests {
         assert_eq!(&ddo_service.id().to_string(), "#service-0");
         assert_eq!(
             ddo_service.service_type(),
-            &OneOrList::List(vec![ServiceType::DIDCommV1])
+            &OneOrList::One(ServiceType::DIDCommV1)
         );
         assert_eq!(ddo_service.service_endpoint(), &service_endpoint);
         assert_eq!(

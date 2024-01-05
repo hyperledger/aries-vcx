@@ -185,18 +185,19 @@ mod tests {
     fn test_service_builder() {
         let uri_id = Uri::new("http://example.com").unwrap();
         let service_endpoint = "http://example.com/endpoint";
-        let service_type = OneOrList::One(ServiceType::DIDCommV2);
+        let service_type = ServiceType::DIDCommV2;
 
         let service = Service::new(
             uri_id.clone(),
             service_endpoint.try_into().unwrap(),
-            service_type.clone(),
+            OneOrList::One(service_type.clone()),
             HashMap::default(),
         );
 
         assert_eq!(service.id(), &uri_id);
         assert_eq!(service.service_endpoint().as_ref(), service_endpoint);
-        assert_eq!(service.service_type(), &service_type);
+        assert_eq!(service.service_types(), vec!(service_type.clone()));
+        assert_eq!(service.service_type(), &OneOrList::One(service_type));
     }
 
     #[test]

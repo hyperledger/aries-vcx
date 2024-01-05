@@ -12,8 +12,6 @@ use super::{
 };
 use crate::{error::DidDocumentBuilderError, schema::service::Service};
 
-pub type ControllerAlias = OneOrList<Did>;
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default, Display)]
 #[serde(default)]
 #[serde(rename_all = "camelCase")]
@@ -22,7 +20,7 @@ pub struct DidDocument {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     also_known_as: Vec<Uri>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    controller: Option<ControllerAlias>,
+    controller: Option<OneOrList<Did>>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     verification_method: Vec<VerificationMethod>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
