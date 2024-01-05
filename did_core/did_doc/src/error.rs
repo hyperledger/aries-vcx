@@ -1,5 +1,3 @@
-use url::ParseError;
-
 use crate::schema::{
     types::multibase::MultibaseWrapperError, verification_method::VerificationMethodType,
 };

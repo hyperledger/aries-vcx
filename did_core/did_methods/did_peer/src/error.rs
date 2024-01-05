@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 
-use did_doc::schema::verification_method::VerificationMethodType;
+use did_doc::schema::{types::uri::UriWrapperError, verification_method::VerificationMethodType};
 
 use crate::peer_did::numalgos::kind::NumalgoKind;
 
@@ -39,5 +39,11 @@ pub enum DidPeerError {
 impl From<Infallible> for DidPeerError {
     fn from(_: Infallible) -> Self {
         panic!("Attempted to convert an Infallible error")
+    }
+}
+
+impl From<UriWrapperError> for DidPeerError {
+    fn from(error: UriWrapperError) -> Self {
+        DidPeerError::ParsingError(error.to_string())
     }
 }

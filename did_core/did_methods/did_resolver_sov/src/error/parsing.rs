@@ -1,4 +1,4 @@
-use did_resolver::did_parser;
+use did_resolver::{did_doc::schema::types::uri::UriWrapperError, did_parser};
 use thiserror::Error;
 
 use super::DidSovError;
@@ -7,6 +7,8 @@ use super::DidSovError;
 pub enum ParsingErrorSource {
     #[error("DID document parsing error: {0}")]
     DidDocumentParsingError(#[from] did_parser::ParseError),
+    #[error("DID document parsing URI error: {0}")]
+    DidDocumentParsingUriError(#[from] UriWrapperError),
     #[error("Serde error: {0}")]
     SerdeError(#[from] serde_json::Error),
     #[error("Ledger response parsing error: {0}")]

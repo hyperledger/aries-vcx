@@ -159,6 +159,8 @@ pub(crate) fn deabbreviate_service(
         }
     };
 
+    // todo: >>> we created custom error for uniresid wrapper, now we'll need conversion across the
+    // board.
     let id = format!("#service-{}", index).parse()?;
 
     let mut service = Service::new(

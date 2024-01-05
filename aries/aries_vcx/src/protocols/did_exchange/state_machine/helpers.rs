@@ -71,7 +71,12 @@ pub async fn create_our_did_document(
     let key_enc = generate_keypair(wallet, KeyType::Ed25519).await?;
 
     let service: Service = ServiceDidCommV1::new(
-        Uri::new("#0")?,
+        Uri::new("#0").map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidInput,
+                format!("Attempted to service with invalid uri, err: {}", err),
+            )
+        })?,
         service_endpoint,
         0,
         vec![],
