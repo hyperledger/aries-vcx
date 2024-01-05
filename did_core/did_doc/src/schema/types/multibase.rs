@@ -5,8 +5,18 @@ use std::{
 
 use multibase::{decode, Base};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
-use crate::error::DidDocumentBuilderError;
+#[derive(Debug, Error)]
+pub struct MultibaseWrapperError {
+    reason: String,
+}
+
+impl Display for MultibaseWrapperError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "MultibaseWrapperError: {}", self.reason)
+    }
+}
 
 // https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-07
 #[derive(Clone, Debug, PartialEq)]
@@ -16,9 +26,9 @@ pub struct Multibase {
 }
 
 impl Multibase {
-    pub fn new(multibase: String) -> Result<Self, DidDocumentBuilderError> {
-        let (base, bytes) = decode(multibase).map_err(|err| {
-            DidDocumentBuilderError::InvalidInput(format!("Invalid multibase key: {}", err))
+    pub fn new(multibase: String) -> Result<Self, MultibaseWrapperError> {
+        let (base, bytes) = decode(multibase).map_err(|err| MultibaseWrapperError {
+            reason: format!("Invalid multibase data: {}", err),
         })?;
         Ok(Self { base, bytes })
     }
@@ -52,7 +62,7 @@ impl<'de> Deserialize<'de> for Multibase {
 }
 
 impl FromStr for Multibase {
-    type Err = DidDocumentBuilderError;
+    type Err = MultibaseWrapperError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::new(s.to_string())

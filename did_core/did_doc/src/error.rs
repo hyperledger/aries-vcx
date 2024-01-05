@@ -1,6 +1,8 @@
 use url::ParseError;
 
-use crate::schema::verification_method::VerificationMethodType;
+use crate::schema::{
+    types::multibase::MultibaseWrapperError, verification_method::VerificationMethodType,
+};
 
 #[derive(Debug)]
 pub enum DidDocumentBuilderError {
@@ -13,6 +15,7 @@ pub enum DidDocumentBuilderError {
     Base58DecodeError(bs58::decode::Error),
     Base64DecodeError(base64::DecodeError),
     HexDecodeError(hex::FromHexError),
+    MultibaseError(MultibaseWrapperError),
     UnsupportedVerificationMethodType(VerificationMethodType),
     PublicKeyError(public_key::PublicKeyError),
 }
@@ -53,6 +56,9 @@ impl std::fmt::Display for DidDocumentBuilderError {
             DidDocumentBuilderError::CustomError(string) => {
                 write!(f, "Custom DidDocumentBuilderError: {}", string)
             }
+            DidDocumentBuilderError::MultibaseError(error) => {
+                write!(f, "Multibase error: {}", error)
+            }
         }
     }
 }
@@ -66,6 +72,7 @@ impl std::error::Error for DidDocumentBuilderError {
             DidDocumentBuilderError::Base64DecodeError(error) => Some(error),
             DidDocumentBuilderError::HexDecodeError(error) => Some(error),
             DidDocumentBuilderError::PublicKeyError(error) => Some(error),
+            DidDocumentBuilderError::MultibaseError(error) => Some(error),
             _ => None,
         }
     }

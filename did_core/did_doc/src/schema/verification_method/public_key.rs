@@ -34,7 +34,8 @@ impl PublicKeyField {
             PublicKeyField::Multibase {
                 public_key_multibase,
             } => {
-                let multibase = Multibase::from_str(public_key_multibase)?;
+                let multibase = Multibase::from_str(public_key_multibase)
+                    .map_err(DidDocumentBuilderError::MultibaseError)?;
                 Ok(multibase.as_ref().to_vec())
             }
             PublicKeyField::Jwk { public_key_jwk } => Ok(public_key_jwk.to_vec()?),
