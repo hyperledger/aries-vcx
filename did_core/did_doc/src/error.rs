@@ -112,12 +112,6 @@ impl From<hex::FromHexError> for DidDocumentBuilderError {
     }
 }
 
-impl From<ParseError> for DidDocumentBuilderError {
-    fn from(error: ParseError) -> Self {
-        DidDocumentBuilderError::InvalidInput(error.to_string())
-    }
-}
-
 impl From<public_key::PublicKeyError> for DidDocumentBuilderError {
     fn from(error: public_key::PublicKeyError) -> Self {
         DidDocumentBuilderError::PublicKeyError(error)
