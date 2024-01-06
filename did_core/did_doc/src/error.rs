@@ -3,7 +3,6 @@ use crate::schema::verification_method::{error::KeyDecodingError, VerificationMe
 #[derive(Debug)]
 pub enum DidDocumentBuilderError {
     CustomError(String),
-    InvalidInput(String),
     MissingField(&'static str),
     JsonError(serde_json::Error),
     KeyDecodingError(KeyDecodingError),
@@ -14,9 +13,6 @@ pub enum DidDocumentBuilderError {
 impl std::fmt::Display for DidDocumentBuilderError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DidDocumentBuilderError::InvalidInput(input) => {
-                write!(f, "Invalid input: {}", input)
-            }
             DidDocumentBuilderError::MissingField(field) => {
                 write!(f, "Missing field: {}", field)
             }
