@@ -1,6 +1,9 @@
 use std::convert::Infallible;
 
-use did_doc::schema::{types::uri::UriWrapperError, verification_method::VerificationMethodType};
+use did_doc::schema::{
+    types::uri::UriWrapperError,
+    verification_method::{error::KeyDecodingError, VerificationMethodType},
+};
 
 use crate::peer_did::numalgos::kind::NumalgoKind;
 
@@ -28,6 +31,8 @@ pub enum DidPeerError {
     UnsupportedVerificationMethodType(VerificationMethodType),
     #[error("Base 64 decoding error")]
     Base64DecodingError(#[from] base64::DecodeError),
+    #[error("Key decoding error")]
+    KeyDecodingError(#[from] KeyDecodingError),
     #[error("JSON error: {0}")]
     JsonError(#[from] serde_json::Error),
     #[error("Regex error: {0}")]

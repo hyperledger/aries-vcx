@@ -1,4 +1,5 @@
-mod public_key;
+pub mod error;
+pub mod public_key;
 mod verification_method_kind;
 mod verification_method_type;
 

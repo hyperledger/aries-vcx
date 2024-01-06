@@ -3,9 +3,9 @@ use std::str::FromStr;
 use base64::{engine::general_purpose, Engine};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    error::DidDocumentBuilderError,
-    schema::types::{jsonwebkey::JsonWebKey, multibase::Multibase},
+use crate::schema::{
+    types::{jsonwebkey::JsonWebKey, multibase::Multibase},
+    verification_method::error::KeyDecodingError,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -29,18 +29,18 @@ pub enum PublicKeyField {
 }
 
 impl PublicKeyField {
-    pub fn key_decoded(&self) -> Result<Vec<u8>, DidDocumentBuilderError> {
+    pub fn key_decoded(&self) -> Result<Vec<u8>, KeyDecodingError> {
         match self {
             PublicKeyField::Multibase {
                 public_key_multibase,
             } => {
                 let multibase = Multibase::from_str(public_key_multibase)
-                    .map_err(DidDocumentBuilderError::MultibaseError)?;
+                    .map_err(KeyDecodingError::MultibaseError)?;
                 Ok(multibase.as_ref().to_vec())
             }
             PublicKeyField::Jwk { public_key_jwk } => Ok(public_key_jwk
                 .to_vec()
-                .map_err(DidDocumentBuilderError::JwkDecodeError)?),
+                .map_err(KeyDecodingError::JwkDecodeError)?),
             PublicKeyField::Base58 { public_key_base58 } => {
                 Ok(bs58::decode(public_key_base58).into_vec()?)
             }
@@ -51,14 +51,14 @@ impl PublicKeyField {
             PublicKeyField::Pem { public_key_pem } => {
                 Ok(pem::parse(public_key_pem.as_bytes())?.contents().to_vec())
             }
-            PublicKeyField::Pgp { public_key_pgp: _ } => Err(
-                DidDocumentBuilderError::UnsupportedPublicKeyField("publicKeyPgp"),
-            ),
+            PublicKeyField::Pgp { public_key_pgp: _ } => {
+                Err(KeyDecodingError::UnsupportedPublicKeyField("publicKeyPgp"))
+            }
         }
     }
 
     // TODO: Other formats
-    pub fn base58(&self) -> Result<String, DidDocumentBuilderError> {
+    pub fn base58(&self) -> Result<String, KeyDecodingError> {
         Ok(bs58::encode(self.key_decoded()?).into_string())
     }
 }
@@ -130,7 +130,7 @@ mod tests {
         // println!("pretty display: {:#?}", err);
         // println!("source in debug: {:?}", err.source());
         assert!(
-            matches!(err, DidDocumentBuilderError::Base58DecodeError(_)),
+            matches!(err, KeyDecodingError::Base58DecodeError(_)),
             "Expected Base58DecodeError, got {:?}",
             err
         );
@@ -143,7 +143,7 @@ mod tests {
         };
         let err = public_key_field.key_decoded().unwrap_err();
         assert!(
-            matches!(err, DidDocumentBuilderError::PemError(_)),
+            matches!(err, KeyDecodingError::PemError(_)),
             "Expected PemError, got {:?}",
             err
         );
