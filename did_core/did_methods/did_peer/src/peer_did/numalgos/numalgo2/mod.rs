@@ -55,6 +55,7 @@ impl Numalgo for Numalgo2 {
 mod test {
     use did_doc::schema::did_doc::DidDocument;
     use serde_json::{from_value, json};
+    use pretty_assertions::assert_eq;
 
     use crate::{
         peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},

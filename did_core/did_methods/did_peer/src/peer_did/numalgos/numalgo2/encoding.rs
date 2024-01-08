@@ -136,14 +136,13 @@ mod tests {
         verification_method::{VerificationMethod, VerificationMethodType},
     };
     use did_parser::DidUrl;
-    use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
     use pretty_assertions::assert_eq;
 
     use super::*;
     use crate::{
         helpers::convert_to_hashmap,
         peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-        resolver::{options::PublicKeyEncoding, PeerDidResolver},
+        resolver::{options::PublicKeyEncoding},
     };
 
     fn create_verification_method(
@@ -197,7 +196,7 @@ mod tests {
             .routing_keys(vec![ServiceKeyKind::Reference(
                 "did:example:somemediator#somekey".parse().unwrap(),
             )])
-            .accept(vec!["didcomm/aip2;env=rfc587".into()])
+            .accept(vec!["didcomm/v2".into(), "didcomm/aip2;env=rfc587".into()])
             .build();
 
         let service = Service::new(
@@ -214,17 +213,14 @@ mod tests {
         let did = append_encoded_service_segment(did.to_string(), &did_document).unwrap();
 
         let did_parsed = PeerDid::<Numalgo2>::parse(did.clone()).unwrap();
-        let DidResolutionOutput { did_document, .. } =
-            PeerDidResolver::resolve_peerdid2(&did_parsed, PublicKeyEncoding::Base58)
-                .await
-                .unwrap();
+        let ddo = did_parsed.to_did_doc(PublicKeyEncoding::Base58).unwrap();
 
         let did_expected_parsed = PeerDid::<Numalgo2>::parse(did_expected.clone()).unwrap();
         let ddo_expected = did_expected_parsed
             .to_did_doc(PublicKeyEncoding::Base58)
             .unwrap();
 
-        assert_eq!(did_document, ddo_expected);
+        assert_eq!(ddo, ddo_expected);
         assert_eq!(did, did_expected);
     }
 
