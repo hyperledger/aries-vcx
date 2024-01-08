@@ -53,7 +53,7 @@ impl ServiceDidCommV1 {
         Self {
             service: TypedService::<ExtraFieldsDidCommV1> {
                 id,
-                service_type: OneOrList::One(ServiceType::DIDCommV1.to_string()),
+                service_type: ServiceType::DIDCommV1,
                 service_endpoint,
                 extra,
             },
@@ -62,10 +62,6 @@ impl ServiceDidCommV1 {
 
     pub fn id(&self) -> &Uri {
         self.service.id()
-    }
-
-    pub fn service_type(&self) -> ServiceType {
-        ServiceType::DIDCommV1
     }
 
     pub fn service_endpoint(&self) -> Url {
@@ -102,7 +98,7 @@ impl TryFrom<ServiceDidCommV1> for Service {
         Ok(Service::new(
             did_comm_service.id().clone(),
             did_comm_service.service_endpoint(),
-            OneOrList::List(vec![ServiceType::DIDCommV1]),
+            OneOrList::One(ServiceType::DIDCommV1),
             extra_fields,
         ))
     }

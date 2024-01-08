@@ -14,7 +14,7 @@ use did_peer::{
 };
 use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn Error>> {
     demo().await
 }
@@ -59,7 +59,7 @@ async fn demo() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[test]
-fn demo_test() -> Result<(), Box<dyn Error>> {
-    demo()
+#[tokio::test]
+async fn demo_test() -> Result<(), Box<dyn Error>> {
+    demo().await
 }

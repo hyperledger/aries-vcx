@@ -1,22 +1,20 @@
 pub mod aip1;
 pub mod didcommv1;
 pub mod didcommv2;
+pub mod legacy;
 
 use std::{fmt::Display, str::FromStr};
 
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use url::Url;
 
-use crate::{
-    error::DidDocumentBuilderError,
-    schema::{types::uri::Uri, utils::OneOrList},
-};
+use crate::{error::DidDocumentBuilderError, schema::types::uri::Uri};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct TypedService<E> {
+pub(crate) struct TypedService<E> {
     id: Uri,
     #[serde(rename = "type")]
-    service_type: OneOrList<String>,
+    service_type: ServiceType,
     service_endpoint: Url,
     #[serde(flatten)]
     extra: E,
@@ -25,10 +23,6 @@ pub struct TypedService<E> {
 impl<E> TypedService<E> {
     pub fn id(&self) -> &Uri {
         &self.id
-    }
-
-    pub fn service_type(&self) -> &OneOrList<String> {
-        &self.service_type
     }
 
     pub fn service_endpoint(&self) -> &Url {

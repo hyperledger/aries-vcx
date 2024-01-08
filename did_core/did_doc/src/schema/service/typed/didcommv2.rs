@@ -10,7 +10,6 @@ use crate::schema::{
         typed::{ServiceType, TypedService},
     },
     types::uri::Uri,
-    utils::OneOrList,
 };
 
 #[derive(Serialize, Clone, Debug, PartialEq)]
@@ -33,7 +32,7 @@ impl ServiceDidCommV2 {
         Self {
             service: TypedService::<ExtraFieldsDidCommV2> {
                 id,
-                service_type: OneOrList::One(ServiceType::DIDCommV2.to_string()),
+                service_type: ServiceType::DIDCommV2,
                 service_endpoint,
                 extra,
             },
@@ -42,10 +41,6 @@ impl ServiceDidCommV2 {
 
     pub fn id(&self) -> &Uri {
         self.service.id()
-    }
-
-    pub fn service_type(&self) -> ServiceType {
-        ServiceType::DIDCommV2
     }
 
     pub fn service_endpoint(&self) -> Url {

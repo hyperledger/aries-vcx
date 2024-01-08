@@ -262,7 +262,6 @@ mod tests {
             ]
         );
 
-        println!("did_doc: {}", did_doc);
         assert_eq!(did_doc.key_agreement().len(), 1);
         match did_doc.key_agreement().first().unwrap() {
             VerificationMethodKind::Resolved(key_agreement) => {
