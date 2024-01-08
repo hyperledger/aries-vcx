@@ -5,6 +5,7 @@ use did_doc::schema::{
         service_accept_type::ServiceAcceptType, service_key_kind::ServiceKeyKind,
         typed::ServiceType, Service,
     },
+    types::uri::Uri,
     utils::OneOrList,
 };
 use serde::{Deserialize, Serialize};
@@ -18,7 +19,7 @@ pub struct ServiceAbbreviatedDidPeer2 {
     // https://identity.foundation/peer-did-method-spec/#generating-a-didpeer2
     //   > For use with did:peer:2, service id attributes MUST be relative.
     //   > The service MAY omit the id; however, this is NOT RECOMMEDED (clarified).
-    id: Option<String>,
+    id: Option<Uri>,
     #[serde(rename = "t")]
     service_type: OneOrList<String>,
     #[serde(rename = "s")]
@@ -35,7 +36,7 @@ pub struct ServiceAbbreviatedDidPeer2 {
 
 impl ServiceAbbreviatedDidPeer2 {
     pub fn new(
-        id: Option<String>,
+        id: Option<Uri>,
         service_type: OneOrList<String>,
         service_endpoint: Url,
         routing_keys: Vec<ServiceKeyKind>,
@@ -124,7 +125,7 @@ pub(crate) fn abbreviate_service(
         }
     };
     Ok(ServiceAbbreviatedDidPeer2::new(
-        Some(service.id().to_string()),
+        Some(service.id().clone()),
         service_types_abbreviated,
         service_endpoint,
         routing_keys,
@@ -161,7 +162,10 @@ pub(crate) fn deabbreviate_service(
 
     // todo: >>> we created custom error for uniresid wrapper, now we'll need conversion across the
     // board.
-    let id = format!("#service-{}", index).parse()?;
+    let id = abbreviated
+        .id
+        .clone()
+        .unwrap_or(format!("#service-{}", index).parse()?);
 
     let mut service = Service::new(
         id,
@@ -187,6 +191,7 @@ mod tests {
             service_accept_type::ServiceAcceptType, service_key_kind::ServiceKeyKind,
             typed::ServiceType, Service,
         },
+        types::uri::Uri,
         utils::OneOrList,
     };
     use serde_json::json;
@@ -199,7 +204,7 @@ mod tests {
     #[test]
     fn test_deabbreviate_service_type_value_dm() {
         let service_abbreviated = ServiceAbbreviatedDidPeer2 {
-            id: Some("#service-0".into()),
+            id: Some(Uri::new("#service-0").unwrap()),
             service_type: OneOrList::One("dm".to_string()),
             service_endpoint: Url::parse("https://example.org").unwrap(),
             routing_keys: vec![],
@@ -220,9 +225,9 @@ mod tests {
         let accept = vec![ServiceAcceptType::DIDCommV1];
         let service_endpoint = Url::parse("https://example.com/endpoint").unwrap();
         let service_type = OneOrList::One(ServiceType::Other("foobar".to_string()));
-        let service_id = "#service-0";
+        let service_id = Uri::new("#service-0").unwrap();
         let service_abbreviated = ServiceAbbreviatedDidPeer2 {
-            id: Some(service_id.into()),
+            id: Some(service_id),
             service_type: OneOrList::One("foobar".to_string()),
             service_endpoint: service_endpoint.clone(),
             routing_keys: routing_keys.clone(),

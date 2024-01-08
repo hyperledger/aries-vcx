@@ -142,7 +142,7 @@ mod tests {
     use crate::{
         helpers::convert_to_hashmap,
         peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-        resolver::{options::PublicKeyEncoding},
+        resolver::options::PublicKeyEncoding,
     };
 
     fn create_verification_method(

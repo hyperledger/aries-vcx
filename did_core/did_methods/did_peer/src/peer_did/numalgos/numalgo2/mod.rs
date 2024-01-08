@@ -54,8 +54,8 @@ impl Numalgo for Numalgo2 {
 #[cfg(test)]
 mod test {
     use did_doc::schema::did_doc::DidDocument;
-    use serde_json::{from_value, json};
     use pretty_assertions::assert_eq;
+    use serde_json::{from_value, json};
 
     use crate::{
         peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
@@ -64,12 +64,13 @@ mod test {
 
     #[test]
     fn test_peer_did_2_encode_decode() {
+        let expected_did_peer = "did:peer:2.Ez6MkkukgyKAdBN46UAHvia2nxmioo74F6YdvW1nBT1wfKKha.Vz6MkfoapUdLHHgSMq5PYhdHYCoqGuRku2i17cQ9zAoR5cLSm.SeyJpZCI6IiNmb29iYXIiLCJ0IjpbImRpZC1jb21tdW5pY2F0aW9uIl0sInMiOiJodHRwOi8vZHVtbXl1cmwub3JnLyIsInIiOlsiIzZNa2t1a2d5Il0sImEiOlsiZGlkY29tbS9haXAyO2Vudj1yZmMxOSJdfQ";
         let value = json!({
-            "id": "did:peer:2.Ez6MkkukgyKAdBN46UAHvia2nxmioo74F6YdvW1nBT1wfKKha.Vz6MkfoapUdLHHgSMq5PYhdHYCoqGuRku2i17cQ9zAoR5cLSm.SeyJpZCI6IiMwIiwidCI6WyJkaWQtY29tbXVuaWNhdGlvbiJdLCJzIjoiaHR0cDovL2R1bW15dXJsLm9yZy8iLCJhIjpbImRpZGNvbW0vYWlwMjtlbnY9cmZjMTkiXX0",
+            "id": expected_did_peer,
             "verificationMethod": [
                 {
                     "id": "#6MkfoapU",
-                    "controller": "did:example:123456789abcdefghi",
+                    "controller": expected_did_peer,
                     "type": "Ed25519VerificationKey2020",
                     "publicKeyBase58": "2MKmtP5qx8wtiaYr24KhMiHH5rV3cpkkvPF4LXT4h7fP"
                 }
@@ -77,31 +78,29 @@ mod test {
             "keyAgreement": [
                 {
                     "id": "#6Mkkukgy",
-                    "controller": "did:example:123456789abcdefghi",
+                    "controller": expected_did_peer,
                     "type": "Ed25519VerificationKey2020",
                     "publicKeyBase58": "7TVeP4vBqpZdMfTE314x7gAoyXnPgfPZozsFcjyeQ6vC"
                 }
             ],
             "service": [
                 {
-                    "id": "#0",
+                    "id": "#foobar",
                     "type": [
                         "did-communication"
                     ],
                     "serviceEndpoint": "http://dummyurl.org/",
-                    "routingKeys": [],
+                    "routingKeys": ["#6Mkkukgy"],
                     "accept": [
                         "didcomm/aip2;env=rfc19"
                     ],
-                    "priority": 0,
-                    "recipientKeys": [
-                        "did:key:z6MkkukgyKAdBN46UAHvia2nxmioo74F6YdvW1nBT1wfKKha"
-                    ]
                 }
             ]
         });
         let ddo_original: DidDocument = from_value(value).unwrap();
         let did_peer: PeerDid<Numalgo2> = PeerDid::from_did_doc(ddo_original.clone()).unwrap();
+        assert_eq!(did_peer.to_string(), expected_did_peer);
+
         let ddo_decoded: DidDocument = did_peer.to_did_doc(PublicKeyEncoding::Base58).unwrap();
         assert_eq!(ddo_original, ddo_decoded);
     }
