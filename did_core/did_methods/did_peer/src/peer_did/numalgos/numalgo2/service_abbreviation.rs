@@ -140,8 +140,6 @@ pub(crate) fn deabbreviate_service(
     index: usize,
 ) -> Result<Service, DidPeerError> {
     let service_type = match abbreviated.service_type().clone() {
-        // todo: get rid of internal OneOrList representation - just have list
-        //       also don't expose OneOrList to users, it's just matter of de/serialization
         OneOrList::One(service_type) => {
             let typed = match service_type.as_str() {
                 "dm" => ServiceType::DIDCommV2,
@@ -162,8 +160,6 @@ pub(crate) fn deabbreviate_service(
         }
     };
 
-    // todo: >>> we created custom error for uniresid wrapper, now we'll need conversion across the
-    // board.
     let id = abbreviated
         .id
         .clone()
