@@ -68,6 +68,8 @@ impl ServiceAbbreviatedDidPeer2 {
     }
 }
 
+// todo: This is encoding is lossy but shouldn't be.
+//       Right now any unrecognized field will not be included in the abbreviated form
 pub(crate) fn abbreviate_service(
     service: &Service,
 ) -> Result<ServiceAbbreviatedDidPeer2, DidPeerError> {
