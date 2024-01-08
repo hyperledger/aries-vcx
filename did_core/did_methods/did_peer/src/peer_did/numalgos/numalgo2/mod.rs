@@ -33,7 +33,7 @@ impl PeerDid<Numalgo2> {
         PeerDid::<Numalgo3>::parse(format!("did:peer:3.{}", numalgoless_id_hashed))
     }
 
-    pub fn to_did_doc(
+    pub(crate) fn to_did_doc(
         &self,
         public_key_encoding: PublicKeyEncoding,
     ) -> Result<DidDocument, DidPeerError> {

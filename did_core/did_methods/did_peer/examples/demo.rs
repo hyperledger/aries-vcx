@@ -5,16 +5,21 @@ use did_doc::schema::{
     verification_method::{VerificationMethod, VerificationMethodType},
 };
 use did_parser::{Did, DidUrl};
-use did_peer::peer_did::{
-    numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
-    PeerDid,
+use did_peer::{
+    peer_did::{
+        numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
+        PeerDid,
+    },
+    resolver::{options::PublicKeyEncoding, PeerDidResolver},
 };
+use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    demo()
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    demo().await
 }
 
-fn demo() -> Result<(), Box<dyn Error>> {
+async fn demo() -> Result<(), Box<dyn Error>> {
     let did_url = DidUrl::parse("did:foo:bar#key-1".into())?;
     let did = Did::parse("did:foo:bar".into())?;
     let verification_method = VerificationMethod::builder(
@@ -42,11 +47,13 @@ fn demo() -> Result<(), Box<dyn Error>> {
         peer_did_3_v2
     );
 
-    let decoded_did_doc =
-        peer_did_2.to_did_doc(did_peer::resolver::options::PublicKeyEncoding::Base58)?;
+    let DidResolutionOutput { did_document, .. } =
+        PeerDidResolver::resolve_peerdid2(&peer_did_2, PublicKeyEncoding::Base58)
+            .await
+            .unwrap();
     println!(
         "Decoded did document: \n{}",
-        serde_json::to_string_pretty(&decoded_did_doc)?
+        serde_json::to_string_pretty(&did_document)?
     );
 
     Ok(())

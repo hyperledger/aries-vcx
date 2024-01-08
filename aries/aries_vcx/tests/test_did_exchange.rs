@@ -27,6 +27,7 @@ use did_peer::{
     peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
     resolver::{options::PublicKeyEncoding, PeerDidResolver},
 };
+use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::resolution::DidSovResolver;
 use log::info;
@@ -137,7 +138,12 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     let responders_peer_did = PeerDid::<Numalgo2>::from_did_doc(responders_did_document.clone())?;
     info!("Responder prepares their peer:did: {responders_peer_did}");
 
-    let check_diddoc: DidDocument = responders_peer_did.to_did_doc(PublicKeyEncoding::Base58)?;
+    let DidResolutionOutput {
+        did_document: check_diddoc,
+        ..
+    } = PeerDidResolver::resolve_peerdid2(&responders_peer_did, PublicKeyEncoding::Base58)
+        .await
+        .unwrap();
     info!("Responder decodes constructed peer:did as did document: {check_diddoc}");
 
     let TransitionResult {
