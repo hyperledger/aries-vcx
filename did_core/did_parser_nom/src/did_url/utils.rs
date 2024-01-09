@@ -10,8 +10,12 @@ use nom::{
     IResult,
 };
 
+type UrlPart<'a> = (&'a str, Vec<(&'a str, &'a str)>, Vec<&'a str>);
+
 use crate::{
-    did::utils::{parse_qualified_did, parse_unqualified_sovrin_did, to_did_ranges, to_id_range},
+    did::utils::{
+        parse_qualified_did, parse_unqualified_sovrin_did, to_did_ranges, to_id_range, DidRanges,
+    },
     DidRange, DidUrl, ParseError,
 };
 
@@ -73,9 +77,7 @@ fn query_parser(input: &str) -> IResult<&str, Vec<(&str, &str)>> {
     separated_list0(char('&'), query_key_value_pair)(input)
 }
 
-fn parse_did_part(
-    input: &str,
-) -> IResult<&str, (Option<DidRange>, Option<DidRange>, Option<DidRange>)> {
+fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
     alt((
         map(parse_qualified_did, to_did_ranges),
         map(parse_unqualified_sovrin_did, to_id_range),
@@ -84,7 +86,7 @@ fn parse_did_part(
 }
 
 // did-url-remaining = path-abempty [ "?" query ] [ "#" fragment ]
-fn parse_url_part(input: &str) -> IResult<&str, (&str, Vec<(&str, &str)>, Vec<&str>)> {
+fn parse_url_part(input: &str) -> IResult<&str, UrlPart> {
     let (input, path) = path_abempty(input)?;
     let (input, queries) = alt((preceded(tag("?"), query_parser), value(vec![], tag(""))))(input)?;
     let (input, fragments) = alt((
@@ -96,7 +98,7 @@ fn parse_url_part(input: &str) -> IResult<&str, (&str, Vec<(&str, &str)>, Vec<&s
 
 fn to_did_url_ranges(
     id_range: Option<DidRange>,
-    (path, queries, fragments): (&str, Vec<(&str, &str)>, Vec<&str>),
+    (path, queries, fragments): UrlPart,
 ) -> (
     Option<DidRange>,
     HashMap<DidRange, DidRange>,
@@ -137,10 +139,7 @@ fn to_did_url_ranges(
     (path_range, query_map, fragment_range)
 }
 
-fn check_result(
-    parsed_remaining: &(&str, Vec<(&str, &str)>, Vec<&str>),
-    did_ranges: &(Option<DidRange>, Option<DidRange>, Option<DidRange>),
-) -> Result<(), ParseError> {
+fn check_result(parsed_remaining: &UrlPart, did_ranges: &DidRanges) -> Result<(), ParseError> {
     if parsed_remaining == &Default::default() && did_ranges == &Default::default() {
         Err(ParseError::InvalidInput("Invalid input"))
     } else {
@@ -155,15 +154,15 @@ pub fn parse_did_url(did_url: String) -> Result<DidUrl, ParseError> {
     }
 
     let (remaining, did_ranges) =
-        parse_did_part(&did_url).map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
+        parse_did_ranges(&did_url).map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
 
-    let (_, url_ranges) =
+    let (_, url_part) =
         parse_url_part(remaining).map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
 
-    check_result(&url_ranges, &did_ranges)?;
+    check_result(&url_part, &did_ranges)?;
 
     let (method, namespace, id) = did_ranges;
-    let (path, queries, fragment) = to_did_url_ranges(id.clone(), url_ranges);
+    let (path, queries, fragment) = to_did_url_ranges(id.clone(), url_part);
 
     Ok(DidUrl {
         did_url,

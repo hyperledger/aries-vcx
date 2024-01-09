@@ -10,12 +10,15 @@ use nom::{
 
 use crate::{Did, DidRange, ParseError};
 
+type DidPart<'a> = (&'a str, &'a str, Option<&'a str>, &'a str);
+pub type DidRanges = (Option<DidRange>, Option<DidRange>, Option<DidRange>);
+
 fn hexadecimal_digit(input: &str) -> IResult<&str, &str> {
     fn is_hexadecimal_digit(c: char) -> bool {
-        c.is_digit(16)
+        c.is_ascii_hexdigit()
     }
 
-    recognize(satisfy(|c| is_hexadecimal_digit(c)))(input)
+    recognize(satisfy(is_hexadecimal_digit))(input)
 }
 
 fn base58char(input: &str) -> IResult<&str, &str> {
@@ -64,7 +67,7 @@ fn namespace(input: &str) -> IResult<&str, &str> {
 }
 
 // did = "did:" method-name ":" method-specific-id
-pub fn parse_qualified_did(input: &str) -> IResult<&str, (&str, &str, Option<&str>, &str)> {
+pub fn parse_qualified_did(input: &str) -> IResult<&str, DidPart> {
     tuple((tag("did"), method_name, opt(namespace), method_specific_id))(input)
 }
 
@@ -72,13 +75,11 @@ pub fn parse_unqualified_sovrin_did(input: &str) -> IResult<&str, &str> {
     recognize(many_m_n(21, 22, base58char))(input)
 }
 
-pub fn to_id_range(id: &str) -> (Option<DidRange>, Option<DidRange>, Option<DidRange>) {
+pub fn to_id_range(id: &str) -> DidRanges {
     (None, None, Some(0..id.len()))
 }
 
-pub fn to_did_ranges(
-    (did_prefix, method, namespace, id): (&str, &str, Option<&str>, &str),
-) -> (Option<DidRange>, Option<DidRange>, Option<DidRange>) {
+pub fn to_did_ranges((did_prefix, method, namespace, id): DidPart) -> DidRanges {
     let mut next_start = if !did_prefix.is_empty() {
         did_prefix.len() + 1
     } else {
