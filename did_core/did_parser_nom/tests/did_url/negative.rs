@@ -25,4 +25,6 @@ test_cases_negative! {
     test_failure_case10: ";#"
     test_failure_case11: "did:example:123456789abcdefghi#fragment1#fragment2"
     test_failure_case12: "did:example:123456789abcdefghi&query1=value1"
+    test_failure_case13: "did:example:123456789abcdefghi?query1=v^lue1"
+    test_failure_case14: "did:example:123456789abcdefghi#fr^gment"
 }

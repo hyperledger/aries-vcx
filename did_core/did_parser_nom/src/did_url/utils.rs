@@ -4,8 +4,8 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
     character::complete::{char, one_of},
-    combinator::{all_consuming, complete, cut, map, recognize, success, value},
-    multi::{many0, separated_list0, separated_list1},
+    combinator::{all_consuming, cut, map, recognize, success, value},
+    multi::{many0, separated_list0},
     sequence::{preceded, separated_pair},
     IResult,
 };
@@ -141,7 +141,6 @@ fn to_did_url_ranges(
     let fragment_range = if fragments.is_empty() {
         None
     } else {
-        // TODO: Potential bug, multiple fragments are separated by #
         let fragment_end = fragments.len() + current_last_position;
         Some(current_last_position..fragment_end)
     };
