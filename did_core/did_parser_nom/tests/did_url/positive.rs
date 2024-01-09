@@ -168,6 +168,22 @@ test_cases_positive! {
         }
 
     test_case13:
+        "did:example:123456789abcdefghi?query1=value1?query2=value2",
+        Some("did:example:123456789abcdefghi"),
+        Some("example"),
+        Some("123456789abcdefghi"),
+        None,
+        None,
+        {
+            let mut queries = HashMap::new();
+            queries.extend(vec![
+                ("query1".to_string(), "value1".to_string()),
+                ("query2".to_string(), "value2".to_string()),
+            ]);
+            queries
+        }
+
+    test_case14:
         "did:example:123456789abcdefghi?query=",
         Some("did:example:123456789abcdefghi"),
         Some("example"),
@@ -182,7 +198,7 @@ test_cases_positive! {
             queries
         }
 
-    test_case14:
+    test_case15:
         "did:example:123456789abcdefghi?query=value&query2=#fragment",
         Some("did:example:123456789abcdefghi"),
         Some("example"),
@@ -198,7 +214,7 @@ test_cases_positive! {
             queries
         }
 
-    test_case15:
+    test_case16:
         "did:example:123456789abcdefghi?query1=value1&query2=value2#fragment",
         Some("did:example:123456789abcdefghi"),
         Some("example"),
@@ -214,7 +230,7 @@ test_cases_positive! {
             queries
         }
 
-    test_case16:
+    test_case17:
         "/path",
         None,
         None,
@@ -223,7 +239,7 @@ test_cases_positive! {
         None,
         HashMap::new()
 
-    test_case17:
+    test_case18:
         "?query=value",
         None,
         None,
@@ -236,7 +252,7 @@ test_cases_positive! {
             queries
         }
 
-    test_case18:
+    test_case19:
         "#fragment",
         None,
         None,
@@ -245,7 +261,7 @@ test_cases_positive! {
         Some("fragment"),
         HashMap::new()
 
-    test_case19:
+    test_case20:
         "/path?query=value",
         None,
         None,
@@ -258,7 +274,7 @@ test_cases_positive! {
             queries
         }
 
-    test_case20:
+    test_case21:
         "/path#fragment",
         None,
         None,
@@ -269,7 +285,7 @@ test_cases_positive! {
 
     // TODO: How the hell are we suppposed to distinguish a did:web DID URL with path
     // from a namespace
-    // test_case21:
+    // test_case22:
     //     "did:web:w3c-ccg.github.io:user:alice",
     //     Some("did:web:w3c-ccg.github.io:user:alice"),
     //     Some("web"),
@@ -278,7 +294,7 @@ test_cases_positive! {
     //     None,
     //     HashMap::new()
 
-    test_case22:
+    test_case23:
         "2ZHFFhzA2XtTD6hJqzL7ux#1",
         Some("2ZHFFhzA2XtTD6hJqzL7ux"),
         None,

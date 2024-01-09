@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
-    character::complete::char,
+    character::complete::{char, one_of},
     combinator::{all_consuming, complete, cut, map, recognize, success, value},
     multi::{many0, separated_list0, separated_list1},
     sequence::{preceded, separated_pair},
@@ -45,7 +45,7 @@ fn path_abempty(input: &str) -> IResult<&str, &str> {
 }
 
 // fragment = *( pchar / "/" / "?" )
-fn fragment(input: &str) -> IResult<&str, &str> {
+fn fragment_parser(input: &str) -> IResult<&str, &str> {
     fn is_fragment_char(c: char) -> bool {
         is_pchar(c) || "/?".contains(c)
     }
@@ -62,7 +62,7 @@ fn query_key_value_pair(input: &str) -> IResult<&str, (&str, &str)> {
     let (remaining, (key, value)) = cut(separated_pair(
         take_while1(|c| !"=&#;".contains(c)),
         char('='),
-        alt((take_while1(|c| !"&#;".contains(c)), success(""))),
+        alt((take_while1(|c| !"&#;?".contains(c)), success(""))),
     ))(input)?;
 
     cut(all_consuming(take_while1(is_query_char)))(key)?;
@@ -74,7 +74,7 @@ fn query_key_value_pair(input: &str) -> IResult<&str, (&str, &str)> {
 }
 
 fn query_parser(input: &str) -> IResult<&str, Vec<(&str, &str)>> {
-    separated_list0(char('&'), query_key_value_pair)(input)
+    separated_list0(one_of("&?"), query_key_value_pair)(input)
 }
 
 fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
@@ -90,7 +90,7 @@ fn parse_url_part(input: &str) -> IResult<&str, UrlPart> {
     let (input, path) = path_abempty(input)?;
     let (input, queries) = alt((preceded(tag("?"), query_parser), value(vec![], tag(""))))(input)?;
     let (input, fragments) = alt((
-        preceded(tag("#"), cut(all_consuming(fragment))),
+        preceded(tag("#"), cut(all_consuming(fragment_parser))),
         success(""), // Missing fragment; TODO: perhaps better way to repr. this is an option?
     ))(input)?;
     Ok((input, (path, queries, fragments)))
