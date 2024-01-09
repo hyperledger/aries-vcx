@@ -1,10 +1,10 @@
-mod utils;
+mod parsing;
 
 use std::{collections::HashMap, fmt::Display, str::FromStr};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use self::utils::parse_did_url;
+use self::parsing::parse_did_url;
 use crate::{error::ParseError, Did, DidRange};
 
 #[derive(Default, Debug, Clone, PartialEq)]

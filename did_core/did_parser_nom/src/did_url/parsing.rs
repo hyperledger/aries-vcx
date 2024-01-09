@@ -13,7 +13,7 @@ use nom::{
 type UrlPart<'a> = (&'a str, Option<Vec<(&'a str, &'a str)>>, Option<&'a str>);
 
 use crate::{
-    did::utils::{
+    did::parsing::{
         parse_qualified_did, parse_unqualified_sovrin_did, to_did_ranges, to_id_range, DidRanges,
     },
     DidRange, DidUrl, ParseError,

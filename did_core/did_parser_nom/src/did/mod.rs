@@ -1,4 +1,4 @@
-pub(super) mod utils;
+pub(super) mod parsing;
 
 use std::{
     convert::TryFrom,
@@ -8,7 +8,7 @@ use std::{
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use self::utils::parse_did;
+use self::parsing::parse_did;
 use crate::{error::ParseError, DidRange, DidUrl};
 
 #[derive(Clone, PartialEq, Eq, Hash)]
