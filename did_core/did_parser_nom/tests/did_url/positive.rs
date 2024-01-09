@@ -48,12 +48,10 @@ test_cases_positive! {
         Some("/path"),
         None,
         {
-            let mut queries = HashMap::new();
-            queries.extend(vec![
+            vec![
                 ("query1".to_string(), "value1".to_string()),
                 ("query2".to_string(), "value2".to_string()),
-            ]);
-            queries
+            ].into_iter().collect()
         }
 
     test_case4:
@@ -64,9 +62,9 @@ test_cases_positive! {
         Some("/path"),
         Some("fragment"),
         {
-            let mut queries = HashMap::new();
-            queries.extend(vec![("query".to_string(), "value".to_string())]);
-            queries
+            vec![
+                ("query".to_string(), "value".to_string()),
+            ].into_iter().collect()
         }
 
     test_case5:
@@ -77,12 +75,10 @@ test_cases_positive! {
         None,
         Some("fragment"),
         {
-            let mut queries = HashMap::new();
-            queries.extend(vec![
+            vec![
                 ("query1".to_string(), "value1".to_string()),
-                ("query2".to_string(), "value2".to_string())
-            ]);
-            queries
+                ("query2".to_string(), "value2".to_string()),
+            ].into_iter().collect()
         }
 
     test_case6:
@@ -102,9 +98,9 @@ test_cases_positive! {
         None,
         None,
         {
-            let mut queries = HashMap::new();
-            queries.insert("query".to_string(), "value".to_string());
-            queries
+            vec![
+                ("query".to_string(), "value".to_string()),
+            ].into_iter().collect()
         }
 
     test_case8:
@@ -146,9 +142,9 @@ test_cases_positive! {
         Some("/path"),
         None,
         {
-            let mut query = HashMap::new();
-            query.insert("query".to_string(), "value".to_string());
-            query
+            vec![
+                ("query".to_string(), "value".to_string()),
+            ].into_iter().collect()
         }
 
     test_case12:
@@ -159,12 +155,10 @@ test_cases_positive! {
         Some("/path"),
         Some("fragment"),
         {
-            let mut queries = HashMap::new();
-            queries.extend(vec![
+            vec![
                 ("query1".to_string(), "value1".to_string()),
                 ("query2".to_string(), "value2".to_string()),
-            ]);
-            queries
+            ].into_iter().collect()
         }
 
     test_case13:
@@ -175,12 +169,10 @@ test_cases_positive! {
         None,
         None,
         {
-            let mut queries = HashMap::new();
-            queries.extend(vec![
+            vec![
                 ("query1".to_string(), "value1".to_string()),
                 ("query2".to_string(), "value2".to_string()),
-            ]);
-            queries
+            ].into_iter().collect()
         }
 
     test_case14:
@@ -191,11 +183,9 @@ test_cases_positive! {
         None,
         None,
         {
-            let mut queries = HashMap::new();
-            queries.extend(vec![
+            vec![
                 ("query".to_string(), "".to_string()),
-            ]);
-            queries
+            ].into_iter().collect()
         }
 
     test_case15:
@@ -206,12 +196,10 @@ test_cases_positive! {
         None,
         Some("fragment"),
         {
-            let mut queries = HashMap::new();
-            queries.extend(vec![
+            vec![
                 ("query".to_string(), "value".to_string()),
                 ("query2".to_string(), "".to_string()),
-            ]);
-            queries
+            ].into_iter().collect()
         }
 
     test_case16:
@@ -222,12 +210,10 @@ test_cases_positive! {
         None,
         Some("fragment"),
         {
-            let mut queries = HashMap::new();
-            queries.extend(vec![
+            vec![
                 ("query1".to_string(), "value1".to_string()),
                 ("query2".to_string(), "value2".to_string()),
-            ]);
-            queries
+            ].into_iter().collect()
         }
 
     test_case17:
@@ -247,9 +233,9 @@ test_cases_positive! {
         None,
         None,
         {
-            let mut queries = HashMap::new();
-            queries.insert("query".to_string(), "value".to_string());
-            queries
+            vec![
+                ("query".to_string(), "value".to_string()),
+            ].into_iter().collect()
         }
 
     test_case19:
@@ -269,9 +255,9 @@ test_cases_positive! {
         Some("/path"),
         None,
         {
-            let mut queries = HashMap::new();
-            queries.insert("query".to_string(), "value".to_string());
-            queries
+            vec![
+                ("query".to_string(), "value".to_string()),
+            ].into_iter().collect()
         }
 
     test_case21:

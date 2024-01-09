@@ -4,13 +4,13 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
     character::complete::{char, one_of},
-    combinator::{all_consuming, cut, map, recognize, success, value},
+    combinator::{all_consuming, cut, map, opt, recognize, success},
     multi::{many0, separated_list0},
     sequence::{preceded, separated_pair},
     IResult,
 };
 
-type UrlPart<'a> = (&'a str, Vec<(&'a str, &'a str)>, &'a str);
+type UrlPart<'a> = (&'a str, Option<Vec<(&'a str, &'a str)>>, Option<&'a str>);
 
 use crate::{
     did::utils::{
@@ -75,7 +75,6 @@ fn query_key_value_pair(input: &str) -> IResult<&str, (&str, &str)> {
 
 fn query_parser(input: &str) -> IResult<&str, Vec<(&str, &str)>> {
     separated_list0(one_of("&?"), query_key_value_pair)(input)
-    // separated_list0(char('&'), query_key_value_pair)(input)
 }
 
 fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
@@ -89,26 +88,20 @@ fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
 // did-url-remaining = path-abempty [ "?" query ] [ "#" fragment ]
 fn parse_url_part(input: &str) -> IResult<&str, UrlPart> {
     let (input, path) = path_abempty(input)?;
-    let (input, queries) = alt((
-        preceded(tag("?"), cut(query_parser)),
-        value(vec![], tag("")),
-    ))(input)?;
-    let (input, fragments) = alt((
-        preceded(tag("#"), cut(all_consuming(fragment_parser))),
-        success(""), // Missing fragment; TODO: perhaps better way to repr. this is an option?
-    ))(input)?;
+    let (input, queries) = opt(preceded(tag("?"), cut(query_parser)))(input)?;
+    let (input, fragment) = opt(preceded(tag("#"), cut(all_consuming(fragment_parser))))(input)?;
     if !input.is_empty() {
         return Err(nom::Err::Error(nom::error::Error::new(
             input,
             nom::error::ErrorKind::Eof,
         )));
     }
-    Ok((input, (path, queries, fragments)))
+    Ok((input, (path, queries, fragment)))
 }
 
 fn to_did_url_ranges(
     id_range: Option<DidRange>,
-    (path, queries, fragments): UrlPart,
+    (path, queries, fragment): UrlPart,
 ) -> (
     Option<DidRange>,
     HashMap<DidRange, DidRange>,
@@ -129,7 +122,7 @@ fn to_did_url_ranges(
         .unwrap_or(id_end + 1);
 
     let mut query_map = HashMap::<DidRange, DidRange>::new();
-    for (key, value) in queries {
+    for (key, value) in queries.unwrap_or_default() {
         let key_start = current_last_position;
         let key_end = key_start + key.len();
         let value_start = key_end + 1;
@@ -138,18 +131,16 @@ fn to_did_url_ranges(
         query_map.insert(key_start..key_end, value_start..value_end);
     }
 
-    let fragment_range = if fragments.is_empty() {
-        None
-    } else {
-        let fragment_end = fragments.len() + current_last_position;
-        Some(current_last_position..fragment_end)
-    };
+    let fragment_range = fragment.map(|fragment| {
+        let fragment_end = fragment.len() + current_last_position;
+        current_last_position..fragment_end
+    });
 
     (path_range, query_map, fragment_range)
 }
 
-fn check_result(parsed_remaining: &UrlPart, did_ranges: &DidRanges) -> Result<(), ParseError> {
-    if parsed_remaining == &Default::default() && did_ranges == &Default::default() {
+fn validate_result_not_empty(url_part: &UrlPart, did_ranges: &DidRanges) -> Result<(), ParseError> {
+    if (url_part, did_ranges) == (&Default::default(), &Default::default()) {
         Err(ParseError::InvalidInput("Invalid input"))
     } else {
         Ok(())
@@ -168,7 +159,7 @@ pub fn parse_did_url(did_url: String) -> Result<DidUrl, ParseError> {
     let (_, url_part) =
         parse_url_part(remaining).map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
 
-    check_result(&url_part, &did_ranges)?;
+    validate_result_not_empty(&url_part, &did_ranges)?;
 
     let (method, namespace, id) = did_ranges;
     let (path, queries, fragment) = to_did_url_ranges(id.clone(), url_part);
