@@ -27,4 +27,5 @@ test_cases_negative! {
     test_failure_case12: "did:example:123456789abcdefghi&query1=value1"
     test_failure_case13: "did:example:123456789abcdefghi?query1=v^lue1"
     test_failure_case14: "did:example:123456789abcdefghi#fr^gment"
+    test_failure_case15: "did:example:123456789abcdefghi/path??"
 }

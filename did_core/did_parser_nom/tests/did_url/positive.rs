@@ -189,7 +189,7 @@ test_cases_positive! {
         }
 
     test_case15:
-        "did:example:123456789abcdefghi?query=value&query2=#fragment",
+        "did:example:123456789abcdefghi?query1=value1&query2=#fragment",
         Some("did:example:123456789abcdefghi"),
         Some("example"),
         Some("123456789abcdefghi"),
@@ -197,7 +197,7 @@ test_cases_positive! {
         Some("fragment"),
         {
             vec![
-                ("query".to_string(), "value".to_string()),
+                ("query1".to_string(), "value1".to_string()),
                 ("query2".to_string(), "".to_string()),
             ].into_iter().collect()
         }
@@ -288,4 +288,43 @@ test_cases_positive! {
         None,
         Some("1"),
         HashMap::new()
+
+    test_case24:
+        "did:example:123456789abcdefghi?query1=val;ue1",
+        Some("did:example:123456789abcdefghi"),
+        Some("example"),
+        Some("123456789abcdefghi"),
+        None,
+        None,
+        {
+            vec![
+                ("query1".to_string(), "val;ue1".to_string()),
+            ].into_iter().collect()
+        }
+
+    test_case25:
+        "did:example:123456789abcdefghi?quer;y1=value1",
+        Some("did:example:123456789abcdefghi"),
+        Some("example"),
+        Some("123456789abcdefghi"),
+        None,
+        None,
+        {
+            vec![
+                ("quer;y1".to_string(), "value1".to_string()),
+            ].into_iter().collect()
+        }
+
+    test_case26:
+        "did:example:123456789abcdefghi?query1=val=ue1",
+        Some("did:example:123456789abcdefghi"),
+        Some("example"),
+        Some("123456789abcdefghi"),
+        None,
+        None,
+        {
+            vec![
+                ("query1".to_string(), "val=ue1".to_string()),
+            ].into_iter().collect()
+        }
 }

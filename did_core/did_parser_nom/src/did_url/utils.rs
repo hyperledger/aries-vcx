@@ -60,9 +60,9 @@ fn query_key_value_pair(input: &str) -> IResult<&str, (&str, &str)> {
     }
 
     let (remaining, (key, value)) = cut(separated_pair(
-        take_while1(|c| !"=&#;".contains(c)),
+        take_while1(|c| !"=&#".contains(c)),
         char('='),
-        alt((take_while1(|c| !"&#;?".contains(c)), success(""))),
+        alt((take_while1(|c| !"&#?".contains(c)), success(""))),
     ))(input)?;
 
     cut(all_consuming(take_while1(is_query_char)))(key)?;
