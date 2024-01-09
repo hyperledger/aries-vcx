@@ -23,4 +23,5 @@ test_cases_negative! {
     test_failure_case8: ";"
     test_failure_case9: ";?"
     test_failure_case10: ";#"
+    test_failure_case11: "did:example:123456789abcdefghi#fragment1#fragment2"
 }

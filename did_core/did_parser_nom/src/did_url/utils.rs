@@ -4,13 +4,13 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
     character::complete::char,
-    combinator::{all_consuming, cut, map, recognize, success, value},
+    combinator::{all_consuming, complete, cut, map, recognize, success, value},
     multi::{many0, separated_list0, separated_list1},
     sequence::{preceded, separated_pair},
     IResult,
 };
 
-type UrlPart<'a> = (&'a str, Vec<(&'a str, &'a str)>, Vec<&'a str>);
+type UrlPart<'a> = (&'a str, Vec<(&'a str, &'a str)>, &'a str);
 
 use crate::{
     did::utils::{
@@ -90,8 +90,8 @@ fn parse_url_part(input: &str) -> IResult<&str, UrlPart> {
     let (input, path) = path_abempty(input)?;
     let (input, queries) = alt((preceded(tag("?"), query_parser), value(vec![], tag(""))))(input)?;
     let (input, fragments) = alt((
-        preceded(tag("#"), separated_list1(tag("#"), fragment)),
-        value(vec![], tag("")),
+        preceded(tag("#"), cut(all_consuming(fragment))),
+        success(""), // Missing fragment; TODO: perhaps better way to repr. this is an option?
     ))(input)?;
     Ok((input, (path, queries, fragments)))
 }
@@ -132,7 +132,7 @@ fn to_did_url_ranges(
         None
     } else {
         // TODO: Potential bug, multiple fragments are separated by #
-        let fragment_end = fragments.iter().map(|f| f.len()).sum::<usize>() + current_last_position;
+        let fragment_end = fragments.len() + current_last_position;
         Some(current_last_position..fragment_end)
     };
 
