@@ -1,7 +1,7 @@
 # Simple Message Relay
 The simple message relay is a basic implementation of a mediator/relay service which can be used for testing agent-to-agent comms.
 
-*This relay should never be used in production/public environments, as it intentionally lacks user authorization and data persistance for testing simplicitly purposes.*
+*This relay should never be used in production/public environments, as it intentionally lacks user authorization and data persistence for testing simplicity purposes.*
 
 Like a mediator, an agent can provide their HTTP/s "user endpoint" to peers during DIDComm connection protocols. An agent can then poll to collect incoming messages that have been sent to their endpoint.
 
