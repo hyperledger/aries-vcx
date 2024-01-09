@@ -23,3 +23,9 @@ impl fmt::Display for ParseError {
         }
     }
 }
+
+impl From<nom::Err<nom::error::Error<&str>>> for ParseError {
+    fn from(err: nom::Err<nom::error::Error<&str>>) -> Self {
+        ParseError::ParserError(err.to_owned().into())
+    }
+}

@@ -140,8 +140,7 @@ pub fn parse_did(did: String) -> Result<Did, ParseError> {
         return Err(ParseError::InvalidInput("Empty input"));
     }
 
-    let (_, (method, namespace, id)) =
-        parse_did_ranges(&did).map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
+    let (_, (method, namespace, id)) = all_consuming(parse_did_ranges)(&did)?;
     let id = id.ok_or_else(|| ParseError::InvalidInput("Invalid DID"))?;
 
     if id.end > did.len() {

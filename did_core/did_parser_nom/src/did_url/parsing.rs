@@ -84,16 +84,11 @@ fn parse_did_ranges_with_empty_allowed(input: &str) -> IResult<&str, DidRanges> 
 
 // did-url-remaining = path-abempty [ "?" query ] [ "#" fragment ]
 fn parse_url_part(input: &str) -> IResult<&str, UrlPart> {
-    let (input, path) = path_abempty(input)?;
-    let (input, queries) = opt(preceded(tag("?"), cut(query_parser)))(input)?;
-    let (input, fragment) = opt(preceded(tag("#"), cut(all_consuming(fragment_parser))))(input)?;
-    if !input.is_empty() {
-        return Err(nom::Err::Error(nom::error::Error::new(
-            input,
-            nom::error::ErrorKind::Eof,
-        )));
-    }
-    Ok((input, (path, queries, fragment)))
+    let (remaining, path) = path_abempty(input)?;
+    let (remaining, queries) = opt(preceded(tag("?"), cut(query_parser)))(remaining)?;
+    let (remaining, fragment) =
+        opt(preceded(tag("#"), cut(all_consuming(fragment_parser))))(remaining)?;
+    Ok((remaining, (path, queries, fragment)))
 }
 
 fn to_did_url_ranges(
@@ -150,11 +145,9 @@ pub fn parse_did_url(did_url: String) -> Result<DidUrl, ParseError> {
         return Err(ParseError::InvalidInput("Empty input"));
     }
 
-    let (remaining, did_ranges) = parse_did_ranges_with_empty_allowed(&did_url)
-        .map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
+    let (remaining, did_ranges) = parse_did_ranges_with_empty_allowed(&did_url)?;
 
-    let (_, url_part) =
-        parse_url_part(remaining).map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
+    let (_, url_part) = all_consuming(parse_url_part)(remaining)?;
 
     validate_result_not_empty(&url_part, &did_ranges)?;
 
