@@ -75,6 +75,7 @@ fn query_key_value_pair(input: &str) -> IResult<&str, (&str, &str)> {
 
 fn query_parser(input: &str) -> IResult<&str, Vec<(&str, &str)>> {
     separated_list0(one_of("&?"), query_key_value_pair)(input)
+    // separated_list0(char('&'), query_key_value_pair)(input)
 }
 
 fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
@@ -88,11 +89,20 @@ fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
 // did-url-remaining = path-abempty [ "?" query ] [ "#" fragment ]
 fn parse_url_part(input: &str) -> IResult<&str, UrlPart> {
     let (input, path) = path_abempty(input)?;
-    let (input, queries) = alt((preceded(tag("?"), query_parser), value(vec![], tag(""))))(input)?;
+    let (input, queries) = alt((
+        preceded(tag("?"), cut(query_parser)),
+        value(vec![], tag("")),
+    ))(input)?;
     let (input, fragments) = alt((
         preceded(tag("#"), cut(all_consuming(fragment_parser))),
         success(""), // Missing fragment; TODO: perhaps better way to repr. this is an option?
     ))(input)?;
+    if !input.is_empty() {
+        return Err(nom::Err::Error(nom::error::Error::new(
+            input,
+            nom::error::ErrorKind::Eof,
+        )));
+    }
     Ok((input, (path, queries, fragments)))
 }
 
