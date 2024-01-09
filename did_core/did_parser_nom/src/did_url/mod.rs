@@ -158,16 +158,12 @@ impl TryFrom<&DidUrl> for Did {
     type Error = ParseError;
 
     fn try_from(did_url: &DidUrl) -> Result<Self, Self::Error> {
-        if let (Some(did), Some(method), Some(id)) = (did_url.did(), &did_url.method, &did_url.id) {
-            Ok(Did::from_parts(
-                did.to_owned(),
-                method.to_owned(),
-                id.to_owned(),
-            ))
-        } else {
-            Err(ParseError::InvalidInput(
-                "Unable to construct a DID from relative DID URL",
-            ))
-        }
+        let err = || ParseError::InvalidInput("Unable to construct a DID from relative DID URL");
+        Ok(Did::from_parts(
+            did_url.did().ok_or_else(err)?.to_owned(),
+            did_url.method.to_owned(),
+            did_url.namespace.to_owned(),
+            did_url.id.to_owned().ok_or_else(err)?,
+        ))
     }
 }

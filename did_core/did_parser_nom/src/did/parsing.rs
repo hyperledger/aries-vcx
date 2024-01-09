@@ -1,8 +1,8 @@
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_while1},
+    bytes::complete::{tag, take_till, take_while1},
     character::complete::{alphanumeric1, char, one_of, satisfy},
-    combinator::{all_consuming, cut, map, opt, recognize},
+    combinator::{all_consuming, cut, fail, map, opt, recognize},
     multi::{many1, many_m_n},
     sequence::{delimited, tuple},
     AsChar, IResult,
@@ -35,6 +35,7 @@ fn is_lowercase_alphanumeric(c: char) -> bool {
 fn pct_encoded(input: &str) -> IResult<&str, &str> {
     recognize(tuple((tag("%"), hexadecimal_digit, hexadecimal_digit)))(input)
 }
+
 // idchar = ALPHA / DIGIT / "." / "-" / "_" / pct-encoded
 fn idchar(input: &str) -> IResult<&str, &str> {
     alt((alphanumeric1, tag("."), tag("-"), tag("_"), pct_encoded))(input)
@@ -67,19 +68,32 @@ fn namespace(input: &str) -> IResult<&str, &str> {
 }
 
 // did = "did:" method-name ":" method-specific-id
-pub fn parse_qualified_did(input: &str) -> IResult<&str, DidPart> {
+fn parse_qualified_did(input: &str) -> IResult<&str, DidPart> {
     tuple((tag("did"), method_name, opt(namespace), method_specific_id))(input)
 }
 
-pub fn parse_unqualified_sovrin_did(input: &str) -> IResult<&str, &str> {
+fn parse_did_web(input: &str) -> IResult<&str, DidPart> {
+    fn did_web_method(input: &str) -> IResult<&str, &str> {
+        delimited(char(':'), tag("web"), char(':'))(input)
+    }
+
+    tuple((
+        tag("did"),
+        did_web_method,
+        opt(fail::<_, &str, _>),
+        take_till(|c| "?/#".contains(c)),
+    ))(input)
+}
+
+fn parse_unqualified_sovrin_did(input: &str) -> IResult<&str, &str> {
     recognize(many_m_n(21, 22, base58char))(input)
 }
 
-pub fn to_id_range(id: &str) -> DidRanges {
+fn to_id_range(id: &str) -> DidRanges {
     (None, None, Some(0..id.len()))
 }
 
-pub fn to_did_ranges((did_prefix, method, namespace, id): DidPart) -> DidRanges {
+fn to_did_ranges((did_prefix, method, namespace, id): DidPart) -> DidRanges {
     let mut next_start = if !did_prefix.is_empty() {
         did_prefix.len() + 1
     } else {
@@ -113,16 +127,21 @@ pub fn to_did_ranges((did_prefix, method, namespace, id): DidPart) -> DidRanges 
     (method_range, namespace_range, id_range)
 }
 
+pub fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
+    alt((
+        map(parse_did_web, to_did_ranges),
+        map(parse_qualified_did, to_did_ranges),
+        map(parse_unqualified_sovrin_did, to_id_range),
+    ))(input)
+}
+
 pub fn parse_did(did: String) -> Result<Did, ParseError> {
     if did.is_empty() {
         return Err(ParseError::InvalidInput("Empty input"));
     }
 
-    let (_, (method, namespace, id)) = alt((
-        map(parse_qualified_did, to_did_ranges),
-        map(parse_unqualified_sovrin_did, to_id_range),
-    ))(&did)
-    .map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
+    let (_, (method, namespace, id)) =
+        parse_did_ranges(&did).map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
     let id = id.ok_or_else(|| ParseError::InvalidInput("Invalid DID"))?;
 
     if id.end > did.len() {

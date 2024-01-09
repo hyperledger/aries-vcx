@@ -1,4 +1,4 @@
-pub(super) mod parsing;
+pub(crate) mod parsing;
 
 use std::{
     convert::TryFrom,
@@ -43,11 +43,16 @@ impl Did {
         self.did[self.id.clone()].as_ref()
     }
 
-    pub(crate) fn from_parts(did: String, method: DidRange, id: DidRange) -> Self {
+    pub(crate) fn from_parts(
+        did: String,
+        method: Option<DidRange>,
+        namespace: Option<DidRange>,
+        id: DidRange,
+    ) -> Self {
         Self {
             did,
-            method: Some(method),
-            namespace: None,
+            method,
+            namespace,
             id,
         }
     }

@@ -291,16 +291,15 @@ test_cases_positive! {
         Some("fragment"),
         HashMap::new()
 
-    // TODO: How the hell are we suppposed to distinguish a did:web DID URL with path
-    // from a namespace
-    // test_case22:
-    //     "did:web:w3c-ccg.github.io:user:alice",
-    //     Some("did:web:w3c-ccg.github.io:user:alice"),
-    //     Some("web"),
-    //     Some("w3c-ccg.github.io:user:alice"),
-    //     None,
-    //     None,
-    //     HashMap::new()
+    test_case22:
+        "did:web:w3c-ccg.github.io:user:alice",
+        Some("did:web:w3c-ccg.github.io:user:alice"),
+        Some("web"),
+        None,
+        Some("w3c-ccg.github.io:user:alice"),
+        None,
+        None,
+        HashMap::new()
 
     test_case23:
         "2ZHFFhzA2XtTD6hJqzL7ux#1",

@@ -4,7 +4,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
     character::complete::{char, one_of},
-    combinator::{all_consuming, cut, map, opt, recognize, success},
+    combinator::{all_consuming, cut, opt, recognize, success},
     multi::{many0, separated_list0},
     sequence::{preceded, separated_pair},
     IResult,
@@ -13,9 +13,7 @@ use nom::{
 type UrlPart<'a> = (&'a str, Option<Vec<(&'a str, &'a str)>>, Option<&'a str>);
 
 use crate::{
-    did::parsing::{
-        parse_qualified_did, parse_unqualified_sovrin_did, to_did_ranges, to_id_range, DidRanges,
-    },
+    did::parsing::{parse_did_ranges, DidRanges},
     DidRange, DidUrl, ParseError,
 };
 
@@ -77,10 +75,9 @@ fn query_parser(input: &str) -> IResult<&str, Vec<(&str, &str)>> {
     separated_list0(one_of("&?"), query_key_value_pair)(input)
 }
 
-fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
+fn parse_did_ranges_with_empty_allowed(input: &str) -> IResult<&str, DidRanges> {
     alt((
-        map(parse_qualified_did, to_did_ranges),
-        map(parse_unqualified_sovrin_did, to_id_range),
+        parse_did_ranges,
         success(Default::default()), // Relative DID URL
     ))(input)
 }
@@ -107,7 +104,7 @@ fn to_did_url_ranges(
     HashMap<DidRange, DidRange>,
     Option<DidRange>,
 ) {
-    let id_end = id_range.clone().unwrap_or_default().end;
+    let id_end = id_range.unwrap_or_default().end;
     let path_range = if path.is_empty() {
         None
     } else {
@@ -153,8 +150,8 @@ pub fn parse_did_url(did_url: String) -> Result<DidUrl, ParseError> {
         return Err(ParseError::InvalidInput("Empty input"));
     }
 
-    let (remaining, did_ranges) =
-        parse_did_ranges(&did_url).map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
+    let (remaining, did_ranges) = parse_did_ranges_with_empty_allowed(&did_url)
+        .map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
 
     let (_, url_part) =
         parse_url_part(remaining).map_err(|err| ParseError::ParserError(err.to_owned().into()))?;
