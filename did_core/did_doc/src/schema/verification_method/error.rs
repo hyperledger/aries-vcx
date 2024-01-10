@@ -1,48 +1,92 @@
-use thiserror::Error;
-use crate::schema::types::jsonwebkey::JsonWebKeyError;
+use std::{
+    error::Error,
+    fmt,
+    fmt::{Display, Formatter},
+};
 
-use crate::schema::types::multibase::MultibaseWrapperError;
+use thiserror::Error;
+
+use crate::schema::types::{jsonwebkey::JsonWebKeyError, multibase::MultibaseWrapperError};
 
 #[derive(Debug, Error)]
-pub enum KeyDecodingError {
-    #[error("Json decoding error: ${0}")]
-    JsonError(serde_json::Error),
-    #[error("Pem decoding error: ${0}")]
-    PemError(pem::PemError),
-    #[error("Unsupported key error: ${0}")]
-    UnsupportedPublicKeyField(&'static str),
-    #[error("Base 58 decoding error: ${0}")]
-    Base58DecodeError(bs58::decode::Error),
-    #[error("Base 64 decoding error: ${0}")]
-    Base64DecodeError(base64::DecodeError),
-    #[error("Hex decoding error: ${0}")]
-    HexDecodeError(hex::FromHexError),
-    #[error("Jwk decoding error: ${0}")]
-    JwkDecodeError(JsonWebKeyError),
-    #[error("Multibase decoding error ${0}")]
-    MultibaseError(MultibaseWrapperError),
+pub struct KeyDecodingError {
+    reason: &'static str,
+    #[source]
+    source: Option<Box<dyn Error + Sync + Send>>,
+}
+
+impl KeyDecodingError {
+    pub fn new(reason: &'static str) -> Self {
+        KeyDecodingError {
+            reason,
+            source: None,
+        }
+    }
+}
+
+impl Display for KeyDecodingError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match &self.source {
+            Some(source) => write!(
+                f,
+                "KeyDecodingError, reason: {}, source: {}",
+                self.reason, source
+            ),
+            None => write!(f, "KeyDecodingError, reason: {}", self.reason),
+        }
+    }
 }
 
 impl From<pem::PemError> for KeyDecodingError {
     fn from(error: pem::PemError) -> Self {
-        KeyDecodingError::PemError(error)
+        KeyDecodingError {
+            reason: "Failed to decode PEM",
+            source: Some(Box::new(error)),
+        }
     }
 }
 
 impl From<bs58::decode::Error> for KeyDecodingError {
     fn from(error: bs58::decode::Error) -> Self {
-        KeyDecodingError::Base58DecodeError(error)
+        KeyDecodingError {
+            reason: "Failed to decode base58",
+            source: Some(Box::new(error)),
+        }
     }
 }
 
 impl From<base64::DecodeError> for KeyDecodingError {
     fn from(error: base64::DecodeError) -> Self {
-        KeyDecodingError::Base64DecodeError(error)
+        KeyDecodingError {
+            reason: "Failed to decode base64",
+            source: Some(Box::new(error)),
+        }
     }
 }
 
 impl From<hex::FromHexError> for KeyDecodingError {
     fn from(error: hex::FromHexError) -> Self {
-        KeyDecodingError::HexDecodeError(error)
+        KeyDecodingError {
+            reason: "Failed to decode hex value",
+            source: Some(Box::new(error)),
+        }
+    }
+}
+
+impl From<MultibaseWrapperError> for KeyDecodingError {
+    fn from(error: MultibaseWrapperError) -> Self {
+        KeyDecodingError {
+            reason: "Failed to decode multibase value",
+            source: Some(Box::new(error)),
+        }
+    }
+}
+
+impl From<JsonWebKeyError> for KeyDecodingError {
+    fn from(error: JsonWebKeyError) -> Self {
+        KeyDecodingError {
+            reason: "Failed to decode JWK",
+            source: Some(Box::new(error)),
+        }
     }
 }

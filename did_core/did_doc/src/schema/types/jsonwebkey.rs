@@ -1,9 +1,9 @@
 use std::{
     collections::HashMap,
+    error::Error,
     fmt::{self, Display, Formatter},
     str::FromStr,
 };
-use std::error::Error;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

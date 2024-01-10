@@ -34,13 +34,10 @@ impl PublicKeyField {
             PublicKeyField::Multibase {
                 public_key_multibase,
             } => {
-                let multibase = Multibase::from_str(public_key_multibase)
-                    .map_err(KeyDecodingError::MultibaseError)?;
+                let multibase = Multibase::from_str(public_key_multibase)?;
                 Ok(multibase.as_ref().to_vec())
             }
-            PublicKeyField::Jwk { public_key_jwk } => Ok(public_key_jwk
-                .to_vec()
-                .map_err(KeyDecodingError::JwkDecodeError)?),
+            PublicKeyField::Jwk { public_key_jwk } => Ok(public_key_jwk.to_vec()?),
             PublicKeyField::Base58 { public_key_base58 } => {
                 Ok(bs58::decode(public_key_base58).into_vec()?)
             }
@@ -51,9 +48,9 @@ impl PublicKeyField {
             PublicKeyField::Pem { public_key_pem } => {
                 Ok(pem::parse(public_key_pem.as_bytes())?.contents().to_vec())
             }
-            PublicKeyField::Pgp { public_key_pgp: _ } => {
-                Err(KeyDecodingError::UnsupportedPublicKeyField("publicKeyPgp"))
-            }
+            PublicKeyField::Pgp { public_key_pgp: _ } => Err(KeyDecodingError::new(
+                "PGP public key decoding not supported",
+            )),
         }
     }
 
@@ -65,6 +62,8 @@ impl PublicKeyField {
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error;
+
     use super::*;
 
     static PUBLIC_KEY_MULTIBASE: &str = "z6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc";
@@ -124,12 +123,13 @@ mod tests {
         let public_key_field = PublicKeyField::Base58 {
             public_key_base58: "abcdefghijkl".to_string(),
         };
-        let err = public_key_field.key_decoded().unwrap_err();
-        assert!(
-            matches!(err, KeyDecodingError::Base58DecodeError(_)),
-            "Expected Base58DecodeError, got {:?}",
-            err
-        );
+        let err = public_key_field.key_decoded().expect_err("Expected error");
+        println!("Error: {}", err);
+        assert!(err
+            .source()
+            .expect("Error was expected to has source set up.")
+            .is::<bs58::decode::Error>());
+        assert!(err.to_string().contains("Failed to decode base58"));
     }
 
     #[test]
@@ -138,10 +138,11 @@ mod tests {
             public_key_pem: "abcdefghijkl".to_string(),
         };
         let err = public_key_field.key_decoded().unwrap_err();
-        assert!(
-            matches!(err, KeyDecodingError::PemError(_)),
-            "Expected PemError, got {:?}",
-            err
-        );
+        println!("Error: {}", err);
+        assert!(err
+            .source()
+            .expect("Error was expected to has source set up.")
+            .is::<pem::PemError>());
+        assert!(err.to_string().contains("Failed to decode PEM"));
     }
 }
