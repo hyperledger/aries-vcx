@@ -1,4 +1,5 @@
 use thiserror::Error;
+use crate::schema::types::jsonwebkey::JsonWebKeyError;
 
 use crate::schema::types::multibase::MultibaseWrapperError;
 
@@ -17,7 +18,7 @@ pub enum KeyDecodingError {
     #[error("Hex decoding error: ${0}")]
     HexDecodeError(hex::FromHexError),
     #[error("Jwk decoding error: ${0}")]
-    JwkDecodeError(serde_json::Error),
+    JwkDecodeError(JsonWebKeyError),
     #[error("Multibase decoding error ${0}")]
     MultibaseError(MultibaseWrapperError),
 }

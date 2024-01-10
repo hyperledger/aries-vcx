@@ -10,7 +10,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub struct MultibaseWrapperError {
-    reason: String,
+    reason: &'static str,
     #[source]
     source: Box<dyn Error + Sync + Send>,
 }
@@ -35,7 +35,7 @@ pub struct Multibase {
 impl Multibase {
     pub fn new(multibase: String) -> Result<Self, MultibaseWrapperError> {
         let (base, bytes) = decode(multibase).map_err(|err| MultibaseWrapperError {
-            reason: format!("Decoding multibase value failed"),
+            reason: "Decoding multibase value failed",
             source: Box::new(err),
         })?;
         Ok(Self { base, bytes })
@@ -136,7 +136,7 @@ mod tests {
     #[test]
     fn test_multibase_from_str_invalid() {
         let multibase = "invalidmultibasekey".parse::<Multibase>();
-        let err = multibase.err().expect("Error was expected.");
+        let err = multibase.expect_err("Error was expected.");
         assert!(err
             .source()
             .expect("Error was expected to has source set up.")
