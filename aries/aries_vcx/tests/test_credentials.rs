@@ -1,7 +1,9 @@
 use std::error::Error;
 
 use aries_vcx::common::credentials::{get_cred_rev_id, is_cred_revoked, ProverCredential};
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+};
 use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};
 
 use crate::utils::{
@@ -110,6 +112,11 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
 
     assert!(!is_cred_revoked(&setup.ledger_read, &rev_reg.rev_reg_id, &cred_rev_id).await?);
 
+    let rev_reg_delta_json = setup
+        .ledger_read
+        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+        .await?
+        .1;
     setup
         .anoncreds
         .revoke_credential_local(
@@ -117,6 +124,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
             &rev_reg.get_tails_dir(),
             &rev_reg.rev_reg_id,
             &cred_rev_id,
+            &rev_reg_delta_json,
         )
         .await?;
     rev_reg

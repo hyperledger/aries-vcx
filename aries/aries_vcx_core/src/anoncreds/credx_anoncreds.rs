@@ -468,6 +468,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         wallet: &impl BaseWallet,
         issuer_did: &str,
+        _schema_id: &str,
         schema_json: &str,
         tag: &str,
         sig_type: Option<&str>,
@@ -1233,6 +1234,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         _tails_dir: &str,
         rev_reg_id: &str,
         cred_rev_id: &str,
+        _rev_reg_delta_json: &str,
     ) -> VcxCoreResult<()> {
         let cred_rev_id = cred_rev_id.parse().map_err(|e| {
             AriesVcxCoreError::from_msg(
