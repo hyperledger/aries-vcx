@@ -121,9 +121,12 @@ pub(super) async fn ledger_response_to_ddo(
 
     let ddo_metadata = {
         let mut metadata_builder = DidDocumentMetadata::builder().deactivated(false);
-        if let Some(datetime) = datetime {
-            metadata_builder = metadata_builder.updated(datetime);
-        };
+        if let Ok(txn_time) = txn_time {
+            let datetime = unix_to_datetime(txn_time);
+            if let Some(datetime) = datetime {
+                metadata_builder = metadata_builder.updated(datetime);
+            };
+        }
         metadata_builder.build()
     };
 
