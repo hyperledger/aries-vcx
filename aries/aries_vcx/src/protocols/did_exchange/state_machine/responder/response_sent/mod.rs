@@ -103,7 +103,6 @@ async fn resolve_ddo_from_request(
             resolver_registry
                 .resolve(&request.content.did.parse()?, &Default::default())
                 .await?
-                .did_document()
-                .to_owned(),
+                .did_document,
         ))
 }

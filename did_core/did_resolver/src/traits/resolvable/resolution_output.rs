@@ -23,18 +23,6 @@ impl DidResolutionOutput {
             did_document_metadata: None,
         }
     }
-
-    pub fn did_document(&self) -> &DidDocument {
-        &self.did_document
-    }
-
-    pub fn did_resolution_metadata(&self) -> &DidResolutionMetadata {
-        &self.did_resolution_metadata
-    }
-
-    pub fn did_document_metadata(&self) -> &DidDocumentMetadata {
-        &self.did_document_metadata
-    }
 }
 
 pub struct DidResolutionOutputBuilder {

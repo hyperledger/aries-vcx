@@ -74,9 +74,9 @@ pub(crate) fn dereference_did_document(
     resolution_output: &DidResolutionOutput,
     did_url: &DidUrl,
 ) -> Result<DidDereferencingOutput<Cursor<Vec<u8>>>, DidSovError> {
-    let content_stream = content_stream_from(resolution_output.did_document(), did_url)?;
+    let content_stream = content_stream_from(&resolution_output.did_document, did_url)?;
 
-    let content_metadata = resolution_output.did_document_metadata().clone();
+    let content_metadata = resolution_output.did_document_metadata.clone();
 
     let dereferencing_metadata = DidDereferencingMetadata::builder()
         .content_type("application/did+json".to_string())
@@ -176,7 +176,7 @@ mod tests {
         assert_eq!(content_value, expected);
 
         let content_metadata = dereferencing_output.content_metadata();
-        assert_eq!(content_metadata, resolution_output.did_document_metadata());
+        assert_eq!(content_metadata, &resolution_output.did_document_metadata);
 
         let dereferencing_metadata = dereferencing_output.dereferencing_metadata();
         assert_eq!(

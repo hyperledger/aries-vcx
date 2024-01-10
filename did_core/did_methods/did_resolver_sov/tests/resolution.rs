@@ -3,8 +3,9 @@ use std::{thread, time::Duration};
 use aries_vcx::common::ledger::{service_didsov::EndpointDidSov, transactions::write_endpoint};
 use aries_vcx_core::{ledger::base_ledger::IndyLedgerWrite, wallet::base_wallet::BaseWallet};
 use did_resolver::{
-    did_doc::schema::service::typed::ServiceType, did_parser::Did,
-    traits::resolvable::DidResolvable,
+    did_doc::schema::service::typed::ServiceType,
+    did_parser::Did,
+    traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };
 use did_resolver_sov::resolution::DidSovResolver;
 use test_utils::devsetup::build_setup_profile;
@@ -36,12 +37,12 @@ async fn write_service_on_ledger_and_resolve_did_doc() {
     let resolver = DidSovResolver::new(profile.ledger_read);
     let did = format!("did:sov:{}", profile.institution_did);
 
-    let did_doc = resolver
+    let DidResolutionOutput { did_document, .. } = resolver
         .resolve(&Did::parse(did.clone()).unwrap(), &())
         .await
         .unwrap();
 
-    assert_eq!(did_doc.did_document().id().to_string(), did);
+    assert_eq!(did_document.id().to_string(), did);
 }
 
 #[tokio::test]

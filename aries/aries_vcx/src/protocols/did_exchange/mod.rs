@@ -35,7 +35,7 @@ pub async fn resolve_enc_key_from_invitation(
                 })?;
             info!("DID resolution output {:?}", output);
             Ok(output
-                .did_document()
+                .did_document
                 .verification_method()
                 .first()
                 .ok_or_else(|| {

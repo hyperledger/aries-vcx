@@ -14,12 +14,11 @@ use crate::fixtures::{
 
 async fn resolve_positive_test(did_doc: &str, peer_did: &str, options: PeerDidResolutionOptions) {
     let did_document_expected = serde_json::from_str::<DidDocument>(did_doc).unwrap();
-    let ddo = PeerDidResolver
+    let resolution = PeerDidResolver
         .resolve(&peer_did.parse().unwrap(), &options)
         .await
         .unwrap();
-    let did_document_actual = ddo.did_document().clone();
-    assert_eq!(did_document_actual, did_document_expected);
+    assert_eq!(resolution.did_document, did_document_expected);
 }
 
 #[test]

@@ -34,7 +34,7 @@ impl DidExchangeRequester<RequestSent> {
         let their_did_document = resolver_registry
             .resolve(their_did, &Default::default())
             .await?
-            .did_document()
+            .did_document
             .clone();
         let DidResolutionOutput { did_document, .. } =
             PeerDidResolver::resolve_peerdid2(our_peer_did, PublicKeyEncoding::Base58).await?;

@@ -51,7 +51,7 @@ where
         };
         let result_inner = self.inner.resolve(did, &options).await?;
 
-        let did_document_inner_hashmap = serde_json::to_value(result_inner.did_document())
+        let did_document_inner_hashmap = serde_json::to_value(result_inner.did_document)
             .unwrap()
             .as_object()
             .unwrap()
@@ -61,8 +61,8 @@ where
             serde_json::from_value(Value::Object(did_document_inner_hashmap))?;
 
         Ok(DidResolutionOutput::builder(did_document)
-            .did_resolution_metadata(result_inner.did_resolution_metadata().clone())
-            .did_document_metadata(result_inner.did_document_metadata().clone())
+            .did_resolution_metadata(result_inner.did_resolution_metadata)
+            .did_document_metadata(result_inner.did_document_metadata)
             .build())
     }
 }

@@ -186,8 +186,11 @@ mod tests {
             }
         }"#;
         let verkey = "9wvq2i4xUa5umXoThe83CDgx1e5bsjZKJL4DEWvTP9qe".to_string();
-        let resolution_output = ledger_response_to_ddo(did, resp, verkey).await.unwrap();
-        let ddo = resolution_output.did_document();
+        let DidResolutionOutput {
+            did_document: ddo,
+            did_resolution_metadata,
+            did_document_metadata,
+        } = ledger_response_to_ddo(did, resp, verkey).await.unwrap();
         assert_eq!(ddo.id().to_string(), "did:example:1234567890");
         assert_eq!(ddo.service()[0].id().to_string(), "did:example:1234567890");
         assert_eq!(
@@ -195,14 +198,11 @@ mod tests {
             "https://example.com/"
         );
         assert_eq!(
-            resolution_output.did_document_metadata().updated().unwrap(),
-            chrono::Utc.timestamp_opt(1629272938, 0).unwrap()
+            did_document_metadata.updated().unwrap(),
+            Utc.timestamp_opt(1629272938, 0).unwrap()
         );
         assert_eq!(
-            resolution_output
-                .did_resolution_metadata()
-                .content_type()
-                .unwrap(),
+            did_resolution_metadata.content_type().unwrap(),
             "application/did+json"
         );
         if let PublicKeyField::Base58 { public_key_base58 } =

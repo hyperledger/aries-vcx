@@ -1,7 +1,9 @@
 use std::{convert::Infallible, net::SocketAddr};
 
 use did_resolver::{
-    did_doc::schema::did_doc::DidDocument, did_parser::Did, traits::resolvable::DidResolvable,
+    did_doc::schema::did_doc::DidDocument,
+    did_parser::Did,
+    traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };
 use did_resolver_web::resolution::resolver::DidWebResolver;
 use hyper::{
@@ -111,9 +113,13 @@ async fn test_did_web_resolver() {
     let did_example_1 = Did::parse(format!("did:web:{}%3A{}", host, port)).unwrap();
     let did_example_2 = Did::parse(format!("did:web:{}%3A{}:user:alice", host, port)).unwrap();
 
-    let result_1 = assert_ok!(did_web_resolver.resolve(&did_example_1, &()).await);
-    verify_did_document(result_1.did_document());
+    let DidResolutionOutput {
+        did_document: ddo1, ..
+    } = assert_ok!(did_web_resolver.resolve(&did_example_1, &()).await);
+    verify_did_document(&ddo1);
 
-    let result_2 = assert_ok!(did_web_resolver.resolve(&did_example_2, &()).await);
-    verify_did_document(result_2.did_document());
+    let DidResolutionOutput {
+        did_document: ddo2, ..
+    } = assert_ok!(did_web_resolver.resolve(&did_example_2, &()).await);
+    verify_did_document(&ddo2);
 }
