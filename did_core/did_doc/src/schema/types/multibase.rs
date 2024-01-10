@@ -1,4 +1,5 @@
 use std::{
+    error::Error,
     fmt::{self, Display, Formatter},
     str::FromStr,
 };
@@ -10,11 +11,17 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub struct MultibaseWrapperError {
     reason: String,
+    #[source]
+    source: Box<dyn Error + Sync + Send>,
 }
 
 impl Display for MultibaseWrapperError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "MultibaseWrapperError: {}", self.reason)
+        write!(
+            f,
+            "MultibaseWrapperError, reason: {}, source: {}",
+            self.reason, self.source
+        )
     }
 }
 
@@ -28,7 +35,8 @@ pub struct Multibase {
 impl Multibase {
     pub fn new(multibase: String) -> Result<Self, MultibaseWrapperError> {
         let (base, bytes) = decode(multibase).map_err(|err| MultibaseWrapperError {
-            reason: format!("Invalid multibase data: {}", err),
+            reason: format!("Decoding multibase value failed"),
+            source: Box::new(err),
         })?;
         Ok(Self { base, bytes })
     }
@@ -128,7 +136,14 @@ mod tests {
     #[test]
     fn test_multibase_from_str_invalid() {
         let multibase = "invalidmultibasekey".parse::<Multibase>();
-        assert!(multibase.is_err());
+        let err = multibase.err().expect("Error was expected.");
+        assert!(err
+            .source()
+            .expect("Error was expected to has source set up.")
+            .is::<multibase::Error>());
+        assert!(err
+            .to_string()
+            .contains("Decoding multibase value failed, source: "));
     }
 
     #[test]
