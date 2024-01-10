@@ -125,10 +125,6 @@ mod tests {
             public_key_base58: "abcdefghijkl".to_string(),
         };
         let err = public_key_field.key_decoded().unwrap_err();
-        // println!("display: {}", err);
-        // println!("debug: {:?}", err);
-        // println!("pretty display: {:#?}", err);
-        // println!("source in debug: {:?}", err.source());
         assert!(
             matches!(err, KeyDecodingError::Base58DecodeError(_)),
             "Expected Base58DecodeError, got {:?}",
