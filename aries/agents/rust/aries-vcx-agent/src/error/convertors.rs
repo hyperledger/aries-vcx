@@ -6,6 +6,7 @@ use aries_vcx::{
     protocols::did_exchange::state_machine::generic::GenericDidExchange,
 };
 use aries_vcx_core::errors::error::AriesVcxCoreError;
+use did_resolver_sov::did_resolver::did_doc::schema::utils::error::DidDocumentLookupError;
 
 use crate::error::*;
 
@@ -81,6 +82,13 @@ impl From<(GenericDidExchange, AriesVcxError)> for AgentError {
     fn from(err: (GenericDidExchange, AriesVcxError)) -> Self {
         let kind = AgentErrorKind::GenericAriesVcxError;
         let message = format!("GenericDidExchange; err: {:?}", err.1.to_string());
+        AgentError { message, kind }
+    }
+}
+impl From<DidDocumentLookupError> for AgentError {
+    fn from(err: DidDocumentLookupError) -> Self {
+        let kind = AgentErrorKind::GenericAriesVcxError;
+        let message = format!("DidDocumentLookupError; err: {:?}", err.to_string());
         AgentError { message, kind }
     }
 }

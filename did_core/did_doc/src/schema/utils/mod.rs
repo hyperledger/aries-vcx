@@ -1,15 +1,15 @@
+pub mod error;
+
 use std::fmt::{Debug, Display};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    error::DidDocumentBuilderError,
-    schema::{
-        did_doc::DidDocument,
-        service::{typed::ServiceType, Service},
-        types::uri::Uri,
-        verification_method::{VerificationMethod, VerificationMethodKind, VerificationMethodType},
-    },
+use crate::schema::{
+    did_doc::DidDocument,
+    service::{typed::ServiceType, Service},
+    types::uri::Uri,
+    utils::error::DidDocumentLookupError,
+    verification_method::{VerificationMethod, VerificationMethodKind, VerificationMethodType},
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -41,15 +41,15 @@ impl DidDocument {
     pub fn get_key_agreement_of_type(
         &self,
         key_types: &[VerificationMethodType],
-    ) -> Result<VerificationMethod, DidDocumentBuilderError> {
+    ) -> Result<VerificationMethod, DidDocumentLookupError> {
         for verification_method_kind in self.key_agreement() {
             let verification_method = match verification_method_kind {
                 VerificationMethodKind::Resolved(verification_method) => verification_method,
                 VerificationMethodKind::Resolvable(reference) => {
                     match self.dereference_key(reference) {
                         None => {
-                            return Err(DidDocumentBuilderError::CustomError(format!(
-                                "Unable to dereference key: {}",
+                            return Err(DidDocumentLookupError::new(format!(
+                                "Unable to resolve key agreement key by reference: {}",
                                 reference
                             )))
                         }
@@ -63,7 +63,7 @@ impl DidDocument {
                 }
             }
         }
-        Err(DidDocumentBuilderError::CustomError(
+        Err(DidDocumentLookupError::new(
             "No supported key_agreement keys have been found".to_string(),
         ))
     }
@@ -71,26 +71,26 @@ impl DidDocument {
     pub fn get_service_of_type(
         &self,
         service_type: &ServiceType,
-    ) -> Result<Service, DidDocumentBuilderError> {
+    ) -> Result<Service, DidDocumentLookupError> {
         for service in self.service() {
-            if service.contains_service_type(service_type) {
+            if service.service_types().contains(service_type) {
                 return Ok(service.clone());
             }
         }
-        Err(DidDocumentBuilderError::CustomError(format!(
-            "No service of type {}",
+        Err(DidDocumentLookupError::new(format!(
+            "Failed to look up service object by type {}",
             service_type
         )))
     }
 
-    pub fn get_service_by_id(&self, id: &Uri) -> Result<Service, DidDocumentBuilderError> {
+    pub fn get_service_by_id(&self, id: &Uri) -> Result<Service, DidDocumentLookupError> {
         for service in self.service() {
             if service.id() == id {
                 return Ok(service.clone());
             }
         }
-        Err(DidDocumentBuilderError::CustomError(format!(
-            "No service found by id {}",
+        Err(DidDocumentLookupError::new(format!(
+            "Failed to look up service object by id {}",
             id
         )))
     }

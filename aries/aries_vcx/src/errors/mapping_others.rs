@@ -1,7 +1,7 @@
 use std::sync::PoisonError;
 
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
-use did_doc::schema::types::uri::UriWrapperError;
+use did_doc::schema::{types::uri::UriWrapperError, utils::error::DidDocumentLookupError};
 use shared::errors::http_error::HttpError;
 
 use crate::{
@@ -42,6 +42,12 @@ impl From<did_parser::ParseError> for AriesVcxError {
 
 impl From<did_doc::error::DidDocumentBuilderError> for AriesVcxError {
     fn from(err: did_doc::error::DidDocumentBuilderError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+impl From<DidDocumentLookupError> for AriesVcxError {
+    fn from(err: DidDocumentLookupError) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
     }
 }
