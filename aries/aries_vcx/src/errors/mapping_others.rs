@@ -1,6 +1,7 @@
 use std::sync::PoisonError;
 
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
+use did_doc::schema::types::uri::UriWrapperError;
 use shared::errors::http_error::HttpError;
 
 use crate::{
@@ -66,6 +67,13 @@ impl From<public_key::PublicKeyError> for AriesVcxError {
 impl From<did_key::error::DidKeyError> for AriesVcxError {
     fn from(err: did_key::error::DidKeyError) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+// map UriWrapperError
+impl From<UriWrapperError> for AriesVcxError {
+    fn from(err: UriWrapperError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err.to_string())
     }
 }
 
