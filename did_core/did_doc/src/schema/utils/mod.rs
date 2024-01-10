@@ -72,27 +72,25 @@ impl DidDocument {
         &self,
         service_type: &ServiceType,
     ) -> Result<Service, DidDocumentLookupError> {
-        for service in self.service() {
-            if service.service_types().contains(service_type) {
-                return Ok(service.clone());
-            }
-        }
-        Err(DidDocumentLookupError::new(format!(
-            "Failed to look up service object by type {}",
-            service_type
-        )))
+        self.service()
+            .iter()
+            .find(|service| service.service_types().contains(service_type))
+            .cloned()
+            .ok_or(DidDocumentLookupError::new(format!(
+                "Failed to look up service object by type {}",
+                service_type
+            )))
     }
 
     pub fn get_service_by_id(&self, id: &Uri) -> Result<Service, DidDocumentLookupError> {
-        for service in self.service() {
-            if service.id() == id {
-                return Ok(service.clone());
-            }
-        }
-        Err(DidDocumentLookupError::new(format!(
-            "Failed to look up service object by id {}",
-            id
-        )))
+        self.service()
+            .iter()
+            .find(|service| service.id() == id)
+            .cloned()
+            .ok_or(DidDocumentLookupError::new(format!(
+                "Failed to look up service object by id {}",
+                id
+            )))
     }
 }
 
