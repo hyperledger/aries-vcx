@@ -137,7 +137,7 @@ where
         let service_endpoint = self.their_did_doc().get_endpoint().ok_or_else(|| {
             AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc")
         })?;
-        transport.send_message(msg, service_endpoint).await
+        transport.send_message(msg, &service_endpoint).await
     }
 }
 

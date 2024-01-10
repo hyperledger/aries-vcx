@@ -7,7 +7,7 @@ use crate::errors::error::VcxResult;
 /// [`crate::protocols::connection::Connection`].
 #[async_trait]
 pub trait Transport: Send + Sync {
-    async fn send_message(&self, msg: Vec<u8>, service_endpoint: Url) -> VcxResult<()>;
+    async fn send_message(&self, msg: Vec<u8>, service_endpoint: &Url) -> VcxResult<()>;
 }
 
 // While in many cases the auto-dereferencing does the trick,
@@ -18,7 +18,7 @@ impl<T> Transport for &T
 where
     T: Transport + ?Sized,
 {
-    async fn send_message(&self, msg: Vec<u8>, service_endpoint: Url) -> VcxResult<()> {
+    async fn send_message(&self, msg: Vec<u8>, service_endpoint: &Url) -> VcxResult<()> {
         self.send_message(msg, service_endpoint).await
     }
 }

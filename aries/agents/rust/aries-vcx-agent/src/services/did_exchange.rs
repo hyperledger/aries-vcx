@@ -93,7 +93,7 @@ impl ServiceDidExchange {
         )
         .await?;
         VcxHttpClient
-            .send_message(encryption_envelope.0, service.service_endpoint().clone())
+            .send_message(encryption_envelope.0, service.service_endpoint())
             .await?;
         self.did_exchange.insert(&request_id, requester.clone())
     }
@@ -144,7 +144,7 @@ impl ServiceDidExchange {
         )
         .await?;
         VcxHttpClient
-            .send_message(encryption_envelope.0, service.service_endpoint().clone())
+            .send_message(encryption_envelope.0, service.service_endpoint())
             .await?;
         self.did_exchange.insert(&request_id, responder.clone())
     }
@@ -168,7 +168,7 @@ impl ServiceDidExchange {
         )
         .await?;
         VcxHttpClient
-            .send_message(encryption_envelope.0, service.service_endpoint().clone())
+            .send_message(encryption_envelope.0, service.service_endpoint())
             .await?;
         self.did_exchange.insert(&thread_id, requester.clone())
     }

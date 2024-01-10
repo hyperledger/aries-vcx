@@ -30,7 +30,7 @@ pub async fn send_message(
 
     post_message(
         envelope,
-        did_doc.get_endpoint().ok_or_else(|| {
+        &did_doc.get_endpoint().ok_or_else(|| {
             AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc")
         })?,
     )

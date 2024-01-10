@@ -207,7 +207,7 @@ impl GenericConnection {
         let service_endpoint = did_doc.get_endpoint().ok_or_else(|| {
             AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc")
         })?;
-        transport.send_message(msg, service_endpoint).await
+        transport.send_message(msg, &service_endpoint).await
     }
 }
 
@@ -341,7 +341,7 @@ mod connection_serde_tests {
 
     #[async_trait]
     impl Transport for MockTransport {
-        async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: Url) -> VcxResult<()> {
+        async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: &Url) -> VcxResult<()> {
             Ok(())
         }
     }

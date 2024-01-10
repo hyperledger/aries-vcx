@@ -36,7 +36,7 @@ impl AgencyClient {
             );
             return Ok(mocked_response);
         }
-        post_message(body_content, url).await.map_err(|err| {
+        post_message(body_content, &url).await.map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::PostMessageFailed,
                 format!("Cannot send message to agency: {err}"),
