@@ -37,7 +37,7 @@ impl PeerDidResolver {
         peer_did: &PeerDid<Numalgo2>,
         public_key_encoding: PublicKeyEncoding,
     ) -> Result<DidResolutionOutput, GenericError> {
-        let builder: DidDocumentBuilder = peer_did.to_did_doc(public_key_encoding)?.into();
+        let builder: DidDocumentBuilder = peer_did.to_did_doc_builder(public_key_encoding)?;
         let did_doc = builder
             .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
             .build();
