@@ -352,4 +352,14 @@ test_cases_positive! {
                 ("query1".to_string(), "val=ue1".to_string()),
             ].into_iter().collect()
         }
+
+    test_case27:
+        "did:indy:sovrin:5nDyJVP1NrcPAttP3xwMB9/anoncreds/v0/REV_REG_DEF/56495/npdb/TAG1",
+        Some("did:indy:sovrin:5nDyJVP1NrcPAttP3xwMB9"),
+        Some("indy"),
+        Some("sovrin"),
+        Some("5nDyJVP1NrcPAttP3xwMB9"),
+        Some("/anoncreds/v0/REV_REG_DEF/56495/npdb/TAG1"),
+        None,
+        HashMap::new()
 }
