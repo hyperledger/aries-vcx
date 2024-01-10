@@ -43,7 +43,10 @@ pub async fn build_schemas_json_prover(
                 .get_schema(&cred_info.schema_id, None)
                 .await
                 .map_err(|err| {
-                    err.map(AriesVcxCoreErrorKind::InvalidSchema, "Cannot get schema")
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidSchema,
+                        format!("Cannot get schema id {}; {}", cred_info.schema_id, err),
+                    )
                 })?;
 
             let schema_json = serde_json::from_str(&schema_json).map_err(|err| {

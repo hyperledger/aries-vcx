@@ -8,6 +8,7 @@ edition = "2021"
 vdrtools_wallet = ["dep:libvdrtools", "dep:indy-api-types"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 credx = ["dep:indy-credx"]
+anoncreds = ["dep:anoncreds"]
 vdr_proxy_ledger = ["credx", "dep:indy-vdr-proxy-client"]
 # Feature flag to allow legacy proof verification
 legacy_proof = []
@@ -16,8 +17,11 @@ legacy_proof = []
 agency_client = { path = "../misc/legacy/agency_client" }
 indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", default-features = false, features = ["log"] }
 indy-credx = { git = "https://github.com/hyperledger/indy-shared-rs", tag = "v1.1.0", optional = true }
+# anoncreds = { git = "https://github.com/hyperledger/anoncreds-rs", tag = "v0.2.0-dev.5", optional = true }
+anoncreds = { git = "https://github.com/mirgee/anoncreds-rs.git", rev = "9a7539c", optional = true }
 libvdrtools = { path = "../misc/legacy/libvdrtools", optional = true }
 indy-api-types = { path = "../misc/legacy/libvdrtools/indy-api-types", optional = true }
+did_parser = { path = "../../did_core/did_parser" }
 async-trait = "0.1.68"
 futures = { version = "0.3", default-features = false }
 serde_json = "1.0.95"
@@ -34,6 +38,7 @@ indy-vdr-proxy-client = { git = "https://github.com/hyperledger/indy-vdr.git", r
 indy-ledger-response-parser = { path = "../misc/indy_ledger_response_parser" }
 lru = { version = "0.12.0"  }
 public_key = { path = "../../did_core/public_key"}
+bitvec = "1.0.1"
 
 [dev-dependencies]
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }
