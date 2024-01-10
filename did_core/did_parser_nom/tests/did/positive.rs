@@ -66,4 +66,10 @@ test_cases_positive! {
         Some("indy"),
         Some("sovrin:alpha"),
         "%0Aqg6BwS.Wapxg-Dm9K_gg"
+    test_case9:
+        "did:sov:builder:VbPQNHsvoLZdaNU7fTBeFx",
+        "did:sov:builder:VbPQNHsvoLZdaNU7fTBeFx",
+        Some("sov"),
+        Some("builder"),
+        "VbPQNHsvoLZdaNU7fTBeFx"
 }

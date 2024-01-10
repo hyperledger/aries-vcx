@@ -19,7 +19,7 @@ impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ParseError::InvalidInput(input) => write!(f, "Invalid input: {}", input),
-            ParseError::ParserError(input) => write!(f, "Parsing library error: {}", input),
+            ParseError::ParserError(error) => write!(f, "Parsing library error: {}", error),
         }
     }
 }

@@ -43,7 +43,7 @@ fn path_abempty(input: &str) -> IResult<&str, &str> {
 }
 
 // fragment = *( pchar / "/" / "?" )
-fn fragment_parser(input: &str) -> IResult<&str, &str> {
+pub(super) fn fragment_parser(input: &str) -> IResult<&str, &str> {
     fn is_fragment_char(c: char) -> bool {
         is_pchar(c) || "/?".contains(c)
     }

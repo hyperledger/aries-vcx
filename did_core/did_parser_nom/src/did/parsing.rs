@@ -85,8 +85,24 @@ fn parse_did_web(input: &str) -> IResult<&str, DidPart> {
     ))(input)
 }
 
+// idstring = 21*22(base58char)
 fn parse_unqualified_sovrin_did(input: &str) -> IResult<&str, &str> {
     recognize(many_m_n(21, 22, base58char))(input)
+}
+
+// The specification seems to contradict practice?
+// sovrin-did = "did:sov:" idstring *(":" subnamespace)
+// subnamespace = ALPHA *(ALPHA / DIGIT / "_" / "-")
+fn parse_qualified_sovrin_did(input: &str) -> IResult<&str, DidPart> {
+    fn did_sov_method(input: &str) -> IResult<&str, &str> {
+        delimited(char(':'), tag("sov"), char(':'))(input)
+    }
+    tuple((
+        tag("did"),
+        did_sov_method,
+        opt(namespace),
+        cut(parse_unqualified_sovrin_did),
+    ))(input)
 }
 
 fn to_id_range(id: &str) -> DidRanges {
@@ -130,6 +146,7 @@ fn to_did_ranges((did_prefix, method, namespace, id): DidPart) -> DidRanges {
 pub fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
     alt((
         map(parse_did_web, to_did_ranges),
+        map(parse_qualified_sovrin_did, to_did_ranges),
         map(parse_qualified_did, to_did_ranges),
         map(parse_unqualified_sovrin_did, to_id_range),
     ))(input)
