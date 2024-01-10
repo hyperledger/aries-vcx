@@ -7,9 +7,8 @@ use nom::{
     IResult,
 };
 
-use crate::did::parsing::did_core::namespace;
-
 use super::DidPart;
+use crate::did::parsing::did_core::namespace;
 
 fn base58char(input: &str) -> IResult<&str, &str> {
     recognize(one_of(

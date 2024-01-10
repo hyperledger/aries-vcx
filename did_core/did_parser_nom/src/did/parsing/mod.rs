@@ -8,13 +8,12 @@ use nom::{
     IResult,
 };
 
-use crate::{Did, DidRange, ParseError};
-
 use self::{
     did_core::{parse_qualified_did, to_did_ranges, to_id_range},
     did_sov::{parse_qualified_sovrin_did, parse_unqualified_sovrin_did},
     did_web::parse_did_web,
 };
+use crate::{Did, DidRange, ParseError};
 
 type DidPart<'a> = (&'a str, &'a str, Option<&'a str>, &'a str);
 pub type DidRanges = (Option<DidRange>, Option<DidRange>, Option<DidRange>);
