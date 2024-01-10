@@ -53,6 +53,15 @@ fn unix_to_datetime(posix_timestamp: i64) -> Option<DateTime<Utc>> {
         .map(|date_time| DateTime::<Utc>::from_naive_utc_and_offset(date_time, Utc))
 }
 
+fn expand_abbreviated_verkey(did: &str, verkey: &str) -> String {
+    if verkey.starts_with('~') {
+        let did_public_key_part = &did[8..];
+        format!("{}{}", did_public_key_part, &verkey[1..])
+    } else {
+        verkey.to_string()
+    }
+}
+
 pub(super) fn is_valid_sovrin_did_id(id: &str) -> bool {
     if id.len() < 21 || id.len() > 22 {
         return false;
@@ -93,12 +102,14 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
     };
 
     // TODO: Use multibase instead of base58
+    let expanded_verkey = expand_abbreviated_verkey(did, &verkey);
+
     let verification_method = VerificationMethod::builder(
         did.to_string().try_into()?,
         did.to_string().try_into()?,
         VerificationMethodType::Ed25519VerificationKey2018,
     )
-    .add_public_key_base58(verkey)
+    .add_public_key_base58(expanded_verkey)
     .build();
 
     let ddo = DidDocument::builder(ddo_id)
@@ -215,5 +226,25 @@ mod tests {
         } else {
             panic!("Unexpected public key type");
         }
+    }
+
+    #[test]
+    fn test_expand_abbreviated_verkey_with_abbreviation() {
+        let did = "did:sov:123456789abcdefghi";
+        let abbreviated_verkey = "~xyz123";
+        let expected_full_verkey = "123456789abcdefghixyz123";
+
+        assert_eq!(
+            expand_abbreviated_verkey(did, abbreviated_verkey),
+            expected_full_verkey
+        );
+    }
+
+    #[test]
+    fn test_expand_abbreviated_verkey_without_abbreviation() {
+        let did = "did:sov:123456789abcdefghi";
+        let full_verkey = "123456789abcdefghixyz123";
+
+        assert_eq!(expand_abbreviated_verkey(did, full_verkey), full_verkey);
     }
 }
