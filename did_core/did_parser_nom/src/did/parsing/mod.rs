@@ -1,4 +1,5 @@
 mod did_core;
+mod did_key;
 mod did_sov;
 mod did_web;
 
@@ -10,6 +11,7 @@ use nom::{
 
 use self::{
     did_core::{parse_qualified_did, to_did_ranges, to_id_range},
+    did_key::parse_did_key,
     did_sov::{parse_qualified_sovrin_did, parse_unqualified_sovrin_did},
     did_web::parse_did_web,
 };
@@ -21,6 +23,7 @@ pub type DidRanges = (Option<DidRange>, Option<DidRange>, Option<DidRange>);
 pub fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
     alt((
         map(parse_did_web, to_did_ranges),
+        map(parse_did_key, to_did_ranges),
         map(parse_qualified_sovrin_did, to_did_ranges),
         map(parse_qualified_did, to_did_ranges),
         map(parse_unqualified_sovrin_did, to_id_range),

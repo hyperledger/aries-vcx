@@ -72,4 +72,10 @@ test_cases_positive! {
         Some("sov"),
         Some("builder"),
         "VbPQNHsvoLZdaNU7fTBeFx"
+    test_case10:
+        "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+        "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+        Some("key"),
+        None,
+        "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
 }
