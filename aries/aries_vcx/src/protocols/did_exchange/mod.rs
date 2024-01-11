@@ -18,7 +18,7 @@ pub async fn resolve_key_from_invitation(
     invitation: &OobInvitation,
     resolver_registry: &Arc<ResolverRegistry>,
 ) -> Result<Key, AriesVcxError> {
-    match invitation.content.services.get(0).ok_or_else(|| {
+    match invitation.content.services.first().ok_or_else(|| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidInput,
             "Invitation does not contain any services",

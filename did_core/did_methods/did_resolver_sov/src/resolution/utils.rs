@@ -54,9 +54,9 @@ fn unix_to_datetime(posix_timestamp: i64) -> Option<DateTime<Utc>> {
 }
 
 fn expand_abbreviated_verkey(did: &str, verkey: &str) -> String {
-    if verkey.starts_with('~') {
+    if let Some(stripped_key) = verkey.strip_prefix('~') {
         let did_public_key_part = &did[8..];
-        format!("{}{}", did_public_key_part, &verkey[1..])
+        format!("{}{}", did_public_key_part, stripped_key)
     } else {
         verkey.to_string()
     }
