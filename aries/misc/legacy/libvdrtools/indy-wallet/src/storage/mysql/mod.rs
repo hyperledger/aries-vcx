@@ -549,7 +549,7 @@ impl WalletStorage for MySqlStorage {
         )
         .bind(self.wallet_id)
         .map(|r: MySqlRow| -> IndyResult<StorageRecord> {
-            let type_: String = r.first();
+            let type_: String = r.get(0);
             let id: String = r.get(1);
             let value: Vec<u8> = r.get(2);
             let tags: serde_json::Value = r.get(3);
@@ -638,7 +638,7 @@ impl WalletStorage for MySqlStorage {
             let records: VecDeque<_> = query
                 .map(|r: MySqlRow| -> IndyResult<StorageRecord> {
                     let type_ = if options.retrieve_type {
-                        let type_: String = r.first();
+                        let type_: String = r.get(0);
                         Some(base64::decode(&type_)?)
                     } else {
                         None
