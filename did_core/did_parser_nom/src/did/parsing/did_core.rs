@@ -1,3 +1,4 @@
+// https://www.w3.org/TR/did-core/#did-syntax
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},

@@ -7,13 +7,11 @@ use nom::{
     IResult,
 };
 
-use super::DidPart;
+use super::{DidPart, BASE58CHARS};
 use crate::did::parsing::did_core::namespace;
 
 fn base58char(input: &str) -> IResult<&str, &str> {
-    recognize(one_of(
-        "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz",
-    ))(input)
+    recognize(one_of(BASE58CHARS))(input)
 }
 
 // idstring = 21*22(base58char)

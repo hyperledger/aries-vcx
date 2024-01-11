@@ -24,4 +24,5 @@ test_cases_negative! {
     test_failure_case9: "2wJPyULfLLnYTEFYzByf"
     test_failure_case10: "2wJPyULfOLnYTEFYzByfUR"
     test_failure_case11: "did:key:zWA8Ta6fesJIxeYku6cbA"
+    test_failure_case12: "did:key:6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
 }

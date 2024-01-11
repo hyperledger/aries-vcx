@@ -86,6 +86,7 @@ impl std::fmt::Debug for Did {
             .field("did", &self.did)
             .field("method", &self.method())
             .field("id", &self.id())
+            .field("namespace", &self.namespace())
             .finish()
     }
 }

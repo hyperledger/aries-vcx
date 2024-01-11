@@ -20,6 +20,8 @@ use crate::{Did, DidRange, ParseError};
 type DidPart<'a> = (&'a str, &'a str, Option<&'a str>, &'a str);
 pub type DidRanges = (Option<DidRange>, Option<DidRange>, Option<DidRange>);
 
+static BASE58CHARS: &str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
 pub fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
     alt((
         map(parse_did_web, to_did_ranges),
