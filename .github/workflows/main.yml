@@ -102,6 +102,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN_VERSON }}
+          default: true
           components: clippy
       - name: "Verify clippy version"
         run: |
