@@ -3,6 +3,9 @@ name: CI
 on:
   push:
     branches:
+      - main
+  pull_request:
+    branches:
       - "**"
 
 env:
@@ -90,6 +93,22 @@ jobs:
           echo "SKIP_NAPI_M1 ${{ needs.workflow-setup.outputs.SKIP_NAPI_M1 }}"
           echo "SKIP_CI ${{ needs.workflow-setup.outputs.SKIP_CI }}"
           echo "DOCKER_IMG_CACHED_VDRPROXY ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}"
+
+  clippy_version:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN_VERSON }}
+          components: clippy
+      - name: "Verify clippy version"
+        run: |
+          echo "cargo version:"
+          cargo --version
+          echo "clippy version:"
+          cargo clippy --version
 
   workspace_clippy:
     runs-on: ubuntu-20.04
