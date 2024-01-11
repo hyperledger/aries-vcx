@@ -19,7 +19,7 @@ env:
 
   DOCKER_REPO_LOCAL_VDRPROXY: vdrproxy
 
-  RUST_TOOLCHAIN_VERSON: 1.70.0
+  RUST_TOOLCHAIN_VERSION: 1.70.0
   NODE_VERSION: 18.x
 
 jobs:
@@ -44,7 +44,7 @@ jobs:
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
         with:
-          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
           skip-docker-setup: true
           skip-vdrproxy-setup: true
       - name: Install prerequisites (sqlx)
