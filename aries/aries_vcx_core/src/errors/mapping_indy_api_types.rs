@@ -1,4 +1,4 @@
-pub use indy_api_types::{errors, ErrorCode};
+pub use indy_api_types::ErrorCode;
 use indy_api_types::{errors::IndyErrorKind, IndyError};
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
