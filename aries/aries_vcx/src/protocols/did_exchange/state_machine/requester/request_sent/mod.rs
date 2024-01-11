@@ -3,9 +3,8 @@ use std::sync::Arc;
 use did_parser::Did;
 use did_peer::{
     peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-    resolver::{options::PublicKeyEncoding, PeerDidResolver},
+    resolver::options::PublicKeyEncoding,
 };
-use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 use did_resolver_registry::ResolverRegistry;
 use messages::msg_fields::protocols::did_exchange::{
     complete::Complete as CompleteMessage, request::Request, response::Response,
@@ -34,10 +33,8 @@ impl DidExchangeRequester<RequestSent> {
         let their_did_document = resolver_registry
             .resolve(their_did, &Default::default())
             .await?
-            .did_document
-            .clone();
-        let DidResolutionOutput { did_document, .. } =
-            PeerDidResolver::resolve_peerdid2(our_peer_did, PublicKeyEncoding::Base58).await?;
+            .did_document;
+        let did_document = our_peer_did.resolve(PublicKeyEncoding::Base58)?;
         let invitation_id = Uuid::new_v4().to_string();
 
         let request = construct_request(invitation_id.clone(), our_peer_did.to_string());
@@ -76,11 +73,9 @@ impl DidExchangeRequester<RequestSent> {
         } else {
             let peer_did = PeerDid::<Numalgo2>::parse(response.content.did)
                 .map_err(to_transition_error(self.clone()))?;
-            let DidResolutionOutput { did_document, .. } =
-                PeerDidResolver::resolve_peerdid2(&peer_did, PublicKeyEncoding::Base58)
-                    .await
-                    .map_err(to_transition_error(self.clone()))?;
-            did_document
+            peer_did
+                .resolve(PublicKeyEncoding::Base58)
+                .map_err(to_transition_error(self.clone()))?
         };
 
         let complete_message = construct_didexchange_complete(

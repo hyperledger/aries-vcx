@@ -4,9 +4,8 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use did_doc::schema::did_doc::DidDocument;
 use did_peer::{
     peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-    resolver::{options::PublicKeyEncoding, PeerDidResolver},
+    resolver::options::PublicKeyEncoding,
 };
-use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 use did_resolver_registry::ResolverRegistry;
 use messages::msg_fields::protocols::did_exchange::{
     complete::Complete, request::Request, response::Response,
@@ -34,10 +33,7 @@ impl DidExchangeResponder<ResponseSent> {
         invitation_key: Key,
     ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, Response>, AriesVcxError> {
         let their_ddo = resolve_ddo_from_request(&resolver_registry, &request).await?;
-        let DidResolutionOutput {
-            did_document: our_did_document,
-            ..
-        } = PeerDidResolver::resolve_peerdid2(our_peer_did, PublicKeyEncoding::Base58).await?;
+        let our_did_document = our_peer_did.resolve(PublicKeyEncoding::Base58)?;
         // TODO: Response should sign the new *did* with invitation_key only if key was rotated
         //       In practice if the invitation was public, we definitely will be rotating to
         //       peer:did

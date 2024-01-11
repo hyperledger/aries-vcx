@@ -10,9 +10,8 @@ use did_peer::{
         numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
         PeerDid,
     },
-    resolver::{options::PublicKeyEncoding, PeerDidResolver},
+    resolver::options::PublicKeyEncoding,
 };
-use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -47,10 +46,7 @@ async fn demo() -> Result<(), Box<dyn Error>> {
         peer_did_3_v2
     );
 
-    let DidResolutionOutput { did_document, .. } =
-        PeerDidResolver::resolve_peerdid2(&peer_did_2, PublicKeyEncoding::Base58)
-            .await
-            .unwrap();
+    let did_document = peer_did_2.resolve(PublicKeyEncoding::Base58)?;
     println!(
         "Decoded did document: \n{}",
         serde_json::to_string_pretty(&did_document)?

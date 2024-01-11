@@ -42,6 +42,17 @@ impl PeerDid<Numalgo2> {
             didpeer_elements_to_diddoc(did_doc_builder, self.did(), public_key_encoding)?;
         Ok(did_doc_builder)
     }
+
+    pub fn resolve(
+        &self,
+        public_key_encoding: PublicKeyEncoding,
+    ) -> Result<DidDocument, DidPeerError> {
+        let builder: DidDocumentBuilder = self.to_did_doc_builder(public_key_encoding)?;
+        let did_doc = builder
+            .add_also_known_as(self.to_numalgo3()?.to_string().parse()?)
+            .build();
+        Ok(did_doc)
+    }
 }
 
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
