@@ -78,7 +78,7 @@ fn test_deserialization() {
     assert_eq!(did_doc.service().len(), 3);
 
     let services = did_doc.service();
-    let first_service = services.get(0).unwrap();
+    let first_service = services.first().unwrap();
     assert_eq!(
         first_service.service_endpoint().to_string(),
         "https://example.com/endpoint"
@@ -113,7 +113,7 @@ fn test_deserialization() {
     assert!(second_extra.first_recipient_key().is_ok());
     assert!(second_extra.first_routing_key().is_err());
     assert_eq!(
-        second_extra.accept().unwrap().get(0).unwrap().clone(),
+        second_extra.accept().unwrap().first().unwrap().clone(),
         AcceptType::DIDCommV1
     );
     assert_eq!(second_extra.priority().unwrap(), 0);
@@ -124,7 +124,7 @@ fn test_deserialization() {
     assert!(third_extra.first_recipient_key().is_err());
     assert!(third_extra.first_routing_key().is_err());
     assert_eq!(
-        third_extra.accept().unwrap().get(0).unwrap().clone(),
+        third_extra.accept().unwrap().first().unwrap().clone(),
         AcceptType::DIDCommV2
     );
     assert!(third_extra.priority().is_err());
