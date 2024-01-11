@@ -4,6 +4,6 @@ pub static DEFAULT_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
 pub static DEFAULT_WALLET_BACKUP_KEY: &str = "backup_wallet_key";
 pub static DEFAULT_WALLET_KEY: &str = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY";
 pub static WALLET_KDF_RAW: &str = "RAW";
-pub static WALLET_KDF_ARGON2I_MOD: &str = "ARGON2I_MOD";
 pub static WALLET_KDF_ARGON2I_INT: &str = "ARGON2I_INT";
+pub static WALLET_KDF_ARGON2I_MOD: &str = "ARGON2I_MOD";
 pub static WALLET_KDF_DEFAULT: &str = WALLET_KDF_ARGON2I_MOD;
