@@ -184,8 +184,7 @@ pub async fn dev_build_featured_indy_ledger(
     };
 }
 
-#[allow(unreachable_code)]
-#[allow(unused_variables)]
+#[allow(clippy::needless_return)]
 pub async fn dev_build_featured_anoncreds() -> impl BaseAnonCreds {
     #[cfg(feature = "credx")]
     {
