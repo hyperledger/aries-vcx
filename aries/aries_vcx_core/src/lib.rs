@@ -31,6 +31,9 @@ pub mod ledger;
 pub mod utils;
 pub mod wallet;
 
+#[cfg(feature = "test_utils")]
+pub mod test_utils;
+
 pub use indy_ledger_response_parser::ResponseParser;
 pub use indy_vdr::config::PoolConfig;
 #[cfg(feature = "vdr_proxy_ledger")]

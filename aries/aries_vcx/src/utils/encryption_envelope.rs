@@ -242,8 +242,8 @@ impl EncryptionEnvelope {
 
 #[cfg(test)]
 pub mod unit_tests {
+    use aries_vcx_core::test_utils::devsetup::build_setup_profile;
     use serde_json::Value;
-    use test_utils::devsetup::build_setup_profile;
 
     use super::*;
 

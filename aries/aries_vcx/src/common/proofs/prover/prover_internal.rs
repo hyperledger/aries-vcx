@@ -278,10 +278,12 @@ pub fn build_requested_credentials_json(
 pub mod pool_tests {
     use std::error::Error;
 
-    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
-    use test_utils::{
-        constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
-        devsetup::build_setup_profile,
+    use aries_vcx_core::{
+        ledger::indy::pool::test_utils::get_temp_dir_path,
+        test_utils::{
+            constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
+            devsetup::build_setup_profile,
+        },
     };
 
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
@@ -325,15 +327,17 @@ pub mod pool_tests {
 
 #[cfg(test)]
 pub mod unit_tests {
-    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
-    use test_utils::{
-        constants::{
-            ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID,
-            ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
-            REV_STATE_JSON, SCHEMA_ID,
+    use aries_vcx_core::{
+        ledger::indy::pool::test_utils::get_temp_dir_path,
+        test_utils::{
+            constants::{
+                ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID,
+                ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
+                REV_STATE_JSON, SCHEMA_ID,
+            },
+            devsetup::*,
+            mockdata::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
         },
-        devsetup::*,
-        mockdata::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
     };
 
     use super::*;

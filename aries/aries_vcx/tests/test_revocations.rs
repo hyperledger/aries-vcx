@@ -3,8 +3,8 @@ use std::{error::Error, thread, time::Duration};
 use aries_vcx::protocols::proof_presentation::verifier::{
     state_machine::VerifierState, verification_status::PresentationVerificationStatus,
 };
+use aries_vcx_core::test_utils::devsetup::*;
 use serde_json::json;
-use test_utils::devsetup::*;
 
 use crate::utils::{
     scenarios::{

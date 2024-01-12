@@ -3,12 +3,14 @@ use std::error::Error;
 use aries_vcx::common::primitives::{
     credential_definition::generate_cred_def, revocation_registry::generate_rev_reg,
 };
-use aries_vcx_core::ledger::{
-    base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
-    indy::pool::test_utils::get_temp_dir_path,
+use aries_vcx_core::{
+    ledger::{
+        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+        indy::pool::test_utils::get_temp_dir_path,
+    },
+    test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile},
 };
 use serde_json::json;
-use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};
 
 use crate::utils::create_and_write_test_schema;
 

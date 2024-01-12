@@ -232,9 +232,9 @@ mod test {
         protocols::oob::oob_invitation_to_legacy_did_doc,
         utils::encryption_envelope::EncryptionEnvelope,
     };
+    use aries_vcx_core::test_utils::mockdata::mock_ledger::MockLedger;
     use log::info;
     use serde_json::Value;
-    use test_utils::mockdata::mock_ledger::MockLedger;
 
     use super::AgentBuilder;
 

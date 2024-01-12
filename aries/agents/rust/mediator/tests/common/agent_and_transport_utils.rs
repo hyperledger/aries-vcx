@@ -7,7 +7,9 @@ use aries_vcx::{
     },
     utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_core::{
+    test_utils::mockdata::mock_ledger::MockLedger, wallet::base_wallet::BaseWallet,
+};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediator::{
     aries_agent::{
@@ -29,7 +31,6 @@ use messages::{
     AriesMessage,
 };
 use reqwest::header::ACCEPT;
-use test_utils::mockdata::mock_ledger::MockLedger;
 
 use super::prelude::*;
 

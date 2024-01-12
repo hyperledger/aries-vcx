@@ -14,18 +14,14 @@ doctest = false
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 credx = [
     "aries_vcx_core/credx",
-    "test_utils/vdrtools_wallet",
-    "test_utils/credx"
 ]
 vdr_proxy_ledger = [
     "aries_vcx_core/vdr_proxy_ledger",
     "aries_vcx_core/vdrtools_wallet",
-    "test_utils/vdr_proxy_ledger",
     "credx",
 ]
 vdrtools_wallet = [
     "aries_vcx_core/vdrtools_wallet",
-    "test_utils/vdrtools_wallet",
 ]
 backtrace_errors = ["backtrace"]
 
@@ -72,7 +68,7 @@ url = { version = "2.3", features = ["serde"] }
 backtrace = { optional = true, version = "0.3" }
 
 [dev-dependencies]
-test_utils = { path = "../misc/test_utils" }
+aries_vcx_core = { path = "../aries_vcx_core", features = ["test_utils"] }
 libvcx_logger = { path = "../misc/legacy/libvcx_logger" }
 wallet_migrator = { path = "../misc/wallet_migrator" }
 async-channel = "1.7.1"

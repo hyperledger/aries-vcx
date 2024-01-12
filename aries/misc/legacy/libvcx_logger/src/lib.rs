@@ -2,13 +2,15 @@ use std::{env, io::Write, sync::Once};
 
 #[cfg(target_os = "android")]
 use android_logger::Config;
-use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use chrono::{
     format::{DelayedFormat, StrftimeItems},
     Local,
 };
 use env_logger::{fmt::Formatter, Builder as EnvLoggerBuilder};
+use error::LibvcxLoggerResult;
 use log::{info, LevelFilter, Record};
+
+pub mod error;
 
 static TEST_LOGGING_INIT: Once = Once::new();
 
@@ -60,7 +62,7 @@ impl LibvcxDefaultLogger {
         }
     }
 
-    pub fn init(pattern: Option<String>) -> VcxCoreResult<()> {
+    pub fn init(pattern: Option<String>) -> LibvcxLoggerResult<()> {
         let pattern = pattern.or(env::var("RUST_LOG").ok());
         if cfg!(target_os = "android") {
             #[cfg(target_os = "android")]
@@ -92,13 +94,7 @@ impl LibvcxDefaultLogger {
                 .format(formatter)
                 .filter(None, LevelFilter::Off)
                 .parse_filters(pattern.as_deref().unwrap_or("warn"))
-                .try_init()
-                .map_err(|err| {
-                    AriesVcxCoreError::from_msg(
-                        AriesVcxCoreErrorKind::LoggingError,
-                        format!("Cannot init logger: {:?}", err),
-                    )
-                })?;
+                .try_init()?;
         }
         Ok(())
     }

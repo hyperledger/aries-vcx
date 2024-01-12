@@ -1,16 +1,16 @@
-use aries_vcx_core::{
+use async_trait::async_trait;
+
+use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     ledger::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
         indy_vdr_ledger::UpdateRole,
     },
+    test_utils::constants::{
+        rev_def_json, CRED_DEF_JSON, DEFAULT_AUTHOR_AGREEMENT, REQUEST_WITH_ENDORSER,
+        REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON,
+    },
     wallet::base_wallet::BaseWallet,
-};
-use async_trait::async_trait;
-
-use crate::constants::{
-    rev_def_json, CRED_DEF_JSON, DEFAULT_AUTHOR_AGREEMENT, REQUEST_WITH_ENDORSER,
-    REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON,
 };
 
 #[derive(Debug)]

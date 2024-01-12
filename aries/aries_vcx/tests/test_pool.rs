@@ -27,14 +27,14 @@ use aries_vcx_core::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
         indy::pool::test_utils::get_temp_file_path,
     },
+    test_utils::{
+        constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_URL},
+        devsetup::{build_setup_profile, SetupPoolDirectory},
+    },
     wallet::{base_wallet::BaseWallet, indy::wallet::get_verkey_from_wallet},
 };
 use diddoc_legacy::aries::service::AriesService;
 use serde_json::json;
-use test_utils::{
-    constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_URL},
-    devsetup::{build_setup_profile, SetupPoolDirectory},
-};
 
 use crate::utils::{
     create_and_publish_test_rev_reg, create_and_write_test_cred_def, create_and_write_test_schema,

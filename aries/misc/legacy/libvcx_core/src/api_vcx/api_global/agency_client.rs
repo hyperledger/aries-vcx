@@ -102,7 +102,9 @@ mod tests {
         messages::update_message::UIDsByConn, testing::mocking::AgencyMockDecrypted,
         MessageStatusCode,
     };
-    use test_utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::SetupMocks};
+    use aries_vcx_core::test_utils::{
+        constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::SetupMocks,
+    };
 
     use crate::api_vcx::api_global::agency_client::{agency_update_messages, update_webhook_url};
 

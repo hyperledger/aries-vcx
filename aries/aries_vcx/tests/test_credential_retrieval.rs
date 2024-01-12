@@ -9,6 +9,7 @@ use aries_vcx::{
         util::AttachmentId,
     },
 };
+use aries_vcx_core::test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};
 use base64::{engine::general_purpose, Engine};
 use messages::{
     decorators::attachment::{Attachment, AttachmentData, AttachmentType},
@@ -18,7 +19,6 @@ use messages::{
     },
 };
 use serde_json::json;
-use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};
 
 use crate::utils::{
     create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_schema,

@@ -3,6 +3,7 @@ pub mod sender;
 
 #[cfg(test)]
 pub mod test_utils {
+    use aries_vcx_core::test_utils::constants::REV_REG_ID;
     use messages::{
         decorators::please_ack::{AckOn, PleaseAck},
         msg_fields::protocols::revocation::revoke::{
@@ -11,7 +12,6 @@ pub mod test_utils {
         AriesMessage,
     };
     use shared::maybe_known::MaybeKnown;
-    use test_utils::constants::REV_REG_ID;
     use uuid::Uuid;
 
     use crate::{errors::error::VcxResult, protocols::SendClosure};

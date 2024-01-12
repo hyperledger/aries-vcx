@@ -10,10 +10,10 @@ use aries_vcx::{
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+    test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile},
     wallet::base_wallet::BaseWallet,
 };
 use serde_json::json;
-use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};
 
 use crate::utils::{
     create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_schema,

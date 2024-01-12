@@ -1,14 +1,14 @@
-use aries_vcx_core::{
+use async_trait::async_trait;
+
+use crate::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
+    test_utils::constants::{
+        CREDENTIAL_JSON, CREDENTIAL_REQ_STRING, LARGE_NONCE, LIBINDY_CRED_OFFER, PROOF_JSON,
+        REV_REG_DELTA_JSON, REV_STATE_JSON,
+    },
     wallet::base_wallet::BaseWallet,
-};
-use async_trait::async_trait;
-
-use crate::constants::{
-    CREDENTIAL_JSON, CREDENTIAL_REQ_STRING, LARGE_NONCE, LIBINDY_CRED_OFFER, PROOF_JSON,
-    REV_REG_DELTA_JSON, REV_STATE_JSON,
 };
 
 #[derive(Debug)]

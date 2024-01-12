@@ -9,7 +9,7 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aries_vcx_core = { path = "../../../aries_vcx_core" }
+thiserror = "1.0"
 chrono = "0.4"
 env_logger = "0.10"
 log = "0.4"

@@ -380,7 +380,6 @@ dependencies = [
  "shared",
  "strum 0.25.0",
  "strum_macros 0.25.2",
- "test_utils",
  "thiserror",
  "time 0.3.20",
  "tokio",
@@ -395,6 +394,7 @@ version = "0.1.0"
 dependencies = [
  "agency_client",
  "async-trait",
+ "chrono",
  "derive_builder",
  "futures",
  "indy-api-types",
@@ -403,6 +403,7 @@ dependencies = [
  "indy-vdr",
  "indy-vdr-proxy-client",
  "lazy_static",
+ "libvcx_logger",
  "libvdrtools",
  "log",
  "lru",
@@ -1528,7 +1529,6 @@ dependencies = [
  "mockall",
  "serde",
  "serde_json",
- "test_utils",
  "thiserror",
  "tokio",
  "url",
@@ -2755,7 +2755,6 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "shared",
- "test_utils",
  "thiserror",
  "time 0.3.20",
  "tokio",
@@ -2769,10 +2768,10 @@ name = "libvcx_logger"
 version = "0.61.0"
 dependencies = [
  "android_logger",
- "aries_vcx_core",
  "chrono",
  "env_logger 0.10.0",
  "log",
+ "thiserror",
 ]
 
 [[package]]
@@ -2915,7 +2914,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
- "test_utils",
  "thiserror",
  "tokio",
  "tower-http",
@@ -4628,22 +4626,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 
 [[package]]
-name = "test_utils"
-version = "0.61.0"
-dependencies = [
- "agency_client",
- "aries_vcx_core",
- "async-trait",
- "chrono",
- "lazy_static",
- "libvcx_logger",
- "log",
- "rand 0.8.5",
- "serde_json",
- "uuid 1.5.0",
-]
-
-[[package]]
 name = "textwrap"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5234,6 +5216,7 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
+ "thiserror",
  "uuid 1.5.0",
  "wallet_migrator",
 ]

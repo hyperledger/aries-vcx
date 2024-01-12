@@ -19,6 +19,7 @@ use aries_vcx_core::{
     ledger::base_ledger::{
         AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
     },
+    test_utils::constants::TEST_TAILS_URL,
     wallet::base_wallet::BaseWallet,
 };
 use messages::msg_fields::protocols::{
@@ -29,7 +30,6 @@ use messages::msg_fields::protocols::{
     report_problem::ProblemReport,
 };
 use serde_json::json;
-use test_utils::constants::TEST_TAILS_URL;
 
 use super::{attr_names_address_list, create_credential_proposal, credential_data_address_1};
 use crate::utils::{

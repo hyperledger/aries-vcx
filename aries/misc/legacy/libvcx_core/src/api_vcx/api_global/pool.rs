@@ -149,11 +149,11 @@ mod tests {
         },
         global::settings::DEFAULT_GENESIS_PATH,
     };
-    use serde_json;
-    use test_utils::{
+    use aries_vcx_core::test_utils::{
         constants::POOL1_TXN,
         devsetup::{SetupMocks, TempFile},
     };
+    use serde_json;
 
     use crate::{
         api_vcx::api_global::{

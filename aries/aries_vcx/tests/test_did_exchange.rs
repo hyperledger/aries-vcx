@@ -13,6 +13,7 @@ use aries_vcx::{
         transition::transition_result::TransitionResult,
     },
 };
+use aries_vcx_core::test_utils::devsetup::SetupPoolDirectory;
 use did_doc_sov::{
     extra_fields::{didcommv1::ExtraFieldsDidCommV1, KeyKind},
     service::{didcommv1::ServiceDidCommV1, ServiceSov},
@@ -27,7 +28,6 @@ use messages::{
     },
 };
 use public_key::KeyType;
-use test_utils::devsetup::SetupPoolDirectory;
 use url::Url;
 use uuid::Uuid;
 

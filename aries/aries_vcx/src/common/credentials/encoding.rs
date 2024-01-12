@@ -109,8 +109,8 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod unit_tests {
+    use aries_vcx_core::test_utils::devsetup::*;
     use serde_json::Value;
-    use test_utils::devsetup::*;
 
     use crate::common::credentials::encoding::encode_attributes;
 

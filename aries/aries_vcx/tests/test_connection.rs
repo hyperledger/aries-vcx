@@ -10,6 +10,7 @@ use aries_vcx_core::{
     ledger::base_ledger::{
         AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
     },
+    test_utils::devsetup::*,
     wallet::base_wallet::BaseWallet,
 };
 use chrono::Utc;
@@ -21,7 +22,6 @@ use messages::{
     },
     AriesMessage,
 };
-use test_utils::devsetup::*;
 use utils::test_agent::TestAgent;
 use uuid::Uuid;
 

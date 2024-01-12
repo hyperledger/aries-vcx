@@ -29,6 +29,7 @@ use aries_vcx_core::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
         indy::pool::test_utils::get_temp_dir_path,
     },
+    test_utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL},
     wallet::base_wallet::BaseWallet,
 };
 use log::info;
@@ -46,7 +47,6 @@ use messages::{
     AriesMessage,
 };
 use serde_json::Value;
-use test_utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL};
 
 use super::requested_attrs_address;
 use crate::utils::{scenarios::requested_attr_objects, test_agent::TestAgent};

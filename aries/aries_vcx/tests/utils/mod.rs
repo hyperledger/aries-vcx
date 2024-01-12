@@ -19,11 +19,11 @@ use aries_vcx_core::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
         indy::pool::test_utils::get_temp_dir_path,
     },
+    test_utils::{
+        constants::TEST_TAILS_URL,
+        random::{generate_random_schema_name, generate_random_schema_version},
+    },
     wallet::base_wallet::BaseWallet,
-};
-use test_utils::{
-    constants::TEST_TAILS_URL,
-    random::{generate_random_schema_name, generate_random_schema_version},
 };
 
 pub async fn create_and_write_test_schema(

@@ -221,7 +221,9 @@ pub async fn build_rev_reg_json(
 
 #[cfg(test)]
 pub mod unit_tests {
-    use test_utils::{constants::*, devsetup::*, mockdata::mock_ledger::MockLedger};
+    use aries_vcx_core::test_utils::{
+        constants::*, devsetup::*, mockdata::mock_ledger::MockLedger,
+    };
 
     use super::*;
 

@@ -35,5 +35,5 @@ wallet_migrator = { path = "../../wallet_migrator" }
 shared = { path = "../../shared" }
 
 [dev-dependencies]
-test_utils = {path = "../../test_utils" }
+aries_vcx_core = { path = "../../../aries_vcx_core", features = ["test_utils", "credx", "vdrtools_wallet"] }
 tokio = { version = "1.20", features = [ "rt", "macros" ] }

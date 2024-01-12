@@ -13,7 +13,9 @@ use aries_vcx::{
     },
     utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_core::{
+    test_utils::mockdata::mock_ledger::MockLedger, wallet::base_wallet::BaseWallet,
+};
 use messages::{
     msg_fields::protocols::{
         connection::{response::Response, Connection},
@@ -21,7 +23,6 @@ use messages::{
     },
     AriesMessage,
 };
-use test_utils::mockdata::mock_ledger::MockLedger;
 
 use crate::persistence::MediatorPersistence;
 pub mod transports;

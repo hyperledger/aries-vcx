@@ -177,11 +177,11 @@ pub mod test_utils {
 
 #[cfg(test)]
 mod unit_tests {
-    use ::test_utils::{
+    use agency_client::testing::test_utils::SetupMocks;
+    use aries_vcx_core::test_utils::{
         constants::{INDY_PROOF_REQ_JSON, REQUESTED_ATTRS, REQUESTED_PREDICATES},
         mockdata::{mock_anoncreds::MockAnoncreds, mockdata_proof},
     };
-    use agency_client::testing::test_utils::SetupMocks;
     use serde_json::Value;
 
     use super::*;

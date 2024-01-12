@@ -69,8 +69,8 @@ impl TrustPingSender {
 
 #[cfg(test)]
 mod unit_tests {
+    use aries_vcx_core::test_utils::devsetup::SetupMocks;
     use messages::AriesMessage;
-    use test_utils::devsetup::SetupMocks;
 
     use crate::{
         errors::error::VcxResult,

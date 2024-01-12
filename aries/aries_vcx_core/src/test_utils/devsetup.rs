@@ -5,7 +5,11 @@ use std::{
 };
 
 use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
-use aries_vcx_core::{
+use chrono::{DateTime, Duration, Utc};
+use libvcx_logger::init_test_logging;
+use log::{debug, info, warn};
+
+use crate::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     ledger::{
@@ -19,23 +23,19 @@ use aries_vcx_core::{
             GetTxnAuthorAgreementData, VcxPoolConfig,
         },
     },
+    test_utils::constants::{POOL1_TXN, TRUSTEE_SEED},
     wallet::base_wallet::BaseWallet,
 };
-use chrono::{DateTime, Duration, Utc};
-use libvcx_logger::init_test_logging;
-use log::{debug, info, warn};
-
-use crate::constants::{POOL1_TXN, TRUSTEE_SEED};
 
 #[cfg(feature = "vdr_proxy_ledger")]
 pub mod vdr_proxy_ledger;
 #[cfg(feature = "vdr_proxy_ledger")]
-use crate::devsetup::vdr_proxy_ledger::dev_build_profile_vdr_proxy_ledger;
+use crate::test_utils::devsetup::vdr_proxy_ledger::dev_build_profile_vdr_proxy_ledger;
 
 #[cfg(feature = "vdrtools_wallet")]
 pub mod vdrtools_wallet;
 #[cfg(feature = "vdrtools_wallet")]
-use crate::devsetup::vdrtools_wallet::dev_build_indy_wallet;
+use crate::test_utils::devsetup::vdrtools_wallet::dev_build_indy_wallet;
 
 const DEFAULT_AML_LABEL: &str = "eula";
 
@@ -188,13 +188,13 @@ pub async fn dev_build_featured_indy_ledger(
 pub async fn dev_build_featured_anoncreds() -> impl BaseAnonCreds {
     #[cfg(feature = "credx")]
     {
-        use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+        use crate::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
         return IndyCredxAnonCreds;
     }
 
     #[cfg(not(feature = "credx"))]
     return {
-        use crate::mockdata::mock_anoncreds::MockAnoncreds;
+        use crate::test_utils::mockdata::mock_anoncreds::MockAnoncreds;
         return MockAnoncreds;
     };
 }
@@ -234,10 +234,7 @@ pub async fn build_setup_profile() -> SetupProfile<
     let anoncreds = dev_build_featured_anoncreds().await;
 
     anoncreds
-        .prover_create_link_secret(
-            &wallet,
-            aries_vcx_core::global::settings::DEFAULT_LINK_SECRET_ALIAS,
-        )
+        .prover_create_link_secret(&wallet, crate::global::settings::DEFAULT_LINK_SECRET_ALIAS)
         .await
         .unwrap();
 

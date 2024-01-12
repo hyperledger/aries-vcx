@@ -487,7 +487,7 @@ pub async fn download_messages(
 
 #[cfg(test)]
 pub mod test_utils {
-    use ::test_utils::mockdata::mockdata_mediated_connection::{
+    use aries_vcx_core::test_utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
     };
 
@@ -522,7 +522,7 @@ pub mod test_utils {
 
 #[cfg(test)]
 mod tests {
-    use ::test_utils::{constants::INSTITUTION_DID, devsetup::SetupMocks};
+    use aries_vcx_core::test_utils::{constants::INSTITUTION_DID, devsetup::SetupMocks};
     use serde_json::Value;
 
     use super::*;

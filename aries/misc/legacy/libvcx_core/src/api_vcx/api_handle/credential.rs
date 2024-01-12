@@ -19,11 +19,11 @@ use aries_vcx::{
     },
     protocols::issuance::holder::state_machine::HolderState,
 };
-use serde_json;
 #[cfg(test)]
-use test_utils::{
+use aries_vcx_core::test_utils::{
     constants::GET_MESSAGES_DECRYPTED_RESPONSE, mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER,
 };
+use serde_json;
 
 use crate::{
     api_vcx::{
@@ -482,7 +482,7 @@ mod tests {
         messages::msg_fields::protocols::cred_issuance::v1::issue_credential::IssueCredentialV1,
         protocols::issuance::holder::state_machine::HolderState,
     };
-    use test_utils::{
+    use aries_vcx_core::test_utils::{
         devsetup::SetupMocks,
         mockdata::{
             mockdata_credex,

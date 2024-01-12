@@ -142,7 +142,7 @@ impl Schema {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::constants::SCHEMA_ID;
+    use aries_vcx_core::test_utils::constants::SCHEMA_ID;
 
     use super::*;
 

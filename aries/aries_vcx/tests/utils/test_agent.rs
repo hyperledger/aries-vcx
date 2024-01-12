@@ -8,14 +8,14 @@ use aries_vcx_core::{
     ledger::base_ledger::{
         AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
     },
-    wallet::{base_wallet::BaseWallet, indy::wallet::get_verkey_from_wallet},
-};
-use test_utils::{
-    constants::TRUSTEE_SEED,
-    devsetup::{
-        dev_build_featured_anoncreds, dev_build_featured_indy_ledger, dev_build_featured_wallet,
+    test_utils::{
+        constants::TRUSTEE_SEED,
+        devsetup::{
+            dev_build_featured_anoncreds, dev_build_featured_indy_ledger, dev_build_featured_wallet,
+        },
+        random::generate_random_seed,
     },
-    random::generate_random_seed,
+    wallet::{base_wallet::BaseWallet, indy::wallet::get_verkey_from_wallet},
 };
 
 pub struct TestAgent<LR, LW, A, W>

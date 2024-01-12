@@ -4,13 +4,15 @@ use aries_vcx::common::ledger::{
     service_didsov::{DidSovServiceType, EndpointDidSov},
     transactions::write_endpoint,
 };
-use aries_vcx_core::{ledger::base_ledger::IndyLedgerWrite, wallet::base_wallet::BaseWallet};
+use aries_vcx_core::{
+    ledger::base_ledger::IndyLedgerWrite, test_utils::devsetup::build_setup_profile,
+    wallet::base_wallet::BaseWallet,
+};
 use did_resolver::{
     did_parser::Did,
     traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable},
 };
 use did_resolver_sov::resolution::DidSovResolver;
-use test_utils::devsetup::build_setup_profile;
 
 async fn write_test_endpoint(
     wallet: &impl BaseWallet,

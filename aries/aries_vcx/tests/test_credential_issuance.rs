@@ -4,7 +4,7 @@ use aries_vcx::protocols::{
     issuance::issuer::state_machine::IssuerState,
     proof_presentation::verifier::verification_status::PresentationVerificationStatus,
 };
-use test_utils::devsetup::*;
+use aries_vcx_core::test_utils::devsetup::*;
 
 use crate::utils::{
     scenarios::{

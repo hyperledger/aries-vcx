@@ -42,7 +42,7 @@ pub fn validate_actors(actors: &str) -> VcxResult<Vec<Role>> {
 
 #[cfg(test)]
 mod unit_tests {
-    use test_utils::devsetup::SetupMocks;
+    use aries_vcx_core::test_utils::devsetup::SetupMocks;
 
     use super::*;
 

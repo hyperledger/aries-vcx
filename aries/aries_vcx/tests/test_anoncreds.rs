@@ -5,9 +5,9 @@ use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,
     ledger::{base_ledger::AnoncredsLedgerRead, indy::pool::test_utils::get_temp_dir_path},
+    test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile},
 };
 use serde_json::json;
-use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};
 
 use crate::utils::{
     create_and_publish_test_rev_reg, create_and_write_credential, create_and_write_test_cred_def,

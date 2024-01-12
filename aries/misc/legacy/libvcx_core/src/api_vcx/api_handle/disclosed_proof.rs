@@ -413,11 +413,11 @@ pub fn get_presentation_status(handle: u32) -> LibvcxResult<u32> {
 mod tests {
     extern crate serde_json;
 
-    use serde_json::Value;
-    use test_utils::{
+    use aries_vcx_core::test_utils::{
         constants::V3_OBJECT_SERIALIZE_VERSION, devsetup::SetupMocks,
         mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
     };
+    use serde_json::Value;
 
     use super::*;
     use crate::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
