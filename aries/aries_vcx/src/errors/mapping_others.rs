@@ -151,6 +151,7 @@ impl From<AriesVcxCoreError> for AriesVcxError {
                 AriesVcxErrorKind::DuplicationMasterSecret
             }
             AriesVcxCoreErrorKind::DuplicationDid => AriesVcxErrorKind::DuplicationDid,
+            AriesVcxCoreErrorKind::WalletError => AriesVcxErrorKind::WalletError,
             AriesVcxCoreErrorKind::LoggingError => AriesVcxErrorKind::LoggingError,
             AriesVcxCoreErrorKind::EncodeError => AriesVcxErrorKind::EncodeError,
             AriesVcxCoreErrorKind::UnknownError => AriesVcxErrorKind::UnknownError,

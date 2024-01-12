@@ -150,6 +150,9 @@ pub enum AriesVcxErrorKind {
     #[error("Could not parse a value")]
     ParsingError,
 
+    #[error("Unexpected wallet error")]
+    WalletError,
+
     // A2A
     #[error("Invalid HTTP response.")]
     InvalidHttpResponse,

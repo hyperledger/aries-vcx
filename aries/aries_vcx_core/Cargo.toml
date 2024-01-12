@@ -33,6 +33,7 @@ tokio = { version = "1.20" }
 indy-vdr-proxy-client = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", optional = true }
 indy-ledger-response-parser = { path = "../misc/indy_ledger_response_parser" }
 lru = { version = "0.12.0"  }
+public_key = { path = "../../did_core/public_key"}
 
 [dev-dependencies]
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }
