@@ -53,24 +53,23 @@ fn unix_to_datetime(posix_timestamp: i64) -> Option<DateTime<Utc>> {
         .map(|date_time| DateTime::<Utc>::from_naive_utc_and_offset(date_time, Utc))
 }
 
-fn expand_abbreviated_verkey(did: &str, verkey: &str) -> Result<String, DidSovError> {
-    if let Some(stripped_key) = verkey.strip_prefix('~') {
-        let stripped_did = &did[8..];
-        let mut decoded_did = bs58::decode(stripped_did).into_vec().map_err(|e| {
+fn expand_abbreviated_verkey(nym: &str, verkey: &str) -> Result<String, DidSovError> {
+    if let Some(stripped_verkey) = verkey.strip_prefix('~') {
+        let mut decoded_nym = bs58::decode(nym).into_vec().map_err(|e| {
             DidSovError::ParsingError(ParsingErrorSource::LedgerResponseParsingError(format!(
                 "Failed to decode did from base58: {} (error: {})",
-                stripped_did, e
+                nym, e
             )))
         })?;
-        let decoded_stripped_key = bs58::decode(stripped_key).into_vec().map_err(|e| {
+        let decoded_stripped_verkey = bs58::decode(stripped_verkey).into_vec().map_err(|e| {
             DidSovError::ParsingError(ParsingErrorSource::LedgerResponseParsingError(format!(
                 "Failed to decode verkey from base58: {} (error: {})",
-                stripped_key, e
+                stripped_verkey, e
             )))
         })?;
-        decoded_did.extend(&decoded_stripped_key);
+        decoded_nym.extend(&decoded_stripped_verkey);
 
-        Ok(bs58::encode(decoded_did).into_string())
+        Ok(bs58::encode(decoded_nym).into_string())
     } else {
         Ok(verkey.to_string())
     }
@@ -94,6 +93,8 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
     let service_data = get_data_from_response(resp);
 
     let txn_time = get_txn_time_from_response(resp);
+
+    let expanded_verkey = expand_abbreviated_verkey(ddo_id.id(), &verkey)?;
 
     // Initialize DID document builder
     let mut ddo_builder = DidDocument::builder(ddo_id);
@@ -126,7 +127,6 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
     }
 
     // Continue building DID document
-    let expanded_verkey = expand_abbreviated_verkey(did, &verkey)?;
 
     let verification_method = VerificationMethod::builder(
         did.to_string().try_into()?,
@@ -256,23 +256,23 @@ mod tests {
 
     #[test]
     fn test_expand_abbreviated_verkey_with_abbreviation() {
-        let did = "did:sov:7Sqc3ne5NfUVxMTrHahxz3";
+        let nym = "7Sqc3ne5NfUVxMTrHahxz3";
         let abbreviated_verkey = "~DczaFTexiEYv5abkEUZeZt";
         let expected_full_verkey = "4WkksEAXsewRbDYDz66aTdjtVF2LBxbqEMyF2WEjTBKk";
 
         assert_eq!(
-            expand_abbreviated_verkey(did, abbreviated_verkey).unwrap(),
+            expand_abbreviated_verkey(nym, abbreviated_verkey).unwrap(),
             expected_full_verkey
         );
     }
 
     #[test]
     fn test_expand_abbreviated_verkey_without_abbreviation() {
-        let did = "did:sov:123456789abcdefghi";
+        let nym = "123456789abcdefghi";
         let full_verkey = "123456789abcdefghixyz123";
 
         assert_eq!(
-            expand_abbreviated_verkey(did, full_verkey).unwrap(),
+            expand_abbreviated_verkey(nym, full_verkey).unwrap(),
             full_verkey
         );
     }
