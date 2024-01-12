@@ -55,8 +55,14 @@ fn unix_to_datetime(posix_timestamp: i64) -> Option<DateTime<Utc>> {
 
 fn expand_abbreviated_verkey(did: &str, verkey: &str) -> String {
     if let Some(stripped_key) = verkey.strip_prefix('~') {
-        let did_public_key_part = &did[8..];
-        format!("{}{}", did_public_key_part, stripped_key)
+        let decoded_did = bs58::decode(did).into_vec().unwrap();
+        let decoded_stripped_key = bs58::decode(stripped_key).into_vec().unwrap();
+        let decoded_did_string = String::from_utf8(decoded_did).unwrap();
+        let decoded_stripped_key_string = String::from_utf8(decoded_stripped_key).unwrap();
+
+        let decoded_verkey = format!("{}{}", decoded_did_string, decoded_stripped_key_string);
+
+        bs58::encode(decoded_verkey).into_string()
     } else {
         verkey.to_string()
     }
@@ -233,9 +239,9 @@ mod tests {
 
     #[test]
     fn test_expand_abbreviated_verkey_with_abbreviation() {
-        let did = "did:sov:123456789abcdefghi";
-        let abbreviated_verkey = "~xyz123";
-        let expected_full_verkey = "123456789abcdefghixyz123";
+        let did = "7Sqc3ne5NfUVxMTrHahxz3";
+        let abbreviated_verkey = "~DczaFTexiEYv5abkEUZeZt";
+        let expected_full_verkey = "4WkksEAXsewRbDYDz66aTdjtVF2LBxbqEMyF2WEjTBKk";
 
         assert_eq!(
             expand_abbreviated_verkey(did, abbreviated_verkey),
@@ -245,7 +251,7 @@ mod tests {
 
     #[test]
     fn test_expand_abbreviated_verkey_without_abbreviation() {
-        let did = "did:sov:123456789abcdefghi";
+        let did = "123456789abcdefghi";
         let full_verkey = "123456789abcdefghixyz123";
 
         assert_eq!(expand_abbreviated_verkey(did, full_verkey), full_verkey);
