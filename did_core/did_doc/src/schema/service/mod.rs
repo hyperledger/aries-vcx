@@ -51,10 +51,10 @@ impl Service {
         &self.service_type
     }
 
-    pub fn service_types(&self) -> Vec<ServiceType> {
+    pub fn service_types(&self) -> &[ServiceType] {
         match &self.service_type {
-            OneOrList::One(service_type) => vec![service_type.clone()],
-            OneOrList::List(service_types) => service_types.clone(),
+            OneOrList::One(service_type) => std::slice::from_ref(service_type),
+            OneOrList::List(service_types) => service_types.as_slice()
         }
     }
 
