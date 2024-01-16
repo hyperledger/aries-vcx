@@ -54,7 +54,7 @@ impl Service {
     pub fn service_types(&self) -> &[ServiceType] {
         match &self.service_type {
             OneOrList::One(service_type) => std::slice::from_ref(service_type),
-            OneOrList::List(service_types) => service_types.as_slice()
+            OneOrList::List(service_types) => service_types.as_slice(),
         }
     }
 
