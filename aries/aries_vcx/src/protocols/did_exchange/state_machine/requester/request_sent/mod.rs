@@ -3,9 +3,8 @@ use std::sync::Arc;
 use did_parser::Did;
 use did_peer::{
     peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-    resolver::{options::PublicKeyEncoding, PeerDidResolutionOptions, PeerDidResolver},
+    resolver::options::PublicKeyEncoding,
 };
-use did_resolver::traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable};
 use did_resolver_registry::ResolverRegistry;
 use messages::msg_fields::protocols::did_exchange::{
     complete::Complete as CompleteMessage, request::Request, response::Response,
@@ -23,6 +22,7 @@ use crate::{
         states::{completed::Completed, requester::request_sent::RequestSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
     },
+    utils::didcomm_utils::resolve_didpeer2,
 };
 
 impl DidExchangeRequester<RequestSent> {
@@ -34,16 +34,8 @@ impl DidExchangeRequester<RequestSent> {
         let their_did_document = resolver_registry
             .resolve(their_did, &Default::default())
             .await?
-            .did_document
-            .clone();
-        let DidResolutionOutput { did_document, .. } = PeerDidResolver::new()
-            .resolve(
-                our_peer_did.did(),
-                &PeerDidResolutionOptions {
-                    encoding: Some(PublicKeyEncoding::Base58),
-                },
-            )
-            .await?;
+            .did_document;
+        let our_did_document = resolve_didpeer2(our_peer_did, PublicKeyEncoding::Base58).await?;
         let invitation_id = Uuid::new_v4().to_string();
 
         let request = construct_request(invitation_id.clone(), our_peer_did.to_string());
@@ -55,7 +47,7 @@ impl DidExchangeRequester<RequestSent> {
                     invitation_id,
                 },
                 their_did_document,
-                did_document,
+                our_did_document,
             ),
             output: request,
         })
@@ -82,16 +74,9 @@ impl DidExchangeRequester<RequestSent> {
         } else {
             let peer_did = PeerDid::<Numalgo2>::parse(response.content.did)
                 .map_err(to_transition_error(self.clone()))?;
-            let DidResolutionOutput { did_document, .. } = PeerDidResolver::new()
-                .resolve(
-                    peer_did.did(),
-                    &PeerDidResolutionOptions {
-                        encoding: Some(PublicKeyEncoding::Base58),
-                    },
-                )
+            resolve_didpeer2(&peer_did, PublicKeyEncoding::Base58)
                 .await
-                .map_err(to_transition_error(self.clone()))?;
-            did_document
+                .map_err(to_transition_error(self.clone()))?
         };
 
         let complete_message = construct_didexchange_complete(
