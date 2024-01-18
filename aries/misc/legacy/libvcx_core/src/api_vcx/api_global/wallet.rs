@@ -21,8 +21,8 @@ use aries_vcx::{
     protocols::mediated_connection::pairwise_info::PairwiseInfo,
 };
 use aries_vcx_core::wallet::{
-    base_wallet::{DidWallet, RecordBuilder, RecordWallet},
-    indy::WalletRecord,
+    base_wallet::{DidWallet, Record, RecordWallet},
+    indy::{IndyTags, WalletRecord},
 };
 use futures::FutureExt;
 use public_key::{Key, KeyType};
@@ -119,7 +119,7 @@ pub async fn create_main_wallet(config: &WalletConfig) -> LibvcxResult<()> {
 pub async fn key_for_local_did(did: &str) -> LibvcxResult<String> {
     let wallet = get_main_wallet()?;
 
-    map_ariesvcx_core_result(wallet.did_key(did).await.map(|key| key.base58()))
+    map_ariesvcx_core_result(wallet.key_for_did(did).await.map(|key| key.base58()))
 }
 
 pub async fn wallet_sign(vk: &str, data_raw: &[u8]) -> LibvcxResult<Vec<u8>> {
@@ -168,8 +168,8 @@ pub async fn wallet_create_and_store_did(seed: Option<&str>) -> LibvcxResult<Pai
     let wallet = get_main_wallet()?;
     let did_data = wallet.create_and_store_my_did(seed, None).await?;
     Ok(PairwiseInfo {
-        pw_did: did_data.get_did().into(),
-        pw_vk: did_data.get_verkey().base58(),
+        pw_did: did_data.did().into(),
+        pw_vk: did_data.verkey().base58(),
     })
 }
 
@@ -190,17 +190,20 @@ pub async fn wallet_add_wallet_record(
     let wallet = get_main_wallet()?;
     let tags: Option<HashMap<String, String>> = option.map(serde_json::from_str).transpose()?;
 
-    let mut record_builder = RecordBuilder::default();
-    record_builder
-        .name(id.into())
-        .category(type_.into())
-        .value(value.into());
-
-    if let Some(record_tags) = tags {
-        record_builder.tags(record_tags.into());
-    }
-
-    let record = record_builder.build()?;
+    let record = if let Some(record_tags) = tags {
+        Record::builder()
+            .name(id.into())
+            .category(type_.into())
+            .value(value.into())
+            .tags(IndyTags::new(record_tags).to_entry_tags())
+            .build()
+    } else {
+        Record::builder()
+            .name(id.into())
+            .category(type_.into())
+            .value(value.into())
+            .build()
+    };
 
     map_ariesvcx_core_result(wallet.add_record(record).await)
 }
@@ -211,7 +214,7 @@ pub async fn wallet_update_wallet_record_value(
     value: &str,
 ) -> LibvcxResult<()> {
     let wallet = get_main_wallet()?;
-    map_ariesvcx_core_result(wallet.update_record_value(id, xtype, value).await)
+    map_ariesvcx_core_result(wallet.update_record_value(xtype, id, value).await)
 }
 
 pub async fn wallet_update_wallet_record_tags(
@@ -221,7 +224,11 @@ pub async fn wallet_update_wallet_record_tags(
 ) -> LibvcxResult<()> {
     let wallet = get_main_wallet()?;
     let tags: HashMap<String, String> = serde_json::from_str(tags_json)?;
-    map_ariesvcx_core_result(wallet.update_record_tags(id, xtype, tags.into()).await)
+    map_ariesvcx_core_result(
+        wallet
+            .update_record_tags(xtype, id, IndyTags::new(tags).to_entry_tags())
+            .await,
+    )
 }
 
 pub async fn wallet_add_wallet_record_tags(
@@ -230,16 +237,20 @@ pub async fn wallet_add_wallet_record_tags(
     tags_json: &str,
 ) -> LibvcxResult<()> {
     let wallet = get_main_wallet()?;
-    let mut tags: HashMap<String, String> = serde_json::from_str(tags_json)?;
-    let record = wallet.get_record(id, xtype).await?;
+    let record = wallet.get_record(xtype, id).await?;
 
-    let found_tags: HashMap<String, String> = record.get_tags().clone().into();
+    let found_tags = IndyTags::from_entry_tags(record.tags().clone()).to_inner();
+    let tags = {
+        let mut tags: HashMap<String, String> = serde_json::from_str(tags_json)?;
+        tags.extend(found_tags);
+        tags
+    };
 
-    for (key, val) in found_tags {
-        tags.insert(key, val);
-    }
-
-    map_ariesvcx_core_result(wallet.update_record_tags(id, xtype, tags.into()).await)
+    map_ariesvcx_core_result(
+        wallet
+            .update_record_tags(xtype, id, IndyTags::new(tags).to_entry_tags())
+            .await,
+    )
 }
 
 pub async fn wallet_delete_wallet_record_tags(
@@ -250,17 +261,16 @@ pub async fn wallet_delete_wallet_record_tags(
     let wallet = get_main_wallet()?;
     let tags: HashMap<String, String> = serde_json::from_str(tags_json)?;
 
-    let record = wallet.get_record(id, xtype).await?;
+    let record = wallet.get_record(xtype, id).await?;
 
-    let mut found_tags: HashMap<String, String> = record.get_tags().clone().into();
-
-    for (key, _) in tags {
-        found_tags.remove(&key);
+    let mut found_tags = IndyTags::from_entry_tags(record.tags().clone()).to_inner();
+    for key in tags.keys() {
+        found_tags.remove(key);
     }
 
     map_ariesvcx_core_result(
         wallet
-            .update_record_tags(id, xtype, found_tags.into())
+            .update_record_tags(xtype, id, IndyTags::new(found_tags).to_entry_tags())
             .await,
     )
 }
@@ -274,9 +284,9 @@ pub async fn wallet_get_wallet_record(
 
     map_ariesvcx_result(
         wallet
-            .get_record(id, xtype)
-            .map(|item| {
-                let wallet_record: WalletRecord = item?.try_into()?;
+            .get_record(xtype, id)
+            .map(|res| {
+                let wallet_record = WalletRecord::from_record(res?)?;
 
                 Ok(serde_json::to_string(&wallet_record)?)
             })
@@ -286,7 +296,7 @@ pub async fn wallet_get_wallet_record(
 
 pub async fn wallet_delete_wallet_record(xtype: &str, id: &str) -> LibvcxResult<()> {
     let wallet = get_main_wallet()?;
-    map_ariesvcx_core_result(wallet.delete_record(id, xtype).await)
+    map_ariesvcx_core_result(wallet.delete_record(xtype, id).await)
 }
 
 pub async fn wallet_open_search_wallet(
@@ -349,7 +359,7 @@ pub mod test_utils {
         aries_vcx_core::wallet::indy::WalletConfig,
         global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
     };
-    use aries_vcx_core::wallet::base_wallet::{DidWallet, RecordBuilder, RecordWallet};
+    use aries_vcx_core::wallet::base_wallet::{DidWallet, Record, RecordWallet};
 
     use crate::{
         api_vcx::api_global::{
@@ -388,12 +398,11 @@ pub mod test_utils {
         wallet.create_and_store_my_did(None, None).await.unwrap();
         let (type_, id, value) = _record();
 
-        let new_record = RecordBuilder::default()
+        let new_record = Record::builder()
             .name(id.into())
             .category(type_.into())
             .value(value.into())
-            .build()
-            .unwrap();
+            .build();
 
         wallet.add_record(new_record).await.unwrap();
         export_main_wallet(&export_file.path, DEFAULT_WALLET_BACKUP_KEY)

@@ -36,7 +36,7 @@ impl DidWallet for IndySdkWallet {
         Ok(DidData::new(&did, verkey))
     }
 
-    async fn did_key(&self, did: &str) -> VcxCoreResult<Key> {
+    async fn key_for_did(&self, did: &str) -> VcxCoreResult<Key> {
         let res = Locator::instance()
             .did_controller
             .key_for_local_did(self.wallet_handle, DidValue(did.into()))

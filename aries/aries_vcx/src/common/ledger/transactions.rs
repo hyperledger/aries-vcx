@@ -89,15 +89,15 @@ pub async fn add_new_did(
         .publish_nym(
             wallet,
             submitter_did,
-            did_data.get_did(),
-            Some(&did_data.get_verkey().base58()),
+            did_data.did(),
+            Some(&did_data.verkey().base58()),
             None,
             role,
         )
         .await?;
     check_response(&res)?;
 
-    Ok((did_data.get_did().into(), did_data.get_verkey().base58()))
+    Ok((did_data.did().into(), did_data.verkey().base58()))
 }
 
 pub async fn get_service(ledger: &impl IndyLedgerRead, did: &String) -> VcxResult<AriesService> {

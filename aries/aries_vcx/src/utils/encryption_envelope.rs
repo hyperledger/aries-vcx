@@ -276,7 +276,7 @@ pub mod unit_tests {
             &setup.wallet,
             data_original.as_bytes(),
             None,
-            did_data.get_verkey().base58(),
+            did_data.verkey().base58(),
             [].to_vec(),
         )
         .await
@@ -310,8 +310,8 @@ pub mod unit_tests {
         let envelope = EncryptionEnvelope::create2(
             &setup.wallet,
             data_original.as_bytes(),
-            Some(&sender_data.get_verkey().base58()),
-            recipient_data.get_verkey().base58(),
+            Some(&sender_data.verkey().base58()),
+            recipient_data.verkey().base58(),
             [].to_vec(),
         )
         .await
@@ -320,7 +320,7 @@ pub mod unit_tests {
         let data_unpacked = EncryptionEnvelope::auth_unpack(
             &setup.wallet,
             envelope.0,
-            &sender_data.get_verkey().base58(),
+            &sender_data.verkey().base58(),
         )
         .await
         .unwrap();
@@ -352,9 +352,9 @@ pub mod unit_tests {
         let envelope = EncryptionEnvelope::create2(
             &setup.wallet,
             data_original.as_bytes(),
-            Some(&sender_data.get_verkey().base58()),
-            recipient_data.get_verkey().base58(),
-            [routing_data.get_verkey().base58()].to_vec(),
+            Some(&sender_data.verkey().base58()),
+            recipient_data.verkey().base58(),
+            [routing_data.verkey().base58()].to_vec(),
         )
         .await
         .unwrap();
@@ -398,8 +398,8 @@ pub mod unit_tests {
         let envelope = EncryptionEnvelope::create2(
             &setup.wallet,
             data_original.as_bytes(),
-            Some(&bob_data.get_verkey().base58()), // bob trying to impersonate alice
-            recipient_data.get_verkey().base58(),
+            Some(&bob_data.verkey().base58()), // bob trying to impersonate alice
+            recipient_data.verkey().base58(),
             [].to_vec(),
         )
         .await
@@ -408,7 +408,7 @@ pub mod unit_tests {
         let err = EncryptionEnvelope::auth_unpack(
             &setup.wallet,
             envelope.0,
-            &alice_data.get_verkey().base58(),
+            &alice_data.verkey().base58(),
         )
         .await;
         assert!(err.is_err());

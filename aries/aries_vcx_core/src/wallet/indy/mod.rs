@@ -1,7 +1,13 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
-use crate::{errors::error::AriesVcxCoreError, WalletHandle};
+use super::{
+    base_wallet::{BaseWallet, Record},
+    entry_tag::{EntryTag, EntryTags},
+};
+use crate::{errors::error::VcxCoreResult, WalletHandle};
 
 pub mod indy_did_wallet;
 pub mod indy_record_wallet;
@@ -75,15 +81,19 @@ pub struct WalletRecord {
     tags: Option<String>,
 }
 
-impl TryFrom<Record> for WalletRecord {
-    type Error = AriesVcxCoreError;
+impl WalletRecord {
+    pub fn from_record(record: Record) -> VcxCoreResult<Self> {
+        let tags = if record.tags().is_empty() {
+            None
+        } else {
+            Some(serde_json::to_string(&record.tags())?)
+        };
 
-    fn try_from(record: Record) -> Result<Self, Self::Error> {
         Ok(Self {
-            id: Some(record.get_name().into()),
-            record_type: Some(record.get_category().into()),
-            value: Some(record.get_value().into()),
-            tags: record.get_tags().clone().try_into()?,
+            id: Some(record.name().into()),
+            record_type: Some(record.category().into()),
+            value: Some(record.value().into()),
+            tags,
         })
     }
 }
@@ -98,13 +108,6 @@ pub struct RestoreWalletConfigs {
     pub wallet_key_derivation: Option<String>,
 }
 
-use std::collections::HashMap;
-
-use super::{
-    base_wallet::{BaseWallet, Record},
-    entry_tag::{EntryTag, EntryTags},
-};
-
 const WALLET_OPTIONS: &str =
     r#"{"retrieveType": true, "retrieveValue": true, "retrieveTags": true}"#;
 
@@ -112,47 +115,64 @@ const SEARCH_OPTIONS: &str = r#"{"retrieveType": true, "retrieveValue": true, "r
 
 impl BaseWallet for IndySdkWallet {}
 
-impl From<EntryTag> for (String, String) {
-    fn from(value: EntryTag) -> Self {
-        match value {
-            EntryTag::Encrypted(key, val) => (key, val),
-            EntryTag::Plaintext(key, val) => (format!("~{}", key), val),
-        }
-    }
-}
+pub struct IndyTag((String, String));
 
-impl From<(String, String)> for EntryTag {
-    fn from(value: (String, String)) -> Self {
-        if value.0.starts_with('~') {
-            EntryTag::Plaintext(value.0.trim_start_matches('~').into(), value.1)
+impl IndyTag {
+    pub fn new(pair: (String, String)) -> Self {
+        Self(pair)
+    }
+
+    pub fn to_inner(self) -> (String, String) {
+        self.0
+    }
+
+    pub fn to_entry_tag(self) -> EntryTag {
+        let inner = self.to_inner();
+
+        if inner.0.starts_with('~') {
+            EntryTag::Plaintext(inner.0.trim_start_matches('~').into(), inner.1)
         } else {
-            EntryTag::Encrypted(value.0, value.1)
+            EntryTag::Encrypted(inner.0, inner.1)
+        }
+    }
+
+    pub fn from_entry_tag(tag: EntryTag) -> Self {
+        match tag {
+            EntryTag::Encrypted(key, val) => Self((key, val)),
+            EntryTag::Plaintext(key, val) => Self((format!("~{}", key), val)),
         }
     }
 }
 
-impl From<EntryTags> for HashMap<String, String> {
-    fn from(value: EntryTags) -> Self {
-        let tags: Vec<EntryTag> = value.into();
-        tags.into_iter().fold(Self::new(), |mut memo, item| {
-            let (key, value) = item.into();
+pub struct IndyTags(HashMap<String, String>);
 
-            memo.insert(key, value);
-            memo
-        })
+impl IndyTags {
+    pub fn new(map: HashMap<String, String>) -> Self {
+        Self(map)
     }
-}
 
-impl From<HashMap<String, String>> for EntryTags {
-    fn from(value: HashMap<String, String>) -> Self {
-        let mut items: Vec<EntryTag> = value
+    pub fn to_inner(self) -> HashMap<String, String> {
+        self.0
+    }
+
+    pub fn from_entry_tags(tags: EntryTags) -> Self {
+        let mut map = HashMap::new();
+        let tags_vec: Vec<_> = tags
             .into_iter()
-            .map(|(key, value)| (key, value))
-            .map(From::from)
+            .map(|tag| IndyTag::from_entry_tag(tag).to_inner())
             .collect();
+        map.extend(tags_vec);
+        Self(map)
+    }
 
+    pub fn to_entry_tags(self) -> EntryTags {
+        let mut items: Vec<EntryTag> = self
+            .0
+            .into_iter()
+            .map(|pair| IndyTag::new(pair).to_entry_tag())
+            .collect();
         items.sort();
 
-        Self::new(items)
+        EntryTags::new(items)
     }
 }

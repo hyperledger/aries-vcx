@@ -12,8 +12,8 @@ impl PairwiseInfo {
     pub async fn create(wallet: &impl BaseWallet) -> VcxResult<PairwiseInfo> {
         let did_data = wallet.create_and_store_my_did(None, None).await?;
         Ok(PairwiseInfo {
-            pw_did: did_data.get_did().into(),
-            pw_vk: did_data.get_verkey().base58(),
+            pw_did: did_data.did().into(),
+            pw_vk: did_data.verkey().base58(),
         })
     }
 }

@@ -85,8 +85,8 @@ pub async fn provision_cloud_agent(
     client
         .provision_cloud_agent(
             wallet.to_base_agency_client_wallet(),
-            did_data.get_did(),
-            &did_data.get_verkey().base58(),
+            did_data.did(),
+            &did_data.verkey().base58(),
             &agency_config.agency_did,
             &agency_config.agency_verkey,
             agency_config.agency_endpoint.clone(),

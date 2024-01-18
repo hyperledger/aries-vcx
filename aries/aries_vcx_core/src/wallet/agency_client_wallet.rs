@@ -30,14 +30,14 @@ impl RecordWallet for AgencyClientWallet {
         Err(unimplemented_agency_client_wallet_method("add_record"))
     }
 
-    async fn get_record(&self, name: &str, category: &str) -> VcxCoreResult<Record> {
+    async fn get_record(&self, category: &str, name: &str) -> VcxCoreResult<Record> {
         Err(unimplemented_agency_client_wallet_method("get_record"))
     }
 
     async fn update_record_tags(
         &self,
-        name: &str,
         category: &str,
+        name: &str,
         new_tags: EntryTags,
     ) -> VcxCoreResult<()> {
         Err(unimplemented_agency_client_wallet_method(
@@ -47,8 +47,8 @@ impl RecordWallet for AgencyClientWallet {
 
     async fn update_record_value(
         &self,
-        name: &str,
         category: &str,
+        name: &str,
         new_value: &str,
     ) -> VcxCoreResult<()> {
         Err(unimplemented_agency_client_wallet_method(
@@ -56,7 +56,7 @@ impl RecordWallet for AgencyClientWallet {
         ))
     }
 
-    async fn delete_record(&self, name: &str, category: &str) -> VcxCoreResult<()> {
+    async fn delete_record(&self, category: &str, name: &str) -> VcxCoreResult<()> {
         Err(unimplemented_agency_client_wallet_method("delete_record"))
     }
 
@@ -82,7 +82,7 @@ impl DidWallet for AgencyClientWallet {
         ))
     }
 
-    async fn did_key(&self, name: &str) -> VcxCoreResult<Key> {
+    async fn key_for_did(&self, name: &str) -> VcxCoreResult<Key> {
         Err(unimplemented_agency_client_wallet_method("did_key"))
     }
 

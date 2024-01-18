@@ -49,8 +49,8 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         let client_conn = InviteeConnection::<ClientInit>::new_invitee(
             "foo".into(),
             PairwiseInfo {
-                pw_did: did_data.get_did().into(),
-                pw_vk: did_data.get_verkey().base58(),
+                pw_did: did_data.did().into(),
+                pw_vk: did_data.verkey().base58(),
             },
         )
         .accept_invitation(&mock_ledger, AnyInvitation::Oob(oob_invite.clone()))

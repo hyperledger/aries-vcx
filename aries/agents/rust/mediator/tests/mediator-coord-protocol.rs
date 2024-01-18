@@ -76,7 +76,7 @@ async fn test_mediate_keylist_update_add() -> Result<()> {
     let keylist_update_request = KeylistUpdate::builder()
         .content(KeylistUpdateContent {
             updates: vec![KeylistUpdateItem {
-                recipient_key: did_data.get_verkey().base58(),
+                recipient_key: did_data.verkey().base58(),
                 action: KeylistUpdateItemAction::Add,
             }],
         })
@@ -127,7 +127,7 @@ async fn test_mediate_keylist_query() -> Result<()> {
     let keylist_update_request = KeylistUpdate::builder()
         .content(KeylistUpdateContent {
             updates: vec![KeylistUpdateItem {
-                recipient_key: did_data.get_verkey().base58(),
+                recipient_key: did_data.verkey().base58(),
                 action: KeylistUpdateItemAction::Add,
             }],
         })
@@ -195,7 +195,7 @@ async fn test_mediate_keylist_update_remove() -> Result<()> {
     let keylist_update_request = KeylistUpdate::builder()
         .content(KeylistUpdateContent {
             updates: vec![KeylistUpdateItem {
-                recipient_key: did_data.get_verkey().base58(),
+                recipient_key: did_data.verkey().base58(),
                 action: KeylistUpdateItemAction::Add,
             }],
         })
@@ -220,7 +220,7 @@ async fn test_mediate_keylist_update_remove() -> Result<()> {
     let keylist_update_request = KeylistUpdate::builder()
         .content(KeylistUpdateContent {
             updates: vec![KeylistUpdateItem {
-                recipient_key: did_data.get_verkey().base58(),
+                recipient_key: did_data.verkey().base58(),
                 action: KeylistUpdateItemAction::Remove,
             }],
         })

@@ -97,7 +97,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             id: "#inline".to_owned(),
             type_: "did-communication".to_owned(),
             priority: 0,
-            recipient_keys: vec![did_data.get_verkey().base58()],
+            recipient_keys: vec![did_data.verkey().base58()],
             routing_keys,
             service_endpoint,
         };
@@ -188,8 +188,8 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             self.wallet.as_ref(),
             thread_id,
             old_vk.clone(),
-            did_data.get_did().into(),
-            did_data.get_verkey().base58(),
+            did_data.did().into(),
+            did_data.verkey().base58(),
             self.service.as_ref().unwrap().service_endpoint.clone(),
             self.service.as_ref().unwrap().routing_keys.clone(),
         )
@@ -209,7 +209,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         let auth_pubkey = their_keys
             .first()
             .ok_or("No recipient key for client :/ ?".to_owned())?;
-        self.create_account(auth_pubkey, &did_data.get_verkey().base58(), &their_diddoc)
+        self.create_account(auth_pubkey, &did_data.verkey().base58(), &their_diddoc)
             .await?;
         Ok(packed_response_envelope)
     }

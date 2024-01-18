@@ -4,7 +4,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use vdrtools::Locator;
 
-use super::{SEARCH_OPTIONS, WALLET_OPTIONS};
+use super::{IndyTags, SEARCH_OPTIONS, WALLET_OPTIONS};
 use crate::{
     errors::error::{AriesVcxCoreError, VcxCoreResult},
     wallet::{
@@ -17,25 +17,25 @@ use crate::{
 #[async_trait]
 impl RecordWallet for IndySdkWallet {
     async fn add_record(&self, record: Record) -> VcxCoreResult<()> {
-        let tags_map = if record.get_tags().is_empty() {
+        let tags_map = if record.tags().is_empty() {
             None
         } else {
-            Some(record.get_tags().clone().into())
+            Some(IndyTags::from_entry_tags(record.tags().clone()).to_inner())
         };
 
         Ok(Locator::instance()
             .non_secret_controller
             .add_record(
                 self.wallet_handle,
-                record.get_category().into(),
-                record.get_name().into(),
-                record.get_value().into(),
+                record.category().into(),
+                record.name().into(),
+                record.value().into(),
                 tags_map,
             )
             .await?)
     }
 
-    async fn get_record(&self, name: &str, category: &str) -> VcxCoreResult<Record> {
+    async fn get_record(&self, category: &str, name: &str) -> VcxCoreResult<Record> {
         let res = Locator::instance()
             .non_secret_controller
             .get_record(
@@ -53,8 +53,8 @@ impl RecordWallet for IndySdkWallet {
 
     async fn update_record_tags(
         &self,
-        name: &str,
         category: &str,
+        name: &str,
         new_tags: EntryTags,
     ) -> VcxCoreResult<()> {
         Ok(Locator::instance()
@@ -63,15 +63,15 @@ impl RecordWallet for IndySdkWallet {
                 self.wallet_handle,
                 category.into(),
                 name.into(),
-                new_tags.into(),
+                IndyTags::from_entry_tags(new_tags).to_inner(),
             )
             .await?)
     }
 
     async fn update_record_value(
         &self,
-        name: &str,
         category: &str,
+        name: &str,
         new_value: &str,
     ) -> VcxCoreResult<()> {
         Ok(Locator::instance()
@@ -85,7 +85,7 @@ impl RecordWallet for IndySdkWallet {
             .await?)
     }
 
-    async fn delete_record(&self, name: &str, category: &str) -> VcxCoreResult<()> {
+    async fn delete_record(&self, category: &str, name: &str) -> VcxCoreResult<()> {
         Ok(Locator::instance()
             .non_secret_controller
             .delete_record(self.wallet_handle, category.into(), name.into())

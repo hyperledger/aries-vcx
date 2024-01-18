@@ -2755,7 +2755,6 @@ dependencies = [
  "diddoc_legacy",
  "env_logger 0.10.0",
  "futures",
- "indy-api-types",
  "lazy_static",
  "libc",
  "log",

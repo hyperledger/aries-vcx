@@ -3,7 +3,7 @@ use vdrtools::{
         domain::wallet::{default_key_derivation_method, KeyDerivationMethod},
         errors::IndyErrorKind,
     },
-    DidMethod, DidValue, KeyInfo, Locator, MyDidInfo, WalletHandle,
+    DidMethod, Locator, MyDidInfo, WalletHandle,
 };
 
 use crate::{
@@ -305,42 +305,6 @@ pub async fn create_and_store_my_did(
                 ..MyDidInfo::default()
             },
         )
-        .await?;
-
-    Ok(res)
-}
-
-pub async fn libindy_replace_keys_start(
-    wallet_handle: WalletHandle,
-    did: &str,
-) -> VcxCoreResult<String> {
-    let res = Locator::instance()
-        .did_controller
-        .replace_keys_start(wallet_handle, KeyInfo::default(), DidValue(did.into()))
-        .await?;
-
-    Ok(res)
-}
-
-pub async fn libindy_replace_keys_apply(
-    wallet_handle: WalletHandle,
-    did: &str,
-) -> VcxCoreResult<()> {
-    Locator::instance()
-        .did_controller
-        .replace_keys_apply(wallet_handle, DidValue(did.into()))
-        .await?;
-
-    Ok(())
-}
-
-pub async fn get_verkey_from_wallet(
-    wallet_handle: WalletHandle,
-    did: &str,
-) -> VcxCoreResult<String> {
-    let res = Locator::instance()
-        .did_controller
-        .key_for_local_did(wallet_handle, DidValue(did.into()))
         .await?;
 
     Ok(res)

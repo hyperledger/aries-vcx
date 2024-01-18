@@ -1,7 +1,5 @@
 use serde::{ser::SerializeMap, Deserialize, Serialize};
 
-use crate::errors::error::AriesVcxCoreError;
-
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Ord)]
 pub enum EntryTag {
     Encrypted(String, String),
@@ -77,17 +75,5 @@ impl From<Vec<EntryTag>> for EntryTags {
 impl From<EntryTags> for Vec<EntryTag> {
     fn from(value: EntryTags) -> Self {
         value.inner
-    }
-}
-
-impl TryFrom<EntryTags> for Option<String> {
-    type Error = AriesVcxCoreError;
-
-    fn try_from(tags: EntryTags) -> Result<Self, Self::Error> {
-        if tags.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(serde_json::to_string(&tags)?))
-        }
     }
 }

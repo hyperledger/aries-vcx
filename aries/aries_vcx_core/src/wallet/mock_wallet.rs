@@ -2,9 +2,7 @@ use async_trait::async_trait;
 use public_key::{Key, KeyType};
 
 use super::{
-    base_wallet::{
-        BaseWallet, DidData, DidWallet, Record, RecordBuilder, RecordWallet, SearchFilter,
-    },
+    base_wallet::{BaseWallet, DidData, DidWallet, Record, RecordWallet, SearchFilter},
     structs_io::UnpackMessageOutput,
 };
 use crate::{
@@ -25,18 +23,18 @@ impl RecordWallet for MockWallet {
         Ok(())
     }
 
-    async fn get_record(&self, name: &str, category: &str) -> VcxCoreResult<Record> {
-        Ok(RecordBuilder::default()
+    async fn get_record(&self, category: &str, name: &str) -> VcxCoreResult<Record> {
+        Ok(Record::builder()
             .name("123".into())
             .category("record type".into())
             .value("record value".into())
-            .build()?)
+            .build())
     }
 
     async fn update_record_value(
         &self,
-        name: &str,
         category: &str,
+        name: &str,
         new_value: &str,
     ) -> VcxCoreResult<()> {
         Ok(())
@@ -44,14 +42,14 @@ impl RecordWallet for MockWallet {
 
     async fn update_record_tags(
         &self,
-        name: &str,
         category: &str,
+        name: &str,
         new_tags: EntryTags,
     ) -> VcxCoreResult<()> {
         Ok(())
     }
 
-    async fn delete_record(&self, name: &str, category: &str) -> VcxCoreResult<()> {
+    async fn delete_record(&self, category: &str, name: &str) -> VcxCoreResult<()> {
         Ok(())
     }
 
@@ -81,7 +79,7 @@ impl DidWallet for MockWallet {
         ))
     }
 
-    async fn did_key(&self, name: &str) -> VcxCoreResult<Key> {
+    async fn key_for_did(&self, name: &str) -> VcxCoreResult<Key> {
         Ok(Key::new(utils::constants::VERKEY.into(), KeyType::Ed25519).unwrap())
     }
 
