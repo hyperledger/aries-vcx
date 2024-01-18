@@ -22,6 +22,7 @@ use crate::{
         states::{completed::Completed, requester::request_sent::RequestSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
     },
+    utils::didcomm_utils::resolve_didpeer2,
 };
 
 impl DidExchangeRequester<RequestSent> {
@@ -34,7 +35,7 @@ impl DidExchangeRequester<RequestSent> {
             .resolve(their_did, &Default::default())
             .await?
             .did_document;
-        let did_document = our_peer_did.resolve(PublicKeyEncoding::Base58)?;
+        let our_did_document = resolve_didpeer2(our_peer_did, PublicKeyEncoding::Base58).await?;
         let invitation_id = Uuid::new_v4().to_string();
 
         let request = construct_request(invitation_id.clone(), our_peer_did.to_string());
@@ -46,7 +47,7 @@ impl DidExchangeRequester<RequestSent> {
                     invitation_id,
                 },
                 their_did_document,
-                did_document,
+                our_did_document,
             ),
             output: request,
         })
@@ -73,8 +74,8 @@ impl DidExchangeRequester<RequestSent> {
         } else {
             let peer_did = PeerDid::<Numalgo2>::parse(response.content.did)
                 .map_err(to_transition_error(self.clone()))?;
-            peer_did
-                .resolve(PublicKeyEncoding::Base58)
+            resolve_didpeer2(&peer_did, PublicKeyEncoding::Base58)
+                .await
                 .map_err(to_transition_error(self.clone()))?
         };
 

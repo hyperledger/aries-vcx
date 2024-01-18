@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use did_doc::schema::did_doc::DidDocumentBuilder;
 use did_parser::Did;
 use did_resolver::{
     error::GenericError,
@@ -28,7 +29,6 @@ impl PeerDidResolver {
 pub struct PeerDidResolutionOptions {
     pub encoding: Option<PublicKeyEncoding>,
 }
-
 #[async_trait]
 impl DidResolvable for PeerDidResolver {
     type DidResolutionOptions = PeerDidResolutionOptions;
@@ -41,8 +41,11 @@ impl DidResolvable for PeerDidResolver {
         let peer_did = AnyPeerDid::parse(did.to_owned())?;
         match peer_did {
             AnyPeerDid::Numalgo2(peer_did) => {
-                let did_doc =
-                    peer_did.resolve(options.encoding.unwrap_or(PublicKeyEncoding::Base58))?;
+                let encoding = options.encoding.unwrap_or(PublicKeyEncoding::Multibase);
+                let builder: DidDocumentBuilder = peer_did.to_did_doc_builder(encoding)?;
+                let did_doc = builder
+                    .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
+                    .build();
                 let resolution_metadata = DidResolutionMetadata::builder()
                     .content_type("application/did+json".to_string())
                     .build();

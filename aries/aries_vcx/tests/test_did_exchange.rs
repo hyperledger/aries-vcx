@@ -25,8 +25,9 @@ use did_doc::schema::{
 use did_parser::Did;
 use did_peer::{
     peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-    resolver::{options::PublicKeyEncoding, PeerDidResolver},
+    resolver::{options::PublicKeyEncoding, PeerDidResolutionOptions, PeerDidResolver},
 };
+use did_resolver::traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable};
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::resolution::DidSovResolver;
 use log::info;
@@ -41,6 +42,22 @@ use crate::utils::test_agent::{
 };
 
 pub mod utils;
+
+pub(crate) async fn resolve_didpeer2(
+    did_peer: &PeerDid<Numalgo2>,
+    encoding: PublicKeyEncoding,
+) -> DidDocument {
+    let DidResolutionOutput { did_document, .. } = PeerDidResolver::new()
+        .resolve(
+            did_peer.did(),
+            &PeerDidResolutionOptions {
+                encoding: Some(encoding),
+            },
+        )
+        .await
+        .unwrap();
+    did_document
+}
 
 fn assert_key_agreement(a: DidDocument, b: DidDocument) {
     let a_key = resolve_base58_key_agreement(&a).unwrap();
@@ -137,7 +154,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     let responders_peer_did = PeerDid::<Numalgo2>::from_did_doc(responders_did_document.clone())?;
     info!("Responder prepares their peer:did: {responders_peer_did}");
 
-    let check_diddoc = responders_peer_did.resolve(PublicKeyEncoding::Base58)?;
+    let check_diddoc = resolve_didpeer2(&responders_peer_did, PublicKeyEncoding::Base58).await;
     info!("Responder decodes constructed peer:did as did document: {check_diddoc}");
 
     let TransitionResult {

@@ -76,14 +76,12 @@ impl From<did_key::error::DidKeyError> for AriesVcxError {
     }
 }
 
-// map UriWrapperError
 impl From<UriWrapperError> for AriesVcxError {
     fn from(err: UriWrapperError) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err.to_string())
     }
 }
 
-// TODO
 impl From<AriesVcxCoreError> for AriesVcxError {
     fn from(err: AriesVcxCoreError) -> Self {
         let kind = match err.kind() {
