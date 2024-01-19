@@ -91,17 +91,6 @@ impl std::fmt::Debug for Did {
     }
 }
 
-impl Default for Did {
-    fn default() -> Self {
-        Self {
-            did: "did:example:123456789abcdefghi".to_string(),
-            method: Some(4..11),
-            namespace: None,
-            id: 12..30,
-        }
-    }
-}
-
 impl Serialize for Did {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
