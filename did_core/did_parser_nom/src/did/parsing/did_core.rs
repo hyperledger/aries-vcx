@@ -9,7 +9,7 @@ use nom::{
     AsChar, IResult,
 };
 
-use super::{DidPart, DidRanges};
+use super::DidPart;
 
 fn hexadecimal_digit(input: &str) -> IResult<&str, &str> {
     fn is_hexadecimal_digit(c: char) -> bool {
@@ -62,42 +62,4 @@ pub(super) fn namespace(input: &str) -> IResult<&str, &str> {
 // did = "did:" method-name ":" method-specific-id
 pub(super) fn parse_qualified_did(input: &str) -> IResult<&str, DidPart> {
     tuple((tag("did"), method_name, opt(namespace), method_specific_id))(input)
-}
-
-pub(super) fn to_id_range(id: &str) -> DidRanges {
-    (None, None, Some(0..id.len()))
-}
-
-pub(super) fn to_did_ranges((did_prefix, method, namespace, id): DidPart) -> DidRanges {
-    let mut next_start = if !did_prefix.is_empty() {
-        did_prefix.len() + 1
-    } else {
-        0
-    };
-
-    let method_range = if !method.is_empty() {
-        let method_start = next_start;
-        let method_end = method_start + method.len();
-        next_start = method_end + 1;
-        Some(method_start..method_end)
-    } else {
-        next_start = 0;
-        None
-    };
-
-    let namespace_range = namespace.map(|ns| {
-        let namespace_start = next_start;
-        let namespace_end = namespace_start + ns.len();
-        next_start = namespace_end + 1;
-        namespace_start..namespace_end
-    });
-
-    let id_start = next_start;
-    let id_end = id_start + id.len();
-    let id_range = match id_start..id_end {
-        range if range.is_empty() => None,
-        range => Some(range),
-    };
-
-    (method_range, namespace_range, id_range)
 }
