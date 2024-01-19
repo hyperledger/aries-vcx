@@ -13,19 +13,30 @@ macro_rules! test_cases_negative {
 }
 
 test_cases_negative! {
-    test_failure_case1: ""
-    test_failure_case2: "not-a-did"
-    test_failure_case3: "did:example"
-    test_failure_case4: "did:example:123456789abcdefghi/path?query1=value1&query2"
-    test_failure_case5: "/"
-    test_failure_case6: "/?"
-    test_failure_case7: "/#"
-    test_failure_case8: ";"
-    test_failure_case9: ";?"
-    test_failure_case10: ";#"
-    test_failure_case11: "did:example:123456789abcdefghi#fragment1#fragment2"
-    test_failure_case12: "did:example:123456789abcdefghi&query1=value1"
-    test_failure_case13: "did:example:123456789abcdefghi?query1=v^lue1"
-    test_failure_case14: "did:example:123456789abcdefghi#fr^gment"
-    test_failure_case15: "did:example:123456789abcdefghi/path??"
+    empty:
+        ""
+    random_string:
+        "not-a-did"
+    no_method_specific_id:
+        "did:example"
+    no_equal_sign_after_last_query:
+        "did:example:123456789abcdefghi/path?query1=value1&query2"
+    no_equal_sign_after_query:
+        "did:example:123456789abcdefghi/path?query1"
+    fragment_doubled:
+        "did:example:123456789abcdefghi#fragment1#fragment2"
+    fragment_invalid_char:
+        "did:example:123456789abcdefghi#fr^gment"
+    query_doubled:
+        "did:example:123456789abcdefghi/path??"
+    query_not_delimited:
+        "did:example:123456789abcdefghi&query1=value1"
+    query_invalid_char:
+        "did:example:123456789abcdefghi?query1=v^lue1"
+    relative_empty_path: "/"
+    relative_empty_path_and_query: "/?"
+    relative_empty_path_and_fragment: "/#"
+    relative_semicolon: ";"
+    relative_semicolon_query: ";?"
+    relative_semicolon_fragment: ";#"
 }
