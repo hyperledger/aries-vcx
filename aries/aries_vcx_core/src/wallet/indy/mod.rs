@@ -84,7 +84,7 @@ impl Drop for IndyWalletRecordIterator {
 }
 
 #[derive(Clone, Debug, Default, TypedBuilder, Serialize, Deserialize)]
-#[builder(field_defaults(setter(into), default))]
+#[builder(field_defaults(default))]
 pub struct WalletConfig {
     pub wallet_name: String,
     pub wallet_key: String,
@@ -107,7 +107,7 @@ pub struct WalletConfig {
 }
 
 #[derive(Clone, Debug, Default, TypedBuilder, Serialize, Deserialize)]
-#[builder(field_defaults(setter(into), default))]
+#[builder(field_defaults(default))]
 pub struct IssuerConfig {
     pub institution_did: String,
 }

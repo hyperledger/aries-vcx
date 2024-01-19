@@ -36,9 +36,9 @@ mod dbtests {
         let enterprise_seed = "000000000000000000000000Trustee1";
         let config_wallet = WalletConfig::builder()
             .wallet_name(format!("faber_wallet_{}", uuid::Uuid::new_v4()))
-            .wallet_key(settings::DEFAULT_WALLET_KEY)
-            .wallet_key_derivation(settings::WALLET_KDF_RAW)
-            .wallet_type("mysql")
+            .wallet_key(settings::DEFAULT_WALLET_KEY.into())
+            .wallet_key_derivation(settings::WALLET_KDF_RAW.into())
+            .wallet_type("mysql".into())
             .storage_config(storage_config)
             .storage_credentials(storage_credentials)
             .build();
