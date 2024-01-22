@@ -1,0 +1,11 @@
+[package]
+name = "did_parser_nom"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nom = "7.1.3"
+serde = "1.0.160"
+
+[dev-dependencies]
+serde_test = "1.0.176"
