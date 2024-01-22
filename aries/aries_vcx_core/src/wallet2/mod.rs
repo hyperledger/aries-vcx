@@ -14,7 +14,7 @@ pub mod indy_wallet;
 pub mod entry_tag;
 pub mod utils;
 
-#[derive(Debug, Default, Clone, TypedBuilder)]
+#[derive(Debug, Clone, TypedBuilder)]
 pub struct Record {
     category: String,
     name: String,
