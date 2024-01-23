@@ -395,7 +395,6 @@ version = "0.1.0"
 dependencies = [
  "agency_client",
  "async-trait",
- "derive_builder",
  "futures",
  "indy-api-types",
  "indy-credx",
@@ -413,6 +412,7 @@ dependencies = [
  "thiserror",
  "time 0.3.20",
  "tokio",
+ "typed-builder 0.18.1",
  "uuid 1.5.0",
 ]
 
@@ -2959,7 +2959,7 @@ dependencies = [
  "strum_macros 0.24.3",
  "thiserror",
  "transitive",
- "typed-builder",
+ "typed-builder 0.16.2",
  "url",
 ]
 
@@ -4940,7 +4940,16 @@ version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34085c17941e36627a879208083e25d357243812c30e7d7387c3b954f30ade16"
 dependencies = [
- "typed-builder-macro",
+ "typed-builder-macro 0.16.2",
+]
+
+[[package]]
+name = "typed-builder"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "444d8748011b93cb168770e8092458cb0f8854f931ff82fdf6ddfbd72a9c933e"
+dependencies = [
+ "typed-builder-macro 0.18.1",
 ]
 
 [[package]]
@@ -4948,6 +4957,17 @@ name = "typed-builder-macro"
 version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f03ca4cb38206e2bef0700092660bb74d696f808514dae47fa1467cbfe26e96e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.38",
+]
+
+[[package]]
+name = "typed-builder-macro"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "563b3b88238ec95680aef36bdece66896eaa7ce3c0f1b4f39d38fb2435261352"
 dependencies = [
  "proc-macro2",
  "quote",

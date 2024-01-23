@@ -27,7 +27,7 @@ rand = "0.8.5"
 log = "0.4.17"
 thiserror = "1.0.40"
 lazy_static = "1.4.0"
-derive_builder = "0.12.0"
+typed-builder = "0.18.1"
 uuid = { version = "1.3.0", default-features = false, features = ["v4"] }
 tokio = { version = "1.20" }
 indy-vdr-proxy-client = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", optional = true }
