@@ -12,9 +12,12 @@ use sqlx::{
 };
 
 use super::super::MediatorPersistence;
-use crate::persistence::{
-    errors::{CreateAccountError, GetAccountDetailsError, ListAccountsError},
-    AccountDetails,
+use crate::{
+    persistence::{
+        errors::{CreateAccountError, GetAccountDetailsError, ListAccountsError},
+        AccountDetails,
+    },
+    utils::structs::VerKey,
 };
 
 pub async fn get_db_pool() -> MySqlPool {
@@ -78,7 +81,9 @@ impl MediatorPersistence for sqlx::MySqlPool {
             };
         Ok(account_id)
     }
-    async fn list_accounts(&self) -> Result<Vec<(String, String)>, ListAccountsError> {
+    /// Returns list of accounts in form of tuples containing
+    /// account_name and associated auth_pubkey
+    async fn list_accounts(&self) -> Result<Vec<(String, VerKey)>, ListAccountsError> {
         let accounts_rows: Vec<MySqlRow> =
             sqlx::query("SELECT account_name, auth_pubkey FROM accounts;")
                 .fetch_all(self)
@@ -229,7 +234,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
         &self,
         auth_pubkey: &str,
         limit: u32,
-        recipient_key: Option<&String>,
+        recipient_key: Option<&VerKey>,
     ) -> Result<Vec<(String, Vec<u8>)>, String> {
         info!(
             "Processing retrieve for messages to recipient_key {:#?} of auth_pubkey {:#?}",
@@ -313,13 +318,13 @@ impl MediatorPersistence for sqlx::MySqlPool {
             }
         }
     }
-    async fn list_recipient_keys(&self, auth_pubkey: &str) -> Result<Vec<String>, String> {
+    async fn list_recipient_keys(&self, auth_pubkey: &str) -> Result<Vec<VerKey>, String> {
         info!(
             "Retrieving recipient_keys for account with auth_pubkey {:#?}",
             auth_pubkey
         );
         let account_id: Vec<u8> = self.get_account_id(auth_pubkey).await?;
-        let recipient_keys: Vec<String> =
+        let recipient_keys: Vec<VerKey> =
             match sqlx::query("SELECT (recipient_key) FROM recipients WHERE account_id = ?;")
                 .bind(&account_id)
                 .fetch_all(self)
