@@ -21,7 +21,7 @@ pub enum GetAccountIdError {
     #[error("No account found matching given input")]
     NotFound,
     #[error(transparent)]
-    hkpLXwHUQError(#[from] Box<dyn std::error::Error>),
+    hkpLXwHUQError(#[from] anyhow::Error),
 }
 
 #[derive(Error, Debug)]

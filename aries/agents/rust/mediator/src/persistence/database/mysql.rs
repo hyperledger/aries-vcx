@@ -14,7 +14,9 @@ use sqlx::{
 use super::super::MediatorPersistence;
 use crate::{
     persistence::{
-        errors::{CreateAccountError, GetAccountDetailsError, ListAccountsError},
+        errors::{
+            CreateAccountError, GetAccountDetailsError, GetAccountIdError, ListAccountsError,
+        },
         AccountDetails,
     },
     utils::structs::VerKey,
@@ -66,19 +68,14 @@ impl MediatorPersistence for sqlx::MySqlPool {
         Ok(())
     }
     /// Get account id associated with auth_pubkey
-    async fn get_account_id(&self, auth_pubkey: &str) -> Result<Vec<u8>, String> {
+    async fn get_account_id(&self, auth_pubkey: &str) -> Result<Vec<u8>, GetAccountIdError> {
         let account_id: Vec<u8> =
-            match sqlx::query("SELECT (account_id) FROM accounts WHERE auth_pubkey = ?;")
+            sqlx::query("SELECT (account_id) FROM accounts WHERE auth_pubkey = ?;")
                 .bind(auth_pubkey)
                 .fetch_one(self)
                 .await
-            {
-                Ok(account_row) => account_row.get("account_id"),
-                Err(err) => {
-                    info!("Error while finding account, {:#?}", err);
-                    return Err(format!("{:#}", err));
-                }
-            };
+                .map_err(|e| anyhow!(e))?
+                .get("account_id");
         Ok(account_id)
     }
     /// Returns list of accounts in form of tuples containing
