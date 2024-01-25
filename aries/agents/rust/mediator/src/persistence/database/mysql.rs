@@ -13,7 +13,7 @@ use sqlx::{
 
 use super::super::MediatorPersistence;
 use crate::persistence::{
-    errors::{GetAccountDetailsError, ListAccountsError},
+    errors::{CreateAccountError, GetAccountDetailsError, ListAccountsError},
     AccountDetails,
 };
 
@@ -36,7 +36,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
         auth_pubkey: &str,
         our_signing_key: &str,
         did_doc: &str,
-    ) -> Result<(), String> {
+    ) -> Result<(), CreateAccountError> {
         info!(
             "Adding new account to database with auth_pubkey {:#?}",
             &auth_pubkey
@@ -51,12 +51,14 @@ impl MediatorPersistence for sqlx::MySqlPool {
         .await;
         if let Err(err) = insert_result {
             info!("Error during creating new account, {:#?}", err);
-            return Err(format!("{:#}", err));
+            return Err(CreateAccountError::StorageBackendError {
+                source: anyhow!(err),
+            });
         };
-        let account_id = self.get_account_id(auth_pubkey).await?;
+        let account_details = self.get_account_details(auth_pubkey).await?;
         info!(
-            "Created account {:x?} for auth_pubkey {:#?}",
-            &account_id, &auth_pubkey
+            "Created account {:?} for auth_pubkey {:#?}",
+            &account_details, &auth_pubkey
         );
         Ok(())
     }
@@ -101,8 +103,11 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .await
             .map_err(|e| match e {
                 sqlx::error::Error::RowNotFound => GetAccountDetailsError::NotFound,
-                _ => GetAccountDetailsError::LowerLayerError(Box::new(e)),
+                _ => GetAccountDetailsError::LowerLayerError(anyhow!(e)),
             })?;
+        let account_id = row
+            .try_get("account_id")
+            .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
         let account_name = row
             .try_get("account_name")
             .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
@@ -116,6 +121,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .try_get::<serde_json::Value, &str>("did_doc")
             .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
         let account_details = AccountDetails {
+            account_id,
             account_name,
             auth_pubkey,
             our_signing_key,

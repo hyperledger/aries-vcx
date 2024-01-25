@@ -228,7 +228,8 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
     ) -> Result<(), String> {
         self.persistence
             .create_account(their_vk, our_vk, &json!(did_doc).to_string())
-            .await?;
+            .await
+            .map_err(string_from_std_error)?;
         Ok(())
     }
 }

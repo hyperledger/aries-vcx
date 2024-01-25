@@ -8,10 +8,12 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum CreateAccountError {
-    #[error("Possibly created account, but failed to retrieve created account ID")]
-    GetAccountIdError(#[from] GetAccountIdError),
+    #[error("Failed to create account in storage layer")]
+    StorageBackendError { source: anyhow::Error },
+    #[error("Possibly created account, but failed to retrieve created account's ID")]
+    GetAccountDetailsError(#[from] GetAccountDetailsError),
     #[error(transparent)]
-    LowerLayerError(#[from] Box<dyn std::error::Error>),
+    LowerLayerError(#[from] anyhow::Error),
 }
 
 #[derive(Error, Debug)]
@@ -32,8 +34,8 @@ pub enum ListAccountsError {
 pub enum GetAccountDetailsError {
     #[error("No account found matching given input")]
     NotFound,
-    #[error("Couldn't decode retrieved data to expected account details structure: {0}")]
+    #[error("Couldn't retrieve or decode expected account details: {0}")]
     DecodeError(String),
     #[error(transparent)]
-    LowerLayerError(#[from] Box<dyn std::error::Error>),
+    LowerLayerError(#[from] anyhow::Error),
 }
