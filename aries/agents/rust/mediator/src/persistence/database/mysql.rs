@@ -1,6 +1,8 @@
 // Copyright 2023 Naian G.
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fmt::format;
+
 use anyhow::anyhow;
 use async_trait::async_trait;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
@@ -15,7 +17,9 @@ use super::super::MediatorPersistence;
 use crate::{
     persistence::{
         errors::{
-            CreateAccountError, GetAccountDetailsError, GetAccountIdError, ListAccountsError,
+            AddRecipientError, CreateAccountError, GetAccountDetailsError, GetAccountIdError,
+            ListAccountsError, ListRecipientKeysError, RemoveRecipientError,
+            RetrievePendingMessageCountError, RetrievePendingMessagesError,
         },
         AccountDetails,
     },
@@ -74,7 +78,10 @@ impl MediatorPersistence for sqlx::MySqlPool {
                 .bind(auth_pubkey)
                 .fetch_one(self)
                 .await
-                .map_err(|e| anyhow!(e))?
+                .map_err(|e| match e {
+                    sqlx::Error::RowNotFound => GetAccountIdError::AccountNotFound,
+                    _ => GetAccountIdError::hkpLXwHUQError(anyhow!(e)),
+                })?
                 .get("account_id");
         Ok(account_id)
     }
@@ -104,7 +111,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .fetch_one(self)
             .await
             .map_err(|e| match e {
-                sqlx::error::Error::RowNotFound => GetAccountDetailsError::NotFound,
+                sqlx::error::Error::RowNotFound => GetAccountDetailsError::AccountNotFound,
                 _ => GetAccountDetailsError::hkpLXwHUQError(anyhow!(e)),
             })?;
         let account_id = row
@@ -198,8 +205,20 @@ impl MediatorPersistence for sqlx::MySqlPool {
         &self,
         auth_pubkey: &str,
         recipient_key: Option<&String>,
-    ) -> Result<u32, String> {
-        let account_id: Vec<u8> = self.get_account_id(auth_pubkey).await?;
+    ) -> Result<u32, RetrievePendingMessageCountError> {
+        let account_id: Vec<u8> = self
+            .get_account_id(auth_pubkey)
+            .await
+            .map_err(|e| match e {
+                GetAccountIdError::AccountNotFound => {
+                    RetrievePendingMessageCountError::AccountNotFound
+                }
+                GetAccountIdError::hkpLXwHUQError(anye) => {
+                    RetrievePendingMessageCountError::hkpLXwHUQError(
+                        anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
+                    )
+                }
+            })?;
         let message_count_result = if let Some(recipient_key) = recipient_key {
             sqlx::query(
                 "SELECT COUNT(*) FROM messages
@@ -219,7 +238,9 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .await
         };
         // MySQL BIGINT can be converted to i32 only, not u32
-        let message_count: i32 = message_count_result.unwrap().get::<i32, &str>("COUNT(*)");
+        let message_count: i32 = message_count_result
+            .map_err(|e| anyhow!(e))?
+            .get::<i32, &str>("COUNT(*)");
         let message_count: u32 = message_count.try_into().unwrap();
         info!(
             "Total message count of all requested recipients: {:#?}",
@@ -232,12 +253,22 @@ impl MediatorPersistence for sqlx::MySqlPool {
         auth_pubkey: &str,
         limit: u32,
         recipient_key: Option<&VerKey>,
-    ) -> Result<Vec<(String, Vec<u8>)>, String> {
+    ) -> Result<Vec<(String, Vec<u8>)>, RetrievePendingMessagesError> {
         info!(
             "Processing retrieve for messages to recipient_key {:#?} of auth_pubkey {:#?}",
             recipient_key, auth_pubkey
         );
-        let account_id: Vec<u8> = self.get_account_id(auth_pubkey).await?;
+        let account_id: Vec<u8> = self
+            .get_account_id(auth_pubkey)
+            .await
+            .map_err(|e| match e {
+                GetAccountIdError::AccountNotFound => RetrievePendingMessagesError::AccountNotFound,
+                GetAccountIdError::hkpLXwHUQError(anye) => {
+                    RetrievePendingMessagesError::hkpLXwHUQError(
+                        anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
+                    )
+                }
+            })?;
         let mut messages: Vec<(String, Vec<u8>)> = Vec::new();
         let mut message_rows = if let Some(recipient_key) = recipient_key {
             sqlx::query("SELECT * FROM messages WHERE (account_id = ?) AND (recipient_key = ?)")
@@ -256,7 +287,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
             // debug!("recipient {:x?}", recipient);
             // debug!("message {:x?}", msg);
             messages.push((id, msg));
-            if u32::try_from(messages.len()).unwrap() >= limit {
+            if u32::try_from(messages.len()).map_err(|e| anyhow!(e))? >= limit {
                 info!("Found enough messages {:#?}", limit);
                 break;
             }
@@ -267,75 +298,100 @@ impl MediatorPersistence for sqlx::MySqlPool {
         );
         Ok(messages)
     }
-    async fn add_recipient(&self, auth_pubkey: &str, recipient_key: &str) -> Result<(), String> {
+    async fn add_recipient(
+        &self,
+        auth_pubkey: &str,
+        recipient_key: &str,
+    ) -> Result<(), AddRecipientError> {
         info!(
             "Adding recipient_key to account with auth_pubkey {:#?}",
             auth_pubkey
         );
-        let account_id: Vec<u8> = self.get_account_id(auth_pubkey).await?;
+        let account_id: Vec<u8> = self
+            .get_account_id(auth_pubkey)
+            .await
+            .map_err(|e| match e {
+                GetAccountIdError::AccountNotFound => AddRecipientError::AccountNotFound,
+                GetAccountIdError::hkpLXwHUQError(anye) => AddRecipientError::hkpLXwHUQError(
+                    anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
+                ),
+            })?;
         info!(
             "Found matching account {:x?}. Proceeding with attempt to add recipient recipient_key \
              {:#?} ",
             account_id, recipient_key
         );
-        match sqlx::query("INSERT INTO recipients (account_id, recipient_key) VALUES (?, ?);")
+        sqlx::query("INSERT INTO recipients (account_id, recipient_key) VALUES (?, ?);")
             .bind(&account_id)
             .bind(recipient_key)
             .execute(self)
             .await
-        {
-            Ok(_result) => Ok(()),
-            Err(err) => {
-                info!("Error while adding recipient, {:#}", err);
-                Err(format!("{:#}", err))
-            }
-        }
+            .map_err(|e| {
+                anyhow!(e).context("Error while inserting recipient entry into the database")
+            })?;
+        Ok(())
     }
-    async fn remove_recipient(&self, auth_pubkey: &str, recipient_key: &str) -> Result<(), String> {
+    async fn remove_recipient(
+        &self,
+        auth_pubkey: &str,
+        recipient_key: &str,
+    ) -> Result<(), RemoveRecipientError> {
         info!(
             "Removing recipient_key from account with auth_pubkey {:#?}",
             auth_pubkey
         );
-        let account_id: Vec<u8> = self.get_account_id(auth_pubkey).await?;
+        let account_id: Vec<u8> = self
+            .get_account_id(auth_pubkey)
+            .await
+            .map_err(|e| match e {
+                GetAccountIdError::AccountNotFound => RemoveRecipientError::AccountNotFound,
+                GetAccountIdError::hkpLXwHUQError(anye) => RemoveRecipientError::hkpLXwHUQError(
+                    anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
+                ),
+            })?;
         info!(
             "Found matching account {:x?}. Proceeding with attempt to remove recipient \
              recipient_key {:#?} ",
             account_id, recipient_key
         );
-        match sqlx::query("DELETE FROM recipients WHERE (account_id = ?) AND (recipient_key = ?);")
+        sqlx::query("DELETE FROM recipients WHERE (account_id = ?) AND (recipient_key = ?);")
             .bind(&account_id)
             .bind(recipient_key)
             .execute(self)
             .await
-        {
-            Ok(_result) => Ok(()),
-            Err(err) => {
-                info!("Error while removing recipient, {:#}", err);
-                Err(format!("{:#}", err))
-            }
-        }
+            .map_err(|e| {
+                anyhow!(e).context("Error while deleting recipient entry from the database")
+            })?;
+        Ok(())
     }
-    async fn list_recipient_keys(&self, auth_pubkey: &str) -> Result<Vec<VerKey>, String> {
+    async fn list_recipient_keys(
+        &self,
+        auth_pubkey: &str,
+    ) -> Result<Vec<VerKey>, ListRecipientKeysError> {
         info!(
             "Retrieving recipient_keys for account with auth_pubkey {:#?}",
             auth_pubkey
         );
-        let account_id: Vec<u8> = self.get_account_id(auth_pubkey).await?;
+        let account_id: Vec<u8> = self
+            .get_account_id(auth_pubkey)
+            .await
+            .map_err(|e| match e {
+                GetAccountIdError::AccountNotFound => ListRecipientKeysError::AccountNotFound,
+                GetAccountIdError::hkpLXwHUQError(anye) => ListRecipientKeysError::hkpLXwHUQError(
+                    anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
+                ),
+            })?;
         let recipient_keys: Vec<VerKey> =
-            match sqlx::query("SELECT (recipient_key) FROM recipients WHERE account_id = ?;")
+            sqlx::query("SELECT (recipient_key) FROM recipients WHERE account_id = ?;")
                 .bind(&account_id)
                 .fetch_all(self)
                 .await
-            {
-                Ok(recipient_key_rows) => recipient_key_rows
-                    .into_iter()
-                    .map(|row| row.get("recipient_key"))
-                    .collect(),
-                Err(err) => {
-                    info!("Error while getting recipient_keys, {:#}", err);
-                    return Err(format!("{:#}", err));
-                }
-            };
+                .map_err(|e| {
+                    anyhow!(e).context("Error while fetching recipient_keys from database")
+                })?
+                .into_iter()
+                .map(|row| row.get("recipient_key"))
+                .collect();
         Ok(recipient_keys)
     }
 }
