@@ -22,7 +22,7 @@ use aries_vcx::{
 };
 use aries_vcx_core::wallet::{
     base_wallet::{DidWallet, Record, RecordWallet},
-    indy::{IndyTags, WalletRecord},
+    indy::{IndyTags, IndyWalletRecord},
 };
 use futures::FutureExt;
 use public_key::{Key, KeyType};
@@ -286,7 +286,7 @@ pub async fn wallet_get_wallet_record(
         wallet
             .get_record(xtype, id)
             .map(|res| {
-                let wallet_record = WalletRecord::from_record(res?)?;
+                let wallet_record = IndyWalletRecord::from_record(res?)?;
 
                 Ok(serde_json::to_string(&wallet_record)?)
             })
@@ -437,7 +437,7 @@ pub mod test_utils {
 mod tests {
     use aries_vcx::{
         aries_vcx_core::wallet::indy::{
-            wallet::delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord,
+            wallet::delete_wallet, IndyWalletRecord, RestoreWalletConfigs, WalletConfig,
         },
         global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
     };
@@ -574,7 +574,7 @@ mod tests {
         .to_string();
 
         let record = wallet_get_wallet_record(&xtype, &id, &options).await?;
-        let record: WalletRecord = serde_json::from_str(&record)?;
+        let record: IndyWalletRecord = serde_json::from_str(&record)?;
         assert_eq!(record.value.unwrap(), value);
         Ok(())
     }
@@ -749,7 +749,7 @@ mod tests {
             .await
             .unwrap();
         let record = wallet_get_wallet_record(&xtype, &id, "{}").await.unwrap();
-        let record: WalletRecord = serde_json::from_str(&record).unwrap();
+        let record: IndyWalletRecord = serde_json::from_str(&record).unwrap();
         assert_eq!(record.value.unwrap(), new_value);
     }
 }

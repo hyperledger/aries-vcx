@@ -73,7 +73,7 @@ struct WalletCredentials {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct WalletRecord {
+pub struct IndyWalletRecord {
     id: Option<String>,
     #[serde(rename = "type")]
     record_type: Option<String>,
@@ -81,7 +81,7 @@ pub struct WalletRecord {
     tags: Option<String>,
 }
 
-impl WalletRecord {
+impl IndyWalletRecord {
     pub fn from_record(record: Record) -> VcxCoreResult<Self> {
         let tags = if record.tags().is_empty() {
             None

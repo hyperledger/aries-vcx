@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 #[cfg(feature = "vdrtools_wallet")]
-use indy_api_types::domain::wallet::Record as IndyRecord;
+use indy_api_types::domain::wallet::IndyRecord;
 use public_key::Key;
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;

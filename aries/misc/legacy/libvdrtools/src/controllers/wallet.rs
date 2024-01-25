@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 // use async_std::task::spawn_blocking;
 use indy_api_types::{
-    domain::wallet::{Config, Credentials, ExportConfig, KeyConfig, Record},
+    domain::wallet::{Config, Credentials, ExportConfig, IndyRecord, KeyConfig},
     errors::prelude::*,
     WalletHandle,
 };
@@ -391,7 +391,7 @@ impl WalletController {
         &self,
         old_wh: WalletHandle,
         new_wh: WalletHandle,
-        migrate_fn: impl FnMut(Record) -> Result<Option<Record>, E>,
+        migrate_fn: impl FnMut(IndyRecord) -> Result<Option<IndyRecord>, E>,
     ) -> IndyResult<MigrationResult>
     where
         E: std::fmt::Display,

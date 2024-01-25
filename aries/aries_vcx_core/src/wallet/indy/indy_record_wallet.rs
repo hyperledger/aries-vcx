@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use indy_api_types::domain::wallet::Record as IndyRecord;
+use indy_api_types::domain::wallet::IndyRecord;
 use serde::Deserialize;
 use serde_json::Value;
 use vdrtools::Locator;
