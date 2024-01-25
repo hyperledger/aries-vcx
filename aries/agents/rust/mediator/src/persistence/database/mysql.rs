@@ -108,7 +108,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .await
             .map_err(|e| match e {
                 sqlx::error::Error::RowNotFound => GetAccountDetailsError::NotFound,
-                _ => GetAccountDetailsError::LowerLayerError(anyhow!(e)),
+                _ => GetAccountDetailsError::hkpLXwHUQError(anyhow!(e)),
             })?;
         let account_id = row
             .try_get("account_id")

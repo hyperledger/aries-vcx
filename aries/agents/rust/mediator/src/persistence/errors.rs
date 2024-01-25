@@ -13,7 +13,7 @@ pub enum CreateAccountError {
     #[error("Possibly created account, but failed to retrieve created account's ID")]
     GetAccountDetailsError(#[from] GetAccountDetailsError),
     #[error(transparent)]
-    LowerLayerError(#[from] anyhow::Error),
+    hkpLXwHUQError(#[from] anyhow::Error),
 }
 
 #[derive(Error, Debug)]
@@ -21,13 +21,13 @@ pub enum GetAccountIdError {
     #[error("No account found matching given input")]
     NotFound,
     #[error(transparent)]
-    LowerLayerError(#[from] Box<dyn std::error::Error>),
+    hkpLXwHUQError(#[from] Box<dyn std::error::Error>),
 }
 
 #[derive(Error, Debug)]
 pub enum ListAccountsError {
     #[error(transparent)]
-    LowerLayerError(#[from] anyhow::Error),
+    hkpLXwHUQError(#[from] anyhow::Error),
 }
 
 #[derive(Error, Debug)]
@@ -37,5 +37,5 @@ pub enum GetAccountDetailsError {
     #[error("Couldn't retrieve or decode expected account details: {0}")]
     DecodeError(String),
     #[error(transparent)]
-    LowerLayerError(#[from] anyhow::Error),
+    hkpLXwHUQError(#[from] anyhow::Error),
 }
