@@ -24,6 +24,7 @@ impl Convert for IndyVdrSchema {
                     version: schema.version,
                     attr_names: schema.attr_names.0.into(),
                     issuer_id: IssuerId::new(issuer_id)?,
+                    seq_no: schema.seq_no,
                 })
             }
         }

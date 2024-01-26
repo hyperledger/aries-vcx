@@ -405,6 +405,7 @@ name = "aries_vcx"
 version = "0.61.0"
 dependencies = [
  "agency_client",
+ "anoncreds_types",
  "aries_vcx_core",
  "async-channel",
  "async-trait",

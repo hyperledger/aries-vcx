@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::ledger::schema::Schema;
 use async_trait::async_trait;
 
 use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
@@ -32,8 +33,8 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         wallet: &impl BaseWallet,
         issuer_did: &str,
-        schema_json: &str,
         schema_id: &str,
+        schema_json: Schema,
         tag: &str,
         signature_type: Option<&str>,
         config_json: &str,

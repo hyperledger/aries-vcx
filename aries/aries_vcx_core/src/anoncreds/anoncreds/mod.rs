@@ -7,7 +7,7 @@ use anoncreds::{
         credential::Credential,
         issuer_id::IssuerId,
         rev_reg_def::{RevocationRegistryDefinitionId, CL_ACCUM},
-        schema::{Schema, SchemaId},
+        schema::{Schema as AnoncredsSchema, SchemaId},
     },
     issuer::{create_revocation_registry_def, create_revocation_status_list},
     tails::TailsFileWriter,
@@ -18,6 +18,7 @@ use anoncreds::{
         RevocationStatusList, SignatureType,
     },
 };
+use anoncreds_types::data_types::ledger::schema::Schema;
 use async_trait::async_trait;
 use bitvec::bitvec;
 use did_parser::Did;
@@ -287,7 +288,7 @@ impl BaseAnonCreds for Anoncreds {
         let pres_req: PresentationRequest = serde_json::from_str(proof_request_json)?;
 
         let mut schemas_val: HashMap<SchemaId, Value> = serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<SchemaId, Schema> = HashMap::new();
+        let mut schemas: HashMap<SchemaId, AnoncredsSchema> = HashMap::new();
         for (schema_id, schema_json) in schemas_val.iter_mut() {
             if let Some(v) = schema_json.as_object_mut() {
                 v.insert(
@@ -507,11 +508,12 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         issuer_did: &str,
         schema_id: &str,
-        schema_json: &str,
+        schema_json: Schema,
         tag: &str,
         signature_type: Option<&str>,
         config_json: &str,
     ) -> VcxCoreResult<(String, String)> {
+        dbg!(schema_id);
         let mut value: Value = serde_json::from_str(schema_json)?;
         value
             .as_object_mut()
@@ -527,6 +529,7 @@ impl BaseAnonCreds for Anoncreds {
 
         let cred_def_id =
             make_credential_definition_id(issuer_did, schema_id, schema_seq_no, tag, sig_type);
+        dbg!(cred_def_id.clone());
 
         // If cred def already exists, return it
         if let Ok(cred_def) = self
@@ -540,7 +543,8 @@ impl BaseAnonCreds for Anoncreds {
         let (cred_def, cred_def_priv, cred_key_correctness_proof) =
             anoncreds::issuer::create_credential_definition(
                 // Schema ID must be just the schema seq no for some reason
-                SchemaId::new_unchecked(schema_seq_no.unwrap().to_string()),
+                // SchemaId::new_unchecked(schema_seq_no.unwrap().to_string()),
+                SchemaId::new(schema_id).unwrap(),
                 &schema,
                 schema.issuer_id.clone(),
                 tag,
@@ -585,7 +589,7 @@ impl BaseAnonCreds for Anoncreds {
         let store_schema_res = wallet.add_record(record).await;
 
         if let Err(e) = store_schema_res {
-            warn!("Storing schema {schema_json} failed - {e}. It's possible it is already stored.")
+            warn!("Storing schema {schema_json:?} failed - {e}. It's possible it is already stored.")
         }
 
         let record = Record::builder()

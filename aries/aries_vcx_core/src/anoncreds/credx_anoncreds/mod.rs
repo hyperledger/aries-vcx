@@ -1,9 +1,12 @@
+mod type_conversion;
+
 use std::{
     borrow::Borrow,
     collections::{HashMap, HashSet},
     sync::Arc,
 };
 
+use anoncreds_types::data_types::ledger::schema::Schema;
 use async_trait::async_trait;
 use credx::{
     anoncreds_clsignatures::{bn::BigNumber, LinkSecret as ClLinkSecret},
@@ -13,7 +16,7 @@ use credx::{
         CredentialOffer, CredentialRequestMetadata, CredentialRevocationConfig,
         CredentialRevocationState, DidValue, IssuanceType, LinkSecret, PresentCredentials,
         Presentation, PresentationRequest, RegistryType, RevocationRegistry,
-        RevocationRegistryDefinition, RevocationRegistryDelta, RevocationRegistryId, Schema,
+        RevocationRegistryDefinition, RevocationRegistryDelta, RevocationRegistryId, Schema as CredxSchema,
         SchemaId, SignatureType,
     },
 };
@@ -22,6 +25,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};
 use uuid::Uuid;
 
+use type_conversion::Convert;
 use super::base_anoncreds::BaseAnonCreds;
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -239,7 +243,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
 
-        let schemas: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let schemas: HashMap<SchemaId, CredxSchema> = serde_json::from_str(schemas_json)?;
         let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
@@ -371,21 +375,19 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         wallet: &impl BaseWallet,
         issuer_did: &str,
         _schema_id: &str,
-        schema_json: &str,
+        schema_json: Schema,
         tag: &str,
         sig_type: Option<&str>,
         config_json: &str,
     ) -> VcxCoreResult<(String, String)> {
         let issuer_did = issuer_did.to_owned().into();
-        let schema = serde_json::from_str(schema_json)?;
         let sig_type = sig_type
             .map(serde_json::from_str)
             .unwrap_or(Ok(SignatureType::CL))?;
         let config = serde_json::from_str(config_json)?;
 
-        let schema_seq_no = match &schema {
-            Schema::SchemaV1(s) => s.seq_no,
-        };
+        let schema_seq_no = schema_json.seq_no.clone();
+        let schema = Convert::convert(schema_json.clone(), ())?;
 
         let cred_def_id = credx::issuer::make_credential_definition_id(
             &issuer_did,
@@ -439,12 +441,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let record = Record::builder()
             .name(schema.id().to_string())
             .category(CATEGORY_CRED_SCHEMA.to_string())
-            .value(schema_json.into())
+            .value(serde_json::to_string(&schema_json)?)
             .build();
         let store_schema_res = wallet.add_record(record).await;
 
         if let Err(e) = store_schema_res {
-            warn!("Storing schema {schema_json} failed - {e}. It's possible it is already stored.")
+            warn!("Storing schema {schema_json:?} failed - {e}. It's possible it is already stored.")
         }
 
         let record = Record::builder()
@@ -634,7 +636,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             None
         };
 
-        let schemas: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let schemas: HashMap<SchemaId, CredxSchema> = serde_json::from_str(schemas_json)?;
         let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 

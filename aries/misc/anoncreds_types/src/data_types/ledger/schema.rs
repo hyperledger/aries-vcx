@@ -10,6 +10,8 @@ pub const MAX_ATTRIBUTES_COUNT: usize = 125;
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Schema {
+    // pub id: SchemaId,
+    pub seq_no: Option<u32>,
     pub name: String,
     pub version: String,
     pub attr_names: AttributeNames,
@@ -35,6 +37,12 @@ impl From<Vec<String>> for AttributeNames {
 impl From<HashSet<String>> for AttributeNames {
     fn from(attrs: HashSet<String>) -> Self {
         Self(attrs.into_iter().collect::<Vec<_>>())
+    }
+}
+
+impl From<AttributeNames> for HashSet<String> {
+    fn from(value: AttributeNames) -> Self {
+        value.0.into_iter().collect::<HashSet<String>>()
     }
 }
 

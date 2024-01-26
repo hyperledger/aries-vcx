@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::ledger::schema::Schema;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,
@@ -112,17 +113,15 @@ impl CredentialDef {
             schema_id,
             tag,
         } = config;
-        let schema_json = serde_json::to_string(
-            &ledger_read
-                .get_schema(&schema_id, Some(&issuer_did))
-                .await?,
-        )?;
+        let schema_json = ledger_read
+            .get_schema(&schema_id, Some(&issuer_did))
+            .await?;
         let (cred_def_id, cred_def_json) = generate_cred_def(
             wallet,
             anoncreds,
             &issuer_did,
             &schema_id,
-            &schema_json,
+            schema_json,
             &tag,
             None,
             Some(support_revocation),
@@ -243,13 +242,13 @@ pub async fn generate_cred_def(
     anoncreds: &impl BaseAnonCreds,
     issuer_did: &str,
     schema_id: &str,
-    schema_json: &str,
+    schema_json: Schema,
     tag: &str,
     sig_type: Option<&str>,
     support_revocation: Option<bool>,
 ) -> VcxResult<(String, String)> {
     trace!(
-        "generate_cred_def >>> issuer_did: {}, schema_json: {}, tag: {}, sig_type: {:?}, \
+        "generate_cred_def >>> issuer_did: {}, schema_json: {:?}, tag: {}, sig_type: {:?}, \
          support_revocation: {:?}",
         issuer_did,
         schema_json,
