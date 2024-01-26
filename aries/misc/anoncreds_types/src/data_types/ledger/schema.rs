@@ -1,12 +1,11 @@
-use crate::impl_anoncreds_object_identifier;
+use crate::{
+    data_types::identifiers::issuer_id::IssuerId, error::ValidationError,
+    utils::validation::Validatable,
+};
 
 use std::collections::HashSet;
 
-use super::issuer_id::IssuerId;
-
 pub const MAX_ATTRIBUTES_COUNT: usize = 125;
-
-impl_anoncreds_object_identifier!(SchemaId);
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]

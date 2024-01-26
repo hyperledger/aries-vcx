@@ -5,12 +5,11 @@ use std::collections::HashMap;
 use zeroize::Zeroize;
 
 use crate::cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessProof, Witness};
+use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
+use crate::data_types::identifiers::rev_reg_def_id::RevocationRegistryDefinitionId;
+use crate::data_types::identifiers::schema_id::SchemaId;
 use crate::error::{ConversionError, ValidationError};
 use crate::utils::validation::Validatable;
-
-use crate::data_types::ledger::{
-    cred_def::CredentialDefinitionId, rev_reg_def::RevocationRegistryDefinitionId, schema::SchemaId,
-};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Credential {

@@ -1,6 +1,6 @@
 use crate::cl::CredentialKeyCorrectnessProof;
-use crate::data_types::ledger::cred_def::CredentialDefinitionId;
-use crate::data_types::ledger::schema::SchemaId;
+use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
+use crate::data_types::identifiers::schema_id::SchemaId;
 use crate::error::ValidationError;
 use crate::utils::validation::Validatable;
 

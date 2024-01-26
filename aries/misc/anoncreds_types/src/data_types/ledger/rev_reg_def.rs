@@ -3,14 +3,12 @@ use std::str::FromStr;
 use anoncreds_clsignatures::RevocationKeyPrivate;
 
 use crate::cl::RevocationKeyPublic;
-use crate::{error::ConversionError, impl_anoncreds_object_identifier};
-
-use super::cred_def::CredentialDefinitionId;
-use super::issuer_id::IssuerId;
+use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
+use crate::data_types::identifiers::issuer_id::IssuerId;
+use crate::error::{ConversionError, ValidationError};
+use crate::utils::validation::Validatable;
 
 pub const CL_ACCUM: &str = "CL_ACCUM";
-
-impl_anoncreds_object_identifier!(RevocationRegistryDefinitionId);
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]

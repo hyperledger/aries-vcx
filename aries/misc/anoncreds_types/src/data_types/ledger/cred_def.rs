@@ -3,14 +3,12 @@ use std::str::FromStr;
 use anoncreds_clsignatures::CredentialPrivateKey;
 
 use crate::cl::{CredentialPrimaryPublicKey, CredentialPublicKey, CredentialRevocationPublicKey};
-use crate::{error::ConversionError, impl_anoncreds_object_identifier};
-
-use super::issuer_id::IssuerId;
-use super::schema::SchemaId;
+use crate::data_types::identifiers::issuer_id::IssuerId;
+use crate::data_types::identifiers::schema_id::SchemaId;
+use crate::error::{ConversionError, ValidationError};
+use crate::utils::validation::Validatable;
 
 pub const CL_SIGNATURE_TYPE: &str = "CL";
-
-impl_anoncreds_object_identifier!(CredentialDefinitionId);
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SignatureType {

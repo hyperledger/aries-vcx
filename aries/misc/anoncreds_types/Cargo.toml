@@ -7,6 +7,11 @@ edition = "2021"
 name = "anoncreds_types"
 path = "src/lib.rs"
 
+[features]
+messages = []
+ledger = []
+default = ["messages", "ledger"]
+
 [dependencies]
 anoncreds-clsignatures = "0.3.1"
 bitvec = "1.0.1"

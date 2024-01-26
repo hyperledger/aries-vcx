@@ -1,5 +1,5 @@
 use crate::cl::{BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof};
-use crate::data_types::ledger::cred_def::CredentialDefinitionId;
+use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use crate::error::{Result, ValidationError};
 use crate::invalid;
 use crate::utils::validation::{Validatable, LEGACY_DID_IDENTIFIER};
