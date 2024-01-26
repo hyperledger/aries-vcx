@@ -8,7 +8,7 @@ use crate::cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessPro
 use crate::error::{ConversionError, ValidationError};
 use crate::utils::validation::Validatable;
 
-use crate::data_types::{
+use crate::data_types::ledger::{
     cred_def::CredentialDefinitionId, rev_reg_def::RevocationRegistryDefinitionId, schema::SchemaId,
 };
 

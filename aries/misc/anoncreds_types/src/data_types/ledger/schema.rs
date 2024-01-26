@@ -1,6 +1,8 @@
-use crate::{data_types::issuer_id::IssuerId, impl_anoncreds_object_identifier};
+use crate::impl_anoncreds_object_identifier;
 
 use std::collections::HashSet;
+
+use super::issuer_id::IssuerId;
 
 pub const MAX_ATTRIBUTES_COUNT: usize = 125;
 

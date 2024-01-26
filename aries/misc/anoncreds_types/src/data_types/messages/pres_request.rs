@@ -5,14 +5,15 @@ use std::fmt;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::data_types::credential::Credential;
-use crate::data_types::nonce::Nonce;
 use crate::error::ValidationError;
 use crate::invalid;
 use crate::utils::{
     query::Query,
     validation::{self, Validatable},
 };
+
+use super::credential::Credential;
+use super::nonce::Nonce;
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct PresentationRequestPayload {

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use crate::cl::Proof;
-use crate::data_types::cred_def::CredentialDefinitionId;
-use crate::data_types::rev_reg_def::RevocationRegistryDefinitionId;
-use crate::data_types::schema::SchemaId;
+use crate::data_types::ledger::cred_def::CredentialDefinitionId;
+use crate::data_types::ledger::rev_reg_def::RevocationRegistryDefinitionId;
+use crate::data_types::ledger::schema::SchemaId;
 use crate::error::ValidationError;
 use crate::utils::validation::Validatable;
 

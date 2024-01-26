@@ -1,9 +1,12 @@
 use std::str::FromStr;
 
+use anoncreds_clsignatures::RevocationKeyPrivate;
+
 use crate::cl::RevocationKeyPublic;
-use crate::data_types::cred_def::CredentialDefinitionId;
-use crate::data_types::issuer_id::IssuerId;
 use crate::{error::ConversionError, impl_anoncreds_object_identifier};
+
+use super::cred_def::CredentialDefinitionId;
+use super::issuer_id::IssuerId;
 
 pub const CL_ACCUM: &str = "CL_ACCUM";
 
@@ -58,4 +61,9 @@ impl Validatable for RevocationRegistryDefinition {
 
         Ok(())
     }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct RevocationRegistryDefinitionPrivate {
+    pub value: RevocationKeyPrivate,
 }

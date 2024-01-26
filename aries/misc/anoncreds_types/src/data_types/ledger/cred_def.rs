@@ -1,9 +1,12 @@
 use std::str::FromStr;
 
+use anoncreds_clsignatures::CredentialPrivateKey;
+
 use crate::cl::{CredentialPrimaryPublicKey, CredentialPublicKey, CredentialRevocationPublicKey};
-use crate::data_types::issuer_id::IssuerId;
-use crate::data_types::schema::SchemaId;
 use crate::{error::ConversionError, impl_anoncreds_object_identifier};
+
+use super::issuer_id::IssuerId;
+use super::schema::SchemaId;
 
 pub const CL_SIGNATURE_TYPE: &str = "CL";
 
@@ -76,4 +79,9 @@ impl Validatable for CredentialDefinition {
 
         Ok(())
     }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CredentialDefinitionPrivate {
+    pub value: CredentialPrivateKey,
 }
