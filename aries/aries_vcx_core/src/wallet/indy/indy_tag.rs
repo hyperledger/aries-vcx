@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::wallet::entry_tag::{EntryTag, EntryTags};
+use crate::wallet::entry_tag::{pair_into_entry_tag, EntryTag, EntryTags};
 
 pub struct IndyTag((String, String));
 
@@ -16,11 +16,7 @@ impl IndyTag {
     pub fn into_entry_tag(self) -> EntryTag {
         let inner = self.into_inner();
 
-        if inner.0.starts_with('~') {
-            EntryTag::Plaintext(inner.0.trim_start_matches('~').into(), inner.1)
-        } else {
-            EntryTag::Encrypted(inner.0, inner.1)
-        }
+        pair_into_entry_tag(inner)
     }
 
     pub fn from_entry_tag(tag: EntryTag) -> Self {

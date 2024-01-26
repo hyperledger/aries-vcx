@@ -83,7 +83,6 @@ mod tests {
         wallet::{
             base_wallet::{DidWallet, Record, RecordWallet},
             entry_tag::{EntryTag, EntryTags},
-            indy::IndySdkWallet,
         },
     };
 
@@ -97,26 +96,10 @@ mod tests {
 
     async fn build_test_wallet() -> impl BaseWallet {
         #[cfg(feature = "vdrtools_wallet")]
-        return dev_setup_indy_wallet().await;
-    }
-
-    #[cfg(feature = "vdrtools_wallet")]
-    async fn dev_setup_indy_wallet() -> IndySdkWallet {
-        use crate::wallet::indy::{wallet::create_and_open_wallet, WalletConfig};
-
-        let config_wallet = WalletConfig {
-            wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
-            wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
-            wallet_key_derivation: "RAW".into(),
-            wallet_type: None,
-            storage_config: None,
-            storage_credentials: None,
-            rekey: None,
-            rekey_derivation_method: None,
-        };
-        let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
-
-        IndySdkWallet::new(wallet_handle)
+        {
+            use crate::wallet::indy::test::dev_setup_indy_wallet;
+            dev_setup_indy_wallet().await
+        }
     }
 
     #[tokio::test]

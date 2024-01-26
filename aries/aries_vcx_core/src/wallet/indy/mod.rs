@@ -10,7 +10,6 @@ mod indy_did_wallet;
 mod indy_record_wallet;
 pub mod indy_tag;
 pub mod internal;
-pub mod signing;
 pub mod wallet;
 pub mod wallet_non_secrets;
 
@@ -134,3 +133,26 @@ const WALLET_OPTIONS: &str =
 const SEARCH_OPTIONS: &str = r#"{"retrieveType": true, "retrieveValue": true, "retrieveTags": true, "retrieveRecords": true}"#;
 
 impl BaseWallet for IndySdkWallet {}
+
+#[cfg(test)]
+pub mod test {
+    use super::IndySdkWallet;
+
+    pub async fn dev_setup_indy_wallet() -> IndySdkWallet {
+        use crate::wallet::indy::{wallet::create_and_open_wallet, WalletConfig};
+
+        let config_wallet = WalletConfig {
+            wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
+            wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
+            wallet_key_derivation: "RAW".into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None,
+        };
+        let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
+
+        IndySdkWallet::new(wallet_handle)
+    }
+}

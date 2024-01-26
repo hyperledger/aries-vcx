@@ -32,7 +32,6 @@ use crate::{
     wallet::{
         base_wallet::{record::Record, search_filter::SearchFilter, BaseWallet, RecordWallet},
         entry_tag::EntryTags,
-        indy::indy_tag::IndyTags,
     },
 };
 
@@ -1029,13 +1028,13 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let credential_id = cred_id.map_or(Uuid::new_v4().to_string(), String::from);
 
         let record_value = serde_json::to_string(&credential)?;
-        let tags_map: HashMap<String, String> = serde_json::from_value(tags.clone())?;
+        let tags = serde_json::from_value(tags.clone())?;
 
         let record = Record::builder()
             .name(credential_id.clone())
             .category(CATEGORY_CREDENTIAL.into())
             .value(record_value)
-            .tags(IndyTags::new(tags_map).into_entry_tags())
+            .tags(tags)
             .build();
 
         wallet.add_record(record).await?;
