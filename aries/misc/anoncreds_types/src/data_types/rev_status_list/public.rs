@@ -1,8 +1,7 @@
-use super::issuer_id::IssuerId;
-use super::rev_reg::RevocationRegistry;
-use super::rev_reg_def::RevocationRegistryDefinitionId;
-
 use crate::cl::{Accumulator, RevocationRegistry as CryptoRevocationRegistry};
+use crate::data_types::issuer_id::IssuerId;
+use crate::data_types::rev_reg::RevocationRegistry;
+use crate::data_types::rev_reg_def::RevocationRegistryDefinitionId;
 use crate::Result;
 
 /// Data model for the revocation status list as defined in the [Anoncreds V1.0

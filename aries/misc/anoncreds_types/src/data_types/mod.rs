@@ -1,4 +1,6 @@
-/// Credential definitions
+// TODO: Just use features at this level and then on lower level (in the case of cred def, rev reg
+// def
+// perhaps split into messages, ledger, private?
 pub mod cred_def;
 
 /// Credential offers
@@ -39,7 +41,3 @@ pub mod macros;
 
 /// Identifier wrapper for the issuer
 pub mod issuer_id;
-
-#[cfg(feature = "w3c")]
-/// W3C Credential standard definitions
-pub mod w3c;

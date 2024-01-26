@@ -1,9 +1,8 @@
 use crate::cl::{BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof};
+use crate::data_types::{cred_def::CredentialDefinitionId, nonce::Nonce};
 use crate::error::{Result, ValidationError};
 use crate::invalid;
 use crate::utils::validation::{Validatable, LEGACY_DID_IDENTIFIER};
-
-use super::{cred_def::CredentialDefinitionId, nonce::Nonce};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialRequest {

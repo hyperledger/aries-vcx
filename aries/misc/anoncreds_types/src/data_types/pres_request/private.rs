@@ -5,8 +5,8 @@ use std::fmt;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use super::credential::Credential;
-use super::nonce::Nonce;
+use crate::data_types::credential::Credential;
+use crate::data_types::nonce::Nonce;
 use crate::error::ValidationError;
 use crate::invalid;
 use crate::utils::{

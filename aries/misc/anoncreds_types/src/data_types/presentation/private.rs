@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
 use crate::cl::Proof;
+use crate::data_types::cred_def::CredentialDefinitionId;
+use crate::data_types::rev_reg_def::RevocationRegistryDefinitionId;
+use crate::data_types::schema::SchemaId;
 use crate::error::ValidationError;
 use crate::utils::validation::Validatable;
-
-use super::{
-    cred_def::CredentialDefinitionId, rev_reg_def::RevocationRegistryDefinitionId, schema::SchemaId,
-};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Presentation {

@@ -8,8 +8,9 @@ use crate::cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessPro
 use crate::error::{ConversionError, ValidationError};
 use crate::utils::validation::Validatable;
 
-use super::rev_reg_def::RevocationRegistryDefinitionId;
-use super::{cred_def::CredentialDefinitionId, schema::SchemaId};
+use crate::data_types::{
+    cred_def::CredentialDefinitionId, rev_reg_def::RevocationRegistryDefinitionId, schema::SchemaId,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Credential {
