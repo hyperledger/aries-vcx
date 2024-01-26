@@ -1,4 +1,5 @@
-use anoncreds_types::data_types::{issuer_id::IssuerId, schema::Schema as OurSchema};
+use anoncreds_types::data_types::identifiers::issuer_id::IssuerId;
+use anoncreds_types::data_types::ledger::schema::Schema as OurSchema;
 use indy_vdr::ledger::requests::schema::Schema as IndyVdrSchema;
 
 pub trait Convert {

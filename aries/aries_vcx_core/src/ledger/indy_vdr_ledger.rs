@@ -4,7 +4,7 @@ use std::{
     sync::RwLock,
 };
 
-use anoncreds_types::data_types::schema::Schema;
+use anoncreds_types::data_types::ledger::schema::Schema;
 use async_trait::async_trait;
 pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
 use indy_ledger_response_parser::{

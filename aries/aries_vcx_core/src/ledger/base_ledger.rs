@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use anoncreds_types::data_types::schema::Schema;
+use anoncreds_types::data_types::ledger::schema::Schema;
 use async_trait::async_trait;
 use indy_vdr::ledger::constants::UpdateRole;
 use serde::Serialize;
