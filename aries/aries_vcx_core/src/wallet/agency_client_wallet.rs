@@ -8,7 +8,10 @@ use async_trait::async_trait;
 use public_key::{Key, KeyType};
 
 use super::{
-    base_wallet::{BaseWallet, DidData, DidWallet, Record, RecordWallet, SearchFilter},
+    base_wallet::{
+        did_data::DidData, record::Record, search_filter::SearchFilter, BaseWallet, DidWallet,
+        RecordWallet,
+    },
     structs_io::UnpackMessageOutput,
 };
 use crate::{
@@ -78,12 +81,12 @@ impl DidWallet for AgencyClientWallet {
         method_name: Option<&str>,
     ) -> VcxCoreResult<DidData> {
         Err(unimplemented_agency_client_wallet_method(
-            "create_nad_store_my_did",
+            "create_and_store_my_did",
         ))
     }
 
     async fn key_for_did(&self, name: &str) -> VcxCoreResult<Key> {
-        Err(unimplemented_agency_client_wallet_method("did_key"))
+        Err(unimplemented_agency_client_wallet_method("key_for_did"))
     }
 
     async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxCoreResult<Key> {

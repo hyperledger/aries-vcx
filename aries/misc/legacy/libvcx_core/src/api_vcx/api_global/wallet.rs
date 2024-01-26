@@ -21,8 +21,8 @@ use aries_vcx::{
     protocols::mediated_connection::pairwise_info::PairwiseInfo,
 };
 use aries_vcx_core::wallet::{
-    base_wallet::{DidWallet, Record, RecordWallet},
-    indy::{IndyTags, IndyWalletRecord},
+    base_wallet::{record::Record, DidWallet, RecordWallet},
+    indy::{indy_tag::IndyTags, IndyWalletRecord},
 };
 use futures::FutureExt;
 use public_key::{Key, KeyType};
@@ -195,7 +195,7 @@ pub async fn wallet_add_wallet_record(
             .name(id.into())
             .category(type_.into())
             .value(value.into())
-            .tags(IndyTags::new(record_tags).to_entry_tags())
+            .tags(IndyTags::new(record_tags).into_entry_tags())
             .build()
     } else {
         Record::builder()
@@ -226,7 +226,7 @@ pub async fn wallet_update_wallet_record_tags(
     let tags: HashMap<String, String> = serde_json::from_str(tags_json)?;
     map_ariesvcx_core_result(
         wallet
-            .update_record_tags(xtype, id, IndyTags::new(tags).to_entry_tags())
+            .update_record_tags(xtype, id, IndyTags::new(tags).into_entry_tags())
             .await,
     )
 }
@@ -239,7 +239,7 @@ pub async fn wallet_add_wallet_record_tags(
     let wallet = get_main_wallet()?;
     let record = wallet.get_record(xtype, id).await?;
 
-    let found_tags = IndyTags::from_entry_tags(record.tags().clone()).to_inner();
+    let found_tags = IndyTags::from_entry_tags(record.tags().clone()).into_inner();
     let tags = {
         let mut tags: HashMap<String, String> = serde_json::from_str(tags_json)?;
         tags.extend(found_tags);
@@ -248,7 +248,7 @@ pub async fn wallet_add_wallet_record_tags(
 
     map_ariesvcx_core_result(
         wallet
-            .update_record_tags(xtype, id, IndyTags::new(tags).to_entry_tags())
+            .update_record_tags(xtype, id, IndyTags::new(tags).into_entry_tags())
             .await,
     )
 }
@@ -263,14 +263,14 @@ pub async fn wallet_delete_wallet_record_tags(
 
     let record = wallet.get_record(xtype, id).await?;
 
-    let mut found_tags = IndyTags::from_entry_tags(record.tags().clone()).to_inner();
+    let mut found_tags = IndyTags::from_entry_tags(record.tags().clone()).into_inner();
     for key in tags.keys() {
         found_tags.remove(key);
     }
 
     map_ariesvcx_core_result(
         wallet
-            .update_record_tags(xtype, id, IndyTags::new(found_tags).to_entry_tags())
+            .update_record_tags(xtype, id, IndyTags::new(found_tags).into_entry_tags())
             .await,
     )
 }
@@ -359,7 +359,7 @@ pub mod test_utils {
         aries_vcx_core::wallet::indy::WalletConfig,
         global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
     };
-    use aries_vcx_core::wallet::base_wallet::{DidWallet, Record, RecordWallet};
+    use aries_vcx_core::wallet::base_wallet::{record::Record, DidWallet, RecordWallet};
 
     use crate::{
         api_vcx::api_global::{

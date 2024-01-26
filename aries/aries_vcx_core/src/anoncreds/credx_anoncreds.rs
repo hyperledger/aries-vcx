@@ -30,9 +30,9 @@ use crate::{
         json::{AsTypeOrDeserializationError, TryGetIndex},
     },
     wallet::{
-        base_wallet::{BaseWallet, Record, RecordWallet, SearchFilter},
+        base_wallet::{record::Record, search_filter::SearchFilter, BaseWallet, RecordWallet},
         entry_tag::EntryTags,
-        indy::IndyTags,
+        indy::indy_tag::IndyTags,
     },
 };
 
@@ -1035,7 +1035,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .name(credential_id.clone())
             .category(CATEGORY_CREDENTIAL.into())
             .value(record_value)
-            .tags(IndyTags::new(tags_map).to_entry_tags())
+            .tags(IndyTags::new(tags_map).into_entry_tags())
             .build();
 
         wallet.add_record(record).await?;

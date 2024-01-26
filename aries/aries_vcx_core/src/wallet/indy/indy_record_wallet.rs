@@ -4,11 +4,11 @@ use serde::Deserialize;
 use serde_json::Value;
 use vdrtools::Locator;
 
-use super::{IndyTags, SEARCH_OPTIONS, WALLET_OPTIONS};
+use super::{indy_tag::IndyTags, SEARCH_OPTIONS, WALLET_OPTIONS};
 use crate::{
     errors::error::{AriesVcxCoreError, VcxCoreResult},
     wallet::{
-        base_wallet::{Record, RecordWallet, SearchFilter},
+        base_wallet::{record::Record, search_filter::SearchFilter, RecordWallet},
         entry_tag::EntryTags,
         indy::IndySdkWallet,
     },
@@ -20,7 +20,7 @@ impl RecordWallet for IndySdkWallet {
         let tags_map = if record.tags().is_empty() {
             None
         } else {
-            Some(IndyTags::from_entry_tags(record.tags().clone()).to_inner())
+            Some(IndyTags::from_entry_tags(record.tags().clone()).into_inner())
         };
 
         Ok(Locator::instance()
@@ -63,7 +63,7 @@ impl RecordWallet for IndySdkWallet {
                 self.wallet_handle,
                 category.into(),
                 name.into(),
-                IndyTags::from_entry_tags(new_tags).to_inner(),
+                IndyTags::from_entry_tags(new_tags).into_inner(),
             )
             .await?)
     }

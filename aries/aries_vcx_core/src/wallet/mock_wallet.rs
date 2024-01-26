@@ -2,7 +2,10 @@ use async_trait::async_trait;
 use public_key::{Key, KeyType};
 
 use super::{
-    base_wallet::{BaseWallet, DidData, DidWallet, Record, RecordWallet, SearchFilter},
+    base_wallet::{
+        did_data::DidData, record::Record, search_filter::SearchFilter, BaseWallet, DidWallet,
+        RecordWallet,
+    },
     structs_io::UnpackMessageOutput,
 };
 use crate::{
