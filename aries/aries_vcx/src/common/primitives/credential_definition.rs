@@ -112,9 +112,11 @@ impl CredentialDef {
             schema_id,
             tag,
         } = config;
-        let schema_json = ledger_read
-            .get_schema(&schema_id, Some(&issuer_did))
-            .await?;
+        let schema_json = serde_json::to_string(
+            &ledger_read
+                .get_schema(&schema_id, Some(&issuer_did))
+                .await?,
+        )?;
         let (cred_def_id, cred_def_json) = generate_cred_def(
             wallet,
             anoncreds,

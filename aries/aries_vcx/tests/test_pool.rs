@@ -510,7 +510,8 @@ async fn test_pool_create_and_get_schema() -> Result<(), Box<dyn Error>> {
     .await;
 
     let ledger = &setup.ledger_read;
-    let retrieved_schema = ledger.get_schema(&schema.schema_id, None).await?;
+    let retrieved_schema =
+        serde_json::to_string(&ledger.get_schema(&schema.schema_id, None).await?).unwrap();
     assert!(retrieved_schema.contains(&schema.schema_id));
     Ok(())
 }

@@ -71,7 +71,9 @@ impl ServiceSchemas {
 
     pub async fn schema_json(&self, thread_id: &str) -> AgentResult<String> {
         let ledger = self.ledger_read.as_ref();
-        Ok(ledger.get_schema(thread_id, None).await?)
+        Ok(serde_json::to_string(
+            &ledger.get_schema(thread_id, None).await?,
+        )?)
     }
 
     pub fn find_by_name_and_version(&self, name: &str, version: &str) -> AgentResult<Vec<String>> {

@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+use anoncreds_types::data_types::schema::Schema;
 use async_trait::async_trait;
 use indy_vdr::ledger::constants::UpdateRole;
 use serde::Serialize;
@@ -65,7 +66,7 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
         &self,
         schema_id: &str,
         submitter_did: Option<&str>,
-    ) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<Schema>;
     async fn get_cred_def(
         &self,
         cred_def_id: &str,

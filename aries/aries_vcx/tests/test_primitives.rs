@@ -29,7 +29,8 @@ async fn test_pool_create_cred_def_real() -> Result<(), Box<dyn Error>> {
 
     let ledger_read = setup.ledger_read;
     let ledger_write = &setup.ledger_write;
-    let schema_json = ledger_read.get_schema(&schema.schema_id, None).await?;
+    let schema_json =
+        serde_json::to_string(&ledger_read.get_schema(&schema.schema_id, None).await?)?;
 
     let (cred_def_id, cred_def_json_local) = generate_cred_def(
         &setup.wallet,
@@ -72,7 +73,8 @@ async fn test_pool_create_rev_reg_def() -> Result<(), Box<dyn Error>> {
     .await;
     let ledger_read = &setup.ledger_read;
     let ledger_write = &setup.ledger_write;
-    let schema_json = ledger_read.get_schema(&schema.schema_id, None).await?;
+    let schema_json =
+        serde_json::to_string(&ledger_read.get_schema(&schema.schema_id, None).await?)?;
 
     let (cred_def_id, cred_def_json) = generate_cred_def(
         &setup.wallet,

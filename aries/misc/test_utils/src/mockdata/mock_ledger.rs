@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::schema::Schema;
 use aries_vcx_core::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     ledger::{
@@ -107,8 +108,8 @@ impl AnoncredsLedgerRead for MockLedger {
         &self,
         schema_id: &str,
         submitter_did: Option<&str>,
-    ) -> VcxCoreResult<String> {
-        Ok(SCHEMA_JSON.to_string())
+    ) -> VcxCoreResult<Schema> {
+        todo!()
     }
 
     async fn get_cred_def(

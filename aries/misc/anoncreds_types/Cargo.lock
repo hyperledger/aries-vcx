@@ -37,7 +37,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "anoncreds-types"
+name = "anoncreds_types"
 version = "0.1.0"
 dependencies = [
  "anoncreds-clsignatures",

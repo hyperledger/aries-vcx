@@ -131,7 +131,7 @@ impl Schema {
         if !self.schema_json.is_empty() {
             Ok(self.schema_json.clone())
         } else {
-            Ok(ledger.get_schema(&self.schema_id, None).await?)
+            Ok(serde_json::to_string(&ledger.get_schema(&self.schema_id, None).await?)?)
         }
     }
 

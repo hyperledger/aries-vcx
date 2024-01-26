@@ -49,7 +49,7 @@ pub async fn build_schemas_json_prover(
                     )
                 })?;
 
-            let schema_json = serde_json::from_str(&schema_json).map_err(|err| {
+            let schema_json = serde_json::to_value(&schema_json).map_err(|err| {
                 AriesVcxCoreError::from_msg(
                     AriesVcxCoreErrorKind::InvalidSchema,
                     format!("Cannot deserialize schema: {}", err),

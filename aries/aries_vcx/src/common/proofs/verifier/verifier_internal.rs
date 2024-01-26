@@ -132,7 +132,7 @@ pub async fn build_schemas_json_verifier(
             let schema_json = ledger.get_schema(schema_id, None).await.map_err(|err| {
                 err.map(AriesVcxCoreErrorKind::InvalidSchema, "Cannot get schema")
             })?;
-            let schema_val = serde_json::from_str(&schema_json).map_err(|err| {
+            let schema_val = serde_json::to_value(&schema_json).map_err(|err| {
                 AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidSchema,
                     format!("Cannot deserialize schema: {}", err),

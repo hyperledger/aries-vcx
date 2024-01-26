@@ -24,3 +24,9 @@ impl From<ParseError> for AriesVcxCoreError {
         AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, err.to_string())
     }
 }
+
+impl From<Box<dyn std::error::Error>> for AriesVcxCoreError {
+    fn from(err: Box<dyn std::error::Error>) -> Self {
+        AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidState, err.to_string())
+    }
+}

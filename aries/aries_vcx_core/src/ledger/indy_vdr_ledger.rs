@@ -4,6 +4,7 @@ use std::{
     sync::RwLock,
 };
 
+use anoncreds_types::data_types::schema::Schema;
 use async_trait::async_trait;
 pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
 use indy_ledger_response_parser::{
@@ -22,7 +23,7 @@ use vdr::{
             rev_reg_def::{
                 RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1,
             },
-            schema::{Schema, SchemaV1},
+            schema::{Schema as IndyVdrSchema, SchemaV1},
         },
         RequestBuilder,
     },
@@ -51,6 +52,7 @@ use crate::{
     ledger::{
         base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions},
         common::verify_transaction_can_be_endorsed,
+        type_conversion::Convert,
     },
     wallet::base_wallet::BaseWallet,
 };
@@ -446,7 +448,7 @@ where
         &self,
         schema_id: &str,
         _submitter_did: Option<&str>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<Schema> {
         debug!("get_schema >> schema_id: {schema_id}");
         let request = self
             .request_builder()?
@@ -456,7 +458,7 @@ where
         let schema = self
             .response_parser
             .parse_get_schema_response(&response, None)?;
-        Ok(serde_json::to_string(&schema)?)
+        Ok(IndyVdrSchema::convert(schema, ())?)
     }
 
     async fn get_cred_def(
@@ -582,7 +584,7 @@ where
         let schema_data: SchemaV1 = serde_json::from_str(schema_json)?;
         let mut request = self
             .request_builder()?
-            .build_schema_request(&identifier, Schema::SchemaV1(schema_data))?;
+            .build_schema_request(&identifier, IndyVdrSchema::SchemaV1(schema_data))?;
         request = self.append_txn_author_agreement_to_request(request).await?;
         // if let Some(endorser_did) = endorser_did {
         //     request = PreparedRequest::from_request_json(
