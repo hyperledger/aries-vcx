@@ -243,7 +243,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
 
-        let schemas: HashMap<SchemaId, CredxSchema> = serde_json::from_str(schemas_json)?;
+        let schemas_: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let mut schemas: HashMap<SchemaId, CredxSchema> = HashMap::new();
+        for (key, value) in schemas_ {
+            schemas.insert(key, Convert::convert(value, ())?);
+        }
         let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
@@ -636,7 +640,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             None
         };
 
-        let schemas: HashMap<SchemaId, CredxSchema> = serde_json::from_str(schemas_json)?;
+        let schemas_: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let mut schemas: HashMap<SchemaId, CredxSchema> = HashMap::new();
+        for (key, value) in schemas_ {
+            schemas.insert(key, Convert::convert(value, ())?);
+        }
+
         let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
