@@ -7,7 +7,7 @@ pub trait Convert {
     type Target;
     type Error;
 
-    fn convert(value: Self, args: Self::Args) -> Result<Self::Target, Self::Error>;
+    fn convert(self, args: Self::Args) -> Result<Self::Target, Self::Error>;
 }
 
 impl Convert for IndyVdrSchema {
@@ -15,8 +15,8 @@ impl Convert for IndyVdrSchema {
     type Target = OurSchema;
     type Error = Box<dyn std::error::Error>;
 
-    fn convert(value: Self, _: Self::Args) -> Result<Self::Target, Self::Error> {
-        match value {
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
             IndyVdrSchema::SchemaV1(schema) => {
                 let issuer_id = schema.id.parts().unwrap().1.to_string();
                 Ok(OurSchema {

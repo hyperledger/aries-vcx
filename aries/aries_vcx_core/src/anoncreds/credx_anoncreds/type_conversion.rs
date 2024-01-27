@@ -8,7 +8,7 @@ pub trait Convert {
     type Target;
     type Error;
 
-    fn convert(value: Self, args: Self::Args) -> Result<Self::Target, Self::Error>;
+    fn convert(self, args: Self::Args) -> Result<Self::Target, Self::Error>;
 }
 
 fn from_issuer_id_to_did_value(issuer_id: IssuerId) -> DidValue {
@@ -24,13 +24,13 @@ impl Convert for OurSchema {
     type Target = CredxSchema;
     type Error = Box<dyn std::error::Error>;
 
-    fn convert(value: Self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(create_schema(
-            &from_issuer_id_to_did_value(value.issuer_id),
-            &value.name,
-            &value.version,
-            from_attribute_names_to_attribute_names(value.attr_names),
-            value.seq_no,
+            &from_issuer_id_to_did_value(self.issuer_id),
+            &self.name,
+            &self.version,
+            from_attribute_names_to_attribute_names(self.attr_names),
+            self.seq_no,
         )?)
     }
 }

@@ -246,7 +246,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let schemas_: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
         let mut schemas: HashMap<SchemaId, CredxSchema> = HashMap::new();
         for (key, value) in schemas_ {
-            schemas.insert(key, Convert::convert(value, ())?);
+            schemas.insert(key, value.convert(())?);
         }
         let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
@@ -391,7 +391,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let config = serde_json::from_str(config_json)?;
 
         let schema_seq_no = schema_json.seq_no.clone();
-        let schema = Convert::convert(schema_json.clone(), ())?;
+        let schema = schema_json.clone().convert(())?;
 
         let cred_def_id = credx::issuer::make_credential_definition_id(
             &issuer_did,
@@ -643,7 +643,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let schemas_: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
         let mut schemas: HashMap<SchemaId, CredxSchema> = HashMap::new();
         for (key, value) in schemas_ {
-            schemas.insert(key, Convert::convert(value, ())?);
+            schemas.insert(key, value.convert(())?);
         }
 
         let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =

@@ -538,8 +538,8 @@ impl BaseAnonCreds for Anoncreds {
                 // Schema ID must be just the schema seq no for some reason
                 SchemaId::new_unchecked(schema_json.seq_no.unwrap().to_string()),
                 // SchemaId::new(schema_id).unwrap(),
-                &Convert::convert(schema_json.clone(), ())?,
-                Convert::convert(schema_json.issuer_id.clone(), ())?,
+                &schema_json.clone().convert(())?,
+                schema_json.issuer_id.clone().convert(())?,
                 tag,
                 sig_type,
                 config,
@@ -806,7 +806,7 @@ impl BaseAnonCreds for Anoncreds {
                 )
             });
             let schema: Schema = serde_json::from_value(schema_json.clone())?;
-            schemas.insert(schema_id.clone(), Convert::convert(schema, ())?);
+            schemas.insert(schema_id.clone(), schema.convert(())?);
         }
         let mut cred_defs_val: HashMap<CredentialDefinitionId, Value> =
             serde_json::from_str(credential_defs_json)?;

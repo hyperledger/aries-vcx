@@ -458,7 +458,7 @@ where
         let schema = self
             .response_parser
             .parse_get_schema_response(&response, None)?;
-        Ok(IndyVdrSchema::convert(schema, ())?)
+        Ok(schema.convert(())?)
     }
 
     async fn get_cred_def(

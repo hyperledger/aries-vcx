@@ -11,7 +11,7 @@ pub trait Convert {
     type Target;
     type Error;
 
-    fn convert(value: Self, args: Self::Args) -> Result<Self::Target, Self::Error>;
+    fn convert(self, args: Self::Args) -> Result<Self::Target, Self::Error>;
 }
 
 impl Convert for OurIssuerId {
@@ -19,8 +19,8 @@ impl Convert for OurIssuerId {
     type Target = AnoncredsIssuerId;
     type Error = Box<dyn std::error::Error>;
 
-    fn convert(value: Self, args: Self::Args) -> Result<Self::Target, Self::Error> {
-        AnoncredsIssuerId::new(value.to_string()).map_err(|e| e.into())
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        AnoncredsIssuerId::new(self.to_string()).map_err(|e| e.into())
     }
 }
 
@@ -35,12 +35,12 @@ impl Convert for OurSchema {
     type Target = AnoncredsSchema;
     type Error = Box<dyn std::error::Error>;
 
-    fn convert(value: Self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(AnoncredsSchema {
-            name: value.name,
-            version: value.version,
-            attr_names: from_attribute_names_to_attribute_names(value.attr_names),
-            issuer_id: Convert::convert(value.issuer_id, ())?,
+            name: self.name,
+            version: self.version,
+            attr_names: from_attribute_names_to_attribute_names(self.attr_names),
+            issuer_id: Convert::convert(self.issuer_id, ())?,
         })
     }
 }
