@@ -1,3 +1,5 @@
+mod type_conversion;
+
 use std::collections::{BTreeSet, HashMap, HashSet};
 
 use anoncreds::{
@@ -29,6 +31,7 @@ use uuid::Uuid;
 
 use super::base_anoncreds::BaseAnonCreds;
 use crate::{
+    anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{
         constants::ATTRS,
@@ -513,23 +516,13 @@ impl BaseAnonCreds for Anoncreds {
         signature_type: Option<&str>,
         config_json: &str,
     ) -> VcxCoreResult<(String, String)> {
-        dbg!(schema_id);
-        let mut value: Value = serde_json::from_str(schema_json)?;
-        value
-            .as_object_mut()
-            .map(|v| v.insert("issuerId".to_owned(), json!(issuer_did)));
-        let schema_seq_no = value.get("seqNo").and_then(|v| v.as_u64());
-
-        let schema = serde_json::from_value(value)?;
-
         let sig_type = signature_type
             .map(serde_json::from_str)
             .unwrap_or(Ok(SignatureType::CL))?;
         let config = serde_json::from_str(config_json)?;
 
         let cred_def_id =
-            make_credential_definition_id(issuer_did, schema_id, schema_seq_no, tag, sig_type);
-        dbg!(cred_def_id.clone());
+            make_credential_definition_id(issuer_did, schema_id, schema_json.seq_no, tag, sig_type);
 
         // If cred def already exists, return it
         if let Ok(cred_def) = self
@@ -543,10 +536,10 @@ impl BaseAnonCreds for Anoncreds {
         let (cred_def, cred_def_priv, cred_key_correctness_proof) =
             anoncreds::issuer::create_credential_definition(
                 // Schema ID must be just the schema seq no for some reason
-                // SchemaId::new_unchecked(schema_seq_no.unwrap().to_string()),
-                SchemaId::new(schema_id).unwrap(),
-                &schema,
-                schema.issuer_id.clone(),
+                SchemaId::new_unchecked(schema_json.seq_no.unwrap().to_string()),
+                // SchemaId::new(schema_id).unwrap(),
+                &Convert::convert(schema_json.clone(), ())?,
+                Convert::convert(schema_json.issuer_id.clone(), ())?,
                 tag,
                 sig_type,
                 config,
@@ -584,12 +577,14 @@ impl BaseAnonCreds for Anoncreds {
         let record = Record::builder()
             .name(schema_id.to_string())
             .category(CATEGORY_CRED_SCHEMA.to_string())
-            .value(schema_json.into())
+            .value(serde_json::to_string(&schema_json)?)
             .build();
         let store_schema_res = wallet.add_record(record).await;
 
         if let Err(e) = store_schema_res {
-            warn!("Storing schema {schema_json:?} failed - {e}. It's possible it is already stored.")
+            warn!(
+                "Storing schema {schema_json:?} failed - {e}. It's possible it is already stored."
+            )
         }
 
         let record = Record::builder()
@@ -802,7 +797,7 @@ impl BaseAnonCreds for Anoncreds {
         };
 
         let mut schemas_val: HashMap<SchemaId, Value> = serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<SchemaId, Schema> = HashMap::new();
+        let mut schemas: HashMap<SchemaId, AnoncredsSchema> = HashMap::new();
         for (schema_id, schema_json) in schemas_val.iter_mut() {
             schema_json.as_object_mut().map(|v| {
                 v.insert(
@@ -810,8 +805,8 @@ impl BaseAnonCreds for Anoncreds {
                     schema_id.to_string().split(':').next().into(),
                 )
             });
-            let schema = serde_json::from_value(schema_json.clone())?;
-            schemas.insert(schema_id.clone(), schema);
+            let schema: Schema = serde_json::from_value(schema_json.clone())?;
+            schemas.insert(schema_id.clone(), Convert::convert(schema, ())?);
         }
         let mut cred_defs_val: HashMap<CredentialDefinitionId, Value> =
             serde_json::from_str(credential_defs_json)?;
@@ -1604,7 +1599,7 @@ pub fn make_schema_id(did: &str, name: &str, version: &str) -> SchemaId {
 pub fn make_credential_definition_id(
     origin_did: &str,
     schema_id: &str,
-    schema_seq_no: Option<u64>,
+    schema_seq_no: Option<u32>,
     tag: &str,
     signature_type: SignatureType,
 ) -> CredentialDefinitionId {
