@@ -167,26 +167,24 @@ mod tests {
 
     #[test]
     fn test_from_string_versioned() {
-        let serialized = r#"
-{
-  "version": "1.0",
-  "data": {
-    "data": [
-      "name",
-      "age"
-    ],
-    "version": "1.0",
-    "schema_id": "test_schema_id",
-    "name": "test",
-    "source_id": "1",
-    "submitter_did": "",
-    "state": 1,
-    "schema_json": ""
-  }
-}
-"#;
-        let schema_result = Schema::from_string_versioned(serialized);
-        assert!(schema_result.is_ok());
+        let serialized = json!({
+        "version": "1.0",
+        "data": {
+          "data": [
+            "name",
+            "age"
+          ],
+          "version": "1.0",
+          "schema_id": "test_schema_id",
+          "name": "test",
+          "source_id": "1",
+          "submitter_did": DID,
+          "state": 1,
+          "schema_json": serde_json::from_str::<LedgerSchema>(SCHEMA_JSON).unwrap()
+        }})
+        .to_string();
+        let schema_result = Schema::from_string_versioned(&serialized);
+        // assert!(schema_result.is_ok());
         let schema = schema_result.unwrap();
 
         assert_eq!(schema.version, "1.0");

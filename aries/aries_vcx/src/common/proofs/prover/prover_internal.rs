@@ -442,7 +442,10 @@ pub mod unit_tests {
             .unwrap();
         assert!(!schemas.is_empty());
         assert!(schemas.contains(
-            r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#
+            r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4""#
+        ));
+        assert!(schemas.contains(
+            r#""name":"test-licence""#
         ));
     }
 
