@@ -1,18 +1,14 @@
 use std::collections::HashMap;
 
+use aries_vcx_core::{
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    utils::{self, async_fn_iterator::AsyncFnIterator},
+    wallet::{base_wallet::BaseWallet, structs_io::UnpackMessageOutput},
+};
 use async_trait::async_trait;
 
-use super::structs_io::UnpackMessageOutput;
 #[cfg(feature = "vdrtools_wallet")]
-use crate::WalletHandle;
-use crate::{
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    utils::{
-        async_fn_iterator::AsyncFnIterator,
-        {self},
-    },
-    wallet::base_wallet::BaseWallet,
-};
+use aries_vcx_core::WalletHandle;
 
 #[derive(Debug)]
 pub struct MockWallet;

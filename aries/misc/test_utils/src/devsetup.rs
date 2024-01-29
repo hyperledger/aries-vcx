@@ -37,6 +37,8 @@ pub mod vdrtools_wallet;
 #[cfg(feature = "vdrtools_wallet")]
 use crate::devsetup::vdrtools_wallet::dev_build_indy_wallet;
 
+pub mod mock_wallet;
+
 const DEFAULT_AML_LABEL: &str = "eula";
 
 pub fn write_file<P: AsRef<Path>>(file: P, content: &str) -> VcxCoreResult<()>
