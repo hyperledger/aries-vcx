@@ -1343,7 +1343,7 @@ impl BaseAnonCreds for Anoncreds {
         name: &str,
         version: &str,
         attrs: &str,
-    ) -> VcxCoreResult<(String, String)> {
+    ) -> VcxCoreResult<Schema> {
         let attr_names = serde_json::from_str(attrs)?;
 
         let schema = anoncreds::issuer::create_schema(
@@ -1352,11 +1352,8 @@ impl BaseAnonCreds for Anoncreds {
             IssuerId::new(issuer_did).unwrap(),
             attr_names,
         )?;
-        let mut schema_json = serde_json::to_value(schema)?;
         let schema_id = make_schema_id(issuer_did, name, version);
-        schema_json["id"] = schema_id.to_string().into();
-
-        Ok((schema_id.to_string(), schema_json.to_string()))
+        Ok(schema.convert((schema_id.to_string(),))?)
     }
 
     async fn revoke_credential_local(

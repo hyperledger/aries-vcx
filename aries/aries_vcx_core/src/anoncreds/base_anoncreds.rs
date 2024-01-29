@@ -132,7 +132,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         name: &str,
         version: &str,
         attrs: &str,
-    ) -> VcxCoreResult<(String, String)>;
+    ) -> VcxCoreResult<Schema>;
 
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not
     // PURE Anoncreds)

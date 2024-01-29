@@ -196,7 +196,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _name: &str,
         _version: &str,
         _attrs: &str,
-    ) -> VcxCoreResult<(String, String)> {
+    ) -> VcxCoreResult<Schema> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,

@@ -1,5 +1,6 @@
 use crate::{
-    data_types::identifiers::issuer_id::IssuerId, error::ValidationError,
+    data_types::identifiers::{issuer_id::IssuerId, schema_id::SchemaId},
+    error::ValidationError,
     utils::validation::Validatable,
 };
 
@@ -7,10 +8,10 @@ use std::collections::HashSet;
 
 pub const MAX_ATTRIBUTES_COUNT: usize = 125;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Schema {
-    // pub id: SchemaId,
+    pub id: SchemaId,
     pub seq_no: Option<u32>,
     pub name: String,
     pub version: String,
@@ -19,7 +20,7 @@ pub struct Schema {
 }
 
 // QUESTION: If these must be unique, why not directly store them as a set?
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct AttributeNames(pub Vec<String>);
 
 impl From<&[&str]> for AttributeNames {

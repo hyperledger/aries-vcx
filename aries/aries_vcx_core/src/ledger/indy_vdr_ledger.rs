@@ -576,15 +576,14 @@ where
     async fn publish_schema(
         &self,
         wallet: &impl BaseWallet,
-        schema_json: &str,
+        schema_json: Schema,
         submitter_did: &str,
         _endorser_did: Option<String>,
     ) -> VcxCoreResult<()> {
         let identifier = DidValue::from_str(submitter_did)?;
-        let schema_data: SchemaV1 = serde_json::from_str(schema_json)?;
         let mut request = self
             .request_builder()?
-            .build_schema_request(&identifier, IndyVdrSchema::SchemaV1(schema_data))?;
+            .build_schema_request(&identifier, schema_json.convert(())?)?;
         request = self.append_txn_author_agreement_to_request(request).await?;
         // if let Some(endorser_did) = endorser_did {
         //     request = PreparedRequest::from_request_json(

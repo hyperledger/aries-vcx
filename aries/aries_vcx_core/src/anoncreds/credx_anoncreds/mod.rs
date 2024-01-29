@@ -1123,7 +1123,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         name: &str,
         version: &str,
         attrs: &str,
-    ) -> VcxCoreResult<(String, String)> {
+    ) -> VcxCoreResult<Schema> {
         let origin_did = DidValue::new(issuer_did, None);
         let attr_names = serde_json::from_str(attrs)?;
 
@@ -1132,7 +1132,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let schema_json = serde_json::to_string(&schema)?;
         let schema_id = &schema.id().0;
 
-        Ok((schema_id.to_string(), schema_json))
+        Ok(schema.convert((issuer_did.to_string(),))?)
     }
 
     async fn revoke_credential_local(

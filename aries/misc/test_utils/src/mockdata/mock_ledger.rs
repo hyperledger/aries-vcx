@@ -148,7 +148,7 @@ impl AnoncredsLedgerWrite for MockLedger {
     async fn publish_schema(
         &self,
         wallet: &impl BaseWallet,
-        schema_json: &str,
+        schema_json: Schema,
         submitter_did: &str,
         endorser_did: Option<String>,
     ) -> VcxCoreResult<()> {

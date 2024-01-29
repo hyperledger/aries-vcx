@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use anoncreds_types::data_types::ledger::schema::Schema as LedgerSchema;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     global::settings::DEFAULT_SERIALIZE_VERSION,
@@ -21,7 +22,7 @@ pub struct SchemaData {
     pub attr_names: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Schema {
     pub data: Vec<String>,
     pub version: String,
@@ -32,8 +33,7 @@ pub struct Schema {
     submitter_did: String,
     #[serde(default)]
     pub state: PublicEntityStateType,
-    #[serde(default)]
-    pub schema_json: String, // added in 0.45.0, #[serde(default)] use for backwards compatibility
+    pub schema_json: LedgerSchema,
 }
 
 impl Schema {
@@ -60,7 +60,7 @@ impl Schema {
             )
         })?;
 
-        let (schema_id, schema_json) = anoncreds
+        let schema_json = anoncreds
             .issuer_create_schema(submitter_did, name, version, &data_str)
             .await?;
 
@@ -69,7 +69,7 @@ impl Schema {
             name: name.to_string(),
             data: data.clone(),
             version: version.to_string(),
-            schema_id,
+            schema_id: schema_json.id.to_string(),
             submitter_did: submitter_did.to_string(),
             schema_json,
             state: PublicEntityStateType::Built,
@@ -88,7 +88,7 @@ impl Schema {
         trace!("Schema::publish >>>");
 
         ledger
-            .publish_schema(wallet, &self.schema_json, &self.submitter_did, None)
+            .publish_schema(wallet, self.schema_json.clone(), &self.submitter_did, None)
             .await?;
 
         Ok(Self {
@@ -128,11 +128,8 @@ impl Schema {
         &self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
     ) -> VcxResult<String> {
-        if !self.schema_json.is_empty() {
-            Ok(self.schema_json.clone())
-        } else {
-            Ok(serde_json::to_string(&ledger.get_schema(&self.schema_id, None).await?)?)
-        }
+        // TODO: This has different behavior than the original code
+        Ok(serde_json::to_string(&self.schema_json)?)
     }
 
     pub fn get_state(&self) -> u32 {
