@@ -2,6 +2,7 @@ pub mod scenarios;
 pub mod test_agent;
 use std::time::Duration;
 
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use aries_vcx::{
     common::{
         credentials::encoding::encode_attributes,
@@ -54,7 +55,7 @@ pub async fn create_and_write_test_cred_def(
     ledger_read: &impl AnoncredsLedgerRead,
     ledger_write: &impl AnoncredsLedgerWrite,
     issuer_did: &str,
-    schema_id: &str,
+    schema_id: &SchemaId,
     revokable: bool,
 ) -> CredentialDef {
     CredentialDef::create(
@@ -64,7 +65,7 @@ pub async fn create_and_write_test_cred_def(
         "1".to_string(),
         CredentialDefConfigBuilder::default()
             .issuer_did(issuer_did)
-            .schema_id(schema_id)
+            .schema_id(schema_id.clone())
             .tag("1")
             .build()
             .unwrap(),

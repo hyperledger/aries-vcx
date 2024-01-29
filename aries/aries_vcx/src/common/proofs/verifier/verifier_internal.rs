@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use aries_vcx_core::{
     errors::error::AriesVcxCoreErrorKind, ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -7,7 +8,7 @@ use crate::{errors::error::prelude::*, utils::openssl::encode};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoVerifier {
-    pub schema_id: String,
+    pub schema_id: SchemaId,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
     pub timestamp: Option<u64>,
@@ -33,7 +34,7 @@ pub fn get_credential_info(proof: &str) -> VcxResult<Vec<CredInfoVerifier>> {
 
                 let timestamp = identifier["timestamp"].as_u64();
                 rtn.push(CredInfoVerifier {
-                    schema_id: schema_id.to_string(),
+                    schema_id: SchemaId::new(schema_id).unwrap(),
                     cred_def_id: cred_def_id.to_string(),
                     rev_reg_id,
                     timestamp,
@@ -127,7 +128,7 @@ pub async fn build_schemas_json_verifier(
     let mut schemas_json = json!({});
 
     for cred_info in credential_data.iter() {
-        if schemas_json.get(&cred_info.schema_id).is_none() {
+        if schemas_json.get(&cred_info.schema_id.to_string()).is_none() {
             let schema_id = &cred_info.schema_id;
             let schema_json = ledger.get_schema(schema_id, None).await.map_err(|err| {
                 err.map(AriesVcxCoreErrorKind::InvalidSchema, "Cannot get schema")
@@ -138,7 +139,7 @@ pub async fn build_schemas_json_verifier(
                     format!("Cannot deserialize schema: {}", err),
                 )
             })?;
-            schemas_json[schema_id] = schema_val;
+            schemas_json[schema_id.to_string()] = schema_val;
         }
     }
 
@@ -230,13 +231,13 @@ pub mod unit_tests {
         let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
-            schema_id: "schema_key1".to_string(),
+            schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: None,
             timestamp: None,
         };
         let cred2 = CredInfoVerifier {
-            schema_id: "schema_key2".to_string(),
+            schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: None,
             timestamp: None,
@@ -257,13 +258,13 @@ pub mod unit_tests {
         let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             cred_def_id: "cred_def_key1".to_string(),
             rev_reg_id: None,
             timestamp: None,
         };
         let cred2 = CredInfoVerifier {
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             cred_def_id: "cred_def_key2".to_string(),
             rev_reg_id: None,
             timestamp: None,
@@ -284,13 +285,13 @@ pub mod unit_tests {
         let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
-            schema_id: "schema_key1".to_string(),
+            schema_id: schema_id(),
             cred_def_id: "cred_def_key1".to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             timestamp: None,
         };
         let cred2 = CredInfoVerifier {
-            schema_id: "schema_key2".to_string(),
+            schema_id: schema_id(),
             cred_def_id: "cred_def_key2".to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             timestamp: None,
@@ -311,13 +312,13 @@ pub mod unit_tests {
         let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
-            schema_id: "schema_key1".to_string(),
+            schema_id: schema_id(),
             cred_def_id: "cred_def_key1".to_string(),
             rev_reg_id: Some("id1".to_string()),
             timestamp: Some(1),
         };
         let cred2 = CredInfoVerifier {
-            schema_id: "schema_key2".to_string(),
+            schema_id: schema_id(),
             cred_def_id: "cred_def_key2".to_string(),
             rev_reg_id: Some("id2".to_string()),
             timestamp: Some(2),

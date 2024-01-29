@@ -70,8 +70,8 @@ async fn create_and_store_nonrevocable_credential_def(
     let cred_def_id = cred_def.get_cred_def_id();
     let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await?;
     Ok((
-        schema.schema_id,
-        schema.schema_json,
+        schema.schema_id.to_string(),
+        serde_json::to_string(&schema.schema_json)?,
         cred_def_id,
         cred_def_json,
         cred_def,
@@ -512,7 +512,7 @@ async fn test_pool_create_and_get_schema() -> Result<(), Box<dyn Error>> {
     let ledger = &setup.ledger_read;
     let retrieved_schema =
         serde_json::to_string(&ledger.get_schema(&schema.schema_id, None).await?).unwrap();
-    assert!(retrieved_schema.contains(&schema.schema_id));
+    assert!(retrieved_schema.contains(&schema.schema_id.to_string()));
     Ok(())
 }
 

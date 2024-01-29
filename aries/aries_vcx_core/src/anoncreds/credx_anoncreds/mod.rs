@@ -1129,9 +1129,6 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let schema = credx::issuer::create_schema(&origin_did, name, version, attr_names, None)?;
 
-        let schema_json = serde_json::to_string(&schema)?;
-        let schema_id = &schema.id().0;
-
         Ok(schema.convert((issuer_did.to_string(),))?)
     }
 

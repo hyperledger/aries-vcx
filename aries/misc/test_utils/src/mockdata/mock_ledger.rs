@@ -1,4 +1,4 @@
-use anoncreds_types::data_types::ledger::schema::Schema;
+use anoncreds_types::data_types::{ledger::schema::Schema, identifiers::schema_id::SchemaId};
 use aries_vcx_core::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     ledger::{
@@ -11,7 +11,7 @@ use async_trait::async_trait;
 
 use crate::constants::{
     rev_def_json, CRED_DEF_JSON, DEFAULT_AUTHOR_AGREEMENT, REQUEST_WITH_ENDORSER,
-    REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON
+    REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON
 };
 
 #[derive(Debug)]
@@ -106,10 +106,10 @@ impl IndyLedgerWrite for MockLedger {
 impl AnoncredsLedgerRead for MockLedger {
     async fn get_schema(
         &self,
-        schema_id: &str,
+        schema_id: &SchemaId,
         submitter_did: Option<&str>,
     ) -> VcxCoreResult<Schema> {
-        todo!()
+        Ok(serde_json::from_str(&SCHEMA_JSON)?)
     }
 
     async fn get_cred_def(

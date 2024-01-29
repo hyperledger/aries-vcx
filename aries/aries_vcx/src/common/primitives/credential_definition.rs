@@ -1,4 +1,4 @@
-use anoncreds_types::data_types::ledger::schema::Schema;
+use anoncreds_types::data_types::{ledger::schema::Schema, identifiers::schema_id::SchemaId};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,
@@ -56,7 +56,7 @@ pub struct CredentialDef {
     cred_def_json: String,
     support_revocation: bool,
     #[serde(default)]
-    schema_id: String,
+    schema_id: SchemaId,
     #[serde(default)]
     pub state: PublicEntityStateType,
 }
@@ -65,7 +65,7 @@ pub struct CredentialDef {
 #[builder(setter(into), default)]
 pub struct CredentialDefConfig {
     issuer_did: String,
-    schema_id: String,
+    schema_id: SchemaId,
     tag: String,
 }
 
@@ -217,7 +217,7 @@ impl CredentialDef {
     }
 
     pub fn get_schema_id(&self) -> String {
-        self.schema_id.clone()
+        self.schema_id.to_string()
     }
 
     pub fn set_source_id(&mut self, source_id: String) {
@@ -241,7 +241,7 @@ pub async fn generate_cred_def(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
     issuer_did: &str,
-    schema_id: &str,
+    schema_id: &SchemaId,
     schema_json: Schema,
     tag: &str,
     sig_type: Option<&str>,
@@ -264,7 +264,7 @@ pub async fn generate_cred_def(
         .issuer_create_and_store_credential_def(
             wallet,
             issuer_did,
-            schema_id,
+            &schema_id.to_string(),
             schema_json,
             tag,
             sig_type,

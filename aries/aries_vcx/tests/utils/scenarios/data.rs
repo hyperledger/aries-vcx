@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use messages::{
     misc::MimeType,
     msg_fields::protocols::{
@@ -29,7 +30,7 @@ pub fn attr_names_address_list() -> Vec<String> {
 
 pub fn requested_attrs_address(
     did: &str,
-    schema_id: &str,
+    schema_id: &SchemaId,
     cred_def_id: &str,
     from: Option<u64>,
     to: Option<u64>,
@@ -66,7 +67,7 @@ pub(super) fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr>
 }
 
 pub fn create_credential_proposal(
-    schema_id: &str,
+    schema_id: &SchemaId,
     cred_def_id: &str,
     comment: &str,
 ) -> ProposeCredentialV1 {
@@ -84,7 +85,7 @@ pub fn create_credential_proposal(
         .collect();
     let content = ProposeCredentialV1Content::builder()
         .credential_proposal(CredentialPreviewV1::new(attrs))
-        .schema_id(schema_id.to_owned())
+        .schema_id(schema_id.to_string())
         .cred_def_id(cred_def_id.to_owned())
         .comment(comment.to_owned())
         .build();

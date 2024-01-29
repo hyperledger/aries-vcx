@@ -4,7 +4,7 @@ use std::{
     sync::RwLock,
 };
 
-use anoncreds_types::data_types::ledger::schema::Schema;
+use anoncreds_types::data_types::{ledger::schema::Schema, identifiers::schema_id::SchemaId};
 use async_trait::async_trait;
 pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
 use indy_ledger_response_parser::{
@@ -16,14 +16,13 @@ use time::OffsetDateTime;
 use vdr::{
     config::PoolConfig,
     ledger::{
-        identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId},
+        identifiers::{CredentialDefinitionId, RevocationRegistryId},
         requests::{
             cred_def::{CredentialDefinition, CredentialDefinitionV1},
             rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
             rev_reg_def::{
                 RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1,
             },
-            schema::{Schema as IndyVdrSchema, SchemaV1},
         },
         RequestBuilder,
     },
@@ -446,13 +445,13 @@ where
 {
     async fn get_schema(
         &self,
-        schema_id: &str,
+        schema_id: &SchemaId,
         _submitter_did: Option<&str>,
     ) -> VcxCoreResult<Schema> {
         debug!("get_schema >> schema_id: {schema_id}");
         let request = self
             .request_builder()?
-            .build_get_schema_request(None, &SchemaId::from_str(schema_id)?)?;
+            .build_get_schema_request(None, &schema_id.convert(())?)?;
         let response = self.submit_request(None, request).await?;
         debug!("get_schema << response: {response}");
         let schema = self

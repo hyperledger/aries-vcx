@@ -61,7 +61,7 @@ async fn test_pool_prover_get_credential() -> Result<(), Box<dyn Error>> {
         .await?;
     let prover_cred = serde_json::from_str::<ProverCredential>(&cred_json)?;
 
-    assert_eq!(prover_cred.schema_id, schema.schema_id);
+    assert_eq!(prover_cred.schema_id, schema.schema_id.to_string());
     assert_eq!(prover_cred.cred_def_id, cred_def.get_cred_def_id());
     assert_eq!(prover_cred.cred_rev_id.unwrap(), cred_rev_id);
     assert_eq!(prover_cred.rev_reg_id.unwrap(), rev_reg.rev_reg_id);

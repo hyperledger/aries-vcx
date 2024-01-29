@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use anoncreds_types::data_types::ledger::schema::Schema as LedgerSchema;
+use anoncreds_types::data_types::{
+    identifiers::schema_id::SchemaId, ledger::schema::Schema as LedgerSchema,
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     global::settings::DEFAULT_SERIALIZE_VERSION,
@@ -26,7 +28,7 @@ pub struct SchemaData {
 pub struct Schema {
     pub data: Vec<String>,
     pub version: String,
-    pub schema_id: String,
+    pub schema_id: SchemaId,
     pub name: String,
     pub source_id: String,
     #[serde(default)]
@@ -69,7 +71,7 @@ impl Schema {
             name: name.to_string(),
             data: data.clone(),
             version: version.to_string(),
-            schema_id: schema_json.id.to_string(),
+            schema_id: schema_json.id.clone(),
             submitter_did: submitter_did.to_string(),
             schema_json,
             state: PublicEntityStateType::Built,
@@ -102,7 +104,7 @@ impl Schema {
     }
 
     pub fn get_schema_id(&self) -> String {
-        self.schema_id.clone()
+        self.schema_id.to_string()
     }
 
     pub fn to_string_versioned(&self) -> VcxResult<String> {
@@ -139,7 +141,7 @@ impl Schema {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::constants::SCHEMA_ID;
+    use test_utils::constants::{schema_id, DID, SCHEMA_ID, SCHEMA_JSON};
 
     use super::*;
 
@@ -148,10 +150,12 @@ mod tests {
         let schema = Schema {
             data: vec!["name".to_string(), "age".to_string()],
             version: "1.0".to_string(),
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             name: "test".to_string(),
             source_id: "1".to_string(),
-            ..Schema::default()
+            submitter_did: DID.to_string(),
+            state: PublicEntityStateType::Built,
+            schema_json: serde_json::from_str(SCHEMA_JSON).unwrap(),
         };
         let serialized = schema.to_string_versioned().unwrap();
         assert!(serialized.contains(r#""version":"1.0""#));
@@ -187,7 +191,7 @@ mod tests {
 
         assert_eq!(schema.version, "1.0");
         assert_eq!(schema.data, vec!["name".to_string(), "age".to_string()]);
-        assert_eq!(schema.schema_id, "test_schema_id");
+        assert_eq!(schema.schema_id, SchemaId::new_unchecked("test_schema_id"));
         assert_eq!(schema.name, "test");
         assert_eq!(schema.source_id, "1");
         assert_eq!(schema.state, PublicEntityStateType::Published);
@@ -198,10 +202,12 @@ mod tests {
         let schema = Schema {
             data: vec!["name".to_string(), "age".to_string()],
             version: "1.0".to_string(),
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             name: "test".to_string(),
             source_id: "1".to_string(),
-            ..Schema::default()
+            submitter_did: DID.to_string(),
+            state: PublicEntityStateType::Built,
+            schema_json: serde_json::from_str(SCHEMA_JSON).unwrap(),
         };
         assert_eq!(schema.get_schema_id(), SCHEMA_ID);
     }

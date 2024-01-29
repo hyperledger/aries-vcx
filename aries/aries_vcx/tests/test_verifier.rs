@@ -75,9 +75,8 @@ async fn create_indy_proof(
     .to_string();
 
     let schema_id = schema.schema_id.clone();
-    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
     let schemas = json!({
-        schema_id: schema_json,
+        schema_id: schema.schema_json,
     })
     .to_string();
 
@@ -174,9 +173,8 @@ async fn create_proof_with_predicate(
         .to_string()
     };
 
-    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
     let schemas = json!({
-        schema.schema_id: schema_json,
+        schema.schema_id: schema.schema_json,
     })
     .to_string();
 
@@ -351,7 +349,6 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
     )
     .await;
     let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json())?;
-    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
 
     let anoncreds = &setup.anoncreds;
     let prover_proof_json = anoncreds
@@ -370,7 +367,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
             })
             .to_string(),
             "main",
-            &json!({ schema.schema_id: schema_json }).to_string(),
+            &json!({ schema.schema_id: schema.schema_json }).to_string(),
             &json!({ cred_def.get_cred_def_id(): cred_def_json }).to_string(),
             None,
         )
@@ -445,7 +442,6 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
     )
     .await;
     let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json())?;
-    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
 
     let anoncreds = &setup.anoncreds;
     let prover_proof_json = anoncreds
@@ -464,7 +460,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
             })
             .to_string(),
             "main",
-            &json!({ schema.schema_id: schema_json }).to_string(),
+            &json!({ schema.schema_id: schema.schema_json }).to_string(),
             &json!({ cred_def.get_cred_def_id(): cred_def_json }).to_string(),
             None,
         )

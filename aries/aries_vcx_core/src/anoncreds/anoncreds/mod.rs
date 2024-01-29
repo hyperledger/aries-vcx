@@ -1653,11 +1653,6 @@ fn make_revocation_registry_id(
     .unwrap())
 }
 
-// V4SGRU86Z58d6TV7PBUe6f:4:V4SGRU86Z58d6TV7PBUe6f:3:CL:771:1:CL_ACCUM:tag1
-pub fn rev_reg_def_parts(_id: &str) -> Option<(Option<&str>, Did, String, SchemaId, String)> {
-    todo!()
-}
-
 pub fn schema_parts(id: &str) -> Option<(Option<&str>, Did, String, String)> {
     let parts = id.split_terminator(':').collect::<Vec<&str>>();
 

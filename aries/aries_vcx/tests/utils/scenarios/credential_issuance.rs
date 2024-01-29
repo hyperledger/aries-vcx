@@ -1,5 +1,6 @@
 use std::{thread, time::Duration};
 
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use aries_vcx::{
     common::primitives::{
         credential_definition::CredentialDef, credential_schema::Schema,
@@ -338,7 +339,7 @@ pub async fn exchange_credential_with_proposal(
         impl BaseAnonCreds,
         impl BaseWallet,
     >,
-    schema_id: &str,
+    schema_id: &SchemaId,
     cred_def_id: &str,
     rev_reg_id: Option<String>,
     tails_dir: Option<String>,

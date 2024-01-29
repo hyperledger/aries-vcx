@@ -7,6 +7,7 @@ use indy_vdr::ledger::identifiers::SchemaId as IndyVdrSchemaId;
 use indy_vdr::ledger::requests::schema::{
     AttributeNames as IndyVdrAttributeNames, Schema as IndyVdrSchema, SchemaV1,
 };
+use indy_vdr::utils::did::DidValue;
 
 pub trait Convert {
     type Args;
@@ -48,7 +49,6 @@ impl Convert for OurSchema {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _: ()) -> Result<Self::Target, Self::Error> {
-        dbg!(self.clone());
         Ok(IndyVdrSchema::SchemaV1(SchemaV1 {
             id: IndyVdrSchemaId::new(
                 &indy_vdr::utils::did::DidValue::new(&self.issuer_id.0, None),
@@ -60,5 +60,33 @@ impl Convert for OurSchema {
             version: self.version,
             seq_no: self.seq_no,
         }))
+    }
+}
+
+impl Convert for &OurSchemaId {
+    type Args = ();
+    type Target = IndyVdrSchemaId;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        let parts = self.0.split(":").collect::<Vec<_>>();
+        let (_method, did, name, version) = if parts.len() == 4 {
+            // NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0
+            let did = parts[0].to_string();
+            let name = parts[2].to_string();
+            let version = parts[3].to_string();
+            (None, DidValue(did), name, version)
+        } else if parts.len() == 8 {
+            // schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0
+            let method = parts[1];
+            let did = parts[2..5].join(":");
+            let name = parts[6].to_string();
+            let version = parts[7].to_string();
+            (Some(method), DidValue(did), name, version)
+        } else {
+            return Err("Invalid schema id".into());
+        };
+
+        Ok(IndyVdrSchemaId::new(&did, &name, &version))
     }
 }
