@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
 use self::indy_tag::IndyTags;
-use super::base_wallet::{record::Record, BaseWallet};
+use super::base_wallet::{record::Record, record_category::RecordCategory, BaseWallet};
 use crate::{errors::error::VcxCoreResult, WalletHandle};
 
 mod indy_did_wallet;
@@ -88,32 +88,43 @@ impl IndyWalletRecord {
 
         Ok(Self {
             id: Some(record.name().into()),
-            record_type: Some(record.category().into()),
+            record_type: Some(record.category().to_string()),
             value: Some(record.value().into()),
             tags,
         })
     }
 }
 
-impl From<IndyRecord> for Record {
-    fn from(ir: IndyRecord) -> Self {
-        Self::builder()
-            .name(ir.id)
-            .category(ir.type_)
-            .value(ir.value)
-            .tags(IndyTags::new(ir.tags).into_entry_tags())
-            .build()
-    }
-}
+// impl From<IndyRecord> for Record {
+//     fn from(ir: IndyRecord) -> Self {
+//         Self::builder()
+//             .name(ir.id)
+//             .category(RecordCategory::from_str(&ir.type_)?)
+//             .value(ir.value)
+//             .tags(IndyTags::new(ir.tags).into_entry_tags())
+//             .build()
+//     }
+// }
 
 impl From<Record> for IndyRecord {
     fn from(record: Record) -> Self {
         Self {
             id: record.name().into(),
-            type_: record.category().into(),
+            type_: record.category().to_string(),
             value: record.value().into(),
             tags: IndyTags::from_entry_tags(record.tags().to_owned()).into_inner(),
         }
+    }
+}
+
+impl Record {
+    pub fn try_from_indy_record(indy_record: IndyRecord) -> VcxCoreResult<Record> {
+        Ok(Record::builder()
+            .name(indy_record.id)
+            .category(RecordCategory::from_str(&indy_record.type_)?)
+            .value(indy_record.value)
+            .tags(IndyTags::new(indy_record.tags).into_entry_tags())
+            .build())
     }
 }
 

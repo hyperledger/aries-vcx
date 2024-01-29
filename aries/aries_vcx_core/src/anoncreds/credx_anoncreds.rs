@@ -30,27 +30,30 @@ use crate::{
         json::{AsTypeOrDeserializationError, TryGetIndex},
     },
     wallet::{
-        base_wallet::{record::Record, search_filter::SearchFilter, BaseWallet, RecordWallet},
+        base_wallet::{
+            record::Record, record_category::RecordCategory, search_filter::SearchFilter,
+            BaseWallet, RecordWallet,
+        },
         entry_tag::EntryTags,
     },
 };
 
-pub const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
+// pub const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
 
-pub const CATEGORY_CREDENTIAL: &str = "VCX_CREDENTIAL";
-pub const CATEGORY_CRED_DEF: &str = "VCX_CRED_DEF";
-pub const CATEGORY_CRED_KEY_CORRECTNESS_PROOF: &str = "VCX_CRED_KEY_CORRECTNESS_PROOF";
-pub const CATEGORY_CRED_DEF_PRIV: &str = "VCX_CRED_DEF_PRIV";
-pub const CATEGORY_CRED_SCHEMA: &str = "VCX_CRED_SCHEMA";
+// pub const RecordCategory::Cred: &str = "VCX_CREDENTIAL";
+// pub const RecordDategory::CredDef: &str = "VCX_CRED_DEF";
+// pub const RecordCategory::CredKeyCorectnessProofCATEGORY_CRED_KEY_CORRECTNESS_PROOF: &str = "VCX_CRED_KEY_CORRECTNESS_PROOF";
+// pub const RecordCategory::CategoryCredDefPrivCATEGORY_CRED_DEF_PRIV: &str = "VCX_CRED_DEF_PRIV";
+// pub const RecordCategory::CredSchema: &str = "VCX_CRED_SCHEMA";
 
-// Category used for mapping a cred_def_id to a schema_id
-pub const CATEGORY_CRED_MAP_SCHEMA_ID: &str = "VCX_CRED_MAP_SCHEMA_ID";
+// // Category used for mapping a cred_def_id to a schema_id
+// pub const CATEGORY_CRED_MAP_SCHEMA_ID: &str = "VCX_CRED_MAP_SCHEMA_ID";
 
-pub const CATEGORY_REV_REG: &str = "VCX_REV_REG";
-pub const CATEGORY_REV_REG_DELTA: &str = "VCX_REV_REG_DELTA";
-pub const CATEGORY_REV_REG_INFO: &str = "VCX_REV_REG_INFO";
-pub const CATEGORY_REV_REG_DEF: &str = "VCX_REV_REG_DEF";
-pub const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
+// pub const RecordCategory::CategoryRevRegCATEGORY_REV_REG: &str = "VCX_REV_REG";
+// pub const RecordCategore::RevRegDelta: &str = "VCX_REV_REG_DELTA";
+// pub const RecordCategory::RevRegInfo: &str = "VCX_REV_REG_INFO";
+// pub const RecordCategory::RevRegDef: &str = "VCX_REV_REG_DEF";
+// pub const RecordCategory::RevRegDefPriv: &str = "VCX_REV_REG_DEF_PRIV";
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RevocationRegistryInfo {
@@ -70,13 +73,13 @@ impl RecordWallet for WalletAdapter {
         self.0.add_record(record).await
     }
 
-    async fn get_record(&self, category: &str, name: &str) -> VcxCoreResult<Record> {
+    async fn get_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<Record> {
         self.0.get_record(category, name).await
     }
 
     async fn update_record_tags(
         &self,
-        category: &str,
+        category: RecordCategory,
         name: &str,
         new_tags: EntryTags,
     ) -> VcxCoreResult<()> {
@@ -85,20 +88,20 @@ impl RecordWallet for WalletAdapter {
 
     async fn update_record_value(
         &self,
-        category: &str,
+        category: RecordCategory,
         name: &str,
         new_value: &str,
     ) -> VcxCoreResult<()> {
         self.0.update_record_value(category, name, new_value).await
     }
 
-    async fn delete_record(&self, category: &str, name: &str) -> VcxCoreResult<()> {
+    async fn delete_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<()> {
         self.0.delete_record(category, name).await
     }
 
     async fn search_record(
         &self,
-        category: &str,
+        category: RecordCategory,
         search_filter: Option<SearchFilter>,
     ) -> VcxCoreResult<Vec<Record>> {
         self.0.search_record(category, search_filter).await
@@ -111,7 +114,7 @@ pub struct IndyCredxAnonCreds;
 impl IndyCredxAnonCreds {
     async fn get_wallet_record_value<T>(
         wallet: &impl BaseWallet,
-        category: &str,
+        category: RecordCategory,
         id: &str,
     ) -> VcxCoreResult<T>
     where
@@ -126,7 +129,7 @@ impl IndyCredxAnonCreds {
         link_secret_id: &str,
     ) -> VcxCoreResult<LinkSecret> {
         let record = wallet
-            .get_record(CATEGORY_LINK_SECRET, link_secret_id)
+            .get_record(RecordCategory::LinkSecret, link_secret_id)
             .await?;
 
         let ms_bn: BigNumber = BigNumber::from_dec(record.value()).map_err(|err| {
@@ -148,7 +151,7 @@ impl IndyCredxAnonCreds {
         credential_id: &str,
     ) -> VcxCoreResult<CredxCredential> {
         let cred_record = wallet
-            .get_record(CATEGORY_CREDENTIAL, credential_id)
+            .get_record(RecordCategory::Cred, credential_id)
             .await?;
 
         let credential: CredxCredential = serde_json::from_str(cred_record.value())?;
@@ -162,7 +165,7 @@ impl IndyCredxAnonCreds {
     ) -> VcxCoreResult<Vec<(String, CredxCredential)>> {
         let records = wallet
             .search_record(
-                CATEGORY_CREDENTIAL,
+                RecordCategory::Cred,
                 Some(SearchFilter::JsonFilter(wql.into())),
             )
             .await?;
@@ -295,7 +298,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
         let cred_def =
-            Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, cred_def_id).await?;
+            Self::get_wallet_record_value(wallet, RecordCategory::CredDef, cred_def_id).await?;
 
         let rev_reg_id = credx::issuer::make_revocation_registry_id(
             &issuer_did,
@@ -305,9 +308,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         )?;
 
         let res_rev_reg =
-            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG, &rev_reg_id.0).await;
+            Self::get_wallet_record_value(wallet, RecordCategory::RevReg, &rev_reg_id.0).await;
         let res_rev_reg_def =
-            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF, &rev_reg_id.0).await;
+            Self::get_wallet_record_value(wallet, RecordCategory::RevRegDef, &rev_reg_id.0).await;
 
         if let (Ok(rev_reg), Ok(rev_reg_def)) = (res_rev_reg, res_rev_reg_def) {
             return Ok((rev_reg_id.0, rev_reg, rev_reg_def));
@@ -334,7 +337,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_rev_reg_info = serde_json::to_string(&rev_reg_info)?;
         let record = Record::builder()
             .name(rev_reg_id.0.clone())
-            .category(CATEGORY_REV_REG_INFO.to_string())
+            .category(RecordCategory::RevRegInfo)
             .value(str_rev_reg_info)
             .build();
         wallet.add_record(record).await?;
@@ -342,7 +345,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_rev_reg_def = serde_json::to_string(&rev_reg_def)?;
         let record = Record::builder()
             .name(rev_reg_id.0.clone())
-            .category(CATEGORY_REV_REG_DEF.to_string())
+            .category(RecordCategory::RevRegDef)
             .value(str_rev_reg_def.clone())
             .build();
         wallet.add_record(record).await?;
@@ -350,7 +353,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_rev_reg_def_priv = serde_json::to_string(&rev_reg_def_priv)?;
         let record = Record::builder()
             .name(rev_reg_id.0.clone())
-            .category(CATEGORY_REV_REG_DEF_PRIV.to_string())
+            .category(RecordCategory::RevRegDefPriv)
             .value(str_rev_reg_def_priv)
             .build();
         wallet.add_record(record).await?;
@@ -358,7 +361,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_rev_reg = serde_json::to_string(&rev_reg)?;
         let record = Record::builder()
             .name(rev_reg_id.0.clone())
-            .category(CATEGORY_REV_REG.to_string())
+            .category(RecordCategory::RevReg)
             .value(str_rev_reg.clone())
             .build();
         wallet.add_record(record).await?;
@@ -396,7 +399,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         // If cred def already exists, return it
         if let Ok(cred_def) =
-            Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, &cred_def_id.0).await
+            Self::get_wallet_record_value(wallet, RecordCategory::CredDef, &cred_def_id.0).await
         {
             return Ok((cred_def_id.0, cred_def));
         }
@@ -414,7 +417,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_cred_def = serde_json::to_string(&cred_def)?;
         let record = Record::builder()
             .name(cred_def_id.0.clone())
-            .category(CATEGORY_CRED_DEF.to_string())
+            .category(RecordCategory::CredDef)
             .value(str_cred_def.clone())
             .build();
         wallet.add_record(record).await?;
@@ -422,7 +425,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_cred_def_priv = serde_json::to_string(&cred_def_priv)?;
         let record = Record::builder()
             .name(cred_def_id.0.clone())
-            .category(CATEGORY_CRED_DEF_PRIV.to_string())
+            .category(RecordCategory::CredDefPriv)
             .value(str_cred_def_priv)
             .build();
         wallet.add_record(record).await?;
@@ -430,14 +433,14 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_cred_key_proof = serde_json::to_string(&cred_key_correctness_proof)?;
         let record = Record::builder()
             .name(cred_def_id.0.clone())
-            .category(CATEGORY_CRED_KEY_CORRECTNESS_PROOF.to_string())
+            .category(RecordCategory::CredKeyCorectnessProof)
             .value(str_cred_key_proof)
             .build();
         wallet.add_record(record).await?;
 
         let record = Record::builder()
             .name(schema.id().to_string())
-            .category(CATEGORY_CRED_SCHEMA.to_string())
+            .category(RecordCategory::CredSchema)
             .value(schema_json.into())
             .build();
         let store_schema_res = wallet.add_record(record).await;
@@ -448,7 +451,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let record = Record::builder()
             .name(cred_def_id.0.clone())
-            .category(CATEGORY_CRED_MAP_SCHEMA_ID.to_string())
+            .category(RecordCategory::CredMapSchemaId)
             .value(schema.id().0.clone())
             .build();
         wallet.add_record(record).await?;
@@ -463,14 +466,17 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         cred_def_id: &str,
     ) -> VcxCoreResult<String> {
         let cred_def =
-            Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, cred_def_id).await?;
+            Self::get_wallet_record_value(wallet, RecordCategory::CredDef, cred_def_id).await?;
 
-        let correctness_proof =
-            Self::get_wallet_record_value(wallet, CATEGORY_CRED_KEY_CORRECTNESS_PROOF, cred_def_id)
-                .await?;
+        let correctness_proof = Self::get_wallet_record_value(
+            wallet,
+            RecordCategory::CredKeyCorectnessProof,
+            cred_def_id,
+        )
+        .await?;
 
         let schema = wallet
-            .get_record(CATEGORY_CRED_MAP_SCHEMA_ID, cred_def_id)
+            .get_record(RecordCategory::CredMapSchemaId, cred_def_id)
             .await?;
 
         let schema_id = SchemaId(schema.value().into());
@@ -500,24 +506,26 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let cred_def_id = &cred_offer.cred_def_id.0;
 
         let cred_def =
-            Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, cred_def_id).await?;
+            Self::get_wallet_record_value(wallet, RecordCategory::CredDef, cred_def_id).await?;
 
         let cred_def_private =
-            Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF_PRIV, cred_def_id).await?;
+            Self::get_wallet_record_value(wallet, RecordCategory::CredDefPriv, cred_def_id).await?;
 
         let mut revocation_config_parts = match &rev_reg_id {
             Some(rev_reg_id) => {
                 let rev_reg_def =
-                    Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF, rev_reg_id).await?;
+                    Self::get_wallet_record_value(wallet, RecordCategory::RevRegDef, rev_reg_id)
+                        .await?;
 
                 let rev_reg_def_priv =
-                    Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF_PRIV, rev_reg_id)
+                    Self::get_wallet_record_value(wallet, RecordCategory::CredDefPriv, rev_reg_id)
                         .await?;
 
                 let rev_reg =
-                    Self::get_wallet_record_value(wallet, CATEGORY_REV_REG, rev_reg_id).await?;
+                    Self::get_wallet_record_value(wallet, RecordCategory::RevReg, rev_reg_id)
+                        .await?;
                 let rev_reg_info: RevocationRegistryInfo =
-                    Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_INFO, rev_reg_id)
+                    Self::get_wallet_record_value(wallet, RecordCategory::RevRegInfo, rev_reg_id)
                         .await?;
 
                 Some((rev_reg_def, rev_reg_def_priv, rev_reg, rev_reg_info))
@@ -585,11 +593,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 let str_rev_reg_info = serde_json::to_string(&rev_reg_info)?;
 
                 wallet
-                    .update_record_value(CATEGORY_REV_REG, &rev_reg_id, str_rev_reg)
+                    .update_record_value(RecordCategory::RevReg, &rev_reg_id, str_rev_reg)
                     .await?;
 
                 wallet
-                    .update_record_value(CATEGORY_REV_REG_INFO, &rev_reg_id, &str_rev_reg_info)
+                    .update_record_value(RecordCategory::RevRegInfo, &rev_reg_id, &str_rev_reg_info)
                     .await?;
 
                 Some(cred_rev_id)
@@ -1032,7 +1040,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let record = Record::builder()
             .name(credential_id.clone())
-            .category(CATEGORY_CREDENTIAL.into())
+            .category(RecordCategory::Cred)
             .value(record_value)
             .tags(tags)
             .build();
@@ -1048,7 +1056,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         link_secret_id: &str,
     ) -> VcxCoreResult<String> {
         let existing_record = wallet
-            .get_record(CATEGORY_LINK_SECRET, link_secret_id)
+            .get_record(RecordCategory::LinkSecret, link_secret_id)
             .await
             .ok(); // ignore error, as we only care about whether it exists or not
 
@@ -1088,7 +1096,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let record = Record::builder()
             .name(link_secret_id.into())
-            .category(CATEGORY_LINK_SECRET.into())
+            .category(RecordCategory::LinkSecret)
             .value(ms_decimal)
             .build();
 
@@ -1102,7 +1110,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         wallet: &impl BaseWallet,
         cred_id: &str,
     ) -> VcxCoreResult<()> {
-        wallet.delete_record(CATEGORY_CREDENTIAL, cred_id).await
+        wallet.delete_record(RecordCategory::Cred, cred_id).await
     }
 
     async fn issuer_create_schema(
@@ -1137,16 +1145,18 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             )
         })?;
 
-        let rev_reg = Self::get_wallet_record_value(wallet, CATEGORY_REV_REG, rev_reg_id).await?;
+        let rev_reg =
+            Self::get_wallet_record_value(wallet, RecordCategory::RevReg, rev_reg_id).await?;
 
         let rev_reg_def =
-            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF, rev_reg_id).await?;
+            Self::get_wallet_record_value(wallet, RecordCategory::RevRegDef, rev_reg_id).await?;
 
         let rev_reg_priv =
-            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF_PRIV, rev_reg_id).await?;
+            Self::get_wallet_record_value(wallet, RecordCategory::RevRegDefPriv, rev_reg_id)
+                .await?;
 
         let mut rev_reg_info: RevocationRegistryInfo =
-            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_INFO, rev_reg_id).await?;
+            Self::get_wallet_record_value(wallet, RecordCategory::RevRegInfo, rev_reg_id).await?;
 
         let (issuance_type, cred_def_id) = match &rev_reg_def {
             RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => {
@@ -1155,7 +1165,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         };
 
         let cred_def =
-            Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, cred_def_id).await?;
+            Self::get_wallet_record_value(wallet, RecordCategory::CredDef, cred_def_id).await?;
 
         match issuance_type {
             IssuanceType::ISSUANCE_ON_DEMAND => {
@@ -1210,23 +1220,27 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_rev_reg_delta = serde_json::to_string(&rev_reg_delta)?;
 
         wallet
-            .update_record_value(CATEGORY_REV_REG, rev_reg_id, &str_rev_reg)
+            .update_record_value(RecordCategory::RevReg, rev_reg_id, &str_rev_reg)
             .await?;
 
         wallet
-            .update_record_value(CATEGORY_REV_REG_INFO, rev_reg_id, &str_rev_reg_info)
+            .update_record_value(RecordCategory::RevRegInfo, rev_reg_id, &str_rev_reg_info)
             .await?;
 
         match old_str_rev_reg_delta {
             Some(_) => {
                 wallet
-                    .update_record_value(CATEGORY_REV_REG_DELTA, rev_reg_id, &str_rev_reg_delta)
+                    .update_record_value(
+                        RecordCategory::RevRegDelta,
+                        rev_reg_id,
+                        &str_rev_reg_delta,
+                    )
                     .await?
             }
             None => {
                 let record = Record::builder()
                     .name(rev_reg_id.into())
-                    .category(CATEGORY_REV_REG_DELTA.into())
+                    .category(RecordCategory::RevRegDelta)
                     .value(str_rev_reg_delta)
                     .build();
                 wallet.add_record(record).await?
@@ -1243,7 +1257,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     ) -> VcxCoreResult<Option<String>> {
         let res_rev_reg_delta = Self::get_wallet_record_value::<RevocationRegistryDelta>(
             wallet,
-            CATEGORY_REV_REG_DELTA,
+            RecordCategory::RevRegDelta,
             rev_reg_id,
         )
         .await;
@@ -1280,7 +1294,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     ) -> VcxCoreResult<()> {
         if self.get_rev_reg_delta(wallet, rev_reg_id).await?.is_some() {
             wallet
-                .delete_record(CATEGORY_REV_REG_DELTA, rev_reg_id)
+                .delete_record(RecordCategory::RevRegDelta, rev_reg_id)
                 .await?;
         }
 

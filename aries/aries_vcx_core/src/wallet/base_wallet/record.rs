@@ -1,10 +1,10 @@
 use typed_builder::TypedBuilder;
 
-use crate::wallet::entry_tag::EntryTags;
+use crate::wallet::{base_wallet::record_category::RecordCategory, entry_tag::EntryTags};
 
 #[derive(Debug, Default, Clone, TypedBuilder)]
 pub struct Record {
-    category: String,
+    category: RecordCategory,
     name: String,
     value: String,
     #[builder(default)]
@@ -20,7 +20,7 @@ impl Record {
         &self.name
     }
 
-    pub fn category(&self) -> &str {
+    pub fn category(&self) -> &RecordCategory {
         &self.category
     }
 

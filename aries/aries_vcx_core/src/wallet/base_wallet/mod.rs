@@ -1,17 +1,23 @@
 use async_trait::async_trait;
 use public_key::Key;
 
+use std::fmt::{Display, Formatter, Result};
+
 use super::entry_tag::EntryTags;
 use crate::{
     errors::error::VcxCoreResult,
     wallet::{
-        base_wallet::{did_data::DidData, record::Record, search_filter::SearchFilter},
+        base_wallet::{
+            did_data::DidData, record::Record, record_category::RecordCategory,
+            search_filter::SearchFilter,
+        },
         structs_io::UnpackMessageOutput,
     },
 };
 
 pub mod did_data;
 pub mod record;
+pub mod record_category;
 pub mod search_filter;
 
 pub trait BaseWallet: RecordWallet + DidWallet + Send + Sync + std::fmt::Debug {}
@@ -48,27 +54,27 @@ pub trait DidWallet {
 pub trait RecordWallet {
     async fn add_record(&self, record: Record) -> VcxCoreResult<()>;
 
-    async fn get_record(&self, category: &str, name: &str) -> VcxCoreResult<Record>;
+    async fn get_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<Record>;
 
     async fn update_record_tags(
         &self,
-        category: &str,
+        category: RecordCategory,
         name: &str,
         new_tags: EntryTags,
     ) -> VcxCoreResult<()>;
 
     async fn update_record_value(
         &self,
-        category: &str,
+        category: RecordCategory,
         name: &str,
         new_value: &str,
     ) -> VcxCoreResult<()>;
 
-    async fn delete_record(&self, category: &str, name: &str) -> VcxCoreResult<()>;
+    async fn delete_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<()>;
 
     async fn search_record(
         &self,
-        category: &str,
+        category: RecordCategory,
         search_filter: Option<SearchFilter>,
     ) -> VcxCoreResult<Vec<Record>>;
 }
@@ -81,7 +87,7 @@ mod tests {
     use crate::{
         errors::error::AriesVcxCoreErrorKind,
         wallet::{
-            base_wallet::{DidWallet, Record, RecordWallet},
+            base_wallet::{record_category::RecordCategory, DidWallet, Record, RecordWallet},
             entry_tag::{EntryTag, EntryTags},
         },
     };
@@ -171,7 +177,7 @@ mod tests {
         let wallet = build_test_wallet().await;
 
         let name = "foo";
-        let category = "my";
+        let category = RecordCategory::default();
         let value = "bar";
 
         let record1 = Record::builder()
@@ -198,12 +204,12 @@ mod tests {
         let wallet = build_test_wallet().await;
 
         let name = "foo";
-        let category = "my";
+        let category = RecordCategory::default();
         let value = "bar";
 
         let record = Record::builder()
             .name(name.into())
-            .category(category.into())
+            .category(category)
             .value(value.into())
             .build();
 
@@ -226,27 +232,27 @@ mod tests {
         let name1 = "foo";
         let name2 = "foa";
         let name3 = "fob";
-        let category1 = "my";
-        let category2 = "your";
+        let category1 = RecordCategory::Cred;
+        let category2 = RecordCategory::CredDef;
         let value = "xxx";
 
         let record1 = Record::builder()
             .name(name1.into())
-            .category(category1.into())
+            .category(category1)
             .value(value.into())
             .build();
         wallet.add_record(record1).await.unwrap();
 
         let record2 = Record::builder()
             .name(name2.into())
-            .category(category1.into())
+            .category(category1)
             .value(value.into())
             .build();
         wallet.add_record(record2).await.unwrap();
 
         let record3 = Record::builder()
             .name(name3.into())
-            .category(category2.into())
+            .category(category2)
             .value(value.into())
             .build();
         wallet.add_record(record3).await.unwrap();
@@ -261,7 +267,7 @@ mod tests {
         let wallet = build_test_wallet().await;
 
         let name = "foo";
-        let category = "my";
+        let category = RecordCategory::default();
         let value1 = "xxx";
         let value2 = "yyy";
         let tags1: EntryTags = vec![EntryTag::Plaintext("a".into(), "b".into())].into();
@@ -269,7 +275,7 @@ mod tests {
 
         let record = Record::builder()
             .name(name.into())
-            .category(category.into())
+            .category(category)
             .tags(tags1.clone())
             .value(value1.into())
             .build();
@@ -294,7 +300,7 @@ mod tests {
         let wallet = build_test_wallet().await;
 
         let name = "foo";
-        let category = "my";
+        let category = RecordCategory::default();
         let value1 = "xxx";
         let value2 = "yyy";
         let tags: EntryTags = vec![EntryTag::Plaintext("a".into(), "b".into())].into();
@@ -322,7 +328,7 @@ mod tests {
         let wallet = build_test_wallet().await;
 
         let name = "foo";
-        let category = "my";
+        let category = RecordCategory::default();
         let value = "xxx";
         let tags1: EntryTags = vec![EntryTag::Plaintext("a".into(), "b".into())].into();
         let tags2: EntryTags = vec![EntryTag::Plaintext("c".into(), "d".into())].into();
