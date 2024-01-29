@@ -8,7 +8,10 @@ use super::{indy_tags::IndyTags, SEARCH_OPTIONS, WALLET_OPTIONS};
 use crate::{
     errors::error::{AriesVcxCoreError, VcxCoreResult},
     wallet::{
-        base_wallet::{record::Record, search_filter::SearchFilter, RecordWallet},
+        base_wallet::{
+            record::Record, record_category::RecordCategory, search_filter::SearchFilter,
+            RecordWallet,
+        },
         indy::IndySdkWallet,
         record_tags::RecordTags,
     },
@@ -27,7 +30,7 @@ impl RecordWallet for IndySdkWallet {
             .non_secret_controller
             .add_record(
                 self.wallet_handle,
-                record.category().into(),
+                record.category().to_string(),
                 record.name().into(),
                 record.value().into(),
                 tags_map,
@@ -35,12 +38,12 @@ impl RecordWallet for IndySdkWallet {
             .await?)
     }
 
-    async fn get_record(&self, category: &str, name: &str) -> VcxCoreResult<Record> {
+    async fn get_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<Record> {
         let res = Locator::instance()
             .non_secret_controller
             .get_record(
                 self.wallet_handle,
-                category.into(),
+                category.to_string(),
                 name.into(),
                 WALLET_OPTIONS.into(),
             )
@@ -48,12 +51,12 @@ impl RecordWallet for IndySdkWallet {
 
         let indy_record: IndyRecord = serde_json::from_str(&res)?;
 
-        Ok(indy_record.into())
+        Ok(Record::try_from_indy_record(indy_record)?)
     }
 
     async fn update_record_tags(
         &self,
-        category: &str,
+        category: RecordCategory,
         name: &str,
         new_tags: RecordTags,
     ) -> VcxCoreResult<()> {
@@ -61,7 +64,7 @@ impl RecordWallet for IndySdkWallet {
             .non_secret_controller
             .update_record_tags(
                 self.wallet_handle,
-                category.into(),
+                category.to_string(),
                 name.into(),
                 IndyTags::from_entry_tags(new_tags).into_inner(),
             )
@@ -70,7 +73,7 @@ impl RecordWallet for IndySdkWallet {
 
     async fn update_record_value(
         &self,
-        category: &str,
+        category: RecordCategory,
         name: &str,
         new_value: &str,
     ) -> VcxCoreResult<()> {
@@ -78,23 +81,23 @@ impl RecordWallet for IndySdkWallet {
             .non_secret_controller
             .update_record_value(
                 self.wallet_handle,
-                category.into(),
+                category.to_string(),
                 name.into(),
                 new_value.into(),
             )
             .await?)
     }
 
-    async fn delete_record(&self, category: &str, name: &str) -> VcxCoreResult<()> {
+    async fn delete_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<()> {
         Ok(Locator::instance()
             .non_secret_controller
-            .delete_record(self.wallet_handle, category.into(), name.into())
+            .delete_record(self.wallet_handle, category.to_string(), name.into())
             .await?)
     }
 
     async fn search_record(
         &self,
-        category: &str,
+        category: RecordCategory,
         search_filter: Option<SearchFilter>,
     ) -> VcxCoreResult<Vec<Record>> {
         let json_filter = search_filter
@@ -109,7 +112,7 @@ impl RecordWallet for IndySdkWallet {
             .non_secret_controller
             .open_search(
                 self.wallet_handle,
-                category.into(),
+                category.to_string(),
                 query_json,
                 SEARCH_OPTIONS.into(),
             )
@@ -133,7 +136,7 @@ impl RecordWallet for IndySdkWallet {
 
         let mut records = Vec::new();
         while let Some(record) = next().await? {
-            records.push(record.into());
+            records.push(Record::try_from_indy_record(record)?);
         }
 
         Ok(records)
