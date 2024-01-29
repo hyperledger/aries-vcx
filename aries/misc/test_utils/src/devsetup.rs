@@ -30,6 +30,7 @@ use crate::constants::{POOL1_TXN, TRUSTEE_SEED};
 
 #[cfg(feature = "vdr_proxy_ledger")]
 pub mod vdr_proxy_ledger;
+
 #[cfg(feature = "vdr_proxy_ledger")]
 use crate::devsetup::vdr_proxy_ledger::dev_build_profile_vdr_proxy_ledger;
 
@@ -37,6 +38,8 @@ use crate::devsetup::vdr_proxy_ledger::dev_build_profile_vdr_proxy_ledger;
 pub mod vdrtools_wallet;
 #[cfg(feature = "vdrtools_wallet")]
 use crate::devsetup::vdrtools_wallet::dev_build_indy_wallet;
+
+pub mod mock_wallet;
 
 const DEFAULT_AML_LABEL: &str = "eula";
 
@@ -216,9 +219,7 @@ pub async fn dev_build_featured_wallet(key_seed: &str) -> (String, impl BaseWall
 
     #[cfg(not(feature = "vdrtools_wallet"))]
     {
-        use aries_vcx_core::wallet::mock_wallet::MockWallet;
-
-        use crate::constants::INSTITUTION_DID;
+        use crate::{constants::INSTITUTION_DID, devsetup::mock_wallet::MockWallet};
 
         return (INSTITUTION_DID.to_owned(), MockWallet);
     }

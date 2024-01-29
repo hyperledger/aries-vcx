@@ -38,5 +38,5 @@ wallet_migrator = { path = "../../wallet_migrator" }
 shared = { path = "../../shared" }
 
 [dev-dependencies]
-test_utils = {path = "../../test_utils" }
+test_utils = {path = "../../test_utils", features = ["vdrtools_wallet"] }
 tokio = { version = "1.20", features = [ "rt", "macros" ] }

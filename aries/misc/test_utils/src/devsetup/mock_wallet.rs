@@ -1,18 +1,17 @@
-use async_trait::async_trait;
-use public_key::{Key, KeyType};
-
-use super::{
-    base_wallet::{
-        did_data::DidData, record::Record, search_filter::SearchFilter, BaseWallet, DidWallet,
-        RecordWallet,
-    },
-    record_tags::RecordTags,
-    structs_io::UnpackMessageOutput,
-};
-use crate::{
+use aries_vcx_core::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{self},
+    wallet::{
+        base_wallet::{
+            did_data::DidData, record::Record, search_filter::SearchFilter, BaseWallet, DidWallet,
+            RecordWallet,
+        },
+        entry_tags::EntryTags,
+        structs_io::UnpackMessageOutput,
+    },
 };
+use async_trait::async_trait;
+use public_key::{Key, KeyType};
 
 #[derive(Debug)]
 pub struct MockWallet;

@@ -215,7 +215,6 @@ impl GenericConnection {
 /// of the [`crate::protocols::connection::Connection`], if modified, will be modified together.
 #[cfg(test)]
 mod connection_serde_tests {
-    use aries_vcx_core::wallet::mock_wallet::MockWallet;
     use async_trait::async_trait;
     use chrono::Utc;
     use messages::{
@@ -230,7 +229,7 @@ mod connection_serde_tests {
             notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
         },
     };
-    use test_utils::mockdata::mock_ledger::MockLedger;
+    use test_utils::{devsetup::mock_wallet::MockWallet, mockdata::mock_ledger::MockLedger};
     use url::Url;
     use uuid::Uuid;
 

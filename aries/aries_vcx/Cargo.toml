@@ -74,7 +74,7 @@ url = { version = "2.3", features = ["serde"] }
 backtrace = { optional = true, version = "0.3" }
 
 [dev-dependencies]
-test_utils = { path = "../misc/test_utils" }
+test_utils = { path = "../misc/test_utils", features = ["vdrtools_wallet"] }
 libvcx_logger = { path = "../misc/legacy/libvcx_logger" }
 wallet_migrator = { path = "../misc/wallet_migrator" }
 async-channel = "1.7.1"
