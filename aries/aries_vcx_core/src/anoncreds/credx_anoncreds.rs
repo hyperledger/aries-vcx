@@ -31,7 +31,7 @@ use crate::{
     },
     wallet::{
         base_wallet::{record::Record, search_filter::SearchFilter, BaseWallet, RecordWallet},
-        entry_tag::EntryTags,
+        entry_tags::EntryTags,
     },
 };
 

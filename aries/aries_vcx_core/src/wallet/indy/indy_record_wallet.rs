@@ -4,12 +4,12 @@ use serde::Deserialize;
 use serde_json::Value;
 use vdrtools::Locator;
 
-use super::{indy_tag::IndyTags, SEARCH_OPTIONS, WALLET_OPTIONS};
+use super::{indy_tags::IndyTags, SEARCH_OPTIONS, WALLET_OPTIONS};
 use crate::{
     errors::error::{AriesVcxCoreError, VcxCoreResult},
     wallet::{
         base_wallet::{record::Record, search_filter::SearchFilter, RecordWallet},
-        entry_tag::EntryTags,
+        entry_tags::EntryTags,
         indy::IndySdkWallet,
     },
 };

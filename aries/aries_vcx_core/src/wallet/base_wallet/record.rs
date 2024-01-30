@@ -1,6 +1,6 @@
 use typed_builder::TypedBuilder;
 
-use crate::wallet::entry_tag::EntryTags;
+use crate::wallet::entry_tags::EntryTags;
 
 #[derive(Debug, Default, Clone, TypedBuilder)]
 pub struct Record {

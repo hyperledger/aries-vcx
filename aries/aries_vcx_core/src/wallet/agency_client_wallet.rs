@@ -16,7 +16,7 @@ use super::{
 };
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::entry_tag::EntryTags,
+    wallet::entry_tags::EntryTags,
 };
 
 #[derive(Debug)]

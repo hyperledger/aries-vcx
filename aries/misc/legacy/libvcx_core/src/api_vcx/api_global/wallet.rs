@@ -19,7 +19,7 @@ use aries_vcx::{
 };
 use aries_vcx_core::wallet::{
     base_wallet::{record::Record, DidWallet, RecordWallet},
-    entry_tag::EntryTags,
+    entry_tags::EntryTags,
     indy::IndyWalletRecord,
 };
 use futures::FutureExt;

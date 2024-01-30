@@ -2,13 +2,13 @@ use indy_api_types::domain::wallet::IndyRecord;
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
-use self::indy_tag::IndyTags;
+use self::indy_tags::IndyTags;
 use super::base_wallet::{record::Record, BaseWallet};
 use crate::{errors::error::VcxCoreResult, WalletHandle};
 
 mod indy_did_wallet;
 mod indy_record_wallet;
-mod indy_tag;
+mod indy_tags;
 pub mod internal;
 pub mod wallet;
 
