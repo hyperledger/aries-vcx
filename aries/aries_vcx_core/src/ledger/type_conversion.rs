@@ -1,8 +1,6 @@
+use anoncreds_types::data_types::identifiers::issuer_id::IssuerId;
 use anoncreds_types::data_types::identifiers::schema_id::SchemaId as OurSchemaId;
 use anoncreds_types::data_types::ledger::schema::Schema as OurSchema;
-use anoncreds_types::data_types::{
-    identifiers::issuer_id::IssuerId, ledger::schema::AttributeNames as OurAttributeNames,
-};
 use did_parser::Did;
 use indy_vdr::ledger::identifiers::SchemaId as IndyVdrSchemaId;
 use indy_vdr::ledger::requests::schema::{
@@ -40,16 +38,6 @@ impl Convert for IndyVdrSchema {
     }
 }
 
-impl Convert for OurAttributeNames {
-    type Args = ();
-    type Target = IndyVdrAttributeNames;
-    type Error = Box<dyn std::error::Error>;
-
-    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(IndyVdrAttributeNames(self.into()))
-    }
-}
-
 impl Convert for OurSchema {
     type Args = ();
     type Target = IndyVdrSchema;
@@ -63,7 +51,7 @@ impl Convert for OurSchema {
                 &self.version,
             ),
             name: self.name,
-            attr_names: self.attr_names.convert(())?,
+            attr_names: IndyVdrAttributeNames(self.attr_names.into()),
             version: self.version,
             seq_no: self.seq_no,
         }))

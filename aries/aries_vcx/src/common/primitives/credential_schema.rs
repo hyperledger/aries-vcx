@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use anoncreds_types::data_types::{
     identifiers::schema_id::SchemaId, ledger::schema::Schema as LedgerSchema,
 };
@@ -104,8 +102,8 @@ impl Schema {
         self.source_id.clone()
     }
 
-    pub fn get_schema_id(&self) -> String {
-        self.schema_id.to_string()
+    pub fn get_schema_id(&self) -> SchemaId {
+        self.schema_id.clone()
     }
 
     pub fn to_string_versioned(&self) -> VcxResult<String> {
@@ -127,14 +125,6 @@ impl Schema {
         Ok(self.state as u32)
     }
 
-    pub async fn get_schema_json(
-        &self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-    ) -> VcxResult<String> {
-        // TODO: This has different behavior than the original code
-        Ok(serde_json::to_string(&self.schema_json)?)
-    }
-
     pub fn get_state(&self) -> u32 {
         self.state as u32
     }
@@ -142,7 +132,7 @@ impl Schema {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::constants::{schema_id, DID, SCHEMA_ID, SCHEMA_JSON};
+    use test_utils::constants::{schema_id, schema_json, DID};
 
     use super::*;
 
@@ -156,7 +146,7 @@ mod tests {
             source_id: "1".to_string(),
             submitter_did: DID.to_string().parse().unwrap(),
             state: PublicEntityStateType::Built,
-            schema_json: serde_json::from_str(SCHEMA_JSON).unwrap(),
+            schema_json: schema_json(),
         };
         let serialized = schema.to_string_versioned().unwrap();
         assert!(serialized.contains(r#""version":"1.0""#));
@@ -181,7 +171,7 @@ mod tests {
           "source_id": "1",
           "submitter_did": DID,
           "state": 1,
-          "schema_json": serde_json::from_str::<LedgerSchema>(SCHEMA_JSON).unwrap()
+          "schema_json": schema_json()
         }})
         .to_string();
         let schema = Schema::from_string_versioned(&serialized).unwrap();
@@ -203,8 +193,8 @@ mod tests {
             source_id: "1".to_string(),
             submitter_did: DID.to_string().parse().unwrap(),
             state: PublicEntityStateType::Built,
-            schema_json: serde_json::from_str(SCHEMA_JSON).unwrap(),
+            schema_json: schema_json(),
         };
-        assert_eq!(schema.get_schema_id(), SCHEMA_ID);
+        assert_eq!(schema.get_schema_id(), schema_id());
     }
 }

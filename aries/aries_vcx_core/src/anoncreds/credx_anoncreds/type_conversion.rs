@@ -15,14 +15,6 @@ pub trait Convert {
     fn convert(self, args: Self::Args) -> Result<Self::Target, Self::Error>;
 }
 
-fn from_issuer_id_to_did_value(issuer_id: OurIssuerId) -> DidValue {
-    DidValue::new(&issuer_id.to_string(), None)
-}
-
-fn from_attribute_names_to_attribute_names(attr_names: OurAttributeNames) -> CredxAttributeNames {
-    CredxAttributeNames(attr_names.into())
-}
-
 impl Convert for OurSchema {
     type Args = ();
     type Target = CredxSchema;
@@ -30,10 +22,10 @@ impl Convert for OurSchema {
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(create_schema(
-            &from_issuer_id_to_did_value(self.issuer_id),
+            &DidValue::new(&self.issuer_id.to_string(), None),
             &self.name,
             &self.version,
-            from_attribute_names_to_attribute_names(self.attr_names),
+            CredxAttributeNames(self.attr_names.into()),
             self.seq_no,
         )?)
     }

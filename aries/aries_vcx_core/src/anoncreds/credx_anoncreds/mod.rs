@@ -14,7 +14,7 @@ use credx::{
     types::{
         Credential as CredxCredential, CredentialDefinition, CredentialDefinitionId,
         CredentialOffer, CredentialRequestMetadata, CredentialRevocationConfig,
-        CredentialRevocationState, DidValue, IssuanceType, LinkSecret, PresentCredentials,
+        CredentialRevocationState, IssuanceType, LinkSecret, PresentCredentials,
         Presentation, PresentationRequest, RegistryType, RevocationRegistry,
         RevocationRegistryDefinition, RevocationRegistryDelta, RevocationRegistryId, Schema as CredxSchema,
         SchemaId, SignatureType,

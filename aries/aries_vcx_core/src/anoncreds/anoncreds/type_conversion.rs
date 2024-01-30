@@ -25,12 +25,6 @@ impl Convert for OurIssuerId {
     }
 }
 
-fn from_attribute_names_to_attribute_names(
-    attr_names: OurAttributeNames,
-) -> AnoncredsAttributeNames {
-    AnoncredsAttributeNames(attr_names.into())
-}
-
 impl Convert for OurSchema {
     type Args = ();
     type Target = AnoncredsSchema;
@@ -40,8 +34,8 @@ impl Convert for OurSchema {
         Ok(AnoncredsSchema {
             name: self.name,
             version: self.version,
-            attr_names: from_attribute_names_to_attribute_names(self.attr_names),
-            issuer_id: Convert::convert(self.issuer_id, ())?,
+            attr_names: AnoncredsAttributeNames(self.attr_names.into()),
+            issuer_id: self.issuer_id.convert(())?,
         })
     }
 }
