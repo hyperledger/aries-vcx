@@ -1,26 +1,35 @@
-use std::sync::{Arc, RwLock};
+use std::{
+    borrow::Borrow,
+    sync::{Arc, RwLock},
+};
 
 use aries_vcx::{
     aries_vcx_core::{
         anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
         wallet,
-        wallet::{
-            indy::{
-                internal::{close_search_wallet, fetch_next_records_wallet, open_search_wallet},
-                wallet::{close_wallet, create_indy_wallet, import, open_wallet},
-                IndySdkWallet, IssuerConfig, RestoreWalletConfigs, WalletConfig,
-            },
-            structs_io::UnpackMessageOutput,
-        },
-        SearchHandle, WalletHandle,
+        wallet::{indy::IndySdkWallet, structs_io::UnpackMessageOutput},
+        WalletHandle,
     },
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
     protocols::mediated_connection::pairwise_info::PairwiseInfo,
 };
-use aries_vcx_core::wallet::{
-    base_wallet::{record::Record, DidWallet, RecordWallet},
-    entry_tag::EntryTags,
-    indy::IndyWalletRecord,
+use aries_vcx_core::{
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
+    wallet::{
+        base_wallet::{
+            did_wallet::DidWallet,
+            issuer_config::IssuerConfig,
+            record::Record,
+            record_wallet::RecordWallet,
+            search_filter::{self, SearchFilter},
+            BaseWallet, ImportWallet, ManageWallet,
+        },
+        entry_tag::EntryTags,
+        indy::{
+            restore_wallet_configs::RestoreWalletConfigs, wallet_config::WalletConfig,
+            IndyWalletRecord,
+        },
+    },
 };
 use futures::FutureExt;
 use public_key::{Key, KeyType};
@@ -36,29 +45,17 @@ use crate::{
     },
 };
 
-pub static GLOBAL_BASE_WALLET: RwLock<Option<Arc<IndySdkWallet>>> = RwLock::new(None);
+pub static GLOBAL_BASE_WALLET: RwLock<Option<Arc<dyn BaseWallet>>> = RwLock::new(None);
 pub static GLOBAL_BASE_ANONCREDS: RwLock<Option<Arc<IndyCredxAnonCreds>>> = RwLock::new(None);
 
-pub fn get_main_wallet_handle() -> LibvcxResult<WalletHandle> {
-    get_main_wallet().map(|wallet| wallet.get_wallet_handle())
-}
-
 pub async fn export_main_wallet(path: &str, backup_key: &str) -> LibvcxResult<()> {
-    let wallet_handle = get_main_wallet_handle()?;
-    map_ariesvcx_core_result(
-        wallet::indy::wallet::export_wallet(wallet_handle, path, backup_key).await,
-    )
+    let main_wallet = get_main_wallet()?;
+    map_ariesvcx_core_result(main_wallet.export_wallet(path, backup_key).await)
 }
 
-fn build_component_base_wallet(wallet_handle: WalletHandle) -> Arc<IndySdkWallet> {
-    Arc::new(IndySdkWallet::new(wallet_handle))
-}
-
-fn setup_global_wallet(wallet_handle: WalletHandle) -> LibvcxResult<()> {
-    // new way
-    let base_wallet_impl = build_component_base_wallet(wallet_handle);
+fn setup_global_wallet(wallet: Arc<dyn BaseWallet>) -> LibvcxResult<()> {
     let mut b_wallet = GLOBAL_BASE_WALLET.write()?;
-    *b_wallet = Some(base_wallet_impl);
+    *b_wallet = Some(wallet);
     // anoncreds
     let base_anoncreds_impl = Arc::new(IndyCredxAnonCreds);
     let mut b_anoncreds = GLOBAL_BASE_ANONCREDS.write()?;
@@ -66,22 +63,22 @@ fn setup_global_wallet(wallet_handle: WalletHandle) -> LibvcxResult<()> {
     Ok(())
 }
 
-pub fn setup_wallet(handle: WalletHandle) -> LibvcxResult<()> {
-    setup_global_wallet(handle)
-}
-
-pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> LibvcxResult<WalletHandle> {
-    let handle = wallet::indy::wallet::open_wallet(wallet_config).await?;
-    setup_wallet(handle)?;
-    Ok(handle)
+pub async fn open_as_main_wallet(
+    wallet_config: &WalletConfig,
+) -> LibvcxResult<Arc<dyn BaseWallet>> {
+    let wallet = wallet_config.open_wallet().await?;
+    setup_global_wallet(wallet.clone())?;
+    Ok(wallet)
 }
 
 pub async fn create_and_open_as_main_wallet(
     wallet_config: &WalletConfig,
-) -> LibvcxResult<WalletHandle> {
-    let handle = wallet::indy::wallet::create_and_open_wallet(wallet_config).await?;
-    setup_wallet(handle)?;
-    Ok(handle)
+) -> LibvcxResult<Arc<dyn BaseWallet>> {
+    wallet_config.create_wallet().await?;
+    let wallet = wallet_config.open_wallet().await?;
+
+    setup_global_wallet(wallet.clone())?;
+    Ok(wallet)
 }
 
 pub async fn close_main_wallet() -> LibvcxResult<()> {
@@ -91,7 +88,7 @@ pub async fn close_main_wallet() -> LibvcxResult<()> {
             warn!("Skipping wallet close, no global wallet component available.")
         }
         Some(wallet) => {
-            wallet::indy::wallet::close_wallet(wallet.get_wallet_handle()).await?;
+            wallet.close_wallet().await?;
             let mut b_wallet = GLOBAL_BASE_WALLET.write()?;
             *b_wallet = None;
         }
@@ -106,7 +103,7 @@ pub async fn create_main_wallet(config: &WalletConfig) -> LibvcxResult<()> {
 
     // If MS is already in wallet then just continue
     get_main_anoncreds()?
-        .prover_create_link_secret(wallet.as_ref(), DEFAULT_LINK_SECRET_ALIAS)
+        .prover_create_link_secret(&wallet, DEFAULT_LINK_SECRET_ALIAS)
         .await
         .ok();
 
@@ -146,9 +143,10 @@ pub async fn replace_did_keys_start(did: &str) -> LibvcxResult<String> {
 }
 
 pub async fn rotate_verkey_apply(did: &str, temp_vk: &str) -> LibvcxResult<()> {
+    let wallet = get_main_wallet()?;
     map_ariesvcx_result(
         aries_vcx::common::keys::rotate_verkey_apply(
-            get_main_wallet()?.as_ref(),
+            &wallet,
             get_main_ledger_write()?.as_ref(),
             did,
             temp_vk,
@@ -172,11 +170,8 @@ pub async fn wallet_create_and_store_did(seed: Option<&str>) -> LibvcxResult<Pai
 }
 
 pub async fn wallet_configure_issuer(enterprise_seed: &str) -> LibvcxResult<IssuerConfig> {
-    // TODO - future - use profile wallet to stop indy dependency
-    let wallet = get_main_wallet_handle()?;
-    map_ariesvcx_core_result(
-        wallet::indy::wallet::wallet_configure_issuer(wallet, enterprise_seed).await,
-    )
+    let wallet = get_main_wallet()?;
+    map_ariesvcx_core_result(wallet.configure_issuer(enterprise_seed).await)
 }
 
 pub async fn wallet_add_wallet_record(
@@ -284,55 +279,40 @@ pub async fn wallet_delete_wallet_record(xtype: &str, id: &str) -> LibvcxResult<
     map_ariesvcx_core_result(wallet.delete_record(xtype, id).await)
 }
 
-pub async fn wallet_open_search_wallet(
-    xtype: &str,
-    query_json: &str,
-    options_json: &str,
-) -> LibvcxResult<SearchHandle> {
-    // TODO - future - use profile wallet to stop binding to indy
-    let wallet_handle = get_main_wallet_handle()?;
-    map_ariesvcx_core_result(
-        open_search_wallet(wallet_handle, xtype, query_json, options_json).await,
-    )
-}
+pub async fn wallet_search_records(xtype: &str, query_json: &str) -> LibvcxResult<String> {
+    let wallet = get_main_wallet()?;
+    let records = wallet
+        .search_record(xtype, Some(SearchFilter::JsonFilter(query_json.into())))
+        .await?;
 
-pub async fn wallet_close_search_wallet(wallet_search_handle: SearchHandle) -> LibvcxResult<()> {
-    map_ariesvcx_core_result(close_search_wallet(wallet_search_handle).await)
-}
+    let indy_records = records
+        .into_iter()
+        .map(|record| IndyWalletRecord::from_record(record))
+        .collect::<Result<Vec<_>, _>>()?;
 
-pub async fn wallet_fetch_next_records_wallet(
-    wallet_search_handle: SearchHandle,
-    count: usize,
-) -> LibvcxResult<String> {
-    // TODO - future - use profile wallet to stop binding to indy
-    let wallet_handle = get_main_wallet_handle()?;
-    map_ariesvcx_core_result(
-        fetch_next_records_wallet(wallet_handle, wallet_search_handle, count).await,
-    )
+    let res = serde_json::to_string(&indy_records)
+        .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, err));
+
+    map_ariesvcx_core_result(res)
 }
 
 pub async fn wallet_import(config: &RestoreWalletConfigs) -> LibvcxResult<()> {
-    map_ariesvcx_core_result(import(config).await)
+    map_ariesvcx_core_result(config.import_wallet().await)
 }
 
 pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
-    let src_wallet_handle = get_main_wallet_handle()?;
+    let src_wallet = get_main_wallet()?;
     info!("Assuring target wallet exists.");
-    create_indy_wallet(wallet_config).await?;
+    let dest_wallet = wallet_config.create_wallet().await?;
     info!("Opening target wallet.");
-    let dest_wallet_handle = open_wallet(wallet_config).await?;
-    info!("Target wallet is ready.");
 
+    let dest_wallet: Arc<_> = dest_wallet.into();
     let migration_res = wallet_migrator::migrate_wallet(
-        src_wallet_handle,
-        dest_wallet_handle,
+        src_wallet,
+        dest_wallet,
         wallet_migrator::vdrtools2credx::migrate_any_record,
     )
     .await;
-
-    info!("Closing source and target wallets");
-    close_wallet(src_wallet_handle).await.ok();
-    close_wallet(dest_wallet_handle).await.ok();
 
     migration_res.map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::WalletMigrationFailed, e))
 }
@@ -340,11 +320,13 @@ pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
 #[cfg(test)]
 pub mod test_utils {
     use ::test_utils::devsetup::TempFile;
-    use aries_vcx::{
-        aries_vcx_core::wallet::indy::WalletConfig,
-        global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
+    use aries_vcx::global::settings::{
+        DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW,
     };
-    use aries_vcx_core::wallet::base_wallet::{record::Record, DidWallet, RecordWallet};
+    use aries_vcx_core::wallet::{
+        base_wallet::{did_wallet::DidWallet, record::Record, record_wallet::RecordWallet},
+        indy::wallet_config::WalletConfig,
+    };
 
     use crate::{
         api_vcx::api_global::{
@@ -422,10 +404,11 @@ pub mod test_utils {
 mod tests {
     use aries_vcx::{
         aries_vcx_core::wallet::indy::{
-            wallet::delete_wallet, IndyWalletRecord, RestoreWalletConfigs, WalletConfig,
+            restore_wallet_configs::RestoreWalletConfigs, IndyWalletRecord,
         },
         global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
     };
+    use aries_vcx_core::wallet::{base_wallet::ManageWallet, indy::wallet_config::WalletConfig};
     use test_utils::devsetup::{SetupMocks, TempFile};
 
     use crate::{
@@ -459,6 +442,7 @@ mod tests {
         }))
         .unwrap();
 
+        // #[cfg(feature("vdrtools_wallet"))]
         super::wallet_migrate(&new_config).await.unwrap();
     }
 
@@ -607,7 +591,7 @@ mod tests {
             .await
             .unwrap();
         close_main_wallet().await.unwrap();
-        delete_wallet(&wallet_config).await.unwrap();
+        wallet_config.delete_wallet().await.unwrap();
         let import_config: RestoreWalletConfigs = serde_json::from_value(json!({
             "wallet_name": wallet_config.wallet_name.clone(),
             "wallet_key": wallet_config.wallet_key.clone(),
@@ -617,7 +601,7 @@ mod tests {
         }))
         .unwrap();
         wallet_import(&import_config).await.unwrap();
-        delete_wallet(&wallet_config).await.unwrap();
+        wallet_config.delete_wallet().await.unwrap();
     }
 
     #[tokio::test]
@@ -671,7 +655,7 @@ mod tests {
         let (export_wallet_path, wallet_name, wallet_config) =
             _create_main_wallet_and_its_backup().await;
 
-        delete_wallet(&wallet_config).await.unwrap();
+        wallet_config.delete_wallet().await.unwrap();
 
         let import_config = RestoreWalletConfigs {
             wallet_name: wallet_name.clone(),

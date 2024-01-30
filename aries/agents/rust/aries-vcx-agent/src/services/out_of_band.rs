@@ -18,7 +18,7 @@ use aries_vcx::{
     },
     protocols::did_exchange::state_machine::generate_keypair,
 };
-use aries_vcx_core::wallet::indy::IndySdkWallet;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use public_key::KeyType;
 use uuid::Uuid;
 
@@ -29,13 +29,13 @@ use crate::{
 };
 
 pub struct ServiceOutOfBand {
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<dyn BaseWallet>,
     service_endpoint: ServiceEndpoint,
     out_of_band: Arc<ObjectCache<GenericOutOfBand>>,
 }
 
 impl ServiceOutOfBand {
-    pub fn new(wallet: Arc<IndySdkWallet>, service_endpoint: ServiceEndpoint) -> Self {
+    pub fn new(wallet: Arc<dyn BaseWallet>, service_endpoint: ServiceEndpoint) -> Self {
         Self {
             wallet,
             service_endpoint,
@@ -44,7 +44,7 @@ impl ServiceOutOfBand {
     }
 
     pub async fn create_invitation(&self) -> AgentResult<AriesMessage> {
-        let public_key = generate_keypair(self.wallet.as_ref(), KeyType::Ed25519).await?;
+        let public_key = generate_keypair(&self.wallet, KeyType::Ed25519).await?;
         let service = {
             let service_id = Uuid::new_v4().to_string();
             ServiceSov::DIDCommV1(ServiceDidCommV1::new(

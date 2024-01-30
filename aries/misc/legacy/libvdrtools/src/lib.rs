@@ -8,6 +8,7 @@ extern crate serde_derive;
 extern crate indy_utils;
 
 pub use indy_api_types as types;
+pub use indy_wallet;
 
 #[macro_use]
 mod utils;

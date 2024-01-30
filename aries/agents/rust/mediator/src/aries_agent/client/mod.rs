@@ -31,7 +31,7 @@ use super::Agent;
 use crate::utils::prelude::*;
 
 // client role utilities
-impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
+impl<P: MediatorPersistence> Agent<P> {
     /// Starting from a new connection object, tries to create connection request object for the
     /// specified OOB invite endpoint
     pub async fn gen_connection_request(
@@ -71,7 +71,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         // encrypt/pack the connection request message
         let EncryptionEnvelope(packed_aries_msg_bytes) = client_conn
             .encrypt_message(
-                self.wallet.as_ref(),
+                &self.wallet,
                 &AriesMessage::Connection(Connection::Request(req_msg.clone())),
             )
             .await
@@ -86,7 +86,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         response: Response,
     ) -> Result<InviteeConnection<Completed>, String> {
         state
-            .handle_response(self.wallet.as_ref(), response)
+            .handle_response(&self.wallet, response)
             .await
             .map_err(|err| err.to_string())
     }

@@ -10,7 +10,10 @@ use aries_vcx::{
         pairwise_info::PairwiseInfo, Connection, GenericConnection, State, ThinState,
     },
 };
-use aries_vcx_core::{ledger::indy_vdr_ledger::DefaultIndyLedgerRead, wallet::indy::IndySdkWallet};
+use aries_vcx_core::{
+    ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
+    wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
+};
 use url::Url;
 
 use crate::{
@@ -23,7 +26,7 @@ pub type ServiceEndpoint = Url;
 
 pub struct ServiceConnections {
     ledger_read: Arc<DefaultIndyLedgerRead>,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<dyn BaseWallet>,
     service_endpoint: ServiceEndpoint,
     connections: Arc<ObjectCache<GenericConnection>>,
 }
@@ -31,7 +34,7 @@ pub struct ServiceConnections {
 impl ServiceConnections {
     pub fn new(
         ledger_read: Arc<DefaultIndyLedgerRead>,
-        wallet: Arc<IndySdkWallet>,
+        wallet: Arc<dyn BaseWallet>,
         service_endpoint: ServiceEndpoint,
     ) -> Self {
         Self {
@@ -46,7 +49,7 @@ impl ServiceConnections {
         &self,
         pw_info: Option<PairwiseInfo>,
     ) -> AgentResult<AnyInvitation> {
-        let pw_info = pw_info.unwrap_or(PairwiseInfo::create(self.wallet.as_ref()).await?);
+        let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&self.wallet).await?);
         let inviter = Connection::new_inviter("".to_owned(), pw_info)
             .create_invitation(vec![], self.service_endpoint.clone());
         let invite = inviter.get_invitation().clone();
@@ -58,7 +61,7 @@ impl ServiceConnections {
     }
 
     pub async fn receive_invitation(&self, invite: AnyInvitation) -> AgentResult<String> {
-        let pairwise_info = PairwiseInfo::create(self.wallet.as_ref()).await?;
+        let pairwise_info = PairwiseInfo::create(&self.wallet).await?;
         let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
             .accept_invitation(self.ledger_read.as_ref(), invite)
             .await?;
@@ -75,7 +78,7 @@ impl ServiceConnections {
             .await?;
         let request = invitee.get_request().clone();
         invitee
-            .send_message(self.wallet.as_ref(), &request.into(), &VcxHttpClient)
+            .send_message(&self.wallet, &request.into(), &VcxHttpClient)
             .await?;
         self.connections.insert(thread_id, invitee.into())?;
         Ok(())
@@ -99,12 +102,7 @@ impl ServiceConnections {
         }?;
 
         let inviter = inviter
-            .handle_request(
-                self.wallet.as_ref(),
-                request,
-                self.service_endpoint.clone(),
-                vec![],
-            )
+            .handle_request(&self.wallet, request, self.service_endpoint.clone(), vec![])
             .await?;
 
         self.connections.insert(thread_id, inviter.into())?;
@@ -116,7 +114,7 @@ impl ServiceConnections {
         let inviter: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         let response = inviter.get_connection_response_msg();
         inviter
-            .send_message(self.wallet.as_ref(), &response.into(), &VcxHttpClient)
+            .send_message(&self.wallet, &response.into(), &VcxHttpClient)
             .await?;
 
         self.connections.insert(thread_id, inviter.into())?;
@@ -126,9 +124,7 @@ impl ServiceConnections {
 
     pub async fn accept_response(&self, thread_id: &str, response: Response) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
-        let invitee = invitee
-            .handle_response(self.wallet.as_ref(), response)
-            .await?;
+        let invitee = invitee.handle_response(&self.wallet, response).await?;
 
         self.connections.insert(thread_id, invitee.into())?;
 
@@ -138,11 +134,7 @@ impl ServiceConnections {
     pub async fn send_ack(&self, thread_id: &str) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         invitee
-            .send_message(
-                self.wallet.as_ref(),
-                &invitee.get_ack().into(),
-                &VcxHttpClient,
-            )
+            .send_message(&self.wallet, &invitee.get_ack().into(), &VcxHttpClient)
             .await?;
 
         self.connections.insert(thread_id, invitee.into())?;

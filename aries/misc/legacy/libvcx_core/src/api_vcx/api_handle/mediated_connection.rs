@@ -143,7 +143,7 @@ pub async fn create_connection(source_id: &str) -> LibvcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
     let connection = MediatedConnection::create(
         source_id,
-        get_main_wallet()?.as_ref(),
+        &get_main_wallet()?,
         &get_main_agency_client()?,
         true,
     )
@@ -158,7 +158,7 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Li
             any_invitation_into_did_doc(get_main_ledger_read()?.as_ref(), &invitation).await?;
         let connection = MediatedConnection::create_with_invite(
             source_id,
-            get_main_wallet()?.as_ref(),
+            &get_main_wallet()?,
             &get_main_agency_client()?,
             invitation,
             ddo,
@@ -183,7 +183,7 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Lib
     })?;
 
     let connection = MediatedConnection::create_with_request(
-        get_main_wallet()?.as_ref(),
+        &get_main_wallet()?,
         request,
         pw_info,
         &get_main_agency_client()?,
@@ -196,7 +196,7 @@ pub async fn send_generic_message(handle: u32, msg: &str) -> LibvcxResult<String
     let connection = CONNECTION_MAP.get_cloned(handle)?;
 
     connection
-        .send_generic_message(get_main_wallet()?.as_ref(), msg)
+        .send_generic_message(&get_main_wallet()?, msg)
         .await
         .map_err(|err| err.into())
 }
@@ -205,7 +205,7 @@ pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> LibvcxResult<()
     let connection = CONNECTION_MAP.get_cloned(handle)?;
 
     connection
-        .send_handshake_reuse(get_main_wallet()?.as_ref(), oob_msg)
+        .send_handshake_reuse(&get_main_wallet()?, oob_msg)
         .await
         .map_err(|err| err.into())
 }
@@ -224,7 +224,7 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
 
     connection
         .update_state_with_message(
-            get_main_wallet()?.as_ref(),
+            &get_main_wallet()?,
             get_main_agency_client()?,
             Some(message),
         )
@@ -247,7 +247,7 @@ pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<()> {
     })?;
 
     connection
-        .handle_message(message, get_main_wallet()?.as_ref())
+        .handle_message(message, &get_main_wallet()?)
         .await?;
     CONNECTION_MAP.insert(handle, connection)
 }
@@ -262,7 +262,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
         );
 
         connection
-            .find_and_handle_message(get_main_wallet()?.as_ref(), &get_main_agency_client()?)
+            .find_and_handle_message(&get_main_wallet()?, &get_main_agency_client()?)
             .await?
     } else {
         info!(
@@ -272,7 +272,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
         );
 
         connection
-            .find_message_and_update_state(get_main_wallet()?.as_ref(), &get_main_agency_client()?)
+            .find_message_and_update_state(&get_main_wallet()?, &get_main_agency_client()?)
             .await?
     };
     let state: u32 = connection.get_state().to_u32();
@@ -290,11 +290,7 @@ pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
 
     connection
-        .connect(
-            get_main_wallet()?.as_ref(),
-            &get_main_agency_client()?,
-            None,
-        )
+        .connect(&get_main_wallet()?, &get_main_agency_client()?, None)
         .await?;
     let invitation = connection
         .get_invite_details()
@@ -380,7 +376,7 @@ pub async fn send_message(handle: u32, message: AriesMessage) -> LibvcxResult<()
     trace!("connection::send_message >>>");
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     let wallet = get_main_wallet()?;
-    let send_message = connection.send_message_closure(wallet.as_ref()).await?;
+    let send_message = connection.send_message_closure(&wallet).await?;
     send_message(message).await.map_err(|err| err.into())
 }
 
@@ -388,7 +384,7 @@ pub async fn send_ping(handle: u32, comment: Option<&str>) -> LibvcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
 
     connection
-        .send_ping(get_main_wallet()?.as_ref(), comment.map(String::from))
+        .send_ping(&get_main_wallet()?, comment.map(String::from))
         .await?;
     CONNECTION_MAP.insert(handle, connection)
 }

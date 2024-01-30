@@ -7,11 +7,8 @@ mod dbtests {
 
     use aries_vcx::global::settings;
     use aries_vcx_core::wallet::{
-        base_wallet::DidWallet,
-        indy::{
-            wallet::{close_wallet, create_and_open_wallet, wallet_configure_issuer},
-            IndySdkWallet, WalletConfig,
-        },
+        base_wallet::{did_wallet::DidWallet, ManageWallet},
+        indy::wallet_config::WalletConfig,
     };
     use libvcx_logger::LibvcxDefaultLogger;
 
@@ -43,13 +40,13 @@ mod dbtests {
             .storage_credentials(storage_credentials)
             .build();
 
-        let wallet_handle = create_and_open_wallet(&config_wallet).await?;
-        let _config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await?;
+        config_wallet.create_wallet().await?;
+        let wallet = config_wallet.open_wallet().await?;
+        wallet.configure_issuer(enterprise_seed).await?;
 
-        IndySdkWallet::new(wallet_handle)
-            .create_and_store_my_did(None, None)
-            .await?;
-        close_wallet(wallet_handle).await?;
+        wallet.create_and_store_my_did(None, None).await?;
+
+        wallet.close_wallet().await?;
         Ok(())
     }
 }

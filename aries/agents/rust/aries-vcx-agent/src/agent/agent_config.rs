@@ -1,4 +1,6 @@
-use aries_vcx_core::wallet::indy::{IssuerConfig, WalletConfig};
+use aries_vcx_core::wallet::{
+    base_wallet::issuer_config::IssuerConfig, indy::wallet_config::WalletConfig,
+};
 
 #[derive(Clone)]
 pub struct AgentConfig {

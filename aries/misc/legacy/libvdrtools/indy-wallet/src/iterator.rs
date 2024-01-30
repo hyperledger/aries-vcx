@@ -6,7 +6,7 @@ use super::{
     encryption::decrypt_storage_record, storage::StorageIterator, wallet::Keys, WalletRecord,
 };
 
-pub(super) struct WalletIterator {
+pub struct WalletIterator {
     storage_iterator: Box<dyn StorageIterator>,
     keys: Arc<Keys>,
 }

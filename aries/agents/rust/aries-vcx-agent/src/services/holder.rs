@@ -12,8 +12,9 @@ use aries_vcx::{
     protocols::{issuance::holder::state_machine::HolderState, SendClosure},
 };
 use aries_vcx_core::{
-    anoncreds::credx_anoncreds::IndyCredxAnonCreds, ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
-    wallet::indy::IndySdkWallet,
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds,
+    ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
+    wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
 };
 
 use crate::{
@@ -41,7 +42,7 @@ impl HolderWrapper {
 pub struct ServiceCredentialsHolder {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     anoncreds: IndyCredxAnonCreds,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<dyn BaseWallet>,
     creds_holder: ObjectCache<HolderWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
@@ -50,7 +51,7 @@ impl ServiceCredentialsHolder {
     pub fn new(
         ledger_read: Arc<DefaultIndyLedgerRead>,
         anoncreds: IndyCredxAnonCreds,
-        wallet: Arc<IndySdkWallet>,
+        wallet: Arc<dyn BaseWallet>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
@@ -78,12 +79,11 @@ impl ServiceCredentialsHolder {
         propose_credential: ProposeCredentialV1,
     ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
-        let wallet = self.wallet.as_ref();
 
         let mut holder = Holder::create("")?;
         holder.set_proposal(propose_credential.clone())?;
         connection
-            .send_message(wallet, &propose_credential.into(), &VcxHttpClient)
+            .send_message(&self.wallet, &propose_credential.into(), &VcxHttpClient)
             .await?;
 
         self.creds_holder.insert(
@@ -117,15 +117,19 @@ impl ServiceCredentialsHolder {
             (None, None) => return Err(AgentError::from_kind(AgentErrorKind::InvalidArguments)),
         };
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        let wallet = self.wallet.as_ref();
+
         let pw_did = connection.pairwise_info().pw_did.to_string();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
+            Box::pin(async move {
+                connection
+                    .send_message(&self.wallet, &msg, &VcxHttpClient)
+                    .await
+            })
         });
         let msg_response = holder
             .prepare_credential_request(
-                self.wallet.as_ref(),
+                &self.wallet,
                 self.ledger_read.as_ref(),
                 &self.anoncreds,
                 pw_did,
@@ -146,11 +150,10 @@ impl ServiceCredentialsHolder {
         let mut holder = self.get_holder(thread_id)?;
         let connection_id = self.get_connection_id(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        let wallet = self.wallet.as_ref();
 
         holder
             .process_credential(
-                self.wallet.as_ref(),
+                &self.wallet,
                 self.ledger_read.as_ref(),
                 &self.anoncreds,
                 msg_issue_credential.clone(),
@@ -160,9 +163,11 @@ impl ServiceCredentialsHolder {
             None => {}
             Some(msg_response) => {
                 let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-                    Box::pin(
-                        async move { connection.send_message(wallet, &msg, &VcxHttpClient).await },
-                    )
+                    Box::pin(async move {
+                        connection
+                            .send_message(&self.wallet, &msg, &VcxHttpClient)
+                            .await
+                    })
                 });
                 send_closure(msg_response).await?;
             }

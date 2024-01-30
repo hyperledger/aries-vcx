@@ -20,8 +20,7 @@ impl IndyTag {
 
     pub fn from_entry_tag(tag: EntryTag) -> Self {
         match tag {
-            EntryTag::Encrypted(key, val) => Self((key, val)),
-            EntryTag::Plaintext(key, val) => Self((format!("~{}", key), val)),
+            EntryTag::Tag(key, val) => Self((key, val)),
         }
     }
 }

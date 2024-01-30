@@ -6,7 +6,8 @@ use std::{
 use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds,
-    ledger::indy_vdr_ledger::DefaultIndyLedgerWrite, wallet::indy::IndySdkWallet,
+    ledger::indy_vdr_ledger::DefaultIndyLedgerWrite,
+    wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
 };
 
 use crate::{
@@ -17,7 +18,7 @@ use crate::{
 pub struct ServiceRevocationRegistries {
     ledger_write: Arc<DefaultIndyLedgerWrite>,
     anoncreds: IndyCredxAnonCreds,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<dyn BaseWallet>,
     issuer_did: String,
     rev_regs: ObjectCache<RevocationRegistry>,
 }
@@ -26,7 +27,7 @@ impl ServiceRevocationRegistries {
     pub fn new(
         ledger_write: Arc<DefaultIndyLedgerWrite>,
         anoncreds: IndyCredxAnonCreds,
-        wallet: Arc<IndySdkWallet>,
+        wallet: Arc<dyn BaseWallet>,
         issuer_did: String,
     ) -> Self {
         Self {
@@ -50,7 +51,7 @@ impl ServiceRevocationRegistries {
 
     pub async fn create_rev_reg(&self, cred_def_id: &str, max_creds: u32) -> AgentResult<String> {
         let rev_reg = RevocationRegistry::create(
-            self.wallet.as_ref(),
+            &self.wallet,
             &self.anoncreds,
             &self.issuer_did,
             cred_def_id,
@@ -78,11 +79,7 @@ impl ServiceRevocationRegistries {
     pub async fn publish_rev_reg(&self, thread_id: &str, tails_url: &str) -> AgentResult<()> {
         let mut rev_reg = self.rev_regs.get(thread_id)?;
         rev_reg
-            .publish_revocation_primitives(
-                self.wallet.as_ref(),
-                self.ledger_write.as_ref(),
-                tails_url,
-            )
+            .publish_revocation_primitives(&self.wallet, self.ledger_write.as_ref(), tails_url)
             .await?;
         self.rev_regs.insert(thread_id, rev_reg)?;
         Ok(())
@@ -91,7 +88,7 @@ impl ServiceRevocationRegistries {
     pub async fn revoke_credential_locally(&self, id: &str, cred_rev_id: &str) -> AgentResult<()> {
         let rev_reg = self.rev_regs.get(id)?;
         rev_reg
-            .revoke_credential_local(self.wallet.as_ref(), &self.anoncreds, cred_rev_id)
+            .revoke_credential_local(&self.wallet, &self.anoncreds, cred_rev_id)
             .await?;
         Ok(())
     }
@@ -100,7 +97,7 @@ impl ServiceRevocationRegistries {
         let rev_reg = self.rev_regs.get(id)?;
         rev_reg
             .publish_local_revocations(
-                self.wallet.as_ref(),
+                &self.wallet,
                 &self.anoncreds,
                 self.ledger_write.as_ref(),
                 &self.issuer_did,

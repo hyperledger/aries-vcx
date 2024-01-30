@@ -52,10 +52,7 @@ pub async fn create_and_publish_schema(
         &data,
     )
     .await?
-    .publish(
-        get_main_wallet()?.as_ref(),
-        get_main_ledger_write()?.as_ref(),
-    )
+    .publish(&get_main_wallet()?, get_main_ledger_write()?.as_ref())
     .await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
     debug!(

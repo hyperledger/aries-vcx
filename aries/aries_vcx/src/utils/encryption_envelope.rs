@@ -259,7 +259,7 @@ pub mod unit_tests {
     use test_utils::devsetup::build_setup_profile;
 
     use super::*;
-    use crate::aries_vcx_core::wallet::base_wallet::DidWallet;
+    use crate::aries_vcx_core::wallet::base_wallet::did_wallet::DidWallet;
 
     #[tokio::test]
     async fn test_pack_unpack_anon() {

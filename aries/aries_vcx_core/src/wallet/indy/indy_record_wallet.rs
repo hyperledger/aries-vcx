@@ -8,7 +8,7 @@ use super::{indy_tag::IndyTags, SEARCH_OPTIONS, WALLET_OPTIONS};
 use crate::{
     errors::error::{AriesVcxCoreError, VcxCoreResult},
     wallet::{
-        base_wallet::{record::Record, search_filter::SearchFilter, RecordWallet},
+        base_wallet::{record::Record, record_wallet::RecordWallet, search_filter::SearchFilter},
         entry_tag::EntryTags,
         indy::IndySdkWallet,
     },

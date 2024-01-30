@@ -4,23 +4,17 @@ use serde::{de::Visitor, ser::SerializeMap, Deserialize, Serialize};
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub enum EntryTag {
-    Encrypted(String, String),
-    Plaintext(String, String),
+    Tag(String, String),
 }
 
 impl EntryTag {
     pub fn from_pair(pair: (String, String)) -> Self {
-        if pair.0.starts_with('~') {
-            EntryTag::Plaintext(pair.0.trim_start_matches('~').into(), pair.1)
-        } else {
-            EntryTag::Encrypted(pair.0, pair.1)
-        }
+        Self::Tag(pair.0, pair.1)
     }
 
     pub fn key(&self) -> &str {
         match self {
-            Self::Encrypted(key, _) => key,
-            Self::Plaintext(key, _) => key,
+            Self::Tag(key, _) => key,
         }
     }
 }
@@ -38,8 +32,7 @@ impl Serialize for EntryTags {
         let mut map = serializer.serialize_map(Some(self.inner.len()))?;
         for tag in self.inner.iter() {
             match tag {
-                EntryTag::Encrypted(key, val) => map.serialize_entry(&key, &val)?,
-                EntryTag::Plaintext(key, val) => map.serialize_entry(&format!("~{}", key), &val)?,
+                EntryTag::Tag(key, val) => map.serialize_entry(&key, &val)?,
             }
         }
         map.end()
@@ -156,8 +149,8 @@ mod tests {
     #[test]
     fn test_entry_tags_serialize() {
         let tags = EntryTags::new(vec![
-            EntryTag::Plaintext("a".into(), "b".into()),
-            EntryTag::Encrypted("c".into(), "d".into()),
+            EntryTag::Tag("~a".into(), "b".into()),
+            EntryTag::Tag("c".into(), "d".into()),
         ]);
 
         let res = serde_json::to_string(&tags).unwrap();
@@ -170,8 +163,8 @@ mod tests {
         let json = json!({"a":"b", "~c":"d"});
 
         let tags = EntryTags::new(vec![
-            EntryTag::Encrypted("a".into(), "b".into()),
-            EntryTag::Plaintext("c".into(), "d".into()),
+            EntryTag::Tag("a".into(), "b".into()),
+            EntryTag::Tag("~c".into(), "d".into()),
         ]);
 
         let res = serde_json::from_str(&json.to_string()).unwrap();

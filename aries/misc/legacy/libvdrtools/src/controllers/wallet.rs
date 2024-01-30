@@ -9,7 +9,7 @@ use indy_api_types::{
 use indy_utils::crypto::{
     chacha20poly1305_ietf, chacha20poly1305_ietf::Key as MasterKey, randombytes,
 };
-use indy_wallet::{KeyDerivationData, MigrationResult, WalletService};
+use indy_wallet::{iterator::WalletIterator, KeyDerivationData, MigrationResult, WalletService};
 
 use crate::{services::CryptoService, utils::crypto::base58::ToBase58};
 
@@ -387,18 +387,8 @@ impl WalletController {
         res
     }
 
-    pub async fn migrate_records<E>(
-        &self,
-        old_wh: WalletHandle,
-        new_wh: WalletHandle,
-        migrate_fn: impl FnMut(IndyRecord) -> Result<Option<IndyRecord>, E>,
-    ) -> IndyResult<MigrationResult>
-    where
-        E: std::fmt::Display,
-    {
-        self.wallet_service
-            .migrate_records(old_wh, new_wh, migrate_fn)
-            .await
+    pub async fn get_all(&self, handle: WalletHandle) -> IndyResult<WalletIterator> {
+        self.wallet_service.get_all(handle).await
     }
 
     /// Generate wallet master key.

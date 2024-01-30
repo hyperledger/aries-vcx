@@ -3,8 +3,8 @@ use messages::msg_fields::protocols::connection::Connection;
 
 use super::{unhandled_aries_message, utils::prelude::*, ArcAgent};
 
-pub async fn handle_aries_connection<T: BaseWallet + 'static, P: MediatorPersistence>(
-    agent: ArcAgent<T, P>,
+pub async fn handle_aries_connection<P: MediatorPersistence>(
+    agent: ArcAgent<P>,
     connection: Connection,
 ) -> Result<EncryptionEnvelope, String> {
     match connection {

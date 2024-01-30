@@ -9,8 +9,13 @@ use public_key::{Key, KeyType};
 
 use super::{
     base_wallet::{
-        did_data::DidData, record::Record, search_filter::SearchFilter, BaseWallet, DidWallet,
-        RecordWallet,
+        did_data::DidData,
+        did_wallet::DidWallet,
+        issuer_config::IssuerConfig,
+        record::{AllRecords, Record},
+        record_wallet::RecordWallet,
+        search_filter::SearchFilter,
+        BaseWallet,
     },
     structs_io::UnpackMessageOutput,
 };
@@ -24,7 +29,41 @@ pub struct AgencyClientWallet {
     inner: Arc<dyn BaseAgencyClientWallet>,
 }
 
-impl BaseWallet for AgencyClientWallet {}
+#[allow(unused_variables)]
+#[async_trait]
+impl BaseWallet for AgencyClientWallet {
+    async fn export_wallet(&self, path: &str, backup_key: &str) -> VcxCoreResult<()> {
+        Err(unimplemented_agency_client_wallet_method("export_wallet"))
+    }
+
+    async fn close_wallet(&self) -> VcxCoreResult<()> {
+        Err(unimplemented_agency_client_wallet_method("close_wallet"))
+    }
+
+    async fn configure_issuer(&self, key_seed: &str) -> VcxCoreResult<IssuerConfig> {
+        Err(unimplemented_agency_client_wallet_method(
+            "configure_issuer",
+        ))
+    }
+
+    // async fn create_wallet(wallet_config: WalletConfig) -> VcxCoreResult<Box<dyn BaseWallet>>
+    // where
+    //     Self: Sized,
+    // {
+    //     Err(unimplemented_agency_client_wallet_method("create_wallet"))
+    // }
+
+    // async fn open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<Box<dyn BaseWallet>>
+    // where
+    //     Self: Sized,
+    // {
+    //     Err(unimplemented_agency_client_wallet_method("open_wallet"))
+    // }
+
+    async fn all(&self) -> VcxCoreResult<Box<dyn AllRecords + Send>> {
+        Err(unimplemented_agency_client_wallet_method("get_all"))
+    }
+}
 
 #[allow(unused_variables)]
 #[async_trait]
@@ -236,10 +275,7 @@ pub trait ToBaseAgencyClientWallet {
     fn to_base_agency_client_wallet(&self) -> Arc<dyn BaseAgencyClientWallet>;
 }
 
-impl<T> ToBaseAgencyClientWallet for Arc<T>
-where
-    T: BaseWallet + 'static,
-{
+impl ToBaseAgencyClientWallet for Arc<dyn BaseWallet> {
     fn to_base_agency_client_wallet(&self) -> Arc<dyn BaseAgencyClientWallet> {
         let x = self.clone();
         Arc::new(BaseWalletAgencyClientWallet { inner: x })

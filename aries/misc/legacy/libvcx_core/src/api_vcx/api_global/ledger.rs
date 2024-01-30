@@ -29,7 +29,7 @@ pub async fn endorse_transaction(transaction: &str, endorser_did: &str) -> Libvc
     let ledger = get_main_ledger_write()?;
     map_ariesvcx_core_result(
         ledger
-            .endorse_transaction(wallet.as_ref(), endorser_did, transaction)
+            .endorse_transaction(&wallet, endorser_did, transaction)
             .await,
     )
 }
@@ -45,7 +45,7 @@ pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> Libvc
 
 pub async fn rotate_verkey(did: &str) -> LibvcxResult<()> {
     let result = aries_vcx::common::keys::rotate_verkey(
-        get_main_wallet()?.as_ref(),
+        &get_main_wallet()?,
         get_main_ledger_write()?.as_ref(),
         did,
     )
@@ -75,7 +75,7 @@ pub async fn ledger_write_endpoint_legacy(
             .set_recipient_keys(recipient_keys)
             .set_routing_keys(routing_keys);
     write_endpoint_legacy(
-        wallet.as_ref(),
+        &wallet,
         get_main_ledger_write()?.as_ref(),
         target_did,
         &service,
@@ -101,7 +101,7 @@ pub async fn ledger_write_endpoint(
             ]))
             .set_routing_keys(Some(routing_keys));
     write_endpoint(
-        wallet.as_ref(),
+        &wallet,
         get_main_ledger_write()?.as_ref(),
         target_did,
         &service,
@@ -122,13 +122,7 @@ pub async fn ledger_get_attr(target_did: &str, attr: &str) -> LibvcxResult<Strin
 pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
     let wallet = get_main_wallet()?;
     map_ariesvcx_result(
-        clear_attr(
-            wallet.as_ref(),
-            get_main_ledger_write()?.as_ref(),
-            target_did,
-            attr,
-        )
-        .await,
+        clear_attr(&wallet, get_main_ledger_write()?.as_ref(), target_did, attr).await,
     )
 }
 
@@ -141,7 +135,7 @@ pub async fn ledger_write_endorser_did(
     let wallet = get_main_wallet()?;
     map_ariesvcx_result(
         write_endorser_did(
-            wallet.as_ref(),
+            &wallet,
             get_main_ledger_write()?.as_ref(),
             submitter_did,
             target_did,

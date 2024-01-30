@@ -199,7 +199,7 @@ pub async fn update_state_nonmediated(
     let wallet = get_main_wallet()?;
 
     let send_message: SendClosure = Box::new(|msg: AriesMessage| {
-        Box::pin(async move { con.send_message(wallet.as_ref(), &msg, &HttpClient).await })
+        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
     });
 
     let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -286,7 +286,7 @@ pub async fn send_proof_request_nonmediated(
     let wallet = get_main_wallet()?;
 
     let send_message: SendClosure = Box::new(|msg: AriesMessage| {
-        Box::pin(async move { con.send_message(wallet.as_ref(), &msg, &HttpClient).await })
+        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
     });
 
     let message = proof.mark_presentation_request_sent()?;

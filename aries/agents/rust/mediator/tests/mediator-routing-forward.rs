@@ -63,7 +63,7 @@ async fn test_forward_flow() -> Result<()> {
         serde_json::to_string(&message).unwrap()
     );
     let EncryptionEnvelope(packed_message) = EncryptionEnvelope::create(
-        &*agent.get_wallet_ref(),
+        &agent.get_wallet_ref(),
         &serde_json::to_vec(&message)?,
         None,
         &agent_diddoc,

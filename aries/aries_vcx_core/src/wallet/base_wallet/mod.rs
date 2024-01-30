@@ -1,76 +1,64 @@
-use async_trait::async_trait;
-use public_key::Key;
+use std::sync::Arc;
 
-use super::entry_tag::EntryTags;
-use crate::{
-    errors::error::VcxCoreResult,
-    wallet::{
-        base_wallet::{did_data::DidData, record::Record, search_filter::SearchFilter},
-        structs_io::UnpackMessageOutput,
-    },
+use async_trait::async_trait;
+
+use self::{
+    did_wallet::DidWallet, issuer_config::IssuerConfig, record::AllRecords,
+    record_wallet::RecordWallet,
 };
 
+use crate::errors::error::VcxCoreResult;
+
 pub mod did_data;
+pub mod did_wallet;
+pub mod issuer_config;
+pub mod migrate;
 pub mod record;
+pub mod record_wallet;
 pub mod search_filter;
 
-pub trait BaseWallet: RecordWallet + DidWallet + Send + Sync + std::fmt::Debug {}
-
 #[async_trait]
-pub trait DidWallet {
-    async fn create_and_store_my_did(
-        &self,
-        seed: Option<&str>,
-        kdf_method_name: Option<&str>,
-    ) -> VcxCoreResult<DidData>;
-
-    async fn key_for_did(&self, did: &str) -> VcxCoreResult<Key>;
-
-    async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxCoreResult<Key>;
-
-    async fn replace_did_key_apply(&self, did: &str) -> VcxCoreResult<()>;
-
-    async fn sign(&self, key: &Key, msg: &[u8]) -> VcxCoreResult<Vec<u8>>;
-
-    async fn verify(&self, key: &Key, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool>;
-
-    async fn pack_message(
-        &self,
-        sender_vk: Option<Key>,
-        receiver_keys: Vec<Key>,
-        msg: &[u8],
-    ) -> VcxCoreResult<Vec<u8>>;
-
-    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput>;
+pub trait ImportWallet {
+    async fn import_wallet(&self) -> VcxCoreResult<()>;
 }
 
 #[async_trait]
-pub trait RecordWallet {
-    async fn add_record(&self, record: Record) -> VcxCoreResult<()>;
+pub trait ManageWallet {
+    async fn create_wallet(&self) -> VcxCoreResult<Arc<dyn BaseWallet>>;
 
-    async fn get_record(&self, category: &str, name: &str) -> VcxCoreResult<Record>;
+    async fn open_wallet(&self) -> VcxCoreResult<Arc<dyn BaseWallet>>;
 
-    async fn update_record_tags(
-        &self,
-        category: &str,
-        name: &str,
-        new_tags: EntryTags,
-    ) -> VcxCoreResult<()>;
+    async fn delete_wallet(&self) -> VcxCoreResult<()>;
+}
 
-    async fn update_record_value(
-        &self,
-        category: &str,
-        name: &str,
-        new_value: &str,
-    ) -> VcxCoreResult<()>;
+#[async_trait]
+pub trait BaseWallet: RecordWallet + DidWallet + Send + Sync + std::fmt::Debug {
+    async fn export_wallet(&self, path: &str, backup_key: &str) -> VcxCoreResult<()>;
 
-    async fn delete_record(&self, category: &str, name: &str) -> VcxCoreResult<()>;
+    async fn close_wallet(&self) -> VcxCoreResult<()>;
 
-    async fn search_record(
-        &self,
-        category: &str,
-        search_filter: Option<SearchFilter>,
-    ) -> VcxCoreResult<Vec<Record>>;
+    async fn configure_issuer(&self, key_seed: &str) -> VcxCoreResult<IssuerConfig>;
+
+    async fn all(&self) -> VcxCoreResult<Box<dyn AllRecords + Send>>;
+}
+
+#[async_trait]
+impl BaseWallet for Arc<dyn BaseWallet> {
+    async fn export_wallet(&self, path: &str, backup_key: &str) -> VcxCoreResult<()> {
+        self.as_ref().export_wallet(path, backup_key).await
+    }
+
+    async fn close_wallet(&self) -> VcxCoreResult<()> {
+        self.as_ref().close_wallet().await
+    }
+
+    async fn configure_issuer(&self, key_seed: &str) -> VcxCoreResult<IssuerConfig> {
+        self.as_ref().configure_issuer(key_seed).await
+    }
+
+    async fn all(&self) -> VcxCoreResult<Box<dyn AllRecords + Send>> {
+        self.as_ref().all().await
+    }
 }
 
 #[cfg(test)]
@@ -81,7 +69,7 @@ mod tests {
     use crate::{
         errors::error::AriesVcxCoreErrorKind,
         wallet::{
-            base_wallet::{DidWallet, Record, RecordWallet},
+            base_wallet::{record::Record, DidWallet, RecordWallet},
             entry_tag::{EntryTag, EntryTags},
         },
     };
@@ -264,7 +252,7 @@ mod tests {
         let category = "my";
         let value1 = "xxx";
         let value2 = "yyy";
-        let tags1: EntryTags = vec![EntryTag::Plaintext("a".into(), "b".into())].into();
+        let tags1: EntryTags = vec![EntryTag::Tag("a".into(), "b".into())].into();
         let tags2 = EntryTags::default();
 
         let record = Record::builder()
@@ -297,7 +285,7 @@ mod tests {
         let category = "my";
         let value1 = "xxx";
         let value2 = "yyy";
-        let tags: EntryTags = vec![EntryTag::Plaintext("a".into(), "b".into())].into();
+        let tags: EntryTags = vec![EntryTag::Tag("a".into(), "b".into())].into();
 
         let record = Record::builder()
             .name(name.into())
@@ -324,8 +312,8 @@ mod tests {
         let name = "foo";
         let category = "my";
         let value = "xxx";
-        let tags1: EntryTags = vec![EntryTag::Plaintext("a".into(), "b".into())].into();
-        let tags2: EntryTags = vec![EntryTag::Plaintext("c".into(), "d".into())].into();
+        let tags1: EntryTags = vec![EntryTag::Tag("a".into(), "b".into())].into();
+        let tags2: EntryTags = vec![EntryTag::Tag("c".into(), "d".into())].into();
 
         let record = Record::builder()
             .name(name.into())

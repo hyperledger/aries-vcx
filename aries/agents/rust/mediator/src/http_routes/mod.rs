@@ -19,7 +19,7 @@ use crate::{
 
 pub async fn oob_invite_qr(
     headers: HeaderMap,
-    State(agent): State<ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>>,
+    State(agent): State<ArcAgent<impl MediatorPersistence>>,
 ) -> Response {
     let Json(oob_json) = oob_invite_json(State(agent)).await;
     let preferred_mimetype = headers
@@ -48,14 +48,14 @@ pub async fn oob_invite_qr(
 }
 
 pub async fn oob_invite_json(
-    State(agent): State<ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>>,
+    State(agent): State<ArcAgent<impl MediatorPersistence>>,
 ) -> Json<Value> {
     let oob = agent.get_oob_invite().unwrap();
     Json(serde_json::to_value(oob).unwrap())
 }
 
 pub async fn handle_didcomm(
-    State(agent): State<ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>>,
+    State(agent): State<ArcAgent<impl MediatorPersistence>>,
     didcomm_msg: Bytes,
 ) -> Result<Json<Value>, String> {
     didcomm_handlers::handle_aries(State(agent), didcomm_msg).await
@@ -65,9 +65,7 @@ pub async fn readme() -> Html<String> {
     Html("<p>Please refer to the API section of <a>readme</a> for usage. Thanks. </p>".into())
 }
 
-pub async fn build_router(
-    agent: Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
-) -> Router {
+pub async fn build_router(agent: Agent<impl MediatorPersistence>) -> Router {
     Router::default()
         .route("/", get(readme))
         .route("/register", get(oob_invite_qr))

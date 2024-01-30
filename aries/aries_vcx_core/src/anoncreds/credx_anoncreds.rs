@@ -30,7 +30,9 @@ use crate::{
         json::{AsTypeOrDeserializationError, TryGetIndex},
     },
     wallet::{
-        base_wallet::{record::Record, search_filter::SearchFilter, BaseWallet, RecordWallet},
+        base_wallet::{
+            record::Record, record_wallet::RecordWallet, search_filter::SearchFilter, BaseWallet,
+        },
         entry_tag::EntryTags,
     },
 };

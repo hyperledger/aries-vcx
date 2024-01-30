@@ -17,8 +17,9 @@ use aries_vcx::{
     },
 };
 use aries_vcx_core::{
-    anoncreds::credx_anoncreds::IndyCredxAnonCreds, ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
-    wallet::indy::IndySdkWallet,
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds,
+    ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
+    wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
 };
 
 use super::connection::ServiceConnections;
@@ -46,7 +47,7 @@ impl VerifierWrapper {
 pub struct ServiceVerifier {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     anoncreds: IndyCredxAnonCreds,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<dyn BaseWallet>,
     verifiers: ObjectCache<VerifierWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
@@ -55,7 +56,7 @@ impl ServiceVerifier {
     pub fn new(
         ledger_read: Arc<DefaultIndyLedgerRead>,
         anoncreds: IndyCredxAnonCreds,
-        wallet: Arc<IndySdkWallet>,
+        wallet: Arc<dyn BaseWallet>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
@@ -80,10 +81,12 @@ impl ServiceVerifier {
             Verifier::create_from_request("".to_string(), &request)?
         };
 
-        let wallet = self.wallet.as_ref();
-
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
+            Box::pin(async move {
+                connection
+                    .send_message(&self.wallet, &msg, &VcxHttpClient)
+                    .await
+            })
         });
 
         let message = verifier.mark_presentation_request_sent()?;
@@ -112,10 +115,13 @@ impl ServiceVerifier {
             connection_id,
         } = self.verifiers.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        let wallet = self.wallet.as_ref();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
+            Box::pin(async move {
+                connection
+                    .send_message(&self.wallet, &msg, &VcxHttpClient)
+                    .await
+            })
         });
 
         let message = verifier

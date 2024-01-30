@@ -3,8 +3,13 @@ use public_key::{Key, KeyType};
 
 use super::{
     base_wallet::{
-        did_data::DidData, record::Record, search_filter::SearchFilter, BaseWallet, DidWallet,
-        RecordWallet,
+        did_data::DidData,
+        did_wallet::DidWallet,
+        issuer_config::IssuerConfig,
+        record::{AllRecords, PartialRecord, Record},
+        record_wallet::RecordWallet,
+        search_filter::SearchFilter,
+        BaseWallet,
     },
     structs_io::UnpackMessageOutput,
 };
@@ -17,7 +22,52 @@ use crate::{
 #[derive(Debug)]
 pub struct MockWallet;
 
-impl BaseWallet for MockWallet {}
+pub struct MockAllRecords;
+
+#[async_trait]
+impl AllRecords for MockAllRecords {
+    fn total_count(&self) -> VcxCoreResult<Option<usize>> {
+        Ok(Some(0))
+    }
+
+    async fn next(&mut self) -> VcxCoreResult<Option<PartialRecord>> {
+        Ok(None)
+    }
+}
+
+#[async_trait]
+#[allow(unused_variables)]
+impl BaseWallet for MockWallet {
+    async fn export_wallet(&self, path: &str, backup_key: &str) -> VcxCoreResult<()> {
+        Ok(())
+    }
+
+    async fn close_wallet(&self) -> VcxCoreResult<()> {
+        Ok(())
+    }
+
+    async fn configure_issuer(&self, key_seed: &str) -> VcxCoreResult<IssuerConfig> {
+        Ok(IssuerConfig::builder().build())
+    }
+
+    // async fn create_wallet(wallet_config: WalletConfig) -> VcxCoreResult<Box<dyn BaseWallet>>
+    // where
+    //     Self: Sized,
+    // {
+    //     Ok(Box::new(MockWallet {}))
+    // }
+
+    // async fn open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<Box<dyn BaseWallet>>
+    // where
+    //     Self: Sized,
+    // {
+    //     Ok(Box::new(MockWallet {}))
+    // }
+
+    async fn all(&self) -> VcxCoreResult<Box<dyn AllRecords + Send>> {
+        Ok(Box::new(MockAllRecords {}))
+    }
+}
 
 #[async_trait]
 #[allow(unused_variables)]

@@ -226,7 +226,7 @@ pub async fn update_state(
         Some(aries_msg) => {
             credential
                 .process_aries_msg(
-                    get_main_wallet()?.as_ref(),
+                    &get_main_wallet()?,
                     get_main_ledger_read()?.as_ref(),
                     get_main_anoncreds()?.as_ref(),
                     aries_msg.clone(),
@@ -300,7 +300,7 @@ pub async fn delete_credential(handle: u32) -> LibvcxResult<()> {
     );
     let credential = HANDLE_MAP.get_cloned(handle)?;
     credential
-        .delete_credential(get_main_wallet()?.as_ref(), get_main_anoncreds()?.as_ref())
+        .delete_credential(&get_main_wallet()?, get_main_anoncreds()?.as_ref())
         .await?;
     HANDLE_MAP.release(handle)
 }
@@ -331,7 +331,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
     let msg_response = credential
         .prepare_credential_request(
-            get_main_wallet()?.as_ref(),
+            &get_main_wallet()?,
             get_main_ledger_read()?.as_ref(),
             get_main_anoncreds()?.as_ref(),
             my_pw_did,

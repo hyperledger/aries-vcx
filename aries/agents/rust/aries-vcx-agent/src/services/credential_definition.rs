@@ -4,7 +4,7 @@ use aries_vcx::common::primitives::credential_definition::{CredentialDef, Creden
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds,
     ledger::indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
-    wallet::indy::IndySdkWallet,
+    wallet::base_wallet::BaseWallet,
 };
 
 use crate::{
@@ -16,7 +16,7 @@ pub struct ServiceCredentialDefinitions {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     ledger_write: Arc<DefaultIndyLedgerWrite>,
     anoncreds: IndyCredxAnonCreds,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<dyn BaseWallet>,
     cred_defs: ObjectCache<CredentialDef>,
 }
 
@@ -25,7 +25,7 @@ impl ServiceCredentialDefinitions {
         ledger_read: Arc<DefaultIndyLedgerRead>,
         ledger_write: Arc<DefaultIndyLedgerWrite>,
         anoncreds: IndyCredxAnonCreds,
-        wallet: Arc<IndySdkWallet>,
+        wallet: Arc<dyn BaseWallet>,
     ) -> Self {
         Self {
             cred_defs: ObjectCache::new("cred-defs"),
@@ -38,7 +38,7 @@ impl ServiceCredentialDefinitions {
 
     pub async fn create_cred_def(&self, config: CredentialDefConfig) -> AgentResult<String> {
         let cd = CredentialDef::create(
-            self.wallet.as_ref(),
+            &self.wallet,
             self.ledger_read.as_ref(),
             &self.anoncreds,
             "".to_string(),
@@ -53,7 +53,7 @@ impl ServiceCredentialDefinitions {
         let cred_def = self.cred_defs.get(thread_id)?;
         let cred_def = cred_def
             .publish_cred_def(
-                self.wallet.as_ref(),
+                &self.wallet,
                 self.ledger_read.as_ref(),
                 self.ledger_write.as_ref(),
             )

@@ -7,7 +7,7 @@ use uuid::Uuid;
 use super::utils::prelude::*;
 
 pub async fn handle_mediation_coord(
-    agent: &ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>,
+    agent: &ArcAgent<impl MediatorPersistence>,
     coord_msg: CoordinateMediation,
     auth_pubkey: &str,
 ) -> Result<CoordinateMediation, String> {

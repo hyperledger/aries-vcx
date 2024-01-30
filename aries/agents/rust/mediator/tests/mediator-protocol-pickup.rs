@@ -51,7 +51,7 @@ async fn forward_basic_anoncrypt_message(
         .build();
 
     let EncryptionEnvelope(packed_message) = EncryptionEnvelope::create(
-        &*agent_f.get_wallet_ref(),
+        &agent_f.get_wallet_ref(),
         &serde_json::to_vec(&message)?,
         None,
         agent_diddoc,

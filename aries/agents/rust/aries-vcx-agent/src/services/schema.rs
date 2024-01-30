@@ -7,7 +7,7 @@ use aries_vcx_core::{
         base_ledger::AnoncredsLedgerRead,
         indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
     },
-    wallet::indy::IndySdkWallet,
+    wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
 };
 
 use crate::{
@@ -19,7 +19,7 @@ pub struct ServiceSchemas {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     ledger_write: Arc<DefaultIndyLedgerWrite>,
     anoncreds: IndyCredxAnonCreds,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<dyn BaseWallet>,
     issuer_did: String,
     schemas: ObjectCache<Schema>,
 }
@@ -29,7 +29,7 @@ impl ServiceSchemas {
         ledger_read: Arc<DefaultIndyLedgerRead>,
         ledger_write: Arc<DefaultIndyLedgerWrite>,
         anoncreds: IndyCredxAnonCreds,
-        wallet: Arc<IndySdkWallet>,
+        wallet: Arc<dyn BaseWallet>,
         issuer_did: String,
     ) -> Self {
         Self {
@@ -63,7 +63,7 @@ impl ServiceSchemas {
     pub async fn publish_schema(&self, thread_id: &str) -> AgentResult<()> {
         let schema = self.schemas.get(thread_id)?;
         let schema = schema
-            .publish(self.wallet.as_ref(), self.ledger_write.as_ref())
+            .publish(&self.wallet, self.ledger_write.as_ref())
             .await?;
         self.schemas.insert(thread_id, schema)?;
         Ok(())

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds,
     ledger::indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
-    wallet::indy::IndySdkWallet,
+    wallet::base_wallet::BaseWallet,
 };
 
 use crate::{
@@ -22,7 +22,7 @@ pub struct Agent {
     pub(super) ledger_read: Arc<DefaultIndyLedgerRead>,
     pub(super) ledger_write: Arc<DefaultIndyLedgerWrite>,
     pub(super) anoncreds: IndyCredxAnonCreds,
-    pub(super) wallet: Arc<IndySdkWallet>,
+    pub(super) wallet: Arc<dyn BaseWallet>,
     pub(super) config: AgentConfig,
     pub(super) connections: Arc<ServiceConnections>,
     pub(super) schemas: Arc<ServiceSchemas>,
@@ -49,7 +49,7 @@ impl Agent {
         &self.anoncreds
     }
 
-    pub fn wallet(&self) -> &IndySdkWallet {
+    pub fn wallet(&self) -> &Arc<dyn BaseWallet> {
         &self.wallet
     }
 
