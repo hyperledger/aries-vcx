@@ -184,13 +184,10 @@ mod tests {
           "schema_json": serde_json::from_str::<LedgerSchema>(SCHEMA_JSON).unwrap()
         }})
         .to_string();
-        let schema_result = Schema::from_string_versioned(&serialized);
-        // assert!(schema_result.is_ok());
-        let schema = schema_result.unwrap();
-
+        let schema = Schema::from_string_versioned(&serialized).unwrap();
         assert_eq!(schema.version, "1.0");
         assert_eq!(schema.data, vec!["name".to_string(), "age".to_string()]);
-        assert_eq!(schema.schema_id, SchemaId::new_unchecked("test_schema_id"));
+        assert_eq!(schema.schema_id, SchemaId::new("test_schema_id").unwrap());
         assert_eq!(schema.name, "test");
         assert_eq!(schema.source_id, "1");
         assert_eq!(schema.state, PublicEntityStateType::Published);

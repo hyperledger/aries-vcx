@@ -34,7 +34,7 @@ pub fn get_credential_info(proof: &str) -> VcxResult<Vec<CredInfoVerifier>> {
 
                 let timestamp = identifier["timestamp"].as_u64();
                 rtn.push(CredInfoVerifier {
-                    schema_id: SchemaId::new(schema_id).unwrap(),
+                    schema_id: SchemaId::new(schema_id).unwrap(), // TODO: Fix horrible anoncreds_types error types first
                     cred_def_id: cred_def_id.to_string(),
                     rev_reg_id,
                     timestamp,

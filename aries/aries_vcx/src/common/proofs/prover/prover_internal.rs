@@ -39,7 +39,8 @@ pub async fn build_schemas_json_prover(
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
-        if rtn.get(&cred_info.schema_id.to_string()).is_none() {
+        let schema_id = cred_info.schema_id.to_string();
+        if rtn.get(&schema_id).is_none() {
             let schema_json = ledger
                 .get_schema(&cred_info.schema_id, None)
                 .await
@@ -57,7 +58,7 @@ pub async fn build_schemas_json_prover(
                 )
             })?;
 
-            rtn[cred_info.schema_id.to_string()] = schema_json;
+            rtn[schema_id] = schema_json;
         }
     }
     Ok(rtn.to_string())
