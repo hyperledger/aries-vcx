@@ -1,6 +1,7 @@
 mod common;
 
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediator::aries_agent::client::transports::AriesTransport;
 use messages::{
@@ -31,7 +32,7 @@ async fn forward_basic_anoncrypt_message(
     message_text: &str,
 ) -> Result<()> {
     // Prepare forwarding agent
-    let agent_f = mediator::aries_agent::AgentBuilder::new_demo_agent().await?;
+    let agent_f = mediator::aries_agent::AgentBuilder::<IndySdkWallet>::new_demo_agent().await?;
     // Prepare forwarding agent transport
     let mut agent_f_aries_transport = reqwest::Client::new();
     // Prepare message and wrap into anoncrypt forward message
@@ -47,7 +48,7 @@ async fn forward_basic_anoncrypt_message(
         .build();
 
     let EncryptionEnvelope(packed_message) = EncryptionEnvelope::create(
-        &*agent_f.get_wallet_ref(),
+        agent_f.get_wallet_ref().as_ref(),
         &serde_json::to_vec(&message)?,
         None,
         agent_diddoc,

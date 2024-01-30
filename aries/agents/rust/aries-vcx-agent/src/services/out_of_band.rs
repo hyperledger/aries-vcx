@@ -18,7 +18,7 @@ use aries_vcx::{
     },
     protocols::did_exchange::state_machine::generate_keypair,
 };
-use aries_vcx_core::wallet::indy::IndySdkWallet;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use public_key::KeyType;
 use uuid::Uuid;
 
@@ -28,14 +28,14 @@ use crate::{
     AgentResult,
 };
 
-pub struct ServiceOutOfBand {
-    wallet: Arc<IndySdkWallet>,
+pub struct ServiceOutOfBand<T> {
+    wallet: Arc<T>,
     service_endpoint: ServiceEndpoint,
     out_of_band: Arc<ObjectCache<GenericOutOfBand>>,
 }
 
-impl ServiceOutOfBand {
-    pub fn new(wallet: Arc<IndySdkWallet>, service_endpoint: ServiceEndpoint) -> Self {
+impl<T: BaseWallet> ServiceOutOfBand<T> {
+    pub fn new(wallet: Arc<T>, service_endpoint: ServiceEndpoint) -> Self {
         Self {
             wallet,
             service_endpoint,

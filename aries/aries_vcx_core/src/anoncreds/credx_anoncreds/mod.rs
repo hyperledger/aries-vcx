@@ -66,8 +66,11 @@ use crate::{
     utils::{constants::ATTRS, json::AsTypeOrDeserializationError},
     wallet::{
         base_wallet::{
-            record::Record, record_category::RecordCategory, search_filter::SearchFilter,
-            BaseWallet, RecordWallet,
+            record::{AllRecords, Record},
+            record_category::RecordCategory,
+            record_wallet::RecordWallet,
+            search_filter::SearchFilter,
+            BaseWallet,
         },
         record_tags::{RecordTag, RecordTags},
     },
@@ -87,6 +90,10 @@ struct WalletAdapter(Arc<dyn BaseWallet>);
 
 #[async_trait]
 impl RecordWallet for WalletAdapter {
+    async fn all_records(&self) -> VcxCoreResult<Box<dyn AllRecords + Send>> {
+        self.0.all_records().await
+    }
+
     async fn add_record(&self, record: Record) -> VcxCoreResult<()> {
         self.0.add_record(record).await
     }

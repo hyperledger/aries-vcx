@@ -2,13 +2,15 @@ use async_trait::async_trait;
 use indy_api_types::domain::wallet::IndyRecord;
 use vdrtools::Locator;
 
-use super::{indy_tags::IndyTags, WALLET_OPTIONS};
+use super::{all_indy_records::AllIndyRecords, indy_tags::IndyTags, WALLET_OPTIONS};
 use crate::{
     errors::error::VcxCoreResult,
     wallet::{
         base_wallet::{
-            record::Record, record_category::RecordCategory, search_filter::SearchFilter,
-            RecordWallet,
+            record::{AllRecords, Record},
+            record_category::RecordCategory,
+            record_wallet::RecordWallet,
+            search_filter::SearchFilter,
         },
         indy::IndySdkWallet,
         record_tags::RecordTags,
@@ -17,6 +19,15 @@ use crate::{
 
 #[async_trait]
 impl RecordWallet for IndySdkWallet {
+    async fn all_records(&self) -> VcxCoreResult<Box<dyn AllRecords + Send>> {
+        let all = Locator::instance()
+            .wallet_controller
+            .get_all(self.get_wallet_handle())
+            .await?;
+
+        Ok(Box::new(AllIndyRecords::new(all)))
+    }
+
     async fn add_record(&self, record: Record) -> VcxCoreResult<()> {
         let tags_map = if record.tags().is_empty() {
             None

@@ -10,7 +10,9 @@ use aries_vcx::{
         pairwise_info::PairwiseInfo, Connection, GenericConnection, State, ThinState,
     },
 };
-use aries_vcx_core::{ledger::indy_vdr_ledger::DefaultIndyLedgerRead, wallet::indy::IndySdkWallet};
+use aries_vcx_core::{
+    ledger::indy_vdr_ledger::DefaultIndyLedgerRead, wallet::base_wallet::BaseWallet,
+};
 use url::Url;
 
 use crate::{
@@ -21,17 +23,17 @@ use crate::{
 
 pub type ServiceEndpoint = Url;
 
-pub struct ServiceConnections {
+pub struct ServiceConnections<T> {
     ledger_read: Arc<DefaultIndyLedgerRead>,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<T>,
     service_endpoint: ServiceEndpoint,
     connections: Arc<ObjectCache<GenericConnection>>,
 }
 
-impl ServiceConnections {
+impl<T: BaseWallet> ServiceConnections<T> {
     pub fn new(
         ledger_read: Arc<DefaultIndyLedgerRead>,
-        wallet: Arc<IndySdkWallet>,
+        wallet: Arc<T>,
         service_endpoint: ServiceEndpoint,
     ) -> Self {
         Self {

@@ -27,7 +27,7 @@ pub fn unhandled_aries_message(message: impl Debug) -> String {
     format!("Don't know how to handle this message type {:#?}", message)
 }
 
-pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
+pub async fn handle_aries<T: BaseWallet, P: MediatorPersistence>(
     State(agent): State<ArcAgent<T, P>>,
     didcomm_msg: Bytes,
 ) -> Result<Json<Value>, String> {

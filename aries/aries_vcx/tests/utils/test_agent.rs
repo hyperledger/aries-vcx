@@ -8,7 +8,7 @@ use aries_vcx_core::{
     ledger::base_ledger::{
         AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
     },
-    wallet::base_wallet::{BaseWallet, DidWallet},
+    wallet::base_wallet::{did_wallet::DidWallet, BaseWallet},
 };
 use did_parser::Did;
 use test_utils::{

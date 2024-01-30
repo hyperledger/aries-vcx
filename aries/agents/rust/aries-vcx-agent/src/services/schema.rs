@@ -7,7 +7,7 @@ use aries_vcx_core::{
         base_ledger::AnoncredsLedgerRead,
         indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
     },
-    wallet::indy::IndySdkWallet,
+    wallet::base_wallet::BaseWallet,
 };
 
 use crate::{
@@ -15,21 +15,21 @@ use crate::{
     storage::{object_cache::ObjectCache, Storage},
 };
 
-pub struct ServiceSchemas {
+pub struct ServiceSchemas<T> {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     ledger_write: Arc<DefaultIndyLedgerWrite>,
     anoncreds: IndyCredxAnonCreds,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<T>,
     issuer_did: Did,
     schemas: ObjectCache<Schema>,
 }
 
-impl ServiceSchemas {
+impl<T: BaseWallet> ServiceSchemas<T> {
     pub fn new(
         ledger_read: Arc<DefaultIndyLedgerRead>,
         ledger_write: Arc<DefaultIndyLedgerWrite>,
         anoncreds: IndyCredxAnonCreds,
-        wallet: Arc<IndySdkWallet>,
+        wallet: Arc<T>,
         issuer_did: String,
     ) -> Self {
         Self {

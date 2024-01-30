@@ -1,3 +1,4 @@
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 use log::info;
 use mediator::aries_agent::AgentBuilder;
 
@@ -8,7 +9,9 @@ async fn main() {
     info!("Starting up mediator! ⚙️⚙️");
     let endpoint_root = std::env::var("ENDPOINT_ROOT").unwrap_or("127.0.0.1:8005".into());
     info!("Mediator endpoint root address {}", endpoint_root);
-    let mut agent = AgentBuilder::new_demo_agent().await.unwrap();
+    let mut agent = AgentBuilder::<IndySdkWallet>::new_demo_agent()
+        .await
+        .unwrap();
     agent
         .init_service(
             vec![],

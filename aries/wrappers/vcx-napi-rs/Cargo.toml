@@ -11,6 +11,11 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 doctest = false
 
+[features]
+default = ["vdrtools_wallet"]
+askar_wallet = ["libvcx_core/askar_wallet"]
+vdrtools_wallet = ["libvcx_core/vdrtools_wallet"]
+
 [dependencies]
 libvcx_core = { path = "../../misc/legacy/libvcx_core" }
 wallet_migrator = { path = "../../misc/wallet_migrator" }
@@ -20,6 +25,8 @@ napi-derive = { version = "2.10.1" }
 uuid = { version = "1.5.0", default-features = false, features = ["v4"] }
 chrono = "0.4.23"
 libvcx_logger = { path = "../../misc/legacy/libvcx_logger" }
+serde = { version = "1.0.159", features = ["derive"] }
+serde_json = "1.0.95"
 
 [build-dependencies]
 napi-build = "2.0.1"

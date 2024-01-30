@@ -19,7 +19,7 @@ use crate::{
 
 pub async fn oob_invite_qr(
     headers: HeaderMap,
-    State(agent): State<ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>>,
+    State(agent): State<ArcAgent<impl BaseWallet, impl MediatorPersistence>>,
 ) -> Response {
     let Json(oob_json) = oob_invite_json(State(agent)).await;
     let preferred_mimetype = headers
@@ -48,14 +48,14 @@ pub async fn oob_invite_qr(
 }
 
 pub async fn oob_invite_json(
-    State(agent): State<ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>>,
+    State(agent): State<ArcAgent<impl BaseWallet, impl MediatorPersistence>>,
 ) -> Json<Value> {
     let oob = agent.get_oob_invite().unwrap();
     Json(serde_json::to_value(oob).unwrap())
 }
 
 pub async fn handle_didcomm(
-    State(agent): State<ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>>,
+    State(agent): State<ArcAgent<impl BaseWallet, impl MediatorPersistence>>,
     didcomm_msg: Bytes,
 ) -> Result<Json<Value>, String> {
     didcomm_handlers::handle_aries(State(agent), didcomm_msg).await

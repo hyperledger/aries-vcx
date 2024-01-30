@@ -1,97 +1,70 @@
 use async_trait::async_trait;
-use public_key::Key;
 
-use self::{did_data::DidData, record_category::RecordCategory};
-use super::record_tags::RecordTags;
-use crate::{
-    errors::error::VcxCoreResult,
-    wallet::{
-        base_wallet::{record::Record, search_filter::SearchFilter},
-        structs_io::UnpackMessageOutput,
-    },
-};
+use self::{did_wallet::DidWallet, issuer_config::IssuerConfig, record_wallet::RecordWallet};
+use crate::errors::error::VcxCoreResult;
 
 pub mod did_data;
 pub mod did_value;
+pub mod did_wallet;
+pub mod issuer_config;
+pub mod migrate;
 pub mod record;
 pub mod record_category;
+pub mod record_wallet;
 pub mod search_filter;
 
-pub trait BaseWallet: RecordWallet + DidWallet + Send + Sync + std::fmt::Debug {}
-
 #[async_trait]
-pub trait DidWallet {
-    async fn create_and_store_my_did(
-        &self,
-        seed: Option<&str>,
-        kdf_method_name: Option<&str>,
-    ) -> VcxCoreResult<DidData>;
-
-    async fn key_for_did(&self, did: &str) -> VcxCoreResult<Key>;
-
-    async fn key_count(&self) -> VcxCoreResult<usize>;
-
-    async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxCoreResult<Key>;
-
-    async fn replace_did_key_apply(&self, did: &str) -> VcxCoreResult<()>;
-
-    async fn sign(&self, key: &Key, msg: &[u8]) -> VcxCoreResult<Vec<u8>>;
-
-    async fn verify(&self, key: &Key, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool>;
-
-    async fn pack_message(
-        &self,
-        sender_vk: Option<Key>,
-        receiver_keys: Vec<Key>,
-        msg: &[u8],
-    ) -> VcxCoreResult<Vec<u8>>;
-
-    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput>;
+pub trait ImportWallet {
+    async fn import_wallet(&self) -> VcxCoreResult<()>;
 }
 
 #[async_trait]
-pub trait RecordWallet {
-    async fn add_record(&self, record: Record) -> VcxCoreResult<()>;
+pub trait ManageWallet {
+    type ManagedWalletType: BaseWallet;
 
-    async fn get_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<Record>;
+    async fn create_wallet(&self) -> VcxCoreResult<Self::ManagedWalletType>;
 
-    async fn update_record_tags(
-        &self,
-        category: RecordCategory,
-        name: &str,
-        new_tags: RecordTags,
-    ) -> VcxCoreResult<()>;
+    async fn open_wallet(&self) -> VcxCoreResult<Self::ManagedWalletType>;
 
-    async fn update_record_value(
-        &self,
-        category: RecordCategory,
-        name: &str,
-        new_value: &str,
-    ) -> VcxCoreResult<()>;
+    async fn delete_wallet(&self) -> VcxCoreResult<()>;
+}
 
-    async fn delete_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<()>;
+#[async_trait]
+pub trait BaseWallet: RecordWallet + DidWallet + Send + Sync + std::fmt::Debug {
+    async fn export_wallet(&self, path: &str, backup_key: &str) -> VcxCoreResult<()>;
 
-    async fn search_record(
-        &self,
-        category: RecordCategory,
-        search_filter: Option<SearchFilter>,
-    ) -> VcxCoreResult<Vec<Record>>;
+    async fn close_wallet(&self) -> VcxCoreResult<()>;
+
+    async fn configure_issuer(&self, key_seed: &str) -> VcxCoreResult<IssuerConfig> {
+        Ok(IssuerConfig {
+            institution_did: self
+                .create_and_store_my_did(Some(key_seed), None)
+                .await?
+                .did()
+                .to_string(),
+        })
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::BaseWallet;
     use crate::{
         errors::error::AriesVcxCoreErrorKind,
         wallet::{
-            base_wallet::{record_category::RecordCategory, Record},
+            base_wallet::{
+                did_wallet::DidWallet, record::Record, record_category::RecordCategory,
+                record_wallet::RecordWallet,
+            },
             record_tags::{RecordTag, RecordTags},
             utils::{did_from_key, random_seed},
         },
     };
 
     #[allow(unused_variables)]
-    async fn build_test_wallet() -> Box<dyn BaseWallet> {
+    async fn build_test_wallet() -> impl BaseWallet {
         #[cfg(feature = "vdrtools_wallet")]
         let wallet = {
             use crate::wallet::indy::tests::dev_setup_indy_wallet;
@@ -463,6 +436,42 @@ mod tests {
         assert_eq!(value, res.value());
         assert_eq!(&tags2, res.tags());
     }
+
+    #[tokio::test]
+    async fn record_wallet_should_fetch_all() {
+        let wallet = build_test_wallet().await;
+
+        wallet
+            .create_and_store_my_did(Some(&random_seed()), None)
+            .await
+            .unwrap();
+
+        let mut res = wallet.all_records().await.unwrap();
+
+        if let Some(total_count) = res.total_count().unwrap() {
+            assert_eq!(2, total_count);
+        } else {
+            panic!("expected total count when fetching all records");
+        }
+
+        let mut key_count = 0;
+        let mut did_count = 0;
+
+        while let Some(record) = res.next().await.unwrap() {
+            if let Some(category) = record.category() {
+                match RecordCategory::from_str(category).unwrap() {
+                    RecordCategory::Did => did_count += 1,
+                    RecordCategory::Key => key_count += 1,
+                    _ => (),
+                }
+            } else {
+                panic!("expected record to have a category");
+            }
+        }
+
+        assert_eq!(1, key_count);
+        assert_eq!(1, did_count);
+    }
 }
 
 #[cfg(test)]
@@ -473,10 +482,7 @@ mod compat_tests {
         indy::tests::dev_setup_indy_wallet,
     };
 
-    async fn pack_and_unpack_anoncrypt(
-        sender: Box<dyn BaseWallet>,
-        recipient: Box<dyn BaseWallet>,
-    ) {
+    async fn pack_and_unpack_anoncrypt(sender: impl BaseWallet, recipient: impl BaseWallet) {
         let did_data = recipient.create_and_store_my_did(None, None).await.unwrap();
 
         let msg = "send me";
@@ -491,10 +497,7 @@ mod compat_tests {
         assert_eq!(msg, unpacked.message);
     }
 
-    async fn pack_and_unpack_authcrypt(
-        sender: Box<dyn BaseWallet>,
-        recipient: Box<dyn BaseWallet>,
-    ) {
+    async fn pack_and_unpack_authcrypt(sender: impl BaseWallet, recipient: impl BaseWallet) {
         let sender_did_data = sender.create_and_store_my_did(None, None).await.unwrap();
         let recipient_did_data = recipient.create_and_store_my_did(None, None).await.unwrap();
 

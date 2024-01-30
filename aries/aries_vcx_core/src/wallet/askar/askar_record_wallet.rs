@@ -1,13 +1,15 @@
 use aries_askar::entry::EntryTag;
 use async_trait::async_trait;
 
-use super::AskarWallet;
+use super::{all_askar_records::AllAskarRecords, AskarWallet};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::{
         base_wallet::{
-            record::Record, record_category::RecordCategory, search_filter::SearchFilter,
-            RecordWallet,
+            record::{AllRecords, PartialRecord, Record},
+            record_category::RecordCategory,
+            record_wallet::RecordWallet,
+            search_filter::SearchFilter,
         },
         record_tags::RecordTags,
     },
@@ -131,5 +133,34 @@ impl RecordWallet for AskarWallet {
             .collect::<Vec<Result<Record, _>>>()
             .into_iter()
             .collect::<Result<_, _>>()?)
+    }
+
+    async fn all_records(&self) -> VcxCoreResult<Box<dyn AllRecords + Send>> {
+        let mut session = self.session().await?;
+
+        let recs = session.fetch_all(None, None, None, false).await?;
+
+        let mut recs = recs
+            .into_iter()
+            .map(PartialRecord::from_askar_entry)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let keys = session
+            .fetch_all_keys(None, None, None, None, false)
+            .await?;
+
+        let mut local_keys = keys
+            .into_iter()
+            .map(PartialRecord::from_askar_key_entry)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        recs.append(&mut local_keys);
+
+        let total_count = recs.len();
+
+        Ok(Box::new(AllAskarRecords::new(
+            recs.into_iter(),
+            Some(total_count),
+        )))
     }
 }

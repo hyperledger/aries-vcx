@@ -1,3 +1,5 @@
+use aries_vcx_core::wallet::indy::IndySdkWallet;
+
 mod tui;
 
 /// Aries Agent TUI
@@ -11,7 +13,9 @@ async fn main() {
     load_dot_env();
     setup_logging();
     log::info!("TUI initializing!");
-    let agent = AgentBuilder::new_demo_agent().await.unwrap();
+    let agent = AgentBuilder::<IndySdkWallet>::new_demo_agent()
+        .await
+        .unwrap();
     tui::init_tui(agent).await;
 }
 

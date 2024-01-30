@@ -5,7 +5,7 @@ use vdrtools::{DidMethod, DidValue, KeyInfo, Locator, MyDidInfo};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::{
-        base_wallet::{did_data::DidData, record_category::RecordCategory, DidWallet},
+        base_wallet::{did_data::DidData, did_wallet::DidWallet, record_category::RecordCategory},
         indy::IndySdkWallet,
         structs_io::UnpackMessageOutput,
     },

@@ -31,7 +31,7 @@ use super::Agent;
 use crate::utils::prelude::*;
 
 // client role utilities
-impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
+impl<T: BaseWallet, P: MediatorPersistence> Agent<T, P> {
     /// Starting from a new connection object, tries to create connection request object for the
     /// specified OOB invite endpoint
     pub async fn gen_connection_request(

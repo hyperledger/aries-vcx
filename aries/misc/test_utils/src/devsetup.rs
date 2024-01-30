@@ -36,8 +36,6 @@ use crate::devsetup::vdr_proxy_ledger::dev_build_profile_vdr_proxy_ledger;
 
 #[cfg(feature = "vdrtools_wallet")]
 pub mod vdrtools_wallet;
-#[cfg(feature = "vdrtools_wallet")]
-use crate::devsetup::vdrtools_wallet::dev_build_indy_wallet;
 
 const DEFAULT_AML_LABEL: &str = "eula";
 
@@ -212,7 +210,9 @@ pub async fn dev_build_featured_wallet(key_seed: &str) -> (String, impl BaseWall
     #[cfg(feature = "vdrtools_wallet")]
     return {
         info!("SetupProfile >> using indy wallet");
-        dev_build_indy_wallet(key_seed).await
+
+        use crate::devsetup::vdrtools_wallet::dev_setup_wallet_indy;
+        dev_setup_wallet_indy(key_seed).await
     };
 
     #[cfg(not(feature = "vdrtools_wallet"))]

@@ -8,11 +8,10 @@ use aries_vcx::{
 use aries_vcx_core::{
     errors::error::AriesVcxCoreError,
     wallet::{
-        base_wallet::BaseWallet,
-        indy::{wallet::create_and_open_wallet, IndySdkWallet, WalletConfig},
+        base_wallet::{BaseWallet, ManageWallet},
+        indy::indy_wallet_config::IndyWalletConfig,
         structs_io::UnpackMessageOutput,
     },
-    WalletHandle,
 };
 use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
 use messages::{
@@ -46,12 +45,12 @@ pub struct AgentBuilder<T: BaseWallet> {
     _type_wallet: PhantomData<T>,
 }
 /// Constructors
-impl AgentBuilder<IndySdkWallet> {
+impl<T: BaseWallet> AgentBuilder<T> {
     pub async fn new_from_wallet_config(
-        config: WalletConfig,
-    ) -> Result<Agent<IndySdkWallet, sqlx::MySqlPool>, AriesVcxCoreError> {
-        let wallet_handle: WalletHandle = create_and_open_wallet(&config).await?;
-        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
+        config: impl ManageWallet,
+    ) -> Result<Agent<impl BaseWallet, sqlx::MySqlPool>, AriesVcxCoreError> {
+        let wallet = Arc::new(config.create_wallet().await?);
+
         info!("Connecting to persistence layer");
         let persistence = Arc::new(get_persistence().await);
         Ok(Agent {
@@ -60,9 +59,9 @@ impl AgentBuilder<IndySdkWallet> {
             service: None,
         })
     }
-    pub async fn new_demo_agent() -> Result<Agent<IndySdkWallet, sqlx::MySqlPool>, AriesVcxCoreError>
-    {
-        let config = WalletConfig {
+    pub async fn new_demo_agent(
+    ) -> Result<Agent<impl BaseWallet, sqlx::MySqlPool>, AriesVcxCoreError> {
+        let config = IndyWalletConfig {
             wallet_name: uuid::Uuid::new_v4().to_string(),
             wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
             wallet_key_derivation: "RAW".into(),
@@ -77,8 +76,8 @@ impl AgentBuilder<IndySdkWallet> {
 }
 
 // Utils
-impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
-    pub fn get_wallet_ref(&self) -> Arc<impl BaseWallet> {
+impl<T: BaseWallet, P: MediatorPersistence> Agent<T, P> {
+    pub fn get_wallet_ref(&self) -> Arc<T> {
         self.wallet.clone()
     }
     pub fn get_persistence_ref(&self) -> Arc<impl MediatorPersistence> {
@@ -235,6 +234,7 @@ mod test {
         protocols::oob::oob_invitation_to_legacy_did_doc,
         utils::encryption_envelope::EncryptionEnvelope,
     };
+    use aries_vcx_core::wallet::indy::IndySdkWallet;
     use log::info;
     use serde_json::Value;
     use test_utils::mockdata::mock_ledger::MockLedger;
@@ -245,7 +245,9 @@ mod test {
     pub async fn test_pack_unpack() {
         let message: Value = serde_json::from_str("{}").unwrap();
         let message_bytes = serde_json::to_vec(&message).unwrap();
-        let mut agent = AgentBuilder::new_demo_agent().await.unwrap();
+        let mut agent = AgentBuilder::<IndySdkWallet>::new_demo_agent()
+            .await
+            .unwrap();
         agent
             .init_service(
                 vec![],
