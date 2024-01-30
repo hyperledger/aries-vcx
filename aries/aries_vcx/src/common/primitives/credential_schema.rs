@@ -9,6 +9,7 @@ use aries_vcx_core::{
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
+use did_parser::Did;
 
 use super::credential_definition::PublicEntityStateType;
 use crate::{
@@ -32,7 +33,7 @@ pub struct Schema {
     pub name: String,
     pub source_id: String,
     #[serde(default)]
-    submitter_did: String,
+    submitter_did: Did,
     #[serde(default)]
     pub state: PublicEntityStateType,
     pub schema_json: LedgerSchema,
@@ -42,7 +43,7 @@ impl Schema {
     pub async fn create(
         anoncreds: &impl BaseAnonCreds,
         source_id: &str,
-        submitter_did: &str,
+        submitter_did: &Did,
         name: &str,
         version: &str,
         data: &Vec<String>,
@@ -72,14 +73,14 @@ impl Schema {
             data: data.clone(),
             version: version.to_string(),
             schema_id: schema_json.id.clone(),
-            submitter_did: submitter_did.to_string(),
+            submitter_did: submitter_did.to_owned(),
             schema_json,
             state: PublicEntityStateType::Built,
         })
     }
 
     pub async fn submitter_did(&self) -> String {
-        self.submitter_did.clone()
+        self.submitter_did.to_string()
     }
 
     pub async fn publish(

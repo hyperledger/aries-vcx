@@ -4,6 +4,7 @@ use aries_vcx_core::{
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
+use did_parser::Did;
 
 use super::credential_definition::PublicEntityStateType;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
@@ -11,7 +12,7 @@ use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq)]
 pub struct RevocationRegistry {
     cred_def_id: String,
-    issuer_did: String,
+    issuer_did: Did,
     pub rev_reg_id: String,
     rev_reg_def: RevocationRegistryDefinition,
     pub(in crate::common) rev_reg_entry: String,
@@ -26,7 +27,7 @@ impl RevocationRegistry {
     pub async fn create(
         wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
-        issuer_did: &str,
+        issuer_did: &Did,
         cred_def_id: &str,
         tails_dir: &str,
         max_creds: u32,
@@ -62,7 +63,7 @@ impl RevocationRegistry {
         })?;
         Ok(RevocationRegistry {
             cred_def_id: cred_def_id.to_string(),
-            issuer_did: issuer_did.to_string(),
+            issuer_did: issuer_did.to_owned(),
             rev_reg_id,
             rev_reg_def,
             rev_reg_entry,
@@ -102,7 +103,7 @@ impl RevocationRegistry {
         &mut self,
         wallet: &impl BaseWallet,
         ledger: &impl AnoncredsLedgerWrite,
-        issuer_did: &str,
+        issuer_did: &Did,
         tails_url: &str,
     ) -> VcxResult<()> {
         trace!(
@@ -130,7 +131,7 @@ impl RevocationRegistry {
         &mut self,
         wallet: &impl BaseWallet,
         ledger_write: &impl AnoncredsLedgerWrite,
-        issuer_did: &str,
+        issuer_did: &Did,
     ) -> VcxResult<()> {
         trace!(
             "RevocationRegistry::publish_rev_reg_delta >>> issuer_did:{}, rev_reg_id: {}",
@@ -242,7 +243,7 @@ impl RevocationRegistry {
         wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
         ledger_write: &impl AnoncredsLedgerWrite,
-        submitter_did: &str,
+        submitter_did: &Did,
     ) -> VcxResult<()> {
         if let Some(delta) = anoncreds
             .get_rev_reg_delta(wallet, &self.rev_reg_id)
@@ -313,7 +314,7 @@ pub struct RevocationRegistryDefinition {
 pub async fn generate_rev_reg(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
-    issuer_did: &str,
+    issuer_did: &Did,
     cred_def_id: &str,
     tails_dir: &str,
     max_creds: u32,

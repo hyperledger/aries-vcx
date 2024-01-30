@@ -2,6 +2,7 @@ use aries_vcx_core::{
     ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
+use did_parser::Did;
 use serde_json::Value;
 
 use crate::errors::error::prelude::*;
@@ -9,7 +10,7 @@ use crate::errors::error::prelude::*;
 pub async fn rotate_verkey_apply(
     wallet: &impl BaseWallet,
     indy_ledger_write: &impl IndyLedgerWrite,
-    did: &str,
+    did: &Did,
     temp_vk: &str,
 ) -> VcxResult<()> {
     let nym_result = indy_ledger_write
@@ -48,7 +49,7 @@ pub async fn rotate_verkey_apply(
 pub async fn rotate_verkey(
     wallet: &impl BaseWallet,
     indy_ledger_write: &impl IndyLedgerWrite,
-    did: &str,
+    did: &Did,
 ) -> VcxResult<()> {
     let trustee_verkey = wallet.replace_did_key_start(did, None).await?;
     rotate_verkey_apply(wallet, indy_ledger_write, did, &trustee_verkey.base58()).await
@@ -56,7 +57,7 @@ pub async fn rotate_verkey(
 
 pub async fn get_verkey_from_ledger(
     indy_ledger: &impl IndyLedgerRead,
-    did: &str,
+    did: &Did,
 ) -> VcxResult<String> {
     let nym_response: String = indy_ledger.get_nym(did).await?;
     let nym_json: Value = serde_json::from_str(&nym_response).map_err(|err| {

@@ -11,6 +11,7 @@ use aries_vcx::{
     },
 };
 use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
+use did_parser::Did;
 use diddoc_legacy::aries::service::AriesService;
 use url::Url;
 
@@ -29,7 +30,7 @@ pub async fn endorse_transaction(transaction: &str, endorser_did: &str) -> Libvc
     let ledger = get_main_ledger_write()?;
     map_ariesvcx_core_result(
         ledger
-            .endorse_transaction(wallet.as_ref(), endorser_did, transaction)
+            .endorse_transaction(wallet.as_ref(), &endorser_did.clone().parse()?, transaction)
             .await,
     )
 }
@@ -38,7 +39,7 @@ pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> Libvc
     let ledger = get_main_ledger_read()?;
     map_ariesvcx_core_result(
         ledger
-            .get_ledger_txn(seq_no, submitter_did.as_deref())
+            .get_ledger_txn(seq_no, submitter_did.map(|did| did.parse::<Did>()).transpose()?.as_deref())
             .await,
     )
 }
@@ -47,7 +48,7 @@ pub async fn rotate_verkey(did: &str) -> LibvcxResult<()> {
     let result = aries_vcx::common::keys::rotate_verkey(
         get_main_wallet()?.as_ref(),
         get_main_ledger_write()?.as_ref(),
-        did,
+        did.parse()?,
     )
     .await;
     map_ariesvcx_result(result)
@@ -56,7 +57,7 @@ pub async fn rotate_verkey(did: &str) -> LibvcxResult<()> {
 pub async fn get_verkey_from_ledger(did: &str) -> LibvcxResult<String> {
     let indy_ledger = get_main_ledger_read()?;
     map_ariesvcx_result(
-        aries_vcx::common::keys::get_verkey_from_ledger(indy_ledger.as_ref(), did).await,
+        aries_vcx::common::keys::get_verkey_from_ledger(indy_ledger.as_ref(), &did.parse()?).await,
     )
 }
 
@@ -77,7 +78,7 @@ pub async fn ledger_write_endpoint_legacy(
     write_endpoint_legacy(
         wallet.as_ref(),
         get_main_ledger_write()?.as_ref(),
-        target_did,
+        &target_did.parse()?,
         &service,
     )
     .await?;

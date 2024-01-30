@@ -6,6 +6,7 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 use async_trait::async_trait;
+use did_parser::Did;
 
 use crate::constants::{
     CREDENTIAL_JSON, CREDENTIAL_REQ_STRING, LARGE_NONCE, LIBINDY_CRED_OFFER, PROOF_JSON,
@@ -37,7 +38,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn issuer_create_and_store_revoc_reg(
         &self,
         __wallet: &impl BaseWallet,
-        _issuer_did: &str,
+        _issuer_did: &Did,
         _cred_def_id: &str,
         _tails_dir: &str,
         _max_creds: u32,
@@ -53,7 +54,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn issuer_create_and_store_credential_def(
         &self,
         __wallet: &impl BaseWallet,
-        _issuer_did: &str,
+        _issuer_did: &Did,
         _schema_id: &str,
         _schema_json: Schema,
         _tag: &str,
@@ -192,7 +193,7 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn issuer_create_schema(
         &self,
-        _issuer_did: &str,
+        _issuer_did: &Did,
         _name: &str,
         _version: &str,
         _attrs: &str,

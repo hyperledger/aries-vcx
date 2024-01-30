@@ -3,6 +3,7 @@ use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use anoncreds_types::data_types::ledger::schema::{
     AttributeNames as OurAttributeNames, Schema as OurSchema,
 };
+use did_parser::Did;
 use indy_credx::issuer::create_schema;
 use indy_credx::types::{AttributeNames as CredxAttributeNames, DidValue, Schema as CredxSchema};
 
@@ -54,5 +55,15 @@ impl Convert for CredxSchema {
                 issuer_id: OurIssuerId::new(issuer_id)?,
             }),
         }
+    }
+}
+
+impl Convert for &Did {
+    type Args = ();
+    type Target = DidValue;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(DidValue::new(&self.to_string(), None))
     }
 }

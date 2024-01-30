@@ -22,6 +22,7 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 use chrono::{DateTime, Duration, Utc};
+use did_parser::Did;
 use libvcx_logger::init_test_logging;
 use log::{debug, info, warn};
 
@@ -103,7 +104,7 @@ where
     A: BaseAnonCreds,
     W: BaseWallet,
 {
-    pub institution_did: String,
+    pub institution_did: Did,
     pub ledger_read: LR,
     pub ledger_write: LW,
     pub anoncreds: A,

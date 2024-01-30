@@ -4,8 +4,9 @@ use std::{
     sync::RwLock,
 };
 
-use anoncreds_types::data_types::{ledger::schema::Schema, identifiers::schema_id::SchemaId};
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use async_trait::async_trait;
+use did_parser::Did;
 pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
 use indy_ledger_response_parser::{
     ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo,
@@ -173,11 +174,11 @@ where
 
     async fn sign_request(
         wallet: &impl BaseWallet,
-        did: &str,
+        did: &Did,
         request: &PreparedRequest,
     ) -> VcxCoreResult<Vec<u8>> {
         let to_sign = request.get_signature_input()?;
-        let signer_verkey = wallet.key_for_did(did).await?;
+        let signer_verkey = wallet.key_for_local_did(&did.to_string()).await?;
         let signature = wallet.sign(&signer_verkey, to_sign.as_bytes()).await?;
         Ok(signature)
     }
@@ -185,7 +186,7 @@ where
     async fn sign_and_submit_request(
         &self,
         wallet: &impl BaseWallet,
-        submitter_did: &str,
+        submitter_did: &Did,
         request: PreparedRequest,
     ) -> VcxCoreResult<String> {
         let mut request = request;
@@ -238,12 +239,11 @@ where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
-    async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
+    async fn get_attr(&self, target_did: &Did, attr_name: &str) -> VcxCoreResult<String> {
         debug!("get_attr >> target_did: {target_did}, attr_name: {attr_name}");
-        let dest = DidValue::from_str(target_did)?;
         let request = self.request_builder()?.build_get_attrib_request(
             None,
-            &dest,
+            &target_did.convert(())?,
             Some(attr_name.to_string()),
             None,
             None,
@@ -255,12 +255,11 @@ where
         Ok(response)
     }
 
-    async fn get_nym(&self, did: &str) -> VcxCoreResult<String> {
+    async fn get_nym(&self, did: &Did) -> VcxCoreResult<String> {
         debug!("get_nym >> did: {did}");
-        let dest = DidValue::from_str(did)?;
         let request = self
             .request_builder()?
-            .build_get_nym_request(None, &dest, None, None)?;
+            .build_get_nym_request(None, &did.convert(())?, None, None)?;
         let response = self.submit_request(None, request).await?;
         debug!("get_nym << response: {response}");
         Ok(response)
@@ -284,10 +283,10 @@ where
     async fn get_ledger_txn(
         &self,
         seq_no: i32,
-        submitter_did: Option<&str>,
+        submitter_did: Option<&Did>,
     ) -> VcxCoreResult<String> {
         debug!("get_ledger_txn >> seq_no: {seq_no}");
-        let identifier = submitter_did.map(DidValue::from_str).transpose()?;
+        let identifier = submitter_did.map(|did| did.convert(())).transpose()?;
         let request = self.request_builder()?.build_get_txn_request(
             identifier.as_ref(),
             LedgerType::DOMAIN.to_id(),
@@ -335,14 +334,14 @@ where
     async fn publish_nym(
         &self,
         wallet: &impl BaseWallet,
-        submitter_did: &str,
-        target_did: &str,
+        submitter_did: &Did,
+        target_did: &Did,
         verkey: Option<&str>,
         data: Option<&str>,
         role: Option<&str>,
     ) -> VcxCoreResult<String> {
-        let identifier = DidValue::from_str(submitter_did)?;
-        let dest = DidValue::from_str(target_did)?;
+        let identifier = submitter_did.convert(())?;
+        let dest = target_did.convert(())?;
         let request = self.request_builder()?.build_nym_request(
             &identifier,
             &dest,
@@ -360,38 +359,38 @@ where
     async fn set_endorser(
         &self,
         wallet: &impl BaseWallet,
-        submitter_did: &str,
+        submitter_did: &Did,
         request_json: &str,
         endorser: &str,
     ) -> VcxCoreResult<String> {
         let mut request = PreparedRequest::from_request_json(request_json)?;
         request.set_endorser(&DidValue::from_str(endorser)?)?;
         let signature_submitter = Self::sign_request(wallet, submitter_did, &request).await?;
-        request.set_multi_signature(&DidValue::from_str(submitter_did)?, &signature_submitter)?;
+        request.set_multi_signature(&submitter_did.convert(())?, &signature_submitter)?;
         Ok(request.req_json.to_string())
     }
 
     async fn endorse_transaction(
         &self,
         wallet: &impl BaseWallet,
-        endorser_did: &str,
+        endorser_did: &Did,
         request_json: &str,
     ) -> VcxCoreResult<()> {
         let mut request = PreparedRequest::from_request_json(request_json)?;
         verify_transaction_can_be_endorsed(request_json, endorser_did)?;
         let signature_endorser = Self::sign_request(wallet, endorser_did, &request).await?;
-        request.set_multi_signature(&DidValue::from_str(endorser_did)?, &signature_endorser)?;
+        request.set_multi_signature(&endorser_did.convert(())?, &signature_endorser)?;
         self.request_submitter.submit(request).await.map(|_| ())
     }
 
     async fn add_attr(
         &self,
         wallet: &impl BaseWallet,
-        target_did: &str,
+        target_did: &Did,
         attrib_json: &str,
     ) -> VcxCoreResult<String> {
-        let identifier = DidValue::from_str(target_did)?;
-        let dest = DidValue::from_str(target_did)?;
+        let identifier = target_did.convert(())?;
+        let dest = target_did.convert(())?;
         let request = self.request_builder()?.build_attrib_request(
             &identifier,
             &dest,
@@ -407,8 +406,8 @@ where
     async fn write_did(
         &self,
         wallet: &impl BaseWallet,
-        submitter_did: &str,
-        target_did: &str,
+        submitter_did: &Did,
+        target_did: &Did,
         target_vk: &str,
         role: Option<UpdateRole>,
         alias: Option<String>,
@@ -417,11 +416,9 @@ where
             "write_did >> submitter_did: {submitter_did}, target_did: {target_did}, target_vk: \
              {target_vk}, role: {role:?}, alias: {alias:?}"
         );
-        let identifier = DidValue::from_str(submitter_did)?;
-        let dest = DidValue::from_str(target_did)?;
         let request = self.request_builder()?.build_nym_request(
-            &identifier,
-            &dest,
+            &submitter_did.convert(())?,
+            &target_did.convert(())?,
             Some(target_vk.into()),
             alias,
             role,
@@ -446,7 +443,7 @@ where
     async fn get_schema(
         &self,
         schema_id: &SchemaId,
-        _submitter_did: Option<&str>,
+        _submitter_did: Option<&Did>,
     ) -> VcxCoreResult<Schema> {
         debug!("get_schema >> schema_id: {schema_id}");
         let request = self
@@ -463,10 +460,10 @@ where
     async fn get_cred_def(
         &self,
         cred_def_id: &str,
-        submitter_did: Option<&str>,
+        submitter_did: Option<&Did>,
     ) -> VcxCoreResult<String> {
         debug!("get_cred_def >> cred_def_id: {cred_def_id}");
-        let identifier = submitter_did.map(DidValue::from_str).transpose()?;
+        let identifier = submitter_did.map(|did| did.convert(())).transpose()?;
         let id = CredentialDefinitionId::from_str(cred_def_id)?;
         let request = self
             .request_builder()?
@@ -576,10 +573,10 @@ where
         &self,
         wallet: &impl BaseWallet,
         schema_json: Schema,
-        submitter_did: &str,
+        submitter_did: &Did,
         _endorser_did: Option<String>,
     ) -> VcxCoreResult<()> {
-        let identifier = DidValue::from_str(submitter_did)?;
+        let identifier = submitter_did.convert(())?;
         let mut request = self
             .request_builder()?
             .build_schema_request(&identifier, schema_json.convert(())?)?;
@@ -612,9 +609,9 @@ where
         &self,
         wallet: &impl BaseWallet,
         cred_def_json: &str,
-        submitter_did: &str,
+        submitter_did: &Did,
     ) -> VcxCoreResult<()> {
-        let identifier = DidValue::from_str(submitter_did)?;
+        let identifier = submitter_did.convert(())?;
         let cred_def_data: CredentialDefinitionV1 = serde_json::from_str(cred_def_json)?;
         let request = self.request_builder()?.build_cred_def_request(
             &identifier,
@@ -630,9 +627,9 @@ where
         &self,
         wallet: &impl BaseWallet,
         rev_reg_def: &str,
-        submitter_did: &str,
+        submitter_did: &Did,
     ) -> VcxCoreResult<()> {
-        let identifier = DidValue::from_str(submitter_did)?;
+        let identifier = submitter_did.convert(())?;
         let rev_reg_def_data: RevocationRegistryDefinitionV1 = serde_json::from_str(rev_reg_def)?;
         let request = self.request_builder()?.build_revoc_reg_def_request(
             &identifier,
@@ -649,9 +646,9 @@ where
         wallet: &impl BaseWallet,
         rev_reg_id: &str,
         rev_reg_entry_json: &str,
-        submitter_did: &str,
+        submitter_did: &Did,
     ) -> VcxCoreResult<()> {
-        let identifier = DidValue::from_str(submitter_did)?;
+        let identifier = submitter_did.convert(())?;
         let rev_reg_delta_data: RevocationRegistryDeltaV1 =
             serde_json::from_str(rev_reg_entry_json)?;
         let request = self.request_builder()?.build_revoc_reg_entry_request(

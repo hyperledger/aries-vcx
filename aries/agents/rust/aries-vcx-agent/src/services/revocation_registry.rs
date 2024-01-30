@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
+use aries_vcx::{common::primitives::revocation_registry::RevocationRegistry, did_parser::Did};
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds,
     ledger::indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
@@ -20,7 +20,7 @@ pub struct ServiceRevocationRegistries {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     anoncreds: IndyCredxAnonCreds,
     wallet: Arc<IndySdkWallet>,
-    issuer_did: String,
+    issuer_did: Did,
     rev_regs: ObjectCache<RevocationRegistry>,
 }
 
@@ -33,7 +33,7 @@ impl ServiceRevocationRegistries {
         issuer_did: String,
     ) -> Self {
         Self {
-            issuer_did,
+            issuer_did: Did::parse(issuer_did).unwrap(), // TODO
             rev_regs: ObjectCache::new("rev-regs"),
             ledger_write,
             ledger_read,

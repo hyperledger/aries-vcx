@@ -6,6 +6,7 @@ use aries_vcx_core::{
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
+use did_parser::Did;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
@@ -52,7 +53,7 @@ pub struct CredentialDef {
     id: String,
     tag: String,
     source_id: String,
-    issuer_did: String,
+    issuer_did: Did,
     cred_def_json: String,
     support_revocation: bool,
     #[serde(default)]
@@ -64,7 +65,7 @@ pub struct CredentialDef {
 #[derive(Clone, Debug, Deserialize, Serialize, Builder, Default)]
 #[builder(setter(into), default)]
 pub struct CredentialDefConfig {
-    issuer_did: String,
+    issuer_did: Did,
     schema_id: SchemaId,
     tag: String,
 }
@@ -79,7 +80,7 @@ pub struct RevocationDetails {
 
 async fn _try_get_cred_def_from_ledger(
     ledger: &impl AnoncredsLedgerRead,
-    issuer_did: &str,
+    issuer_did: &Did,
     cred_def_id: &str,
 ) -> VcxResult<Option<String>> {
     match ledger.get_cred_def(cred_def_id, Some(issuer_did)).await {
@@ -240,7 +241,7 @@ impl CredentialDef {
 pub async fn generate_cred_def(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
-    issuer_did: &str,
+    issuer_did: &Did,
     schema_id: &SchemaId,
     schema_json: Schema,
     tag: &str,

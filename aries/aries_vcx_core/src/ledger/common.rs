@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use did_parser::Did;
 use serde::Deserialize;
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
@@ -17,7 +18,7 @@ struct Request {
 
 pub fn verify_transaction_can_be_endorsed(
     transaction_json: &str,
-    submitter_did: &str,
+    submitter_did: &Did,
 ) -> VcxCoreResult<()> {
     let transaction: Request = serde_json::from_str(transaction_json).map_err(|err| {
         AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, format!("{err:?}"))
@@ -28,7 +29,7 @@ pub fn verify_transaction_can_be_endorsed(
         "Transaction cannot be endorsed: endorser DID is not set.",
     ))?;
 
-    if endorser_did != submitter_did {
+    if &Did::parse(endorser_did.clone())? != submitter_did {
         return Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidJson,
             format!(

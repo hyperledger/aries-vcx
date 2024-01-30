@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use aries_vcx::common::primitives::credential_schema::Schema;
+use aries_vcx::{common::primitives::credential_schema::Schema, did_parser::Did};
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds,
     ledger::{
@@ -20,7 +20,7 @@ pub struct ServiceSchemas {
     ledger_write: Arc<DefaultIndyLedgerWrite>,
     anoncreds: IndyCredxAnonCreds,
     wallet: Arc<IndySdkWallet>,
-    issuer_did: String,
+    issuer_did: Did,
     schemas: ObjectCache<Schema>,
 }
 
@@ -33,7 +33,7 @@ impl ServiceSchemas {
         issuer_did: String,
     ) -> Self {
         Self {
-            issuer_did,
+            issuer_did: Did::parse(issuer_did).unwrap(), // TODO
             schemas: ObjectCache::new("schemas"),
             ledger_read,
             ledger_write,

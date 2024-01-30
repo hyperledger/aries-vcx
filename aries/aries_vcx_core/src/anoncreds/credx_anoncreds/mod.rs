@@ -20,6 +20,7 @@ use credx::{
         SchemaId, SignatureType,
     },
 };
+use did_parser::Did;
 use indy_credx as credx;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -292,13 +293,13 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn issuer_create_and_store_revoc_reg(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
+        issuer_did: &Did,
         cred_def_id: &str,
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
     ) -> VcxCoreResult<(String, String, String)> {
-        let issuer_did = issuer_did.to_owned().into();
+        let issuer_did = issuer_did.convert(())?;
 
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
@@ -377,14 +378,14 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn issuer_create_and_store_credential_def(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
+        issuer_did: &Did,
         _schema_id: &str,
         schema_json: Schema,
         tag: &str,
         sig_type: Option<&str>,
         config_json: &str,
     ) -> VcxCoreResult<(String, String)> {
-        let issuer_did = issuer_did.to_owned().into();
+        let issuer_did = issuer_did.to_owned();
         let sig_type = sig_type
             .map(serde_json::from_str)
             .unwrap_or(Ok(SignatureType::CL))?;
@@ -394,7 +395,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let schema = schema_json.clone().convert(())?;
 
         let cred_def_id = credx::issuer::make_credential_definition_id(
-            &issuer_did,
+            &issuer_did.convert(())?,
             schema.id(),
             schema_seq_no,
             tag,
@@ -411,7 +412,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         // Otherwise, create cred def
         let (cred_def, cred_def_priv, cred_key_correctness_proof) =
             credx::issuer::create_credential_definition(
-                &issuer_did,
+                &issuer_did.convert(())?,
                 &schema,
                 tag,
                 sig_type,
@@ -1119,12 +1120,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
     async fn issuer_create_schema(
         &self,
-        issuer_did: &str,
+        issuer_did: &Did,
         name: &str,
         version: &str,
         attrs: &str,
     ) -> VcxCoreResult<Schema> {
-        let origin_did = DidValue::new(issuer_did, None);
+        let origin_did = issuer_did.convert(())?;
         let attr_names = serde_json::from_str(attrs)?;
 
         let schema = credx::issuer::create_schema(&origin_did, name, version, attr_names, None)?;

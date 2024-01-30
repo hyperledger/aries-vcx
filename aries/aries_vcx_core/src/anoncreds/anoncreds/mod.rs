@@ -32,12 +32,13 @@ use uuid::Uuid;
 use super::base_anoncreds::BaseAnonCreds;
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
+    anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{
         constants::ATTRS,
         json::{AsTypeOrDeserializationError, TryGetIndex},
     },
-    wallet::base_wallet::{record::Record, search_filter::SearchFilter, BaseWallet},
+    wallet::base_wallet::{AsyncFnIteratorCollect, BaseWallet},
 };
 
 pub const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
@@ -410,7 +411,7 @@ impl BaseAnonCreds for Anoncreds {
     async fn issuer_create_and_store_revoc_reg(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
+        issuer_did: &Did,
         cred_def_id: &str,
         tails_dir: &str,
         max_creds: u32,
@@ -509,7 +510,7 @@ impl BaseAnonCreds for Anoncreds {
     async fn issuer_create_and_store_credential_def(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
+        issuer_did: &Did,
         schema_id: &str,
         schema_json: Schema,
         tag: &str,
@@ -1339,7 +1340,7 @@ impl BaseAnonCreds for Anoncreds {
 
     async fn issuer_create_schema(
         &self,
-        issuer_did: &str,
+        issuer_did: &Did,
         name: &str,
         version: &str,
         attrs: &str,
@@ -1349,7 +1350,7 @@ impl BaseAnonCreds for Anoncreds {
         let schema = anoncreds::issuer::create_schema(
             name,
             version,
-            IssuerId::new(issuer_did).unwrap(),
+            IssuerId::new(issuer_did.to_string()).unwrap(),
             attr_names,
         )?;
         let schema_id = make_schema_id(issuer_did, name, version);
@@ -1583,18 +1584,17 @@ fn _format_attribute_as_marker_tag_name(attribute_name: &str) -> String {
     format!("attr::{attribute_name}::marker")
 }
 
-pub fn make_schema_id(did: &str, name: &str, version: &str) -> SchemaId {
-    let prefix = Did::parse(did.to_owned())
-        .ok()
-        .and_then(|did| did.method().map(|method| format!("schema:{}:", method)))
+pub fn make_schema_id(did: &Did, name: &str, version: &str) -> SchemaId {
+    let prefix = did
+        .method()
+        .map(|method| format!("schema:{}:", method))
         .unwrap_or_default();
-
     let id = format!("{}{}:2:{}:{}", prefix, did, name, version);
     SchemaId::new(id).unwrap()
 }
 
 pub fn make_credential_definition_id(
-    origin_did: &str,
+    origin_did: &Did,
     schema_id: &str,
     schema_seq_no: Option<u32>,
     tag: &str,
@@ -1610,9 +1610,9 @@ pub fn make_credential_definition_id(
         format!(":{}", tag)
     };
 
-    let prefix = Did::parse(origin_did.to_owned())
-        .ok()
-        .and_then(|did| did.method().map(|method| format!("creddef:{}:", method)))
+    let prefix = origin_did
+        .method()
+        .map(|method| format!("creddef:{}:", method))
         .unwrap_or_default();
 
     let schema_infix_id = schema_seq_no
@@ -1632,7 +1632,7 @@ pub fn make_credential_definition_id(
 }
 
 fn make_revocation_registry_id(
-    origin_did: &str,
+    origin_did: &Did,
     cred_def_id: &CredentialDefinitionId,
     tag: &str,
     rev_reg_type: RegistryType,
@@ -1640,7 +1640,7 @@ fn make_revocation_registry_id(
     // Must use unchecked as anoncreds doesn't expose validation error
     Ok(RevocationRegistryDefinitionId::new(format!(
         "{}{}:4:{}:{}:{}",
-        Did::parse(origin_did.to_owned())?
+        origin_did
             .method()
             .map_or(Default::default(), |method| format!("revreg:{}:", method)),
         origin_did,

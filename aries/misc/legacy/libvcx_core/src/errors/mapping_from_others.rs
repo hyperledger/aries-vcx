@@ -21,3 +21,9 @@ impl From<PublicKeyError> for LibvcxError {
         LibvcxError::from_msg(LibvcxErrorKind::InvalidVerkey, value)
     }
 }
+
+impl From<did_parser::ParseError> for LibvcxError {
+    fn from(err: did_parser::ParseError) -> Self {
+        LibvcxError::from_msg(LibvcxErrorKind::InvalidDid, err.to_string())
+    }
+}

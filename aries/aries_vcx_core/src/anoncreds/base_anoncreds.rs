@@ -1,5 +1,6 @@
 use anoncreds_types::data_types::ledger::schema::Schema;
 use async_trait::async_trait;
+use did_parser::Did;
 
 use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
 
@@ -21,7 +22,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn issuer_create_and_store_revoc_reg(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
+        issuer_did: &Did,
         cred_def_id: &str,
         tails_dir: &str,
         max_creds: u32,
@@ -32,7 +33,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn issuer_create_and_store_credential_def(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
+        issuer_did: &Did,
         schema_id: &str,
         schema_json: Schema,
         tag: &str,
@@ -128,7 +129,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
 
     async fn issuer_create_schema(
         &self,
-        issuer_did: &str,
+        issuer_did: &Did,
         name: &str,
         version: &str,
         attrs: &str,
