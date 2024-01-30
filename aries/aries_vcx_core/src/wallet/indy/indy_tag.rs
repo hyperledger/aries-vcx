@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-use crate::wallet::entry_tag::{pair_into_entry_tag, EntryTag, EntryTags};
-
-pub struct IndyTag((String, String));
+use crate::wallet::entry_tag::{EntryTag, EntryTags};
+struct IndyTag((String, String));
 
 impl IndyTag {
     pub fn new(pair: (String, String)) -> Self {
@@ -16,7 +15,7 @@ impl IndyTag {
     pub fn into_entry_tag(self) -> EntryTag {
         let inner = self.into_inner();
 
-        pair_into_entry_tag(inner)
+        EntryTag::from_pair(inner)
     }
 
     pub fn from_entry_tag(tag: EntryTag) -> Self {
@@ -27,7 +26,7 @@ impl IndyTag {
     }
 }
 
-pub struct IndyTags(HashMap<String, String>);
+pub(crate) struct IndyTags(HashMap<String, String>);
 
 impl IndyTags {
     pub fn new(map: HashMap<String, String>) -> Self {

@@ -2,10 +2,27 @@ use std::fmt;
 
 use serde::{de::Visitor, ser::SerializeMap, Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub enum EntryTag {
     Encrypted(String, String),
     Plaintext(String, String),
+}
+
+impl EntryTag {
+    pub fn from_pair(pair: (String, String)) -> Self {
+        if pair.0.starts_with('~') {
+            EntryTag::Plaintext(pair.0.trim_start_matches('~').into(), pair.1)
+        } else {
+            EntryTag::Encrypted(pair.0, pair.1)
+        }
+    }
+
+    pub fn key(&self) -> &str {
+        match self {
+            Self::Encrypted(key, _) => key,
+            Self::Plaintext(key, _) => key,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -45,7 +62,7 @@ impl<'de> Visitor<'de> for EntryTagsVisitor {
         let mut tags = EntryTags::new(vec![]);
 
         while let Some(pair) = map.next_entry()? {
-            tags.add(pair_into_entry_tag(pair));
+            tags.add(EntryTag::from_pair(pair));
         }
 
         Ok(tags)
@@ -63,15 +80,34 @@ impl<'de> Deserialize<'de> for EntryTags {
 
 impl EntryTags {
     pub fn new(inner: Vec<EntryTag>) -> Self {
-        Self { inner }
+        let mut items = inner;
+        items.sort();
+
+        Self { inner: items }
     }
 
     pub fn add(&mut self, tag: EntryTag) {
-        self.inner.push(tag)
+        self.inner.push(tag);
+        self.inner.sort();
     }
 
     pub fn is_empty(&self) -> bool {
         self.inner.is_empty()
+    }
+
+    pub fn into_inner(self) -> Vec<EntryTag> {
+        self.inner
+    }
+
+    pub fn merge(&mut self, other: EntryTags) {
+        self.inner.extend(other.into_inner());
+        self.inner.sort();
+    }
+
+    pub fn remove(&mut self, tag: EntryTag) {
+        self.inner
+            .retain(|existing_tag| existing_tag.key() != tag.key());
+        self.inner.sort();
     }
 }
 
@@ -111,20 +147,14 @@ impl From<EntryTags> for Vec<EntryTag> {
     }
 }
 
-pub fn pair_into_entry_tag(pair: (String, String)) -> EntryTag {
-    if pair.0.starts_with('~') {
-        EntryTag::Plaintext(pair.0.trim_start_matches('~').into(), pair.1)
-    } else {
-        EntryTag::Encrypted(pair.0, pair.1)
-    }
-}
-
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+
     use crate::wallet::entry_tag::{EntryTag, EntryTags};
 
     #[test]
-    fn should_serialize_entry_tags() {
+    fn test_entry_tags_serialize() {
         let tags = EntryTags::new(vec![
             EntryTag::Plaintext("a".into(), "b".into()),
             EntryTag::Encrypted("c".into(), "d".into()),
@@ -132,19 +162,19 @@ mod tests {
 
         let res = serde_json::to_string(&tags).unwrap();
 
-        assert_eq!("{\"~a\":\"b\",\"c\":\"d\"}", res);
+        assert_eq!(json!({ "~a": "b", "c": "d" }).to_string(), res);
     }
 
     #[test]
-    fn shoud_deserialize_entry_tags() {
-        let json = "{\"a\":\"b\",\"~c\":\"d\"}";
+    fn test_entry_tags_deserialize() {
+        let json = json!({"a":"b", "~c":"d"});
 
         let tags = EntryTags::new(vec![
             EntryTag::Encrypted("a".into(), "b".into()),
             EntryTag::Plaintext("c".into(), "d".into()),
         ]);
 
-        let res = serde_json::from_str(json).unwrap();
+        let res = serde_json::from_str(&json.to_string()).unwrap();
 
         assert_eq!(tags, res);
     }

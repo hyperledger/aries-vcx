@@ -8,10 +8,9 @@ use crate::{errors::error::VcxCoreResult, WalletHandle};
 
 mod indy_did_wallet;
 mod indy_record_wallet;
-pub mod indy_tag;
+mod indy_tag;
 pub mod internal;
 pub mod wallet;
-pub mod wallet_non_secrets;
 
 #[derive(Debug)]
 pub struct IndySdkWallet {
@@ -135,7 +134,7 @@ const SEARCH_OPTIONS: &str = r#"{"retrieveType": true, "retrieveValue": true, "r
 impl BaseWallet for IndySdkWallet {}
 
 #[cfg(test)]
-pub mod test {
+pub mod tests {
     use super::IndySdkWallet;
 
     pub async fn dev_setup_indy_wallet() -> IndySdkWallet {

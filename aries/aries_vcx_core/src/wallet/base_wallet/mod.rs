@@ -97,7 +97,7 @@ mod tests {
     async fn build_test_wallet() -> impl BaseWallet {
         #[cfg(feature = "vdrtools_wallet")]
         {
-            use crate::wallet::indy::test::dev_setup_indy_wallet;
+            use crate::wallet::indy::tests::dev_setup_indy_wallet;
             dev_setup_indy_wallet().await
         }
     }

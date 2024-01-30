@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
+use std::sync::{Arc, RwLock};
 
 use aries_vcx::{
     aries_vcx_core::{
@@ -22,7 +19,8 @@ use aries_vcx::{
 };
 use aries_vcx_core::wallet::{
     base_wallet::{record::Record, DidWallet, RecordWallet},
-    indy::{indy_tag::IndyTags, IndyWalletRecord},
+    entry_tag::EntryTags,
+    indy::IndyWalletRecord,
 };
 use futures::FutureExt;
 use public_key::{Key, KeyType};
@@ -188,14 +186,14 @@ pub async fn wallet_add_wallet_record(
     option: Option<&str>,
 ) -> LibvcxResult<()> {
     let wallet = get_main_wallet()?;
-    let tags: Option<HashMap<String, String>> = option.map(serde_json::from_str).transpose()?;
+    let tags: Option<EntryTags> = option.map(serde_json::from_str).transpose()?;
 
     let record = if let Some(record_tags) = tags {
         Record::builder()
             .name(id.into())
             .category(type_.into())
             .value(value.into())
-            .tags(IndyTags::new(record_tags).into_entry_tags())
+            .tags(record_tags)
             .build()
     } else {
         Record::builder()
@@ -223,12 +221,8 @@ pub async fn wallet_update_wallet_record_tags(
     tags_json: &str,
 ) -> LibvcxResult<()> {
     let wallet = get_main_wallet()?;
-    let tags: HashMap<String, String> = serde_json::from_str(tags_json)?;
-    map_ariesvcx_core_result(
-        wallet
-            .update_record_tags(xtype, id, IndyTags::new(tags).into_entry_tags())
-            .await,
-    )
+    let tags = serde_json::from_str(tags_json)?;
+    map_ariesvcx_core_result(wallet.update_record_tags(xtype, id, tags).await)
 }
 
 pub async fn wallet_add_wallet_record_tags(
@@ -239,18 +233,13 @@ pub async fn wallet_add_wallet_record_tags(
     let wallet = get_main_wallet()?;
     let record = wallet.get_record(xtype, id).await?;
 
-    let found_tags = IndyTags::from_entry_tags(record.tags().clone()).into_inner();
     let tags = {
-        let mut tags: HashMap<String, String> = serde_json::from_str(tags_json)?;
-        tags.extend(found_tags);
+        let mut tags: EntryTags = serde_json::from_str(tags_json)?;
+        tags.merge(record.tags().clone());
         tags
     };
 
-    map_ariesvcx_core_result(
-        wallet
-            .update_record_tags(xtype, id, IndyTags::new(tags).into_entry_tags())
-            .await,
-    )
+    map_ariesvcx_core_result(wallet.update_record_tags(xtype, id, tags).await)
 }
 
 pub async fn wallet_delete_wallet_record_tags(
@@ -259,20 +248,16 @@ pub async fn wallet_delete_wallet_record_tags(
     tags_json: &str,
 ) -> LibvcxResult<()> {
     let wallet = get_main_wallet()?;
-    let tags: HashMap<String, String> = serde_json::from_str(tags_json)?;
+    let tags: EntryTags = serde_json::from_str(tags_json)?;
 
     let record = wallet.get_record(xtype, id).await?;
 
-    let mut found_tags = IndyTags::from_entry_tags(record.tags().clone()).into_inner();
-    for key in tags.keys() {
+    let mut found_tags = record.tags().clone();
+    for key in tags {
         found_tags.remove(key);
     }
 
-    map_ariesvcx_core_result(
-        wallet
-            .update_record_tags(xtype, id, IndyTags::new(found_tags).into_entry_tags())
-            .await,
-    )
+    map_ariesvcx_core_result(wallet.update_record_tags(xtype, id, found_tags).await)
 }
 
 pub async fn wallet_get_wallet_record(

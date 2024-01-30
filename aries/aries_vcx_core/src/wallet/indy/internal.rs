@@ -3,56 +3,6 @@ use vdrtools::{Locator, WalletHandle};
 
 use crate::errors::error::VcxCoreResult;
 
-pub(crate) async fn add_wallet_record(
-    wallet_handle: WalletHandle,
-    xtype: &str,
-    id: &str,
-    value: &str,
-    tags: Option<&str>,
-) -> VcxCoreResult<()> {
-    trace!(
-        "add_record >>> xtype: {}, id: {}, value: {}, tags: {:?}",
-        secret!(&xtype),
-        secret!(&id),
-        secret!(&value),
-        secret!(&tags)
-    );
-
-    Locator::instance()
-        .non_secret_controller
-        .add_record(
-            wallet_handle,
-            xtype.into(),
-            id.into(),
-            value.into(),
-            tags.map(serde_json::from_str).transpose()?,
-        )
-        .await?;
-
-    Ok(())
-}
-
-pub(crate) async fn get_wallet_record(
-    wallet_handle: WalletHandle,
-    xtype: &str,
-    id: &str,
-    options: &str,
-) -> VcxCoreResult<String> {
-    trace!(
-        "get_record >>> xtype: {}, id: {}, options: {}",
-        secret!(&xtype),
-        secret!(&id),
-        options
-    );
-
-    let res = Locator::instance()
-        .non_secret_controller
-        .get_record(wallet_handle, xtype.into(), id.into(), options.into())
-        .await?;
-
-    Ok(res)
-}
-
 pub async fn delete_wallet_record(
     wallet_handle: WalletHandle,
     xtype: &str,
@@ -67,27 +17,6 @@ pub async fn delete_wallet_record(
     Locator::instance()
         .non_secret_controller
         .delete_record(wallet_handle, xtype.into(), id.into())
-        .await?;
-
-    Ok(())
-}
-
-pub(crate) async fn update_wallet_record_value(
-    wallet_handle: WalletHandle,
-    xtype: &str,
-    id: &str,
-    value: &str,
-) -> VcxCoreResult<()> {
-    trace!(
-        "update_record_value >>> xtype: {}, id: {}, value: {}",
-        secret!(&xtype),
-        secret!(&id),
-        secret!(&value)
-    );
-
-    Locator::instance()
-        .non_secret_controller
-        .update_record_value(wallet_handle, xtype.into(), id.into(), value.into())
         .await?;
 
     Ok(())
