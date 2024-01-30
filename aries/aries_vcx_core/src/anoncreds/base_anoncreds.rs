@@ -90,7 +90,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn prover_create_credential_req(
         &self,
         wallet: &impl BaseWallet,
-        prover_did: &str,
+        prover_did: &Did,
         cred_offer_json: &str,
         cred_def_json: &str,
         master_secret_id: &str,

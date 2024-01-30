@@ -32,13 +32,12 @@ use uuid::Uuid;
 use super::base_anoncreds::BaseAnonCreds;
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
-    anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{
         constants::ATTRS,
         json::{AsTypeOrDeserializationError, TryGetIndex},
     },
-    wallet::base_wallet::{AsyncFnIteratorCollect, BaseWallet},
+    wallet::base_wallet::{BaseWallet, record::Record, search_filter::SearchFilter},
 };
 
 pub const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
@@ -1076,13 +1075,11 @@ impl BaseAnonCreds for Anoncreds {
     async fn prover_create_credential_req(
         &self,
         wallet: &impl BaseWallet,
-        prover_did: &str,
+        prover_did: &Did,
         cred_offer_json: &str,
         cred_def_json: &str,
         master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
-        let prover_did = Did::parse(prover_did.to_owned())
-            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidDid, e))?;
         let mut cred_def_json: Value = serde_json::from_str(cred_def_json)?;
         let cred_def_id = cred_def_json["id"].as_str().unwrap().to_string();
         cred_def_json.as_object_mut().unwrap().insert(

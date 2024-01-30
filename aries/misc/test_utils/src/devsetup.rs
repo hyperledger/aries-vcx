@@ -255,7 +255,7 @@ pub async fn build_setup_profile() -> SetupProfile<
         ledger_write,
         anoncreds,
         wallet,
-        institution_did,
+        institution_did: Did::parse(institution_did).unwrap(),
         genesis_file_path,
     }
 }

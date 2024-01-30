@@ -154,7 +154,7 @@ mod tests {
             schema_id: schema_id(),
             name: "test".to_string(),
             source_id: "1".to_string(),
-            submitter_did: DID.to_string(),
+            submitter_did: DID.to_string().parse().unwrap(),
             state: PublicEntityStateType::Built,
             schema_json: serde_json::from_str(SCHEMA_JSON).unwrap(),
         };
@@ -204,7 +204,7 @@ mod tests {
             schema_id: schema_id(),
             name: "test".to_string(),
             source_id: "1".to_string(),
-            submitter_did: DID.to_string(),
+            submitter_did: DID.to_string().parse().unwrap(),
             state: PublicEntityStateType::Built,
             schema_json: serde_json::from_str(SCHEMA_JSON).unwrap(),
         };

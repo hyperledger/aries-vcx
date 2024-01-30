@@ -5,6 +5,7 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 use chrono::Utc;
+use did_parser::Did;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
@@ -209,7 +210,7 @@ impl HolderSM {
         wallet: &impl BaseWallet,
         ledger: &'a impl AnoncredsLedgerRead,
         anoncreds: &'a impl BaseAnonCreds,
-        my_pw_did: String,
+        my_pw_did: Did,
     ) -> VcxResult<Self> {
         trace!("HolderSM::prepare_credential_request >>");
         let state = match self.state {
@@ -585,7 +586,7 @@ pub async fn create_anoncreds_credential_request(
     ledger: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
     cred_def_id: &str,
-    prover_did: &str,
+    prover_did: &Did,
     cred_offer: &str,
 ) -> VcxResult<(String, String, String, String)> {
     let cred_def_json = ledger.get_cred_def(cred_def_id, None).await?;
@@ -614,7 +615,7 @@ async fn build_credential_request_msg(
     ledger: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
     thread_id: String,
-    my_pw_did: String,
+    my_pw_did: Did,
     offer: &OfferCredentialV1,
 ) -> VcxResult<(RequestCredentialV1, String, String)> {
     trace!(

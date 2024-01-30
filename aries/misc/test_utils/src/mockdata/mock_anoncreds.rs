@@ -140,7 +140,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn prover_create_credential_req(
         &self,
         _wallet: &impl BaseWallet,
-        _prover_did: &str,
+        _prover_did: &Did,
         _cred_offer_json: &str,
         _cred_def_json: &str,
         _master_secret_id: &str,

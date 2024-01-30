@@ -100,7 +100,7 @@ impl Agent {
         let (public_did, _verkey) = add_new_did(
             wallet.as_ref(),
             ledger_write.as_ref(),
-            &config_issuer.institution_did,
+            &config_issuer.institution_did.parse()?,
             None,
         )
         .await?;

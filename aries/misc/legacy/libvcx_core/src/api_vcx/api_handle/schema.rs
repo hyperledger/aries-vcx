@@ -46,7 +46,7 @@ pub async fn create_and_publish_schema(
     let schema = Schema::create(
         get_main_anoncreds()?.as_ref(),
         source_id,
-        issuer_did,
+        &issuer_did.parse()?,
         &name,
         &version,
         &data,

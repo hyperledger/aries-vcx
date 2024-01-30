@@ -1,4 +1,5 @@
 use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use did_parser::Did;
 use messages::{
     misc::MimeType,
     msg_fields::protocols::{
@@ -29,7 +30,7 @@ pub fn attr_names_address_list() -> Vec<String> {
 }
 
 pub fn requested_attrs_address(
-    did: &str,
+    did: &Did,
     schema_id: &SchemaId,
     cred_def_id: &str,
     from: Option<u64>,
