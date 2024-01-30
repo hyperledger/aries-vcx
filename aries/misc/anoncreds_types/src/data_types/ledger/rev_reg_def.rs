@@ -5,7 +5,7 @@ use anoncreds_clsignatures::RevocationKeyPrivate;
 use crate::cl::RevocationKeyPublic;
 use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use crate::data_types::identifiers::issuer_id::IssuerId;
-use crate::error::{ConversionError, ValidationError};
+use crate::error::ConversionError;
 use crate::utils::validation::Validatable;
 
 pub const CL_ACCUM: &str = "CL_ACCUM";
@@ -53,7 +53,7 @@ pub struct RevocationRegistryDefinition {
 }
 
 impl Validatable for RevocationRegistryDefinition {
-    fn validate(&self) -> Result<(), ValidationError> {
+    fn validate(&self) -> Result<(), crate::error::Error> {
         self.cred_def_id.validate()?;
         self.issuer_id.validate()?;
 

@@ -1,7 +1,6 @@
 use crate::cl::CredentialKeyCorrectnessProof;
 use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use crate::data_types::identifiers::schema_id::SchemaId;
-use crate::error::ValidationError;
 use crate::utils::validation::Validatable;
 
 use super::nonce::Nonce;
@@ -17,7 +16,7 @@ pub struct CredentialOffer {
 }
 
 impl Validatable for CredentialOffer {
-    fn validate(&self) -> Result<(), ValidationError> {
+    fn validate(&self) -> Result<(), crate::error::Error> {
         self.schema_id.validate()?;
         self.cred_def_id.validate()?;
         Ok(())

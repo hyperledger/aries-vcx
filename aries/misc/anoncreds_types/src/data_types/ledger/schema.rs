@@ -1,6 +1,5 @@
 use crate::{
     data_types::identifiers::{issuer_id::IssuerId, schema_id::SchemaId},
-    error::ValidationError,
     utils::validation::Validatable,
 };
 
@@ -54,7 +53,7 @@ impl From<AttributeNames> for Vec<String> {
 }
 
 impl Validatable for Schema {
-    fn validate(&self) -> Result<(), ValidationError> {
+    fn validate(&self) -> Result<(), crate::error::Error> {
         self.issuer_id.validate()?;
         self.attr_names.validate()?;
         Ok(())
@@ -62,25 +61,33 @@ impl Validatable for Schema {
 }
 
 impl Validatable for AttributeNames {
-    fn validate(&self) -> Result<(), ValidationError> {
+    fn validate(&self) -> Result<(), crate::error::Error> {
         let mut unique = HashSet::new();
         let is_unique = self.0.iter().all(move |name| unique.insert(name));
 
         if !is_unique {
-            return Err("Attributes inside the schema must be unique".into());
+            return Err(crate::error::Error::from_msg(
+                crate::error::ErrorKind::Input,
+                "Attributes inside the schema must be unique",
+            ));
         }
 
         if self.0.is_empty() {
-            return Err("Empty list of Schema attributes has been passed".into());
+            return Err(crate::error::Error::from_msg(
+                crate::error::ErrorKind::Input,
+                "Empty list of Schema attributes has been passed",
+            ));
         }
 
         if self.0.len() > MAX_ATTRIBUTES_COUNT {
-            return Err(format!(
-                "The number of Schema attributes {} cannot be greater than {}",
-                self.0.len(),
-                MAX_ATTRIBUTES_COUNT
-            )
-            .into());
+            return Err(crate::error::Error::from_msg(
+                crate::error::ErrorKind::Input,
+                format!(
+                    "The number of Schema attributes {} cannot be greater than {}",
+                    self.0.len(),
+                    MAX_ATTRIBUTES_COUNT
+                ),
+            ));
         }
         Ok(())
     }

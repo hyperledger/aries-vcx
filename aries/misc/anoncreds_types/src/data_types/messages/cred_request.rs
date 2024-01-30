@@ -1,6 +1,6 @@
 use crate::cl::{BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof};
 use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
-use crate::error::{Result, ValidationError};
+use crate::error::Result;
 use crate::invalid;
 use crate::utils::validation::{Validatable, LEGACY_DID_IDENTIFIER};
 
@@ -19,7 +19,7 @@ pub struct CredentialRequest {
 }
 
 impl Validatable for CredentialRequest {
-    fn validate(&self) -> std::result::Result<(), ValidationError> {
+    fn validate(&self) -> std::result::Result<(), crate::error::Error> {
         self.cred_def_id.validate()?;
 
         match &self.entropy {
@@ -47,8 +47,7 @@ impl Validatable for CredentialRequest {
                     Err(invalid!("entropy is required"))
                 }
             }
-        }?;
-        Ok(())
+        }
     }
 }
 

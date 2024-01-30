@@ -4,7 +4,6 @@ use crate::cl::Proof;
 use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use crate::data_types::identifiers::rev_reg_def_id::RevocationRegistryDefinitionId;
 use crate::data_types::identifiers::schema_id::SchemaId;
-use crate::error::ValidationError;
 use crate::utils::validation::Validatable;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -61,7 +60,7 @@ pub struct Identifier {
 }
 
 impl Validatable for Presentation {
-    fn validate(&self) -> Result<(), ValidationError> {
+    fn validate(&self) -> Result<(), crate::error::Error> {
         for identifier in &self.identifiers {
             identifier.schema_id.validate()?;
             identifier.cred_def_id.validate()?;

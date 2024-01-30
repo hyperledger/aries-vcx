@@ -8,7 +8,7 @@ use crate::cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessPro
 use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use crate::data_types::identifiers::rev_reg_def_id::RevocationRegistryDefinitionId;
 use crate::data_types::identifiers::schema_id::SchemaId;
-use crate::error::{ConversionError, ValidationError};
+use crate::error::ConversionError;
 use crate::utils::validation::Validatable;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -50,7 +50,7 @@ impl Credential {
 }
 
 impl Validatable for Credential {
-    fn validate(&self) -> Result<(), ValidationError> {
+    fn validate(&self) -> Result<(), crate::error::Error> {
         self.values.validate()?;
         self.schema_id.validate()?;
         self.cred_def_id.validate()?;
@@ -60,11 +60,14 @@ impl Validatable for Credential {
             .transpose()?;
 
         if self.rev_reg_id.is_some() && (self.witness.is_none() || self.rev_reg.is_none()) {
-            return Err("Credential validation failed: `witness` and `rev_reg` must be passed for revocable Credential".into());
+            return Err(crate::error::Error::from_msg(crate::error::ErrorKind::Input, "Credential validation failed: `witness` and `rev_reg` must be passed for revocable Credential"));
         }
 
         if self.values.0.is_empty() {
-            return Err("Credential validation failed: `values` is empty".into());
+            return Err(crate::error::Error::from_msg(
+                crate::error::ErrorKind::Input,
+                "Credential validation failed: `values` is empty",
+            ));
         }
 
         Ok(())
@@ -123,9 +126,12 @@ impl Drop for CredentialValues {
 }
 
 impl Validatable for CredentialValues {
-    fn validate(&self) -> Result<(), ValidationError> {
+    fn validate(&self) -> Result<(), crate::error::Error> {
         if self.0.is_empty() {
-            return Err("CredentialValues validation failed: empty list has been passed".into());
+            return Err(crate::error::Error::from_msg(
+                crate::error::ErrorKind::Input,
+                "CredentialValues validation failed: empty list has been passed",
+            ));
         }
 
         Ok(())

@@ -5,7 +5,7 @@ use anoncreds_clsignatures::CredentialPrivateKey;
 use crate::cl::{CredentialPrimaryPublicKey, CredentialPublicKey, CredentialRevocationPublicKey};
 use crate::data_types::identifiers::issuer_id::IssuerId;
 use crate::data_types::identifiers::schema_id::SchemaId;
-use crate::error::{ConversionError, ValidationError};
+use crate::error::ConversionError;
 use crate::utils::validation::Validatable;
 
 pub const CL_SIGNATURE_TYPE: &str = "CL";
@@ -71,7 +71,7 @@ impl CredentialDefinition {
 }
 
 impl Validatable for CredentialDefinition {
-    fn validate(&self) -> Result<(), ValidationError> {
+    fn validate(&self) -> Result<(), crate::error::Error> {
         self.schema_id.validate()?;
         self.issuer_id.validate()?;
 

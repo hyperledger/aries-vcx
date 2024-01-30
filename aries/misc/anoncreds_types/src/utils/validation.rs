@@ -1,4 +1,3 @@
-use crate::error::ValidationError;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -30,16 +29,16 @@ pub fn is_uri_identifier(id: &str) -> bool {
 /// Macro to return a new `ValidationError` with an optional message
 #[macro_export]
 macro_rules! invalid {
-    () => { $crate::error::ValidationError::from(None) };
+    () => { $crate::error::ValidationError::from(None).into() };
     ($($arg:tt)+) => {
-        $crate::error::ValidationError::from(format!($($arg)+))
+        Into::<crate::error::Error>::into($crate::error::ValidationError::from(format!($($arg)+)))
     };
 }
 
 /// Trait for data types which need validation after being loaded from external sources
 /// TODO: this should not default to Ok(())
 pub trait Validatable {
-    fn validate(&self) -> Result<(), ValidationError> {
+    fn validate(&self) -> Result<(), crate::error::Error> {
         Ok(())
     }
 }

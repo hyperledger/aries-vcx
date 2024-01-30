@@ -5,7 +5,6 @@ use std::fmt;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::error::ValidationError;
 use crate::invalid;
 use crate::utils::{
     query::Query,
@@ -168,7 +167,7 @@ impl NonRevokedInterval {
         });
     }
 
-    pub fn is_valid(&self, timestamp: u64) -> Result<(), ValidationError> {
+    pub fn is_valid(&self, timestamp: u64) -> Result<(), crate::error::Error> {
         if timestamp.lt(&self.from.unwrap_or(0)) || timestamp.gt(&self.to.unwrap_or(u64::MAX)) {
             Err(invalid!("Invalid timestamp"))
         } else {
@@ -246,7 +245,7 @@ impl From<PredicateTypes> for PredicateType {
 // }
 
 impl Validatable for PresentationRequest {
-    fn validate(&self) -> Result<(), ValidationError> {
+    fn validate(&self) -> Result<(), crate::error::Error> {
         let value = self.value();
         let version = self.version();
 
@@ -298,7 +297,7 @@ impl Validatable for PresentationRequest {
 fn _process_operator(
     restriction_op: &Query,
     version: &PresentationRequestVersion,
-) -> Result<(), ValidationError> {
+) -> Result<(), crate::error::Error> {
     match restriction_op {
         Query::Eq(ref tag_name, ref tag_value)
         | Query::Neq(ref tag_name, ref tag_value)
@@ -313,21 +312,21 @@ fn _process_operator(
             tag_values
                 .iter()
                 .map(|tag_value| _check_restriction(tag_name, tag_value, version))
-                .collect::<Result<Vec<()>, ValidationError>>()?;
+                .collect::<Result<Vec<()>, crate::error::Error>>()?;
             Ok(())
         }
         Query::Exist(ref tag_names) => {
             tag_names
                 .iter()
                 .map(|tag_name| _check_restriction(tag_name, "", version))
-                .collect::<Result<Vec<()>, ValidationError>>()?;
+                .collect::<Result<Vec<()>, crate::error::Error>>()?;
             Ok(())
         }
         Query::And(ref operators) | Query::Or(ref operators) => {
             operators
                 .iter()
                 .map(|operator| _process_operator(operator, version))
-                .collect::<Result<Vec<()>, ValidationError>>()?;
+                .collect::<Result<Vec<()>, crate::error::Error>>()?;
             Ok(())
         }
         Query::Not(ref operator) => _process_operator(operator, version),
@@ -338,7 +337,7 @@ fn _check_restriction(
     tag_name: &str,
     tag_value: &str,
     version: &PresentationRequestVersion,
-) -> Result<(), ValidationError> {
+) -> Result<(), crate::error::Error> {
     if *version == PresentationRequestVersion::V1
         && Credential::QUALIFIABLE_TAGS.contains(&tag_name)
         && validation::is_uri_identifier(tag_value)
