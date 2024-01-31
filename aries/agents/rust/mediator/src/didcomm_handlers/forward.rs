@@ -1,3 +1,4 @@
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::msg_fields::protocols::{notification::ack::Ack, routing::Forward};
 
 use super::{utils::prelude::*, ArcAgent};

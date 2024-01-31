@@ -39,7 +39,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         oob_invite: OOBInvitation,
     ) -> Result<(InviteeConnection<ClientRequestSent>, EncryptionEnvelope), String> {
         // Generate keys
-        let (pw_did, pw_vk) = self
+        let did_data = self
             .wallet
             .create_and_store_my_did(None, None)
             .await
@@ -48,7 +48,10 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
         let mock_ledger = MockLedger {}; // not good. to be dealt later
         let client_conn = InviteeConnection::<ClientInit>::new_invitee(
             "foo".into(),
-            PairwiseInfo { pw_did, pw_vk },
+            PairwiseInfo {
+                pw_did: did_data.did().into(),
+                pw_vk: did_data.verkey().base58(),
+            },
         )
         .accept_invitation(&mock_ledger, AnyInvitation::Oob(oob_invite.clone()))
         .await

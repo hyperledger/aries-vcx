@@ -8,7 +8,7 @@ use aries_vcx_core::{
     ledger::base_ledger::{
         AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
     },
-    wallet::{base_wallet::BaseWallet, indy::wallet::get_verkey_from_wallet},
+    wallet::base_wallet::{BaseWallet, DidWallet},
 };
 use test_utils::{
     constants::TRUSTEE_SEED,
@@ -103,15 +103,14 @@ where
     W: BaseWallet,
 {
     let acme = create_test_agent(genesis_file_path.to_string()).await;
-    let acme_vk =
-        get_verkey_from_wallet(acme.wallet.get_wallet_handle(), &acme.institution_did).await?;
+    let acme_vk = acme.wallet.key_for_did(&acme.institution_did).await?;
 
     write_endorser_did(
         &trustee_wallet,
         &ledger_write,
         trustee_did,
         &acme.institution_did,
-        &acme_vk,
+        &acme_vk.base58(),
         None,
     )
     .await?;

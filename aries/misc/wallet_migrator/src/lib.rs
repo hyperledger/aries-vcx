@@ -6,7 +6,7 @@ use std::fmt::Display;
 
 use error::MigrationResult;
 use log::{error, info};
-pub use vdrtools::types::domain::wallet::Record;
+pub use vdrtools::types::domain::wallet::IndyRecord;
 use vdrtools::{Locator, WalletHandle};
 
 use crate::error::MigrationError;
@@ -17,7 +17,7 @@ use crate::error::MigrationError;
 pub async fn migrate_wallet<E>(
     src_wallet_handle: WalletHandle,
     dest_wallet_handle: WalletHandle,
-    migrate_fn: impl FnMut(Record) -> Result<Option<Record>, E>,
+    migrate_fn: impl FnMut(IndyRecord) -> Result<Option<IndyRecord>, E>,
 ) -> MigrationResult<()>
 where
     E: Display,

@@ -74,7 +74,7 @@ pub struct KeyConfig {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Record {
+pub struct IndyRecord {
     // Wallet record type
     #[serde(rename = "type")]
     pub type_: String,
@@ -86,7 +86,7 @@ pub struct Record {
     pub tags: HashMap<String, String>,
 }
 
-impl fmt::Debug for Record {
+impl fmt::Debug for IndyRecord {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Record")
             .field("type_", &self.type_)

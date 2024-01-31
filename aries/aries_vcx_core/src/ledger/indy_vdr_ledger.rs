@@ -176,7 +176,7 @@ where
         request: &PreparedRequest,
     ) -> VcxCoreResult<Vec<u8>> {
         let to_sign = request.get_signature_input()?;
-        let signer_verkey = wallet.key_for_local_did(did).await?;
+        let signer_verkey = wallet.key_for_did(did).await?;
         let signature = wallet.sign(&signer_verkey, to_sign.as_bytes()).await?;
         Ok(signature)
     }

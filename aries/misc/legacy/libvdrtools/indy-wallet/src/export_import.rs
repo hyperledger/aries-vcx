@@ -7,7 +7,7 @@ use std::{
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use indy_api_types::{
-    domain::wallet::{KeyDerivationMethod, Record},
+    domain::wallet::{IndyRecord, KeyDerivationMethod},
     errors::prelude::*,
 };
 use indy_utils::crypto::{
@@ -139,7 +139,7 @@ pub(super) async fn export_continue(
         tags,
     }) = records.next().await?
     {
-        let record = Record {
+        let record = IndyRecord {
             type_: type_.ok_or_else(|| {
                 err_msg(
                     IndyErrorKind::InvalidState,
@@ -300,7 +300,7 @@ where
         let mut record = vec![0u8; record_len];
         reader.read_exact(&mut record).map_err(_map_io_err)?;
 
-        let record: Record = rmp_serde::from_slice(&record).to_indy(
+        let record: IndyRecord = rmp_serde::from_slice(&record).to_indy(
             IndyErrorKind::InvalidStructure,
             "Record is malformed msgpack",
         )?;

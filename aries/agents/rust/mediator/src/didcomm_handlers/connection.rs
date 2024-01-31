@@ -1,3 +1,4 @@
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::msg_fields::protocols::connection::Connection;
 
 use super::{unhandled_aries_message, utils::prelude::*, ArcAgent};

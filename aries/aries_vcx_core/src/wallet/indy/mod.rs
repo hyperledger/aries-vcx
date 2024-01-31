@@ -1,85 +1,29 @@
-use std::thread;
-
-use async_trait::async_trait;
-use futures::executor::block_on;
+use indy_api_types::domain::wallet::IndyRecord;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use typed_builder::TypedBuilder;
 
-use crate::{
-    errors::error::{AriesVcxCoreError, VcxCoreResult},
-    utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
-    SearchHandle, WalletHandle,
-};
+use self::indy_tags::IndyTags;
+use super::base_wallet::{record::Record, BaseWallet};
+use crate::{errors::error::VcxCoreResult, WalletHandle};
 
-pub mod indy_wallet;
+mod indy_did_wallet;
+mod indy_record_wallet;
+mod indy_tags;
 pub mod internal;
-pub mod signing;
 pub mod wallet;
-pub mod wallet_non_secrets;
 
 #[derive(Debug)]
 pub struct IndySdkWallet {
-    pub wallet_handle: WalletHandle,
+    wallet_handle: WalletHandle,
 }
 
 impl IndySdkWallet {
     pub fn new(wallet_handle: WalletHandle) -> Self {
         IndySdkWallet { wallet_handle }
     }
-}
 
-struct IndyWalletRecordIterator {
-    wallet_handle: WalletHandle,
-    search_handle: SearchHandle,
-}
-
-impl IndyWalletRecordIterator {
-    fn new(wallet_handle: WalletHandle, search_handle: SearchHandle) -> Self {
-        IndyWalletRecordIterator {
-            wallet_handle,
-            search_handle,
-        }
-    }
-
-    async fn fetch_next_records(&self) -> VcxCoreResult<Option<String>> {
-        let indy_res_json =
-            internal::fetch_next_records_wallet(self.wallet_handle, self.search_handle, 1).await?;
-
-        let indy_res: Value = serde_json::from_str(&indy_res_json)?;
-
-        let records = (&indy_res).try_get("records")?;
-
-        let item: Option<VcxCoreResult<String>> = records
-            .as_array()
-            .and_then(|arr| arr.first())
-            .map(|item| serde_json::to_string(item).map_err(AriesVcxCoreError::from));
-
-        item.transpose()
-    }
-}
-
-/// Implementation of a generic [AsyncFnIterator] iterator for indy/vdrtools wallet record
-/// iteration. Wraps over the vdrtools record [SearchHandle] functionality
-#[async_trait]
-impl AsyncFnIterator for IndyWalletRecordIterator {
-    type Item = VcxCoreResult<String>;
-
-    async fn next(&mut self) -> Option<Self::Item> {
-        let records = self.fetch_next_records().await;
-        records.transpose()
-    }
-}
-
-impl Drop for IndyWalletRecordIterator {
-    fn drop(&mut self) {
-        let search_handle = self.search_handle;
-
-        thread::spawn(move || {
-            block_on(async {
-                internal::close_search_wallet(search_handle).await.ok();
-            });
-        });
+    pub fn get_wallet_handle(&self) -> WalletHandle {
+        self.wallet_handle
     }
 }
 
@@ -125,12 +69,51 @@ struct WalletCredentials {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct WalletRecord {
+pub struct IndyWalletRecord {
     id: Option<String>,
     #[serde(rename = "type")]
     record_type: Option<String>,
     pub value: Option<String>,
     tags: Option<String>,
+}
+
+impl IndyWalletRecord {
+    pub fn from_record(record: Record) -> VcxCoreResult<Self> {
+        let tags = if record.tags().is_empty() {
+            None
+        } else {
+            Some(serde_json::to_string(&record.tags())?)
+        };
+
+        Ok(Self {
+            id: Some(record.name().into()),
+            record_type: Some(record.category().into()),
+            value: Some(record.value().into()),
+            tags,
+        })
+    }
+}
+
+impl From<IndyRecord> for Record {
+    fn from(ir: IndyRecord) -> Self {
+        Self::builder()
+            .name(ir.id)
+            .category(ir.type_)
+            .value(ir.value)
+            .tags(IndyTags::new(ir.tags).into_entry_tags())
+            .build()
+    }
+}
+
+impl From<Record> for IndyRecord {
+    fn from(record: Record) -> Self {
+        Self {
+            id: record.name().into(),
+            type_: record.category().into(),
+            value: record.value().into(),
+            tags: IndyTags::from_entry_tags(record.tags().to_owned()).into_inner(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -141,4 +124,34 @@ pub struct RestoreWalletConfigs {
     pub backup_key: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wallet_key_derivation: Option<String>,
+}
+
+const WALLET_OPTIONS: &str =
+    r#"{"retrieveType": true, "retrieveValue": true, "retrieveTags": true}"#;
+
+const SEARCH_OPTIONS: &str = r#"{"retrieveType": true, "retrieveValue": true, "retrieveTags": true, "retrieveRecords": true}"#;
+
+impl BaseWallet for IndySdkWallet {}
+
+#[cfg(test)]
+pub mod tests {
+    use super::IndySdkWallet;
+
+    pub async fn dev_setup_indy_wallet() -> IndySdkWallet {
+        use crate::wallet::indy::{wallet::create_and_open_wallet, WalletConfig};
+
+        let config_wallet = WalletConfig {
+            wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
+            wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
+            wallet_key_derivation: "RAW".into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None,
+        };
+        let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
+
+        IndySdkWallet::new(wallet_handle)
+    }
 }

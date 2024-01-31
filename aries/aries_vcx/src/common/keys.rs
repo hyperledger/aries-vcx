@@ -42,10 +42,7 @@ pub async fn rotate_verkey_apply(
         ));
     }
 
-    wallet
-        .replace_did_keys_apply(did)
-        .await
-        .map_err(|err| err.into())
+    Ok(wallet.replace_did_key_apply(did).await?)
 }
 
 pub async fn rotate_verkey(
@@ -53,8 +50,8 @@ pub async fn rotate_verkey(
     indy_ledger_write: &impl IndyLedgerWrite,
     did: &str,
 ) -> VcxResult<()> {
-    let trustee_temp_verkey = wallet.replace_did_keys_start(did).await?;
-    rotate_verkey_apply(wallet, indy_ledger_write, did, &trustee_temp_verkey).await
+    let trustee_verkey = wallet.replace_did_key_start(did, None).await?;
+    rotate_verkey_apply(wallet, indy_ledger_write, did, &trustee_verkey.base58()).await
 }
 
 pub async fn get_verkey_from_ledger(

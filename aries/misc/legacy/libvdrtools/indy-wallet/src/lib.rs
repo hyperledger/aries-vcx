@@ -8,7 +8,7 @@ use std::{
 };
 
 use indy_api_types::{
-    domain::wallet::{CacheConfig, Config, Credentials, ExportConfig, Record, Tags},
+    domain::wallet::{CacheConfig, Config, Credentials, ExportConfig, IndyRecord, Tags},
     errors::prelude::*,
     WalletHandle,
 };
@@ -713,7 +713,7 @@ impl WalletService {
         &self,
         old_wh: WalletHandle,
         new_wh: WalletHandle,
-        mut migrate_fn: impl FnMut(Record) -> Result<Option<Record>, E>,
+        mut migrate_fn: impl FnMut(IndyRecord) -> Result<Option<IndyRecord>, E>,
     ) -> IndyResult<MigrationResult>
     where
         E: std::fmt::Display,
@@ -768,7 +768,7 @@ impl WalletService {
                 Some(tags) => tags.clone(),
             };
 
-            let record = Record {
+            let record = IndyRecord {
                 type_: unwrapped_type_,
                 id: source_record.id.clone(),
                 value: unwrapped_value,

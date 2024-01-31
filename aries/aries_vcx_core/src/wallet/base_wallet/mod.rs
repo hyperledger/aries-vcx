@@ -1,62 +1,30 @@
 use async_trait::async_trait;
-#[cfg(feature = "vdrtools_wallet")]
-use indy_api_types::domain::wallet::Record as IndyRecord;
 use public_key::Key;
-use serde::{Deserialize, Serialize};
-use typed_builder::TypedBuilder;
 
-use self::entry_tag::EntryTags;
-use crate::{errors::error::VcxCoreResult, wallet::structs_io::UnpackMessageOutput};
+use super::entry_tags::EntryTags;
+use crate::{
+    errors::error::VcxCoreResult,
+    wallet::{
+        base_wallet::{did_data::DidData, record::Record, search_filter::SearchFilter},
+        structs_io::UnpackMessageOutput,
+    },
+};
 
-#[cfg(feature = "vdrtools_wallet")]
-pub mod indy_wallet;
+pub mod did_data;
+pub mod record;
+pub mod search_filter;
 
-pub mod entry_tag;
-pub mod utils;
-
-#[derive(Debug, Clone, TypedBuilder)]
-pub struct Record {
-    category: String,
-    name: String,
-    value: String,
-    #[builder(default)]
-    tags: EntryTags,
-}
-
-#[cfg(feature = "vdrtools_wallet")]
-impl From<IndyRecord> for Record {
-    fn from(ir: IndyRecord) -> Self {
-        Self {
-            name: ir.id,
-            category: ir.type_,
-            value: ir.value,
-            tags: ir.tags.into(),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct DidData {
-    did: String,
-    verkey: Key,
-}
-
-pub enum SearchFilter {
-    JsonFilter(String),
-}
-
-#[async_trait]
-pub trait BaseWallet2: RecordWallet + DidWallet {}
+pub trait BaseWallet: RecordWallet + DidWallet + Send + Sync + std::fmt::Debug {}
 
 #[async_trait]
 pub trait DidWallet {
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,
-        method_name: Option<&str>,
+        kdf_method_name: Option<&str>,
     ) -> VcxCoreResult<DidData>;
 
-    async fn did_key(&self, name: &str) -> VcxCoreResult<Key>;
+    async fn key_for_did(&self, did: &str) -> VcxCoreResult<Key>;
 
     async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxCoreResult<Key>;
 
@@ -80,23 +48,23 @@ pub trait DidWallet {
 pub trait RecordWallet {
     async fn add_record(&self, record: Record) -> VcxCoreResult<()>;
 
-    async fn get_record(&self, name: &str, category: &str) -> VcxCoreResult<Record>;
+    async fn get_record(&self, category: &str, name: &str) -> VcxCoreResult<Record>;
 
     async fn update_record_tags(
         &self,
-        name: &str,
         category: &str,
+        name: &str,
         new_tags: EntryTags,
     ) -> VcxCoreResult<()>;
 
     async fn update_record_value(
         &self,
-        name: &str,
         category: &str,
+        name: &str,
         new_value: &str,
     ) -> VcxCoreResult<()>;
 
-    async fn delete_record(&self, name: &str, category: &str) -> VcxCoreResult<()>;
+    async fn delete_record(&self, category: &str, name: &str) -> VcxCoreResult<()>;
 
     async fn search_record(
         &self,
@@ -107,39 +75,31 @@ pub trait RecordWallet {
 
 #[cfg(test)]
 mod tests {
-    use super::BaseWallet2;
+    use rand::{distributions::Alphanumeric, Rng};
+
+    use super::BaseWallet;
     use crate::{
         errors::error::AriesVcxCoreErrorKind,
-        wallet::indy::IndySdkWallet,
-        wallet2::{
-            entry_tag::{EntryTag, EntryTags},
-            utils::random_seed,
-            DidWallet, Record, RecordWallet,
+        wallet::{
+            base_wallet::{DidWallet, Record, RecordWallet},
+            entry_tags::EntryTags,
         },
     };
 
-    async fn build_test_wallet() -> impl BaseWallet2 {
-        #[cfg(feature = "vdrtools_wallet")]
-        return dev_setup_indy_wallet().await;
+    fn random_seed() -> String {
+        rand::thread_rng()
+            .sample_iter(Alphanumeric)
+            .take(32)
+            .map(char::from)
+            .collect()
     }
 
-    #[cfg(feature = "vdrtools_wallet")]
-    async fn dev_setup_indy_wallet() -> IndySdkWallet {
-        use crate::wallet::indy::{wallet::create_and_open_wallet, WalletConfig};
-
-        let config_wallet = WalletConfig {
-            wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
-            wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
-            wallet_key_derivation: "RAW".into(),
-            wallet_type: None,
-            storage_config: None,
-            storage_credentials: None,
-            rekey: None,
-            rekey_derivation_method: None,
-        };
-        let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
-
-        IndySdkWallet::new(wallet_handle)
+    async fn build_test_wallet() -> impl BaseWallet {
+        #[cfg(feature = "vdrtools_wallet")]
+        {
+            use crate::wallet::indy::tests::dev_setup_indy_wallet;
+            dev_setup_indy_wallet().await
+        }
     }
 
     #[tokio::test]
@@ -152,9 +112,9 @@ mod tests {
             .unwrap();
 
         let msg = "sign this".as_bytes();
-        let sig = wallet.sign(&did_data.verkey, msg).await.unwrap();
+        let sig = wallet.sign(did_data.verkey(), msg).await.unwrap();
 
-        let res = wallet.verify(&did_data.verkey, msg, &sig).await.unwrap();
+        let res = wallet.verify(did_data.verkey(), msg, &sig).await.unwrap();
         assert!(res);
     }
 
@@ -167,18 +127,18 @@ mod tests {
             .await
             .unwrap();
 
-        let key = wallet.did_key(&did_data.did).await.unwrap();
+        let key = wallet.key_for_did(did_data.did()).await.unwrap();
 
-        assert_eq!(did_data.verkey, key);
+        assert_eq!(did_data.verkey(), &key);
 
         let res = wallet
-            .replace_did_key_start(&did_data.did, Some(&random_seed()))
+            .replace_did_key_start(did_data.did(), Some(&random_seed()))
             .await
             .unwrap();
 
-        wallet.replace_did_key_apply(&did_data.did).await.unwrap();
+        wallet.replace_did_key_apply(did_data.did()).await.unwrap();
 
-        let new_key = wallet.did_key(&did_data.did).await.unwrap();
+        let new_key = wallet.key_for_did(did_data.did()).await.unwrap();
         assert_eq!(res, new_key);
     }
 
@@ -194,8 +154,8 @@ mod tests {
 
         let packed = wallet
             .pack_message(
-                Some(sender_data.verkey),
-                vec![receiver_data.verkey],
+                Some(sender_data.verkey().clone()),
+                vec![receiver_data.verkey().clone()],
                 msg.as_bytes(),
             )
             .await
@@ -228,9 +188,9 @@ mod tests {
         wallet.add_record(record1).await.unwrap();
         wallet.add_record(record2).await.unwrap();
 
-        let res = wallet.get_record(name, category).await.unwrap();
+        let res = wallet.get_record(category, name).await.unwrap();
 
-        assert_eq!(value, res.value);
+        assert_eq!(value, res.value());
     }
 
     #[tokio::test]
@@ -249,13 +209,13 @@ mod tests {
 
         wallet.add_record(record).await.unwrap();
 
-        let res = wallet.get_record(name, category).await.unwrap();
+        let res = wallet.get_record(category, name).await.unwrap();
 
-        assert_eq!(value, res.value);
+        assert_eq!(value, res.value());
 
-        wallet.delete_record(name, category).await.unwrap();
+        wallet.delete_record(category, name).await.unwrap();
 
-        let err = wallet.get_record(name, category).await.unwrap_err();
+        let err = wallet.get_record(category, name).await.unwrap_err();
         assert_eq!(AriesVcxCoreErrorKind::WalletRecordNotFound, err.kind());
     }
 
@@ -275,7 +235,6 @@ mod tests {
             .category(category1.into())
             .value(value.into())
             .build();
-
         wallet.add_record(record1).await.unwrap();
 
         let record2 = Record::builder()
@@ -283,7 +242,6 @@ mod tests {
             .category(category1.into())
             .value(value.into())
             .build();
-
         wallet.add_record(record2).await.unwrap();
 
         let record3 = Record::builder()
@@ -291,7 +249,6 @@ mod tests {
             .category(category2.into())
             .value(value.into())
             .build();
-
         wallet.add_record(record3).await.unwrap();
 
         let res = wallet.search_record(category1, None).await.unwrap();
@@ -307,7 +264,7 @@ mod tests {
         let category = "my";
         let value1 = "xxx";
         let value2 = "yyy";
-        let tags1: EntryTags = vec![EntryTag::Plaintext("a".into(), "b".into())].into();
+        let tags1: EntryTags = vec![("a".into(), "b".into())].into();
         let tags2 = EntryTags::default();
 
         let record = Record::builder()
@@ -319,17 +276,17 @@ mod tests {
         wallet.add_record(record.clone()).await.unwrap();
 
         wallet
-            .update_record_value(name, category, value2)
+            .update_record_value(category, name, value2)
             .await
             .unwrap();
         wallet
-            .update_record_tags(name, category, tags2.clone())
+            .update_record_tags(category, name, tags2.clone())
             .await
             .unwrap();
 
-        let res = wallet.get_record(name, category).await.unwrap();
-        assert_eq!(value2, res.value);
-        assert_eq!(tags2, res.tags);
+        let res = wallet.get_record(category, name).await.unwrap();
+        assert_eq!(value2, res.value());
+        assert_eq!(&tags2, res.tags());
     }
 
     #[tokio::test]
@@ -340,7 +297,7 @@ mod tests {
         let category = "my";
         let value1 = "xxx";
         let value2 = "yyy";
-        let tags: EntryTags = vec![EntryTag::Plaintext("a".into(), "b".into())].into();
+        let tags: EntryTags = vec![("a".into(), "b".into())].into();
 
         let record = Record::builder()
             .name(name.into())
@@ -351,13 +308,13 @@ mod tests {
         wallet.add_record(record.clone()).await.unwrap();
 
         wallet
-            .update_record_value(name, category, value2)
+            .update_record_value(category, name, value2)
             .await
             .unwrap();
 
-        let res = wallet.get_record(name, category).await.unwrap();
-        assert_eq!(value2, res.value);
-        assert_eq!(tags, res.tags);
+        let res = wallet.get_record(category, name).await.unwrap();
+        assert_eq!(value2, res.value());
+        assert_eq!(&tags, res.tags());
     }
 
     #[tokio::test]
@@ -367,8 +324,8 @@ mod tests {
         let name = "foo";
         let category = "my";
         let value = "xxx";
-        let tags1: EntryTags = vec![EntryTag::Plaintext("a".into(), "b".into())].into();
-        let tags2: EntryTags = vec![EntryTag::Plaintext("c".into(), "d".into())].into();
+        let tags1: EntryTags = vec![("a".into(), "b".into())].into();
+        let tags2: EntryTags = vec![("c".into(), "d".into())].into();
 
         let record = Record::builder()
             .name(name.into())
@@ -379,12 +336,12 @@ mod tests {
         wallet.add_record(record.clone()).await.unwrap();
 
         wallet
-            .update_record_tags(name, category, tags2.clone())
+            .update_record_tags(category, name, tags2.clone())
             .await
             .unwrap();
 
-        let res = wallet.get_record(name, category).await.unwrap();
-        assert_eq!(value, res.value);
-        assert_eq!(tags2, res.tags);
+        let res = wallet.get_record(category, name).await.unwrap();
+        assert_eq!(value, res.value());
+        assert_eq!(&tags2, res.tags());
     }
 }

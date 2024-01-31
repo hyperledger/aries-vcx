@@ -1,7 +1,7 @@
 pub mod conv;
 
 use log::trace;
-use vdrtools::types::domain::wallet::Record;
+use vdrtools::types::domain::wallet::IndyRecord;
 
 use crate::error::MigrationResult;
 
@@ -21,7 +21,7 @@ pub(crate) const INDY_REV_REG_DEF: &str = "Indy::RevocationRegistryDefinition";
 pub(crate) const INDY_REV_REG_DEF_PRIV: &str = "Indy::RevocationRegistryDefinitionPrivate";
 
 /// Contains the logic for record mapping and migration.
-pub fn migrate_any_record(record: Record) -> MigrationResult<Option<Record>> {
+pub fn migrate_any_record(record: IndyRecord) -> MigrationResult<Option<IndyRecord>> {
     trace!("Migrating wallet record {record:?}");
 
     let record = match record.type_.as_str() {
@@ -384,7 +384,7 @@ mod tests {
             .await
             .unwrap();
 
-        let record: Record = serde_json::from_str(&record_str).unwrap();
+        let record: IndyRecord = serde_json::from_str(&record_str).unwrap();
         record.value
     }
 

@@ -10,7 +10,10 @@ pub struct PairwiseInfo {
 
 impl PairwiseInfo {
     pub async fn create(wallet: &impl BaseWallet) -> VcxResult<PairwiseInfo> {
-        let (pw_did, pw_vk) = wallet.create_and_store_my_did(None, None).await?;
-        Ok(PairwiseInfo { pw_did, pw_vk })
+        let did_data = wallet.create_and_store_my_did(None, None).await?;
+        Ok(PairwiseInfo {
+            pw_did: did_data.did().into(),
+            pw_vk: did_data.verkey().base58(),
+        })
     }
 }

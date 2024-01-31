@@ -4,14 +4,14 @@ use aries_vcx_core::anoncreds::credx_anoncreds::{
     CATEGORY_LINK_SECRET, CATEGORY_REV_REG, CATEGORY_REV_REG_DEF, CATEGORY_REV_REG_DEF_PRIV,
     CATEGORY_REV_REG_DELTA, CATEGORY_REV_REG_INFO,
 };
-use vdrtools::{types::domain::wallet::Record, IndyError};
+use vdrtools::{types::domain::wallet::IndyRecord, IndyError};
 
 use crate::error::MigrationResult;
 
 // The deltas in libvdrtools are prefixed. For absolutely no reason.
 const REV_REG_DELTA_ID_PREFIX: &str = "rev_reg_delta:";
 
-pub fn convert_master_secret(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_master_secret(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     let master_secret: vdrtools::MasterSecret = serde_json::from_str(&record.value)?;
 
     record.value = master_secret
@@ -26,25 +26,25 @@ pub fn convert_master_secret(mut record: Record) -> MigrationResult<Record> {
     Ok(record)
 }
 
-pub fn convert_cred(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_cred(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     record.type_ = CATEGORY_CREDENTIAL.to_owned();
     let _: credx::types::Credential = serde_json::from_str(&record.value)?;
     Ok(record)
 }
 
-pub fn convert_cred_def(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_cred_def(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     record.type_ = CATEGORY_CRED_DEF.to_owned();
     let _: credx::types::CredentialDefinition = serde_json::from_str(&record.value)?;
     Ok(record)
 }
 
-pub fn convert_cred_def_priv_key(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_cred_def_priv_key(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     record.type_ = CATEGORY_CRED_DEF_PRIV.to_owned();
     let _: credx::types::CredentialDefinitionPrivate = serde_json::from_str(&record.value)?;
     Ok(record)
 }
 
-pub fn convert_cred_def_correctness_proof(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_cred_def_correctness_proof(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     record.type_ = CATEGORY_CRED_KEY_CORRECTNESS_PROOF.to_owned();
     let old: vdrtools::CredentialDefinitionCorrectnessProof = serde_json::from_str(&record.value)?;
     let old_value = serde_json::to_string(&old.value)?;
@@ -54,13 +54,13 @@ pub fn convert_cred_def_correctness_proof(mut record: Record) -> MigrationResult
     Ok(record)
 }
 
-pub fn convert_schema(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_schema(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     record.type_ = CATEGORY_CRED_SCHEMA.to_owned();
     let _: credx::types::Schema = serde_json::from_str(&record.value)?;
     Ok(record)
 }
 
-pub fn convert_schema_id(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_schema_id(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     record.type_ = CATEGORY_CRED_MAP_SCHEMA_ID.to_owned();
     // The plain ID is stored as a String,
     // so not that much to check.
@@ -68,13 +68,13 @@ pub fn convert_schema_id(mut record: Record) -> MigrationResult<Record> {
     Ok(record)
 }
 
-pub fn convert_rev_reg(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_rev_reg(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     record.type_ = CATEGORY_REV_REG.to_owned();
     let _: credx::types::RevocationRegistry = serde_json::from_str(&record.value)?;
     Ok(record)
 }
 
-pub fn convert_rev_reg_delta(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_rev_reg_delta(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     record.type_ = CATEGORY_REV_REG_DELTA.to_owned();
 
     // Shave off the useless prefix, if found.
@@ -90,19 +90,19 @@ pub fn convert_rev_reg_delta(mut record: Record) -> MigrationResult<Record> {
     Ok(record)
 }
 
-pub fn convert_rev_reg_info(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_rev_reg_info(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     record.type_ = CATEGORY_REV_REG_INFO.to_owned();
     let _: RevocationRegistryInfo = serde_json::from_str(&record.value)?;
     Ok(record)
 }
 
-pub fn convert_rev_reg_def(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_rev_reg_def(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     record.type_ = CATEGORY_REV_REG_DEF.to_owned();
     let _: credx::types::RevocationRegistryDefinition = serde_json::from_str(&record.value)?;
     Ok(record)
 }
 
-pub fn convert_rev_reg_def_priv(mut record: Record) -> MigrationResult<Record> {
+pub fn convert_rev_reg_def_priv(mut record: IndyRecord) -> MigrationResult<IndyRecord> {
     record.type_ = CATEGORY_REV_REG_DEF_PRIV.to_owned();
     let _: credx::types::RevocationRegistryDefinitionPrivate = serde_json::from_str(&record.value)?;
     Ok(record)

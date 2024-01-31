@@ -5,6 +5,7 @@ use messages::{
     msg_fields::protocols::routing::{Forward, ForwardContent},
     AriesMessage,
 };
+use public_key::{Key, KeyType};
 use uuid::Uuid;
 
 use crate::errors::error::prelude::*;
@@ -70,9 +71,17 @@ impl EncryptionEnvelope {
             "Encrypting for pairwise; sender_vk: {:?}, recipient_key: {}",
             sender_vk, recipient_key
         );
-        let recipient_keys = json!([recipient_key.clone()]).to_string();
+
+        let recipient_keys = vec![Key::from_base58(&recipient_key, KeyType::Ed25519)?];
+
         wallet
-            .pack_message(sender_vk, &recipient_keys, data)
+            .pack_message(
+                sender_vk
+                    .map(|key| Key::from_base58(key, KeyType::Ed25519))
+                    .transpose()?,
+                recipient_keys,
+                data,
+            )
             .await
             .map_err(|err| err.into())
     }
@@ -115,10 +124,14 @@ impl EncryptionEnvelope {
             .build();
 
         let message = json!(AriesMessage::from(message)).to_string();
-        let receiver_keys = json!(vec![routing_key]).to_string();
+
+        let receiver_keys = vec![routing_key]
+            .into_iter()
+            .map(|item| Key::from_base58(item, KeyType::Ed25519))
+            .collect::<Result<_, _>>()?;
 
         wallet
-            .pack_message(None, &receiver_keys, message.as_bytes())
+            .pack_message(None, receiver_keys, message.as_bytes())
             .await
             .map_err(|err| err.into())
     }
@@ -246,11 +259,12 @@ pub mod unit_tests {
     use test_utils::devsetup::build_setup_profile;
 
     use super::*;
+    use crate::aries_vcx_core::wallet::base_wallet::DidWallet;
 
     #[tokio::test]
     async fn test_pack_unpack_anon() {
         let setup = build_setup_profile().await;
-        let (_, recipient_key) = setup
+        let did_data = setup
             .wallet
             .create_and_store_my_did(None, None)
             .await
@@ -262,7 +276,7 @@ pub mod unit_tests {
             &setup.wallet,
             data_original.as_bytes(),
             None,
-            recipient_key,
+            did_data.verkey().base58(),
             [].to_vec(),
         )
         .await
@@ -280,12 +294,12 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_pack_unpack_auth() {
         let setup = build_setup_profile().await;
-        let (_, sender_key) = setup
+        let sender_data = setup
             .wallet
             .create_and_store_my_did(None, None)
             .await
             .unwrap();
-        let (_, recipient_key) = setup
+        let recipient_data = setup
             .wallet
             .create_and_store_my_did(None, None)
             .await
@@ -296,16 +310,20 @@ pub mod unit_tests {
         let envelope = EncryptionEnvelope::create2(
             &setup.wallet,
             data_original.as_bytes(),
-            Some(&sender_key),
-            recipient_key,
+            Some(&sender_data.verkey().base58()),
+            recipient_data.verkey().base58(),
             [].to_vec(),
         )
         .await
         .unwrap();
 
-        let data_unpacked = EncryptionEnvelope::auth_unpack(&setup.wallet, envelope.0, &sender_key)
-            .await
-            .unwrap();
+        let data_unpacked = EncryptionEnvelope::auth_unpack(
+            &setup.wallet,
+            envelope.0,
+            &sender_data.verkey().base58(),
+        )
+        .await
+        .unwrap();
 
         assert_eq!(data_original, data_unpacked);
     }
@@ -313,17 +331,17 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_pack_unpack_with_routing() {
         let setup = build_setup_profile().await;
-        let (_, sender_key) = setup
+        let sender_data = setup
             .wallet
             .create_and_store_my_did(None, None)
             .await
             .unwrap();
-        let (_, recipient_key) = setup
+        let recipient_data = setup
             .wallet
             .create_and_store_my_did(None, None)
             .await
             .unwrap();
-        let (_, routing_key1) = setup
+        let routing_data = setup
             .wallet
             .create_and_store_my_did(None, None)
             .await
@@ -334,9 +352,9 @@ pub mod unit_tests {
         let envelope = EncryptionEnvelope::create2(
             &setup.wallet,
             data_original.as_bytes(),
-            Some(&sender_key),
-            recipient_key,
-            [routing_key1].to_vec(),
+            Some(&sender_data.verkey().base58()),
+            recipient_data.verkey().base58(),
+            [routing_data.verkey().base58()].to_vec(),
         )
         .await
         .unwrap();
@@ -359,17 +377,17 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_pack_unpack_unexpected_key_detection() {
         let setup = build_setup_profile().await;
-        let (_, sender_key_alice) = setup
+        let alice_data = setup
             .wallet
             .create_and_store_my_did(None, None)
             .await
             .unwrap();
-        let (_, sender_key_bob) = setup
+        let bob_data = setup
             .wallet
             .create_and_store_my_did(None, None)
             .await
             .unwrap();
-        let (_, recipient_key) = setup
+        let recipient_data = setup
             .wallet
             .create_and_store_my_did(None, None)
             .await
@@ -380,15 +398,19 @@ pub mod unit_tests {
         let envelope = EncryptionEnvelope::create2(
             &setup.wallet,
             data_original.as_bytes(),
-            Some(&sender_key_bob), // bob trying to impersonate alice
-            recipient_key,
+            Some(&bob_data.verkey().base58()), // bob trying to impersonate alice
+            recipient_data.verkey().base58(),
             [].to_vec(),
         )
         .await
         .unwrap();
 
-        let err =
-            EncryptionEnvelope::auth_unpack(&setup.wallet, envelope.0, &sender_key_alice).await;
+        let err = EncryptionEnvelope::auth_unpack(
+            &setup.wallet,
+            envelope.0,
+            &alice_data.verkey().base58(),
+        )
+        .await;
         assert!(err.is_err());
         assert_eq!(
             err.unwrap_err().kind(),
