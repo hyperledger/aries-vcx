@@ -1,7 +1,9 @@
 use std::fmt;
 
-use crate::cl::{bn::BigNumber, Prover as CryptoProver};
-use crate::error::ConversionError;
+use crate::{
+    cl::{bn::BigNumber, Prover as CryptoProver},
+    error::ConversionError,
+};
 
 pub struct LinkSecret(pub(crate) BigNumber);
 

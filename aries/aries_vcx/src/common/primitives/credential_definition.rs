@@ -1,4 +1,4 @@
-use anoncreds_types::data_types::{ledger::schema::Schema, identifiers::schema_id::SchemaId};
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,

@@ -1,7 +1,11 @@
-use serde::ser::{Serialize, Serializer};
-use serde::{de, Deserialize, Deserializer};
-use serde_json::{self, json, Value as JsonValue};
 use std::string;
+
+use serde::{
+    de,
+    ser::{Serialize, Serializer},
+    Deserialize, Deserializer,
+};
+use serde_json::{self, json, Value as JsonValue};
 
 /// An abstract query representation over a key and value type
 #[derive(Debug, Hash, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -412,10 +416,10 @@ fn parse_single_operator(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use rand::distributions::Alphanumeric;
-    use rand::{thread_rng, Rng};
+    use rand::{distributions::Alphanumeric, thread_rng, Rng};
     use serde_json::json;
+
+    use super::*;
 
     fn _random_string(len: usize) -> String {
         String::from_utf8(thread_rng().sample_iter(&Alphanumeric).take(len).collect()).unwrap()

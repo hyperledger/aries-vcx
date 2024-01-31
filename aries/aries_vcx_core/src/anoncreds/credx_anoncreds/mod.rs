@@ -14,19 +14,19 @@ use credx::{
     types::{
         Credential as CredxCredential, CredentialDefinition, CredentialDefinitionId,
         CredentialOffer, CredentialRequestMetadata, CredentialRevocationConfig,
-        CredentialRevocationState, IssuanceType, LinkSecret, PresentCredentials,
-        Presentation, PresentationRequest, RegistryType, RevocationRegistry,
-        RevocationRegistryDefinition, RevocationRegistryDelta, RevocationRegistryId, Schema as CredxSchema,
-        SchemaId, SignatureType,
+        CredentialRevocationState, IssuanceType, LinkSecret, PresentCredentials, Presentation,
+        PresentationRequest, RegistryType, RevocationRegistry, RevocationRegistryDefinition,
+        RevocationRegistryDelta, RevocationRegistryId, Schema as CredxSchema, SchemaId,
+        SignatureType,
     },
 };
 use did_parser::Did;
 use indy_credx as credx;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};
+use type_conversion::Convert;
 use uuid::Uuid;
 
-use type_conversion::Convert;
 use super::base_anoncreds::BaseAnonCreds;
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -451,7 +451,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let store_schema_res = wallet.add_record(record).await;
 
         if let Err(e) = store_schema_res {
-            warn!("Storing schema {schema_json:?} failed - {e}. It's possible it is already stored.")
+            warn!(
+                "Storing schema {schema_json:?} failed - {e}. It's possible it is already stored."
+            )
         }
 
         let record = Record::builder()

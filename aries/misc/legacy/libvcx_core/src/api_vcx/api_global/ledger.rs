@@ -39,7 +39,13 @@ pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> Libvc
     let ledger = get_main_ledger_read()?;
     map_ariesvcx_core_result(
         ledger
-            .get_ledger_txn(seq_no, submitter_did.map(|did| did.parse::<Did>()).transpose()?.as_ref())
+            .get_ledger_txn(
+                seq_no,
+                submitter_did
+                    .map(|did| did.parse::<Did>())
+                    .transpose()?
+                    .as_ref(),
+            )
             .await,
     )
 }
@@ -117,7 +123,9 @@ pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> 
 }
 
 pub async fn ledger_get_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
-    map_ariesvcx_result(get_attr(get_main_ledger_read()?.as_ref(), &target_did.parse()?, attr).await)
+    map_ariesvcx_result(
+        get_attr(get_main_ledger_read()?.as_ref(), &target_did.parse()?, attr).await,
+    )
 }
 
 pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {

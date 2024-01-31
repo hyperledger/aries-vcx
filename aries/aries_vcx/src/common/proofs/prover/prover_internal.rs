@@ -285,7 +285,7 @@ pub mod pool_tests {
 
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
-        constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, schema_id},
+        constants::{schema_id, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID},
         devsetup::build_setup_profile,
     };
 
@@ -333,9 +333,9 @@ pub mod unit_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
         constants::{
-            ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID,
-            ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
-            REV_STATE_JSON, SCHEMA_ID, address_schema_id, schema_id,
+            address_schema_id, schema_id, ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID,
+            ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID,
+            LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID,
         },
         devsetup::*,
         mockdata::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
@@ -442,12 +442,8 @@ pub mod unit_tests {
             .await
             .unwrap();
         assert!(!schemas.is_empty());
-        assert!(schemas.contains(
-            r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4""#
-        ));
-        assert!(schemas.contains(
-            r#""name":"test-licence""#
-        ));
+        assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4""#));
+        assert!(schemas.contains(r#""name":"test-licence""#));
     }
 
     #[test]

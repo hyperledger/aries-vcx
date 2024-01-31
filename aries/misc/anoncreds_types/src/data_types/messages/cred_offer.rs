@@ -1,9 +1,9 @@
-use crate::cl::CredentialKeyCorrectnessProof;
-use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
-use crate::data_types::identifiers::schema_id::SchemaId;
-use crate::utils::validation::Validatable;
-
 use super::nonce::Nonce;
+use crate::{
+    cl::CredentialKeyCorrectnessProof,
+    data_types::identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    utils::validation::Validatable,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialOffer {

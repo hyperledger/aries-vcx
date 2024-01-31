@@ -2,11 +2,12 @@ use std::str::FromStr;
 
 use anoncreds_clsignatures::RevocationKeyPrivate;
 
-use crate::cl::RevocationKeyPublic;
-use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
-use crate::data_types::identifiers::issuer_id::IssuerId;
-use crate::error::ConversionError;
-use crate::utils::validation::Validatable;
+use crate::{
+    cl::RevocationKeyPublic,
+    data_types::identifiers::{cred_def_id::CredentialDefinitionId, issuer_id::IssuerId},
+    error::ConversionError,
+    utils::validation::Validatable,
+};
 
 pub const CL_ACCUM: &str = "CL_ACCUM";
 

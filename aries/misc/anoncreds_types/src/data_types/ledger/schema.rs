@@ -1,9 +1,9 @@
+use std::collections::HashSet;
+
 use crate::{
     data_types::identifiers::{issuer_id::IssuerId, schema_id::SchemaId},
     utils::validation::Validatable,
 };
-
-use std::collections::HashSet;
 
 pub const MAX_ATTRIBUTES_COUNT: usize = 125;
 

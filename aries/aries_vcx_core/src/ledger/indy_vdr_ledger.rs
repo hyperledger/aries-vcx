@@ -257,9 +257,9 @@ where
 
     async fn get_nym(&self, did: &Did) -> VcxCoreResult<String> {
         debug!("get_nym >> did: {did}");
-        let request = self
-            .request_builder()?
-            .build_get_nym_request(None, &did.convert(())?, None, None)?;
+        let request =
+            self.request_builder()?
+                .build_get_nym_request(None, &did.convert(())?, None, None)?;
         let response = self.submit_request(None, request).await?;
         debug!("get_nym << response: {response}");
         Ok(response)

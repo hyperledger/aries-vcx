@@ -24,7 +24,7 @@ use aries_vcx::{
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     ledger::{
-        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite}
+        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
         indy::pool::test_utils::get_temp_file_path,
     },
     wallet::base_wallet::{BaseWallet, DidWallet},

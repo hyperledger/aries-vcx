@@ -1,4 +1,4 @@
-use anoncreds_types::data_types::{ledger::schema::Schema, identifiers::schema_id::SchemaId};
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use aries_vcx_core::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     ledger::{
@@ -12,7 +12,7 @@ use did_parser::Did;
 
 use crate::constants::{
     rev_def_json, CRED_DEF_JSON, DEFAULT_AUTHOR_AGREEMENT, REQUEST_WITH_ENDORSER,
-    REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON
+    REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON,
 };
 
 #[derive(Debug)]

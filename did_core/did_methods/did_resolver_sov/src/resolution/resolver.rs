@@ -78,7 +78,11 @@ where
                 parsed_did.id().to_string(),
             )));
         }
-        let ledger_response = self.ledger.borrow().get_attr(parsed_did, "endpoint").await?;
+        let ledger_response = self
+            .ledger
+            .borrow()
+            .get_attr(parsed_did, "endpoint")
+            .await?;
         let verkey = self.get_verkey(parsed_did).await?;
         ledger_response_to_ddo(&parsed_did.did(), &ledger_response, verkey)
             .await

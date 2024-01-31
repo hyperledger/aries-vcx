@@ -1,18 +1,17 @@
-use anoncreds_clsignatures::PredicateType;
-use std::collections::HashMap;
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
+use anoncreds_clsignatures::PredicateType;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::invalid;
-use crate::utils::{
-    query::Query,
-    validation::{self, Validatable},
+use super::{credential::Credential, nonce::Nonce};
+use crate::{
+    invalid,
+    utils::{
+        query::Query,
+        validation::{self, Validatable},
+    },
 };
-
-use super::credential::Credential;
-use super::nonce::Nonce;
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct PresentationRequestPayload {
@@ -250,7 +249,10 @@ impl Validatable for PresentationRequest {
         let version = self.version();
 
         if value.requested_attributes.is_empty() && value.requested_predicates.is_empty() {
-            return Err(invalid!("Presentation request validation failed: both `requested_attributes` and `requested_predicates` are empty"));
+            return Err(invalid!(
+                "Presentation request validation failed: both `requested_attributes` and \
+                 `requested_predicates` are empty"
+            ));
         }
 
         for requested_attribute in value.requested_attributes.values() {
@@ -264,13 +266,18 @@ impl Validatable for PresentationRequest {
                 .map_or(true, Vec::is_empty);
             if !has_name && !has_names {
                 return Err(invalid!(
-                    "Presentation request validation failed: there is empty requested attribute: {:?}",
+                    "Presentation request validation failed: there is empty requested attribute: \
+                     {:?}",
                     requested_attribute
                 ));
             }
 
             if has_name && has_names {
-                return Err(invalid!("Presentation request validation failed: there is a requested attribute with both name and names: {:?}", requested_attribute));
+                return Err(invalid!(
+                    "Presentation request validation failed: there is a requested attribute with \
+                     both name and names: {:?}",
+                    requested_attribute
+                ));
             }
 
             if let Some(ref restrictions) = requested_attribute.restrictions {
@@ -281,7 +288,8 @@ impl Validatable for PresentationRequest {
         for requested_predicate in value.requested_predicates.values() {
             if requested_predicate.name.is_empty() {
                 return Err(invalid!(
-                    "Presentation request validation failed: there is empty requested attribute: {:?}",
+                    "Presentation request validation failed: there is empty requested attribute: \
+                     {:?}",
                     requested_predicate
                 ));
             }
@@ -342,8 +350,11 @@ fn _check_restriction(
         && Credential::QUALIFIABLE_TAGS.contains(&tag_name)
         && validation::is_uri_identifier(tag_value)
     {
-        return Err(invalid!("Presentation request validation failed: fully qualified identifiers can not be used for presentation request of the first version. \
-                    Please, set \"ver\":\"2.0\" to use fully qualified identifiers."));
+        return Err(invalid!(
+            "Presentation request validation failed: fully qualified identifiers can not be used \
+             for presentation request of the first version. Please, set \"ver\":\"2.0\" to use \
+             fully qualified identifiers."
+        ));
     }
     Ok(())
 }

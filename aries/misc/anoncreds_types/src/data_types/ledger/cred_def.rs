@@ -2,11 +2,12 @@ use std::str::FromStr;
 
 use anoncreds_clsignatures::CredentialPrivateKey;
 
-use crate::cl::{CredentialPrimaryPublicKey, CredentialPublicKey, CredentialRevocationPublicKey};
-use crate::data_types::identifiers::issuer_id::IssuerId;
-use crate::data_types::identifiers::schema_id::SchemaId;
-use crate::error::ConversionError;
-use crate::utils::validation::Validatable;
+use crate::{
+    cl::{CredentialPrimaryPublicKey, CredentialPublicKey, CredentialRevocationPublicKey},
+    data_types::identifiers::{issuer_id::IssuerId, schema_id::SchemaId},
+    error::ConversionError,
+    utils::validation::Validatable,
+};
 
 pub const CL_SIGNATURE_TYPE: &str = "CL";
 

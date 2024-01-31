@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 
-use crate::cl::Proof;
-use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
-use crate::data_types::identifiers::rev_reg_def_id::RevocationRegistryDefinitionId;
-use crate::data_types::identifiers::schema_id::SchemaId;
-use crate::utils::validation::Validatable;
+use crate::{
+    cl::Proof,
+    data_types::identifiers::{
+        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+        schema_id::SchemaId,
+    },
+    utils::validation::Validatable,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Presentation {

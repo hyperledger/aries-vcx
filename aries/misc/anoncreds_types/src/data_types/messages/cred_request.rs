@@ -1,10 +1,11 @@
-use crate::cl::{BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof};
-use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
-use crate::error::Result;
-use crate::invalid;
-use crate::utils::validation::{Validatable, LEGACY_DID_IDENTIFIER};
-
 use super::nonce::Nonce;
+use crate::{
+    cl::{BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof},
+    data_types::identifiers::cred_def_id::CredentialDefinitionId,
+    error::Result,
+    invalid,
+    utils::validation::{Validatable, LEGACY_DID_IDENTIFIER},
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialRequest {
@@ -306,8 +307,8 @@ impl CredentialRequest {
 //     }
 //
 //     #[test]
-//     fn create_credential_request_json_contains_prover_did_with_legacy_identifiers() -> Result<()> {
-//         let (cred_def, correctness_proof) = cred_def()?;
+//     fn create_credential_request_json_contains_prover_did_with_legacy_identifiers() -> Result<()>
+// {         let (cred_def, correctness_proof) = cred_def()?;
 //         let link_secret = link_secret();
 //         let credential_offer = credential_offer(correctness_proof, true)?;
 //

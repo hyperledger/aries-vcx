@@ -1,8 +1,11 @@
-use crate::cl::{Accumulator, RevocationRegistry as CryptoRevocationRegistry};
-use crate::data_types::identifiers::issuer_id::IssuerId;
-use crate::data_types::identifiers::rev_reg_def_id::RevocationRegistryDefinitionId;
-use crate::data_types::ledger::rev_reg::RevocationRegistry;
-use crate::Result;
+use crate::{
+    cl::{Accumulator, RevocationRegistry as CryptoRevocationRegistry},
+    data_types::{
+        identifiers::{issuer_id::IssuerId, rev_reg_def_id::RevocationRegistryDefinitionId},
+        ledger::rev_reg::RevocationRegistry,
+    },
+    Result,
+};
 
 /// Data model for the revocation status list as defined in the [Anoncreds V1.0
 /// specification](https://hyperledger.github.io/anoncreds-spec/#creating-the-initial-revocation-status-list-object)
@@ -130,8 +133,9 @@ pub mod serde_revocation_list {
 
 #[cfg(test)]
 mod rev_reg_tests {
-    use super::*;
     use bitvec::prelude::*;
+
+    use super::*;
 
     const REVOCATION_LIST: &str = r#"
         {

@@ -1,15 +1,18 @@
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
 
-use crate::cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessProof, Witness};
-use crate::data_types::identifiers::cred_def_id::CredentialDefinitionId;
-use crate::data_types::identifiers::rev_reg_def_id::RevocationRegistryDefinitionId;
-use crate::data_types::identifiers::schema_id::SchemaId;
-use crate::error::ConversionError;
-use crate::utils::validation::Validatable;
+use crate::{
+    cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessProof, Witness},
+    data_types::identifiers::{
+        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+        schema_id::SchemaId,
+    },
+    error::ConversionError,
+    utils::validation::Validatable,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Credential {
@@ -60,7 +63,11 @@ impl Validatable for Credential {
             .transpose()?;
 
         if self.rev_reg_id.is_some() && (self.witness.is_none() || self.rev_reg.is_none()) {
-            return Err(crate::error::Error::from_msg(crate::error::ErrorKind::Input, "Credential validation failed: `witness` and `rev_reg` must be passed for revocable Credential"));
+            return Err(crate::error::Error::from_msg(
+                crate::error::ErrorKind::Input,
+                "Credential validation failed: `witness` and `rev_reg` must be passed for \
+                 revocable Credential",
+            ));
         }
 
         if self.values.0.is_empty() {
@@ -96,8 +103,8 @@ impl Validatable for Credential {
 // impl Validatable for RawCredentialValues {
 //     fn validate(&self) -> Result<(), ValidationError> {
 //         if self.0.is_empty() {
-//             return Err("RawCredentialValues validation failed: empty list has been passed".into());
-//         }
+//             return Err("RawCredentialValues validation failed: empty list has been
+// passed".into());         }
 //
 //         Ok(())
 //     }

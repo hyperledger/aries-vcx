@@ -1,10 +1,10 @@
-use anoncreds::data_types::issuer_id::IssuerId as AnoncredsIssuerId;
-use anoncreds::data_types::schema::Schema as AnoncredsSchema;
-use anoncreds::types::AttributeNames as AnoncredsAttributeNames;
-use anoncreds_types::data_types::identifiers::issuer_id::IssuerId as OurIssuerId;
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
-use anoncreds_types::data_types::ledger::schema::{
-    AttributeNames as OurAttributeNames, Schema as OurSchema,
+use anoncreds::{
+    data_types::{issuer_id::IssuerId as AnoncredsIssuerId, schema::Schema as AnoncredsSchema},
+    types::AttributeNames as AnoncredsAttributeNames,
+};
+use anoncreds_types::data_types::{
+    identifiers::{issuer_id::IssuerId as OurIssuerId, schema_id::SchemaId},
+    ledger::schema::{AttributeNames as OurAttributeNames, Schema as OurSchema},
 };
 
 pub trait Convert {

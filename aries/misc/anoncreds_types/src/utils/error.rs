@@ -1,4 +1,5 @@
 use std::error::Error as StdError;
+
 use thiserror::Error;
 
 type DynError = Box<dyn StdError + Send + Sync + 'static>;

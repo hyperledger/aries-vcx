@@ -1,12 +1,17 @@
-use anoncreds_types::data_types::identifiers::issuer_id::IssuerId;
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId as OurSchemaId;
-use anoncreds_types::data_types::ledger::schema::Schema as OurSchema;
-use did_parser::Did;
-use indy_vdr::ledger::identifiers::SchemaId as IndyVdrSchemaId;
-use indy_vdr::ledger::requests::schema::{
-    AttributeNames as IndyVdrAttributeNames, Schema as IndyVdrSchema, SchemaV1,
+use anoncreds_types::data_types::{
+    identifiers::{issuer_id::IssuerId, schema_id::SchemaId as OurSchemaId},
+    ledger::schema::Schema as OurSchema,
 };
-use indy_vdr::utils::did::DidValue;
+use did_parser::Did;
+use indy_vdr::{
+    ledger::{
+        identifiers::SchemaId as IndyVdrSchemaId,
+        requests::schema::{
+            AttributeNames as IndyVdrAttributeNames, Schema as IndyVdrSchema, SchemaV1,
+        },
+    },
+    utils::did::DidValue,
+};
 
 pub trait Convert {
     type Args;

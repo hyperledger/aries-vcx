@@ -147,7 +147,12 @@ pub async fn accept_offer(
             &alice.wallet,
             &alice.ledger_read,
             &alice.anoncreds,
-            PairwiseInfo::create(&alice.wallet).await.unwrap().pw_did.parse().unwrap(),
+            PairwiseInfo::create(&alice.wallet)
+                .await
+                .unwrap()
+                .pw_did
+                .parse()
+                .unwrap(),
         )
         .await
         .unwrap();
@@ -417,7 +422,12 @@ async fn create_credential_request(
             &alice.wallet,
             &alice.ledger_read,
             &alice.anoncreds,
-            PairwiseInfo::create(&alice.wallet).await.unwrap().pw_did.parse().unwrap(),
+            PairwiseInfo::create(&alice.wallet)
+                .await
+                .unwrap()
+                .pw_did
+                .parse()
+                .unwrap(),
         )
         .await
         .unwrap();

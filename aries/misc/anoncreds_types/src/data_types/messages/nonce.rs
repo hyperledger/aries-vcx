@@ -1,12 +1,19 @@
-use std::convert::TryFrom;
-use std::fmt;
-use std::hash::{Hash, Hasher};
+use std::{
+    convert::TryFrom,
+    fmt,
+    hash::{Hash, Hasher},
+};
 
-use crate::cl::{new_nonce, Nonce as CryptoNonce};
-use crate::error::ConversionError;
-use serde::de::{Error, SeqAccess};
-use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{
+    de::{Error, SeqAccess, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use serde_json::Value;
+
+use crate::{
+    cl::{new_nonce, Nonce as CryptoNonce},
+    error::ConversionError,
+};
 
 pub struct Nonce {
     strval: String,

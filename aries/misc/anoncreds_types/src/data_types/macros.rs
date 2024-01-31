@@ -1,10 +1,12 @@
 #[macro_export]
 macro_rules! impl_anoncreds_object_identifier {
     ($i:ident) => {
-        use $crate::error::Error;
-        use $crate::utils::validation::{
-            Validatable, LEGACY_CRED_DEF_IDENTIFIER, LEGACY_DID_IDENTIFIER,
-            LEGACY_SCHEMA_IDENTIFIER, URI_IDENTIFIER,
+        use $crate::{
+            error::Error,
+            utils::validation::{
+                Validatable, LEGACY_CRED_DEF_IDENTIFIER, LEGACY_DID_IDENTIFIER,
+                LEGACY_SCHEMA_IDENTIFIER, URI_IDENTIFIER,
+            },
         };
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize, Default)]
@@ -44,7 +46,8 @@ macro_rules! impl_anoncreds_object_identifier {
                     "IssuerId" => &LEGACY_DID_IDENTIFIER,
                     "CredentialDefinitionId" => &LEGACY_CRED_DEF_IDENTIFIER,
                     "SchemaId" => &LEGACY_SCHEMA_IDENTIFIER,
-                    // TODO: we do not have correct validation for a revocation registry definition id
+                    // TODO: we do not have correct validation for a revocation registry definition
+                    // id
                     "RevocationRegistryDefinitionId" => &LEGACY_DID_IDENTIFIER,
                     invalid_name => {
                         return Err($crate::invalid!(
@@ -89,7 +92,8 @@ macro_rules! impl_anoncreds_object_identifier {
             }
         }
 
-        // TODO: Only TryFrom<String> should be implemented, TryFrom<&str> & FromStr should not hide cloning
+        // TODO: Only TryFrom<String> should be implemented, TryFrom<&str> & FromStr should not hide
+        // cloning
         impl TryFrom<&str> for $i {
             type Error = Error;
 

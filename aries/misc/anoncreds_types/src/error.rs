@@ -1,10 +1,12 @@
-use std::error::Error as StdError;
-use std::fmt::{self, Display, Formatter};
-use std::result::Result as StdResult;
-
-use crate::cl::{Error as CryptoError, ErrorKind as CryptoErrorKind};
+use std::{
+    error::Error as StdError,
+    fmt::{self, Display, Formatter},
+    result::Result as StdResult,
+};
 
 use thiserror::Error;
+
+use crate::cl::{Error as CryptoError, ErrorKind as CryptoErrorKind};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
