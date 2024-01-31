@@ -24,7 +24,7 @@ use anoncreds::{
     },
 };
 use anoncreds_types::data_types::{
-    identifiers::schema_id::SchemaId,
+    identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId},
     ledger::{cred_def::CredentialDefinition, schema::Schema},
 };
 use async_trait::async_trait;
@@ -310,9 +310,9 @@ impl BaseAnonCreds for Anoncreds {
             schemas.insert(schema_id.clone(), schema);
         }
 
-        let mut cred_defs_val: HashMap<CredentialDefinitionId, Value> =
+        let mut cred_defs_val: HashMap<AnoncredsCredentialDefinitionId, Value> =
             serde_json::from_str(credential_defs_json)?;
-        let mut cred_defs: HashMap<CredentialDefinitionId, AnoncredsCredentialDefinition> =
+        let mut cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
             HashMap::new();
         for (cred_def_id, cred_def_json) in cred_defs_val.iter_mut() {
             if let Some(v) = cred_def_json.as_object_mut() {
@@ -419,7 +419,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         issuer_did: &Did,
-        cred_def_id: &str,
+        cred_def_id: &CredentialDefinitionId,
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
@@ -427,16 +427,14 @@ impl BaseAnonCreds for Anoncreds {
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
         let cred_def: AnoncredsCredentialDefinition = self
-            .get_wallet_record_value(wallet, CATEGORY_CRED_DEF, cred_def_id)
+            .get_wallet_record_value(wallet, CATEGORY_CRED_DEF, &cred_def_id.to_string())
             .await?;
-        let cred_def_id = CredentialDefinitionId::new(cred_def_id).unwrap();
-
         let rev_reg_id =
             make_revocation_registry_id(issuer_did, &cred_def_id, tag, RegistryType::CL_ACCUM)?;
 
         let (rev_reg_def, rev_reg_def_priv) = create_revocation_registry_def(
             &cred_def,
-            cred_def_id,
+            AnoncredsCredentialDefinitionId::new(cred_def_id.to_string()).unwrap(),
             tag,
             RegistryType::CL_ACCUM,
             max_creds,
@@ -613,16 +611,16 @@ impl BaseAnonCreds for Anoncreds {
         cred_def_id: &CredentialDefinitionId,
     ) -> VcxCoreResult<String> {
         let correctness_proof = self
-            .get_wallet_record_value(wallet, CATEGORY_CRED_KEY_CORRECTNESS_PROOF, cred_def_id)
+            .get_wallet_record_value(wallet, CATEGORY_CRED_KEY_CORRECTNESS_PROOF, &cred_def_id.to_string())
             .await?;
 
         let schema_id_value = self
-            .get_wallet_record_value::<Value>(wallet, CATEGORY_CRED_MAP_SCHEMA_ID, cred_def_id)
+            .get_wallet_record_value::<Value>(wallet, CATEGORY_CRED_MAP_SCHEMA_ID, &cred_def_id.to_string())
             .await?;
 
         let offer = anoncreds::issuer::create_credential_offer(
             AnoncredsSchemaId::new(schema_id_value["schemaId"].as_str().unwrap()).unwrap(),
-            CredentialDefinitionId::new(cred_def_id).unwrap(),
+            AnoncredsCredentialDefinitionId::new(cred_def_id.to_string()).unwrap(),
             &correctness_proof,
         )?;
 
