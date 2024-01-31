@@ -2,8 +2,7 @@ use std::error::Error;
 
 use aries_vcx::common::credentials::get_cred_rev_id;
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    errors::error::AriesVcxCoreErrorKind,
+    anoncreds::base_anoncreds::BaseAnonCreds, errors::error::AriesVcxCoreErrorKind,
     ledger::base_ledger::AnoncredsLedgerRead,
 };
 use serde_json::json;
