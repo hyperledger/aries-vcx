@@ -4,16 +4,7 @@ use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 
 impl From<AnoncredsError> for AriesVcxCoreError {
     fn from(err: AnoncredsError) -> Self {
-        let cause = if err.kind() == ErrorKind::Input {
-            err.cause
-                .as_ref()
-                .and_then(|x| x.downcast_ref::<AnoncredsError>())
-        } else {
-            None
-        };
-        let e = cause.unwrap_or(&err);
-
-        match e.kind() {
+        match err.kind() {
             ErrorKind::Input => {
                 AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidInput, err)
             }
