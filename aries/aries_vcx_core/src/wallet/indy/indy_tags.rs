@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::wallet::entry_tags::EntryTags;
+use crate::wallet::entry_tags::{EntryTag, EntryTags};
 
 pub(crate) struct IndyTags(HashMap<String, String>);
 
@@ -21,7 +21,7 @@ impl IndyTags {
     }
 
     pub fn into_entry_tags(self) -> EntryTags {
-        let mut items: Vec<(String, String)> = self.0.into_iter().collect();
+        let mut items: Vec<EntryTag> = self.0.into_iter().collect();
         items.sort();
 
         EntryTags::new(items)

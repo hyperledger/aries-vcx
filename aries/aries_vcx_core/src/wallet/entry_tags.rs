@@ -2,26 +2,11 @@ use std::fmt;
 
 use serde::{de::Visitor, ser::SerializeMap, Deserialize, Serialize};
 
-// #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-// pub enum EntryTag {
-//     Tag(String, String),
-// }
-
-// impl EntryTag {
-//     pub fn from_pair(pair: (String, String)) -> Self {
-//         Self::Tag(pair.0, pair.1)
-//     }
-
-//     pub fn key(&self) -> &str {
-//         match self {
-//             Self::Tag(key, _) => key,
-//         }
-//     }
-// }
+pub(crate) type EntryTag = (String, String);
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct EntryTags {
-    inner: Vec<(String, String)>,
+    inner: Vec<EntryTag>,
 }
 
 impl Serialize for EntryTags {
@@ -52,8 +37,8 @@ impl<'de> Visitor<'de> for EntryTagsVisitor {
     {
         let mut tags = EntryTags::new(vec![]);
 
-        while let Some(pair) = map.next_entry()? {
-            tags.add(pair);
+        while let Some(tag) = map.next_entry()? {
+            tags.add(tag);
         }
 
         Ok(tags)
@@ -70,14 +55,14 @@ impl<'de> Deserialize<'de> for EntryTags {
 }
 
 impl EntryTags {
-    pub fn new(inner: Vec<(String, String)>) -> Self {
+    pub fn new(inner: Vec<EntryTag>) -> Self {
         let mut items = inner;
         items.sort();
 
         Self { inner: items }
     }
 
-    pub fn add(&mut self, tag: (String, String)) {
+    pub fn add(&mut self, tag: EntryTag) {
         self.inner.push(tag);
         self.inner.sort();
     }
@@ -86,7 +71,7 @@ impl EntryTags {
         self.inner.is_empty()
     }
 
-    pub fn into_inner(self) -> Vec<(String, String)> {
+    pub fn into_inner(self) -> Vec<EntryTag> {
         self.inner
     }
 
@@ -95,14 +80,14 @@ impl EntryTags {
         self.inner.sort();
     }
 
-    pub fn remove(&mut self, tag: (String, String)) {
+    pub fn remove(&mut self, tag: EntryTag) {
         self.inner.retain(|existing_tag| existing_tag.0 != tag.0);
         self.inner.sort();
     }
 }
 
 impl IntoIterator for EntryTags {
-    type Item = (String, String);
+    type Item = EntryTag;
 
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
@@ -111,8 +96,8 @@ impl IntoIterator for EntryTags {
     }
 }
 
-impl FromIterator<(String, String)> for EntryTags {
-    fn from_iter<T: IntoIterator<Item = (String, String)>>(iter: T) -> Self {
+impl FromIterator<EntryTag> for EntryTags {
+    fn from_iter<T: IntoIterator<Item = EntryTag>>(iter: T) -> Self {
         let mut tags = Self::default();
 
         for item in iter {
@@ -122,8 +107,8 @@ impl FromIterator<(String, String)> for EntryTags {
     }
 }
 
-impl From<Vec<(String, String)>> for EntryTags {
-    fn from(value: Vec<(String, String)>) -> Self {
+impl From<Vec<EntryTag>> for EntryTags {
+    fn from(value: Vec<EntryTag>) -> Self {
         value.into_iter().fold(Self::default(), |mut memo, item| {
             memo.add(item);
             memo
@@ -131,7 +116,7 @@ impl From<Vec<(String, String)>> for EntryTags {
     }
 }
 
-impl From<EntryTags> for Vec<(String, String)> {
+impl From<EntryTags> for Vec<EntryTag> {
     fn from(value: EntryTags) -> Self {
         value.inner
     }
