@@ -1357,7 +1357,6 @@ impl BaseAnonCreds for Anoncreds {
     async fn revoke_credential_local(
         &self,
         wallet: &impl BaseWallet,
-        _tails_dir: &str,
         rev_reg_id: &str,
         cred_rev_id: &str,
         ledger_rev_reg_delta_json: &str,

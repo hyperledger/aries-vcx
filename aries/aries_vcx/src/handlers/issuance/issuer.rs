@@ -237,7 +237,7 @@ impl Issuer {
                     AriesVcxErrorKind::InvalidState,
                     "Credential is not revocable, no revocation info has been found.",
                 ))?;
-        if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (
+        if let (Some(cred_rev_id), Some(rev_reg_id), Some(_tails_file)) = (
             revocation_info.cred_rev_id,
             revocation_info.rev_reg_id,
             revocation_info.tails_file,
@@ -249,7 +249,6 @@ impl Issuer {
             anoncreds
                 .revoke_credential_local(
                     wallet,
-                    &tails_file,
                     &rev_reg_id,
                     &cred_rev_id,
                     &rev_reg_delta_json,

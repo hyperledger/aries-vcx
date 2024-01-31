@@ -229,7 +229,6 @@ impl RevocationRegistry {
         anoncreds
             .revoke_credential_local(
                 wallet,
-                &self.tails_dir,
                 &self.rev_reg_id,
                 &rev_reg_delta_json,
                 cred_rev_id,

@@ -141,7 +141,6 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn revoke_credential_local(
         &self,
         wallet: &impl BaseWallet,
-        tails_dir: &str,
         rev_reg_id: &str,
         cred_rev_id: &str,
         rev_reg_delta_json: &str,
