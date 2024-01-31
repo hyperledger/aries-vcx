@@ -100,6 +100,7 @@ mod test_schema_validation {
     #[test]
     fn test_schema_valid() {
         let schema_json = json!({
+            "id": "2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4",
             "name": "gvt",
             "version": "1.0",
             "attrNames": ["aaa", "bbb", "ccc"],
@@ -139,6 +140,7 @@ mod test_schema_validation {
     #[test]
     fn test_schema_invalid_issuer_id() {
         let schema_json = json!({
+            "id": "2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4",
             "name": "gvt",
             "version": "1.0",
             "attrNames": ["aaa", "bbb", "ccc"],
@@ -152,6 +154,7 @@ mod test_schema_validation {
     #[test]
     fn test_schema_invalid_attr_names() {
         let schema_json = json!({
+            "id": "2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4",
             "name": "gvt1",
             "version": "1.0",
             "attrNames": [],

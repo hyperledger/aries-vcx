@@ -177,7 +177,7 @@ mod tests {
         let schema = Schema::from_string_versioned(&serialized).unwrap();
         assert_eq!(schema.version, "1.0");
         assert_eq!(schema.data, vec!["name".to_string(), "age".to_string()]);
-        assert_eq!(schema.schema_id, SchemaId::new("test_schema_id").unwrap());
+        assert_eq!(schema.schema_id, SchemaId::new_unchecked("test_schema_id"));
         assert_eq!(schema.name, "test");
         assert_eq!(schema.source_id, "1");
         assert_eq!(schema.state, PublicEntityStateType::Published);

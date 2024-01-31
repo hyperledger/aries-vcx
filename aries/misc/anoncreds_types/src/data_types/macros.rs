@@ -13,6 +13,7 @@ macro_rules! impl_anoncreds_object_identifier {
         pub struct $i(pub String);
 
         impl $i {
+            // TODO: This should be available only in tests (if at all)
             pub fn new_unchecked(s: impl Into<String>) -> Self {
                 Self(s.into())
             }
