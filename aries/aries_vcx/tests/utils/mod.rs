@@ -119,7 +119,7 @@ pub async fn create_and_write_credential(
     let encoded_attributes = encode_attributes(credential_data).unwrap();
 
     let offer = anoncreds_issuer
-        .issuer_create_credential_offer(wallet_issuer, &cred_def.get_cred_def_id())
+        .issuer_create_credential_offer(wallet_issuer, &cred_def.get_cred_def_id().try_into().unwrap())
         .await
         .unwrap();
     let (req, req_meta) = anoncreds_holder

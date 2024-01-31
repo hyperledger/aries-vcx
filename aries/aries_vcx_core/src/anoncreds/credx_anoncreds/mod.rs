@@ -6,18 +6,21 @@ use std::{
     sync::Arc,
 };
 
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::{schema::Schema, cred_def::CredentialDefinition}};
+use anoncreds_types::data_types::{
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    ledger::{cred_def::CredentialDefinition, schema::Schema},
+};
 use async_trait::async_trait;
 use credx::{
     anoncreds_clsignatures::{bn::BigNumber, LinkSecret as ClLinkSecret},
     tails::{TailsFileReader, TailsFileWriter},
     types::{
-        Credential as CredxCredential, CredentialDefinition as CredxCredentialDefinition, CredentialDefinitionId,
-        CredentialOffer, CredentialRequestMetadata, CredentialRevocationConfig,
-        CredentialRevocationState, IssuanceType, LinkSecret, PresentCredentials, Presentation,
-        PresentationRequest, RegistryType, RevocationRegistry, RevocationRegistryDefinition,
-        RevocationRegistryDelta, RevocationRegistryId, Schema as CredxSchema,
-        SchemaId as CredxSchemaId, SignatureType,
+        Credential as CredxCredential, CredentialDefinition as CredxCredentialDefinition,
+        CredentialDefinitionId as CredxCredentialDefinitionId, CredentialOffer,
+        CredentialRequestMetadata, CredentialRevocationConfig, CredentialRevocationState,
+        IssuanceType, LinkSecret, PresentCredentials, Presentation, PresentationRequest,
+        RegistryType, RevocationRegistry, RevocationRegistryDefinition, RevocationRegistryDelta,
+        RevocationRegistryId, Schema as CredxSchema, SchemaId as CredxSchemaId, SignatureType,
     },
 };
 use did_parser::Did;
@@ -249,7 +252,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         for (key, value) in schemas_ {
             schemas.insert(key, value.convert(())?);
         }
-        let cred_defs: HashMap<CredentialDefinitionId, CredxCredentialDefinition> =
+        let cred_defs: HashMap<CredxCredentialDefinitionId, CredxCredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
         let rev_reg_defs: Option<HashMap<RevocationRegistryId, RevocationRegistryDefinition>> =
@@ -294,7 +297,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         wallet: &impl BaseWallet,
         issuer_did: &Did,
-        cred_def_id: &str,
+        cred_def_id: &CredentialDefinitionId,
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
@@ -304,7 +307,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
         let cred_def =
-            Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, cred_def_id).await?;
+            Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, &cred_def_id.0).await?;
 
         let rev_reg_id = credx::issuer::make_revocation_registry_id(
             &issuer_did,
@@ -470,17 +473,17 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn issuer_create_credential_offer(
         &self,
         wallet: &impl BaseWallet,
-        cred_def_id: &str,
+        cred_def_id: &CredentialDefinitionId,
     ) -> VcxCoreResult<String> {
         let cred_def =
-            Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, cred_def_id).await?;
+            Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, &cred_def_id.0).await?;
 
         let correctness_proof =
-            Self::get_wallet_record_value(wallet, CATEGORY_CRED_KEY_CORRECTNESS_PROOF, cred_def_id)
+            Self::get_wallet_record_value(wallet, CATEGORY_CRED_KEY_CORRECTNESS_PROOF, &cred_def_id.0)
                 .await?;
 
         let schema = wallet
-            .get_record(CATEGORY_CRED_MAP_SCHEMA_ID, cred_def_id)
+            .get_record(CATEGORY_CRED_MAP_SCHEMA_ID, &cred_def_id.0)
             .await?;
 
         let schema_id = CredxSchemaId(schema.value().into());
@@ -649,7 +652,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             schemas.insert(key, value.convert(())?);
         }
 
-        let cred_defs: HashMap<CredentialDefinitionId, CredxCredentialDefinition> =
+        let cred_defs: HashMap<CredxCredentialDefinitionId, CredxCredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
         let mut present_credentials: PresentCredentials = PresentCredentials::new();

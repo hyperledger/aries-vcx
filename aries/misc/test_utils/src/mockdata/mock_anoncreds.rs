@@ -1,4 +1,4 @@
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::{schema::Schema, cred_def::CredentialDefinition}};
+use anoncreds_types::data_types::{identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId}, ledger::{schema::Schema, cred_def::CredentialDefinition}};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -39,7 +39,7 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         __wallet: &impl BaseWallet,
         _issuer_did: &Did,
-        _cred_def_id: &str,
+        _cred_def_id: &CredentialDefinitionId,
         _tails_dir: &str,
         _max_creds: u32,
         _tag: &str,
@@ -71,7 +71,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn issuer_create_credential_offer(
         &self,
         __wallet: &impl BaseWallet,
-        _cred_def_id: &str,
+        _cred_def_id: &CredentialDefinitionId,
     ) -> VcxCoreResult<String> {
         Ok(LIBINDY_CRED_OFFER.to_string())
     }

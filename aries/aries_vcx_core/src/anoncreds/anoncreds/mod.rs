@@ -5,7 +5,10 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use anoncreds::{
     cl::{Accumulator, RevocationRegistry as CryptoRevocationRegistry, RevocationRegistryDelta},
     data_types::{
-        cred_def::{CredentialDefinition as AnoncredsCredentialDefinition, CredentialDefinitionId, CL_SIGNATURE_TYPE},
+        cred_def::{
+            CredentialDefinition as AnoncredsCredentialDefinition,
+            CredentialDefinitionId as AnoncredsCredentialDefinitionId, CL_SIGNATURE_TYPE,
+        },
         credential::Credential,
         issuer_id::IssuerId,
         rev_reg_def::{RevocationRegistryDefinitionId, CL_ACCUM},
@@ -20,7 +23,10 @@ use anoncreds::{
         RevocationStatusList, SignatureType,
     },
 };
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::{schema::Schema, cred_def::CredentialDefinition}};
+use anoncreds_types::data_types::{
+    identifiers::schema_id::SchemaId,
+    ledger::{cred_def::CredentialDefinition, schema::Schema},
+};
 use async_trait::async_trait;
 use bitvec::bitvec;
 use did_parser::Did;
@@ -306,7 +312,8 @@ impl BaseAnonCreds for Anoncreds {
 
         let mut cred_defs_val: HashMap<CredentialDefinitionId, Value> =
             serde_json::from_str(credential_defs_json)?;
-        let mut cred_defs: HashMap<CredentialDefinitionId, AnoncredsCredentialDefinition> = HashMap::new();
+        let mut cred_defs: HashMap<CredentialDefinitionId, AnoncredsCredentialDefinition> =
+            HashMap::new();
         for (cred_def_id, cred_def_json) in cred_defs_val.iter_mut() {
             if let Some(v) = cred_def_json.as_object_mut() {
                 v.insert(
@@ -603,7 +610,7 @@ impl BaseAnonCreds for Anoncreds {
     async fn issuer_create_credential_offer(
         &self,
         wallet: &impl BaseWallet,
-        cred_def_id: &str,
+        cred_def_id: &CredentialDefinitionId,
     ) -> VcxCoreResult<String> {
         let correctness_proof = self
             .get_wallet_record_value(wallet, CATEGORY_CRED_KEY_CORRECTNESS_PROOF, cred_def_id)
@@ -810,9 +817,10 @@ impl BaseAnonCreds for Anoncreds {
             let schema: Schema = serde_json::from_value(schema_json.clone())?;
             schemas.insert(schema_id.clone(), schema.convert(())?);
         }
-        let mut cred_defs_val: HashMap<CredentialDefinitionId, Value> =
+        let mut cred_defs_val: HashMap<AnoncredsCredentialDefinitionId, Value> =
             serde_json::from_str(credential_defs_json)?;
-        let mut cred_defs: HashMap<CredentialDefinitionId, AnoncredsCredentialDefinition> = HashMap::new();
+        let mut cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
+            HashMap::new();
         for (cred_def_id, cred_def_json) in cred_defs_val.iter_mut() {
             cred_def_json.as_object_mut().map(|v| {
                 v.insert(
@@ -1088,7 +1096,8 @@ impl BaseAnonCreds for Anoncreds {
             "issuerId".to_owned(),
             cred_def_id.split(':').next().unwrap().into(),
         );
-        let cred_def: AnoncredsCredentialDefinition = serde_json::from_str(&cred_def_json.to_string())?;
+        let cred_def: AnoncredsCredentialDefinition =
+            serde_json::from_str(&cred_def_json.to_string())?;
         let credential_offer: CredentialOffer = serde_json::from_str(cred_offer_json)?;
         let link_secret = self.get_link_secret(wallet, master_secret_id).await?;
 
@@ -1214,7 +1223,8 @@ impl BaseAnonCreds for Anoncreds {
             .as_object_mut()
             .unwrap()
             .insert("issuerId".to_owned(), issuer_id.clone().into());
-        let cred_def: AnoncredsCredentialDefinition = serde_json::from_str(&cred_def_json.to_string())?;
+        let cred_def: AnoncredsCredentialDefinition =
+            serde_json::from_str(&cred_def_json.to_string())?;
         let rev_reg_def: Option<RevocationRegistryDefinition> =
             if let Some(rev_reg_def_json) = rev_reg_def_json {
                 let mut rev_reg_def_json: Value = serde_json::from_str(rev_reg_def_json)?;

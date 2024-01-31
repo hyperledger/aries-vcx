@@ -328,7 +328,7 @@ pub async fn generate_rev_reg(
         .issuer_create_and_store_revoc_reg(
             wallet,
             issuer_did,
-            cred_def_id,
+            &cred_def_id.try_into()?,
             tails_dir,
             max_creds,
             tag,
