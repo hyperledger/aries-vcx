@@ -110,7 +110,7 @@ impl AnoncredsLedgerRead for MockLedger {
         schema_id: &SchemaId,
         submitter_did: Option<&Did>,
     ) -> VcxCoreResult<Schema> {
-        Ok(serde_json::from_str(&SCHEMA_JSON)?)
+        Ok(serde_json::from_str(SCHEMA_JSON)?)
     }
 
     async fn get_cred_def(

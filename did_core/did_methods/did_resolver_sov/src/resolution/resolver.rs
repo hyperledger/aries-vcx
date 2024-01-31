@@ -84,7 +84,7 @@ where
             .get_attr(parsed_did, "endpoint")
             .await?;
         let verkey = self.get_verkey(parsed_did).await?;
-        ledger_response_to_ddo(&parsed_did.did(), &ledger_response, verkey)
+        ledger_response_to_ddo(parsed_did.did(), &ledger_response, verkey)
             .await
             .map_err(|err| err.into())
     }

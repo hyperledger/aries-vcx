@@ -69,7 +69,7 @@ impl Convert for &OurSchemaId {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
-        let parts = self.0.split(":").collect::<Vec<_>>();
+        let parts = self.0.split(':').collect::<Vec<_>>();
         let (_method, did, name, version) = if parts.len() == 4 {
             // NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0
             let did = parts[0].to_string();

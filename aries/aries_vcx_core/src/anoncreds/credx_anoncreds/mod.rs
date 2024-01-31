@@ -391,7 +391,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .unwrap_or(Ok(SignatureType::CL))?;
         let config = serde_json::from_str(config_json)?;
 
-        let schema_seq_no = schema_json.seq_no.clone();
+        let schema_seq_no = schema_json.seq_no;
         let schema = schema_json.clone().convert(())?;
 
         let cred_def_id = credx::issuer::make_credential_definition_id(

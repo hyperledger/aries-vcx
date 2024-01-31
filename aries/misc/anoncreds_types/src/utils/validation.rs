@@ -35,7 +35,7 @@ pub fn is_uri_identifier(id: &str) -> bool {
 macro_rules! invalid {
     () => { $crate::error::ValidationError::from(None).into() };
     ($($arg:tt)+) => {
-        Into::<crate::error::Error>::into($crate::error::ValidationError::from(format!($($arg)+)))
+        Into::<$crate::error::Error>::into($crate::error::ValidationError::from(format!($($arg)+)))
     };
 }
 
