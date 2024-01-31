@@ -1,4 +1,4 @@
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::{schema::Schema, cred_def::CredentialDefinition}};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -60,7 +60,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _tag: &str,
         _signature_type: Option<&str>,
         _config_json: &str,
-    ) -> VcxCoreResult<(String, String)> {
+    ) -> VcxCoreResult<CredentialDefinition> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,

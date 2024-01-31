@@ -261,7 +261,7 @@ pub async fn generate_cred_def(
     let config_json =
         json!({"support_revocation": support_revocation.unwrap_or(false)}).to_string();
 
-    anoncreds
+    let cred_def = anoncreds
         .issuer_create_and_store_credential_def(
             wallet,
             issuer_did,
@@ -271,6 +271,6 @@ pub async fn generate_cred_def(
             sig_type,
             &config_json,
         )
-        .await
-        .map_err(|err| err.into())
+        .await?;
+    Ok((cred_def.id.to_string(), serde_json::to_string(&cred_def)?))
 }

@@ -1,4 +1,4 @@
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::{schema::Schema, cred_def::CredentialDefinition}};
 use async_trait::async_trait;
 use did_parser::Did;
 
@@ -39,7 +39,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         tag: &str,
         signature_type: Option<&str>,
         config_json: &str,
-    ) -> VcxCoreResult<(String, String)>;
+    ) -> VcxCoreResult<CredentialDefinition>;
 
     async fn issuer_create_credential_offer(
         &self,

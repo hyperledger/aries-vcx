@@ -6,13 +6,13 @@ use std::{
     sync::Arc,
 };
 
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::{schema::Schema, cred_def::CredentialDefinition}};
 use async_trait::async_trait;
 use credx::{
     anoncreds_clsignatures::{bn::BigNumber, LinkSecret as ClLinkSecret},
     tails::{TailsFileReader, TailsFileWriter},
     types::{
-        Credential as CredxCredential, CredentialDefinition, CredentialDefinitionId,
+        Credential as CredxCredential, CredentialDefinition as CredxCredentialDefinition, CredentialDefinitionId,
         CredentialOffer, CredentialRequestMetadata, CredentialRevocationConfig,
         CredentialRevocationState, IssuanceType, LinkSecret, PresentCredentials, Presentation,
         PresentationRequest, RegistryType, RevocationRegistry, RevocationRegistryDefinition,
@@ -249,7 +249,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         for (key, value) in schemas_ {
             schemas.insert(key, value.convert(())?);
         }
-        let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
+        let cred_defs: HashMap<CredentialDefinitionId, CredxCredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
         let rev_reg_defs: Option<HashMap<RevocationRegistryId, RevocationRegistryDefinition>> =
@@ -384,7 +384,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         tag: &str,
         sig_type: Option<&str>,
         config_json: &str,
-    ) -> VcxCoreResult<(String, String)> {
+    ) -> VcxCoreResult<CredentialDefinition> {
         let issuer_did = issuer_did.to_owned();
         let sig_type = sig_type
             .map(serde_json::from_str)
@@ -406,7 +406,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         if let Ok(cred_def) =
             Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, &cred_def_id.0).await
         {
-            return Ok((cred_def_id.0, cred_def));
+            // TODO: Perform conversion
+            return Ok(cred_def);
         }
 
         // Otherwise, create cred def
@@ -463,8 +464,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .build();
         wallet.add_record(record).await?;
 
-        // Return the ID and the cred def
-        Ok((cred_def_id.0.to_owned(), str_cred_def))
+        Ok(cred_def.convert((issuer_did.to_string(),))?)
     }
 
     async fn issuer_create_credential_offer(
@@ -649,7 +649,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             schemas.insert(key, value.convert(())?);
         }
 
-        let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
+        let cred_defs: HashMap<CredentialDefinitionId, CredxCredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
         let mut present_credentials: PresentCredentials = PresentCredentials::new();
@@ -913,7 +913,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         link_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
         let prover_did = prover_did.convert(())?;
-        let cred_def: CredentialDefinition = serde_json::from_str(credential_def_json)?;
+        let cred_def: CredxCredentialDefinition = serde_json::from_str(credential_def_json)?;
         let credential_offer: CredentialOffer = serde_json::from_str(credential_offer_json)?;
         let link_secret = Self::get_link_secret(wallet, link_secret_id).await?;
 
@@ -986,7 +986,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let cred_request_metadata: CredentialRequestMetadata = serde_json::from_str(cred_req_meta)?;
         let link_secret_id = &cred_request_metadata.master_secret_name;
         let link_secret = Self::get_link_secret(wallet, link_secret_id).await?;
-        let cred_def: CredentialDefinition = serde_json::from_str(cred_def_json)?;
+        let cred_def: CredxCredentialDefinition = serde_json::from_str(cred_def_json)?;
         let rev_reg_def: Option<RevocationRegistryDefinition> =
             if let Some(rev_reg_def_json) = rev_reg_def_json {
                 serde_json::from_str(rev_reg_def_json)?
