@@ -86,3 +86,11 @@ impl From<(GenericDidExchange, AriesVcxError)> for AgentError {
         AgentError { message, kind }
     }
 }
+
+impl From<anoncreds_types::Error> for AgentError {
+    fn from(err: anoncreds_types::Error) -> Self {
+        let kind = AgentErrorKind::GenericAriesVcxError;
+        let message = format!("AnoncredsTypesError; err: {:?}", err.to_string());
+        AgentError { message, kind }
+    }
+}

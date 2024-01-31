@@ -83,7 +83,7 @@ pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
 }
 
 pub fn get_schema_id(handle: u32) -> LibvcxResult<String> {
-    SCHEMA_MAP.get(handle, |s| Ok(s.get_schema_id()))
+    SCHEMA_MAP.get(handle, |s| Ok(s.get_schema_id().to_string()))
 }
 
 pub fn from_string(schema_data: &str) -> LibvcxResult<u32> {

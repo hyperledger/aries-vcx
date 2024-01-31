@@ -382,6 +382,7 @@ checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
 name = "aries-vcx-agent"
 version = "0.61.0"
 dependencies = [
+ "anoncreds_types",
  "aries_vcx",
  "aries_vcx_core",
  "async-trait",
@@ -2829,6 +2830,7 @@ name = "libvcx_core"
 version = "0.61.0"
 dependencies = [
  "agency_client",
+ "anoncreds_types",
  "aries_vcx",
  "aries_vcx_core",
  "async-trait",
@@ -5154,6 +5156,7 @@ dependencies = [
  "android_logger",
  "aries_vcx",
  "async-trait",
+ "did_parser",
  "diddoc_legacy",
  "log",
  "once_cell",

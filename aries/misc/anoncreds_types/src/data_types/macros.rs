@@ -89,6 +89,7 @@ macro_rules! impl_anoncreds_object_identifier {
             }
         }
 
+        // TODO: Only TryFrom<String> should be implemented, TryFrom<&str> & FromStr should not hide cloning
         impl TryFrom<&str> for $i {
             type Error = Error;
 

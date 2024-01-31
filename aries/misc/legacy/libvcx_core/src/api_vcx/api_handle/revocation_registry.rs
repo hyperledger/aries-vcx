@@ -34,7 +34,7 @@ pub async fn create(config: RevocationRegistryConfig) -> LibvcxResult<u32> {
     let rev_reg = RevocationRegistry::create(
         get_main_wallet()?.as_ref(),
         get_main_anoncreds()?.as_ref(),
-        &issuer_did,
+        &issuer_did.to_string().parse()?,
         &cred_def_id,
         &tails_dir,
         max_creds,
@@ -65,7 +65,7 @@ pub async fn publish_revocations(handle: u32, submitter_did: &str) -> LibvcxResu
             get_main_wallet()?.as_ref(),
             get_main_anoncreds()?.as_ref(),
             get_main_ledger_write()?.as_ref(),
-            submitter_did,
+            &submitter_did.to_string().parse()?,
         )
         .await?;
 

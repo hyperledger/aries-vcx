@@ -128,7 +128,7 @@ impl ServiceCredentialsHolder {
                 self.wallet.as_ref(),
                 self.ledger_read.as_ref(),
                 &self.anoncreds,
-                pw_did,
+                pw_did.parse()?
             )
             .await?;
         send_closure(msg_response).await?;

@@ -57,7 +57,7 @@ impl ServiceSchemas {
             attributes,
         )
         .await?;
-        self.schemas.insert(&schema.get_schema_id(), schema)
+        self.schemas.insert(&schema.get_schema_id().to_string(), schema)
     }
 
     pub async fn publish_schema(&self, thread_id: &str) -> AgentResult<()> {
@@ -72,7 +72,7 @@ impl ServiceSchemas {
     pub async fn schema_json(&self, thread_id: &str) -> AgentResult<String> {
         let ledger = self.ledger_read.as_ref();
         Ok(serde_json::to_string(
-            &ledger.get_schema(thread_id, None).await?,
+            &ledger.get_schema(&thread_id.to_string().try_into()?, None).await?,
         )?)
     }
 

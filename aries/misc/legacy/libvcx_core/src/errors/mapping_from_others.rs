@@ -22,6 +22,11 @@ impl From<PublicKeyError> for LibvcxError {
     }
 }
 
+impl From<anoncreds_types::Error> for LibvcxError {
+    fn from(err: anoncreds_types::Error) -> Self {
+        LibvcxError::from_msg(LibvcxErrorKind::ParsingError, err.to_string())
+    }
+}
 impl From<did_parser::ParseError> for LibvcxError {
     fn from(err: did_parser::ParseError) -> Self {
         LibvcxError::from_msg(LibvcxErrorKind::InvalidDid, err.to_string())

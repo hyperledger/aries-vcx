@@ -25,6 +25,7 @@ serde_derive = "1.0.97"
 futures = { version = "0.3", default-features = false }
 aries_vcx = { path = "../../../aries_vcx", features = ["credx", "vdrtools_wallet"] }
 aries_vcx_core = { path = "../../../aries_vcx_core" }
+anoncreds_types = { path = "../../../../aries/misc/anoncreds_types" }
 diddoc_legacy = { path = "../diddoc_legacy" }
 public_key = { path = "../../../../did_core/public_key" }
 did_parser = { path = "../../../../did_core/did_parser" }

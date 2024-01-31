@@ -30,7 +30,7 @@ pub async fn endorse_transaction(transaction: &str, endorser_did: &str) -> Libvc
     let ledger = get_main_ledger_write()?;
     map_ariesvcx_core_result(
         ledger
-            .endorse_transaction(wallet.as_ref(), &endorser_did.clone().parse()?, transaction)
+            .endorse_transaction(wallet.as_ref(), &endorser_did.parse()?, transaction)
             .await,
     )
 }
@@ -39,7 +39,7 @@ pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> Libvc
     let ledger = get_main_ledger_read()?;
     map_ariesvcx_core_result(
         ledger
-            .get_ledger_txn(seq_no, submitter_did.map(|did| did.parse::<Did>()).transpose()?.as_deref())
+            .get_ledger_txn(seq_no, submitter_did.map(|did| did.parse::<Did>()).transpose()?.as_ref())
             .await,
     )
 }
@@ -48,7 +48,7 @@ pub async fn rotate_verkey(did: &str) -> LibvcxResult<()> {
     let result = aries_vcx::common::keys::rotate_verkey(
         get_main_wallet()?.as_ref(),
         get_main_ledger_write()?.as_ref(),
-        did.parse()?,
+        &did.to_owned().parse()?,
     )
     .await;
     map_ariesvcx_result(result)
@@ -104,7 +104,7 @@ pub async fn ledger_write_endpoint(
     write_endpoint(
         wallet.as_ref(),
         get_main_ledger_write()?.as_ref(),
-        target_did,
+        &target_did.parse()?,
         &service,
     )
     .await?;
@@ -113,11 +113,11 @@ pub async fn ledger_write_endpoint(
 
 pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> {
     let target_did = target_did.to_owned();
-    map_ariesvcx_result(get_service(get_main_ledger_read()?.as_ref(), &target_did).await)
+    map_ariesvcx_result(get_service(get_main_ledger_read()?.as_ref(), &target_did.parse()?).await)
 }
 
 pub async fn ledger_get_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
-    map_ariesvcx_result(get_attr(get_main_ledger_read()?.as_ref(), target_did, attr).await)
+    map_ariesvcx_result(get_attr(get_main_ledger_read()?.as_ref(), &target_did.parse()?, attr).await)
 }
 
 pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
@@ -126,7 +126,7 @@ pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<Str
         clear_attr(
             wallet.as_ref(),
             get_main_ledger_write()?.as_ref(),
-            target_did,
+            &target_did.parse()?,
             attr,
         )
         .await,
@@ -144,8 +144,8 @@ pub async fn ledger_write_endorser_did(
         write_endorser_did(
             wallet.as_ref(),
             get_main_ledger_write()?.as_ref(),
-            submitter_did,
-            target_did,
+            &submitter_did.parse()?,
+            &target_did.parse()?,
             target_vk,
             alias,
         )

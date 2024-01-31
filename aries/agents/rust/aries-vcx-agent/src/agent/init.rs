@@ -134,7 +134,7 @@ impl Agent {
             wallet.clone(),
             did_resolver_registry,
             init_config.service_endpoint.clone(),
-            public_did,
+            public_did.to_string(),
         ));
         let out_of_band = Arc::new(ServiceOutOfBand::new(
             wallet.clone(),

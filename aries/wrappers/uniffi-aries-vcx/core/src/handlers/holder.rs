@@ -85,7 +85,7 @@ impl Holder {
                     profile.inner.wallet(),
                     profile.inner.ledger_read(),
                     profile.inner.anoncreds(),
-                    my_pw_did,
+                    my_pw_did.parse()?,
                 )
                 .await?;
             *handler = holder;

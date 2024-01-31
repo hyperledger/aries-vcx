@@ -27,6 +27,7 @@ thiserror = "1.0.38"
 serde_json = "1.0.91"
 serde = { version = "1.0.188", features = ["derive"] }
 async-trait = "0.1.64"
+did_parser = { path = "../../../../did_core/did_parser" }
 diddoc_legacy = { path = "../../../misc/legacy/diddoc_legacy" }
 shared = { path = "../../../misc/shared" }
 url = "2.3.1"
