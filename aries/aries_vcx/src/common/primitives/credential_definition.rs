@@ -265,7 +265,7 @@ pub async fn generate_cred_def(
         .issuer_create_and_store_credential_def(
             wallet,
             issuer_did,
-            &schema_id.to_string(),
+            schema_id,
             schema_json,
             tag,
             sig_type,

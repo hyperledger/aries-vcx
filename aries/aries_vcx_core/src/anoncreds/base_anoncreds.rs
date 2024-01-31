@@ -1,4 +1,4 @@
-use anoncreds_types::data_types::ledger::schema::Schema;
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use async_trait::async_trait;
 use did_parser::Did;
 
@@ -34,7 +34,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         wallet: &impl BaseWallet,
         issuer_did: &Did,
-        schema_id: &str,
+        schema_id: &SchemaId,
         schema_json: Schema,
         tag: &str,
         signature_type: Option<&str>,

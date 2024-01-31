@@ -1,4 +1,4 @@
-use anoncreds_types::data_types::ledger::schema::Schema;
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -55,7 +55,7 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         __wallet: &impl BaseWallet,
         _issuer_did: &Did,
-        _schema_id: &str,
+        _schema_id: &SchemaId,
         _schema_json: Schema,
         _tag: &str,
         _signature_type: Option<&str>,

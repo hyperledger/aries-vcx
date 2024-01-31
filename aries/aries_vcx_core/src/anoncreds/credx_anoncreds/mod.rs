@@ -6,7 +6,7 @@ use std::{
     sync::Arc,
 };
 
-use anoncreds_types::data_types::ledger::schema::Schema;
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use async_trait::async_trait;
 use credx::{
     anoncreds_clsignatures::{bn::BigNumber, LinkSecret as ClLinkSecret},
@@ -16,8 +16,8 @@ use credx::{
         CredentialOffer, CredentialRequestMetadata, CredentialRevocationConfig,
         CredentialRevocationState, IssuanceType, LinkSecret, PresentCredentials, Presentation,
         PresentationRequest, RegistryType, RevocationRegistry, RevocationRegistryDefinition,
-        RevocationRegistryDelta, RevocationRegistryId, Schema as CredxSchema, SchemaId,
-        SignatureType,
+        RevocationRegistryDelta, RevocationRegistryId, Schema as CredxSchema,
+        SchemaId as CredxSchemaId, SignatureType,
     },
 };
 use did_parser::Did;
@@ -244,8 +244,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
 
-        let schemas_: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<SchemaId, CredxSchema> = HashMap::new();
+        let schemas_: HashMap<CredxSchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let mut schemas: HashMap<CredxSchemaId, CredxSchema> = HashMap::new();
         for (key, value) in schemas_ {
             schemas.insert(key, value.convert(())?);
         }
@@ -379,7 +379,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         wallet: &impl BaseWallet,
         issuer_did: &Did,
-        _schema_id: &str,
+        _schema_id: &SchemaId,
         schema_json: Schema,
         tag: &str,
         sig_type: Option<&str>,
@@ -483,7 +483,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .get_record(CATEGORY_CRED_MAP_SCHEMA_ID, cred_def_id)
             .await?;
 
-        let schema_id = SchemaId(schema.value().into());
+        let schema_id = CredxSchemaId(schema.value().into());
 
         // If cred_def contains schema ID, why take it as an argument here...?
         let offer =
@@ -643,8 +643,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             None
         };
 
-        let schemas_: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<SchemaId, CredxSchema> = HashMap::new();
+        let schemas_: HashMap<CredxSchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let mut schemas: HashMap<CredxSchemaId, CredxSchema> = HashMap::new();
         for (key, value) in schemas_ {
             schemas.insert(key, value.convert(())?);
         }

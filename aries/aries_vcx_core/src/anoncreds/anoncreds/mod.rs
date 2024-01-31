@@ -9,7 +9,7 @@ use anoncreds::{
         credential::Credential,
         issuer_id::IssuerId,
         rev_reg_def::{RevocationRegistryDefinitionId, CL_ACCUM},
-        schema::{Schema as AnoncredsSchema, SchemaId},
+        schema::{Schema as AnoncredsSchema, SchemaId as AnoncredsSchemaId},
     },
     issuer::{create_revocation_registry_def, create_revocation_status_list},
     tails::TailsFileWriter,
@@ -20,7 +20,7 @@ use anoncreds::{
         RevocationStatusList, SignatureType,
     },
 };
-use anoncreds_types::data_types::ledger::schema::Schema;
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use async_trait::async_trait;
 use bitvec::bitvec;
 use did_parser::Did;
@@ -290,8 +290,9 @@ impl BaseAnonCreds for Anoncreds {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_request_json)?;
 
-        let mut schemas_val: HashMap<SchemaId, Value> = serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<SchemaId, AnoncredsSchema> = HashMap::new();
+        let mut schemas_val: HashMap<AnoncredsSchemaId, Value> =
+            serde_json::from_str(schemas_json)?;
+        let mut schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = HashMap::new();
         for (schema_id, schema_json) in schemas_val.iter_mut() {
             if let Some(v) = schema_json.as_object_mut() {
                 v.insert(
@@ -510,7 +511,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         issuer_did: &Did,
-        schema_id: &str,
+        schema_id: &SchemaId,
         schema_json: Schema,
         tag: &str,
         signature_type: Option<&str>,
@@ -536,7 +537,7 @@ impl BaseAnonCreds for Anoncreds {
         let (cred_def, cred_def_priv, cred_key_correctness_proof) =
             anoncreds::issuer::create_credential_definition(
                 // Schema ID must be just the schema seq no for some reason
-                SchemaId::new_unchecked(schema_json.seq_no.unwrap().to_string()),
+                AnoncredsSchemaId::new_unchecked(schema_json.seq_no.unwrap().to_string()),
                 // SchemaId::new(schema_id).unwrap(),
                 &schema_json.clone().convert(())?,
                 schema_json.issuer_id.clone().convert(())?,
@@ -613,7 +614,7 @@ impl BaseAnonCreds for Anoncreds {
             .await?;
 
         let offer = anoncreds::issuer::create_credential_offer(
-            SchemaId::new(schema_id_value["schemaId"].as_str().unwrap()).unwrap(),
+            AnoncredsSchemaId::new(schema_id_value["schemaId"].as_str().unwrap()).unwrap(),
             CredentialDefinitionId::new(cred_def_id).unwrap(),
             &correctness_proof,
         )?;
@@ -796,8 +797,9 @@ impl BaseAnonCreds for Anoncreds {
             None
         };
 
-        let mut schemas_val: HashMap<SchemaId, Value> = serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<SchemaId, AnoncredsSchema> = HashMap::new();
+        let mut schemas_val: HashMap<AnoncredsSchemaId, Value> =
+            serde_json::from_str(schemas_json)?;
+        let mut schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = HashMap::new();
         for (schema_id, schema_json) in schemas_val.iter_mut() {
             schema_json.as_object_mut().map(|v| {
                 v.insert(
@@ -1591,7 +1593,7 @@ pub fn make_schema_id(did: &Did, name: &str, version: &str) -> SchemaId {
 
 pub fn make_credential_definition_id(
     origin_did: &Did,
-    schema_id: &str,
+    schema_id: &SchemaId,
     schema_seq_no: Option<u32>,
     tag: &str,
     signature_type: SignatureType,
