@@ -69,12 +69,12 @@ async fn create_and_store_nonrevocable_credential_def(
 
     tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
-    let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await?;
+    let cred_def_json = ledger_read.get_cred_def(&cred_def_id.to_owned().try_into()?, None).await?;
     Ok((
         schema.schema_id.to_string(),
         serde_json::to_string(&schema.schema_json)?,
         cred_def_id,
-        cred_def_json,
+        serde_json::to_string(&cred_def_json)?,
         cred_def,
     ))
 }
@@ -382,10 +382,10 @@ async fn test_agency_pool_get_credential_def() -> Result<(), Box<dyn Error>> {
     .await?;
 
     let ledger = &setup.ledger_read;
-    let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await?;
+    let r_cred_def_json = ledger.get_cred_def(&cred_def_id.try_into()?, None).await?;
 
     let def1: serde_json::Value = serde_json::from_str(&cred_def_json)?;
-    let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json)?;
+    let def2 = serde_json::to_value(&r_cred_def_json)?;
     assert_eq!(def1, def2);
     Ok(())
 }

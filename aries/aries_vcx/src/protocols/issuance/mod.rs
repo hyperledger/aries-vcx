@@ -10,7 +10,7 @@ pub async fn is_cred_def_revokable(
     cred_def_id: &str,
 ) -> VcxResult<bool> {
     let cred_def_json = ledger
-        .get_cred_def(cred_def_id, None)
+        .get_cred_def(&cred_def_id.to_string().try_into()?, None)
         .await
         .map_err(|err| {
             AriesVcxError::from_msg(
@@ -21,15 +21,14 @@ pub async fn is_cred_def_revokable(
                 ),
             )
         })?;
-    let parsed_cred_def: serde_json::Value =
-        serde_json::from_str(&cred_def_json).map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::SerializationError,
-                format!(
-                    "Failed deserialize credential definition json {}\nError: {}",
-                    cred_def_json, err
-                ),
-            )
-        })?;
+    let parsed_cred_def = serde_json::to_value(&cred_def_json).map_err(|err| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
+            format!(
+                "Failed deserialize credential definition json {:?}\nError: {}",
+                cred_def_json, err
+            ),
+        )
+    })?;
     Ok(!parsed_cred_def["value"]["revocation"].is_null())
 }

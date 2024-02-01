@@ -83,8 +83,8 @@ async fn _try_get_cred_def_from_ledger(
     issuer_did: &Did,
     cred_def_id: &str,
 ) -> VcxResult<Option<String>> {
-    match ledger.get_cred_def(cred_def_id, Some(issuer_did)).await {
-        Ok(cred_def) => Ok(Some(cred_def)),
+    match ledger.get_cred_def(&cred_def_id.to_string().try_into()?, Some(issuer_did)).await {
+        Ok(cred_def) => Ok(Some(serde_json::to_string(&cred_def)?)),
         Err(err) if err.kind() == AriesVcxCoreErrorKind::LedgerItemNotFound => Ok(None),
         Err(err) => Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidLedgerResponse,
@@ -226,7 +226,7 @@ impl CredentialDef {
     }
 
     pub async fn update_state(&mut self, ledger: &impl AnoncredsLedgerRead) -> VcxResult<u32> {
-        if (ledger.get_cred_def(&self.id, None).await).is_ok() {
+        if (ledger.get_cred_def(&self.id.to_string().try_into()?, None).await).is_ok() {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)

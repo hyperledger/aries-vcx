@@ -50,11 +50,11 @@ async fn test_pool_create_cred_def_real() -> Result<(), Box<dyn Error>> {
     std::thread::sleep(std::time::Duration::from_secs(2));
 
     let cred_def_json_ledger = ledger_read
-        .get_cred_def(&cred_def_id, Some(&setup.institution_did))
+        .get_cred_def(&cred_def_id.to_owned().try_into()?, Some(&setup.institution_did))
         .await?;
 
     assert!(cred_def_json_local.contains(&cred_def_id));
-    assert!(cred_def_json_ledger.contains(&cred_def_id));
+    assert!(serde_json::to_string(&cred_def_json_ledger)?.contains(&cred_def_id));
     Ok(())
 }
 

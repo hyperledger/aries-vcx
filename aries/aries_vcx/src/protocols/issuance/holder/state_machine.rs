@@ -589,7 +589,7 @@ pub async fn create_anoncreds_credential_request(
     prover_did: &Did,
     cred_offer: &str,
 ) -> VcxResult<(String, String, String, String)> {
-    let cred_def_json = ledger.get_cred_def(cred_def_id, None).await?;
+    let cred_def_json = ledger.get_cred_def(&cred_def_id.to_string().try_into()?, None).await?;
 
     let master_secret_id = settings::DEFAULT_LINK_SECRET_ALIAS;
     anoncreds
@@ -597,7 +597,7 @@ pub async fn create_anoncreds_credential_request(
             wallet,
             prover_did,
             cred_offer,
-            &cred_def_json,
+            &serde_json::to_string(&cred_def_json)?,
             master_secret_id,
         )
         .await
@@ -607,7 +607,7 @@ pub async fn create_anoncreds_credential_request(
                 format!("Cannot create credential request; {}", err),
             )
         })
-        .map(|(s1, s2)| (s1, s2, cred_def_id.to_string(), cred_def_json))
+        .map(|(s1, s2)| (s1, s2, cred_def_id.to_string(), serde_json::to_string(&cred_def_json).unwrap()))
 }
 
 async fn build_credential_request_msg(

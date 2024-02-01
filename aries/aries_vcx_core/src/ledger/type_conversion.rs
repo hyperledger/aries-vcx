@@ -1,13 +1,23 @@
 use anoncreds_types::data_types::{
-    identifiers::{issuer_id::IssuerId, schema_id::SchemaId as OurSchemaId},
-    ledger::schema::Schema as OurSchema,
+    identifiers::{
+        cred_def_id::CredentialDefinitionId as OurCredentialDefinitionId, issuer_id::IssuerId,
+        schema_id::SchemaId as OurSchemaId,
+    },
+    ledger::{
+        cred_def::{
+            CredentialDefinition as OurCredentialDefinition, CredentialDefinitionData,
+            SignatureType,
+        },
+        schema::Schema as OurSchema,
+    },
 };
 use did_parser::Did;
 use indy_vdr::{
     ledger::{
         identifiers::SchemaId as IndyVdrSchemaId,
-        requests::schema::{
-            AttributeNames as IndyVdrAttributeNames, Schema as IndyVdrSchema, SchemaV1,
+        requests::{
+            cred_def::CredentialDefinition as IndyVdrCredentialDefinition,
+            schema::{AttributeNames as IndyVdrAttributeNames, Schema as IndyVdrSchema, SchemaV1},
         },
     },
     utils::did::DidValue,
@@ -98,5 +108,38 @@ impl Convert for &Did {
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(DidValue::new(&self.to_string(), None))
+    }
+}
+
+impl Convert for IndyVdrCredentialDefinition {
+    type Args = ();
+    type Target = OurCredentialDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            IndyVdrCredentialDefinition::CredentialDefinitionV1(cred_def) => {
+                if let Some((_method, issuer_id, _sig_type, _schema_id, _tag)) = cred_def.id.parts()
+                {
+                    Ok(OurCredentialDefinition {
+                        id: OurCredentialDefinitionId::new(cred_def.id.to_string())?,
+                        schema_id: OurSchemaId::new_unchecked(cred_def.schema_id.to_string()),
+                        signature_type: SignatureType::CL,
+                        tag: cred_def.tag,
+                        value: CredentialDefinitionData {
+                            primary: serde_json::from_value(cred_def.value.primary)?,
+                            revocation: cred_def
+                                .value
+                                .revocation
+                                .map(serde_json::from_value)
+                                .transpose()?,
+                        },
+                        issuer_id: IssuerId::new(issuer_id.to_string())?,
+                    })
+                } else {
+                    todo!()
+                }
+            }
+        }
     }
 }

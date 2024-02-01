@@ -103,9 +103,9 @@ pub async fn build_cred_defs_json_verifier(
     for cred_info in credential_data.iter() {
         if credential_json.get(&cred_info.cred_def_id).is_none() {
             let cred_def_id = &cred_info.cred_def_id;
-            let credential_def = ledger.get_cred_def(cred_def_id, None).await?;
+            let credential_def = ledger.get_cred_def(&cred_def_id.to_string().try_into()?, None).await?;
 
-            let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
+            let credential_def = serde_json::to_value(&credential_def).map_err(|err| {
                 AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidProofCredentialData,
                     format!("Cannot deserialize credential definition: {}", err),

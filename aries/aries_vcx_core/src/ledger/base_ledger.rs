@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
+use anoncreds_types::data_types::{identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId}, ledger::{schema::Schema, cred_def::CredentialDefinition}};
 use async_trait::async_trait;
 use did_parser::Did;
 use indy_vdr::ledger::constants::UpdateRole;
@@ -70,9 +70,9 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
     ) -> VcxCoreResult<Schema>;
     async fn get_cred_def(
         &self,
-        cred_def_id: &str,
+        cred_def_id: &CredentialDefinitionId,
         submitter_did: Option<&Did>,
-    ) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<CredentialDefinition>;
     async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String>;
     async fn get_rev_reg_delta_json(
         &self,

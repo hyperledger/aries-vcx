@@ -4,7 +4,10 @@ use std::{
     sync::RwLock,
 };
 
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
+use anoncreds_types::data_types::{
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    ledger::{cred_def::CredentialDefinition, schema::Schema},
+};
 use async_trait::async_trait;
 use did_parser::Did;
 pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
@@ -17,9 +20,11 @@ use time::OffsetDateTime;
 use vdr::{
     config::PoolConfig,
     ledger::{
-        identifiers::{CredentialDefinitionId, RevocationRegistryId},
+        identifiers::{
+            CredentialDefinitionId as IndyVdrCredentialDefinitionId, RevocationRegistryId,
+        },
         requests::{
-            cred_def::{CredentialDefinition, CredentialDefinitionV1},
+            cred_def::{CredentialDefinition as IndyVdrCredentialDefinition, CredentialDefinitionV1},
             rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
             rev_reg_def::{
                 RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1,
@@ -459,12 +464,12 @@ where
 
     async fn get_cred_def(
         &self,
-        cred_def_id: &str,
+        cred_def_id: &CredentialDefinitionId,
         submitter_did: Option<&Did>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<CredentialDefinition> {
         debug!("get_cred_def >> cred_def_id: {cred_def_id}");
         let identifier = submitter_did.map(|did| did.convert(())).transpose()?;
-        let id = CredentialDefinitionId::from_str(cred_def_id)?;
+        let id = IndyVdrCredentialDefinitionId::from_str(&cred_def_id.to_string())?;
         let request = self
             .request_builder()?
             .build_get_cred_def_request(identifier.as_ref(), &id)?;
@@ -479,7 +484,7 @@ where
         let cred_def = self
             .response_parser
             .parse_get_cred_def_response(&response, None)?;
-        Ok(serde_json::to_string(&cred_def)?)
+        Ok(cred_def.convert(())?)
     }
 
     async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
@@ -615,7 +620,7 @@ where
         let cred_def_data: CredentialDefinitionV1 = serde_json::from_str(cred_def_json)?;
         let request = self.request_builder()?.build_cred_def_request(
             &identifier,
-            CredentialDefinition::CredentialDefinitionV1(cred_def_data),
+            IndyVdrCredentialDefinition::CredentialDefinitionV1(cred_def_data),
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(wallet, submitter_did, request)
