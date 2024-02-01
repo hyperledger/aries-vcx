@@ -10,10 +10,10 @@ use crate::{
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
-    entropy: Option<String>,
+    pub entropy: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    prover_did: Option<String>,
-    cred_def_id: CredentialDefinitionId,
+    pub prover_did: Option<String>,
+    pub cred_def_id: CredentialDefinitionId,
     pub blinded_ms: BlindedCredentialSecrets,
     pub blinded_ms_correctness_proof: BlindedCredentialSecretsCorrectnessProof,
     pub nonce: Nonce,

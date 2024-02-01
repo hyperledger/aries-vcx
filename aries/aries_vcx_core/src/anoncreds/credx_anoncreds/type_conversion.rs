@@ -7,13 +7,18 @@ use anoncreds_types::data_types::{
         cred_def::{CredentialDefinition as OurCredentialDefinition, SignatureType},
         schema::{AttributeNames as OurAttributeNames, Schema as OurSchema},
     },
+    messages::{
+        cred_offer::CredentialOffer as OurCredentialOffer,
+        cred_request::CredentialRequest as OurCredentialRequest,
+    },
 };
 use did_parser::Did;
 use indy_credx::{
     issuer::create_schema,
     types::{
         AttributeNames as CredxAttributeNames, CredentialDefinition as CredxCredentialDefinition,
-        DidValue, Schema as CredxSchema,
+        CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
+        DidValue, Schema as CredxSchema, SchemaId as CredxSchemaId,
     },
 };
 
@@ -89,5 +94,25 @@ impl Convert for CredxCredentialDefinition {
                 })
             }
         }
+    }
+}
+
+impl Convert for OurCredentialOffer {
+    type Args = ();
+    type Target = CredxCredentialOffer;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+    }
+}
+
+impl Convert for OurCredentialRequest {
+    type Args = ();
+    type Target = CredxCredentialRequest;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
     }
 }

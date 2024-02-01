@@ -9,6 +9,7 @@ use std::{
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
     ledger::{cred_def::CredentialDefinition, schema::Schema},
+    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
 use async_trait::async_trait;
 use credx::{
@@ -16,7 +17,8 @@ use credx::{
     tails::{TailsFileReader, TailsFileWriter},
     types::{
         Credential as CredxCredential, CredentialDefinition as CredxCredentialDefinition,
-        CredentialDefinitionId as CredxCredentialDefinitionId, CredentialOffer,
+        CredentialDefinitionId as CredxCredentialDefinitionId,
+        CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         CredentialRequestMetadata, CredentialRevocationConfig, CredentialRevocationState,
         IssuanceType, LinkSecret, PresentCredentials, Presentation, PresentationRequest,
         RegistryType, RevocationRegistry, RevocationRegistryDefinition, RevocationRegistryDelta,
@@ -478,9 +480,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let cred_def =
             Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, &cred_def_id.0).await?;
 
-        let correctness_proof =
-            Self::get_wallet_record_value(wallet, CATEGORY_CRED_KEY_CORRECTNESS_PROOF, &cred_def_id.0)
-                .await?;
+        let correctness_proof = Self::get_wallet_record_value(
+            wallet,
+            CATEGORY_CRED_KEY_CORRECTNESS_PROOF,
+            &cred_def_id.0,
+        )
+        .await?;
 
         let schema = wallet
             .get_record(CATEGORY_CRED_MAP_SCHEMA_ID, &cred_def_id.0)
@@ -498,14 +503,14 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn issuer_create_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_offer_json: &str,
-        cred_req_json: &str,
+        cred_offer_json: CredentialOffer,
+        cred_req_json: CredentialRequest,
         cred_values_json: &str,
         rev_reg_id: Option<String>,
         tails_dir: Option<String>,
     ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
-        let cred_offer: CredentialOffer = serde_json::from_str(cred_offer_json)?;
-        let cred_request = serde_json::from_str(cred_req_json)?;
+        let cred_offer: CredxCredentialOffer = cred_offer_json.convert(())?;
+        let cred_request: CredxCredentialRequest = cred_req_json.convert(())?;
         let cred_values = serde_json::from_str(cred_values_json)?;
 
         // TODO: Might need to qualify with offer method or something - look into how vdrtools does
@@ -917,7 +922,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     ) -> VcxCoreResult<(String, String)> {
         let prover_did = prover_did.convert(())?;
         let cred_def: CredxCredentialDefinition = serde_json::from_str(credential_def_json)?;
-        let credential_offer: CredentialOffer = serde_json::from_str(credential_offer_json)?;
+        let credential_offer: CredxCredentialOffer = serde_json::from_str(credential_offer_json)?;
         let link_secret = Self::get_link_secret(wallet, link_secret_id).await?;
 
         let (cred_req, cred_req_metadata) = credx::prover::create_credential_request(

@@ -1,4 +1,4 @@
-use anoncreds_types::data_types::{identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId}, ledger::{schema::Schema, cred_def::CredentialDefinition}};
+use anoncreds_types::data_types::{identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId}, ledger::{schema::Schema, cred_def::CredentialDefinition}, messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest}};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -79,8 +79,8 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn issuer_create_credential(
         &self,
         __wallet: &impl BaseWallet,
-        _cred_offer_json: &str,
-        _cred_req_json: &str,
+        _cred_offer_json: CredentialOffer,
+        _cred_req_json: CredentialRequest,
         _cred_values_json: &str,
         _rev_reg_id: Option<String>,
         _tails_dir: Option<String>,

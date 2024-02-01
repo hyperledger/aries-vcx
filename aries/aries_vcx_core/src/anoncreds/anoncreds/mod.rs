@@ -17,15 +17,16 @@ use anoncreds::{
     issuer::{create_revocation_registry_def, create_revocation_status_list},
     tails::TailsFileWriter,
     types::{
-        CredentialOffer, CredentialRequestMetadata, CredentialRevocationConfig,
-        CredentialRevocationState, LinkSecret, PresentCredentials, Presentation,
-        PresentationRequest, RegistryType, RevocationRegistry, RevocationRegistryDefinition,
-        RevocationStatusList, SignatureType,
+        CredentialOffer as AnoncredsCredentialOffer, CredentialRequestMetadata,
+        CredentialRevocationConfig, CredentialRevocationState, LinkSecret, PresentCredentials,
+        Presentation, PresentationRequest, RegistryType, RevocationRegistry,
+        RevocationRegistryDefinition, RevocationStatusList, SignatureType, CredentialRequest as AnoncredsCredentialRequest,
     },
 };
 use anoncreds_types::data_types::{
-    identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId},
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
     ledger::{cred_def::CredentialDefinition, schema::Schema},
+    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
 use async_trait::async_trait;
 use bitvec::bitvec;
@@ -611,11 +612,19 @@ impl BaseAnonCreds for Anoncreds {
         cred_def_id: &CredentialDefinitionId,
     ) -> VcxCoreResult<String> {
         let correctness_proof = self
-            .get_wallet_record_value(wallet, CATEGORY_CRED_KEY_CORRECTNESS_PROOF, &cred_def_id.to_string())
+            .get_wallet_record_value(
+                wallet,
+                CATEGORY_CRED_KEY_CORRECTNESS_PROOF,
+                &cred_def_id.to_string(),
+            )
             .await?;
 
         let schema_id_value = self
-            .get_wallet_record_value::<Value>(wallet, CATEGORY_CRED_MAP_SCHEMA_ID, &cred_def_id.to_string())
+            .get_wallet_record_value::<Value>(
+                wallet,
+                CATEGORY_CRED_MAP_SCHEMA_ID,
+                &cred_def_id.to_string(),
+            )
             .await?;
 
         let offer = anoncreds::issuer::create_credential_offer(
@@ -630,14 +639,14 @@ impl BaseAnonCreds for Anoncreds {
     async fn issuer_create_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_offer_json: &str,
-        cred_req_json: &str,
+        cred_offer_json: CredentialOffer,
+        cred_req_json: CredentialRequest,
         cred_values_json: &str,
         rev_reg_id: Option<String>,
         tails_dir: Option<String>,
     ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
-        let cred_offer: CredentialOffer = serde_json::from_str(cred_offer_json)?;
-        let cred_request = serde_json::from_str(cred_req_json)?;
+        let cred_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
+        let cred_request: AnoncredsCredentialRequest = cred_req_json.convert(())?;
         let cred_values = serde_json::from_str(cred_values_json)?;
 
         let cred_def_id = &cred_offer.cred_def_id.0;
@@ -1096,7 +1105,7 @@ impl BaseAnonCreds for Anoncreds {
         );
         let cred_def: AnoncredsCredentialDefinition =
             serde_json::from_str(&cred_def_json.to_string())?;
-        let credential_offer: CredentialOffer = serde_json::from_str(cred_offer_json)?;
+        let credential_offer: AnoncredsCredentialOffer = serde_json::from_str(cred_offer_json)?;
         let link_secret = self.get_link_secret(wallet, master_secret_id).await?;
 
         let (cred_req, cred_req_metadata) = anoncreds::prover::create_credential_request(

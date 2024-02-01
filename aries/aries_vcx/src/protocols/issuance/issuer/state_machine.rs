@@ -601,8 +601,8 @@ async fn create_credential(
     let (libindy_credential, cred_rev_id, _) = anoncreds
         .issuer_create_credential(
             wallet,
-            &offer,
-            &request,
+            serde_json::from_str(&offer)?,
+            serde_json::from_str(&request)?,
             &cred_data,
             rev_reg_id.clone(),
             tails_file.clone(),

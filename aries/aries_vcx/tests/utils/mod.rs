@@ -145,8 +145,8 @@ pub async fn create_and_write_credential(
     let (cred, _, _) = anoncreds_issuer
         .issuer_create_credential(
             wallet_issuer,
-            &offer,
-            &req,
+            serde_json::from_str(&offer).unwrap(),
+            serde_json::from_str(&req).unwrap(),
             &encoded_attributes,
             rev_reg_id,
             tails_dir,
