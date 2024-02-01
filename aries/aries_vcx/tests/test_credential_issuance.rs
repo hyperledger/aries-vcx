@@ -47,7 +47,7 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() -> Result<(), Box
         &mut institution,
         &mut consumer,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request1"),
     )
     .await;

@@ -159,7 +159,7 @@ impl AnoncredsLedgerWrite for MockLedger {
     async fn publish_cred_def(
         &self,
         wallet: &impl BaseWallet,
-        cred_def_json: &str,
+        cred_def_json: CredentialDefinition,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
         Ok(())

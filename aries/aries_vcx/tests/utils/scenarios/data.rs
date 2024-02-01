@@ -1,4 +1,6 @@
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use anoncreds_types::data_types::identifiers::{
+    cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
+};
 use did_parser::Did;
 use messages::{
     misc::MimeType,
@@ -32,7 +34,7 @@ pub fn attr_names_address_list() -> Vec<String> {
 pub fn requested_attrs_address(
     did: &Did,
     schema_id: &SchemaId,
-    cred_def_id: &str,
+    cred_def_id: &CredentialDefinitionId,
     from: Option<u64>,
     to: Option<u64>,
 ) -> Value {
@@ -52,7 +54,9 @@ pub fn requested_attrs_address(
         .collect()
 }
 
-pub(super) fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr> {
+pub(super) fn requested_attr_objects(
+    cred_def_id: &CredentialDefinitionId,
+) -> Vec<PresentationAttr> {
     credential_data_address_1()
         .as_object()
         .unwrap()
@@ -60,7 +64,7 @@ pub(super) fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr>
         .map(|(key, value)| {
             PresentationAttr::builder()
                 .name(key.to_string())
-                .cred_def_id(cred_def_id.to_owned())
+                .cred_def_id(cred_def_id.to_string())
                 .value(value.to_string())
                 .build()
         })
@@ -69,7 +73,7 @@ pub(super) fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr>
 
 pub fn create_credential_proposal(
     schema_id: &SchemaId,
-    cred_def_id: &str,
+    cred_def_id: &CredentialDefinitionId,
     comment: &str,
 ) -> ProposeCredentialV1 {
     let attrs = credential_data_address_1()
@@ -87,7 +91,7 @@ pub fn create_credential_proposal(
     let content = ProposeCredentialV1Content::builder()
         .credential_proposal(CredentialPreviewV1::new(attrs))
         .schema_id(schema_id.to_string())
-        .cred_def_id(cred_def_id.to_owned())
+        .cred_def_id(cred_def_id.to_string())
         .comment(comment.to_owned())
         .build();
     ProposeCredentialV1::builder()

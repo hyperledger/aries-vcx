@@ -2,6 +2,7 @@
 
 use std::{error::Error, thread, time::Duration};
 
+use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use aries_vcx::{
     common::{
         keys::{get_verkey_from_ledger, rotate_verkey},
@@ -53,7 +54,7 @@ async fn create_and_store_nonrevocable_credential_def(
     ledger_write: &impl AnoncredsLedgerWrite,
     issuer_did: &Did,
     attr_list: &str,
-) -> Result<(String, String, String, String, CredentialDef), Box<dyn Error>> {
+) -> Result<(String, String, CredentialDefinitionId, String, CredentialDef), Box<dyn Error>> {
     let schema =
         create_and_write_test_schema(wallet, anoncreds, ledger_write, issuer_did, attr_list).await;
     let cred_def = create_and_write_test_cred_def(
@@ -73,7 +74,7 @@ async fn create_and_store_nonrevocable_credential_def(
     Ok((
         schema.schema_id.to_string(),
         serde_json::to_string(&schema.schema_json)?,
-        cred_def_id,
+        cred_def_id.to_owned(),
         serde_json::to_string(&cred_def_json)?,
         cred_def,
     ))

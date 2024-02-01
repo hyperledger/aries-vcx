@@ -5,8 +5,9 @@ use anoncreds_types::data_types::{
     },
     ledger::{
         cred_def::{
-            CredentialDefinition as OurCredentialDefinition, CredentialDefinitionData,
-            SignatureType,
+            CredentialDefinition as OurCredentialDefinition,
+            CredentialDefinitionData as OurCredentialDefinitionData,
+            SignatureType as OurSignatureType,
         },
         schema::Schema as OurSchema,
     },
@@ -14,9 +15,13 @@ use anoncreds_types::data_types::{
 use did_parser::Did;
 use indy_vdr::{
     ledger::{
+        identifiers::CredentialDefinitionId as IndyVdrCredentialDefinitionId,
         identifiers::SchemaId as IndyVdrSchemaId,
         requests::{
-            cred_def::CredentialDefinition as IndyVdrCredentialDefinition,
+            cred_def::{
+                CredentialDefinition as IndyVdrCredentialDefinition, CredentialDefinitionData,
+                SignatureType as IndyVdrSignatureType,
+            },
             schema::{AttributeNames as IndyVdrAttributeNames, Schema as IndyVdrSchema, SchemaV1},
         },
     },
@@ -124,9 +129,9 @@ impl Convert for IndyVdrCredentialDefinition {
                     Ok(OurCredentialDefinition {
                         id: OurCredentialDefinitionId::new(cred_def.id.to_string())?,
                         schema_id: OurSchemaId::new_unchecked(cred_def.schema_id.to_string()),
-                        signature_type: SignatureType::CL,
+                        signature_type: OurSignatureType::CL,
                         tag: cred_def.tag,
-                        value: CredentialDefinitionData {
+                        value: OurCredentialDefinitionData {
                             primary: serde_json::from_value(cred_def.value.primary)?,
                             revocation: cred_def
                                 .value
@@ -141,5 +146,32 @@ impl Convert for IndyVdrCredentialDefinition {
                 }
             }
         }
+    }
+}
+
+impl Convert for OurCredentialDefinition {
+    type Args = ();
+    type Target = IndyVdrCredentialDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(IndyVdrCredentialDefinition::CredentialDefinitionV1(
+            indy_vdr::ledger::requests::cred_def::CredentialDefinitionV1 {
+                id: IndyVdrCredentialDefinitionId::try_from(self.id.to_string())?,
+                schema_id: IndyVdrSchemaId::try_from(self.schema_id.to_string())?,
+                signature_type: match self.signature_type {
+                    OurSignatureType::CL => IndyVdrSignatureType::CL,
+                },
+                tag: self.tag,
+                value: CredentialDefinitionData {
+                    primary: serde_json::to_value(self.value.primary)?,
+                    revocation: self
+                        .value
+                        .revocation
+                        .map(serde_json::to_value)
+                        .transpose()?,
+                },
+            },
+        ))
     }
 }

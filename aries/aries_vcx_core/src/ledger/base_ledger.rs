@@ -99,7 +99,7 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
     async fn publish_cred_def(
         &self,
         wallet: &impl BaseWallet,
-        cred_def_json: &str,
+        cred_def_json: CredentialDefinition,
         submitter_did: &Did,
     ) -> VcxCoreResult<()>;
     async fn publish_rev_reg_def(

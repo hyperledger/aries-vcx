@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
@@ -28,7 +29,7 @@ impl RevocationRegistry {
         wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
         issuer_did: &Did,
-        cred_def_id: &str,
+        cred_def_id: &CredentialDefinitionId,
         tails_dir: &str,
         max_creds: u32,
         tag: u32,
@@ -309,7 +310,7 @@ pub async fn generate_rev_reg(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
     issuer_did: &Did,
-    cred_def_id: &str,
+    cred_def_id: &CredentialDefinitionId,
     tails_dir: &str,
     max_creds: u32,
     tag: &str,
@@ -328,7 +329,7 @@ pub async fn generate_rev_reg(
         .issuer_create_and_store_revoc_reg(
             wallet,
             issuer_did,
-            &cred_def_id.try_into()?,
+            cred_def_id,
             tails_dir,
             max_creds,
             tag,

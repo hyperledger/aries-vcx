@@ -46,7 +46,7 @@ impl ServiceCredentialDefinitions {
             true,
         )
         .await?;
-        self.cred_defs.insert(&cd.get_cred_def_id(), cd)
+        self.cred_defs.insert(&cd.get_cred_def_id().to_string(), cd)
     }
 
     pub async fn publish_cred_def(&self, thread_id: &str) -> AgentResult<()> {
@@ -73,7 +73,7 @@ impl ServiceCredentialDefinitions {
         let schema_id = schema_id.to_string();
         let f = |(id, m): (&String, &Mutex<CredentialDef>)| -> Option<String> {
             let cred_def = m.lock().unwrap();
-            if cred_def.get_schema_id() == schema_id {
+            if cred_def.get_schema_id().to_string() == schema_id {
                 Some(id.clone())
             } else {
                 None

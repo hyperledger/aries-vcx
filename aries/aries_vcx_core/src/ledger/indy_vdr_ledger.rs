@@ -613,14 +613,13 @@ where
     async fn publish_cred_def(
         &self,
         wallet: &impl BaseWallet,
-        cred_def_json: &str,
+        cred_def_json: CredentialDefinition,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
         let identifier = submitter_did.convert(())?;
-        let cred_def_data: CredentialDefinitionV1 = serde_json::from_str(cred_def_json)?;
         let request = self.request_builder()?.build_cred_def_request(
             &identifier,
-            IndyVdrCredentialDefinition::CredentialDefinitionV1(cred_def_data),
+            cred_def_json.convert(())?
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(wallet, submitter_did, request)

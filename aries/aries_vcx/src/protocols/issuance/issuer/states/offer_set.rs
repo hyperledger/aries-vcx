@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use messages::msg_fields::protocols::{
     cred_issuance::v1::{
         offer_credential::OfferCredentialV1, request_credential::RequestCredentialV1,
@@ -17,7 +18,7 @@ use crate::{
 pub struct OfferSetState {
     pub offer: OfferCredentialV1,
     pub credential_json: String,
-    pub cred_def_id: String,
+    pub cred_def_id: CredentialDefinitionId,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
 }
@@ -26,14 +27,14 @@ impl OfferSetState {
     pub fn new(
         cred_offer_msg: OfferCredentialV1,
         credential_json: &str,
-        cred_def_id: &str,
+        cred_def_id: CredentialDefinitionId,
         rev_reg_id: Option<String>,
         tails_file: Option<String>,
     ) -> Self {
         OfferSetState {
             offer: cred_offer_msg,
             credential_json: credential_json.into(),
-            cred_def_id: cred_def_id.into(),
+            cred_def_id,
             rev_reg_id,
             tails_file,
         }

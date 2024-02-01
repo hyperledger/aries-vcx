@@ -339,7 +339,7 @@ impl IssuerSM {
                 IssuerFullState::OfferSet(OfferSetState::new(
                     cred_offer_msg,
                     &offer_info.credential_json,
-                    &offer_info.cred_def_id,
+                    offer_info.cred_def_id.clone(),
                     offer_info.rev_reg_id.clone(),
                     offer_info.tails_file.clone(),
                 ))

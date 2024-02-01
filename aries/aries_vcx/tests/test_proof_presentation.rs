@@ -282,7 +282,7 @@ async fn test_agency_pool_presentation_via_proposal_with_negotiation() -> Result
     let mut verifier = Verifier::create("1")?;
 
     let presentation_proposal =
-        create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;
+        create_proof_proposal(&mut prover, &cred_def.get_cred_def_id().to_owned()).await;
     let presentation_request =
         accept_proof_proposal(&mut institution, &mut verifier, presentation_proposal).await;
     let selected_credentials =

@@ -2,7 +2,7 @@ pub mod scenarios;
 pub mod test_agent;
 use std::time::Duration;
 
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use anoncreds_types::data_types::identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId};
 use aries_vcx::{
     common::{
         credentials::encoding::encode_attributes,
@@ -84,7 +84,7 @@ pub async fn create_and_publish_test_rev_reg(
     anoncreds: &impl BaseAnonCreds,
     ledger_write: &impl AnoncredsLedgerWrite,
     issuer_did: &Did,
-    cred_def_id: &str,
+    cred_def_id: &CredentialDefinitionId,
 ) -> RevocationRegistry {
     let tails_dir = get_temp_dir_path().as_path().to_str().unwrap().to_string();
     let mut rev_reg = RevocationRegistry::create(
@@ -119,7 +119,7 @@ pub async fn create_and_write_credential(
     let encoded_attributes = encode_attributes(credential_data).unwrap();
 
     let offer = anoncreds_issuer
-        .issuer_create_credential_offer(wallet_issuer, &cred_def.get_cred_def_id().try_into().unwrap())
+        .issuer_create_credential_offer(wallet_issuer, cred_def.get_cred_def_id())
         .await
         .unwrap();
     let (req, req_meta) = anoncreds_holder
@@ -127,7 +127,7 @@ pub async fn create_and_write_credential(
             wallet_holder,
             institution_did,
             &offer,
-            cred_def.get_cred_def_json(),
+            &serde_json::to_string(&cred_def.get_cred_def_json()).unwrap(),
             settings::DEFAULT_LINK_SECRET_ALIAS,
         )
         .await
@@ -160,7 +160,7 @@ pub async fn create_and_write_credential(
             None,
             &req_meta,
             &cred,
-            cred_def.get_cred_def_json(),
+            &serde_json::to_string(&cred_def.get_cred_def_json()).unwrap(),
             rev_reg_def_json.as_deref(),
         )
         .await

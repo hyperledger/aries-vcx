@@ -1,6 +1,6 @@
 use std::{thread, time::Duration};
 
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use anoncreds_types::data_types::identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId};
 use aries_vcx::{
     common::primitives::{
         credential_definition::CredentialDef, credential_schema::Schema,
@@ -104,7 +104,7 @@ pub async fn accept_credential_proposal(
 ) -> OfferCredentialV1 {
     let offer_info = OfferInfo {
         credential_json: json!(cred_proposal.content.credential_proposal.attributes).to_string(),
-        cred_def_id: cred_proposal.content.cred_def_id.clone(),
+        cred_def_id: cred_proposal.content.cred_def_id.try_into().unwrap(),
         rev_reg_id,
         tails_file: tails_dir,
     };
@@ -346,7 +346,7 @@ pub async fn exchange_credential_with_proposal(
         impl BaseWallet,
     >,
     schema_id: &SchemaId,
-    cred_def_id: &str,
+    cred_def_id: &CredentialDefinitionId,
     rev_reg_id: Option<String>,
     tails_dir: Option<String>,
     comment: &str,
@@ -389,7 +389,7 @@ async fn create_credential_offer(
 ) -> Issuer {
     let offer_info = OfferInfo {
         credential_json: credential_json.to_string(),
-        cred_def_id: cred_def.get_cred_def_id(),
+        cred_def_id: cred_def.get_cred_def_id().to_owned(),
         rev_reg_id: Some(rev_reg.get_rev_reg_id()),
         tails_file: Some(rev_reg.get_tails_dir()),
     };

@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use messages::{
     msg_fields::protocols::{
         connection::{invitation::Invitation, Connection},
@@ -344,7 +345,7 @@ pub struct CredentialData {
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct OfferInfo {
     pub credential_json: String,
-    pub cred_def_id: String,
+    pub cred_def_id: CredentialDefinitionId,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
 }
@@ -352,7 +353,7 @@ pub struct OfferInfo {
 impl OfferInfo {
     pub fn new(
         credential_json: String,
-        cred_def_id: String,
+        cred_def_id: CredentialDefinitionId,
         rev_reg_id: Option<String>,
         tails_file: Option<String>,
     ) -> Self {
