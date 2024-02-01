@@ -17,8 +17,8 @@ use crate::{
         errors::{
             AccountNotFound, AddRecipientError, CreateAccountError, DecodeError,
             GetAccountDetailsError, GetAccountIdError, ListAccountsError, ListRecipientKeysError,
-            RemoveRecipientError, RetrievePendingMessageCountError, RetrievePendingMessagesError,
-            StorageBackendError,
+            PersistForwardMessageError, RemoveRecipientError, RetrievePendingMessageCountError,
+            RetrievePendingMessagesError, StorageBackendError,
         },
         AccountDetails,
     },
@@ -177,7 +177,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
         &self,
         recipient_key: &str,
         message_data: &str,
-    ) -> Result<(), String> {
+    ) -> Result<(), PersistForwardMessageError> {
         // Fetch recipient with given recipient_key
         info!("Fetching recipient with recipient_key {:#?}", recipient_key);
         let recipient_row = sqlx::query("SELECT * FROM recipients WHERE recipient_key = ?")
@@ -186,7 +186,13 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .await;
         if let Err(err) = recipient_row {
             info!("Error while finding target recipient, {:#}", err);
-            return Err(format!("{:#}", err));
+            let mapped_err = match err {
+                sqlx::Error::RowNotFound => {
+                    PersistForwardMessageError::AccountNotFound(AccountNotFound)
+                }
+                _ => StorageBackendError { source: err.into() }.into(),
+            };
+            return Err(mapped_err);
         }
         let account_id: Vec<u8> = recipient_row.unwrap().get("account_id");
         // Save message for recipient
@@ -204,7 +210,9 @@ impl MediatorPersistence for sqlx::MySqlPool {
                 "Error while saving message for recipient {:x?}, {:#}",
                 recipient_key, err
             );
-            return Err(format!("{:#}", err));
+            return Err(PersistForwardMessageError::StorageBackendError(
+                StorageBackendError { source: err.into() },
+            ));
         }
         Ok(())
     }

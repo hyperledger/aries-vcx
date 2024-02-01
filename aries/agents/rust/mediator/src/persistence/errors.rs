@@ -50,6 +50,7 @@ errorset!(AddRecipientError[StorageBackendError, AccountNotFound]);
 // Same error modes as AddRecipientError
 pub type RemoveRecipientError = AddRecipientError;
 errorset!(ListRecipientKeysError[StorageBackendError, AccountNotFound]);
+errorset!(PersistForwardMessageError[StorageBackendError, AccountNotFound]);
 
 // Manual declaration example
 #[derive(Error, Debug)]
