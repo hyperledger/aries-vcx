@@ -17,6 +17,13 @@ pub struct StorageBackendError {
 #[error("Couldn't retrieve or decode expected data: {0}")]
 pub struct DecodeError(#[from] pub Box<dyn std::error::Error>);
 
+/// Creates an error enum composed of individual error items given as list.  
+/// The enum variants are named identically to the error variants provided.
+/// From<> impls (to the composition) and Display are automatically derived
+/// with the help of thiserror.
+/// Usage:
+/// errorset!(ComposedError[ErrorVariant1, ErrorVariant2]);
+
 macro_rules! errorset {
     ($errorset_name:ident[$($error_name: ident),*]) => {
         #[derive(Error, Debug)]
@@ -26,6 +33,7 @@ macro_rules! errorset {
             $error_name(#[from] $error_name),
             )*
             /// Generic error variant - display, backtrace passed onto source anyhow::Error
+            /// Useful for chucking in errors from random sources. See usage of anyhow! macro.
             #[error(transparent)]
             ZFhOt01Rdb0Error(#[from] anyhow::Error),
         }
