@@ -101,20 +101,46 @@ impl Convert for AnoncredsCredentialDefinition {
     }
 }
 
+// impl Convert for OurCredentialRequest {
+//     type Args = ();
+//     type Target = AnoncredsCredentialRequest;
+//     type Error = Box<dyn std::error::Error>;
+//
+//     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+//         Ok(AnoncredsCredentialRequest::new(
+//             self.entropy.as_deref(),
+//             self.prover_did.as_deref(),
+//             AnoncredsCredentialDefinitionId::new(self.cred_def_id.to_string())?,
+//             self.blinded_ms,
+//             self.blinded_ms_correctness_proof,
+//             AnoncredsNonce::from_bytes(self.nonce.as_bytes())?,
+//         )?)
+//     }
+// }
+//
+// impl Convert for OurCredentialOffer {
+//     type Args = ();
+//     type Target = AnoncredsCredentialOffer;
+//     type Error = Box<dyn std::error::Error>;
+//
+//     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+//         Ok(AnoncredsCredentialOffer {
+//             schema_id: AnoncredsSchemaId::new_unchecked(self.schema_id.to_string()),
+//             cred_def_id: AnoncredsCredentialDefinitionId::new(self.cred_def_id.0)?,
+//             key_correctness_proof: self.key_correctness_proof,
+//             nonce: AnoncredsNonce::from_bytes(self.nonce.as_bytes())?,
+//             method_name: self.method_name,
+//         })
+//     }
+// }
+
 impl Convert for OurCredentialRequest {
     type Args = ();
     type Target = AnoncredsCredentialRequest;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(AnoncredsCredentialRequest::new(
-            self.entropy.as_deref(),
-            self.prover_did.as_deref(),
-            AnoncredsCredentialDefinitionId::new(self.cred_def_id.to_string())?,
-            self.blinded_ms,
-            self.blinded_ms_correctness_proof,
-            AnoncredsNonce::from_bytes(self.nonce.as_bytes())?,
-        )?)
+        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
     }
 }
 
@@ -124,12 +150,6 @@ impl Convert for OurCredentialOffer {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(AnoncredsCredentialOffer {
-            schema_id: AnoncredsSchemaId::new_unchecked(self.schema_id.to_string()),
-            cred_def_id: AnoncredsCredentialDefinitionId::new(self.cred_def_id.0)?,
-            key_correctness_proof: self.key_correctness_proof,
-            nonce: AnoncredsNonce::from_bytes(self.nonce.as_bytes())?,
-            method_name: self.method_name,
-        })
+        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
     }
 }
