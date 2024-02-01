@@ -1,8 +1,6 @@
 // Copyright 2023 Naian G.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::fmt::format;
-
 use anyhow::anyhow;
 use async_trait::async_trait;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
@@ -17,9 +15,10 @@ use super::super::MediatorPersistence;
 use crate::{
     persistence::{
         errors::{
-            AddRecipientError, CreateAccountError, GetAccountDetailsError, GetAccountIdError,
-            ListAccountsError, ListRecipientKeysError, RemoveRecipientError,
-            RetrievePendingMessageCountError, RetrievePendingMessagesError,
+            AccountNotFound, AddRecipientError, CreateAccountError, DecodeError,
+            GetAccountDetailsError, GetAccountIdError, ListAccountsError, ListRecipientKeysError,
+            RemoveRecipientError, RetrievePendingMessageCountError, RetrievePendingMessagesError,
+            StorageBackendError,
         },
         AccountDetails,
     },
@@ -60,11 +59,15 @@ impl MediatorPersistence for sqlx::MySqlPool {
         .await;
         if let Err(err) = insert_result {
             info!("Error during creating new account, {:#?}", err);
-            return Err(CreateAccountError::StorageBackendError {
-                source: anyhow!(err),
-            });
+            return Err(StorageBackendError {
+                source: Box::new(err),
+            }
+            .into());
         };
-        let account_details = self.get_account_details(auth_pubkey).await?;
+        let account_details = self.get_account_details(auth_pubkey).await.map_err(|e| {
+            anyhow!(e.to_string())
+                .context("Possibly created account, but failed to retrieve created account's ID")
+        })?;
         info!(
             "Created account {:?} for auth_pubkey {:#?}",
             &account_details, &auth_pubkey
@@ -79,8 +82,8 @@ impl MediatorPersistence for sqlx::MySqlPool {
                 .fetch_one(self)
                 .await
                 .map_err(|e| match e {
-                    sqlx::Error::RowNotFound => GetAccountIdError::AccountNotFound,
-                    _ => GetAccountIdError::hkpLXwHUQError(anyhow!(e)),
+                    sqlx::Error::RowNotFound => GetAccountIdError::AccountNotFound(AccountNotFound),
+                    _ => StorageBackendError { source: e.into() }.into(),
                 })?
                 .get("account_id");
         Ok(account_id)
@@ -92,12 +95,14 @@ impl MediatorPersistence for sqlx::MySqlPool {
             sqlx::query("SELECT account_name, auth_pubkey FROM accounts;")
                 .fetch_all(self)
                 .await
-                .map_err(|e| anyhow!(e))?;
+                .map_err(|e| StorageBackendError { source: e.into() })?;
         let mut vec_tup = vec![];
         for row in accounts_rows {
             vec_tup.push((
-                row.try_get("account_name").map_err(|e| anyhow!(e))?,
-                row.try_get("auth_pubkey").map_err(|e| anyhow!(e))?,
+                row.try_get("account_name")
+                    .map_err(|e| DecodeError(e.into()))?,
+                row.try_get("auth_pubkey")
+                    .map_err(|e| DecodeError(e.into()))?,
             ))
         }
         Ok(vec_tup)
@@ -111,31 +116,33 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .fetch_one(self)
             .await
             .map_err(|e| match e {
-                sqlx::error::Error::RowNotFound => GetAccountDetailsError::AccountNotFound,
-                _ => GetAccountDetailsError::hkpLXwHUQError(anyhow!(e)),
+                sqlx::error::Error::RowNotFound => {
+                    GetAccountDetailsError::AccountNotFound(AccountNotFound)
+                }
+                _ => StorageBackendError { source: e.into() }.into(),
             })?;
         let account_id = row
             .try_get("account_id")
-            .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
+            .map_err(|e| DecodeError(e.into()))?;
         let account_name = row
             .try_get("account_name")
-            .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
+            .map_err(|e| DecodeError(e.into()))?;
         let auth_pubkey = row
             .try_get("auth_pubkey")
-            .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
+            .map_err(|e| DecodeError(e.into()))?;
         let our_signing_key = row
             .try_get("our_signing_key")
-            .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
+            .map_err(|e| DecodeError(e.into()))?;
         let did_doc_json = row
             .try_get::<serde_json::Value, &str>("did_doc")
-            .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?;
+            .map_err(|e| DecodeError(e.into()))?;
         let account_details = AccountDetails {
             account_id,
             account_name,
             auth_pubkey,
             our_signing_key,
             their_did_doc: serde_json::from_value::<AriesDidDoc>(did_doc_json)
-                .map_err(|e| GetAccountDetailsError::DecodeError(e.to_string()))?,
+                .map_err(|e| DecodeError(e.into()))?,
         };
         Ok(account_details)
     }
@@ -210,11 +217,10 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .get_account_id(auth_pubkey)
             .await
             .map_err(|e| match e {
-                GetAccountIdError::AccountNotFound => {
-                    RetrievePendingMessageCountError::AccountNotFound
-                }
-                GetAccountIdError::hkpLXwHUQError(anye) => {
-                    RetrievePendingMessageCountError::hkpLXwHUQError(
+                GetAccountIdError::AccountNotFound(_) => AccountNotFound.into(),
+                GetAccountIdError::StorageBackendError(s) => s.into(),
+                GetAccountIdError::ZFhOt01Rdb0Error(anye) => {
+                    RetrievePendingMessageCountError::ZFhOt01Rdb0Error(
                         anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
                     )
                 }
@@ -262,9 +268,10 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .get_account_id(auth_pubkey)
             .await
             .map_err(|e| match e {
-                GetAccountIdError::AccountNotFound => RetrievePendingMessagesError::AccountNotFound,
-                GetAccountIdError::hkpLXwHUQError(anye) => {
-                    RetrievePendingMessagesError::hkpLXwHUQError(
+                GetAccountIdError::AccountNotFound(AccountNotFound) => AccountNotFound.into(),
+                GetAccountIdError::StorageBackendError(s) => s.into(),
+                GetAccountIdError::ZFhOt01Rdb0Error(anye) => {
+                    RetrievePendingMessagesError::ZFhOt01Rdb0Error(
                         anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
                     )
                 }
@@ -311,8 +318,9 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .get_account_id(auth_pubkey)
             .await
             .map_err(|e| match e {
-                GetAccountIdError::AccountNotFound => AddRecipientError::AccountNotFound,
-                GetAccountIdError::hkpLXwHUQError(anye) => AddRecipientError::hkpLXwHUQError(
+                GetAccountIdError::AccountNotFound(_) => AccountNotFound.into(),
+                GetAccountIdError::StorageBackendError(s) => s.into(),
+                GetAccountIdError::ZFhOt01Rdb0Error(anye) => AddRecipientError::ZFhOt01Rdb0Error(
                     anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
                 ),
             })?;
@@ -344,10 +352,13 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .get_account_id(auth_pubkey)
             .await
             .map_err(|e| match e {
-                GetAccountIdError::AccountNotFound => RemoveRecipientError::AccountNotFound,
-                GetAccountIdError::hkpLXwHUQError(anye) => RemoveRecipientError::hkpLXwHUQError(
-                    anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
-                ),
+                GetAccountIdError::AccountNotFound(_) => AccountNotFound.into(),
+                GetAccountIdError::StorageBackendError(s) => s.into(),
+                GetAccountIdError::ZFhOt01Rdb0Error(anye) => {
+                    RemoveRecipientError::ZFhOt01Rdb0Error(
+                        anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
+                    )
+                }
             })?;
         info!(
             "Found matching account {:x?}. Proceeding with attempt to remove recipient \
@@ -376,10 +387,15 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .get_account_id(auth_pubkey)
             .await
             .map_err(|e| match e {
-                GetAccountIdError::AccountNotFound => ListRecipientKeysError::AccountNotFound,
-                GetAccountIdError::hkpLXwHUQError(anye) => ListRecipientKeysError::hkpLXwHUQError(
-                    anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
-                ),
+                GetAccountIdError::AccountNotFound(_) => {
+                    ListRecipientKeysError::AccountNotFound(AccountNotFound)
+                }
+                GetAccountIdError::StorageBackendError(s) => s.into(),
+                GetAccountIdError::ZFhOt01Rdb0Error(anye) => {
+                    ListRecipientKeysError::ZFhOt01Rdb0Error(
+                        anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
+                    )
+                }
             })?;
         let recipient_keys: Vec<VerKey> =
             sqlx::query("SELECT (recipient_key) FROM recipients WHERE account_id = ?;")

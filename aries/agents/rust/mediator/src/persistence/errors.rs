@@ -1,76 +1,53 @@
-// DatabaseOperationnError
-// AccountNotFoundError
-
-// AccountCreationError {
-//     source:
-// }
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+#[error("No account found matching given input")]
+pub struct AccountNotFound;
+
+/// Error closely related to the storage backend
+#[derive(Error, Debug)]
+#[error(transparent)]
+pub struct StorageBackendError {
+    #[from]
+    pub source: Box<dyn std::error::Error>,
+}
+
+/// Error parsing values from backend into expected structures
+#[derive(Error, Debug)]
+#[error("Couldn't retrieve or decode expected data: {0}")]
+pub struct DecodeError(#[from] pub Box<dyn std::error::Error>);
+
+macro_rules! errorset {
+    ($errorset_name:ident[$($error_name: ident),*]) => {
+        #[derive(Error, Debug)]
+        pub enum $errorset_name {
+            $(
+            #[error("{0}")]
+            $error_name(#[from] $error_name),
+            )*
+            /// Generic error variant - display, backtrace passed onto source anyhow::Error
+            #[error(transparent)]
+            ZFhOt01Rdb0Error(#[from] anyhow::Error),
+        }
+    };
+}
+
+errorset!(GetAccountIdError[StorageBackendError, AccountNotFound]);
+errorset!(ListAccountsError[StorageBackendError, DecodeError]);
+
+errorset!(GetAccountDetailsError[StorageBackendError, AccountNotFound, DecodeError]);
+errorset!(RetrievePendingMessageCountError[StorageBackendError, AccountNotFound]);
+errorset!(RetrievePendingMessagesError[StorageBackendError, AccountNotFound]);
+errorset!(AddRecipientError[StorageBackendError, AccountNotFound]);
+// Same error modes as AddRecipientError
+pub type RemoveRecipientError = AddRecipientError;
+errorset!(ListRecipientKeysError[StorageBackendError, AccountNotFound]);
+
+// Manual declaration example
+#[derive(Error, Debug)]
 pub enum CreateAccountError {
     #[error("Failed to create account in storage layer")]
-    StorageBackendError { source: anyhow::Error },
-    #[error("Possibly created account, but failed to retrieve created account's ID")]
-    GetAccountDetailsError(#[from] GetAccountDetailsError),
+    StorageBackendError(#[from] StorageBackendError),
     #[error(transparent)]
-    hkpLXwHUQError(#[from] anyhow::Error),
-}
-
-#[derive(Error, Debug)]
-pub enum GetAccountIdError {
-    #[error("No account found matching given input")]
-    AccountNotFound,
-    #[error(transparent)]
-    hkpLXwHUQError(#[from] anyhow::Error),
-}
-
-#[derive(Error, Debug)]
-pub enum ListAccountsError {
-    #[error(transparent)]
-    hkpLXwHUQError(#[from] anyhow::Error),
-}
-
-#[derive(Error, Debug)]
-pub enum GetAccountDetailsError {
-    #[error("No account found matching given input")]
-    AccountNotFound,
-    #[error("Couldn't retrieve or decode expected account details: {0}")]
-    DecodeError(String),
-    #[error(transparent)]
-    hkpLXwHUQError(#[from] anyhow::Error),
-}
-
-#[derive(Error, Debug)]
-pub enum RetrievePendingMessageCountError {
-    #[error("No account found matching given input")]
-    AccountNotFound,
-    #[error(transparent)]
-    hkpLXwHUQError(#[from] anyhow::Error),
-}
-
-#[derive(Error, Debug)]
-pub enum RetrievePendingMessagesError {
-    #[error("No account found matching given input")]
-    AccountNotFound,
-    #[error(transparent)]
-    hkpLXwHUQError(#[from] anyhow::Error),
-}
-
-#[derive(Error, Debug)]
-pub enum AddRecipientError {
-    #[error("No account found matching given input")]
-    AccountNotFound,
-    #[error(transparent)]
-    hkpLXwHUQError(#[from] anyhow::Error),
-}
-
-/// Same error modes as AddRecipientError
-pub type RemoveRecipientError = AddRecipientError;
-
-#[derive(Error, Debug)]
-pub enum ListRecipientKeysError {
-    #[error("No account found matching given input")]
-    AccountNotFound,
-    #[error(transparent)]
-    hkpLXwHUQError(#[from] anyhow::Error),
+    ZFhOt01Rdb0Error(#[from] anyhow::Error),
 }
