@@ -197,12 +197,8 @@ impl Anoncreds {
         let cred_record = wallet
             .get_record(CATEGORY_CREDENTIAL, credential_id)
             .await?;
-        let cred_record: Value = serde_json::from_str(cred_record.value())?;
-        let cred_record_value = (&cred_record).try_get("value")?;
 
-        let cred_json = cred_record_value.try_as_str()?;
-
-        let credential: Credential = serde_json::from_str(cred_json)?;
+        let credential: Credential = serde_json::from_str(cred_record.value())?;
 
         Ok(credential)
     }
@@ -219,18 +215,11 @@ impl Anoncreds {
             .await?;
 
         let id_cred_tuple_list: VcxCoreResult<Vec<(String, Credential)>> = records
-            .iter()
+            .into_iter()
             .map(|record| {
-                let cred_record: Value = serde_json::from_str(record.value())?;
+                let credential: Credential = serde_json::from_str(record.value())?;
 
-                let cred_record_id = (&cred_record).try_get("id")?.try_as_str()?.to_string();
-                let cred_record_value = (&cred_record).try_get("value")?;
-
-                let cred_json = cred_record_value.try_as_str()?;
-
-                let credential: Credential = serde_json::from_str(cred_json)?;
-
-                Ok((cred_record_id, credential))
+                Ok((record.name().into(), credential))
             })
             .collect();
 
