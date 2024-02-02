@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anoncreds_types::data_types::{
     identifiers::{
         cred_def_id::CredentialDefinitionId as OurCredentialDefinitionId,
@@ -17,6 +19,7 @@ use indy_credx::{
     issuer::create_schema,
     types::{
         AttributeNames as CredxAttributeNames, CredentialDefinition as CredxCredentialDefinition,
+        CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         DidValue, Schema as CredxSchema,
     },
@@ -136,5 +139,22 @@ impl Convert for OurCredentialRequest {
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+    }
+}
+
+impl Convert for HashMap<OurCredentialDefinitionId, OurCredentialDefinition> {
+    type Args = ();
+    type Target = HashMap<CredxCredentialDefinitionId, CredxCredentialDefinition>;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        self.into_iter()
+            .map(|(id, def)| {
+                Ok((
+                    CredxCredentialDefinitionId::from(id.to_string()),
+                    def.convert(())?,
+                ))
+            })
+            .collect()
     }
 }

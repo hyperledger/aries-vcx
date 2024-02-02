@@ -254,8 +254,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         for (key, value) in schemas_ {
             schemas.insert(key, value.convert(())?);
         }
-        let cred_defs: HashMap<CredxCredentialDefinitionId, CredxCredentialDefinition> =
+        let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
+        let cred_defs: HashMap<CredxCredentialDefinitionId, CredxCredentialDefinition> =
+            cred_defs.convert(())?;
 
         let rev_reg_defs: Option<HashMap<RevocationRegistryId, RevocationRegistryDefinition>> =
             serde_json::from_str(rev_reg_defs_json)?;
@@ -657,7 +659,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             schemas.insert(key, value.convert(())?);
         }
 
-        let cred_defs: HashMap<CredxCredentialDefinitionId, CredxCredentialDefinition> =
+        let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
         let mut present_credentials: PresentCredentials = PresentCredentials::new();
@@ -776,7 +778,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             self_attested,
             &link_secret,
             &hashmap_as_ref(&schemas),
-            &hashmap_as_ref(&cred_defs),
+            &hashmap_as_ref(&cred_defs.convert(())?),
         )?;
 
         Ok(serde_json::to_string(&presentation)?)
