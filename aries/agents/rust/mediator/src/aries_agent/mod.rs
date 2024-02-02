@@ -25,7 +25,7 @@ use messages::{
 use serde_json::json;
 
 use crate::{
-    persistence::{get_persistence, MediatorPersistence},
+    persistence::{get_persistence, AccountDetails, MediatorPersistence},
     utils::{prelude::*, structs::VerKey},
 };
 
@@ -146,7 +146,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
     pub async fn auth_and_get_details(
         &self,
         sender_verkey: &Option<VerKey>,
-    ) -> Result<(String, VerKey, VerKey, AriesDidDoc), String> {
+    ) -> Result<AccountDetails, String> {
         let auth_pubkey = sender_verkey
             .as_deref()
             .ok_or("Anonymous sender can't be authenticated")?
@@ -156,12 +156,7 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
             .get_account_details(&auth_pubkey)
             .await
             .map_err(string_from_std_error)?;
-        Ok((
-            account_details.account_name,
-            account_details.auth_pubkey,
-            account_details.our_signing_key,
-            account_details.their_did_doc,
-        ))
+        Ok(account_details)
     }
     pub async fn handle_connection_req(
         &self,
