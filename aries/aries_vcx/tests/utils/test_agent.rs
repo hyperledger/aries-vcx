@@ -104,7 +104,10 @@ where
     W: BaseWallet,
 {
     let acme = create_test_agent(genesis_file_path.to_string()).await;
-    let acme_vk = acme.wallet.key_for_did(&acme.institution_did.to_string()).await?;
+    let acme_vk = acme
+        .wallet
+        .key_for_did(&acme.institution_did.to_string())
+        .await?;
 
     write_endorser_did(
         &trustee_wallet,

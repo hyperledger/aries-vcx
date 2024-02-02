@@ -37,7 +37,7 @@ use crate::{
         constants::ATTRS,
         json::{AsTypeOrDeserializationError, TryGetIndex},
     },
-    wallet::base_wallet::{BaseWallet, record::Record, search_filter::SearchFilter},
+    wallet::base_wallet::{record::Record, search_filter::SearchFilter, BaseWallet},
 };
 
 pub const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";

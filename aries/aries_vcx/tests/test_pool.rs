@@ -174,7 +174,10 @@ async fn test_pool_write_new_endorser_did() -> Result<(), Box<dyn Error>> {
     let setup = SetupPoolDirectory::init().await;
     let faber = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
     let acme = create_test_agent(setup.genesis_file_path.clone()).await;
-    let acme_vk = acme.wallet.key_for_did(&acme.institution_did.to_string()).await?;
+    let acme_vk = acme
+        .wallet
+        .key_for_did(&acme.institution_did.to_string())
+        .await?;
 
     let attrib_json = json!({ "attrib_name": "foo"}).to_string();
     assert!(add_attr(
