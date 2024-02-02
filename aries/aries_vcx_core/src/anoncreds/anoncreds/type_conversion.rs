@@ -1,7 +1,11 @@
 use anoncreds::{
     data_types::{
-        cred_def::CredentialDefinition as AnoncredsCredentialDefinition,
-        issuer_id::IssuerId as AnoncredsIssuerId, schema::Schema as AnoncredsSchema,
+        cred_def::{
+            CredentialDefinition as AnoncredsCredentialDefinition,
+            CredentialDefinitionData as AnoncredsCredentialDefinitionData,
+        },
+        issuer_id::IssuerId as AnoncredsIssuerId,
+        schema::{Schema as AnoncredsSchema, SchemaId as AnoncredsSchemaId},
     },
     types::{
         AttributeNames as AnoncredsAttributeNames, CredentialOffer as AnoncredsCredentialOffer,
@@ -92,6 +96,25 @@ impl Convert for AnoncredsCredentialDefinition {
                 revocation: self.value.revocation,
             },
             issuer_id: OurIssuerId::new(self.issuer_id.to_string())?,
+        })
+    }
+}
+
+impl Convert for OurCredentialDefinition {
+    type Args = ();
+    type Target = AnoncredsCredentialDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(AnoncredsCredentialDefinition {
+            schema_id: AnoncredsSchemaId::new_unchecked(self.schema_id.to_string()),
+            signature_type: anoncreds::types::SignatureType::CL,
+            tag: self.tag,
+            value: AnoncredsCredentialDefinitionData {
+                primary: self.value.primary,
+                revocation: self.value.revocation,
+            },
+            issuer_id: AnoncredsIssuerId::new(self.issuer_id.to_string())?,
         })
     }
 }

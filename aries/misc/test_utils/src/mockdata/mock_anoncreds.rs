@@ -146,7 +146,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _wallet: &impl BaseWallet,
         _prover_did: &Did,
         _cred_offer_json: &str,
-        _cred_def_json: &str,
+        _cred_def_json: CredentialDefinition,
         _master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
         Ok((CREDENTIAL_REQ_STRING.to_owned(), String::new()))
@@ -169,7 +169,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_id: Option<&str>,
         _cred_req_metadata_json: &str,
         _cred_json: &str,
-        _cred_def_json: &str,
+        _cred_def_json: CredentialDefinition,
         _rev_reg_def_json: Option<&str>,
     ) -> VcxCoreResult<String> {
         Ok("cred_id".to_string())

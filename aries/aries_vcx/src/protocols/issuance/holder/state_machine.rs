@@ -574,7 +574,7 @@ async fn _store_credential(
             None,
             req_meta,
             &credential_json,
-            cred_def_json,
+            serde_json::from_str(cred_def_json)?,
             rev_reg_def_json.as_deref(),
         )
         .await?;
@@ -599,7 +599,7 @@ pub async fn create_anoncreds_credential_request(
             wallet,
             prover_did,
             cred_offer,
-            &serde_json::to_string(&cred_def_json)?,
+            cred_def_json.try_clone()?,
             master_secret_id,
         )
         .await

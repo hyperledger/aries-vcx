@@ -129,7 +129,7 @@ pub async fn create_and_write_credential(
             wallet_holder,
             institution_did,
             &offer,
-            &serde_json::to_string(&cred_def.get_cred_def_json()).unwrap(),
+            cred_def.get_cred_def_json().try_clone().unwrap(),
             settings::DEFAULT_LINK_SECRET_ALIAS,
         )
         .await
@@ -162,7 +162,7 @@ pub async fn create_and_write_credential(
             None,
             &req_meta,
             &cred,
-            &serde_json::to_string(&cred_def.get_cred_def_json()).unwrap(),
+            cred_def.get_cred_def_json().try_clone().unwrap(),
             rev_reg_def_json.as_deref(),
         )
         .await

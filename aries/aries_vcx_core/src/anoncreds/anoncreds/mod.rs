@@ -1095,17 +1095,16 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         prover_did: &Did,
         cred_offer_json: &str,
-        cred_def_json: &str,
+        cred_def_json: CredentialDefinition,
         master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
-        let mut cred_def_json: Value = serde_json::from_str(cred_def_json)?;
-        let cred_def_id = cred_def_json["id"].as_str().unwrap().to_string();
-        cred_def_json.as_object_mut().unwrap().insert(
-            "issuerId".to_owned(),
-            cred_def_id.split(':').next().unwrap().into(),
-        );
-        let cred_def: AnoncredsCredentialDefinition =
-            serde_json::from_str(&cred_def_json.to_string())?;
+        // let mut cred_def_json: Value = serde_json::from_str(cred_def_json)?;
+        // let cred_def_id = cred_def_json["id"].as_str().unwrap().to_string();
+        // cred_def_json.as_object_mut().unwrap().insert(
+        //     "issuerId".to_owned(),
+        //     cred_def_id.split(':').next().unwrap().into(),
+        // );
+        let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;
         let credential_offer: AnoncredsCredentialOffer = serde_json::from_str(cred_offer_json)?;
         let link_secret = self.get_link_secret(wallet, master_secret_id).await?;
 
@@ -1216,7 +1215,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_id: Option<&str>,
         cred_req_metadata_json: &str,
         cred_json: &str,
-        cred_def_json: &str,
+        cred_def_json: CredentialDefinition,
         rev_reg_def_json: Option<&str>,
     ) -> VcxCoreResult<String> {
         let mut credential: Credential = serde_json::from_str(cred_json)?;
@@ -1224,22 +1223,14 @@ impl BaseAnonCreds for Anoncreds {
             serde_json::from_str(cred_req_metadata_json)?;
         let link_secret_id = &cred_request_metadata.link_secret_name;
         let link_secret = self.get_link_secret(wallet, link_secret_id).await?;
-        let mut cred_def_json: Value = serde_json::from_str(cred_def_json)?;
-        let cred_def_id = cred_def_json["id"].as_str().unwrap().to_string();
-        let issuer_id = cred_def_id.split(':').next().unwrap().to_string();
-        cred_def_json
-            .as_object_mut()
-            .unwrap()
-            .insert("issuerId".to_owned(), issuer_id.clone().into());
-        let cred_def: AnoncredsCredentialDefinition =
-            serde_json::from_str(&cred_def_json.to_string())?;
+        let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;
         let rev_reg_def: Option<RevocationRegistryDefinition> =
             if let Some(rev_reg_def_json) = rev_reg_def_json {
                 let mut rev_reg_def_json: Value = serde_json::from_str(rev_reg_def_json)?;
                 rev_reg_def_json
                     .as_object_mut()
                     .unwrap()
-                    .insert("issuerId".to_owned(), issuer_id.into());
+                    .insert("issuerId".to_owned(), cred_def.issuer_id.to_string().into());
                 serde_json::from_str(&rev_reg_def_json.to_string())?
             } else {
                 None

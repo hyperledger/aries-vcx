@@ -224,6 +224,7 @@ pub async fn build_rev_reg_json(
 
 #[cfg(test)]
 pub mod unit_tests {
+    use anoncreds_types::data_types::ledger::cred_def::CredentialDefinition;
     use test_utils::{constants::*, devsetup::*, mockdata::mock_ledger::MockLedger};
 
     use super::*;
@@ -250,7 +251,7 @@ pub mod unit_tests {
             .await
             .unwrap();
 
-        let json: Value = serde_json::from_str(CRED_DEF_JSON).unwrap();
+        let json: CredentialDefinition = serde_json::from_str(CRED_DEF_JSON).unwrap();
         let expected = json!({ CRED_DEF_ID: json }).to_string();
         assert_eq!(credential_json, expected);
     }

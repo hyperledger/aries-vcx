@@ -917,11 +917,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         wallet: &impl BaseWallet,
         prover_did: &Did,
         credential_offer_json: &str,
-        credential_def_json: &str,
+        credential_def_json: CredentialDefinition,
         link_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
         let prover_did = prover_did.convert(())?;
-        let cred_def: CredxCredentialDefinition = serde_json::from_str(credential_def_json)?;
+        let cred_def: CredxCredentialDefinition = credential_def_json.convert(())?;
         let credential_offer: CredxCredentialOffer = serde_json::from_str(credential_offer_json)?;
         let link_secret = Self::get_link_secret(wallet, link_secret_id).await?;
 
@@ -987,14 +987,14 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         cred_id: Option<&str>,
         cred_req_meta: &str,
         cred_json: &str,
-        cred_def_json: &str,
+        cred_def_json: CredentialDefinition,
         rev_reg_def_json: Option<&str>,
     ) -> VcxCoreResult<String> {
         let mut credential: CredxCredential = serde_json::from_str(cred_json)?;
         let cred_request_metadata: CredentialRequestMetadata = serde_json::from_str(cred_req_meta)?;
         let link_secret_id = &cred_request_metadata.master_secret_name;
         let link_secret = Self::get_link_secret(wallet, link_secret_id).await?;
-        let cred_def: CredxCredentialDefinition = serde_json::from_str(cred_def_json)?;
+        let cred_def: CredxCredentialDefinition = cred_def_json.convert(())?;
         let rev_reg_def: Option<RevocationRegistryDefinition> =
             if let Some(rev_reg_def_json) = rev_reg_def_json {
                 serde_json::from_str(rev_reg_def_json)?

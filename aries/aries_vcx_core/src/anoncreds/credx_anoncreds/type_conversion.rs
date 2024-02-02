@@ -97,6 +97,18 @@ impl Convert for CredxCredentialDefinition {
     }
 }
 
+impl Convert for OurCredentialDefinition {
+    type Args = ();
+    type Target = CredxCredentialDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(CredxCredentialDefinition::CredentialDefinitionV1(
+            serde_json::from_str(&serde_json::to_string(&self)?)?,
+        ))
+    }
+}
+
 impl Convert for OurCredentialOffer {
     type Args = ();
     type Target = CredxCredentialOffer;
