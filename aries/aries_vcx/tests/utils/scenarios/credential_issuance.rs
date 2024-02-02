@@ -71,7 +71,7 @@ pub async fn create_address_schema_creddef_revreg(
         anoncreds,
         ledger_write,
         institution_did,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
     )
     .await;
     tokio::time::sleep(Duration::from_millis(500)).await;

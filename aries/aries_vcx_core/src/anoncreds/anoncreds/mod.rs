@@ -432,7 +432,7 @@ impl BaseAnonCreds for Anoncreds {
             .get_wallet_record_value(wallet, CATEGORY_CRED_DEF, &cred_def_id.to_string())
             .await?;
         let rev_reg_id =
-            make_revocation_registry_id(issuer_did, &cred_def_id, tag, RegistryType::CL_ACCUM)?;
+            make_revocation_registry_id(issuer_did, cred_def_id, tag, RegistryType::CL_ACCUM)?;
 
         let (rev_reg_def, rev_reg_def_priv) = create_revocation_registry_def(
             &cred_def,

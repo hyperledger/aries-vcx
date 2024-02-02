@@ -293,7 +293,7 @@ pub async fn rotate_rev_reg(
         &faber.wallet,
         &faber.anoncreds,
         &faber.institution_did,
-        &credential_def.get_cred_def_id(),
+        credential_def.get_cred_def_id(),
         &rev_reg.get_tails_dir(),
         10,
         2,

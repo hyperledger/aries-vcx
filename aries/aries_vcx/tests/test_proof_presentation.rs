@@ -62,7 +62,7 @@ async fn test_agency_pool_generate_proof_with_predicates() -> Result<(), Box<dyn
         &setup.anoncreds,
         &setup.ledger_write,
         &setup.institution_did,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
     )
     .await;
     let _cred_id = create_and_write_credential(
@@ -191,7 +191,7 @@ async fn test_agency_pool_presentation_via_proposal() -> Result<(), Box<dyn Erro
         &mut consumer,
         &mut institution,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some(rev_reg.rev_reg_id),
         Some(tails_dir),
         "comment",
@@ -200,7 +200,7 @@ async fn test_agency_pool_presentation_via_proposal() -> Result<(), Box<dyn Erro
     let mut prover = Prover::create("1")?;
     let mut verifier = Verifier::create("1")?;
     let presentation_proposal =
-        create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;
+        create_proof_proposal(&mut prover, cred_def.get_cred_def_id()).await;
     let presentation_request =
         accept_proof_proposal(&mut institution, &mut verifier, presentation_proposal).await;
 
@@ -235,7 +235,7 @@ async fn test_agency_pool_presentation_via_proposal_with_rejection() -> Result<(
         &mut consumer,
         &mut institution,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some(rev_reg.rev_reg_id),
         Some(tails_dir),
         "comment",
@@ -243,7 +243,7 @@ async fn test_agency_pool_presentation_via_proposal_with_rejection() -> Result<(
     .await;
     let mut prover = Prover::create("1")?;
     let presentation_proposal =
-        create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;
+        create_proof_proposal(&mut prover, cred_def.get_cred_def_id()).await;
     let rejection = reject_proof_proposal(&presentation_proposal).await;
     receive_proof_proposal_rejection(&mut prover, rejection).await;
     Ok(())
@@ -272,7 +272,7 @@ async fn test_agency_pool_presentation_via_proposal_with_negotiation() -> Result
         &mut consumer,
         &mut institution,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some(rev_reg.rev_reg_id),
         Some(tails_dir),
         "comment",

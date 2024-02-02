@@ -18,7 +18,7 @@ use indy_credx::{
     types::{
         AttributeNames as CredxAttributeNames, CredentialDefinition as CredxCredentialDefinition,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
-        DidValue, Schema as CredxSchema, SchemaId as CredxSchemaId,
+        DidValue, Schema as CredxSchema,
     },
 };
 

@@ -24,9 +24,6 @@ use vdr::{
             CredentialDefinitionId as IndyVdrCredentialDefinitionId, RevocationRegistryId,
         },
         requests::{
-            cred_def::{
-                CredentialDefinition as IndyVdrCredentialDefinition, CredentialDefinitionV1,
-            },
             rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
             rev_reg_def::{
                 RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1,

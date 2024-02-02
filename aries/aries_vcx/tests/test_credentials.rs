@@ -98,7 +98,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
         &setup.anoncreds,
         &setup.ledger_write,
         &setup.institution_did,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
     )
     .await;
     let cred_id = create_and_write_credential(
