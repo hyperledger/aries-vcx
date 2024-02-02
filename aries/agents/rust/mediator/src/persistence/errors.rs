@@ -24,7 +24,7 @@ pub struct DecodeError(#[from] pub Box<dyn std::error::Error>);
 /// Usage:
 /// errorset!(ComposedError[ErrorVariant1, ErrorVariant2]);
 
-macro_rules! errorset {
+macro_rules! error_compose {
     ($errorset_name:ident[$($error_name: ident),*]) => {
         #[derive(Error, Debug)]
         pub enum $errorset_name {
@@ -40,17 +40,17 @@ macro_rules! errorset {
     };
 }
 
-errorset!(GetAccountIdError[StorageBackendError, AccountNotFound]);
-errorset!(ListAccountsError[StorageBackendError, DecodeError]);
+error_compose!(GetAccountIdError[StorageBackendError, AccountNotFound]);
+error_compose!(ListAccountsError[StorageBackendError, DecodeError]);
 
-errorset!(GetAccountDetailsError[StorageBackendError, AccountNotFound, DecodeError]);
-errorset!(RetrievePendingMessageCountError[StorageBackendError, AccountNotFound]);
-errorset!(RetrievePendingMessagesError[StorageBackendError, AccountNotFound]);
-errorset!(AddRecipientError[StorageBackendError, AccountNotFound]);
-// Same error modes as AddRecipientError
+error_compose!(GetAccountDetailsError[StorageBackendError, AccountNotFound, DecodeError]);
+error_compose!(RetrievePendingMessageCountError[StorageBackendError, AccountNotFound]);
+error_compose!(RetrievePendingMessagesError[StorageBackendError, AccountNotFound]);
+error_compose!(AddRecipientError[StorageBackendError, AccountNotFound]);
+// Expected to fail similarly
 pub type RemoveRecipientError = AddRecipientError;
-errorset!(ListRecipientKeysError[StorageBackendError, AccountNotFound]);
-errorset!(PersistForwardMessageError[StorageBackendError, AccountNotFound]);
+error_compose!(ListRecipientKeysError[StorageBackendError, AccountNotFound]);
+error_compose!(PersistForwardMessageError[StorageBackendError, AccountNotFound]);
 
 // Manual declaration example
 #[derive(Error, Debug)]
