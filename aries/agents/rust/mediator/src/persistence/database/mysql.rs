@@ -82,7 +82,9 @@ impl MediatorPersistence for sqlx::MySqlPool {
                 .fetch_one(self)
                 .await
                 .map_err(|e| match e {
-                    sqlx::Error::RowNotFound => GetAccountIdError::AccountNotFound(AccountNotFound),
+                    sqlx::Error::RowNotFound => GetAccountIdError::AccountNotFound(
+                        AccountNotFound(format!("auth_pubkey={}", auth_pubkey.to_owned())),
+                    ),
                     _ => StorageBackendError { source: e.into() }.into(),
                 })?
                 .get("account_id");
@@ -116,9 +118,9 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .fetch_one(self)
             .await
             .map_err(|e| match e {
-                sqlx::error::Error::RowNotFound => {
-                    GetAccountDetailsError::AccountNotFound(AccountNotFound)
-                }
+                sqlx::error::Error::RowNotFound => GetAccountDetailsError::AccountNotFound(
+                    AccountNotFound(format!("auth_pubkey={}", auth_pubkey.to_owned())),
+                ),
                 _ => StorageBackendError { source: e.into() }.into(),
             })?;
         let account_id = row
@@ -187,9 +189,9 @@ impl MediatorPersistence for sqlx::MySqlPool {
         if let Err(err) = recipient_row {
             info!("Error while finding target recipient, {:#}", err);
             let mapped_err = match err {
-                sqlx::Error::RowNotFound => {
-                    PersistForwardMessageError::AccountNotFound(AccountNotFound)
-                }
+                sqlx::Error::RowNotFound => PersistForwardMessageError::AccountNotFound(
+                    AccountNotFound(format!("reipient_key={}", recipient_key.to_owned())),
+                ),
                 _ => StorageBackendError { source: err.into() }.into(),
             };
             return Err(mapped_err);
@@ -225,7 +227,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .get_account_id(auth_pubkey)
             .await
             .map_err(|e| match e {
-                GetAccountIdError::AccountNotFound(_) => AccountNotFound.into(),
+                GetAccountIdError::AccountNotFound(anf) => anf.into(),
                 GetAccountIdError::StorageBackendError(s) => s.into(),
                 GetAccountIdError::ZFhOt01Rdb0Error(anye) => {
                     RetrievePendingMessageCountError::ZFhOt01Rdb0Error(
@@ -276,7 +278,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .get_account_id(auth_pubkey)
             .await
             .map_err(|e| match e {
-                GetAccountIdError::AccountNotFound(AccountNotFound) => AccountNotFound.into(),
+                GetAccountIdError::AccountNotFound(anf) => anf.into(),
                 GetAccountIdError::StorageBackendError(s) => s.into(),
                 GetAccountIdError::ZFhOt01Rdb0Error(anye) => {
                     RetrievePendingMessagesError::ZFhOt01Rdb0Error(
@@ -326,7 +328,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .get_account_id(auth_pubkey)
             .await
             .map_err(|e| match e {
-                GetAccountIdError::AccountNotFound(_) => AccountNotFound.into(),
+                GetAccountIdError::AccountNotFound(anf) => anf.into(),
                 GetAccountIdError::StorageBackendError(s) => s.into(),
                 GetAccountIdError::ZFhOt01Rdb0Error(anye) => AddRecipientError::ZFhOt01Rdb0Error(
                     anye.context(format!("Couldn't get account id of pubkey {auth_pubkey}")),
@@ -360,7 +362,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .get_account_id(auth_pubkey)
             .await
             .map_err(|e| match e {
-                GetAccountIdError::AccountNotFound(_) => AccountNotFound.into(),
+                GetAccountIdError::AccountNotFound(anf) => anf.into(),
                 GetAccountIdError::StorageBackendError(s) => s.into(),
                 GetAccountIdError::ZFhOt01Rdb0Error(anye) => {
                     RemoveRecipientError::ZFhOt01Rdb0Error(
@@ -395,9 +397,7 @@ impl MediatorPersistence for sqlx::MySqlPool {
             .get_account_id(auth_pubkey)
             .await
             .map_err(|e| match e {
-                GetAccountIdError::AccountNotFound(_) => {
-                    ListRecipientKeysError::AccountNotFound(AccountNotFound)
-                }
+                GetAccountIdError::AccountNotFound(anf) => anf.into(),
                 GetAccountIdError::StorageBackendError(s) => s.into(),
                 GetAccountIdError::ZFhOt01Rdb0Error(anye) => {
                     ListRecipientKeysError::ZFhOt01Rdb0Error(

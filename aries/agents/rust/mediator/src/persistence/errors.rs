@@ -1,8 +1,8 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-#[error("No account found matching given input")]
-pub struct AccountNotFound;
+#[error("No account found matching given input: {0}")]
+pub struct AccountNotFound(pub String);
 
 /// Error closely related to the storage backend
 #[derive(Error, Debug)]
