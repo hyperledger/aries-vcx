@@ -143,7 +143,7 @@ async fn test_pool_revoke_credential() -> Result<(), Box<dyn Error>> {
     .await;
     let cred_rev_id = get_cred_rev_id(&setup.wallet, &setup.anoncreds, &cred_id).await?;
 
-    let ledger = &setup.ledger_read;
+    let ledger = setup.ledger_read;
 
     let (_, first_rev_reg_delta, first_timestamp) = ledger
         .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
@@ -158,18 +158,12 @@ async fn test_pool_revoke_credential() -> Result<(), Box<dyn Error>> {
 
     let anoncreds = &setup.anoncreds;
 
-    let rev_reg_delta_json = setup
-        .ledger_read
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
-        .await?
-        .1;
     anoncreds
         .revoke_credential_local(
             &setup.wallet,
             get_temp_dir_path().to_str().unwrap(),
             &rev_reg.rev_reg_id,
             &cred_rev_id,
-            &rev_reg_delta_json,
         )
         .await?;
 

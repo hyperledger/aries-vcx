@@ -155,7 +155,6 @@ impl Agent {
         ));
         let rev_regs = Arc::new(ServiceRevocationRegistries::new(
             ledger_write.clone(),
-            ledger_read.clone(),
             anoncreds,
             wallet.clone(),
             config_issuer.institution_did.clone(),

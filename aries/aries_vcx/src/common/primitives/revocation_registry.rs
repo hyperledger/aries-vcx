@@ -1,8 +1,6 @@
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
-    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
-    wallet::base_wallet::BaseWallet,
+    anoncreds::base_anoncreds::BaseAnonCreds, errors::error::AriesVcxCoreErrorKind,
+    ledger::base_ledger::AnoncredsLedgerWrite, wallet::base_wallet::BaseWallet,
 };
 
 use super::credential_definition::PublicEntityStateType;
@@ -117,9 +115,9 @@ impl RevocationRegistry {
             .publish_rev_reg_def(wallet, &json!(self.rev_reg_def).to_string(), issuer_did)
             .await
             .map_err(|err| {
-                AriesVcxCoreError::from_msg(
+                err.map(
                     AriesVcxCoreErrorKind::InvalidState,
-                    format!("Cannot publish revocation registry definition; {err}"),
+                    "Cannot publish revocation registry definition",
                 )
             })?;
         self.rev_reg_def_state = PublicEntityStateType::Published;
@@ -141,9 +139,9 @@ impl RevocationRegistry {
             .publish_rev_reg_delta(wallet, &self.rev_reg_id, &self.rev_reg_entry, issuer_did)
             .await
             .map_err(|err| {
-                AriesVcxCoreError::from_msg(
+                err.map(
                     AriesVcxCoreErrorKind::InvalidRevocationEntry,
-                    format!("Cannot publish revocation entry; {err}"),
+                    "Cannot post RevocationEntry",
                 )
             })?;
         self.rev_reg_delta_state = PublicEntityStateType::Published;
@@ -218,21 +216,10 @@ impl RevocationRegistry {
         &self,
         wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
-        ledger: &impl AnoncredsLedgerRead,
         cred_rev_id: &str,
     ) -> VcxResult<()> {
-        let rev_reg_delta_json = ledger
-            .get_rev_reg_delta_json(&self.rev_reg_id, None, None)
-            .await?
-            .1;
         anoncreds
-            .revoke_credential_local(
-                wallet,
-                &self.tails_dir,
-                &self.rev_reg_id,
-                &rev_reg_delta_json,
-                cred_rev_id,
-            )
+            .revoke_credential_local(wallet, &self.tails_dir, &self.rev_reg_id, cred_rev_id)
             .await
             .map_err(|err| err.into())
     }
@@ -293,7 +280,7 @@ impl RevocationRegistry {
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct RevocationRegistryDefinitionValue {
-    pub issuance_type: String, // FILL IN
+    pub issuance_type: String,
     pub max_cred_num: u32,
     pub public_keys: serde_json::Value,
     pub tails_hash: String,
@@ -303,12 +290,12 @@ pub struct RevocationRegistryDefinitionValue {
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct RevocationRegistryDefinition {
-    pub id: String, // FILL IN
+    pub id: String,
     pub revoc_def_type: String,
     pub tag: String,
     pub cred_def_id: String,
     pub value: RevocationRegistryDefinitionValue,
-    pub ver: String, // FILL IN
+    pub ver: String,
 }
 pub async fn generate_rev_reg(
     wallet: &impl BaseWallet,

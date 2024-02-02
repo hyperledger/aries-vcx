@@ -119,7 +119,6 @@ impl CredentialDef {
             wallet,
             anoncreds,
             &issuer_did,
-            &schema_id,
             &schema_json,
             &tag,
             None,
@@ -235,12 +234,10 @@ impl CredentialDef {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 pub async fn generate_cred_def(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
     issuer_did: &str,
-    schema_id: &str,
     schema_json: &str,
     tag: &str,
     sig_type: Option<&str>,
@@ -263,7 +260,6 @@ pub async fn generate_cred_def(
         .issuer_create_and_store_credential_def(
             wallet,
             issuer_did,
-            schema_id,
             schema_json,
             tag,
             sig_type,

@@ -296,53 +296,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "anoncreds"
-version = "0.2.0-dev.5"
-source = "git+https://github.com/mirgee/anoncreds-rs.git?rev=9a7539c#9a7539c62dc0ee65891c2d94b66b7986ef33f210"
-dependencies = [
- "anoncreds-clsignatures 0.3.0",
- "base64",
- "bitvec",
- "bs58 0.4.0",
- "chrono",
- "env_logger 0.9.3",
- "ffi-support",
- "log",
- "once_cell",
- "rand 0.8.5",
- "regex",
- "rmp-serde",
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
- "zeroize",
-]
-
-[[package]]
 name = "anoncreds-clsignatures"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f0a6071c39753711af4abaac08590f276980ae550d4e8f4b8c4a0b40a3dc39c"
-dependencies = [
- "amcl",
- "glass_pumpkin",
- "log",
- "num-bigint",
- "num-integer",
- "num-traits",
- "once_cell",
- "openssl",
- "rand 0.8.5",
- "serde",
- "sha2",
-]
-
-[[package]]
-name = "anoncreds-clsignatures"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6aaf926b07b4d4067ac9614b73caf126b399f419f5c5d41318dbce97d3ddb86"
 dependencies = [
  "amcl",
  "glass_pumpkin",
@@ -437,10 +394,7 @@ name = "aries_vcx_core"
 version = "0.1.0"
 dependencies = [
  "agency_client",
- "anoncreds",
  "async-trait",
- "bitvec",
- "did_parser",
  "futures",
  "indy-api-types",
  "indy-credx",
@@ -768,9 +722,9 @@ checksum = "4cbbc9d0964165b47557570cce6c952866c2678457aca742aafc9fb771d30270"
 
 [[package]]
 name = "base64"
-version = "0.21.7"
+version = "0.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
+checksum = "9ba43ea6f343b788c8764558649e08df62f86c6ef251fdaeb1ffd010a9ae50a2"
 
 [[package]]
 name = "base64-url"
@@ -809,19 +763,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4682ae6287fcf752ecaabbfcc7b6f9b72aa33933dc23a554d853aea8eea8635"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "bitvec"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1bc2832c24239b0141d5674bb9174f9d68a8b5b3f2753311927c172ca46f7e9c"
-dependencies = [
- "funty",
- "radium",
- "serde",
- "tap",
- "wyz",
 ]
 
 [[package]]
@@ -2000,12 +1941,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0845fa252299212f0389d64ba26f34fa32cfe41588355f21ed507c59a0f64541"
 
 [[package]]
-name = "funty"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6d5a32815ae3f33302d95fdcb2ce17862f8c65363dcfd29360480ba1001fc9c"
-
-[[package]]
 name = "futures"
 version = "0.3.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2501,7 +2436,7 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72a8c97ba7f3a0af57c6895f2b7836fc00aa7ed3a56ce28e2367ded9dea3d9be"
 dependencies = [
- "anoncreds-clsignatures 0.2.3",
+ "anoncreds-clsignatures",
  "bs58 0.5.0",
  "curve25519-dalek",
  "ed25519-dalek",
@@ -2522,7 +2457,7 @@ name = "indy-data-types"
 version = "0.7.0"
 source = "git+https://github.com/hyperledger/indy-shared-rs?tag=v1.1.0#0260b93f76573613cedb486bc8836c75c47d4cf4"
 dependencies = [
- "anoncreds-clsignatures 0.2.3",
+ "anoncreds-clsignatures",
  "bs58 0.5.0",
  "curve25519-dalek",
  "ed25519-dalek",
@@ -2542,7 +2477,7 @@ dependencies = [
 name = "indy-ledger-response-parser"
 version = "0.1.0"
 dependencies = [
- "anoncreds-clsignatures 0.2.3",
+ "anoncreds-clsignatures",
  "indy-vdr",
  "serde",
  "serde_json",
@@ -3695,12 +3630,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "radium"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
-
-[[package]]
 name = "rand"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4681,12 +4610,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tap"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
-
-[[package]]
 name = "tempfile"
 version = "3.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5623,15 +5546,6 @@ checksum = "524e57b2c537c0f9b1e69f1965311ec12182b4122e45035b1508cd24d2adadb1"
 dependencies = [
  "cfg-if",
  "windows-sys",
-]
-
-[[package]]
-name = "wyz"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05f360fc0b24296329c78fda852a1e9ae82de9cf7b27dae4b7f62f118f77b9ed"
-dependencies = [
- "tap",
 ]
 
 [[package]]

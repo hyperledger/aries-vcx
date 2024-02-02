@@ -27,13 +27,11 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         tag: &str,
     ) -> VcxCoreResult<(String, String, String)>;
 
-    #[allow(clippy::too_many_arguments)]
     async fn issuer_create_and_store_credential_def(
         &self,
         wallet: &impl BaseWallet,
         issuer_did: &str,
         schema_json: &str,
-        schema_id: &str,
         tag: &str,
         signature_type: Option<&str>,
         config_json: &str,
@@ -135,14 +133,12 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
 
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not
     // PURE Anoncreds)
-    // ^ YES
     async fn revoke_credential_local(
         &self,
         wallet: &impl BaseWallet,
         tails_dir: &str,
         rev_reg_id: &str,
         cred_rev_id: &str,
-        rev_reg_delta_json: &str,
     ) -> VcxCoreResult<()>;
 
     async fn get_rev_reg_delta(

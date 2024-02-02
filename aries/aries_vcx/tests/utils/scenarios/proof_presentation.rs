@@ -248,6 +248,7 @@ pub async fn revoke_credential_and_publish_accumulator(
     rev_reg: &RevocationRegistry,
 ) {
     revoke_credential_local(faber, issuer_credential, &rev_reg.rev_reg_id).await;
+
     rev_reg
         .publish_local_revocations(
             &faber.wallet,
@@ -271,7 +272,7 @@ pub async fn revoke_credential_local(
     _rev_reg_id: &str,
 ) {
     issuer_credential
-        .revoke_credential_local(&faber.wallet, &faber.anoncreds, &faber.ledger_read)
+        .revoke_credential_local(&faber.wallet, &faber.anoncreds)
         .await
         .unwrap();
 }

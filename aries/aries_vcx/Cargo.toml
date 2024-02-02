@@ -17,7 +17,6 @@ credx = [
     "test_utils/vdrtools_wallet",
     "test_utils/credx"
 ]
-anoncreds = ["aries_vcx_core/anoncreds", "test_utils/anoncreds", "test_utils/vdrtools_wallet"]
 vdr_proxy_ledger = [
     "aries_vcx_core/vdr_proxy_ledger",
     "aries_vcx_core/vdrtools_wallet",

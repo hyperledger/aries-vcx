@@ -12,7 +12,6 @@ edition.workspace = true
 vdrtools_wallet = ["aries_vcx_core/vdrtools_wallet"]
 vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "credx"]
 credx = ["aries_vcx_core/credx"]
-anoncreds = ["aries_vcx_core/anoncreds"]
 
 [dependencies]
 aries_vcx_core = { path = "../../aries_vcx_core" }

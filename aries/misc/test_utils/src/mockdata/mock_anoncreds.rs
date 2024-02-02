@@ -53,7 +53,6 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         __wallet: &impl BaseWallet,
         _issuer_did: &str,
-        _schema_id: &str,
         _schema_json: &str,
         _tag: &str,
         _signature_type: Option<&str>,
@@ -209,7 +208,6 @@ impl BaseAnonCreds for MockAnoncreds {
         _tails_dir: &str,
         _rev_reg_id: &str,
         _cred_rev_id: &str,
-        _rev_reg_delta_json: &str,
     ) -> VcxCoreResult<()> {
         Ok(())
     }
