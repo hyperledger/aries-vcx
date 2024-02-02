@@ -562,7 +562,7 @@ async fn _store_credential(
 
     let rev_reg_id = _parse_rev_reg_id_from_credential(&credential_json)?;
     let rev_reg_def_json = if let Some(rev_reg_id) = rev_reg_id {
-        let json = ledger.get_rev_reg_def_json(&rev_reg_id).await?;
+        let json = ledger.get_rev_reg_def_json(&rev_reg_id.try_into()?).await?;
         Some(json)
     } else {
         None

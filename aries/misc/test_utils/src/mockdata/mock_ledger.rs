@@ -1,5 +1,5 @@
 use anoncreds_types::data_types::{
-    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId, rev_reg_def_id::RevocationRegistryDefinitionId},
     ledger::{cred_def::CredentialDefinition, schema::Schema},
 };
 use aries_vcx_core::{
@@ -124,7 +124,7 @@ impl AnoncredsLedgerRead for MockLedger {
         Ok(serde_json::from_str(CRED_DEF_JSON)?)
     }
 
-    async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
+    async fn get_rev_reg_def_json(&self, rev_reg_id: &RevocationRegistryDefinitionId) -> VcxCoreResult<String> {
         Ok(rev_def_json())
     }
 

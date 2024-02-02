@@ -1,7 +1,10 @@
 use std::fmt::Debug;
 
 use anoncreds_types::data_types::{
-    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    identifiers::{
+        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+        schema_id::SchemaId,
+    },
     ledger::{cred_def::CredentialDefinition, schema::Schema},
 };
 use async_trait::async_trait;
@@ -76,7 +79,10 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
         cred_def_id: &CredentialDefinitionId,
         submitter_did: Option<&Did>,
     ) -> VcxCoreResult<CredentialDefinition>;
-    async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String>;
+    async fn get_rev_reg_def_json(
+        &self,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+    ) -> VcxCoreResult<String>;
     async fn get_rev_reg_delta_json(
         &self,
         rev_reg_id: &str,

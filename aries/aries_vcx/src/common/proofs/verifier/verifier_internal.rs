@@ -169,7 +169,7 @@ pub async fn build_rev_reg_defs_json(
             ))?;
 
         if rev_reg_defs_json.get(rev_reg_id).is_none() {
-            let json = ledger.get_rev_reg_def_json(rev_reg_id).await?;
+            let json = ledger.get_rev_reg_def_json(&rev_reg_id.to_string().try_into()?).await?;
             let rev_reg_def_json = serde_json::from_str(&json).or(Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
                 format!("Failed to deserialize as json rev_reg_def: {}", json),

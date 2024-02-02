@@ -179,7 +179,9 @@ pub async fn build_rev_states_json(
                     (None, None)
                 };
 
-                let rev_reg_def_json = ledger_read.get_rev_reg_def_json(rev_reg_id).await?;
+                let rev_reg_def_json = ledger_read
+                    .get_rev_reg_def_json(&rev_reg_id.to_owned().try_into()?)
+                    .await?;
 
                 let (rev_reg_id, rev_reg_delta_json, timestamp) = ledger_read
                     .get_rev_reg_delta_json(rev_reg_id, from, to)
