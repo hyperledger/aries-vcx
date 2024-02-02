@@ -1,6 +1,7 @@
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
-    ledger::{cred_def::CredentialDefinition, schema::Schema}, messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
+    ledger::{cred_def::CredentialDefinition, schema::Schema},
+    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
 use async_trait::async_trait;
 use did_parser::Did;

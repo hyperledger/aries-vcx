@@ -1,4 +1,6 @@
-use anoncreds_types::data_types::identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId};
+use anoncreds_types::data_types::identifiers::{
+    cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
+};
 use aries_vcx::common::primitives::credential_definition::{
     CredentialDef, CredentialDefConfigBuilder, PublicEntityStateType,
 };
@@ -74,7 +76,9 @@ pub fn is_valid_handle(handle: u32) -> bool {
 }
 
 pub fn to_string(handle: u32) -> LibvcxResult<String> {
-    CREDENTIALDEF_MAP.get(handle, |cd| serde_json::to_string(cd).map_err(|err| err.into()))
+    CREDENTIALDEF_MAP.get(handle, |cd| {
+        serde_json::to_string(cd).map_err(|err| err.into())
+    })
 }
 
 pub fn from_string(data: &str) -> LibvcxResult<u32> {

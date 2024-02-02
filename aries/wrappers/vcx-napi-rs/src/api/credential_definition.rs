@@ -38,7 +38,9 @@ fn credentialdef_serialize(handle: u32) -> napi::Result<String> {
 
 #[napi]
 fn credentialdef_get_cred_def_id(handle: u32) -> napi::Result<String> {
-    credential_def::get_cred_def_id(handle).map(String::from).map_err(to_napi_err)
+    credential_def::get_cred_def_id(handle)
+        .map(String::from)
+        .map_err(to_napi_err)
 }
 
 #[napi]

@@ -1,4 +1,7 @@
-use anoncreds_types::data_types::{identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId}, ledger::{schema::Schema, cred_def::CredentialDefinition}};
+use anoncreds_types::data_types::{
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    ledger::{cred_def::CredentialDefinition, schema::Schema},
+};
 use aries_vcx_core::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     ledger::{

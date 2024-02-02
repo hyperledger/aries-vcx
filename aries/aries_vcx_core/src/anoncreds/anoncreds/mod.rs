@@ -17,10 +17,11 @@ use anoncreds::{
     issuer::{create_revocation_registry_def, create_revocation_status_list},
     tails::TailsFileWriter,
     types::{
-        CredentialOffer as AnoncredsCredentialOffer, CredentialRequestMetadata,
+        CredentialOffer as AnoncredsCredentialOffer,
+        CredentialRequest as AnoncredsCredentialRequest, CredentialRequestMetadata,
         CredentialRevocationConfig, CredentialRevocationState, LinkSecret, PresentCredentials,
         Presentation, PresentationRequest, RegistryType, RevocationRegistry,
-        RevocationRegistryDefinition, RevocationStatusList, SignatureType, CredentialRequest as AnoncredsCredentialRequest,
+        RevocationRegistryDefinition, RevocationStatusList, SignatureType,
     },
 };
 use anoncreds_types::data_types::{

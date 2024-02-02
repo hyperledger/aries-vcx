@@ -1,6 +1,9 @@
 use std::fmt::Debug;
 
-use anoncreds_types::data_types::{identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId}, ledger::{schema::Schema, cred_def::CredentialDefinition}};
+use anoncreds_types::data_types::{
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    ledger::{cred_def::CredentialDefinition, schema::Schema},
+};
 use async_trait::async_trait;
 use did_parser::Did;
 use indy_vdr::ledger::constants::UpdateRole;

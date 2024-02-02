@@ -24,7 +24,9 @@ use vdr::{
             CredentialDefinitionId as IndyVdrCredentialDefinitionId, RevocationRegistryId,
         },
         requests::{
-            cred_def::{CredentialDefinition as IndyVdrCredentialDefinition, CredentialDefinitionV1},
+            cred_def::{
+                CredentialDefinition as IndyVdrCredentialDefinition, CredentialDefinitionV1,
+            },
             rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
             rev_reg_def::{
                 RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1,
@@ -617,10 +619,9 @@ where
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
         let identifier = submitter_did.convert(())?;
-        let request = self.request_builder()?.build_cred_def_request(
-            &identifier,
-            cred_def_json.convert(())?
-        )?;
+        let request = self
+            .request_builder()?
+            .build_cred_def_request(&identifier, cred_def_json.convert(())?)?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(wallet, submitter_did, request)
             .await

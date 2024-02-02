@@ -54,7 +54,16 @@ async fn create_and_store_nonrevocable_credential_def(
     ledger_write: &impl AnoncredsLedgerWrite,
     issuer_did: &Did,
     attr_list: &str,
-) -> Result<(String, String, CredentialDefinitionId, String, CredentialDef), Box<dyn Error>> {
+) -> Result<
+    (
+        String,
+        String,
+        CredentialDefinitionId,
+        String,
+        CredentialDef,
+    ),
+    Box<dyn Error>,
+> {
     let schema =
         create_and_write_test_schema(wallet, anoncreds, ledger_write, issuer_did, attr_list).await;
     let cred_def = create_and_write_test_cred_def(
@@ -70,7 +79,9 @@ async fn create_and_store_nonrevocable_credential_def(
 
     tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
-    let cred_def_json = ledger_read.get_cred_def(&cred_def_id.to_owned().try_into()?, None).await?;
+    let cred_def_json = ledger_read
+        .get_cred_def(&cred_def_id.to_owned().try_into()?, None)
+        .await?;
     Ok((
         schema.schema_id.to_string(),
         serde_json::to_string(&schema.schema_json)?,

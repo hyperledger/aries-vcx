@@ -1,6 +1,8 @@
 use std::{thread, time::Duration};
 
-use anoncreds_types::data_types::identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId};
+use anoncreds_types::data_types::identifiers::{
+    cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
+};
 use aries_vcx::{
     common::primitives::{
         credential_definition::CredentialDef, credential_schema::Schema,

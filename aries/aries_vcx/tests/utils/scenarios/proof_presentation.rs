@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use anoncreds_types::data_types::identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId};
+use anoncreds_types::data_types::identifiers::{
+    cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
+};
 use aries_vcx::{
     common::{
         primitives::{
@@ -54,7 +56,7 @@ use crate::utils::{scenarios::requested_attr_objects, test_agent::TestAgent};
 
 pub async fn create_proof_proposal(
     prover: &mut Prover,
-    cred_def_id: &CredentialDefinitionId
+    cred_def_id: &CredentialDefinitionId,
 ) -> ProposePresentationV1 {
     let attrs = requested_attr_objects(cred_def_id);
     let mut proposal_data = PresentationProposalData::default();

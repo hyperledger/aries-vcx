@@ -15,8 +15,9 @@ use anoncreds_types::data_types::{
 use did_parser::Did;
 use indy_vdr::{
     ledger::{
-        identifiers::CredentialDefinitionId as IndyVdrCredentialDefinitionId,
-        identifiers::SchemaId as IndyVdrSchemaId,
+        identifiers::{
+            CredentialDefinitionId as IndyVdrCredentialDefinitionId, SchemaId as IndyVdrSchemaId,
+        },
         requests::{
             cred_def::{
                 CredentialDefinition as IndyVdrCredentialDefinition, CredentialDefinitionData,

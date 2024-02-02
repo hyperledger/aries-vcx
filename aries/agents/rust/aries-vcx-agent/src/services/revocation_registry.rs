@@ -53,7 +53,11 @@ impl ServiceRevocationRegistries {
         Ok(rev_reg.get_tails_dir())
     }
 
-    pub async fn create_rev_reg(&self, cred_def_id: &CredentialDefinitionId, max_creds: u32) -> AgentResult<String> {
+    pub async fn create_rev_reg(
+        &self,
+        cred_def_id: &CredentialDefinitionId,
+        max_creds: u32,
+    ) -> AgentResult<String> {
         let rev_reg = RevocationRegistry::create(
             self.wallet.as_ref(),
             &self.anoncreds,

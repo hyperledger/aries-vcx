@@ -2,7 +2,9 @@ pub mod scenarios;
 pub mod test_agent;
 use std::time::Duration;
 
-use anoncreds_types::data_types::identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId};
+use anoncreds_types::data_types::identifiers::{
+    cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
+};
 use aries_vcx::{
     common::{
         credentials::encoding::encode_attributes,

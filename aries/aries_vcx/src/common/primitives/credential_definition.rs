@@ -1,4 +1,7 @@
-use anoncreds_types::data_types::{identifiers::{schema_id::SchemaId, cred_def_id::CredentialDefinitionId}, ledger::{schema::Schema, cred_def::CredentialDefinition}};
+use anoncreds_types::data_types::{
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    ledger::{cred_def::CredentialDefinition, schema::Schema},
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,
@@ -82,7 +85,7 @@ pub struct RevocationDetails {
 async fn _try_get_cred_def_from_ledger(
     ledger: &impl AnoncredsLedgerRead,
     issuer_did: &Did,
-    cred_def_id: &CredentialDefinitionId
+    cred_def_id: &CredentialDefinitionId,
 ) -> VcxResult<Option<String>> {
     match ledger.get_cred_def(cred_def_id, Some(issuer_did)).await {
         Ok(cred_def) => Ok(Some(serde_json::to_string(&cred_def)?)),
@@ -222,7 +225,11 @@ impl CredentialDef {
     }
 
     pub async fn update_state(&mut self, ledger: &impl AnoncredsLedgerRead) -> VcxResult<u32> {
-        if (ledger.get_cred_def(&self.id.to_string().try_into()?, None).await).is_ok() {
+        if (ledger
+            .get_cred_def(&self.id.to_string().try_into()?, None)
+            .await)
+            .is_ok()
+        {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)
