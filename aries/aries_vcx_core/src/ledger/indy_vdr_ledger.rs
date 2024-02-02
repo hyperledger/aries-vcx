@@ -5,7 +5,10 @@ use std::{
 };
 
 use anoncreds_types::data_types::{
-    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId, rev_reg_def_id::RevocationRegistryDefinitionId},
+    identifiers::{
+        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+        schema_id::SchemaId,
+    },
     ledger::{cred_def::CredentialDefinition, schema::Schema},
 };
 use async_trait::async_trait;
@@ -486,13 +489,18 @@ where
         Ok(cred_def.convert(())?)
     }
 
-    async fn get_rev_reg_def_json(&self, rev_reg_id: &RevocationRegistryDefinitionId) -> VcxCoreResult<String> {
+    async fn get_rev_reg_def_json(
+        &self,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+    ) -> VcxCoreResult<String> {
         debug!("get_rev_reg_def_json >> rev_reg_id: {rev_reg_id}");
         let id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
         let request = self
             .request_builder()?
             .build_get_revoc_reg_def_request(None, &id)?;
-        let response = self.submit_request(Some(&rev_reg_id.to_string()), request).await?;
+        let response = self
+            .submit_request(Some(&rev_reg_id.to_string()), request)
+            .await?;
         debug!("get_rev_reg_def_json << response: {response}");
         let rev_reg_def = self
             .response_parser

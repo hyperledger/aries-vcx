@@ -453,7 +453,9 @@ async fn test_pool_get_rev_reg_def_json() -> Result<(), Box<dyn Error>> {
     .await?;
 
     let ledger = &setup.ledger_read;
-    let _json = ledger.get_rev_reg_def_json(&rev_reg.rev_reg_id.try_into()?).await?;
+    let _json = ledger
+        .get_rev_reg_def_json(&rev_reg.rev_reg_id.try_into()?)
+        .await?;
     Ok(())
 }
 
