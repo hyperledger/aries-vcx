@@ -20,9 +20,7 @@ use time::OffsetDateTime;
 use vdr::{
     config::PoolConfig,
     ledger::{
-        identifiers::{
-            CredentialDefinitionId as IndyVdrCredentialDefinitionId, RevocationRegistryId,
-        },
+        identifiers::RevocationRegistryId,
         requests::{
             rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
             rev_reg_def::{
@@ -32,7 +30,7 @@ use vdr::{
         RequestBuilder,
     },
     pool::{LedgerType, PreparedRequest},
-    utils::{did::DidValue, Qualifiable},
+    utils::Qualifiable,
 };
 pub use vdr::{
     ledger::constants::{LedgerRole, UpdateRole},
@@ -365,10 +363,10 @@ where
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         request_json: &str,
-        endorser: &str,
+        endorser: &Did,
     ) -> VcxCoreResult<String> {
         let mut request = PreparedRequest::from_request_json(request_json)?;
-        request.set_endorser(&DidValue::from_str(endorser)?)?;
+        request.set_endorser(&endorser.convert(())?)?;
         let signature_submitter = Self::sign_request(wallet, submitter_did, &request).await?;
         request.set_multi_signature(&submitter_did.convert(())?, &signature_submitter)?;
         Ok(request.req_json.to_string())
@@ -578,7 +576,7 @@ where
         wallet: &impl BaseWallet,
         schema_json: Schema,
         submitter_did: &Did,
-        _endorser_did: Option<String>,
+        _endorser_did: Option<&Did>,
     ) -> VcxCoreResult<()> {
         let identifier = submitter_did.convert(())?;
         let mut request = self

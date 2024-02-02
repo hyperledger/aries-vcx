@@ -57,7 +57,7 @@ impl IndyLedgerWrite for MockLedger {
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         request: &str,
-        endorser: &str,
+        endorser: &Did,
     ) -> VcxCoreResult<String> {
         Ok(REQUEST_WITH_ENDORSER.to_string())
     }
@@ -154,7 +154,7 @@ impl AnoncredsLedgerWrite for MockLedger {
         wallet: &impl BaseWallet,
         schema_json: Schema,
         submitter_did: &Did,
-        endorser_did: Option<String>,
+        endorser_did: Option<&Did>,
     ) -> VcxCoreResult<()> {
         Ok(())
     }

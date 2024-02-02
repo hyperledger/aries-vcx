@@ -39,7 +39,7 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         request: &str,
-        endorser: &str,
+        endorser: &Did,
     ) -> VcxCoreResult<String>;
     async fn endorse_transaction(
         &self,
@@ -97,7 +97,7 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
         wallet: &impl BaseWallet,
         schema_json: Schema,
         submitter_did: &Did,
-        endorser_did: Option<String>,
+        endorser_did: Option<&Did>,
     ) -> VcxCoreResult<()>;
     async fn publish_cred_def(
         &self,
