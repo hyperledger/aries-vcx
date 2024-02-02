@@ -228,7 +228,6 @@ impl Issuer {
         &self,
         wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
-        ledger: &impl AnoncredsLedgerRead,
     ) -> VcxResult<()> {
         let revocation_info: RevocationInfoV1 =
             self.issuer_sm
@@ -242,18 +241,8 @@ impl Issuer {
             revocation_info.rev_reg_id,
             revocation_info.tails_file,
         ) {
-            let rev_reg_delta_json = ledger
-                .get_rev_reg_delta_json(&rev_reg_id, None, None)
-                .await?
-                .1;
             anoncreds
-                .revoke_credential_local(
-                    wallet,
-                    &tails_file,
-                    &rev_reg_id,
-                    &cred_rev_id,
-                    &rev_reg_delta_json,
-                )
+                .revoke_credential_local(wallet, &tails_file, &rev_reg_id, &cred_rev_id)
                 .await?;
         } else {
             return Err(AriesVcxError::from_msg(

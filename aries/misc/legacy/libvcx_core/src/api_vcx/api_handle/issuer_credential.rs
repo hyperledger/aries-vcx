@@ -19,7 +19,7 @@ use serde_json;
 use super::mediated_connection::send_message;
 use crate::{
     api_vcx::{
-        api_global::profile::{get_main_anoncreds, get_main_ledger_read, get_main_wallet},
+        api_global::profile::{get_main_anoncreds, get_main_wallet},
         api_handle::{
             connection, connection::HttpClient, credential_def, mediated_connection,
             object_cache::ObjectCache, revocation_registry::REV_REG_MAP, ToU32,
@@ -383,11 +383,7 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
 pub async fn revoke_credential_local(handle: u32) -> LibvcxResult<()> {
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     credential
-        .revoke_credential_local(
-            get_main_wallet()?.as_ref(),
-            get_main_anoncreds()?.as_ref(),
-            get_main_ledger_read()?.as_ref(),
-        )
+        .revoke_credential_local(get_main_wallet()?.as_ref(), get_main_anoncreds()?.as_ref())
         .await
         .map_err(|err| err.into())
 }

@@ -235,8 +235,7 @@ impl HolderSM {
                         let problem_report =
                             build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                         error!(
-                            "Failed to create credential request with error {err}, generating \
-                             problem report: {:?}",
+                            "Failed to create credential request, generating problem report: {:?}",
                             problem_report
                         );
                         HolderFullState::Finished(FinishedHolderState::new(problem_report))
@@ -600,13 +599,9 @@ pub async fn create_anoncreds_credential_request(
             master_secret_id,
         )
         .await
-        .map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidState,
-                format!("Cannot create credential request; {}", err),
-            )
-        })
+        .map_err(|err| err.extend("Cannot create credential request"))
         .map(|(s1, s2)| (s1, s2, cred_def_id.to_string(), cred_def_json))
+        .map_err(|err| err.into())
 }
 
 async fn build_credential_request_msg(

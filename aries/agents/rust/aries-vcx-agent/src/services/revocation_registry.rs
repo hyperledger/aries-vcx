@@ -6,8 +6,7 @@ use std::{
 use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds,
-    ledger::indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
-    wallet::indy::IndySdkWallet,
+    ledger::indy_vdr_ledger::DefaultIndyLedgerWrite, wallet::indy::IndySdkWallet,
 };
 
 use crate::{
@@ -17,7 +16,6 @@ use crate::{
 
 pub struct ServiceRevocationRegistries {
     ledger_write: Arc<DefaultIndyLedgerWrite>,
-    ledger_read: Arc<DefaultIndyLedgerRead>,
     anoncreds: IndyCredxAnonCreds,
     wallet: Arc<IndySdkWallet>,
     issuer_did: String,
@@ -27,7 +25,6 @@ pub struct ServiceRevocationRegistries {
 impl ServiceRevocationRegistries {
     pub fn new(
         ledger_write: Arc<DefaultIndyLedgerWrite>,
-        ledger_read: Arc<DefaultIndyLedgerRead>,
         anoncreds: IndyCredxAnonCreds,
         wallet: Arc<IndySdkWallet>,
         issuer_did: String,
@@ -36,7 +33,6 @@ impl ServiceRevocationRegistries {
             issuer_did,
             rev_regs: ObjectCache::new("rev-regs"),
             ledger_write,
-            ledger_read,
             anoncreds,
             wallet,
         }
@@ -95,12 +91,7 @@ impl ServiceRevocationRegistries {
     pub async fn revoke_credential_locally(&self, id: &str, cred_rev_id: &str) -> AgentResult<()> {
         let rev_reg = self.rev_regs.get(id)?;
         rev_reg
-            .revoke_credential_local(
-                self.wallet.as_ref(),
-                &self.anoncreds,
-                self.ledger_read.as_ref(),
-                cred_rev_id,
-            )
+            .revoke_credential_local(self.wallet.as_ref(), &self.anoncreds, cred_rev_id)
             .await?;
         Ok(())
     }
