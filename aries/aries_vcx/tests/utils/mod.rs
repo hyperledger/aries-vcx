@@ -140,7 +140,6 @@ pub async fn create_and_write_credential(
     } else {
         (None, None, None)
     };
-    println!("rev_reg_def_json: {:?}", rev_reg_def_json);
     let (cred, _, _) = anoncreds_issuer
         .issuer_create_credential(
             wallet_issuer,

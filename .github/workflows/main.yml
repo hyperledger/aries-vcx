@@ -289,6 +289,20 @@ jobs:
       - name: "Run aries-vcx integration tests"
         run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F vdrtools_wallet,credx -- --ignored;
 
+  test-integration-aries-vcx-anoncreds-rs:
+    needs: workflow-setup
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+        with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+          default: true
+      - name: "Run anoncreds-rs integration tests"
+        run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F anoncreds --test test_revocations --test test_proof_presentation --test test_anoncreds -- --ignored
+
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
     runs-on: ubuntu-20.04
@@ -391,8 +405,6 @@ jobs:
         run: (cd aries/agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run demo:revocation)
       - name: "Run integration tests"
         run: (cd aries/agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run test:integration)
-
-
 
   ##########################################################################################
   ############################   NPMJS PUBLISHING   #######################################

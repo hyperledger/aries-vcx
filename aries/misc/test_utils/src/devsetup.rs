@@ -192,8 +192,14 @@ pub async fn dev_build_featured_anoncreds() -> impl BaseAnonCreds {
         return IndyCredxAnonCreds;
     }
 
-    #[cfg(not(feature = "credx"))]
-    return {
+    #[cfg(all(not(feature = "credx"), feature = "anoncreds"))]
+    {
+        use aries_vcx_core::anoncreds::anoncreds::Anoncreds;
+        return Anoncreds;
+    }
+
+    #[cfg(all(not(feature = "credx"), not(feature = "anoncreds")))]
+    {
         use crate::mockdata::mock_anoncreds::MockAnoncreds;
         return MockAnoncreds;
     };
