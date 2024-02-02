@@ -22,14 +22,14 @@ pub struct DecodeError(#[from] pub Box<dyn std::error::Error>);
 /// From<> impls (to the composition) and Display are automatically derived
 /// with the help of thiserror.
 /// Usage:
-/// errorset!(ComposedError[ErrorVariant1, ErrorVariant2]);
+/// errorset!(ComposedError\[ErrorVariant1, ErrorVariant2\]);
 
 macro_rules! error_compose {
     ($errorset_name:ident[$($error_name: ident),*]) => {
         #[derive(Error, Debug)]
         pub enum $errorset_name {
             $(
-            #[error("{0}")]
+            #[error(transparent)]
             $error_name(#[from] $error_name),
             )*
             /// Generic error variant - display, backtrace passed onto source anyhow::Error
@@ -40,18 +40,6 @@ macro_rules! error_compose {
     };
 }
 
-error_compose!(GetAccountIdError[StorageBackendError, AccountNotFound]);
-error_compose!(ListAccountsError[StorageBackendError, DecodeError]);
-
-error_compose!(GetAccountDetailsError[StorageBackendError, AccountNotFound, DecodeError]);
-error_compose!(RetrievePendingMessageCountError[StorageBackendError, AccountNotFound]);
-error_compose!(RetrievePendingMessagesError[StorageBackendError, AccountNotFound]);
-error_compose!(AddRecipientError[StorageBackendError, AccountNotFound]);
-// Expected to fail similarly
-pub type RemoveRecipientError = AddRecipientError;
-error_compose!(ListRecipientKeysError[StorageBackendError, AccountNotFound]);
-error_compose!(PersistForwardMessageError[StorageBackendError, AccountNotFound]);
-
 // Manual declaration example
 #[derive(Error, Debug)]
 pub enum CreateAccountError {
@@ -60,3 +48,16 @@ pub enum CreateAccountError {
     #[error(transparent)]
     ZFhOt01Rdb0Error(#[from] anyhow::Error),
 }
+// Composed
+error_compose!(GetAccountIdError[StorageBackendError, AccountNotFound]);
+error_compose!(GetAccountDetailsError[StorageBackendError, AccountNotFound, DecodeError]);
+error_compose!(ListAccountsError[StorageBackendError, DecodeError]);
+
+error_compose!(AddRecipientError[StorageBackendError, AccountNotFound]);
+// Expected to fail similarly
+pub type RemoveRecipientError = AddRecipientError;
+error_compose!(ListRecipientKeysError[StorageBackendError, AccountNotFound]);
+
+error_compose!(PersistForwardMessageError[StorageBackendError, AccountNotFound]);
+error_compose!(RetrievePendingMessageCountError[StorageBackendError, AccountNotFound]);
+error_compose!(RetrievePendingMessagesError[StorageBackendError, AccountNotFound]);
