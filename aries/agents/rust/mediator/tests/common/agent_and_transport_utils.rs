@@ -8,10 +8,7 @@ use aries_vcx::{
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediator::{
-    aries_agent::{
-        client::transports::{AriesReqwest, AriesTransport},
-        Agent,
-    },
+    aries_agent::{client::transports::AriesTransport, Agent},
     persistence::MediatorPersistence,
     utils::{structs::VerKey, GenericStringError},
 };
@@ -65,9 +62,7 @@ pub async fn gen_mediator_connected_agent() -> Result<(
     AriesDidDoc,
 )> {
     let agent = mediator::aries_agent::AgentBuilder::new_demo_agent().await?;
-    let mut aries_transport = AriesReqwest {
-        client: reqwest::Client::new(),
-    };
+    let mut aries_transport = reqwest::Client::new();
     let completed_connection = didcomm_connection(&agent, &mut aries_transport).await?;
     let our_verkey: VerKey = completed_connection.pairwise_info().pw_vk.clone();
     let their_diddoc = completed_connection.their_did_doc().clone();

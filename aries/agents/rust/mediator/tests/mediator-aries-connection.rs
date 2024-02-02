@@ -1,6 +1,5 @@
 mod common;
 
-use mediator::aries_agent::client::transports::AriesReqwest;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
 
@@ -30,9 +29,7 @@ async fn didcomm_connection_succeeds() -> Result<()> {
         serde_json::to_string_pretty(&oobi.clone()).unwrap()
     );
     let agent = mediator::aries_agent::AgentBuilder::new_demo_agent().await?;
-    let mut aries_transport = AriesReqwest {
-        client: reqwest::Client::new(),
-    };
+    let mut aries_transport = reqwest::Client::new();
     let _state = agent
         .establish_connection(oobi, &mut aries_transport)
         .await?;
