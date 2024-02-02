@@ -9,7 +9,9 @@ use anoncreds_types::data_types::{
         cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
         schema_id::SchemaId,
     },
-    ledger::{cred_def::CredentialDefinition, schema::Schema},
+    ledger::{
+        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema,
+    },
 };
 use async_trait::async_trait;
 use did_parser::Did;
@@ -28,9 +30,7 @@ use vdr::{
         },
         requests::{
             rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
-            rev_reg_def::{
-                RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1,
-            },
+            rev_reg_def::RegistryType,
         },
         RequestBuilder,
     },
@@ -636,15 +636,13 @@ where
     async fn publish_rev_reg_def(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_def: &str,
+        rev_reg_def: RevocationRegistryDefinition,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
         let identifier = submitter_did.convert(())?;
-        let rev_reg_def_data: RevocationRegistryDefinitionV1 = serde_json::from_str(rev_reg_def)?;
-        let request = self.request_builder()?.build_revoc_reg_def_request(
-            &identifier,
-            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def_data),
-        )?;
+        let request = self
+            .request_builder()?
+            .build_revoc_reg_def_request(&identifier, rev_reg_def.convert(())?)?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(wallet, submitter_did, request)
             .await

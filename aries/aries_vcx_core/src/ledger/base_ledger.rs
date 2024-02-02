@@ -5,7 +5,9 @@ use anoncreds_types::data_types::{
         cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
         schema_id::SchemaId,
     },
-    ledger::{cred_def::CredentialDefinition, schema::Schema},
+    ledger::{
+        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema,
+    },
 };
 use async_trait::async_trait;
 use did_parser::Did;
@@ -114,7 +116,7 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
     async fn publish_rev_reg_def(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_def: &str,
+        rev_reg_def: RevocationRegistryDefinition,
         submitter_did: &Did,
     ) -> VcxCoreResult<()>;
     async fn publish_rev_reg_delta(

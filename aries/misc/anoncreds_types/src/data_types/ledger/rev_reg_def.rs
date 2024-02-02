@@ -4,7 +4,10 @@ use anoncreds_clsignatures::RevocationKeyPrivate;
 
 use crate::{
     cl::RevocationKeyPublic,
-    data_types::identifiers::{cred_def_id::CredentialDefinitionId, issuer_id::IssuerId},
+    data_types::identifiers::{
+        cred_def_id::CredentialDefinitionId, issuer_id::IssuerId,
+        rev_reg_def_id::RevocationRegistryDefinitionId,
+    },
     error::ConversionError,
     utils::validation::Validatable,
 };
@@ -46,6 +49,7 @@ pub struct RevocationRegistryDefinitionValuePublicKeys {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RevocationRegistryDefinition {
+    pub id: RevocationRegistryDefinitionId,
     pub issuer_id: IssuerId,
     pub revoc_def_type: RegistryType,
     pub tag: String,

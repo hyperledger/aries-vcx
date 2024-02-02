@@ -7,7 +7,6 @@ use aries_vcx_core::ledger::{
     base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     indy::pool::test_utils::get_temp_dir_path,
 };
-use serde_json::json;
 use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};
 
 use crate::utils::create_and_write_test_schema;
@@ -103,7 +102,7 @@ async fn test_pool_create_rev_reg_def() -> Result<(), Box<dyn Error>> {
     ledger_write
         .publish_rev_reg_def(
             &setup.wallet,
-            &json!(rev_reg_def_json).to_string(),
+            serde_json::from_str(&serde_json::to_string(&rev_reg_def_json)?)?,
             &setup.institution_did,
         )
         .await?;

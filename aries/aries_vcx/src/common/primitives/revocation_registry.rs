@@ -116,7 +116,11 @@ impl RevocationRegistry {
         );
         self.rev_reg_def.value.tails_location = String::from(tails_url);
         ledger
-            .publish_rev_reg_def(wallet, &json!(self.rev_reg_def).to_string(), issuer_did)
+            .publish_rev_reg_def(
+                wallet,
+                serde_json::from_str(&serde_json::to_string(&self.rev_reg_def)?)?,
+                issuer_did,
+            )
             .await
             .map_err(|err| {
                 AriesVcxCoreError::from_msg(
