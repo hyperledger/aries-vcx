@@ -77,7 +77,7 @@ pub async fn build_cred_defs_json_prover(
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
             let credential_def = ledger
-                .get_cred_def(&cred_info.cred_def_id.to_string().try_into()?, None)
+                .get_cred_def(&cred_info.cred_def_id.to_owned().try_into()?, None)
                 .await
                 .map_err(|err| {
                     err.map(
@@ -396,7 +396,9 @@ pub mod unit_tests {
             .unwrap();
         assert!(!credential_def.is_empty());
         assert!(credential_def
-            .contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
+            .contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1""#));
+        assert!(credential_def
+            .contains(r#""schemaId":"47""#));
     }
 
     #[tokio::test]
