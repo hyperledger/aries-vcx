@@ -20,7 +20,9 @@ use time::OffsetDateTime;
 use vdr::{
     config::PoolConfig,
     ledger::{
-        identifiers::RevocationRegistryId,
+        identifiers::{
+            CredentialDefinitionId as IndyVdrCredentialDefinitionId, RevocationRegistryId,
+        },
         requests::{
             rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
             rev_reg_def::{

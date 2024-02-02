@@ -49,7 +49,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         wallet: &impl BaseWallet,
         cred_def_id: &CredentialDefinitionId,
-    ) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<CredentialOffer>;
 
     async fn issuer_create_credential(
         &self,

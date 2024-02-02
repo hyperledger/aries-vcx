@@ -128,7 +128,7 @@ pub async fn create_and_write_credential(
         .prover_create_credential_req(
             wallet_holder,
             institution_did,
-            &offer,
+            &serde_json::to_string(&offer).unwrap(),
             cred_def.get_cred_def_json().try_clone().unwrap(),
             settings::DEFAULT_LINK_SECRET_ALIAS,
         )
@@ -147,7 +147,7 @@ pub async fn create_and_write_credential(
     let (cred, _, _) = anoncreds_issuer
         .issuer_create_credential(
             wallet_issuer,
-            serde_json::from_str(&offer).unwrap(),
+            offer,
             serde_json::from_str(&req).unwrap(),
             &encoded_attributes,
             rev_reg_id,

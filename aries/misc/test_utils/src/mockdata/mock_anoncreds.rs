@@ -76,8 +76,8 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         __wallet: &impl BaseWallet,
         _cred_def_id: &CredentialDefinitionId,
-    ) -> VcxCoreResult<String> {
-        Ok(LIBINDY_CRED_OFFER.to_string())
+    ) -> VcxCoreResult<CredentialOffer> {
+        Ok(serde_json::from_str(LIBINDY_CRED_OFFER)?)
     }
 
     async fn issuer_create_credential(

@@ -154,7 +154,7 @@ impl Issuer {
             .issuer_create_credential_offer(wallet, &offer_info.cred_def_id)
             .await?;
         self.issuer_sm = self.issuer_sm.clone().build_credential_offer_msg(
-            &libindy_cred_offer,
+            &serde_json::to_string(&libindy_cred_offer)?,
             credential_preview,
             comment,
             &offer_info,

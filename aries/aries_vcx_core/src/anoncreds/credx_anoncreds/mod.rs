@@ -476,7 +476,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         wallet: &impl BaseWallet,
         cred_def_id: &CredentialDefinitionId,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<CredentialOffer> {
         let cred_def =
             Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, &cred_def_id.0).await?;
 
@@ -497,7 +497,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let offer =
             credx::issuer::create_credential_offer(&schema_id, &cred_def, &correctness_proof)?;
 
-        serde_json::to_string(&offer).map_err(From::from)
+        Ok(offer.convert(())?)
     }
 
     async fn issuer_create_credential(

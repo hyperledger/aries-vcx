@@ -611,7 +611,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         cred_def_id: &CredentialDefinitionId,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<CredentialOffer> {
         let correctness_proof = self
             .get_wallet_record_value(
                 wallet,
@@ -634,7 +634,7 @@ impl BaseAnonCreds for Anoncreds {
             &correctness_proof,
         )?;
 
-        serde_json::to_string(&offer).map_err(From::from)
+        Ok(offer.convert(())?)
     }
 
     async fn issuer_create_credential(
