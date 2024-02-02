@@ -1,10 +1,7 @@
 use anoncreds::{
     data_types::{
-        cred_def::{
-            CredentialDefinition as AnoncredsCredentialDefinition,
-        },
-        issuer_id::IssuerId as AnoncredsIssuerId,
-        schema::{Schema as AnoncredsSchema},
+        cred_def::CredentialDefinition as AnoncredsCredentialDefinition,
+        issuer_id::IssuerId as AnoncredsIssuerId, schema::Schema as AnoncredsSchema,
     },
     types::{
         AttributeNames as AnoncredsAttributeNames, CredentialOffer as AnoncredsCredentialOffer,

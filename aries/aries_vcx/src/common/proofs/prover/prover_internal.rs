@@ -395,10 +395,8 @@ pub mod unit_tests {
             .await
             .unwrap();
         assert!(!credential_def.is_empty());
-        assert!(credential_def
-            .contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1""#));
-        assert!(credential_def
-            .contains(r#""schemaId":"47""#));
+        assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1""#));
+        assert!(credential_def.contains(r#""schemaId":"47""#));
     }
 
     #[tokio::test]
