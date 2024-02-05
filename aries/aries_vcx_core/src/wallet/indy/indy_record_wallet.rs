@@ -9,8 +9,8 @@ use crate::{
     errors::error::{AriesVcxCoreError, VcxCoreResult},
     wallet::{
         base_wallet::{record::Record, search_filter::SearchFilter, RecordWallet},
-        entry_tags::EntryTags,
         indy::IndySdkWallet,
+        record_tags::RecordTags,
     },
 };
 
@@ -55,7 +55,7 @@ impl RecordWallet for IndySdkWallet {
         &self,
         category: &str,
         name: &str,
-        new_tags: EntryTags,
+        new_tags: RecordTags,
     ) -> VcxCoreResult<()> {
         Ok(Locator::instance()
             .non_secret_controller

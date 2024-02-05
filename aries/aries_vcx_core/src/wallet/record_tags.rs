@@ -2,14 +2,14 @@ use std::fmt;
 
 use serde::{de::Visitor, ser::SerializeMap, Deserialize, Serialize};
 
-pub(crate) type EntryTag = (String, String);
+pub(crate) type RecordTag = (String, String);
 
 #[derive(Debug, Default, Clone, PartialEq)]
-pub struct EntryTags {
-    inner: Vec<EntryTag>,
+pub struct RecordTags {
+    inner: Vec<RecordTag>,
 }
 
-impl Serialize for EntryTags {
+impl Serialize for RecordTags {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -22,10 +22,10 @@ impl Serialize for EntryTags {
     }
 }
 
-struct EntryTagsVisitor;
+struct RecordTagsVisitor;
 
-impl<'de> Visitor<'de> for EntryTagsVisitor {
-    type Value = EntryTags;
+impl<'de> Visitor<'de> for RecordTagsVisitor {
+    type Value = RecordTags;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         write!(formatter, "a map representing tags")
@@ -35,7 +35,7 @@ impl<'de> Visitor<'de> for EntryTagsVisitor {
     where
         A: serde::de::MapAccess<'de>,
     {
-        let mut tags = EntryTags::new(vec![]);
+        let mut tags = RecordTags::new(vec![]);
 
         while let Some(tag) = map.next_entry()? {
             tags.add(tag);
@@ -45,24 +45,24 @@ impl<'de> Visitor<'de> for EntryTagsVisitor {
     }
 }
 
-impl<'de> Deserialize<'de> for EntryTags {
+impl<'de> Deserialize<'de> for RecordTags {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        deserializer.deserialize_map(EntryTagsVisitor)
+        deserializer.deserialize_map(RecordTagsVisitor)
     }
 }
 
-impl EntryTags {
-    pub fn new(inner: Vec<EntryTag>) -> Self {
+impl RecordTags {
+    pub fn new(inner: Vec<RecordTag>) -> Self {
         let mut items = inner;
         items.sort();
 
         Self { inner: items }
     }
 
-    pub fn add(&mut self, tag: EntryTag) {
+    pub fn add(&mut self, tag: RecordTag) {
         self.inner.push(tag);
         self.inner.sort();
     }
@@ -71,23 +71,23 @@ impl EntryTags {
         self.inner.is_empty()
     }
 
-    pub fn into_inner(self) -> Vec<EntryTag> {
+    pub fn into_inner(self) -> Vec<RecordTag> {
         self.inner
     }
 
-    pub fn merge(&mut self, other: EntryTags) {
+    pub fn merge(&mut self, other: RecordTags) {
         self.inner.extend(other.into_inner());
         self.inner.sort();
     }
 
-    pub fn remove(&mut self, tag: EntryTag) {
+    pub fn remove(&mut self, tag: RecordTag) {
         self.inner.retain(|existing_tag| existing_tag.0 != tag.0);
         self.inner.sort();
     }
 }
 
-impl IntoIterator for EntryTags {
-    type Item = EntryTag;
+impl IntoIterator for RecordTags {
+    type Item = RecordTag;
 
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
@@ -96,8 +96,8 @@ impl IntoIterator for EntryTags {
     }
 }
 
-impl FromIterator<EntryTag> for EntryTags {
-    fn from_iter<T: IntoIterator<Item = EntryTag>>(iter: T) -> Self {
+impl FromIterator<RecordTag> for RecordTags {
+    fn from_iter<T: IntoIterator<Item = RecordTag>>(iter: T) -> Self {
         let mut tags = Self::default();
 
         for item in iter {
@@ -107,8 +107,8 @@ impl FromIterator<EntryTag> for EntryTags {
     }
 }
 
-impl From<Vec<EntryTag>> for EntryTags {
-    fn from(value: Vec<EntryTag>) -> Self {
+impl From<Vec<RecordTag>> for RecordTags {
+    fn from(value: Vec<RecordTag>) -> Self {
         value.into_iter().fold(Self::default(), |mut memo, item| {
             memo.add(item);
             memo
@@ -116,8 +116,8 @@ impl From<Vec<EntryTag>> for EntryTags {
     }
 }
 
-impl From<EntryTags> for Vec<EntryTag> {
-    fn from(value: EntryTags) -> Self {
+impl From<RecordTags> for Vec<RecordTag> {
+    fn from(value: RecordTags) -> Self {
         value.inner
     }
 }
@@ -126,11 +126,11 @@ impl From<EntryTags> for Vec<EntryTag> {
 mod tests {
     use serde_json::json;
 
-    use crate::wallet::entry_tags::EntryTags;
+    use crate::wallet::record_tags::RecordTags;
 
     #[test]
     fn test_entry_tags_serialize() {
-        let tags = EntryTags::new(vec![("~a".into(), "b".into()), ("c".into(), "d".into())]);
+        let tags = RecordTags::new(vec![("~a".into(), "b".into()), ("c".into(), "d".into())]);
 
         let res = serde_json::to_string(&tags).unwrap();
 
@@ -141,7 +141,7 @@ mod tests {
     fn test_entry_tags_deserialize() {
         let json = json!({"a":"b", "~c":"d"});
 
-        let tags = EntryTags::new(vec![("a".into(), "b".into()), ("~c".into(), "d".into())]);
+        let tags = RecordTags::new(vec![("a".into(), "b".into()), ("~c".into(), "d".into())]);
 
         let res = serde_json::from_str(&json.to_string()).unwrap();
 

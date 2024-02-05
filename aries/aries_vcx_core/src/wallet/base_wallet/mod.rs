@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use public_key::Key;
 
-use super::entry_tags::EntryTags;
+use super::record_tags::RecordTags;
 use crate::{
     errors::error::VcxCoreResult,
     wallet::{
@@ -54,7 +54,7 @@ pub trait RecordWallet {
         &self,
         category: &str,
         name: &str,
-        new_tags: EntryTags,
+        new_tags: RecordTags,
     ) -> VcxCoreResult<()>;
 
     async fn update_record_value(
@@ -82,7 +82,7 @@ mod tests {
         errors::error::AriesVcxCoreErrorKind,
         wallet::{
             base_wallet::{DidWallet, Record, RecordWallet},
-            entry_tags::EntryTags,
+            record_tags::RecordTags,
         },
     };
 
@@ -264,8 +264,8 @@ mod tests {
         let category = "my";
         let value1 = "xxx";
         let value2 = "yyy";
-        let tags1: EntryTags = vec![("a".into(), "b".into())].into();
-        let tags2 = EntryTags::default();
+        let tags1: RecordTags = vec![("a".into(), "b".into())].into();
+        let tags2 = RecordTags::default();
 
         let record = Record::builder()
             .name(name.into())
@@ -297,7 +297,7 @@ mod tests {
         let category = "my";
         let value1 = "xxx";
         let value2 = "yyy";
-        let tags: EntryTags = vec![("a".into(), "b".into())].into();
+        let tags: RecordTags = vec![("a".into(), "b".into())].into();
 
         let record = Record::builder()
             .name(name.into())
@@ -324,8 +324,8 @@ mod tests {
         let name = "foo";
         let category = "my";
         let value = "xxx";
-        let tags1: EntryTags = vec![("a".into(), "b".into())].into();
-        let tags2: EntryTags = vec![("c".into(), "d".into())].into();
+        let tags1: RecordTags = vec![("a".into(), "b".into())].into();
+        let tags2: RecordTags = vec![("c".into(), "d".into())].into();
 
         let record = Record::builder()
             .name(name.into())
