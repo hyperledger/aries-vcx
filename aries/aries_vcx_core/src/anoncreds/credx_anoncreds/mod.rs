@@ -7,7 +7,7 @@ use std::{
 };
 
 use anoncreds_types::data_types::{
-    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId, rev_reg_def_id::RevocationRegistryDefinitionId},
     ledger::{
         cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema,
     },
@@ -25,7 +25,7 @@ use credx::{
         IssuanceType, LinkSecret, PresentCredentials, Presentation, PresentationRequest,
         RegistryType, RevocationRegistry,
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition, RevocationRegistryDelta,
-        RevocationRegistryId, Schema as CredxSchema, SchemaId as CredxSchemaId, SignatureType,
+        RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema, SchemaId as CredxSchemaId, SignatureType,
     },
 };
 use did_parser::Did;
@@ -67,7 +67,7 @@ pub const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RevocationRegistryInfo {
-    pub id: RevocationRegistryId,
+    pub id: CredxRevocationRegistryId,
     pub curr_id: u32,
     pub used_ids: HashSet<u32>,
 }
@@ -262,14 +262,15 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let cred_defs: HashMap<CredxCredentialDefinitionId, CredxCredentialDefinition> =
             cred_defs.convert(())?;
 
-        let rev_reg_defs: Option<HashMap<RevocationRegistryId, CredxRevocationRegistryDefinition>> =
+        let rev_reg_defs: Option<HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>> =
             serde_json::from_str(rev_reg_defs_json)?;
+        let rev_reg_defs: Option<HashMap<CredxRevocationRegistryId, CredxRevocationRegistryDefinition>> = rev_reg_defs.map(|v| v.convert(())).transpose()?;
 
-        let rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, RevocationRegistry>>> =
+        let rev_regs: Option<HashMap<CredxRevocationRegistryId, HashMap<u64, RevocationRegistry>>> =
             serde_json::from_str(rev_regs_json)?;
-        let rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>>> =
+        let rev_regs: Option<HashMap<CredxRevocationRegistryId, HashMap<u64, &RevocationRegistry>>> =
             rev_regs.as_ref().map(|regs| {
-                let mut new_regs: HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>> =
+                let mut new_regs: HashMap<CredxRevocationRegistryId, HashMap<u64, &RevocationRegistry>> =
                     HashMap::new();
                 for (k, v) in regs {
                     new_regs.insert(k.clone(), hashmap_as_ref(v));

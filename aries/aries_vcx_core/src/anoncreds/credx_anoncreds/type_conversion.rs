@@ -28,7 +28,7 @@ use indy_credx::{
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         DidValue, RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
-        Schema as CredxSchema,
+        RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
     },
 };
 
@@ -212,5 +212,22 @@ impl Convert for CredxRevocationRegistryDefinition {
                 })
             }
         }
+    }
+}
+
+impl Convert for HashMap<OurRevocationRegistryDefinitionId, OurRevocationRegistryDefinition> {
+    type Args = ();
+    type Target = HashMap<CredxRevocationRegistryId, CredxRevocationRegistryDefinition>;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        self.into_iter()
+            .map(|(id, def)| {
+                Ok((
+                    CredxRevocationRegistryId::from(id.to_string()),
+                    def.convert(())?,
+                ))
+            })
+            .collect()
     }
 }
