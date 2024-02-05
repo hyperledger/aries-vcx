@@ -10,7 +10,8 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema, rev_reg::RevocationRegistry,
+        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition, schema::Schema,
     },
 };
 use async_trait::async_trait;
@@ -29,7 +30,10 @@ use vdr::{
             CredentialDefinitionId as IndyVdrCredentialDefinitionId, RevocationRegistryId,
         },
         requests::{
-            rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
+            rev_reg::{
+                RevocationRegistryDelta as IndyVdrRevocationRegistryDelta,
+                RevocationRegistryDeltaV1,
+            },
             rev_reg_def::RegistryType,
         },
         RequestBuilder,
@@ -513,7 +517,7 @@ where
         rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(String, u64)> {
+    ) -> VcxCoreResult<(RevocationRegistry, u64)> {
         debug!("get_rev_reg_delta_json >> rev_reg_id: {rev_reg_id}, from: {from:?}, to: {to:?}");
         let revoc_reg_def_id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
 
@@ -537,7 +541,7 @@ where
         } = self
             .response_parser
             .parse_get_revoc_reg_delta_response(&response)?;
-        Ok((serde_json::to_string(&revoc_reg_delta)?, timestamp))
+        Ok((revoc_reg_delta.convert(())?, timestamp))
     }
 
     async fn get_rev_reg(
@@ -655,7 +659,7 @@ where
             &identifier,
             &RevocationRegistryId::from_str(&rev_reg_id.to_string())?,
             &RegistryType::CL_ACCUM,
-            RevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta_data),
+            IndyVdrRevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta_data),
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(wallet, submitter_did, request)

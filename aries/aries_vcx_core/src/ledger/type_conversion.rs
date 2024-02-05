@@ -31,7 +31,10 @@ use indy_vdr::{
                 CredentialDefinition as IndyVdrCredentialDefinition, CredentialDefinitionData,
                 SignatureType as IndyVdrSignatureType,
             },
-            rev_reg::RevocationRegistry as IndyVdrRevocationRegistry,
+            rev_reg::{
+                RevocationRegistry as IndyVdrRevocationRegistry,
+                RevocationRegistryDelta as IndyVdrRevocationRegistryDelta,
+            },
             rev_reg_def::{
                 IssuanceType, RevocationRegistryDefinition as IndyVdrRevocationRegistryDefinition,
                 RevocationRegistryDefinitionV1,
@@ -264,6 +267,22 @@ impl Convert for IndyVdrRevocationRegistry {
             IndyVdrRevocationRegistry::RevocationRegistryV1(rev_reg) => Ok(OurRevocationRegistry {
                 value: serde_json::from_value(rev_reg.value)?,
             }),
+        }
+    }
+}
+
+impl Convert for IndyVdrRevocationRegistryDelta {
+    type Args = ();
+    type Target = OurRevocationRegistry;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            IndyVdrRevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg) => {
+                Ok(OurRevocationRegistry {
+                    value: serde_json::from_value(rev_reg.value)?,
+                })
+            }
         }
     }
 }

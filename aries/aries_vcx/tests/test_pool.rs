@@ -551,6 +551,7 @@ async fn test_pool_create_rev_reg_delta_from_ledger() -> Result<(), Box<dyn Erro
         .ledger_read
         .get_rev_reg_delta_json(&rev_reg.rev_reg_id.try_into()?, None, None)
         .await?;
-    RevocationRegistryDelta::create_from_ledger(&rev_reg_delta_json).await?;
+    RevocationRegistryDelta::create_from_ledger(&serde_json::to_string(&rev_reg_delta_json)?)
+        .await?;
     Ok(())
 }

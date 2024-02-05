@@ -126,7 +126,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
             &setup.wallet,
             &rev_reg.rev_reg_id,
             &cred_rev_id,
-            &rev_reg_delta_json,
+            &serde_json::to_string(&rev_reg_delta_json)?,
         )
         .await?;
     rev_reg
