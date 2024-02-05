@@ -6,7 +6,8 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema,
+        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition, schema::Schema,
     },
 };
 use async_trait::async_trait;
@@ -95,7 +96,7 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-    ) -> VcxCoreResult<(String, u64)>;
+    ) -> VcxCoreResult<(RevocationRegistry, u64)>;
 }
 
 #[async_trait]

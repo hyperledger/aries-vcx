@@ -4,7 +4,8 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema,
+        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition, schema::Schema,
     },
 };
 use aries_vcx_core::{
@@ -149,8 +150,8 @@ impl AnoncredsLedgerRead for MockLedger {
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-    ) -> VcxCoreResult<(String, u64)> {
-        Ok((REV_REG_JSON.to_string(), 1))
+    ) -> VcxCoreResult<(RevocationRegistry, u64)> {
+        Ok((serde_json::from_str(REV_REG_JSON).unwrap(), 1))
     }
 }
 

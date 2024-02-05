@@ -10,6 +10,7 @@ use anoncreds_types::data_types::{
             CredentialDefinitionData as OurCredentialDefinitionData,
             SignatureType as OurSignatureType,
         },
+        rev_reg::RevocationRegistry as OurRevocationRegistry,
         rev_reg_def::{
             RevocationRegistryDefinition as OurRevocationRegistryDefinition,
             RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
@@ -30,6 +31,7 @@ use indy_vdr::{
                 CredentialDefinition as IndyVdrCredentialDefinition, CredentialDefinitionData,
                 SignatureType as IndyVdrSignatureType,
             },
+            rev_reg::RevocationRegistry as IndyVdrRevocationRegistry,
             rev_reg_def::{
                 IssuanceType, RevocationRegistryDefinition as IndyVdrRevocationRegistryDefinition,
                 RevocationRegistryDefinitionV1,
@@ -248,6 +250,20 @@ impl Convert for IndyVdrRevocationRegistryDefinition {
                     },
                 })
             }
+        }
+    }
+}
+
+impl Convert for IndyVdrRevocationRegistry {
+    type Args = ();
+    type Target = OurRevocationRegistry;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            IndyVdrRevocationRegistry::RevocationRegistryV1(rev_reg) => Ok(OurRevocationRegistry {
+                value: serde_json::from_value(rev_reg.value)?,
+            }),
         }
     }
 }

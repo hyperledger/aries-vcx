@@ -212,10 +212,10 @@ pub async fn build_rev_reg_json(
             let (rev_reg_json, timestamp) = ledger
                 .get_rev_reg(&rev_reg_id.to_owned().try_into()?, timestamp.to_owned())
                 .await?;
-            let rev_reg_json: Value =
-                serde_json::from_str(&rev_reg_json).or(Err(AriesVcxError::from_msg(
+            let rev_reg_json =
+                serde_json::to_value(rev_reg_json.clone()).or(Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidJson,
-                    format!("Failed to deserialize as json: {}", rev_reg_json),
+                    format!("Failed to deserialize as json: {:?}", rev_reg_json),
                 )))?;
             let rev_reg_json = json!({ timestamp.to_string(): rev_reg_json });
             rev_regs_json[rev_reg_id] = rev_reg_json;
