@@ -1,6 +1,5 @@
 use aries_vcx_core::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    utils::{self},
     wallet::{
         base_wallet::{
             did_data::DidData, record::Record, search_filter::SearchFilter, BaseWallet, DidWallet,
@@ -17,6 +16,9 @@ use public_key::{Key, KeyType};
 pub struct MockWallet;
 
 impl BaseWallet for MockWallet {}
+
+pub const DID: &str = "FhrSrYtQcw3p9xwf7NYemf";
+pub const VERKEY: &str = "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE";
 
 #[async_trait]
 #[allow(unused_variables)]
@@ -76,17 +78,17 @@ impl DidWallet for MockWallet {
         method_name: Option<&str>,
     ) -> VcxCoreResult<DidData> {
         Ok(DidData::new(
-            utils::constants::DID,
-            Key::new(utils::constants::VERKEY.into(), KeyType::Ed25519).unwrap(),
+            DID,
+            Key::new(VERKEY.into(), KeyType::Ed25519).unwrap(),
         ))
     }
 
     async fn key_for_did(&self, name: &str) -> VcxCoreResult<Key> {
-        Ok(Key::new(utils::constants::VERKEY.into(), KeyType::Ed25519).unwrap())
+        Ok(Key::new(VERKEY.into(), KeyType::Ed25519).unwrap())
     }
 
     async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxCoreResult<Key> {
-        Ok(Key::new(utils::constants::VERKEY.into(), KeyType::Ed25519).unwrap())
+        Ok(Key::new(VERKEY.into(), KeyType::Ed25519).unwrap())
     }
 
     async fn replace_did_key_apply(&self, did: &str) -> VcxCoreResult<()> {
