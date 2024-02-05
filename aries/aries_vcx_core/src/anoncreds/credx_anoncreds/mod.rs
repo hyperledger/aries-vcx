@@ -8,7 +8,9 @@ use std::{
 
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
-    ledger::{cred_def::CredentialDefinition, schema::Schema, rev_reg_def::RevocationRegistryDefinition},
+    ledger::{
+        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema,
+    },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
 use async_trait::async_trait;
@@ -21,7 +23,8 @@ use credx::{
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         CredentialRequestMetadata, CredentialRevocationConfig, CredentialRevocationState,
         IssuanceType, LinkSecret, PresentCredentials, Presentation, PresentationRequest,
-        RegistryType, RevocationRegistry, RevocationRegistryDefinition as CredxRevocationRegistryDefinition, RevocationRegistryDelta,
+        RegistryType, RevocationRegistry,
+        RevocationRegistryDefinition as CredxRevocationRegistryDefinition, RevocationRegistryDelta,
         RevocationRegistryId, Schema as CredxSchema, SchemaId as CredxSchemaId, SignatureType,
     },
 };
@@ -555,8 +558,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             Some((rev_reg_def, rev_reg_def_priv, rev_reg, rev_reg_info)) => {
                 rev_reg_info.curr_id += 1;
 
-                let CredxRevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def_v1) =
-                    rev_reg_def;
+                let CredxRevocationRegistryDefinition::RevocationRegistryDefinitionV1(
+                    rev_reg_def_v1,
+                ) = rev_reg_def;
 
                 if rev_reg_info.curr_id > rev_reg_def_v1.value.max_cred_num {
                     return Err(AriesVcxCoreError::from_msg(
@@ -951,7 +955,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     ) -> VcxCoreResult<String> {
         let revoc_reg_def: CredxRevocationRegistryDefinition = rev_reg_def_json.convert(())?;
         let tails_file_hash = match revoc_reg_def.borrow() {
-            CredxRevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => &r.value.tails_hash,
+            CredxRevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => {
+                &r.value.tails_hash
+            }
         };
 
         let mut tails_file_path = std::path::PathBuf::new();

@@ -1,4 +1,7 @@
-use anoncreds_types::data_types::{identifiers::cred_def_id::CredentialDefinitionId, ledger::rev_reg_def::RevocationRegistryDefinition};
+use anoncreds_types::data_types::{
+    identifiers::cred_def_id::CredentialDefinitionId,
+    ledger::rev_reg_def::RevocationRegistryDefinition,
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},

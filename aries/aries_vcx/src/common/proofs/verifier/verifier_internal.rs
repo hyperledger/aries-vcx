@@ -307,7 +307,7 @@ pub mod unit_tests {
             .await
             .unwrap();
 
-        let json: Value = serde_json::to_value(&rev_def_json()).unwrap();
+        let json: Value = serde_json::to_value(rev_def_json()).unwrap();
         let expected = json!({ REV_REG_ID: json }).to_string();
         assert_eq!(rev_reg_defs_json, expected);
     }

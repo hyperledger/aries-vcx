@@ -172,7 +172,7 @@ impl Convert for OurRevocationRegistryDefinition {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
-        let mut rev_reg_def = serde_json::to_value(&self)?;
+        let mut rev_reg_def = serde_json::to_value(self)?;
         rev_reg_def["value"]
             .as_object_mut()
             .unwrap()

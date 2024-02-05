@@ -21,12 +21,15 @@ use anoncreds::{
         CredentialRequest as AnoncredsCredentialRequest, CredentialRequestMetadata,
         CredentialRevocationConfig, CredentialRevocationState, LinkSecret, PresentCredentials,
         Presentation, PresentationRequest, RegistryType, RevocationRegistry,
-        RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition, RevocationStatusList, SignatureType,
+        RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
+        RevocationStatusList, SignatureType,
     },
 };
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
-    ledger::{cred_def::CredentialDefinition, schema::Schema, rev_reg_def::RevocationRegistryDefinition},
+    ledger::{
+        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema,
+    },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
 use async_trait::async_trait;
