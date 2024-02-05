@@ -190,7 +190,7 @@ pub async fn build_rev_states_json(
                 let rev_state_json = anoncreds
                     .create_revocation_state(
                         tails_dir,
-                        &rev_reg_def_json,
+                        rev_reg_def_json,
                         &rev_reg_delta_json,
                         timestamp,
                         cred_rev_id,

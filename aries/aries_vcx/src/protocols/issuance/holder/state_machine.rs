@@ -575,10 +575,10 @@ async fn _store_credential(
             req_meta,
             &credential_json,
             serde_json::from_str(cred_def_json)?,
-            rev_reg_def_json.as_deref(),
+            rev_reg_def_json.clone(),
         )
         .await?;
-    Ok((cred_id, rev_reg_def_json))
+    Ok((cred_id, rev_reg_def_json.as_ref().map(serde_json::to_string).transpose()?))
 }
 
 pub async fn create_anoncreds_credential_request(

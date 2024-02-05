@@ -163,7 +163,7 @@ pub async fn create_and_write_credential(
             &req_meta,
             &cred,
             cred_def.get_cred_def_json().try_clone().unwrap(),
-            rev_reg_def_json.as_deref(),
+            rev_reg_def_json.as_deref().map(serde_json::from_str).transpose().unwrap(),
         )
         .await
         .unwrap()

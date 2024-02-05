@@ -3,10 +3,16 @@ use std::collections::HashMap;
 use anoncreds_types::data_types::{
     identifiers::{
         cred_def_id::CredentialDefinitionId as OurCredentialDefinitionId,
-        issuer_id::IssuerId as OurIssuerId, schema_id::SchemaId as OurSchemaId,
+        issuer_id::IssuerId as OurIssuerId,
+        rev_reg_def_id::RevocationRegistryDefinitionId as OurRevocationRegistryDefinitionId,
+        schema_id::SchemaId as OurSchemaId,
     },
     ledger::{
         cred_def::{CredentialDefinition as OurCredentialDefinition, SignatureType},
+        rev_reg_def::{
+            RevocationRegistryDefinition as OurRevocationRegistryDefinition,
+            RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
+        },
         schema::{AttributeNames as OurAttributeNames, Schema as OurSchema},
     },
     messages::{
@@ -21,7 +27,8 @@ use indy_credx::{
         AttributeNames as CredxAttributeNames, CredentialDefinition as CredxCredentialDefinition,
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
-        DidValue, Schema as CredxSchema,
+        DidValue, RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
+        Schema as CredxSchema,
     },
 };
 
@@ -156,5 +163,54 @@ impl Convert for HashMap<OurCredentialDefinitionId, OurCredentialDefinition> {
                 ))
             })
             .collect()
+    }
+}
+
+impl Convert for OurRevocationRegistryDefinition {
+    type Args = ();
+    type Target = CredxRevocationRegistryDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        let mut rev_reg_def = serde_json::to_value(&self)?;
+        rev_reg_def["value"]
+            .as_object_mut()
+            .unwrap()
+            .insert("issuanceType".to_string(), "ISSUANCE_BY_DEFAULT".into());
+        Ok(
+            CredxRevocationRegistryDefinition::RevocationRegistryDefinitionV1(
+                serde_json::from_value(rev_reg_def)?,
+            ),
+        )
+    }
+}
+
+impl Convert for CredxRevocationRegistryDefinition {
+    type Args = ();
+    type Target = OurRevocationRegistryDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            CredxRevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def) => {
+                Ok(OurRevocationRegistryDefinition {
+                    id: OurRevocationRegistryDefinitionId::new(rev_reg_def.id.to_string())?,
+                    revoc_def_type:
+                        anoncreds_types::data_types::ledger::rev_reg_def::RegistryType::CL_ACCUM,
+                    tag: rev_reg_def.tag,
+                    cred_def_id: OurCredentialDefinitionId::new(
+                        rev_reg_def.cred_def_id.to_string(),
+                    )?,
+                    value: OurRevocationRegistryDefinitionValue {
+                        max_cred_num: rev_reg_def.value.max_cred_num,
+                        public_keys: serde_json::from_value(serde_json::to_value(
+                            rev_reg_def.value.public_keys,
+                        )?)?,
+                        tails_hash: rev_reg_def.value.tails_hash,
+                        tails_location: rev_reg_def.value.tails_location,
+                    },
+                })
+            }
+        }
     }
 }

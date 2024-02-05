@@ -1,7 +1,8 @@
-use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
-use aries_vcx::common::primitives::revocation_registry::{
-    RevocationRegistry, RevocationRegistryDefinition,
+use anoncreds_types::data_types::{
+    identifiers::cred_def_id::CredentialDefinitionId,
+    ledger::rev_reg_def::RevocationRegistryDefinition,
 };
+use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
 
 use crate::{
     api_vcx::{

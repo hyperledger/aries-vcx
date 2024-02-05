@@ -1,6 +1,6 @@
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
-    ledger::{cred_def::CredentialDefinition, schema::Schema},
+    ledger::{cred_def::CredentialDefinition, schema::Schema, rev_reg_def::RevocationRegistryDefinition},
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
 use aries_vcx_core::{
@@ -155,7 +155,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn create_revocation_state(
         &self,
         _tails_dir: &str,
-        _rev_reg_def_json: &str,
+        _rev_reg_def_json: RevocationRegistryDefinition,
         _rev_reg_delta_json: &str,
         _timestamp: u64,
         _cred_rev_id: &str,
@@ -170,7 +170,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_req_metadata_json: &str,
         _cred_json: &str,
         _cred_def_json: CredentialDefinition,
-        _rev_reg_def_json: Option<&str>,
+        _rev_reg_def_json: Option<RevocationRegistryDefinition>,
     ) -> VcxCoreResult<String> {
         Ok("cred_id".to_string())
     }

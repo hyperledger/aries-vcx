@@ -1,6 +1,7 @@
 use anoncreds_types::data_types::{
     identifiers::{
         cred_def_id::CredentialDefinitionId as OurCredentialDefinitionId, issuer_id::IssuerId,
+        rev_reg_def_id::RevocationRegistryDefinitionId as OurRevocationRegistryDefinitionId,
         schema_id::SchemaId as OurSchemaId,
     },
     ledger::{
@@ -9,7 +10,11 @@ use anoncreds_types::data_types::{
             CredentialDefinitionData as OurCredentialDefinitionData,
             SignatureType as OurSignatureType,
         },
-        rev_reg_def::RevocationRegistryDefinition as OurRevocationRegistryDefinition,
+        rev_reg_def::{
+            RevocationRegistryDefinition as OurRevocationRegistryDefinition,
+            RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
+            RevocationRegistryDefinitionValuePublicKeys as OurRevocationRegistryDefinitionValuePublicKeys,
+        },
         schema::Schema as OurSchema,
     },
 };
@@ -17,8 +22,8 @@ use did_parser::Did;
 use indy_vdr::{
     ledger::{
         identifiers::{
-            CredentialDefinitionId as IndyVdrCredentialDefinitionId, RevocationRegistryId,
-            SchemaId as IndyVdrSchemaId,
+            CredentialDefinitionId as IndyVdrCredentialDefinitionId,
+            RevocationRegistryId as IndyVdrRevocationRegistryId, SchemaId as IndyVdrSchemaId,
         },
         requests::{
             cred_def::{
@@ -27,8 +32,9 @@ use indy_vdr::{
             },
             rev_reg_def::{
                 IssuanceType, RevocationRegistryDefinition as IndyVdrRevocationRegistryDefinition,
-                RevocationRegistryDefinitionV1, RevocationRegistryDefinitionValue,
-                RevocationRegistryDefinitionValuePublicKeys,
+                RevocationRegistryDefinitionV1,
+                RevocationRegistryDefinitionValue as IndyVdrRevocationRegistryDefinitionValue,
+                RevocationRegistryDefinitionValuePublicKeys as IndyVdrRevocationRegistryDefinitionValuePublicKeys,
             },
             schema::{AttributeNames as IndyVdrAttributeNames, Schema as IndyVdrSchema, SchemaV1},
         },
@@ -193,15 +199,15 @@ impl Convert for OurRevocationRegistryDefinition {
         Ok(
             IndyVdrRevocationRegistryDefinition::RevocationRegistryDefinitionV1(
                 RevocationRegistryDefinitionV1 {
-                    id: RevocationRegistryId::try_from(self.id.to_string())?,
+                    id: IndyVdrRevocationRegistryId::try_from(self.id.to_string())?,
                     revoc_def_type: indy_vdr::ledger::requests::rev_reg_def::RegistryType::CL_ACCUM,
                     tag: self.tag,
                     cred_def_id: IndyVdrCredentialDefinitionId::try_from(
                         self.cred_def_id.to_string(),
                     )?,
-                    value: RevocationRegistryDefinitionValue {
+                    value: IndyVdrRevocationRegistryDefinitionValue {
                         max_cred_num: self.value.max_cred_num,
-                        public_keys: RevocationRegistryDefinitionValuePublicKeys {
+                        public_keys: IndyVdrRevocationRegistryDefinitionValuePublicKeys {
                             accum_key: serde_json::to_value(self.value.public_keys.accum_key)?,
                         },
                         tails_hash: self.value.tails_hash,
@@ -211,5 +217,37 @@ impl Convert for OurRevocationRegistryDefinition {
                 },
             ),
         )
+    }
+}
+
+impl Convert for IndyVdrRevocationRegistryDefinition {
+    type Args = ();
+    type Target = OurRevocationRegistryDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            IndyVdrRevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def) => {
+                Ok(OurRevocationRegistryDefinition {
+                    id: OurRevocationRegistryDefinitionId::new(rev_reg_def.id.to_string())?,
+                    revoc_def_type:
+                        anoncreds_types::data_types::ledger::rev_reg_def::RegistryType::CL_ACCUM,
+                    tag: rev_reg_def.tag,
+                    cred_def_id: OurCredentialDefinitionId::new(
+                        rev_reg_def.cred_def_id.to_string(),
+                    )?,
+                    value: OurRevocationRegistryDefinitionValue {
+                        max_cred_num: rev_reg_def.value.max_cred_num,
+                        public_keys: OurRevocationRegistryDefinitionValuePublicKeys {
+                            accum_key: serde_json::from_value(
+                                rev_reg_def.value.public_keys.accum_key,
+                            )?,
+                        },
+                        tails_hash: rev_reg_def.value.tails_hash,
+                        tails_location: rev_reg_def.value.tails_location,
+                    },
+                })
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
-    ledger::{cred_def::CredentialDefinition, schema::Schema},
+    ledger::{cred_def::CredentialDefinition, schema::Schema, rev_reg_def::RevocationRegistryDefinition},
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
 use async_trait::async_trait;
@@ -103,7 +103,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn create_revocation_state(
         &self,
         tails_dir: &str,
-        rev_reg_def_json: &str,
+        rev_reg_def_json: RevocationRegistryDefinition,
         rev_reg_delta_json: &str,
         timestamp: u64,
         cred_rev_id: &str,
@@ -116,7 +116,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_req_metadata_json: &str,
         cred_json: &str,
         cred_def_json: CredentialDefinition,
-        rev_reg_def_json: Option<&str>,
+        rev_reg_def_json: Option<RevocationRegistryDefinition>,
     ) -> VcxCoreResult<String>;
 
     async fn prover_delete_credential(

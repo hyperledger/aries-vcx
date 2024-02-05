@@ -132,7 +132,7 @@ impl AnoncredsLedgerRead for MockLedger {
     async fn get_rev_reg_def_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<RevocationRegistryDefinition> {
         Ok(rev_def_json())
     }
 

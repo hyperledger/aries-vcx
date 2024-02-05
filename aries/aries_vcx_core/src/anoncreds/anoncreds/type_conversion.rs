@@ -3,24 +3,33 @@ use anoncreds::{
         cred_def::{
             CredentialDefinition as AnoncredsCredentialDefinition,
             CredentialDefinitionData as AnoncredsCredentialDefinitionData,
+            CredentialDefinitionId as AnoncredsCredentialDefinitionId,
         },
         issuer_id::IssuerId as AnoncredsIssuerId,
+        rev_reg_def::RevocationRegistryDefinitionValue as AnoncredsRevocationRegistryDefinitionValue,
         schema::{Schema as AnoncredsSchema, SchemaId as AnoncredsSchemaId},
     },
     types::{
         AttributeNames as AnoncredsAttributeNames, CredentialOffer as AnoncredsCredentialOffer,
         CredentialRequest as AnoncredsCredentialRequest,
+        RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
     },
 };
 use anoncreds_types::data_types::{
     identifiers::{
         cred_def_id::CredentialDefinitionId as OurCredentialDefinitionId,
-        issuer_id::IssuerId as OurIssuerId, schema_id::SchemaId as OurSchemaId,
+        issuer_id::IssuerId as OurIssuerId,
+        rev_reg_def_id::RevocationRegistryDefinitionId as OurRevocationRegistryDefinitionId,
+        schema_id::SchemaId as OurSchemaId,
     },
     ledger::{
         cred_def::{
             CredentialDefinition as OurCredentialDefinition,
             CredentialDefinitionData as OurCredentialDefinitionData, SignatureType,
+        },
+        rev_reg_def::{
+            RevocationRegistryDefinition as OurRevocationRegistryDefinition,
+            RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
         },
         schema::{AttributeNames as OurAttributeNames, Schema as OurSchema},
     },
@@ -179,5 +188,49 @@ impl Convert for AnoncredsCredentialOffer {
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+    }
+}
+
+impl Convert for OurRevocationRegistryDefinition {
+    type Args = (String,);
+    type Target = AnoncredsRevocationRegistryDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (issuer_id,): Self::Args) -> Result<Self::Target, Self::Error> {
+        // TODO: Obtain issuer id from cred def id instead
+        Ok(AnoncredsRevocationRegistryDefinition {
+            issuer_id: AnoncredsIssuerId::new(issuer_id)?,
+            revoc_def_type: anoncreds::types::RegistryType::CL_ACCUM,
+            tag: self.tag,
+            cred_def_id: AnoncredsCredentialDefinitionId::new(self.cred_def_id.to_string())?,
+            value: AnoncredsRevocationRegistryDefinitionValue {
+                max_cred_num: self.value.max_cred_num,
+                public_keys: serde_json::from_value(serde_json::to_value(self.value.public_keys)?)?,
+                tails_hash: self.value.tails_hash,
+                tails_location: self.value.tails_location,
+            },
+        })
+    }
+}
+
+impl Convert for AnoncredsRevocationRegistryDefinition {
+    type Args = (String,);
+    type Target = OurRevocationRegistryDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (rev_reg_def_id,): Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(OurRevocationRegistryDefinition {
+            id: OurRevocationRegistryDefinitionId::new(rev_reg_def_id)?,
+            revoc_def_type:
+                anoncreds_types::data_types::ledger::rev_reg_def::RegistryType::CL_ACCUM,
+            tag: self.tag,
+            cred_def_id: OurCredentialDefinitionId::new(self.cred_def_id.to_string())?,
+            value: OurRevocationRegistryDefinitionValue {
+                max_cred_num: self.value.max_cred_num,
+                public_keys: serde_json::from_value(serde_json::to_value(self.value.public_keys)?)?,
+                tails_hash: self.value.tails_hash,
+                tails_location: self.value.tails_location,
+            },
+        })
     }
 }

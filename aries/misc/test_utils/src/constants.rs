@@ -1,4 +1,7 @@
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
+use anoncreds_types::data_types::{
+    identifiers::schema_id::SchemaId,
+    ledger::{rev_reg_def::RevocationRegistryDefinition, schema::Schema},
+};
 use serde_json::json;
 
 pub static TRUSTEE_SEED: &str = "000000000000000000000000Trustee1";
@@ -124,8 +127,8 @@ pub static TEST_TAILS_HASH: &str = r#"5R6BWXL3vPrbJPKe9FsHAVG9hqKdDvVxonBuj3ETYu
 pub static TEST_TAILS_URL: &str = r#"https://get-tails-here.org"#;
 pub static REQUEST_WITH_ENDORSER: &str = r#"{"seqNo":344,"reqId":1522866729726860308,"identifier":"VsKV7grR1BUE29mG2Fm2kX","txnTime":1516284381,"type":"101","endorser":"V4SGRU86Z58d6TV7PBUe6f"}"#;
 
-pub fn rev_def_json() -> String {
-    json!({
+pub fn rev_def_json() -> RevocationRegistryDefinition {
+    serde_json::from_value(json!({
         "ver":"1.0",
         "id": REV_REG_ID.to_string(),
         "revocDefType":"CL_ACCUM",
@@ -142,8 +145,7 @@ pub fn rev_def_json() -> String {
             "tailsHash": TEST_TAILS_HASH.to_string(),
             "tailsLocation": TEST_TAILS_LOCATION.to_string()
         }
-    })
-    .to_string()
+    })).unwrap()
 }
 
 pub static DEFAULT_AUTHOR_AGREEMENT: &str = r#"{"text":"Default indy agreement", "version":"1.0.0", "aml": {"acceptance mechanism label1": "description"}}"#;

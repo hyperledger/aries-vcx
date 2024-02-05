@@ -172,9 +172,9 @@ pub async fn build_rev_reg_defs_json(
             let json = ledger
                 .get_rev_reg_def_json(&rev_reg_id.to_string().try_into()?)
                 .await?;
-            let rev_reg_def_json = serde_json::from_str(&json).or(Err(AriesVcxError::from_msg(
+            let rev_reg_def_json = serde_json::to_value(&json).or(Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
-                format!("Failed to deserialize as json rev_reg_def: {}", json),
+                format!("Failed to deserialize as json rev_reg_def: {:?}", json),
             )))?;
             rev_reg_defs_json[rev_reg_id] = rev_reg_def_json;
         }
@@ -307,7 +307,7 @@ pub mod unit_tests {
             .await
             .unwrap();
 
-        let json: Value = serde_json::from_str(&rev_def_json()).unwrap();
+        let json: Value = serde_json::to_value(&rev_def_json()).unwrap();
         let expected = json!({ REV_REG_ID: json }).to_string();
         assert_eq!(rev_reg_defs_json, expected);
     }

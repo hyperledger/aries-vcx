@@ -1,4 +1,4 @@
-use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
+use anoncreds_types::data_types::{identifiers::cred_def_id::CredentialDefinitionId, ledger::rev_reg_def::RevocationRegistryDefinition};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
@@ -10,7 +10,7 @@ use did_parser::Did;
 use super::credential_definition::PublicEntityStateType;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Deserialize, Debug, Serialize)]
 pub struct RevocationRegistry {
     cred_def_id: String,
     issuer_did: Did,
@@ -290,26 +290,6 @@ impl RevocationRegistry {
     }
 }
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct RevocationRegistryDefinitionValue {
-    pub issuance_type: String, // FILL IN
-    pub max_cred_num: u32,
-    pub public_keys: serde_json::Value,
-    pub tails_hash: String,
-    pub tails_location: String,
-}
-
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct RevocationRegistryDefinition {
-    pub id: String, // FILL IN
-    pub revoc_def_type: String,
-    pub tag: String,
-    pub cred_def_id: String,
-    pub value: RevocationRegistryDefinitionValue,
-    pub ver: String, // FILL IN
-}
 pub async fn generate_rev_reg(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,

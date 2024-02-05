@@ -492,7 +492,7 @@ where
     async fn get_rev_reg_def_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<RevocationRegistryDefinition> {
         debug!("get_rev_reg_def_json >> rev_reg_id: {rev_reg_id}");
         let id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
         let request = self
@@ -505,7 +505,7 @@ where
         let rev_reg_def = self
             .response_parser
             .parse_get_revoc_reg_def_response(&response)?;
-        Ok(serde_json::to_string(&rev_reg_def)?)
+        Ok(rev_reg_def.convert(())?)
     }
 
     async fn get_rev_reg_delta_json(
