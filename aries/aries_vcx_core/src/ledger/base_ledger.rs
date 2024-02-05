@@ -90,7 +90,7 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
         rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(String, String, u64)>;
+    ) -> VcxCoreResult<(String, u64)>;
     async fn get_rev_reg(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,

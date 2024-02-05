@@ -233,7 +233,7 @@ impl RevocationRegistry {
         let rev_reg_delta_json = ledger
             .get_rev_reg_delta_json(&self.rev_reg_id.to_string().try_into()?, None, None)
             .await?
-            .1;
+            .0;
         anoncreds
             .revoke_credential_local(wallet, &self.rev_reg_id, &rev_reg_delta_json, cred_rev_id)
             .await

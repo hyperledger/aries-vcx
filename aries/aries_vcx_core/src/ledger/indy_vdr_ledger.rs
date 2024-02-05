@@ -513,7 +513,7 @@ where
         rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(String, String, u64)> {
+    ) -> VcxCoreResult<(String, u64)> {
         debug!("get_rev_reg_delta_json >> rev_reg_id: {rev_reg_id}, from: {from:?}, to: {to:?}");
         let revoc_reg_def_id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
 
@@ -531,14 +531,13 @@ where
         debug!("get_rev_reg_delta_json << response: {response}");
 
         let RevocationRegistryDeltaInfo {
-            revoc_reg_def_id,
             revoc_reg_delta,
             timestamp,
+            ..
         } = self
             .response_parser
             .parse_get_revoc_reg_delta_response(&response)?;
         Ok((
-            revoc_reg_def_id.to_string(),
             serde_json::to_string(&revoc_reg_delta)?,
             timestamp,
         ))

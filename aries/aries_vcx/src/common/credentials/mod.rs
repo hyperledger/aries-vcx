@@ -45,7 +45,7 @@ pub async fn is_cred_revoked(
     rev_id: &str,
 ) -> VcxResult<bool> {
     let to = Some(OffsetDateTime::now_utc().unix_timestamp() as u64 + 100);
-    let (_, rev_reg_delta_json, _) = ledger.get_rev_reg_delta_json(&rev_reg_id.try_into()?, None, to).await?;
+    let (rev_reg_delta_json, _) = ledger.get_rev_reg_delta_json(&rev_reg_id.try_into()?, None, to).await?;
     let rev_reg_delta = RevocationRegistryDelta::create_from_ledger(&rev_reg_delta_json).await?;
     Ok(rev_reg_delta
         .revoked()

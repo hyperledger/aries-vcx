@@ -245,7 +245,7 @@ impl Issuer {
             let rev_reg_delta_json = ledger
                 .get_rev_reg_delta_json(&rev_reg_id.to_owned().try_into()?, None, None)
                 .await?
-                .1;
+                .0;
             anoncreds
                 .revoke_credential_local(wallet, &rev_reg_id, &cred_rev_id, &rev_reg_delta_json)
                 .await?;

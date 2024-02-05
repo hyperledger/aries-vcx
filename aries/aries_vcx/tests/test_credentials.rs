@@ -119,7 +119,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
         .ledger_read
         .get_rev_reg_delta_json(&rev_reg.rev_reg_id.to_owned().try_into()?, None, None)
         .await?
-        .1;
+        .0;
     setup
         .anoncreds
         .revoke_credential_local(
