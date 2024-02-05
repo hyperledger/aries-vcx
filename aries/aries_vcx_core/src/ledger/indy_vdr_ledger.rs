@@ -510,12 +510,12 @@ where
 
     async fn get_rev_reg_delta_json(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxCoreResult<(String, String, u64)> {
         debug!("get_rev_reg_delta_json >> rev_reg_id: {rev_reg_id}, from: {from:?}, to: {to:?}");
-        let revoc_reg_def_id = RevocationRegistryId::from_str(rev_reg_id)?;
+        let revoc_reg_def_id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
 
         let from = from.map(|x| x as i64);
         let current_time = OffsetDateTime::now_utc().unix_timestamp();
@@ -546,11 +546,11 @@ where
 
     async fn get_rev_reg(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
     ) -> VcxCoreResult<(String, String, u64)> {
         debug!("get_rev_reg >> rev_reg_id: {rev_reg_id}, timestamp: {timestamp}");
-        let revoc_reg_def_id = RevocationRegistryId::from_str(rev_reg_id)?;
+        let revoc_reg_def_id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
 
         let request = self.request_builder()?.build_get_revoc_reg_request(
             None,
@@ -652,7 +652,7 @@ where
     async fn publish_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         rev_reg_entry_json: &str,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
@@ -661,7 +661,7 @@ where
             serde_json::from_str(rev_reg_entry_json)?;
         let request = self.request_builder()?.build_revoc_reg_entry_request(
             &identifier,
-            &RevocationRegistryId::from_str(rev_reg_id)?,
+            &RevocationRegistryId::from_str(&rev_reg_id.to_string())?,
             &RegistryType::CL_ACCUM,
             RevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta_data),
         )?;

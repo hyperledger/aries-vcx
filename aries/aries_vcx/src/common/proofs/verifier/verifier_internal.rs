@@ -210,7 +210,7 @@ pub async fn build_rev_reg_json(
 
         if rev_regs_json.get(rev_reg_id).is_none() {
             let (id, rev_reg_json, timestamp) =
-                ledger.get_rev_reg(rev_reg_id, timestamp.to_owned()).await?;
+                ledger.get_rev_reg(&rev_reg_id.to_owned().try_into()?, timestamp.to_owned()).await?;
             let rev_reg_json: Value =
                 serde_json::from_str(&rev_reg_json).or(Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidJson,

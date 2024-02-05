@@ -117,7 +117,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
 
     let rev_reg_delta_json = setup
         .ledger_read
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+        .get_rev_reg_delta_json(&rev_reg.rev_reg_id.to_owned().try_into()?, None, None)
         .await?
         .1;
     setup

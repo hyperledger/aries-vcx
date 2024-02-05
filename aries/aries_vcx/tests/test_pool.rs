@@ -476,7 +476,7 @@ async fn test_pool_get_rev_reg_delta_json() -> Result<(), Box<dyn Error>> {
 
     let ledger = &setup.ledger_read;
     let (id, _delta, _timestamp) = ledger
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+        .get_rev_reg_delta_json(&rev_reg.rev_reg_id.to_owned().try_into()?, None, None)
         .await?;
 
     assert_eq!(id, rev_reg.rev_reg_id);
@@ -505,7 +505,7 @@ async fn test_pool_get_rev_reg() -> Result<(), Box<dyn Error>> {
     let ledger = &setup.ledger_read;
     let (id, _rev_reg, _timestamp) = ledger
         .get_rev_reg(
-            &rev_reg.rev_reg_id,
+            &rev_reg.rev_reg_id.to_owned().try_into()?,
             time::OffsetDateTime::now_utc().unix_timestamp() as u64,
         )
         .await?;
@@ -551,7 +551,7 @@ async fn test_pool_create_rev_reg_delta_from_ledger() -> Result<(), Box<dyn Erro
 
     let (_, rev_reg_delta_json, _) = setup
         .ledger_read
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+        .get_rev_reg_delta_json(&rev_reg.rev_reg_id.try_into()?, None, None)
         .await?;
     RevocationRegistryDelta::create_from_ledger(&rev_reg_delta_json).await?;
     Ok(())

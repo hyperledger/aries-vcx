@@ -87,13 +87,13 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
     ) -> VcxCoreResult<RevocationRegistryDefinition>;
     async fn get_rev_reg_delta_json(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxCoreResult<(String, String, u64)>;
     async fn get_rev_reg(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
     ) -> VcxCoreResult<(String, String, u64)>;
 }
@@ -122,7 +122,7 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
     async fn publish_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         rev_reg_entry_json: &str,
         submitter_did: &Did,
     ) -> VcxCoreResult<()>;

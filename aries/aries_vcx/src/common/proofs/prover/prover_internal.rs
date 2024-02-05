@@ -184,7 +184,7 @@ pub async fn build_rev_states_json(
                     .await?;
 
                 let (rev_reg_id, rev_reg_delta_json, timestamp) = ledger_read
-                    .get_rev_reg_delta_json(rev_reg_id, from, to)
+                    .get_rev_reg_delta_json(&rev_reg_id.to_owned().try_into()?, from, to)
                     .await?;
 
                 let rev_state_json = anoncreds

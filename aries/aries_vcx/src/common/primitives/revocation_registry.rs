@@ -147,7 +147,7 @@ impl RevocationRegistry {
             self.rev_reg_id
         );
         ledger_write
-            .publish_rev_reg_delta(wallet, &self.rev_reg_id, &self.rev_reg_entry, issuer_did)
+            .publish_rev_reg_delta(wallet, &self.rev_reg_id.to_string().try_into()?, &self.rev_reg_entry, issuer_did)
             .await
             .map_err(|err| {
                 AriesVcxCoreError::from_msg(
@@ -231,7 +231,7 @@ impl RevocationRegistry {
         cred_rev_id: &str,
     ) -> VcxResult<()> {
         let rev_reg_delta_json = ledger
-            .get_rev_reg_delta_json(&self.rev_reg_id, None, None)
+            .get_rev_reg_delta_json(&self.rev_reg_id.to_string().try_into()?, None, None)
             .await?
             .1;
         anoncreds
@@ -252,7 +252,7 @@ impl RevocationRegistry {
             .await?
         {
             ledger_write
-                .publish_rev_reg_delta(wallet, &self.rev_reg_id, &delta, submitter_did)
+                .publish_rev_reg_delta(wallet, &self.rev_reg_id.to_string().try_into()?, &delta, submitter_did)
                 .await?;
 
             info!(

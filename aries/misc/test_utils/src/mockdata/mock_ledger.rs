@@ -138,7 +138,7 @@ impl AnoncredsLedgerRead for MockLedger {
 
     async fn get_rev_reg_delta_json(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxCoreResult<(String, String, u64)> {
@@ -147,7 +147,7 @@ impl AnoncredsLedgerRead for MockLedger {
 
     async fn get_rev_reg(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
     ) -> VcxCoreResult<(String, String, u64)> {
         Ok((REV_REG_ID.to_string(), REV_REG_JSON.to_string(), 1))
@@ -188,7 +188,7 @@ impl AnoncredsLedgerWrite for MockLedger {
     async fn publish_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         rev_reg_entry_json: &str,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {

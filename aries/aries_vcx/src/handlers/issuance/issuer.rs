@@ -243,7 +243,7 @@ impl Issuer {
             revocation_info.tails_file,
         ) {
             let rev_reg_delta_json = ledger
-                .get_rev_reg_delta_json(&rev_reg_id, None, None)
+                .get_rev_reg_delta_json(&rev_reg_id.to_owned().try_into()?, None, None)
                 .await?
                 .1;
             anoncreds
