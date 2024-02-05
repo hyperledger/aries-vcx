@@ -502,14 +502,13 @@ async fn test_pool_get_rev_reg() -> Result<(), Box<dyn Error>> {
     );
 
     let ledger = &setup.ledger_read;
-    let (id, _rev_reg, _timestamp) = ledger
+    let (_rev_reg, _timestamp) = ledger
         .get_rev_reg(
             &rev_reg.rev_reg_id.to_owned().try_into()?,
             time::OffsetDateTime::now_utc().unix_timestamp() as u64,
         )
         .await?;
 
-    assert_eq!(id, rev_reg.rev_reg_id);
     Ok(())
 }
 

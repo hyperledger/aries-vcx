@@ -20,7 +20,7 @@ use did_parser::Did;
 
 use crate::constants::{
     rev_def_json, CRED_DEF_JSON, DEFAULT_AUTHOR_AGREEMENT, REQUEST_WITH_ENDORSER,
-    REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON,
+    REV_REG_DELTA_JSON, REV_REG_JSON, SCHEMA_JSON,
 };
 
 #[derive(Debug)]
@@ -149,8 +149,8 @@ impl AnoncredsLedgerRead for MockLedger {
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-    ) -> VcxCoreResult<(String, String, u64)> {
-        Ok((REV_REG_ID.to_string(), REV_REG_JSON.to_string(), 1))
+    ) -> VcxCoreResult<(String, u64)> {
+        Ok((REV_REG_JSON.to_string(), 1))
     }
 }
 

@@ -147,7 +147,12 @@ impl RevocationRegistry {
             self.rev_reg_id
         );
         ledger_write
-            .publish_rev_reg_delta(wallet, &self.rev_reg_id.to_string().try_into()?, &self.rev_reg_entry, issuer_did)
+            .publish_rev_reg_delta(
+                wallet,
+                &self.rev_reg_id.to_string().try_into()?,
+                &self.rev_reg_entry,
+                issuer_did,
+            )
             .await
             .map_err(|err| {
                 AriesVcxCoreError::from_msg(
@@ -252,7 +257,12 @@ impl RevocationRegistry {
             .await?
         {
             ledger_write
-                .publish_rev_reg_delta(wallet, &self.rev_reg_id.to_string().try_into()?, &delta, submitter_did)
+                .publish_rev_reg_delta(
+                    wallet,
+                    &self.rev_reg_id.to_string().try_into()?,
+                    &delta,
+                    submitter_did,
+                )
                 .await?;
 
             info!(

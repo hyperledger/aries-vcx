@@ -182,7 +182,11 @@ async fn test_pool_revoke_credential() -> Result<(), Box<dyn Error>> {
 
     // Delta should change after revocation
     let (second_rev_reg_delta, _) = ledger
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id.try_into()?, Some(first_timestamp + 1), None)
+        .get_rev_reg_delta_json(
+            &rev_reg.rev_reg_id.try_into()?,
+            Some(first_timestamp + 1),
+            None,
+        )
         .await?;
 
     assert_ne!(first_rev_reg_delta, second_rev_reg_delta);

@@ -95,7 +95,7 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-    ) -> VcxCoreResult<(String, String, u64)>;
+    ) -> VcxCoreResult<(String, u64)>;
 }
 
 #[async_trait]
