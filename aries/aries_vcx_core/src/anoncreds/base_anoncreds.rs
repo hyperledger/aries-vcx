@@ -1,7 +1,7 @@
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
     ledger::{
-        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema,
+        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema, rev_reg_delta::RevocationRegistryDelta,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -106,7 +106,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         tails_dir: &str,
         rev_reg_def_json: RevocationRegistryDefinition,
-        rev_reg_delta_json: &str,
+        rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
         cred_rev_id: &str,
     ) -> VcxCoreResult<String>;
@@ -149,14 +149,14 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         wallet: &impl BaseWallet,
         rev_reg_id: &str,
         cred_rev_id: &str,
-        rev_reg_delta_json: &str,
+        rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()>;
 
     async fn get_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
         rev_reg_id: &str,
-    ) -> VcxCoreResult<Option<String>>;
+    ) -> VcxCoreResult<Option<RevocationRegistryDelta>>;
 
     async fn clear_rev_reg_delta(
         &self,

@@ -11,7 +11,8 @@ use anoncreds_types::data_types::{
     },
     ledger::{
         cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition, schema::Schema, rev_reg_delta::RevocationRegistryDelta,
+        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+        schema::Schema,
     },
 };
 use async_trait::async_trait;
@@ -649,17 +650,15 @@ where
         &self,
         wallet: &impl BaseWallet,
         rev_reg_id: &RevocationRegistryDefinitionId,
-        rev_reg_entry_json: &str,
+        rev_reg_entry_json: RevocationRegistryDelta,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
         let identifier = submitter_did.convert(())?;
-        let rev_reg_delta_data: RevocationRegistryDeltaV1 =
-            serde_json::from_str(rev_reg_entry_json)?;
         let request = self.request_builder()?.build_revoc_reg_entry_request(
             &identifier,
             &RevocationRegistryId::from_str(&rev_reg_id.to_string())?,
             &RegistryType::CL_ACCUM,
-            IndyVdrRevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta_data),
+            rev_reg_entry_json.convert(())?,
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(wallet, submitter_did, request)

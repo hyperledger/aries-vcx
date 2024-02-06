@@ -124,7 +124,7 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
         &self,
         wallet: &impl BaseWallet,
         rev_reg_id: &RevocationRegistryDefinitionId,
-        rev_reg_entry_json: &str,
+        rev_reg_entry_json: RevocationRegistryDelta,
         submitter_did: &Did,
     ) -> VcxCoreResult<()>;
 }

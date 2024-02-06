@@ -3,7 +3,10 @@ mod type_conversion;
 use std::collections::{BTreeSet, HashMap, HashSet};
 
 use anoncreds::{
-    cl::{Accumulator, RevocationRegistry as CryptoRevocationRegistry, RevocationRegistryDelta},
+    cl::{
+        Accumulator, RevocationRegistry as CryptoRevocationRegistry,
+        RevocationRegistryDelta as AnoncredsRevocationRegistryDelta,
+    },
     data_types::{
         cred_def::{
             CredentialDefinition as AnoncredsCredentialDefinition,
@@ -28,7 +31,10 @@ use anoncreds::{
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
     ledger::{
-        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema,
+        cred_def::CredentialDefinition,
+        rev_reg_def::RevocationRegistryDefinition,
+        rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
+        schema::Schema,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -86,7 +92,7 @@ struct RevRegDeltaParts {
 }
 
 fn from_revocation_registry_delta_to_revocation_status_list(
-    delta: &RevRegDeltaSubParts,
+    delta: &RevocationRegistryDeltaValue,
     rev_reg_def: &AnoncredsRevocationRegistryDefinition,
     rev_reg_def_id: &RevocationRegistryDefinitionId,
     timestamp: Option<u64>,
@@ -782,7 +788,7 @@ impl BaseAnonCreds for Anoncreds {
 
         let str_rev_reg_delta = rev_reg
             .map(|rev_reg| {
-                let rev_reg_delta = Into::<RevocationRegistryDelta>::into(rev_reg);
+                let rev_reg_delta = Into::<AnoncredsRevocationRegistryDelta>::into(rev_reg);
                 serde_json::to_string(&rev_reg_delta)
             })
             .transpose()?;
@@ -1130,7 +1136,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         tails_dir: &str,
         rev_reg_def_json: RevocationRegistryDefinition,
-        rev_reg_delta_json: &str,
+        rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
         cred_rev_id: &str,
     ) -> VcxCoreResult<String> {
@@ -1158,9 +1164,7 @@ impl BaseAnonCreds for Anoncreds {
             )
         })?;
 
-        let delta: RevRegDeltaParts = serde_json::from_str(rev_reg_delta_json)?;
-
-        let RevRegDeltaSubParts { accum, revoked, .. } = delta.value;
+        let RevocationRegistryDeltaValue { accum, revoked, .. } = rev_reg_delta_json.value;
 
         let issuer_id = IssuerId::new(issuer_did.did()).unwrap();
         let mut revocation_list = bitvec!(0; max_cred_num as usize);
@@ -1363,7 +1367,7 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         rev_reg_id: &str,
         cred_rev_id: &str,
-        ledger_rev_reg_delta_json: &str,
+        ledger_rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()> {
         let rev_reg_def: RevocationRegistryDefinition = self
             .get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF, rev_reg_id)
@@ -1372,17 +1376,14 @@ impl BaseAnonCreds for Anoncreds {
         let last_rev_reg_delta_stored = self.get_rev_reg_delta(wallet, rev_reg_id).await?;
         let last_rev_reg_delta = last_rev_reg_delta_stored
             .clone()
-            .unwrap_or(ledger_rev_reg_delta_json.to_string());
+            .unwrap_or(ledger_rev_reg_delta_json.clone());
 
-        let ledger_rev_reg_delta: Option<RevocationRegistry> =
-            serde_json::from_str(ledger_rev_reg_delta_json)?;
-        let prev_accum = ledger_rev_reg_delta.map(|rev_reg| rev_reg.value.accum);
+        let prev_accum = ledger_rev_reg_delta_json.value.prev_accum;
         let (_, issuer_id, _, _, _) = cred_def_parts(&rev_reg_def.cred_def_id.to_string()).unwrap();
 
         let current_time = OffsetDateTime::now_utc().unix_timestamp() as u64;
-        let rev_reg_delta = serde_json::from_str::<RevRegDeltaParts>(&last_rev_reg_delta)?;
         let rev_status_list = from_revocation_registry_delta_to_revocation_status_list(
-            &rev_reg_delta.value,
+            &last_rev_reg_delta.value,
             &rev_reg_def.clone().convert((issuer_id.to_string(),))?,
             &RevocationRegistryDefinitionId::new(rev_reg_id).unwrap(),
             Some(current_time),
@@ -1450,9 +1451,13 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         rev_reg_id: &str,
-    ) -> VcxCoreResult<Option<String>> {
+    ) -> VcxCoreResult<Option<RevocationRegistryDelta>> {
         let res_rev_reg_delta = self
-            .get_wallet_record_value::<RevRegDeltaParts>(wallet, CATEGORY_REV_REG_DELTA, rev_reg_id)
+            .get_wallet_record_value::<RevocationRegistryDelta>(
+                wallet,
+                CATEGORY_REV_REG_DELTA,
+                rev_reg_id,
+            )
             .await;
 
         if let Err(err) = &res_rev_reg_delta {
@@ -1463,21 +1468,7 @@ impl BaseAnonCreds for Anoncreds {
             );
         }
 
-        let res_rev_reg_delta = res_rev_reg_delta
-            .ok()
-            .as_ref()
-            .map(serde_json::to_string)
-            .transpose();
-
-        if let Err(err) = &res_rev_reg_delta {
-            warn!(
-                "get_rev_reg_delta >> Unable to deserialize rev_reg_delta cache for rev_reg_id: \
-                 {}, error: {}",
-                rev_reg_id, err
-            );
-        }
-
-        Ok(res_rev_reg_delta.ok().flatten())
+        Ok(res_rev_reg_delta.ok())
     }
 
     async fn clear_rev_reg_delta(

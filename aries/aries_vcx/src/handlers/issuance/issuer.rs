@@ -251,7 +251,7 @@ impl Issuer {
                     wallet,
                     &rev_reg_id,
                     &cred_rev_id,
-                    &serde_json::to_string(&rev_reg_delta_json)?,
+                    rev_reg_delta_json,
                 )
                 .await?;
         } else {

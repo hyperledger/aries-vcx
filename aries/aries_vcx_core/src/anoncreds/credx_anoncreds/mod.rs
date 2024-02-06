@@ -12,7 +12,8 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema,
+        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition,
+        rev_reg_delta::RevocationRegistryDelta, schema::Schema,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -27,7 +28,8 @@ use credx::{
         CredentialRequestMetadata, CredentialRevocationConfig, CredentialRevocationState,
         IssuanceType, LinkSecret, PresentCredentials, Presentation, PresentationRequest,
         RegistryType, RevocationRegistry,
-        RevocationRegistryDefinition as CredxRevocationRegistryDefinition, RevocationRegistryDelta,
+        RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
+        RevocationRegistryDelta as CredxRevocationRegistryDelta,
         RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
         SchemaId as CredxSchemaId, SignatureType,
     },
@@ -960,7 +962,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         tails_dir: &str,
         rev_reg_def_json: RevocationRegistryDefinition,
-        rev_reg_delta_json: &str,
+        rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
         cred_rev_id: &str,
     ) -> VcxCoreResult<String> {
@@ -983,7 +985,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         })?;
 
         let tails_reader = TailsFileReader::new(tails_path);
-        let rev_reg_delta: RevocationRegistryDelta = serde_json::from_str(rev_reg_delta_json)?;
+        let rev_reg_delta: CredxRevocationRegistryDelta = rev_reg_delta_json.convert(())?;
         let rev_reg_idx: u32 = cred_rev_id
             .parse()
             .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, e))?;
@@ -1167,7 +1169,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         wallet: &impl BaseWallet,
         rev_reg_id: &str,
         cred_rev_id: &str,
-        _rev_reg_delta_json: &str,
+        _rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()> {
         let cred_rev_id = cred_rev_id.parse().map_err(|e| {
             AriesVcxCoreError::from_msg(
@@ -1234,12 +1236,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let old_str_rev_reg_delta = self.get_rev_reg_delta(wallet, rev_reg_id).await?;
 
         let rev_reg_delta = old_str_rev_reg_delta
-            .as_ref()
-            .map(|s| serde_json::from_str(s))
-            .transpose()?;
-
-        let rev_reg_delta = rev_reg_delta
-            .map(|rev_reg_delta| {
+            .to_owned()
+            .map(|v| v.convert(()))
+            .transpose()?
+            .map(|rev_reg_delta: CredxRevocationRegistryDelta| {
                 credx::issuer::merge_revocation_registry_deltas(&rev_reg_delta, &new_rev_reg_delta)
             })
             .transpose()?
@@ -1279,7 +1279,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         wallet: &impl BaseWallet,
         rev_reg_id: &str,
-    ) -> VcxCoreResult<Option<String>> {
+    ) -> VcxCoreResult<Option<RevocationRegistryDelta>> {
         let res_rev_reg_delta = Self::get_wallet_record_value::<RevocationRegistryDelta>(
             wallet,
             CATEGORY_REV_REG_DELTA,
@@ -1295,21 +1295,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             );
         }
 
-        let res_rev_reg_delta = res_rev_reg_delta
-            .ok()
-            .as_ref()
-            .map(serde_json::to_string)
-            .transpose();
-
-        if let Err(err) = &res_rev_reg_delta {
-            warn!(
-                "get_rev_reg_delta >> Unable to deserialize rev_reg_delta cache for rev_reg_id: \
-                 {}, error: {}",
-                rev_reg_id, err
-            );
-        }
-
-        Ok(res_rev_reg_delta.ok().flatten())
+        Ok(res_rev_reg_delta.ok())
     }
 
     async fn clear_rev_reg_delta(

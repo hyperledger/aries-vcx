@@ -191,7 +191,7 @@ pub async fn build_rev_states_json(
                     .create_revocation_state(
                         tails_dir,
                         rev_reg_def_json,
-                        &serde_json::to_string(&rev_reg_delta_json)?,
+                        rev_reg_delta_json,
                         timestamp,
                         cred_rev_id,
                     )

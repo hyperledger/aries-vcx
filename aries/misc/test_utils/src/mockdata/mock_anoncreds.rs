@@ -1,7 +1,7 @@
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
     ledger::{
-        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema,
+        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema, rev_reg_delta::RevocationRegistryDelta,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -158,7 +158,7 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         _tails_dir: &str,
         _rev_reg_def_json: RevocationRegistryDefinition,
-        _rev_reg_delta_json: &str,
+        _rev_reg_delta_json: RevocationRegistryDelta,
         _timestamp: u64,
         _cred_rev_id: &str,
     ) -> VcxCoreResult<String> {
@@ -216,7 +216,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _wallet: &impl BaseWallet,
         _rev_reg_id: &str,
         _cred_rev_id: &str,
-        _rev_reg_delta_json: &str,
+        _rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()> {
         Ok(())
     }
@@ -225,8 +225,8 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         _wallet: &impl BaseWallet,
         _rev_reg_id: &str,
-    ) -> VcxCoreResult<Option<String>> {
-        Ok(Some(REV_REG_DELTA_JSON.to_string()))
+    ) -> VcxCoreResult<Option<RevocationRegistryDelta>> {
+        Ok(Some(serde_json::from_str(REV_REG_DELTA_JSON)?))
     }
 
     async fn clear_rev_reg_delta(

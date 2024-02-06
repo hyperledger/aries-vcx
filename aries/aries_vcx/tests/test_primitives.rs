@@ -110,7 +110,7 @@ async fn test_pool_create_rev_reg_def() -> Result<(), Box<dyn Error>> {
         .publish_rev_reg_delta(
             &setup.wallet,
             &rev_reg_def_id.try_into()?,
-            &rev_reg_entry_json,
+            serde_json::from_str(&rev_reg_entry_json)?,
             &setup.institution_did,
         )
         .await?;

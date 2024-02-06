@@ -35,6 +35,7 @@ use indy_vdr::{
             rev_reg::{
                 RevocationRegistry as IndyVdrRevocationRegistry,
                 RevocationRegistryDelta as IndyVdrRevocationRegistryDelta,
+                RevocationRegistryDeltaV1,
             },
             rev_reg_def::{
                 IssuanceType, RevocationRegistryDefinition as IndyVdrRevocationRegistryDefinition,
@@ -285,5 +286,19 @@ impl Convert for IndyVdrRevocationRegistryDelta {
                 })
             }
         }
+    }
+}
+
+impl Convert for OurRevocationRegistryDelta {
+    type Args = ();
+    type Target = IndyVdrRevocationRegistryDelta;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(IndyVdrRevocationRegistryDelta::RevocationRegistryDeltaV1(
+            RevocationRegistryDeltaV1 {
+                value: serde_json::from_value(serde_json::to_value(self.value)?)?,
+            },
+        ))
     }
 }

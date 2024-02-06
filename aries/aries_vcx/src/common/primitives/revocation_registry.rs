@@ -150,7 +150,7 @@ impl RevocationRegistry {
             .publish_rev_reg_delta(
                 wallet,
                 &self.rev_reg_id.to_string().try_into()?,
-                &self.rev_reg_entry,
+                serde_json::from_str(&self.rev_reg_entry)?,
                 issuer_did,
             )
             .await
@@ -243,8 +243,8 @@ impl RevocationRegistry {
             .revoke_credential_local(
                 wallet,
                 &self.rev_reg_id,
-                &serde_json::to_string(&rev_reg_delta_json)?,
                 cred_rev_id,
+                rev_reg_delta_json,
             )
             .await
             .map_err(|err| err.into())
@@ -265,7 +265,7 @@ impl RevocationRegistry {
                 .publish_rev_reg_delta(
                     wallet,
                     &self.rev_reg_id.to_string().try_into()?,
-                    &delta,
+                    delta,
                     submitter_did,
                 )
                 .await?;

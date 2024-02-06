@@ -13,6 +13,7 @@ use anoncreds_types::data_types::{
             RevocationRegistryDefinition as OurRevocationRegistryDefinition,
             RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
         },
+        rev_reg_delta::RevocationRegistryDelta as OurRevocationRegistryDelta,
         schema::{AttributeNames as OurAttributeNames, Schema as OurSchema},
     },
     messages::{
@@ -28,6 +29,7 @@ use indy_credx::{
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         DidValue, RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
+        RevocationRegistryDelta as CredxRevocationRegistryDelta,
         RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
     },
 };
@@ -229,5 +231,15 @@ impl Convert for HashMap<OurRevocationRegistryDefinitionId, OurRevocationRegistr
                 ))
             })
             .collect()
+    }
+}
+
+impl Convert for OurRevocationRegistryDelta {
+    type Args = ();
+    type Target = CredxRevocationRegistryDelta;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        todo!()
     }
 }
