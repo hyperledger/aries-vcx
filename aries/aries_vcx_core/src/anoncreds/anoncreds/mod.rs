@@ -25,7 +25,8 @@ use anoncreds::{
         CredentialOffer as AnoncredsCredentialOffer,
         CredentialRequest as AnoncredsCredentialRequest, CredentialRequestMetadata,
         CredentialRevocationConfig, CredentialRevocationState, LinkSecret, PresentCredentials,
-        Presentation, PresentationRequest, RegistryType, RevocationRegistry,
+        Presentation, PresentationRequest, RegistryType,
+        RevocationRegistry as AnoncredsRevocationRegistry,
         RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
         RevocationStatusList, SignatureType,
     },
@@ -39,7 +40,7 @@ use anoncreds_types::data_types::{
         cred_def::CredentialDefinition,
         rev_reg_def::RevocationRegistryDefinition,
         rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
-        schema::Schema,
+        schema::Schema, rev_reg::RevocationRegistry,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -421,7 +422,7 @@ impl BaseAnonCreds for Anoncreds {
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
-    ) -> VcxCoreResult<(String, RevocationRegistryDefinition, String)> {
+    ) -> VcxCoreResult<(String, RevocationRegistryDefinition, RevocationRegistry)> {
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
         let cred_def: AnoncredsCredentialDefinition = self
@@ -498,7 +499,7 @@ impl BaseAnonCreds for Anoncreds {
             .build();
         wallet.add_record(record).await?;
 
-        let rev_reg = RevocationRegistry { value: rev_reg };
+        let rev_reg = AnoncredsRevocationRegistry { value: rev_reg };
         let str_rev_reg = serde_json::to_string(&rev_reg)?;
         let record = Record::builder()
             .name(rev_reg_id.0.clone())
@@ -510,7 +511,7 @@ impl BaseAnonCreds for Anoncreds {
         Ok((
             rev_reg_id.to_string(),
             rev_reg_def.convert((rev_reg_id.to_string(),))?,
-            str_rev_reg,
+            rev_reg.convert(())?,
         ))
     }
 
@@ -671,7 +672,7 @@ impl BaseAnonCreds for Anoncreds {
                     .get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF_PRIV, rev_reg_def_id)
                     .await?;
 
-                let rev_reg: RevocationRegistry = self
+                let rev_reg: AnoncredsRevocationRegistry = self
                     .get_wallet_record_value(wallet, CATEGORY_REV_REG, rev_reg_def_id)
                     .await?;
                 let rev_reg_info: RevocationRegistryInfo = self
@@ -760,7 +761,7 @@ impl BaseAnonCreds for Anoncreds {
                 let cred_rev_id = rev_reg_info.curr_id.to_string();
                 let str_rev_reg_info = serde_json::to_string(&rev_reg_info)?;
 
-                let rev_reg = RevocationRegistry {
+                let rev_reg = AnoncredsRevocationRegistry {
                     value: rev_reg.clone(),
                 };
                 let str_rev_reg = serde_json::to_string(&rev_reg)?;

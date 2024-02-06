@@ -248,6 +248,16 @@ impl Convert for OurRevocationRegistry {
     }
 }
 
+impl Convert for CredxRevocationRegistry {
+    type Args = ();
+    type Target = OurRevocationRegistry;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        todo!()
+    }
+}
+
 impl Convert for HashMap<OurRevocationRegistryDefinitionId, HashMap<u64, OurRevocationRegistry>> {
     type Args = ();
     type Target = HashMap<CredxRevocationRegistryId, HashMap<u64, CredxRevocationRegistry>>;

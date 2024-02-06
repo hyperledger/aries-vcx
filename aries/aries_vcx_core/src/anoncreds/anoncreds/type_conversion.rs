@@ -12,6 +12,7 @@ use anoncreds::{
     types::{
         AttributeNames as AnoncredsAttributeNames, CredentialOffer as AnoncredsCredentialOffer,
         CredentialRequest as AnoncredsCredentialRequest,
+        RevocationRegistry as AnoncredsRevocationRegistry,
         RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
     },
 };
@@ -27,6 +28,7 @@ use anoncreds_types::data_types::{
             CredentialDefinition as OurCredentialDefinition,
             CredentialDefinitionData as OurCredentialDefinitionData, SignatureType,
         },
+        rev_reg::RevocationRegistry as OurRevocationRegistry,
         rev_reg_def::{
             RevocationRegistryDefinition as OurRevocationRegistryDefinition,
             RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
@@ -232,5 +234,15 @@ impl Convert for AnoncredsRevocationRegistryDefinition {
                 tails_location: self.value.tails_location,
             },
         })
+    }
+}
+
+impl Convert for AnoncredsRevocationRegistry {
+    type Args = ();
+    type Target = OurRevocationRegistry;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        todo!()
     }
 }

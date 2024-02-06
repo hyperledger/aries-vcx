@@ -5,7 +5,7 @@ use anoncreds_types::data_types::{
     },
     ledger::{
         cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition,
-        rev_reg_delta::RevocationRegistryDelta, schema::Schema,
+        rev_reg_delta::RevocationRegistryDelta, schema::Schema, rev_reg::RevocationRegistry,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -37,7 +37,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
-    ) -> VcxCoreResult<(String, RevocationRegistryDefinition, String)>;
+    ) -> VcxCoreResult<(String, RevocationRegistryDefinition, RevocationRegistry)>;
 
     #[allow(clippy::too_many_arguments)]
     async fn issuer_create_and_store_credential_def(

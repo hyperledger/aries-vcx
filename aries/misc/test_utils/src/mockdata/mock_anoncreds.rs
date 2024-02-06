@@ -5,7 +5,7 @@ use anoncreds_types::data_types::{
     },
     ledger::{
         cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition,
-        rev_reg_delta::RevocationRegistryDelta, schema::Schema,
+        rev_reg_delta::RevocationRegistryDelta, schema::Schema, rev_reg::RevocationRegistry,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -53,7 +53,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _tails_dir: &str,
         _max_creds: u32,
         _tag: &str,
-    ) -> VcxCoreResult<(String, RevocationRegistryDefinition, String)> {
+    ) -> VcxCoreResult<(String, RevocationRegistryDefinition, RevocationRegistry)> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
