@@ -1,6 +1,6 @@
 mod type_conversion;
 
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use anoncreds::{
     cl::{
@@ -73,24 +73,6 @@ pub const CATEGORY_REV_REG_INFO: &str = "VCX_REV_REG_INFO";
 pub const CATEGORY_REV_REG_DEF: &str = "VCX_REV_REG_DEF";
 pub const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct RevRegDeltaSubParts {
-    prev_accum: Option<Accumulator>,
-    accum: Accumulator,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
-    issued: BTreeSet<u32>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
-    revoked: BTreeSet<u32>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct RevRegDeltaParts {
-    value: RevRegDeltaSubParts,
-}
-
 fn from_revocation_registry_delta_to_revocation_status_list(
     delta: &RevocationRegistryDeltaValue,
     rev_reg_def: &AnoncredsRevocationRegistryDefinition,
@@ -124,7 +106,7 @@ fn from_revocation_registry_delta_to_revocation_status_list(
 fn from_revocation_status_list_to_revocation_registry_delta(
     rev_status_list: &RevocationStatusList,
     prev_accum: Option<Accumulator>,
-) -> VcxCoreResult<RevRegDeltaParts> {
+) -> VcxCoreResult<RevocationRegistryDelta> {
     let _issued = rev_status_list
         .state()
         .iter()
@@ -138,7 +120,7 @@ fn from_revocation_status_list_to_revocation_registry_delta(
                 }
             },
         )
-        .collect::<BTreeSet<_>>();
+        .collect::<Vec<_>>();
     let revoked = rev_status_list
         .state()
         .iter()
@@ -152,7 +134,7 @@ fn from_revocation_status_list_to_revocation_registry_delta(
                 }
             },
         )
-        .collect::<BTreeSet<_>>();
+        .collect::<Vec<_>>();
 
     let registry = CryptoRevocationRegistry {
         accum: rev_status_list.accum().ok_or_else(|| {
@@ -164,8 +146,8 @@ fn from_revocation_status_list_to_revocation_registry_delta(
         })?,
     };
 
-    Ok(RevRegDeltaParts {
-        value: RevRegDeltaSubParts {
+    Ok(RevocationRegistryDelta {
+        value: RevocationRegistryDeltaValue {
             prev_accum,
             accum: registry.accum,
             issued: Default::default(), // TODO
@@ -366,7 +348,7 @@ impl BaseAnonCreds for Anoncreds {
 
         // WTF, anoncreds-rs expects the whole status list just to use the accumulator :|
         let rev_reg_deltas: Option<
-            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevRegDeltaParts>>,
+            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistryDelta>>,
         > = serde_json::from_str(rev_regs_json)?;
 
         let rev_status_lists = if let Some(map) = rev_reg_deltas {
@@ -382,7 +364,7 @@ impl BaseAnonCreds for Anoncreds {
                             .to_string(),
                     )
                     .unwrap();
-                    let RevRegDeltaSubParts { accum, revoked, .. } = delta.value;
+                    let RevocationRegistryDeltaValue { accum, revoked, .. } = delta.value;
                     let rev_reg_defs = rev_reg_defs_val.as_ref().unwrap();
                     let rev_reg_def = rev_reg_defs.get(&rev_reg_def_id).unwrap();
                     let rev_reg_def_id = Some(rev_reg_def_id.0.as_str());
@@ -1378,7 +1360,7 @@ impl BaseAnonCreds for Anoncreds {
             .clone()
             .unwrap_or(ledger_rev_reg_delta_json.clone());
 
-        let prev_accum = ledger_rev_reg_delta_json.value.prev_accum;
+        let prev_accum = ledger_rev_reg_delta_json.value.accum;
         let (_, issuer_id, _, _, _) = cred_def_parts(&rev_reg_def.cred_def_id.to_string()).unwrap();
 
         let current_time = OffsetDateTime::now_utc().unix_timestamp() as u64;
@@ -1422,7 +1404,7 @@ impl BaseAnonCreds for Anoncreds {
         let updated_revocation_registry_delta =
             from_revocation_status_list_to_revocation_registry_delta(
                 &updated_rev_status_list,
-                prev_accum,
+                Some(prev_accum),
             )?;
         let updated_revocation_registry_delta_str =
             serde_json::to_string(&updated_revocation_registry_delta)?;
