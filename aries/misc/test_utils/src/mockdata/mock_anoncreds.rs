@@ -1,7 +1,8 @@
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
     ledger::{
-        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition, schema::Schema, rev_reg_delta::RevocationRegistryDelta,
+        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition,
+        rev_reg_delta::RevocationRegistryDelta, schema::Schema,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };

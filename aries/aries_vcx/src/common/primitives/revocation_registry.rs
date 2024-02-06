@@ -240,12 +240,7 @@ impl RevocationRegistry {
             .await?
             .0;
         anoncreds
-            .revoke_credential_local(
-                wallet,
-                &self.rev_reg_id,
-                cred_rev_id,
-                rev_reg_delta_json,
-            )
+            .revoke_credential_local(wallet, &self.rev_reg_id, cred_rev_id, rev_reg_delta_json)
             .await
             .map_err(|err| err.into())
     }

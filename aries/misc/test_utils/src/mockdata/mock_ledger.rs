@@ -5,7 +5,8 @@ use anoncreds_types::data_types::{
     },
     ledger::{
         cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition, schema::Schema, rev_reg_delta::RevocationRegistryDelta,
+        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+        schema::Schema,
     },
 };
 use aries_vcx_core::{

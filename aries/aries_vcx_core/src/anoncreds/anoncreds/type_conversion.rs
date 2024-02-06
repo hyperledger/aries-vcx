@@ -31,7 +31,6 @@ use anoncreds_types::data_types::{
             RevocationRegistryDefinition as OurRevocationRegistryDefinition,
             RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
         },
-        rev_reg_delta::RevocationRegistryDelta as OurRevocationRegistryDelta,
         schema::{AttributeNames as OurAttributeNames, Schema as OurSchema},
     },
     messages::{

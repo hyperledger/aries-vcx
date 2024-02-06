@@ -12,8 +12,9 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition,
-        rev_reg_delta::RevocationRegistryDelta, schema::Schema, rev_reg::RevocationRegistry,
+        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+        schema::Schema,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -275,10 +276,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             HashMap<CredxRevocationRegistryId, CredxRevocationRegistryDefinition>,
         > = rev_reg_defs.map(|v| v.convert(())).transpose()?;
 
-        let rev_regs: Option<HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>> =
-            serde_json::from_str(rev_regs_json)?;
-        let rev_regs: Option<HashMap<CredxRevocationRegistryId, HashMap<u64, CredxRevocationRegistry>>> =
-            rev_regs.map(|v| v.convert(())).transpose()?;
+        let rev_regs: Option<
+            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>,
+        > = serde_json::from_str(rev_regs_json)?;
+        let rev_regs: Option<
+            HashMap<CredxRevocationRegistryId, HashMap<u64, CredxRevocationRegistry>>,
+        > = rev_regs.map(|v| v.convert(())).transpose()?;
         let rev_regs: Option<
             HashMap<CredxRevocationRegistryId, HashMap<u64, &CredxRevocationRegistry>>,
         > = rev_regs.as_ref().map(|regs| {
