@@ -16,6 +16,7 @@ use anoncreds_types::data_types::{
             RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
             RevocationRegistryDefinitionValuePublicKeys as OurRevocationRegistryDefinitionValuePublicKeys,
         },
+        rev_reg_delta::RevocationRegistryDelta as OurRevocationRegistryDelta,
         schema::Schema as OurSchema,
     },
 };
@@ -273,13 +274,13 @@ impl Convert for IndyVdrRevocationRegistry {
 
 impl Convert for IndyVdrRevocationRegistryDelta {
     type Args = ();
-    type Target = OurRevocationRegistry;
+    type Target = OurRevocationRegistryDelta;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
         match self {
             IndyVdrRevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg) => {
-                Ok(OurRevocationRegistry {
+                Ok(OurRevocationRegistryDelta {
                     value: serde_json::from_value(rev_reg.value)?,
                 })
             }

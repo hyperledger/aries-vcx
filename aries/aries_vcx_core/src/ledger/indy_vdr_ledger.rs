@@ -11,7 +11,7 @@ use anoncreds_types::data_types::{
     },
     ledger::{
         cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition, schema::Schema,
+        rev_reg_def::RevocationRegistryDefinition, schema::Schema, rev_reg_delta::RevocationRegistryDelta,
     },
 };
 use async_trait::async_trait;
@@ -517,7 +517,7 @@ where
         rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(RevocationRegistry, u64)> {
+    ) -> VcxCoreResult<(RevocationRegistryDelta, u64)> {
         debug!("get_rev_reg_delta_json >> rev_reg_id: {rev_reg_id}, from: {from:?}, to: {to:?}");
         let revoc_reg_def_id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
 
