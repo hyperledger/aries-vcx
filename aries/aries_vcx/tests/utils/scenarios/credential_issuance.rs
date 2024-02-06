@@ -1,5 +1,6 @@
 use std::{thread, time::Duration};
 
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use aries_vcx::{
     common::primitives::{
         credential_definition::CredentialDef, credential_schema::Schema,
@@ -21,6 +22,7 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::BaseWallet,
 };
+use did_parser::Did;
 use messages::msg_fields::protocols::{
     cred_issuance::v1::{
         offer_credential::OfferCredentialV1, propose_credential::ProposeCredentialV1,
@@ -42,7 +44,7 @@ pub async fn create_address_schema_creddef_revreg(
     ledger_read: &(impl IndyLedgerRead + AnoncredsLedgerRead),
     ledger_write: &(impl IndyLedgerWrite + AnoncredsLedgerWrite),
     anoncreds: &impl BaseAnonCreds,
-    institution_did: &str,
+    institution_did: &Did,
 ) -> (Schema, CredentialDef, RevocationRegistry) {
     let schema = create_and_write_test_schema(
         wallet,
@@ -145,7 +147,12 @@ pub async fn accept_offer(
             &alice.wallet,
             &alice.ledger_read,
             &alice.anoncreds,
-            PairwiseInfo::create(&alice.wallet).await.unwrap().pw_did,
+            PairwiseInfo::create(&alice.wallet)
+                .await
+                .unwrap()
+                .pw_did
+                .parse()
+                .unwrap(),
         )
         .await
         .unwrap();
@@ -338,7 +345,7 @@ pub async fn exchange_credential_with_proposal(
         impl BaseAnonCreds,
         impl BaseWallet,
     >,
-    schema_id: &str,
+    schema_id: &SchemaId,
     cred_def_id: &str,
     rev_reg_id: Option<String>,
     tails_dir: Option<String>,
@@ -415,7 +422,12 @@ async fn create_credential_request(
             &alice.wallet,
             &alice.ledger_read,
             &alice.anoncreds,
-            PairwiseInfo::create(&alice.wallet).await.unwrap().pw_did,
+            PairwiseInfo::create(&alice.wallet)
+                .await
+                .unwrap()
+                .pw_did
+                .parse()
+                .unwrap(),
         )
         .await
         .unwrap();

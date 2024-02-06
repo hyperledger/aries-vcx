@@ -107,7 +107,7 @@ pub async fn create_connections_via_oob_invite(
         .set_label("test-label")
         .set_goal_code(OobGoalCode::P2PMessaging)
         .set_goal("To exchange message")
-        .append_service(&OobService::Did(faber.institution_did.clone()))
+        .append_service(&OobService::Did(faber.institution_did.to_string()))
         .append_handshake_protocol(Protocol::ConnectionType(ConnectionType::V1(
             ConnectionTypeV1::new_v1_0(),
         )))
@@ -140,7 +140,7 @@ pub async fn create_connections_via_public_invite(
 ) -> (GenericConnection, GenericConnection) {
     let content = InvitationContent::builder_public()
         .label("faber".to_owned())
-        .did(faber.institution_did.clone())
+        .did(faber.institution_did.to_string())
         .build();
 
     let public_invite = AnyInvitation::Con(

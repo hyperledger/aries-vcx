@@ -29,6 +29,7 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::{BaseWallet, DidWallet},
 };
+use did_parser::Did;
 use diddoc_legacy::aries::service::AriesService;
 use serde_json::json;
 use test_utils::{
@@ -50,7 +51,7 @@ async fn create_and_store_nonrevocable_credential_def(
     anoncreds: &impl BaseAnonCreds,
     ledger_read: &impl AnoncredsLedgerRead,
     ledger_write: &impl AnoncredsLedgerWrite,
-    issuer_did: &str,
+    issuer_did: &Did,
     attr_list: &str,
 ) -> Result<(String, String, String, String, CredentialDef), Box<dyn Error>> {
     let schema =
@@ -70,8 +71,8 @@ async fn create_and_store_nonrevocable_credential_def(
     let cred_def_id = cred_def.get_cred_def_id();
     let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await?;
     Ok((
-        schema.schema_id,
-        schema.schema_json,
+        schema.schema_id.to_string(),
+        serde_json::to_string(&schema.schema_json)?,
         cred_def_id,
         cred_def_json,
         cred_def,
@@ -84,7 +85,7 @@ async fn create_and_store_revocable_credential_def(
     anoncreds: &impl BaseAnonCreds,
     ledger_read: &impl AnoncredsLedgerRead,
     ledger_write: &impl AnoncredsLedgerWrite,
-    issuer_did: &str,
+    issuer_did: &Did,
     attr_list: &str,
 ) -> Result<(Schema, CredentialDef, RevocationRegistry), Box<dyn Error>> {
     let schema =
@@ -124,7 +125,7 @@ async fn test_pool_rotate_verkey() -> Result<(), Box<dyn Error>> {
     .await?;
     rotate_verkey(&setup.wallet, &setup.ledger_write, &did).await?;
     tokio::time::sleep(Duration::from_millis(1000)).await;
-    let local_verkey = setup.wallet.key_for_did(&did).await?;
+    let local_verkey = setup.wallet.key_for_did(&did.to_string()).await?;
 
     let ledger_verkey = get_verkey_from_ledger(&setup.ledger_read, &did).await?;
     assert_ne!(verkey, ledger_verkey);
@@ -173,7 +174,10 @@ async fn test_pool_write_new_endorser_did() -> Result<(), Box<dyn Error>> {
     let setup = SetupPoolDirectory::init().await;
     let faber = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
     let acme = create_test_agent(setup.genesis_file_path.clone()).await;
-    let acme_vk = acme.wallet.key_for_did(&acme.institution_did).await?;
+    let acme_vk = acme
+        .wallet
+        .key_for_did(&acme.institution_did.to_string())
+        .await?;
 
     let attrib_json = json!({ "attrib_name": "foo"}).to_string();
     assert!(add_attr(
@@ -510,8 +514,9 @@ async fn test_pool_create_and_get_schema() -> Result<(), Box<dyn Error>> {
     .await;
 
     let ledger = &setup.ledger_read;
-    let retrieved_schema = ledger.get_schema(&schema.schema_id, None).await?;
-    assert!(retrieved_schema.contains(&schema.schema_id));
+    let retrieved_schema =
+        serde_json::to_string(&ledger.get_schema(&schema.schema_id, None).await?).unwrap();
+    assert!(retrieved_schema.contains(&schema.schema_id.to_string()));
     Ok(())
 }
 

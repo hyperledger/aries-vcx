@@ -150,7 +150,7 @@ pub async fn rotate_verkey_apply(did: &str, temp_vk: &str) -> LibvcxResult<()> {
         aries_vcx::common::keys::rotate_verkey_apply(
             get_main_wallet()?.as_ref(),
             get_main_ledger_write()?.as_ref(),
-            did,
+            &did.parse()?,
             temp_vk,
         )
         .await,

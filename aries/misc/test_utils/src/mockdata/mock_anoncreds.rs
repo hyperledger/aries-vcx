@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -5,6 +6,7 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 use async_trait::async_trait;
+use did_parser::Did;
 
 use crate::constants::{
     CREDENTIAL_JSON, CREDENTIAL_REQ_STRING, LARGE_NONCE, LIBINDY_CRED_OFFER, PROOF_JSON,
@@ -36,7 +38,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn issuer_create_and_store_revoc_reg(
         &self,
         __wallet: &impl BaseWallet,
-        _issuer_did: &str,
+        _issuer_did: &Did,
         _cred_def_id: &str,
         _tails_dir: &str,
         _max_creds: u32,
@@ -52,9 +54,9 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn issuer_create_and_store_credential_def(
         &self,
         __wallet: &impl BaseWallet,
-        _issuer_did: &str,
-        _schema_id: &str,
-        _schema_json: &str,
+        _issuer_did: &Did,
+        _schema_id: &SchemaId,
+        _schema_json: Schema,
         _tag: &str,
         _signature_type: Option<&str>,
         _config_json: &str,
@@ -138,7 +140,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn prover_create_credential_req(
         &self,
         _wallet: &impl BaseWallet,
-        _prover_did: &str,
+        _prover_did: &Did,
         _cred_offer_json: &str,
         _cred_def_json: &str,
         _master_secret_id: &str,
@@ -191,11 +193,11 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn issuer_create_schema(
         &self,
-        _issuer_did: &str,
+        _issuer_did: &Did,
         _name: &str,
         _version: &str,
         _attrs: &str,
-    ) -> VcxCoreResult<(String, String)> {
+    ) -> VcxCoreResult<Schema> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -206,7 +208,6 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn revoke_credential_local(
         &self,
         _wallet: &impl BaseWallet,
-        _tails_dir: &str,
         _rev_reg_id: &str,
         _cred_rev_id: &str,
         _rev_reg_delta_json: &str,

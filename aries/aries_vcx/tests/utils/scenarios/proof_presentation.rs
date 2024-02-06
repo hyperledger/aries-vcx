@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use aries_vcx::{
     common::{
         primitives::{
@@ -331,7 +332,7 @@ pub async fn verifier_create_proof_and_send_request(
         impl BaseAnonCreds,
         impl BaseWallet,
     >,
-    schema_id: &str,
+    schema_id: &SchemaId,
     cred_def_id: &str,
     request_name: Option<&str>,
 ) -> Verifier {
@@ -498,7 +499,7 @@ pub async fn exchange_proof(
         impl BaseAnonCreds,
         impl BaseWallet,
     >,
-    schema_id: &str,
+    schema_id: &SchemaId,
     cred_def_id: &str,
     request_name: Option<&str>,
 ) -> Verifier {

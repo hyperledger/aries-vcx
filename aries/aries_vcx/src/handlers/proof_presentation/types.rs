@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+
 /// Data structure representing the credentials in the wallet, which are suitable
 /// for presentation against a proof request.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -29,7 +31,7 @@ pub struct RetrievedCredentialInfo {
     /// Map of string key values representing all the attributes this credential has
     #[serde(rename = "attrs")]
     pub attributes: HashMap<String, String>,
-    pub schema_id: String,
+    pub schema_id: SchemaId,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
     pub cred_rev_id: Option<String>,
@@ -89,7 +91,7 @@ pub struct SelectedCredentialForReferentCredential {
 pub struct SelectedCredentialInfo {
     /// The unique identifier of the credential in the wallet
     pub referent: String,
-    pub schema_id: String,
+    pub schema_id: SchemaId,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
     pub cred_rev_id: Option<String>,

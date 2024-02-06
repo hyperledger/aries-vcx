@@ -10,6 +10,7 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::{BaseWallet, DidWallet},
 };
+use did_parser::Did;
 use test_utils::{
     constants::TRUSTEE_SEED,
     devsetup::{
@@ -29,7 +30,7 @@ where
     pub ledger_write: LW,
     pub anoncreds: A,
     pub wallet: W,
-    pub institution_did: String,
+    pub institution_did: Did,
     pub genesis_file_path: String,
 }
 
@@ -54,7 +55,7 @@ async fn create_test_agent_from_seed(
 
     TestAgent {
         genesis_file_path,
-        institution_did,
+        institution_did: Did::parse(institution_did).unwrap(),
         wallet,
         ledger_read,
         ledger_write,
@@ -88,7 +89,7 @@ pub async fn create_test_agent_endorser<LW, W>(
     ledger_write: LW,
     trustee_wallet: W,
     genesis_file_path: &str,
-    trustee_did: &str,
+    trustee_did: &Did,
 ) -> Result<
     TestAgent<
         impl IndyLedgerRead + AnoncredsLedgerRead,
@@ -103,7 +104,10 @@ where
     W: BaseWallet,
 {
     let acme = create_test_agent(genesis_file_path.to_string()).await;
-    let acme_vk = acme.wallet.key_for_did(&acme.institution_did).await?;
+    let acme_vk = acme
+        .wallet
+        .key_for_did(&acme.institution_did.to_string())
+        .await?;
 
     write_endorser_did(
         &trustee_wallet,

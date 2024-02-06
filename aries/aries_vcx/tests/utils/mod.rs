@@ -2,6 +2,7 @@ pub mod scenarios;
 pub mod test_agent;
 use std::time::Duration;
 
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use aries_vcx::{
     common::{
         credentials::encoding::encode_attributes,
@@ -21,6 +22,7 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::BaseWallet,
 };
+use did_parser::Did;
 use test_utils::{
     constants::TEST_TAILS_URL,
     random::{generate_random_schema_name, generate_random_schema_version},
@@ -30,7 +32,7 @@ pub async fn create_and_write_test_schema(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
     ledger_write: &impl AnoncredsLedgerWrite,
-    submitter_did: &str,
+    submitter_did: &Did,
     attr_list: &str,
 ) -> Schema {
     let schema = Schema::create(
@@ -53,8 +55,8 @@ pub async fn create_and_write_test_cred_def(
     anoncreds: &impl BaseAnonCreds,
     ledger_read: &impl AnoncredsLedgerRead,
     ledger_write: &impl AnoncredsLedgerWrite,
-    issuer_did: &str,
-    schema_id: &str,
+    issuer_did: &Did,
+    schema_id: &SchemaId,
     revokable: bool,
 ) -> CredentialDef {
     CredentialDef::create(
@@ -63,8 +65,8 @@ pub async fn create_and_write_test_cred_def(
         anoncreds,
         "1".to_string(),
         CredentialDefConfigBuilder::default()
-            .issuer_did(issuer_did)
-            .schema_id(schema_id)
+            .issuer_did(issuer_did.clone())
+            .schema_id(schema_id.clone())
             .tag("1")
             .build()
             .unwrap(),
@@ -81,7 +83,7 @@ pub async fn create_and_publish_test_rev_reg(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
     ledger_write: &impl AnoncredsLedgerWrite,
-    issuer_did: &str,
+    issuer_did: &Did,
     cred_def_id: &str,
 ) -> RevocationRegistry {
     let tails_dir = get_temp_dir_path().as_path().to_str().unwrap().to_string();
@@ -108,7 +110,7 @@ pub async fn create_and_write_credential(
     wallet_holder: &impl BaseWallet,
     anoncreds_issuer: &impl BaseAnonCreds,
     anoncreds_holder: &impl BaseAnonCreds,
-    institution_did: &str,
+    institution_did: &Did,
     cred_def: &CredentialDef,
     rev_reg: Option<&RevocationRegistry>,
 ) -> String {

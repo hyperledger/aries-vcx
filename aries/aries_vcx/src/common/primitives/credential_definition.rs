@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,
@@ -5,6 +6,7 @@ use aries_vcx_core::{
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
+use did_parser::Did;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
@@ -51,11 +53,11 @@ pub struct CredentialDef {
     id: String,
     tag: String,
     source_id: String,
-    issuer_did: String,
+    issuer_did: Did,
     cred_def_json: String,
     support_revocation: bool,
     #[serde(default)]
-    schema_id: String,
+    schema_id: SchemaId,
     #[serde(default)]
     pub state: PublicEntityStateType,
 }
@@ -63,8 +65,8 @@ pub struct CredentialDef {
 #[derive(Clone, Debug, Deserialize, Serialize, Builder, Default)]
 #[builder(setter(into), default)]
 pub struct CredentialDefConfig {
-    issuer_did: String,
-    schema_id: String,
+    issuer_did: Did,
+    schema_id: SchemaId,
     tag: String,
 }
 
@@ -78,7 +80,7 @@ pub struct RevocationDetails {
 
 async fn _try_get_cred_def_from_ledger(
     ledger: &impl AnoncredsLedgerRead,
-    issuer_did: &str,
+    issuer_did: &Did,
     cred_def_id: &str,
 ) -> VcxResult<Option<String>> {
     match ledger.get_cred_def(cred_def_id, Some(issuer_did)).await {
@@ -120,7 +122,7 @@ impl CredentialDef {
             anoncreds,
             &issuer_did,
             &schema_id,
-            &schema_json,
+            schema_json,
             &tag,
             None,
             Some(support_revocation),
@@ -216,7 +218,7 @@ impl CredentialDef {
     }
 
     pub fn get_schema_id(&self) -> String {
-        self.schema_id.clone()
+        self.schema_id.to_string()
     }
 
     pub fn set_source_id(&mut self, source_id: String) {
@@ -239,15 +241,15 @@ impl CredentialDef {
 pub async fn generate_cred_def(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
-    issuer_did: &str,
-    schema_id: &str,
-    schema_json: &str,
+    issuer_did: &Did,
+    schema_id: &SchemaId,
+    schema_json: Schema,
     tag: &str,
     sig_type: Option<&str>,
     support_revocation: Option<bool>,
 ) -> VcxResult<(String, String)> {
     trace!(
-        "generate_cred_def >>> issuer_did: {}, schema_json: {}, tag: {}, sig_type: {:?}, \
+        "generate_cred_def >>> issuer_did: {}, schema_json: {:?}, tag: {}, sig_type: {:?}, \
          support_revocation: {:?}",
         issuer_did,
         schema_json,

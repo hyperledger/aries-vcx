@@ -1,4 +1,6 @@
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use async_trait::async_trait;
+use did_parser::Did;
 
 use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
 
@@ -20,7 +22,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn issuer_create_and_store_revoc_reg(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
+        issuer_did: &Did,
         cred_def_id: &str,
         tails_dir: &str,
         max_creds: u32,
@@ -31,9 +33,9 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn issuer_create_and_store_credential_def(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
-        schema_json: &str,
-        schema_id: &str,
+        issuer_did: &Did,
+        schema_id: &SchemaId,
+        schema_json: Schema,
         tag: &str,
         signature_type: Option<&str>,
         config_json: &str,
@@ -88,7 +90,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn prover_create_credential_req(
         &self,
         wallet: &impl BaseWallet,
-        prover_did: &str,
+        prover_did: &Did,
         cred_offer_json: &str,
         cred_def_json: &str,
         master_secret_id: &str,
@@ -127,11 +129,11 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
 
     async fn issuer_create_schema(
         &self,
-        issuer_did: &str,
+        issuer_did: &Did,
         name: &str,
         version: &str,
         attrs: &str,
-    ) -> VcxCoreResult<(String, String)>;
+    ) -> VcxCoreResult<Schema>;
 
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not
     // PURE Anoncreds)
@@ -139,7 +141,6 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn revoke_credential_local(
         &self,
         wallet: &impl BaseWallet,
-        tails_dir: &str,
         rev_reg_id: &str,
         cred_rev_id: &str,
         rev_reg_delta_json: &str,

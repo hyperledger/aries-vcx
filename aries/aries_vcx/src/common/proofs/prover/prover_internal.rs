@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
@@ -17,7 +18,7 @@ use crate::{
 pub struct CredInfoProver {
     pub referent: String,
     pub credential_referent: String,
-    pub schema_id: String,
+    pub schema_id: SchemaId,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
     pub cred_rev_id: Option<String>,
@@ -38,7 +39,8 @@ pub async fn build_schemas_json_prover(
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
-        if rtn.get(&cred_info.schema_id).is_none() {
+        let schema_id = cred_info.schema_id.to_string();
+        if rtn.get(&schema_id).is_none() {
             let schema_json = ledger
                 .get_schema(&cred_info.schema_id, None)
                 .await
@@ -49,14 +51,14 @@ pub async fn build_schemas_json_prover(
                     )
                 })?;
 
-            let schema_json = serde_json::from_str(&schema_json).map_err(|err| {
+            let schema_json = serde_json::to_value(&schema_json).map_err(|err| {
                 AriesVcxCoreError::from_msg(
                     AriesVcxCoreErrorKind::InvalidSchema,
                     format!("Cannot deserialize schema: {}", err),
                 )
             })?;
 
-            rtn[cred_info.schema_id.to_owned()] = schema_json;
+            rtn[schema_id] = schema_json;
         }
     }
     Ok(rtn.to_string())
@@ -283,7 +285,7 @@ pub mod pool_tests {
 
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
-        constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
+        constants::{schema_id, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID},
         devsetup::build_setup_profile,
     };
 
@@ -308,7 +310,7 @@ pub mod pool_tests {
         let cred1 = CredInfoProver {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: None,
             cred_rev_id: Some(CRED_REV_ID.to_string()),
@@ -331,9 +333,9 @@ pub mod unit_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
         constants::{
-            ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID,
-            ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
-            REV_STATE_JSON, SCHEMA_ID,
+            address_schema_id, schema_id, ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID,
+            ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID,
+            LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID,
         },
         devsetup::*,
         mockdata::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
@@ -365,7 +367,7 @@ pub mod unit_tests {
         let cred1 = CredInfoProver {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
@@ -377,7 +379,7 @@ pub mod unit_tests {
         let cred2 = CredInfoProver {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
-            schema_id: ADDRESS_SCHEMA_ID.to_string(),
+            schema_id: address_schema_id(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
@@ -412,7 +414,7 @@ pub mod unit_tests {
         let cred1 = CredInfoProver {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
@@ -424,7 +426,7 @@ pub mod unit_tests {
         let cred2 = CredInfoProver {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
-            schema_id: ADDRESS_SCHEMA_ID.to_string(),
+            schema_id: address_schema_id(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
@@ -440,9 +442,8 @@ pub mod unit_tests {
             .await
             .unwrap();
         assert!(!schemas.is_empty());
-        assert!(schemas.contains(
-            r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#
-        ));
+        assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4""#));
+        assert!(schemas.contains(r#""name":"test-licence""#));
     }
 
     #[test]
@@ -452,7 +453,7 @@ pub mod unit_tests {
         let cred1 = CredInfoProver {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
@@ -467,7 +468,7 @@ pub mod unit_tests {
         let cred2 = CredInfoProver {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
-            schema_id: ADDRESS_SCHEMA_ID.to_string(),
+            schema_id: address_schema_id(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
@@ -592,7 +593,7 @@ pub mod unit_tests {
         let creds = vec![CredInfoProver {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: None,
             cred_rev_id: Some(CRED_REV_ID.to_string()),
@@ -630,7 +631,7 @@ pub mod unit_tests {
         let cred1 = CredInfoProver {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
@@ -642,7 +643,7 @@ pub mod unit_tests {
         let cred2 = CredInfoProver {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
-            schema_id: ADDRESS_SCHEMA_ID.to_string(),
+            schema_id: address_schema_id(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
@@ -701,7 +702,7 @@ pub mod unit_tests {
         let cred1 = CredInfoProver {
             referent: "height".to_string(),
             credential_referent: "abc".to_string(),
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),

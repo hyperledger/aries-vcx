@@ -12,6 +12,7 @@ aries_vcx_core = { path = "../../../aries_vcx_core", features = [
     "credx",
     "vdrtools_wallet",
 ] }
+anoncreds_types = { path = "../../../misc/anoncreds_types" }
 shared = { path = "../../../misc/shared" }
 did_resolver_registry = { path = "../../../../did_core/did_resolver_registry" }
 did_resolver_sov = { path = "../../../../did_core/did_methods/did_resolver_sov" }

@@ -1,11 +1,13 @@
-use std::sync::Arc;
-
+use anoncreds_types::data_types::{
+    identifiers::schema_id::SchemaId, ledger::schema::Schema as LedgerSchema,
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     global::settings::DEFAULT_SERIALIZE_VERSION,
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
+use did_parser::Did;
 
 use super::credential_definition::PublicEntityStateType;
 use crate::{
@@ -21,26 +23,25 @@ pub struct SchemaData {
     pub attr_names: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Schema {
     pub data: Vec<String>,
     pub version: String,
-    pub schema_id: String,
+    pub schema_id: SchemaId,
     pub name: String,
     pub source_id: String,
     #[serde(default)]
-    submitter_did: String,
+    submitter_did: Did,
     #[serde(default)]
     pub state: PublicEntityStateType,
-    #[serde(default)]
-    pub schema_json: String, // added in 0.45.0, #[serde(default)] use for backwards compatibility
+    pub schema_json: LedgerSchema,
 }
 
 impl Schema {
     pub async fn create(
         anoncreds: &impl BaseAnonCreds,
         source_id: &str,
-        submitter_did: &str,
+        submitter_did: &Did,
         name: &str,
         version: &str,
         data: &Vec<String>,
@@ -60,7 +61,7 @@ impl Schema {
             )
         })?;
 
-        let (schema_id, schema_json) = anoncreds
+        let schema_json = anoncreds
             .issuer_create_schema(submitter_did, name, version, &data_str)
             .await?;
 
@@ -69,15 +70,15 @@ impl Schema {
             name: name.to_string(),
             data: data.clone(),
             version: version.to_string(),
-            schema_id,
-            submitter_did: submitter_did.to_string(),
+            schema_id: schema_json.id.clone(),
+            submitter_did: submitter_did.to_owned(),
             schema_json,
             state: PublicEntityStateType::Built,
         })
     }
 
     pub async fn submitter_did(&self) -> String {
-        self.submitter_did.clone()
+        self.submitter_did.to_string()
     }
 
     pub async fn publish(
@@ -88,7 +89,7 @@ impl Schema {
         trace!("Schema::publish >>>");
 
         ledger
-            .publish_schema(wallet, &self.schema_json, &self.submitter_did, None)
+            .publish_schema(wallet, self.schema_json.clone(), &self.submitter_did, None)
             .await?;
 
         Ok(Self {
@@ -101,7 +102,7 @@ impl Schema {
         self.source_id.clone()
     }
 
-    pub fn get_schema_id(&self) -> String {
+    pub fn get_schema_id(&self) -> SchemaId {
         self.schema_id.clone()
     }
 
@@ -124,17 +125,6 @@ impl Schema {
         Ok(self.state as u32)
     }
 
-    pub async fn get_schema_json(
-        &self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-    ) -> VcxResult<String> {
-        if !self.schema_json.is_empty() {
-            Ok(self.schema_json.clone())
-        } else {
-            Ok(ledger.get_schema(&self.schema_id, None).await?)
-        }
-    }
-
     pub fn get_state(&self) -> u32 {
         self.state as u32
     }
@@ -142,7 +132,7 @@ impl Schema {
 
 #[cfg(test)]
 mod tests {
-    use test_utils::constants::SCHEMA_ID;
+    use test_utils::constants::{schema_id, schema_json, DID};
 
     use super::*;
 
@@ -151,10 +141,12 @@ mod tests {
         let schema = Schema {
             data: vec!["name".to_string(), "age".to_string()],
             version: "1.0".to_string(),
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             name: "test".to_string(),
             source_id: "1".to_string(),
-            ..Schema::default()
+            submitter_did: DID.to_string().parse().unwrap(),
+            state: PublicEntityStateType::Built,
+            schema_json: schema_json(),
         };
         let serialized = schema.to_string_versioned().unwrap();
         assert!(serialized.contains(r#""version":"1.0""#));
@@ -166,31 +158,26 @@ mod tests {
 
     #[test]
     fn test_from_string_versioned() {
-        let serialized = r#"
-{
-  "version": "1.0",
-  "data": {
-    "data": [
-      "name",
-      "age"
-    ],
-    "version": "1.0",
-    "schema_id": "test_schema_id",
-    "name": "test",
-    "source_id": "1",
-    "submitter_did": "",
-    "state": 1,
-    "schema_json": ""
-  }
-}
-"#;
-        let schema_result = Schema::from_string_versioned(serialized);
-        assert!(schema_result.is_ok());
-        let schema = schema_result.unwrap();
-
+        let serialized = json!({
+        "version": "1.0",
+        "data": {
+          "data": [
+            "name",
+            "age"
+          ],
+          "version": "1.0",
+          "schema_id": "test_schema_id",
+          "name": "test",
+          "source_id": "1",
+          "submitter_did": DID,
+          "state": 1,
+          "schema_json": schema_json()
+        }})
+        .to_string();
+        let schema = Schema::from_string_versioned(&serialized).unwrap();
         assert_eq!(schema.version, "1.0");
         assert_eq!(schema.data, vec!["name".to_string(), "age".to_string()]);
-        assert_eq!(schema.schema_id, "test_schema_id");
+        assert_eq!(schema.schema_id, SchemaId::new_unchecked("test_schema_id"));
         assert_eq!(schema.name, "test");
         assert_eq!(schema.source_id, "1");
         assert_eq!(schema.state, PublicEntityStateType::Published);
@@ -201,11 +188,13 @@ mod tests {
         let schema = Schema {
             data: vec!["name".to_string(), "age".to_string()],
             version: "1.0".to_string(),
-            schema_id: SCHEMA_ID.to_string(),
+            schema_id: schema_id(),
             name: "test".to_string(),
             source_id: "1".to_string(),
-            ..Schema::default()
+            submitter_did: DID.to_string().parse().unwrap(),
+            state: PublicEntityStateType::Built,
+            schema_json: schema_json(),
         };
-        assert_eq!(schema.get_schema_id(), SCHEMA_ID);
+        assert_eq!(schema.get_schema_id(), schema_id());
     }
 }

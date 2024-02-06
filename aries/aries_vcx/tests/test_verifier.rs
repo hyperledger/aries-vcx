@@ -12,6 +12,7 @@ use aries_vcx_core::{
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
+use did_parser::Did;
 use serde_json::json;
 use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};
 
@@ -29,7 +30,7 @@ async fn create_indy_proof(
     anoncreds_holder: &impl BaseAnonCreds,
     ledger_read: &impl AnoncredsLedgerRead,
     ledger_write: &impl AnoncredsLedgerWrite,
-    did: &str,
+    did: &Did,
 ) -> Result<(String, String, String, String), Box<dyn Error>> {
     let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
         wallet_issuer,
@@ -75,9 +76,8 @@ async fn create_indy_proof(
     .to_string();
 
     let schema_id = schema.schema_id.clone();
-    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
     let schemas = json!({
-        schema_id: schema_json,
+        schema_id: schema.schema_json,
     })
     .to_string();
 
@@ -113,7 +113,7 @@ async fn create_proof_with_predicate(
     anoncreds_holder: &impl BaseAnonCreds,
     ledger_read: &impl AnoncredsLedgerRead,
     ledger_write: &impl AnoncredsLedgerWrite,
-    did: &str,
+    did: &Did,
     include_predicate_cred: bool,
 ) -> Result<(String, String, String, String), Box<dyn Error>> {
     let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
@@ -174,9 +174,8 @@ async fn create_proof_with_predicate(
         .to_string()
     };
 
-    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
     let schemas = json!({
-        schema.schema_id: schema_json,
+        schema.schema_id: schema.schema_json,
     })
     .to_string();
 
@@ -212,7 +211,7 @@ async fn create_and_store_nonrevocable_credential(
     anoncreds_holder: &impl BaseAnonCreds,
     ledger_read: &impl AnoncredsLedgerRead,
     ledger_write: &impl AnoncredsLedgerWrite,
-    issuer_did: &str,
+    issuer_did: &Did,
     attr_list: &str,
 ) -> (Schema, CredentialDef, String) {
     let schema = create_and_write_test_schema(
@@ -351,7 +350,6 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
     )
     .await;
     let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json())?;
-    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
 
     let anoncreds = &setup.anoncreds;
     let prover_proof_json = anoncreds
@@ -370,7 +368,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
             })
             .to_string(),
             "main",
-            &json!({ schema.schema_id: schema_json }).to_string(),
+            &json!({ schema.schema_id: schema.schema_json }).to_string(),
             &json!({ cred_def.get_cred_def_id(): cred_def_json }).to_string(),
             None,
         )
@@ -445,7 +443,6 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
     )
     .await;
     let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json())?;
-    let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json)?;
 
     let anoncreds = &setup.anoncreds;
     let prover_proof_json = anoncreds
@@ -464,7 +461,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
             })
             .to_string(),
             "main",
-            &json!({ schema.schema_id: schema_json }).to_string(),
+            &json!({ schema.schema_id: schema.schema_json }).to_string(),
             &json!({ cred_def.get_cred_def_id(): cred_def_json }).to_string(),
             None,
         )

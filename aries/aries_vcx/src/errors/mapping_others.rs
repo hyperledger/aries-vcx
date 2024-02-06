@@ -75,6 +75,12 @@ impl From<did_key::error::DidKeyError> for AriesVcxError {
     }
 }
 
+impl From<anoncreds_types::Error> for AriesVcxError {
+    fn from(err: anoncreds_types::Error) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
 // TODO
 impl From<AriesVcxCoreError> for AriesVcxError {
     fn from(err: AriesVcxCoreError) -> Self {

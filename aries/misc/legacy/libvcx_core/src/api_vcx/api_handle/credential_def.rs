@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use aries_vcx::common::primitives::credential_definition::{
     CredentialDef, CredentialDefConfigBuilder, PublicEntityStateType,
 };
@@ -25,8 +26,8 @@ pub async fn create(
     support_revocation: bool,
 ) -> LibvcxResult<u32> {
     let config = CredentialDefConfigBuilder::default()
-        .issuer_did(issuer_did)
-        .schema_id(schema_id)
+        .issuer_did(did_parser::Did::parse(issuer_did)?)
+        .schema_id(SchemaId::new(schema_id)?)
         .tag(tag)
         .build()
         .map_err(|err| {

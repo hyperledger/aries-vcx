@@ -1,9 +1,12 @@
+mod type_conversion;
+
 use std::{
     borrow::Borrow,
     collections::{HashMap, HashSet},
     sync::Arc,
 };
 
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use async_trait::async_trait;
 use credx::{
     anoncreds_clsignatures::{bn::BigNumber, LinkSecret as ClLinkSecret},
@@ -11,15 +14,17 @@ use credx::{
     types::{
         Credential as CredxCredential, CredentialDefinition, CredentialDefinitionId,
         CredentialOffer, CredentialRequestMetadata, CredentialRevocationConfig,
-        CredentialRevocationState, DidValue, IssuanceType, LinkSecret, PresentCredentials,
-        Presentation, PresentationRequest, RegistryType, RevocationRegistry,
-        RevocationRegistryDefinition, RevocationRegistryDelta, RevocationRegistryId, Schema,
-        SchemaId, SignatureType,
+        CredentialRevocationState, IssuanceType, LinkSecret, PresentCredentials, Presentation,
+        PresentationRequest, RegistryType, RevocationRegistry, RevocationRegistryDefinition,
+        RevocationRegistryDelta, RevocationRegistryId, Schema as CredxSchema,
+        SchemaId as CredxSchemaId, SignatureType,
     },
 };
+use did_parser::Did;
 use indy_credx as credx;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};
+use type_conversion::Convert;
 use uuid::Uuid;
 
 use super::base_anoncreds::BaseAnonCreds;
@@ -239,7 +244,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
 
-        let schemas: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let schemas_: HashMap<CredxSchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let mut schemas: HashMap<CredxSchemaId, CredxSchema> = HashMap::new();
+        for (key, value) in schemas_ {
+            schemas.insert(key, value.convert(())?);
+        }
         let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
@@ -284,13 +293,13 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn issuer_create_and_store_revoc_reg(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
+        issuer_did: &Did,
         cred_def_id: &str,
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
     ) -> VcxCoreResult<(String, String, String)> {
-        let issuer_did = issuer_did.to_owned().into();
+        let issuer_did = issuer_did.convert(())?;
 
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
@@ -369,26 +378,24 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn issuer_create_and_store_credential_def(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
-        _schema_id: &str,
-        schema_json: &str,
+        issuer_did: &Did,
+        _schema_id: &SchemaId,
+        schema_json: Schema,
         tag: &str,
         sig_type: Option<&str>,
         config_json: &str,
     ) -> VcxCoreResult<(String, String)> {
-        let issuer_did = issuer_did.to_owned().into();
-        let schema = serde_json::from_str(schema_json)?;
+        let issuer_did = issuer_did.to_owned();
         let sig_type = sig_type
             .map(serde_json::from_str)
             .unwrap_or(Ok(SignatureType::CL))?;
         let config = serde_json::from_str(config_json)?;
 
-        let schema_seq_no = match &schema {
-            Schema::SchemaV1(s) => s.seq_no,
-        };
+        let schema_seq_no = schema_json.seq_no;
+        let schema = schema_json.clone().convert(())?;
 
         let cred_def_id = credx::issuer::make_credential_definition_id(
-            &issuer_did,
+            &issuer_did.convert(())?,
             schema.id(),
             schema_seq_no,
             tag,
@@ -405,7 +412,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         // Otherwise, create cred def
         let (cred_def, cred_def_priv, cred_key_correctness_proof) =
             credx::issuer::create_credential_definition(
-                &issuer_did,
+                &issuer_did.convert(())?,
                 &schema,
                 tag,
                 sig_type,
@@ -439,12 +446,14 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let record = Record::builder()
             .name(schema.id().to_string())
             .category(CATEGORY_CRED_SCHEMA.to_string())
-            .value(schema_json.into())
+            .value(serde_json::to_string(&schema_json)?)
             .build();
         let store_schema_res = wallet.add_record(record).await;
 
         if let Err(e) = store_schema_res {
-            warn!("Storing schema {schema_json} failed - {e}. It's possible it is already stored.")
+            warn!(
+                "Storing schema {schema_json:?} failed - {e}. It's possible it is already stored."
+            )
         }
 
         let record = Record::builder()
@@ -474,7 +483,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .get_record(CATEGORY_CRED_MAP_SCHEMA_ID, cred_def_id)
             .await?;
 
-        let schema_id = SchemaId(schema.value().into());
+        let schema_id = CredxSchemaId(schema.value().into());
 
         // If cred_def contains schema ID, why take it as an argument here...?
         let offer =
@@ -634,7 +643,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             None
         };
 
-        let schemas: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let schemas_: HashMap<CredxSchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let mut schemas: HashMap<CredxSchemaId, CredxSchema> = HashMap::new();
+        for (key, value) in schemas_ {
+            schemas.insert(key, value.convert(())?);
+        }
+
         let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
@@ -893,12 +907,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn prover_create_credential_req(
         &self,
         wallet: &impl BaseWallet,
-        prover_did: &str,
+        prover_did: &Did,
         credential_offer_json: &str,
         credential_def_json: &str,
         link_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
-        let prover_did = DidValue::new(prover_did, None);
+        let prover_did = prover_did.convert(())?;
         let cred_def: CredentialDefinition = serde_json::from_str(credential_def_json)?;
         let credential_offer: CredentialOffer = serde_json::from_str(credential_offer_json)?;
         let link_secret = Self::get_link_secret(wallet, link_secret_id).await?;
@@ -1108,26 +1122,22 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
     async fn issuer_create_schema(
         &self,
-        issuer_did: &str,
+        issuer_did: &Did,
         name: &str,
         version: &str,
         attrs: &str,
-    ) -> VcxCoreResult<(String, String)> {
-        let origin_did = DidValue::new(issuer_did, None);
+    ) -> VcxCoreResult<Schema> {
+        let origin_did = issuer_did.convert(())?;
         let attr_names = serde_json::from_str(attrs)?;
 
         let schema = credx::issuer::create_schema(&origin_did, name, version, attr_names, None)?;
 
-        let schema_json = serde_json::to_string(&schema)?;
-        let schema_id = &schema.id().0;
-
-        Ok((schema_id.to_string(), schema_json))
+        Ok(schema.convert((issuer_did.to_string(),))?)
     }
 
     async fn revoke_credential_local(
         &self,
         wallet: &impl BaseWallet,
-        _tails_dir: &str,
         rev_reg_id: &str,
         cred_rev_id: &str,
         _rev_reg_delta_json: &str,

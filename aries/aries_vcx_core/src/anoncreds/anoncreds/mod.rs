@@ -1,3 +1,5 @@
+mod type_conversion;
+
 use std::collections::{BTreeSet, HashMap, HashSet};
 
 use anoncreds::{
@@ -7,7 +9,7 @@ use anoncreds::{
         credential::Credential,
         issuer_id::IssuerId,
         rev_reg_def::{RevocationRegistryDefinitionId, CL_ACCUM},
-        schema::{Schema, SchemaId},
+        schema::{Schema as AnoncredsSchema, SchemaId as AnoncredsSchemaId},
     },
     issuer::{create_revocation_registry_def, create_revocation_status_list},
     tails::TailsFileWriter,
@@ -18,6 +20,7 @@ use anoncreds::{
         RevocationStatusList, SignatureType,
     },
 };
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use async_trait::async_trait;
 use bitvec::bitvec;
 use did_parser::Did;
@@ -28,6 +31,7 @@ use uuid::Uuid;
 
 use super::base_anoncreds::BaseAnonCreds;
 use crate::{
+    anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{
         constants::ATTRS,
@@ -286,8 +290,9 @@ impl BaseAnonCreds for Anoncreds {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_request_json)?;
 
-        let mut schemas_val: HashMap<SchemaId, Value> = serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<SchemaId, Schema> = HashMap::new();
+        let mut schemas_val: HashMap<AnoncredsSchemaId, Value> =
+            serde_json::from_str(schemas_json)?;
+        let mut schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = HashMap::new();
         for (schema_id, schema_json) in schemas_val.iter_mut() {
             if let Some(v) = schema_json.as_object_mut() {
                 v.insert(
@@ -406,7 +411,7 @@ impl BaseAnonCreds for Anoncreds {
     async fn issuer_create_and_store_revoc_reg(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
+        issuer_did: &Did,
         cred_def_id: &str,
         tails_dir: &str,
         max_creds: u32,
@@ -505,28 +510,20 @@ impl BaseAnonCreds for Anoncreds {
     async fn issuer_create_and_store_credential_def(
         &self,
         wallet: &impl BaseWallet,
-        issuer_did: &str,
-        schema_id: &str,
-        schema_json: &str,
+        issuer_did: &Did,
+        schema_id: &SchemaId,
+        schema_json: Schema,
         tag: &str,
         signature_type: Option<&str>,
         config_json: &str,
     ) -> VcxCoreResult<(String, String)> {
-        let mut value: Value = serde_json::from_str(schema_json)?;
-        value
-            .as_object_mut()
-            .map(|v| v.insert("issuerId".to_owned(), json!(issuer_did)));
-        let schema_seq_no = value.get("seqNo").and_then(|v| v.as_u64());
-
-        let schema = serde_json::from_value(value)?;
-
         let sig_type = signature_type
             .map(serde_json::from_str)
             .unwrap_or(Ok(SignatureType::CL))?;
         let config = serde_json::from_str(config_json)?;
 
         let cred_def_id =
-            make_credential_definition_id(issuer_did, schema_id, schema_seq_no, tag, sig_type);
+            make_credential_definition_id(issuer_did, schema_id, schema_json.seq_no, tag, sig_type);
 
         // If cred def already exists, return it
         if let Ok(cred_def) = self
@@ -540,9 +537,10 @@ impl BaseAnonCreds for Anoncreds {
         let (cred_def, cred_def_priv, cred_key_correctness_proof) =
             anoncreds::issuer::create_credential_definition(
                 // Schema ID must be just the schema seq no for some reason
-                SchemaId::new_unchecked(schema_seq_no.unwrap().to_string()),
-                &schema,
-                schema.issuer_id.clone(),
+                AnoncredsSchemaId::new_unchecked(schema_json.seq_no.unwrap().to_string()),
+                // SchemaId::new(schema_id).unwrap(),
+                &schema_json.clone().convert(())?,
+                schema_json.issuer_id.clone().convert(())?,
                 tag,
                 sig_type,
                 config,
@@ -580,12 +578,14 @@ impl BaseAnonCreds for Anoncreds {
         let record = Record::builder()
             .name(schema_id.to_string())
             .category(CATEGORY_CRED_SCHEMA.to_string())
-            .value(schema_json.into())
+            .value(serde_json::to_string(&schema_json)?)
             .build();
         let store_schema_res = wallet.add_record(record).await;
 
         if let Err(e) = store_schema_res {
-            warn!("Storing schema {schema_json} failed - {e}. It's possible it is already stored.")
+            warn!(
+                "Storing schema {schema_json:?} failed - {e}. It's possible it is already stored."
+            )
         }
 
         let record = Record::builder()
@@ -614,7 +614,7 @@ impl BaseAnonCreds for Anoncreds {
             .await?;
 
         let offer = anoncreds::issuer::create_credential_offer(
-            SchemaId::new(schema_id_value["schemaId"].as_str().unwrap()).unwrap(),
+            AnoncredsSchemaId::new(schema_id_value["schemaId"].as_str().unwrap()).unwrap(),
             CredentialDefinitionId::new(cred_def_id).unwrap(),
             &correctness_proof,
         )?;
@@ -797,8 +797,9 @@ impl BaseAnonCreds for Anoncreds {
             None
         };
 
-        let mut schemas_val: HashMap<SchemaId, Value> = serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<SchemaId, Schema> = HashMap::new();
+        let mut schemas_val: HashMap<AnoncredsSchemaId, Value> =
+            serde_json::from_str(schemas_json)?;
+        let mut schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = HashMap::new();
         for (schema_id, schema_json) in schemas_val.iter_mut() {
             schema_json.as_object_mut().map(|v| {
                 v.insert(
@@ -806,8 +807,8 @@ impl BaseAnonCreds for Anoncreds {
                     schema_id.to_string().split(':').next().into(),
                 )
             });
-            let schema = serde_json::from_value(schema_json.clone())?;
-            schemas.insert(schema_id.clone(), schema);
+            let schema: Schema = serde_json::from_value(schema_json.clone())?;
+            schemas.insert(schema_id.clone(), schema.convert(())?);
         }
         let mut cred_defs_val: HashMap<CredentialDefinitionId, Value> =
             serde_json::from_str(credential_defs_json)?;
@@ -1076,13 +1077,11 @@ impl BaseAnonCreds for Anoncreds {
     async fn prover_create_credential_req(
         &self,
         wallet: &impl BaseWallet,
-        prover_did: &str,
+        prover_did: &Did,
         cred_offer_json: &str,
         cred_def_json: &str,
         master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
-        let prover_did = Did::parse(prover_did.to_owned())
-            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidDid, e))?;
         let mut cred_def_json: Value = serde_json::from_str(cred_def_json)?;
         let cred_def_id = cred_def_json["id"].as_str().unwrap().to_string();
         cred_def_json.as_object_mut().unwrap().insert(
@@ -1340,30 +1339,26 @@ impl BaseAnonCreds for Anoncreds {
 
     async fn issuer_create_schema(
         &self,
-        issuer_did: &str,
+        issuer_did: &Did,
         name: &str,
         version: &str,
         attrs: &str,
-    ) -> VcxCoreResult<(String, String)> {
+    ) -> VcxCoreResult<Schema> {
         let attr_names = serde_json::from_str(attrs)?;
 
         let schema = anoncreds::issuer::create_schema(
             name,
             version,
-            IssuerId::new(issuer_did).unwrap(),
+            IssuerId::new(issuer_did.to_string()).unwrap(),
             attr_names,
         )?;
-        let mut schema_json = serde_json::to_value(schema)?;
         let schema_id = make_schema_id(issuer_did, name, version);
-        schema_json["id"] = schema_id.to_string().into();
-
-        Ok((schema_id.to_string(), schema_json.to_string()))
+        Ok(schema.convert((schema_id.to_string(),))?)
     }
 
     async fn revoke_credential_local(
         &self,
         wallet: &impl BaseWallet,
-        _tails_dir: &str,
         rev_reg_id: &str,
         cred_rev_id: &str,
         ledger_rev_reg_delta_json: &str,
@@ -1587,20 +1582,19 @@ fn _format_attribute_as_marker_tag_name(attribute_name: &str) -> String {
     format!("attr::{attribute_name}::marker")
 }
 
-pub fn make_schema_id(did: &str, name: &str, version: &str) -> SchemaId {
-    let prefix = Did::parse(did.to_owned())
-        .ok()
-        .and_then(|did| did.method().map(|method| format!("schema:{}:", method)))
+pub fn make_schema_id(did: &Did, name: &str, version: &str) -> SchemaId {
+    let prefix = did
+        .method()
+        .map(|method| format!("schema:{}:", method))
         .unwrap_or_default();
-
     let id = format!("{}{}:2:{}:{}", prefix, did, name, version);
     SchemaId::new(id).unwrap()
 }
 
 pub fn make_credential_definition_id(
-    origin_did: &str,
-    schema_id: &str,
-    schema_seq_no: Option<u64>,
+    origin_did: &Did,
+    schema_id: &SchemaId,
+    schema_seq_no: Option<u32>,
     tag: &str,
     signature_type: SignatureType,
 ) -> CredentialDefinitionId {
@@ -1614,9 +1608,9 @@ pub fn make_credential_definition_id(
         format!(":{}", tag)
     };
 
-    let prefix = Did::parse(origin_did.to_owned())
-        .ok()
-        .and_then(|did| did.method().map(|method| format!("creddef:{}:", method)))
+    let prefix = origin_did
+        .method()
+        .map(|method| format!("creddef:{}:", method))
         .unwrap_or_default();
 
     let schema_infix_id = schema_seq_no
@@ -1636,7 +1630,7 @@ pub fn make_credential_definition_id(
 }
 
 fn make_revocation_registry_id(
-    origin_did: &str,
+    origin_did: &Did,
     cred_def_id: &CredentialDefinitionId,
     tag: &str,
     rev_reg_type: RegistryType,
@@ -1644,7 +1638,7 @@ fn make_revocation_registry_id(
     // Must use unchecked as anoncreds doesn't expose validation error
     Ok(RevocationRegistryDefinitionId::new(format!(
         "{}{}:4:{}:{}:{}",
-        Did::parse(origin_did.to_owned())?
+        origin_did
             .method()
             .map_or(Default::default(), |method| format!("revreg:{}:", method)),
         origin_did,
@@ -1655,11 +1649,6 @@ fn make_revocation_registry_id(
         tag
     ))
     .unwrap())
-}
-
-// V4SGRU86Z58d6TV7PBUe6f:4:V4SGRU86Z58d6TV7PBUe6f:3:CL:771:1:CL_ACCUM:tag1
-pub fn rev_reg_def_parts(_id: &str) -> Option<(Option<&str>, Did, String, SchemaId, String)> {
-    todo!()
 }
 
 pub fn schema_parts(id: &str) -> Option<(Option<&str>, Did, String, String)> {

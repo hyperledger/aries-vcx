@@ -78,10 +78,13 @@ where
                 parsed_did.id().to_string(),
             )));
         }
-        let did = parsed_did.did();
-        let ledger_response = self.ledger.borrow().get_attr(did, "endpoint").await?;
-        let verkey = self.get_verkey(did).await?;
-        ledger_response_to_ddo(did, &ledger_response, verkey)
+        let ledger_response = self
+            .ledger
+            .borrow()
+            .get_attr(parsed_did, "endpoint")
+            .await?;
+        let verkey = self.get_verkey(parsed_did).await?;
+        ledger_response_to_ddo(parsed_did.did(), &ledger_response, verkey)
             .await
             .map_err(|err| err.into())
     }
@@ -92,7 +95,7 @@ where
     T: Borrow<A> + Sync + Send,
     A: AttrReader,
 {
-    async fn get_verkey(&self, did: &str) -> Result<String, DidSovError> {
+    async fn get_verkey(&self, did: &Did) -> Result<String, DidSovError> {
         let nym_response = self.ledger.borrow().get_nym(did).await?;
         let nym_json: Value = serde_json::from_str(&nym_response)?;
         let nym_data = nym_json["result"]["data"]

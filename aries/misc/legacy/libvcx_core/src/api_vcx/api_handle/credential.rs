@@ -334,7 +334,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
             get_main_wallet()?.as_ref(),
             get_main_ledger_read()?.as_ref(),
             get_main_anoncreds()?.as_ref(),
-            my_pw_did,
+            my_pw_did.parse()?,
         )
         .await?;
     send_message(connection_handle, msg_response).await?;

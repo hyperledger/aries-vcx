@@ -46,7 +46,7 @@ pub async fn create_and_publish_schema(
     let schema = Schema::create(
         get_main_anoncreds()?.as_ref(),
         source_id,
-        issuer_did,
+        &issuer_did.parse()?,
         &name,
         &version,
         &data,
@@ -83,7 +83,7 @@ pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
 }
 
 pub fn get_schema_id(handle: u32) -> LibvcxResult<String> {
-    SCHEMA_MAP.get(handle, |s| Ok(s.get_schema_id()))
+    SCHEMA_MAP.get(handle, |s| Ok(s.get_schema_id().to_string()))
 }
 
 pub fn from_string(schema_data: &str) -> LibvcxResult<u32> {

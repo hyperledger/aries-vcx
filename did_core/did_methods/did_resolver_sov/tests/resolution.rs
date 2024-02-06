@@ -15,7 +15,7 @@ use test_utils::devsetup::build_setup_profile;
 async fn write_test_endpoint(
     wallet: &impl BaseWallet,
     ledger_write: &impl IndyLedgerWrite,
-    did: &str,
+    did: &Did,
 ) {
     let endpoint = EndpointDidSov::create()
         .set_service_endpoint("http://localhost:8080".parse().unwrap())

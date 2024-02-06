@@ -1,6 +1,8 @@
 use std::fmt::Debug;
 
+use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
 use async_trait::async_trait;
+use did_parser::Did;
 use indy_vdr::ledger::constants::UpdateRole;
 use serde::Serialize;
 
@@ -8,13 +10,13 @@ use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
 
 #[async_trait]
 pub trait IndyLedgerRead: Debug + Send + Sync {
-    async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String>;
-    async fn get_nym(&self, did: &str) -> VcxCoreResult<String>;
+    async fn get_attr(&self, target_did: &Did, attr_name: &str) -> VcxCoreResult<String>;
+    async fn get_nym(&self, did: &Did) -> VcxCoreResult<String>;
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>>;
     async fn get_ledger_txn(
         &self,
         seq_no: i32,
-        submitter_did: Option<&str>,
+        submitter_did: Option<&Did>,
     ) -> VcxCoreResult<String>;
 }
 
@@ -23,8 +25,8 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
     async fn publish_nym(
         &self,
         wallet: &impl BaseWallet,
-        submitter_did: &str,
-        target_did: &str,
+        submitter_did: &Did,
+        target_did: &Did,
         verkey: Option<&str>,
         data: Option<&str>,
         role: Option<&str>,
@@ -32,27 +34,27 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
     async fn set_endorser(
         &self,
         wallet: &impl BaseWallet,
-        submitter_did: &str,
+        submitter_did: &Did,
         request: &str,
         endorser: &str,
     ) -> VcxCoreResult<String>;
     async fn endorse_transaction(
         &self,
         wallet: &impl BaseWallet,
-        endorser_did: &str,
+        endorser_did: &Did,
         request_json: &str,
     ) -> VcxCoreResult<()>;
     async fn add_attr(
         &self,
         wallet: &impl BaseWallet,
-        target_did: &str,
+        target_did: &Did,
         attrib_json: &str,
     ) -> VcxCoreResult<String>;
     async fn write_did(
         &self,
         wallet: &impl BaseWallet,
-        submitter_did: &str,
-        target_did: &str,
+        submitter_did: &Did,
+        target_did: &Did,
         target_vk: &str,
         role: Option<UpdateRole>,
         alias: Option<String>,
@@ -63,13 +65,13 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
 pub trait AnoncredsLedgerRead: Debug + Send + Sync {
     async fn get_schema(
         &self,
-        schema_id: &str,
-        submitter_did: Option<&str>,
-    ) -> VcxCoreResult<String>;
+        schema_id: &SchemaId,
+        submitter_did: Option<&Did>,
+    ) -> VcxCoreResult<Schema>;
     async fn get_cred_def(
         &self,
         cred_def_id: &str,
-        submitter_did: Option<&str>,
+        submitter_did: Option<&Did>,
     ) -> VcxCoreResult<String>;
     async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String>;
     async fn get_rev_reg_delta_json(
@@ -90,28 +92,28 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
     async fn publish_schema(
         &self,
         wallet: &impl BaseWallet,
-        schema_json: &str,
-        submitter_did: &str,
+        schema_json: Schema,
+        submitter_did: &Did,
         endorser_did: Option<String>,
     ) -> VcxCoreResult<()>;
     async fn publish_cred_def(
         &self,
         wallet: &impl BaseWallet,
         cred_def_json: &str,
-        submitter_did: &str,
+        submitter_did: &Did,
     ) -> VcxCoreResult<()>;
     async fn publish_rev_reg_def(
         &self,
         wallet: &impl BaseWallet,
         rev_reg_def: &str,
-        submitter_did: &str,
+        submitter_did: &Did,
     ) -> VcxCoreResult<()>;
     async fn publish_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
         rev_reg_id: &str,
         rev_reg_entry_json: &str,
-        submitter_did: &str,
+        submitter_did: &Did,
     ) -> VcxCoreResult<()>;
 }
 

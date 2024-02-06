@@ -252,7 +252,7 @@ pub async fn any_invitation_into_did_doc(
             ..
         }) => {
             did_doc.set_id(content.did.to_string());
-            let service = get_service(indy_ledger, &content.did)
+            let service = get_service(indy_ledger, &content.did.parse()?)
                 .await
                 .unwrap_or_else(|err| {
                     error!(
