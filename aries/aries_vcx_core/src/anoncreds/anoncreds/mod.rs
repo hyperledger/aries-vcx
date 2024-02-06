@@ -421,7 +421,7 @@ impl BaseAnonCreds for Anoncreds {
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
-    ) -> VcxCoreResult<(String, String, String)> {
+    ) -> VcxCoreResult<(String, RevocationRegistryDefinition, String)> {
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
         let cred_def: AnoncredsCredentialDefinition = self
@@ -468,21 +468,21 @@ impl BaseAnonCreds for Anoncreds {
             .build();
         wallet.add_record(record).await?;
 
-        let mut rev_reg_def = serde_json::to_value(&rev_reg_def)?;
-        rev_reg_def
+        let mut rev_reg_def_val = serde_json::to_value(&rev_reg_def)?;
+        rev_reg_def_val
             .as_object_mut()
             .unwrap()
             .insert("id".to_owned(), rev_reg_id.0.clone().into());
-        rev_reg_def
+        rev_reg_def_val
             .as_object_mut()
             .unwrap()
             .insert("ver".to_owned(), "1.0".into());
-        rev_reg_def["value"]
+        rev_reg_def_val["value"]
             .as_object_mut()
             .unwrap()
             .insert("issuanceType".to_string(), "ISSUANCE_BY_DEFAULT".into());
 
-        let str_rev_reg_def = serde_json::to_string(&rev_reg_def)?;
+        let str_rev_reg_def = serde_json::to_string(&rev_reg_def_val)?;
         let record = Record::builder()
             .name(rev_reg_id.0.clone())
             .category(CATEGORY_REV_REG_DEF.to_string())
@@ -507,7 +507,11 @@ impl BaseAnonCreds for Anoncreds {
             .build();
         wallet.add_record(record).await?;
 
-        Ok((rev_reg_id.0, str_rev_reg_def, str_rev_reg))
+        Ok((
+            rev_reg_id.to_string(),
+            rev_reg_def.convert((rev_reg_id.to_string(),))?,
+            str_rev_reg,
+        ))
     }
 
     async fn issuer_create_and_store_credential_def(

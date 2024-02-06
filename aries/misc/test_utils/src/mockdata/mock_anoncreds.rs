@@ -53,7 +53,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _tails_dir: &str,
         _max_creds: u32,
         _tag: &str,
-    ) -> VcxCoreResult<(String, String, String)> {
+    ) -> VcxCoreResult<(String, RevocationRegistryDefinition, String)> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,

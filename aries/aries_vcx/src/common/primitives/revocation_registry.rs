@@ -338,16 +338,5 @@ pub async fn generate_rev_reg(
         )
         .await?;
 
-    let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def_json)
-        .map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::SerializationError,
-                format!(
-                    "Failed to deserialize rev_reg_def: {:?}, error: {:?}",
-                    rev_reg_def_json, err
-                ),
-            )
-        })?;
-
-    Ok((rev_reg_id, rev_reg_def, rev_reg_entry_json))
+    Ok((rev_reg_id, rev_reg_def_json, rev_reg_entry_json))
 }
