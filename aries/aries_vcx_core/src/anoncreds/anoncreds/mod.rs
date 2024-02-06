@@ -422,7 +422,7 @@ impl BaseAnonCreds for Anoncreds {
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
-    ) -> VcxCoreResult<(String, RevocationRegistryDefinition, RevocationRegistry)> {
+    ) -> VcxCoreResult<(RevocationRegistryDefinitionId, RevocationRegistryDefinition, RevocationRegistry)> {
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
         let cred_def: AnoncredsCredentialDefinition = self
@@ -509,7 +509,7 @@ impl BaseAnonCreds for Anoncreds {
         wallet.add_record(record).await?;
 
         Ok((
-            rev_reg_id.to_string(),
+            rev_reg_id.to_string().try_into()?,
             rev_reg_def.convert((rev_reg_id.to_string(),))?,
             rev_reg.convert(())?,
         ))

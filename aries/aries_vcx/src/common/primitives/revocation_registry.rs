@@ -338,5 +338,5 @@ pub async fn generate_rev_reg(
         )
         .await?;
 
-    Ok((rev_reg_id, rev_reg_def_json, serde_json::to_string(&rev_reg_entry_json)?))
+    Ok((rev_reg_id.to_string(), rev_reg_def_json, serde_json::to_string(&rev_reg_entry_json)?))
 }

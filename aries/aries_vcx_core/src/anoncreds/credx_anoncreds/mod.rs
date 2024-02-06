@@ -326,7 +326,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
-    ) -> VcxCoreResult<(String, RevocationRegistryDefinition, RevocationRegistry)> {
+    ) -> VcxCoreResult<(
+        RevocationRegistryDefinitionId,
+        RevocationRegistryDefinition,
+        RevocationRegistry,
+    )> {
         let issuer_did = issuer_did.convert(())?;
 
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
@@ -347,7 +351,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF, &rev_reg_id.0).await;
 
         if let (Ok(rev_reg), Ok(rev_reg_def)) = (res_rev_reg, res_rev_reg_def) {
-            return Ok((rev_reg_id.0, rev_reg, rev_reg_def));
+            return Ok((rev_reg_id.to_string().try_into()?, rev_reg, rev_reg_def));
         }
 
         let (rev_reg_def, rev_reg_def_priv, rev_reg, _rev_reg_delta) =
@@ -400,7 +404,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .build();
         wallet.add_record(record).await?;
 
-        Ok((rev_reg_id.0, rev_reg_def.convert(())?, rev_reg.convert(())?))
+        Ok((
+            rev_reg_id.to_string().try_into()?,
+            rev_reg_def.convert(())?,
+            rev_reg.convert(())?,
+        ))
     }
 
     async fn issuer_create_and_store_credential_def(

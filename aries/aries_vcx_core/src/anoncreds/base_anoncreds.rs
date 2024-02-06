@@ -37,7 +37,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
-    ) -> VcxCoreResult<(String, RevocationRegistryDefinition, RevocationRegistry)>;
+    ) -> VcxCoreResult<(RevocationRegistryDefinitionId, RevocationRegistryDefinition, RevocationRegistry)>;
 
     #[allow(clippy::too_many_arguments)]
     async fn issuer_create_and_store_credential_def(
