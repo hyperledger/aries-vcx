@@ -9,6 +9,7 @@ use anoncreds_types::data_types::{
     },
     ledger::{
         cred_def::{CredentialDefinition as OurCredentialDefinition, SignatureType},
+        rev_reg::RevocationRegistry as OurRevocationRegistry,
         rev_reg_def::{
             RevocationRegistryDefinition as OurRevocationRegistryDefinition,
             RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
@@ -28,7 +29,8 @@ use indy_credx::{
         AttributeNames as CredxAttributeNames, CredentialDefinition as CredxCredentialDefinition,
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
-        DidValue, RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
+        DidValue, RevocationRegistry as CredxRevocationRegistry,
+        RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
         RevocationRegistryDelta as CredxRevocationRegistryDelta,
         RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
     },
@@ -234,12 +236,45 @@ impl Convert for HashMap<OurRevocationRegistryDefinitionId, OurRevocationRegistr
     }
 }
 
+impl Convert for OurRevocationRegistry {
+    type Args = ();
+    type Target = CredxRevocationRegistry;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(CredxRevocationRegistry::RevocationRegistryV1(
+            serde_json::from_value(serde_json::to_value(self)?)?,
+        ))
+    }
+}
+
+impl Convert for HashMap<OurRevocationRegistryDefinitionId, HashMap<u64, OurRevocationRegistry>> {
+    type Args = ();
+    type Target = HashMap<CredxRevocationRegistryId, HashMap<u64, CredxRevocationRegistry>>;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        self.into_iter()
+            .map(|(id, defs)| {
+                Ok((
+                    CredxRevocationRegistryId::from(id.to_string()),
+                    defs.into_iter()
+                        .map(|(seq_no, def)| Ok((seq_no, def.convert(())?)))
+                        .collect::<Result<HashMap<u64, CredxRevocationRegistry>, Self::Error>>()?,
+                ))
+            })
+            .collect()
+    }
+}
+
 impl Convert for OurRevocationRegistryDelta {
     type Args = ();
     type Target = CredxRevocationRegistryDelta;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
-        todo!()
+        Ok(CredxRevocationRegistryDelta::RevocationRegistryDeltaV1(
+            serde_json::from_value(serde_json::to_value(self)?)?,
+        ))
     }
 }

@@ -30,13 +30,7 @@ use vdr::{
         identifiers::{
             CredentialDefinitionId as IndyVdrCredentialDefinitionId, RevocationRegistryId,
         },
-        requests::{
-            rev_reg::{
-                RevocationRegistryDelta as IndyVdrRevocationRegistryDelta,
-                RevocationRegistryDeltaV1,
-            },
-            rev_reg_def::RegistryType,
-        },
+        requests::rev_reg_def::RegistryType,
         RequestBuilder,
     },
     pool::{LedgerType, PreparedRequest},

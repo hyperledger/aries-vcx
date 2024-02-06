@@ -13,7 +13,7 @@ use anoncreds_types::data_types::{
     },
     ledger::{
         cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition,
-        rev_reg_delta::RevocationRegistryDelta, schema::Schema,
+        rev_reg_delta::RevocationRegistryDelta, schema::Schema, rev_reg::RevocationRegistry,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -27,7 +27,7 @@ use credx::{
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         CredentialRequestMetadata, CredentialRevocationConfig, CredentialRevocationState,
         IssuanceType, LinkSecret, PresentCredentials, Presentation, PresentationRequest,
-        RegistryType, RevocationRegistry,
+        RegistryType, RevocationRegistry as CredxRevocationRegistry,
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
         RevocationRegistryDelta as CredxRevocationRegistryDelta,
         RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
@@ -275,14 +275,16 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             HashMap<CredxRevocationRegistryId, CredxRevocationRegistryDefinition>,
         > = rev_reg_defs.map(|v| v.convert(())).transpose()?;
 
-        let rev_regs: Option<HashMap<CredxRevocationRegistryId, HashMap<u64, RevocationRegistry>>> =
+        let rev_regs: Option<HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>> =
             serde_json::from_str(rev_regs_json)?;
+        let rev_regs: Option<HashMap<CredxRevocationRegistryId, HashMap<u64, CredxRevocationRegistry>>> =
+            rev_regs.map(|v| v.convert(())).transpose()?;
         let rev_regs: Option<
-            HashMap<CredxRevocationRegistryId, HashMap<u64, &RevocationRegistry>>,
+            HashMap<CredxRevocationRegistryId, HashMap<u64, &CredxRevocationRegistry>>,
         > = rev_regs.as_ref().map(|regs| {
             let mut new_regs: HashMap<
                 CredxRevocationRegistryId,
-                HashMap<u64, &RevocationRegistry>,
+                HashMap<u64, &CredxRevocationRegistry>,
             > = HashMap::new();
             for (k, v) in regs {
                 new_regs.insert(k.clone(), hashmap_as_ref(v));
