@@ -14,6 +14,7 @@ use anoncreds_types::data_types::{
 use async_trait::async_trait;
 use did_parser::Did;
 use indy_vdr::ledger::constants::UpdateRole;
+use public_key::Key;
 use serde::Serialize;
 
 use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
@@ -37,7 +38,7 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         target_did: &Did,
-        verkey: Option<&str>,
+        verkey: Option<&Key>,
         data: Option<&str>,
         role: Option<&str>,
     ) -> VcxCoreResult<String>;
@@ -65,7 +66,7 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         target_did: &Did,
-        target_vk: &str,
+        target_vk: &Key,
         role: Option<UpdateRole>,
         alias: Option<String>,
     ) -> VcxCoreResult<String>;

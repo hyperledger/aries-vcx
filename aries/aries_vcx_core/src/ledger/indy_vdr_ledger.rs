@@ -22,6 +22,7 @@ use indy_ledger_response_parser::{
     ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo,
 };
 use indy_vdr as vdr;
+use public_key::Key;
 use serde_json::Value;
 use time::OffsetDateTime;
 use vdr::{
@@ -342,7 +343,7 @@ where
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         target_did: &Did,
-        verkey: Option<&str>,
+        verkey: Option<&Key>,
         data: Option<&str>,
         role: Option<&str>,
     ) -> VcxCoreResult<String> {
@@ -351,7 +352,7 @@ where
         let request = self.request_builder()?.build_nym_request(
             &identifier,
             &dest,
-            verkey.map(String::from),
+            verkey.map(Key::base58),
             data.map(String::from),
             role.map(UpdateRole::from_str).transpose()?,
             None,
@@ -414,18 +415,18 @@ where
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         target_did: &Did,
-        target_vk: &str,
+        target_vk: &Key,
         role: Option<UpdateRole>,
         alias: Option<String>,
     ) -> VcxCoreResult<String> {
         debug!(
             "write_did >> submitter_did: {submitter_did}, target_did: {target_did}, target_vk: \
-             {target_vk}, role: {role:?}, alias: {alias:?}"
+             {target_vk:?}, role: {role:?}, alias: {alias:?}"
         );
         let request = self.request_builder()?.build_nym_request(
             &submitter_did.convert(())?,
             &target_did.convert(())?,
-            Some(target_vk.into()),
+            Some(target_vk.base58()),
             alias,
             role,
             None,

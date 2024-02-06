@@ -10,6 +10,7 @@ use aries_vcx_core::{
 use did_parser::Did;
 use diddoc_legacy::aries::service::AriesService;
 use messages::msg_fields::protocols::out_of_band::invitation::OobService;
+use public_key::{Key, KeyType};
 use serde_json::Value;
 
 use crate::{
@@ -91,7 +92,7 @@ pub async fn add_new_did(
             wallet,
             submitter_did,
             &did_data.did().parse()?,
-            Some(&did_data.verkey().base58()),
+            Some(&did_data.verkey()),
             None,
             role,
         )
@@ -158,7 +159,7 @@ pub async fn write_endorser_did(
             wallet,
             submitter_did,
             target_did,
-            target_vk,
+            &Key::from_base58(target_vk, KeyType::Ed25519)?,
             Some(UpdateRole::Set(LedgerRole::Endorser)),
             alias,
         )
