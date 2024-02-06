@@ -529,9 +529,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         cred_offer_json: CredentialOffer,
         cred_req_json: CredentialRequest,
         cred_values_json: &str,
-        rev_reg_id: Option<String>,
+        rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<String>,
     ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
+        let rev_reg_id = rev_reg_id.map(ToString::to_string);
         let cred_offer: CredxCredentialOffer = cred_offer_json.convert(())?;
         let cred_request: CredxCredentialRequest = cred_req_json.convert(())?;
         let cred_values = serde_json::from_str(cred_values_json)?;
@@ -1172,7 +1173,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn revoke_credential_local(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         cred_rev_id: &str,
         _rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()> {
@@ -1183,16 +1184,19 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             )
         })?;
 
-        let rev_reg = Self::get_wallet_record_value(wallet, CATEGORY_REV_REG, rev_reg_id).await?;
+        let rev_reg_id_str = &rev_reg_id.to_string();
+        let rev_reg =
+            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG, rev_reg_id_str).await?;
 
         let rev_reg_def =
-            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF, rev_reg_id).await?;
+            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF, rev_reg_id_str).await?;
 
         let rev_reg_priv =
-            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF_PRIV, rev_reg_id).await?;
+            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF_PRIV, rev_reg_id_str)
+                .await?;
 
         let mut rev_reg_info: RevocationRegistryInfo =
-            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_INFO, rev_reg_id).await?;
+            Self::get_wallet_record_value(wallet, CATEGORY_REV_REG_INFO, rev_reg_id_str).await?;
 
         let (issuance_type, cred_def_id) = match &rev_reg_def {
             CredxRevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => {
@@ -1254,22 +1258,22 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_rev_reg_delta = serde_json::to_string(&rev_reg_delta)?;
 
         wallet
-            .update_record_value(CATEGORY_REV_REG, rev_reg_id, &str_rev_reg)
+            .update_record_value(CATEGORY_REV_REG, rev_reg_id_str, &str_rev_reg)
             .await?;
 
         wallet
-            .update_record_value(CATEGORY_REV_REG_INFO, rev_reg_id, &str_rev_reg_info)
+            .update_record_value(CATEGORY_REV_REG_INFO, rev_reg_id_str, &str_rev_reg_info)
             .await?;
 
         match old_str_rev_reg_delta {
             Some(_) => {
                 wallet
-                    .update_record_value(CATEGORY_REV_REG_DELTA, rev_reg_id, &str_rev_reg_delta)
+                    .update_record_value(CATEGORY_REV_REG_DELTA, rev_reg_id_str, &str_rev_reg_delta)
                     .await?
             }
             None => {
                 let record = Record::builder()
-                    .name(rev_reg_id.into())
+                    .name(rev_reg_id_str.into())
                     .category(CATEGORY_REV_REG_DELTA.into())
                     .value(str_rev_reg_delta)
                     .build();
@@ -1283,12 +1287,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn get_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
     ) -> VcxCoreResult<Option<RevocationRegistryDelta>> {
         let res_rev_reg_delta = Self::get_wallet_record_value::<RevocationRegistryDelta>(
             wallet,
             CATEGORY_REV_REG_DELTA,
-            rev_reg_id,
+            &rev_reg_id.to_string(),
         )
         .await;
 
@@ -1306,11 +1310,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn clear_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
     ) -> VcxCoreResult<()> {
         if self.get_rev_reg_delta(wallet, rev_reg_id).await?.is_some() {
             wallet
-                .delete_record(CATEGORY_REV_REG_DELTA, rev_reg_id)
+                .delete_record(CATEGORY_REV_REG_DELTA, &rev_reg_id.to_string())
                 .await?;
         }
 

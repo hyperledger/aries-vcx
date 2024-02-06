@@ -92,7 +92,7 @@ pub async fn add_new_did(
             wallet,
             submitter_did,
             &did_data.did().parse()?,
-            Some(&did_data.verkey()),
+            Some(did_data.verkey()),
             None,
             role,
         )

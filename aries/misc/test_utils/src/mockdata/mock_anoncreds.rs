@@ -1,5 +1,8 @@
 use anoncreds_types::data_types::{
-    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    identifiers::{
+        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+        schema_id::SchemaId,
+    },
     ledger::{
         cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition,
         rev_reg_delta::RevocationRegistryDelta, schema::Schema,
@@ -89,7 +92,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_offer_json: CredentialOffer,
         _cred_req_json: CredentialRequest,
         _cred_values_json: &str,
-        _rev_reg_id: Option<String>,
+        _rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         _tails_dir: Option<String>,
     ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
         Ok((CREDENTIAL_JSON.to_owned(), None, None))
@@ -215,7 +218,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn revoke_credential_local(
         &self,
         _wallet: &impl BaseWallet,
-        _rev_reg_id: &str,
+        _rev_reg_id: &RevocationRegistryDefinitionId,
         _cred_rev_id: &str,
         _rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()> {
@@ -225,7 +228,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn get_rev_reg_delta(
         &self,
         _wallet: &impl BaseWallet,
-        _rev_reg_id: &str,
+        _rev_reg_id: &RevocationRegistryDefinitionId,
     ) -> VcxCoreResult<Option<RevocationRegistryDelta>> {
         Ok(Some(serde_json::from_str(REV_REG_DELTA_JSON)?))
     }
@@ -233,7 +236,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn clear_rev_reg_delta(
         &self,
         _wallet: &impl BaseWallet,
-        _rev_reg_id: &str,
+        _rev_reg_id: &RevocationRegistryDefinitionId,
     ) -> VcxCoreResult<()> {
         Ok(())
     }

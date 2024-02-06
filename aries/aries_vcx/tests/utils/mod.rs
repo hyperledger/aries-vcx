@@ -150,7 +150,11 @@ pub async fn create_and_write_credential(
             offer,
             serde_json::from_str(&req).unwrap(),
             &encoded_attributes,
-            rev_reg_id,
+            rev_reg_id
+                .map(TryInto::try_into)
+                .transpose()
+                .unwrap()
+                .as_ref(),
             tails_dir,
         )
         .await

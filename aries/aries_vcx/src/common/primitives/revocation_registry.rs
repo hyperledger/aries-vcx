@@ -240,7 +240,12 @@ impl RevocationRegistry {
             .await?
             .0;
         anoncreds
-            .revoke_credential_local(wallet, &self.rev_reg_id, cred_rev_id, rev_reg_delta_json)
+            .revoke_credential_local(
+                wallet,
+                &self.rev_reg_id.to_owned().try_into()?,
+                cred_rev_id,
+                rev_reg_delta_json,
+            )
             .await
             .map_err(|err| err.into())
     }
@@ -253,7 +258,7 @@ impl RevocationRegistry {
         submitter_did: &Did,
     ) -> VcxResult<()> {
         if let Some(delta) = anoncreds
-            .get_rev_reg_delta(wallet, &self.rev_reg_id)
+            .get_rev_reg_delta(wallet, &self.rev_reg_id.to_owned().try_into()?)
             .await?
         {
             ledger_write
@@ -271,7 +276,7 @@ impl RevocationRegistry {
             );
 
             match anoncreds
-                .clear_rev_reg_delta(wallet, &self.rev_reg_id)
+                .clear_rev_reg_delta(wallet, &self.rev_reg_id.to_owned().try_into()?)
                 .await
             {
                 Ok(_) => {

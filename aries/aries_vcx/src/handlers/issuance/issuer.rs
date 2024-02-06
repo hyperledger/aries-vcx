@@ -247,7 +247,12 @@ impl Issuer {
                 .await?
                 .0;
             anoncreds
-                .revoke_credential_local(wallet, &rev_reg_id, &cred_rev_id, rev_reg_delta_json)
+                .revoke_credential_local(
+                    wallet,
+                    &rev_reg_id.try_into()?,
+                    &cred_rev_id,
+                    rev_reg_delta_json,
+                )
                 .await?;
         } else {
             return Err(AriesVcxError::from_msg(

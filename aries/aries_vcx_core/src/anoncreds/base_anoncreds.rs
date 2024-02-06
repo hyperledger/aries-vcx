@@ -1,5 +1,8 @@
 use anoncreds_types::data_types::{
-    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    identifiers::{
+        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+        schema_id::SchemaId,
+    },
     ledger::{
         cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition,
         rev_reg_delta::RevocationRegistryDelta, schema::Schema,
@@ -60,7 +63,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_offer_json: CredentialOffer,
         cred_req_json: CredentialRequest,
         cred_values_json: &str,
-        rev_reg_id: Option<String>,
+        rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<String>,
     ) -> VcxCoreResult<(String, Option<String>, Option<String>)>;
 
@@ -148,7 +151,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn revoke_credential_local(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         cred_rev_id: &str,
         rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()>;
@@ -156,13 +159,13 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn get_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
     ) -> VcxCoreResult<Option<RevocationRegistryDelta>>;
 
     async fn clear_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
     ) -> VcxCoreResult<()>;
 
     async fn generate_nonce(&self) -> VcxCoreResult<String>;

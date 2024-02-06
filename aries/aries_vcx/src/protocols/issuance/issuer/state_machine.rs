@@ -604,7 +604,11 @@ async fn create_credential(
             serde_json::from_str(&offer)?,
             serde_json::from_str(&request)?,
             &cred_data,
-            rev_reg_id.clone(),
+            rev_reg_id
+                .to_owned()
+                .map(TryInto::try_into)
+                .transpose()?
+                .as_ref(),
             tails_file.clone(),
         )
         .await?;

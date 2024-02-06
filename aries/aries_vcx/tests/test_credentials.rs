@@ -124,7 +124,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
         .anoncreds
         .revoke_credential_local(
             &setup.wallet,
-            &rev_reg.rev_reg_id,
+            &rev_reg.rev_reg_id.to_owned().try_into()?,
             &cred_rev_id,
             rev_reg_delta_json,
         )
