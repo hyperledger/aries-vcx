@@ -1,4 +1,4 @@
-use std::convert::From;
+use std::{convert::From, num::ParseIntError};
 
 use aries_vcx::{
     did_doc::error::DidDocumentBuilderError,
@@ -91,6 +91,14 @@ impl From<anoncreds_types::Error> for AgentError {
     fn from(err: anoncreds_types::Error) -> Self {
         let kind = AgentErrorKind::GenericAriesVcxError;
         let message = format!("AnoncredsTypesError; err: {:?}", err.to_string());
+        AgentError { message, kind }
+    }
+}
+
+impl From<ParseIntError> for AgentError {
+    fn from(err: ParseIntError) -> Self {
+        let kind = AgentErrorKind::GenericAriesVcxError;
+        let message = format!("ParseIntError; err: {:?}", err.to_string());
         AgentError { message, kind }
     }
 }

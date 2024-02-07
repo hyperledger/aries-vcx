@@ -250,7 +250,7 @@ impl Issuer {
                 .revoke_credential_local(
                     wallet,
                     &rev_reg_id.try_into()?,
-                    &cred_rev_id,
+                    cred_rev_id.parse()?,
                     rev_reg_delta_json,
                 )
                 .await?;

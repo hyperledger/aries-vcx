@@ -169,7 +169,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _rev_reg_def_json: RevocationRegistryDefinition,
         _rev_reg_delta_json: RevocationRegistryDelta,
         _timestamp: u64,
-        _cred_rev_id: &str,
+        _cred_rev_id: u32,
     ) -> VcxCoreResult<String> {
         Ok(REV_STATE_JSON.to_string())
     }
@@ -224,7 +224,7 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         _wallet: &impl BaseWallet,
         _rev_reg_id: &RevocationRegistryDefinitionId,
-        _cred_rev_id: &str,
+        _cred_rev_id: u32,
         _rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()> {
         Ok(())

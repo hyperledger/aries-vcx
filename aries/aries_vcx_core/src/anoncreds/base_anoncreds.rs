@@ -117,7 +117,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         rev_reg_def_json: RevocationRegistryDefinition,
         rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
-        cred_rev_id: &str,
+        cred_rev_id: u32,
     ) -> VcxCoreResult<String>;
 
     async fn prover_store_credential(
@@ -157,7 +157,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         wallet: &impl BaseWallet,
         rev_reg_id: &RevocationRegistryDefinitionId,
-        cred_rev_id: &str,
+        cred_rev_id: u32,
         rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()>;
 

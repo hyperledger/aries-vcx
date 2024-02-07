@@ -233,7 +233,7 @@ impl RevocationRegistry {
         wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
         ledger: &impl AnoncredsLedgerRead,
-        cred_rev_id: &str,
+        cred_rev_id: u32,
     ) -> VcxResult<()> {
         let rev_reg_delta_json = ledger
             .get_rev_reg_delta_json(&self.rev_reg_id.to_string().try_into()?, None, None)

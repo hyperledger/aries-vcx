@@ -193,7 +193,7 @@ pub async fn build_rev_states_json(
                         rev_reg_def_json,
                         rev_reg_delta_json,
                         timestamp,
-                        cred_rev_id,
+                        cred_rev_id.parse()?,
                     )
                     .await?;
 

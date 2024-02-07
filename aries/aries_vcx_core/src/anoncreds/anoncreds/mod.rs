@@ -1127,7 +1127,7 @@ impl BaseAnonCreds for Anoncreds {
         rev_reg_def_json: RevocationRegistryDefinition,
         rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
-        cred_rev_id: &str,
+        cred_rev_id: u32,
     ) -> VcxCoreResult<String> {
         let cred_def_id = rev_reg_def_json.cred_def_id.to_string();
         let max_cred_num = rev_reg_def_json.value.max_cred_num;
@@ -1183,15 +1183,11 @@ impl BaseAnonCreds for Anoncreds {
             Some(timestamp),
         )?;
 
-        let rev_reg_idx: u32 = cred_rev_id
-            .parse()
-            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, e))?;
-
         let rev_state = anoncreds::prover::create_or_update_revocation_state(
             tails_path,
             &revoc_reg_def,
             &rev_status_list,
-            rev_reg_idx,
+            cred_rev_id,
             None,
             None,
         )?;
@@ -1355,7 +1351,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         rev_reg_id: &RevocationRegistryDefinitionId,
-        cred_rev_id: &str,
+        cred_rev_id: u32,
         ledger_rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()> {
         let rev_reg_def: RevocationRegistryDefinition = self
@@ -1390,13 +1386,6 @@ impl BaseAnonCreds for Anoncreds {
         let rev_reg_def_priv = self
             .get_wallet_record_value(wallet, CATEGORY_REV_REG_DEF_PRIV, &rev_reg_id.to_string())
             .await?;
-
-        let cred_rev_id = cred_rev_id.parse().map_err(|e| {
-            AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidInput,
-                format!("Invalid cred_rev_id {cred_rev_id} - {e}"),
-            )
-        })?;
 
         let updated_rev_status_list = anoncreds::issuer::update_revocation_status_list(
             &cred_def,

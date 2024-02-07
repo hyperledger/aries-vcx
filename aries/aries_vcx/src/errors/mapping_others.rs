@@ -1,4 +1,4 @@
-use std::sync::PoisonError;
+use std::{num::ParseIntError, sync::PoisonError};
 
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 use shared::errors::http_error::HttpError;
@@ -78,6 +78,12 @@ impl From<did_key::error::DidKeyError> for AriesVcxError {
 impl From<anoncreds_types::Error> for AriesVcxError {
     fn from(err: anoncreds_types::Error) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+impl From<ParseIntError> for AriesVcxError {
+    fn from(err: ParseIntError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err.to_string())
     }
 }
 

@@ -974,7 +974,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         rev_reg_def_json: RevocationRegistryDefinition,
         rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
-        cred_rev_id: &str,
+        cred_rev_id: u32,
     ) -> VcxCoreResult<String> {
         let revoc_reg_def: CredxRevocationRegistryDefinition = rev_reg_def_json.convert(())?;
         let tails_file_hash = match revoc_reg_def.borrow() {
@@ -996,15 +996,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let tails_reader = TailsFileReader::new(tails_path);
         let rev_reg_delta: CredxRevocationRegistryDelta = rev_reg_delta_json.convert(())?;
-        let rev_reg_idx: u32 = cred_rev_id
-            .parse()
-            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, e))?;
 
         let rev_state = credx::prover::create_or_update_revocation_state(
             tails_reader,
             &revoc_reg_def,
             &rev_reg_delta,
-            rev_reg_idx,
+            cred_rev_id,
             timestamp,
             None,
         )?;
@@ -1178,16 +1175,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         wallet: &impl BaseWallet,
         rev_reg_id: &RevocationRegistryDefinitionId,
-        cred_rev_id: &str,
+        cred_rev_id: u32,
         _rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()> {
-        let cred_rev_id = cred_rev_id.parse().map_err(|e| {
-            AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidInput,
-                format!("Invalid cred_rev_id {cred_rev_id} - {e}"),
-            )
-        })?;
-
         let rev_reg_id_str = &rev_reg_id.to_string();
         let rev_reg =
             Self::get_wallet_record_value(wallet, CATEGORY_REV_REG, rev_reg_id_str).await?;

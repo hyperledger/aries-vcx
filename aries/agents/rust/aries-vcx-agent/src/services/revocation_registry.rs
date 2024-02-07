@@ -104,7 +104,7 @@ impl ServiceRevocationRegistries {
                 self.wallet.as_ref(),
                 &self.anoncreds,
                 self.ledger_read.as_ref(),
-                cred_rev_id,
+                cred_rev_id.parse()?,
             )
             .await?;
         Ok(())
