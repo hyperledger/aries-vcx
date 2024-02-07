@@ -256,6 +256,6 @@ impl Convert for AnoncredsNonce {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&self.to_string())?)
+        Ok(serde_json::from_str(self.as_ref())?)
     }
 }

@@ -140,7 +140,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         wallet: &impl BaseWallet,
         link_secret_id: &str,
-    ) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<()>;
 
     async fn issuer_create_schema(
         &self,

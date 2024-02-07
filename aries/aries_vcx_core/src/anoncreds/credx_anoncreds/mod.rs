@@ -1097,7 +1097,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         wallet: &impl BaseWallet,
         link_secret_id: &str,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<()> {
         let existing_record = wallet
             .get_record(CATEGORY_LINK_SECRET, link_secret_id)
             .await
@@ -1144,8 +1144,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .build();
 
         wallet.add_record(record).await?;
-
-        return Ok(link_secret_id.to_string());
+        Ok(())
     }
 
     async fn prover_delete_credential(
@@ -1317,7 +1316,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
     async fn generate_nonce(&self) -> VcxCoreResult<Nonce> {
         Ok(serde_json::from_str(
-            &credx::verifier::generate_nonce()?.to_string(),
+            credx::verifier::generate_nonce()?.as_ref(),
         )?)
     }
 }

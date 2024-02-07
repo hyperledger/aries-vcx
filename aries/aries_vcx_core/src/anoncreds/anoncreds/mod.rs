@@ -1294,7 +1294,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         link_secret_id: &str,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<()> {
         let existing_record = wallet
             .get_record(CATEGORY_LINK_SECRET, link_secret_id)
             .await
@@ -1324,8 +1324,7 @@ impl BaseAnonCreds for Anoncreds {
             .value(ms_decimal)
             .build();
         wallet.add_record(record).await?;
-
-        return Ok(link_secret_id.to_string());
+        Ok(())
     }
 
     async fn issuer_create_schema(

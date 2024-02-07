@@ -13,7 +13,6 @@ use anoncreds_types::data_types::{
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    global::settings::DEFAULT_LINK_SECRET_ALIAS,
     wallet::base_wallet::BaseWallet,
 };
 use async_trait::async_trait;
@@ -202,8 +201,8 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         _wallet: &impl BaseWallet,
         _link_secret_id: &str,
-    ) -> VcxCoreResult<String> {
-        Ok(DEFAULT_LINK_SECRET_ALIAS.to_string())
+    ) -> VcxCoreResult<()> {
+        Ok(())
     }
 
     async fn issuer_create_schema(
