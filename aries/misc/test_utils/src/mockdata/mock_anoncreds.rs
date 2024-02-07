@@ -4,8 +4,9 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition,
-        rev_reg_delta::RevocationRegistryDelta, schema::Schema, rev_reg::RevocationRegistry,
+        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+        schema::Schema,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -53,7 +54,11 @@ impl BaseAnonCreds for MockAnoncreds {
         _tails_dir: &str,
         _max_creds: u32,
         _tag: &str,
-    ) -> VcxCoreResult<(RevocationRegistryDefinitionId, RevocationRegistryDefinition, RevocationRegistry)> {
+    ) -> VcxCoreResult<(
+        RevocationRegistryDefinitionId,
+        RevocationRegistryDefinition,
+        RevocationRegistry,
+    )> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -94,8 +99,8 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_values_json: &str,
         _rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         _tails_dir: Option<String>,
-    ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
-        Ok((CREDENTIAL_JSON.to_owned(), None, None))
+    ) -> VcxCoreResult<(String, Option<String>)> {
+        Ok((CREDENTIAL_JSON.to_owned(), None))
     }
 
     async fn prover_create_proof(

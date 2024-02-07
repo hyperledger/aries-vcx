@@ -144,7 +144,7 @@ pub async fn create_and_write_credential(
     } else {
         (None, None, None)
     };
-    let (cred, _, _) = anoncreds_issuer
+    let (cred, _) = anoncreds_issuer
         .issuer_create_credential(
             wallet_issuer,
             offer,

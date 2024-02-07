@@ -598,7 +598,7 @@ async fn create_credential(
     let request = get_attach_as_string!(&request.content.requests_attach);
 
     let cred_data = encode_attributes(cred_data)?;
-    let (libindy_credential, cred_rev_id, _) = anoncreds
+    let (libindy_credential, cred_rev_id) = anoncreds
         .issuer_create_credential(
             wallet,
             serde_json::from_str(&offer)?,

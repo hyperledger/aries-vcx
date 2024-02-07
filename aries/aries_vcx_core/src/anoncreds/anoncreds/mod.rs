@@ -3,10 +3,7 @@ mod type_conversion;
 use std::collections::{HashMap, HashSet};
 
 use anoncreds::{
-    cl::{
-        Accumulator, RevocationRegistry as CryptoRevocationRegistry,
-        RevocationRegistryDelta as AnoncredsRevocationRegistryDelta,
-    },
+    cl::{Accumulator, RevocationRegistry as CryptoRevocationRegistry},
     data_types::{
         cred_def::{
             CredentialDefinition as AnoncredsCredentialDefinition,
@@ -38,9 +35,10 @@ use anoncreds_types::data_types::{
     },
     ledger::{
         cred_def::CredentialDefinition,
+        rev_reg::RevocationRegistry,
         rev_reg_def::RevocationRegistryDefinition,
         rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
-        schema::Schema, rev_reg::RevocationRegistry,
+        schema::Schema,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -422,7 +420,11 @@ impl BaseAnonCreds for Anoncreds {
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
-    ) -> VcxCoreResult<(RevocationRegistryDefinitionId, RevocationRegistryDefinition, RevocationRegistry)> {
+    ) -> VcxCoreResult<(
+        RevocationRegistryDefinitionId,
+        RevocationRegistryDefinition,
+        RevocationRegistry,
+    )> {
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
         let cred_def: AnoncredsCredentialDefinition = self
@@ -646,7 +648,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_values_json: &str,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<String>,
-    ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
+    ) -> VcxCoreResult<(String, Option<String>)> {
         let cred_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
         let cred_request: AnoncredsCredentialRequest = cred_req_json.convert(())?;
         let cred_values = serde_json::from_str(cred_values_json)?;
@@ -780,14 +782,7 @@ impl BaseAnonCreds for Anoncreds {
 
         let str_cred = serde_json::to_string(&cred)?;
 
-        let str_rev_reg_delta = rev_reg
-            .map(|rev_reg| {
-                let rev_reg_delta = Into::<AnoncredsRevocationRegistryDelta>::into(rev_reg);
-                serde_json::to_string(&rev_reg_delta)
-            })
-            .transpose()?;
-
-        Ok((str_cred, cred_rev_id, str_rev_reg_delta))
+        Ok((str_cred, cred_rev_id))
     }
 
     #[allow(clippy::too_many_arguments)]

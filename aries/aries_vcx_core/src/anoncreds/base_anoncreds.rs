@@ -4,8 +4,9 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg_def::RevocationRegistryDefinition,
-        rev_reg_delta::RevocationRegistryDelta, schema::Schema, rev_reg::RevocationRegistry,
+        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+        schema::Schema,
     },
     messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
 };
@@ -37,7 +38,11 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
-    ) -> VcxCoreResult<(RevocationRegistryDefinitionId, RevocationRegistryDefinition, RevocationRegistry)>;
+    ) -> VcxCoreResult<(
+        RevocationRegistryDefinitionId,
+        RevocationRegistryDefinition,
+        RevocationRegistry,
+    )>;
 
     #[allow(clippy::too_many_arguments)]
     async fn issuer_create_and_store_credential_def(
@@ -65,7 +70,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_values_json: &str,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<String>,
-    ) -> VcxCoreResult<(String, Option<String>, Option<String>)>;
+    ) -> VcxCoreResult<(String, Option<String>)>;
 
     #[allow(clippy::too_many_arguments)]
     async fn prover_create_proof(
