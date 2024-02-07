@@ -243,6 +243,8 @@ impl Convert for AnoncredsRevocationRegistry {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
-        todo!()
+        Ok(OurRevocationRegistry {
+            value: serde_json::from_value(serde_json::to_value(self.value)?)?,
+        })
     }
 }

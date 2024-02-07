@@ -254,7 +254,11 @@ impl Convert for CredxRevocationRegistry {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
-        todo!()
+        match self {
+            CredxRevocationRegistry::RevocationRegistryV1(rev_reg) => Ok(OurRevocationRegistry {
+                value: serde_json::from_value(serde_json::to_value(rev_reg.value)?)?,
+            }),
+        }
     }
 }
 
