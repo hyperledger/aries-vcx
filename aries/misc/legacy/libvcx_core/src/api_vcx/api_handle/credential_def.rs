@@ -76,9 +76,7 @@ pub fn is_valid_handle(handle: u32) -> bool {
 }
 
 pub fn to_string(handle: u32) -> LibvcxResult<String> {
-    CREDENTIALDEF_MAP.get(handle, |cd| {
-        serde_json::to_string(cd).map_err(|err| err.into())
-    })
+    CREDENTIALDEF_MAP.get(handle, |cd| cd.to_string().map_err(|err| err.into()))
 }
 
 pub fn from_string(data: &str) -> LibvcxResult<u32> {

@@ -6,7 +6,7 @@ use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
-    wallet::base_wallet::BaseWallet,
+    wallet::base_wallet::BaseWallet, global::settings::DEFAULT_SERIALIZE_VERSION,
 };
 use did_parser::Did;
 
@@ -196,6 +196,12 @@ impl CredentialDef {
                     format!("Cannot deserialize CredentialDefinition: {}", err),
                 )
             })
+    }
+
+    pub fn to_string(&self) -> VcxResult<String> {
+        ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
+            .serialize()
+            .map_err(|err: AriesVcxError| err.extend("Cannot serialize CredentialDefinition"))
     }
 
     pub fn get_data_json(&self) -> VcxResult<String> {
