@@ -1316,9 +1316,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn generate_nonce(&self) -> VcxCoreResult<Nonce> {
-        Ok(serde_json::from_str(
-            credx::verifier::generate_nonce()?.as_ref(),
-        )?)
+        Ok(Nonce::from_dec(credx::verifier::generate_nonce()?.as_ref()).unwrap())
     }
 }
 
