@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use anoncreds_types::data_types::{
     identifiers::cred_def_id::CredentialDefinitionId,
     ledger::rev_reg_def::RevocationRegistryDefinition,
@@ -332,7 +334,7 @@ pub async fn generate_rev_reg(
             wallet,
             issuer_did,
             cred_def_id,
-            tails_dir,
+            Path::new(tails_dir),
             max_creds,
             tag,
         )

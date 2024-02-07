@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use aries_vcx_core::{
@@ -189,7 +189,7 @@ pub async fn build_rev_states_json(
 
                 let rev_state_json = anoncreds
                     .create_revocation_state(
-                        tails_dir,
+                        Path::new(tails_dir),
                         rev_reg_def_json,
                         rev_reg_delta_json,
                         timestamp,

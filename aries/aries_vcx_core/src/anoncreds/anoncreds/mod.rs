@@ -1,6 +1,9 @@
 mod type_conversion;
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 
 use anoncreds::{
     cl::{Accumulator, RevocationRegistry as CryptoRevocationRegistry},
@@ -417,7 +420,7 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         issuer_did: &Did,
         cred_def_id: &CredentialDefinitionId,
-        tails_dir: &str,
+        tails_dir: &Path,
         max_creds: u32,
         tag: &str,
     ) -> VcxCoreResult<(
@@ -425,7 +428,7 @@ impl BaseAnonCreds for Anoncreds {
         RevocationRegistryDefinition,
         RevocationRegistry,
     )> {
-        let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
+        let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_str().unwrap().to_string()));
 
         let cred_def: AnoncredsCredentialDefinition = self
             .get_wallet_record_value(wallet, CATEGORY_CRED_DEF, &cred_def_id.to_string())
@@ -647,7 +650,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_req_json: CredentialRequest,
         cred_values_json: &str,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
-        tails_dir: Option<String>,
+        tails_dir: Option<&Path>,
     ) -> VcxCoreResult<(String, Option<String>)> {
         let cred_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
         let cred_request: AnoncredsCredentialRequest = cred_req_json.convert(())?;
@@ -1123,7 +1126,7 @@ impl BaseAnonCreds for Anoncreds {
 
     async fn create_revocation_state(
         &self,
-        tails_dir: &str,
+        tails_dir: &Path,
         rev_reg_def_json: RevocationRegistryDefinition,
         rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,

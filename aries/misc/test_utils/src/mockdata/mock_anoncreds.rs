@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use anoncreds_types::data_types::{
     identifiers::{
         cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
@@ -50,7 +52,7 @@ impl BaseAnonCreds for MockAnoncreds {
         __wallet: &impl BaseWallet,
         _issuer_did: &Did,
         _cred_def_id: &CredentialDefinitionId,
-        _tails_dir: &str,
+        _tails_dir: &Path,
         _max_creds: u32,
         _tag: &str,
     ) -> VcxCoreResult<(
@@ -97,7 +99,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_req_json: CredentialRequest,
         _cred_values_json: &str,
         _rev_reg_id: Option<&RevocationRegistryDefinitionId>,
-        _tails_dir: Option<String>,
+        _tails_dir: Option<&Path>,
     ) -> VcxCoreResult<(String, Option<String>)> {
         Ok((CREDENTIAL_JSON.to_owned(), None))
     }
@@ -164,7 +166,7 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn create_revocation_state(
         &self,
-        _tails_dir: &str,
+        _tails_dir: &Path,
         _rev_reg_def_json: RevocationRegistryDefinition,
         _rev_reg_delta_json: RevocationRegistryDelta,
         _timestamp: u64,

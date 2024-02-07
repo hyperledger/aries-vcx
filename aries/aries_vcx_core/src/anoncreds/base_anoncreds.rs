@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use anoncreds_types::data_types::{
     identifiers::{
         cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
@@ -35,7 +37,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         wallet: &impl BaseWallet,
         issuer_did: &Did,
         cred_def_id: &CredentialDefinitionId,
-        tails_dir: &str,
+        tails_dir: &Path,
         max_creds: u32,
         tag: &str,
     ) -> VcxCoreResult<(
@@ -69,7 +71,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_req_json: CredentialRequest,
         cred_values_json: &str,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
-        tails_dir: Option<String>,
+        tails_dir: Option<&Path>,
     ) -> VcxCoreResult<(String, Option<String>)>;
 
     #[allow(clippy::too_many_arguments)]
@@ -113,7 +115,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
 
     async fn create_revocation_state(
         &self,
-        tails_dir: &str,
+        tails_dir: &Path,
         rev_reg_def_json: RevocationRegistryDefinition,
         rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,

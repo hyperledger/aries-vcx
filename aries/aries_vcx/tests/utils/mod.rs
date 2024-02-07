@@ -1,6 +1,6 @@
 pub mod scenarios;
 pub mod test_agent;
-use std::time::Duration;
+use std::{path::Path, time::Duration};
 
 use anoncreds_types::data_types::identifiers::{
     cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
@@ -155,7 +155,7 @@ pub async fn create_and_write_credential(
                 .transpose()
                 .unwrap()
                 .as_ref(),
-            tails_dir,
+            tails_dir.as_deref().map(Path::new),
         )
         .await
         .unwrap();

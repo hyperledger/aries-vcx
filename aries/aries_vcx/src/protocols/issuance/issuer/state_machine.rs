@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, path::Path};
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
@@ -609,7 +609,7 @@ async fn create_credential(
                 .map(TryInto::try_into)
                 .transpose()?
                 .as_ref(),
-            tails_file.clone(),
+            tails_file.clone().as_deref().map(Path::new),
         )
         .await?;
     let msg_issue_credential = build_credential_message(libindy_credential, thread_id);

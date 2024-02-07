@@ -3,6 +3,7 @@ mod type_conversion;
 use std::{
     borrow::Borrow,
     collections::{HashMap, HashSet},
+    path::Path,
     sync::Arc,
 };
 
@@ -323,7 +324,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         wallet: &impl BaseWallet,
         issuer_did: &Did,
         cred_def_id: &CredentialDefinitionId,
-        tails_dir: &str,
+        tails_dir: &Path,
         max_creds: u32,
         tag: &str,
     ) -> VcxCoreResult<(
@@ -333,7 +334,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     )> {
         let issuer_did = issuer_did.convert(())?;
 
-        let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
+        let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_str().unwrap().to_string()));
 
         let cred_def =
             Self::get_wallet_record_value(wallet, CATEGORY_CRED_DEF, &cred_def_id.0).await?;
@@ -538,7 +539,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         cred_req_json: CredentialRequest,
         cred_values_json: &str,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
-        tails_dir: Option<String>,
+        tails_dir: Option<&Path>,
     ) -> VcxCoreResult<(String, Option<String>)> {
         let rev_reg_id = rev_reg_id.map(ToString::to_string);
         let cred_offer: CredxCredentialOffer = cred_offer_json.convert(())?;
@@ -970,7 +971,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
     async fn create_revocation_state(
         &self,
-        tails_dir: &str,
+        tails_dir: &Path,
         rev_reg_def_json: RevocationRegistryDefinition,
         rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
