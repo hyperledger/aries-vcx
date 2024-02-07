@@ -40,7 +40,7 @@ use anoncreds_types::data_types::{
         rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
         schema::Schema,
     },
-    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
+    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest, nonce::Nonce},
 };
 use async_trait::async_trait;
 use bitvec::bitvec;
@@ -1463,8 +1463,8 @@ impl BaseAnonCreds for Anoncreds {
         Ok(())
     }
 
-    async fn generate_nonce(&self) -> VcxCoreResult<String> {
-        Ok(anoncreds::verifier::generate_nonce()?.to_string())
+    async fn generate_nonce(&self) -> VcxCoreResult<Nonce> {
+        Ok(anoncreds::verifier::generate_nonce()?.convert(())?)
     }
 }
 

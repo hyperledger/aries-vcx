@@ -5,8 +5,9 @@ use anoncreds_types::data_types::{
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,
+    global::settings::DEFAULT_SERIALIZE_VERSION,
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
-    wallet::base_wallet::BaseWallet, global::settings::DEFAULT_SERIALIZE_VERSION,
+    wallet::base_wallet::BaseWallet,
 };
 use did_parser::Did;
 

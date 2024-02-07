@@ -8,7 +8,7 @@ use anoncreds_types::data_types::{
         rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
         schema::Schema,
     },
-    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
+    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest, nonce::Nonce},
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -246,7 +246,7 @@ impl BaseAnonCreds for MockAnoncreds {
         Ok(())
     }
 
-    async fn generate_nonce(&self) -> VcxCoreResult<String> {
-        Ok(LARGE_NONCE.to_string())
+    async fn generate_nonce(&self) -> VcxCoreResult<Nonce> {
+        Ok(Nonce::from_dec(LARGE_NONCE.to_string()).unwrap())
     }
 }

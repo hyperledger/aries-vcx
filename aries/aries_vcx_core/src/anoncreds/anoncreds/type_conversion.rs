@@ -6,6 +6,7 @@ use anoncreds::{
             CredentialDefinitionId as AnoncredsCredentialDefinitionId,
         },
         issuer_id::IssuerId as AnoncredsIssuerId,
+        nonce::Nonce as AnoncredsNonce,
         rev_reg_def::RevocationRegistryDefinitionValue as AnoncredsRevocationRegistryDefinitionValue,
         schema::{Schema as AnoncredsSchema, SchemaId as AnoncredsSchemaId},
     },
@@ -37,7 +38,7 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer as OurCredentialOffer,
-        cred_request::CredentialRequest as OurCredentialRequest,
+        cred_request::CredentialRequest as OurCredentialRequest, nonce::Nonce as OurNonce,
     },
 };
 
@@ -246,5 +247,15 @@ impl Convert for AnoncredsRevocationRegistry {
         Ok(OurRevocationRegistry {
             value: serde_json::from_value(serde_json::to_value(self.value)?)?,
         })
+    }
+}
+
+impl Convert for AnoncredsNonce {
+    type Args = ();
+    type Target = OurNonce;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_str(&self.to_string())?)
     }
 }

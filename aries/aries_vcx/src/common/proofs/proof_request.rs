@@ -28,7 +28,7 @@ impl ProofRequestData {
         let nonce = anoncreds.generate_nonce().await?;
         Ok(Self {
             name: name.to_string(),
-            nonce,
+            nonce: nonce.to_string(),
             ..Self::default()
         })
     }

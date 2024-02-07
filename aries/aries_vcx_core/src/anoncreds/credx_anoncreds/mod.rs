@@ -16,7 +16,7 @@ use anoncreds_types::data_types::{
         rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
         schema::Schema,
     },
-    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
+    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest, nonce::Nonce},
 };
 use async_trait::async_trait;
 use credx::{
@@ -1315,9 +1315,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         Ok(())
     }
 
-    async fn generate_nonce(&self) -> VcxCoreResult<String> {
-        let nonce = credx::verifier::generate_nonce()?.to_string();
-        Ok(nonce)
+    async fn generate_nonce(&self) -> VcxCoreResult<Nonce> {
+        Ok(serde_json::from_str(
+            &credx::verifier::generate_nonce()?.to_string(),
+        )?)
     }
 }
 

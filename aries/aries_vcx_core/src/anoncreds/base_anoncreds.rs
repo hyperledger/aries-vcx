@@ -8,7 +8,7 @@ use anoncreds_types::data_types::{
         rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
         schema::Schema,
     },
-    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest},
+    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest, nonce::Nonce},
 };
 use async_trait::async_trait;
 use did_parser::Did;
@@ -173,5 +173,5 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         rev_reg_id: &RevocationRegistryDefinitionId,
     ) -> VcxCoreResult<()>;
 
-    async fn generate_nonce(&self) -> VcxCoreResult<String>;
+    async fn generate_nonce(&self) -> VcxCoreResult<Nonce>;
 }
