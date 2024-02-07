@@ -40,6 +40,9 @@ test-unit test_name="":
 test-integration-aries-vcx-core features:
     cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F {{features}}
 
+test-compatibility-aries-vcx-core:
+    cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F vdrtools_wallet,askar_wallet wallet_compatibility_
+
 test-integration-aries-vcx features test_name="":
     cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F {{features}} -- --ignored {{test_name}}
 
