@@ -37,7 +37,7 @@ pub struct MockAnoncreds;
 impl BaseAnonCreds for MockAnoncreds {
     async fn verifier_verify_proof(
         &self,
-        _proof_request_json: &str,
+        _proof_request_json: PresentationRequest,
         _proof_json: &str,
         _schemas_json: HashMap<SchemaId, Schema>,
         _credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,

@@ -292,7 +292,7 @@ impl Anoncreds {
 impl BaseAnonCreds for Anoncreds {
     async fn verifier_verify_proof(
         &self,
-        proof_request_json: &str,
+        proof_request_json: PresentationRequest,
         proof_json: &str,
         schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
@@ -304,7 +304,7 @@ impl BaseAnonCreds for Anoncreds {
         >,
     ) -> VcxCoreResult<bool> {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
-        let pres_req: AnoncredsPresentationRequest = serde_json::from_str(proof_request_json)?;
+        let pres_req: AnoncredsPresentationRequest = proof_request_json.convert(())?;
 
         let schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = schemas_json.convert(())?;
 

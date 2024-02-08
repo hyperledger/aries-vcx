@@ -27,7 +27,7 @@ use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
 pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn verifier_verify_proof(
         &self,
-        proof_request_json: &str,
+        proof_request_json: PresentationRequest,
         proof_json: &str,
         schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,

@@ -3,6 +3,7 @@ use std::{collections::HashMap, error::Error, time::Duration};
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
     ledger::{cred_def::CredentialDefinition, schema::Schema},
+    messages::pres_request::PresentationRequest,
 };
 use aries_vcx::{
     common::{
@@ -41,7 +42,7 @@ async fn create_indy_proof(
     (
         HashMap<SchemaId, Schema>,
         HashMap<CredentialDefinitionId, CredentialDefinition>,
-        String,
+        PresentationRequest,
         String,
     ),
     Box<dyn Error>,
@@ -119,7 +120,7 @@ async fn create_indy_proof(
     Ok((
         serde_json::from_str(&schemas).unwrap(),
         serde_json::from_str(&cred_defs).unwrap(),
-        proof_req,
+        serde_json::from_str(&proof_req).unwrap(),
         proof,
     ))
 }
@@ -138,7 +139,7 @@ async fn create_proof_with_predicate(
     (
         HashMap<SchemaId, Schema>,
         HashMap<CredentialDefinitionId, CredentialDefinition>,
-        String,
+        PresentationRequest,
         String,
     ),
     Box<dyn Error>,
@@ -230,7 +231,7 @@ async fn create_proof_with_predicate(
     Ok((
         serde_json::from_str(&schemas).unwrap(),
         serde_json::from_str(&cred_defs).unwrap(),
-        proof_req,
+        serde_json::from_str(&proof_req).unwrap(),
         proof,
     ))
 }
@@ -568,7 +569,7 @@ async fn test_pool_prover_verify_proof() -> Result<(), Box<dyn Error>> {
 
     let anoncreds = &setup.anoncreds;
     let proof_validation = anoncreds
-        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, None)
+        .verifier_verify_proof(proof_req, &proof, schemas, cred_defs, None, None)
         .await?;
 
     assert!(proof_validation);
@@ -593,7 +594,7 @@ async fn test_pool_prover_verify_proof_with_predicate_success_case() -> Result<(
 
     let anoncreds = &setup.anoncreds;
     let proof_validation = anoncreds
-        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, None)
+        .verifier_verify_proof(proof_req, &proof, schemas, cred_defs, None, None)
         .await?;
 
     assert!(proof_validation);
@@ -618,7 +619,7 @@ async fn test_pool_prover_verify_proof_with_predicate_fail_case() -> Result<(), 
 
     let anoncreds = &setup.anoncreds;
     anoncreds
-        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, None)
+        .verifier_verify_proof(proof_req, &proof, schemas, cred_defs, None, None)
         .await
         .unwrap_err();
     Ok(())

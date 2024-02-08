@@ -39,7 +39,7 @@ pub async fn validate_indy_proof(
     debug!("validate_indy_proof >> rev_regs_json: {rev_regs_json}");
     anoncreds
         .verifier_verify_proof(
-            proof_req_json,
+            serde_json::from_str(proof_req_json)?,
             proof_json,
             serde_json::from_str(&schemas_json)?,
             serde_json::from_str(&credential_defs_json)?,
