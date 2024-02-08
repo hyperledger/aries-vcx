@@ -12,12 +12,10 @@ use super::{
         did_data::DidData, record::Record, search_filter::SearchFilter, BaseWallet, DidWallet,
         RecordWallet,
     },
+    record_tags::RecordTags,
     structs_io::UnpackMessageOutput,
 };
-use crate::{
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::entry_tags::EntryTags,
-};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
 #[derive(Debug)]
 pub struct AgencyClientWallet {
@@ -41,7 +39,7 @@ impl RecordWallet for AgencyClientWallet {
         &self,
         category: &str,
         name: &str,
-        new_tags: EntryTags,
+        new_tags: RecordTags,
     ) -> VcxCoreResult<()> {
         Err(unimplemented_agency_client_wallet_method(
             "update_record_tags",

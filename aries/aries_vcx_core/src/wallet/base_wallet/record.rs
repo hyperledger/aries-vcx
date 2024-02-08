@@ -1,6 +1,6 @@
 use typed_builder::TypedBuilder;
 
-use crate::wallet::entry_tags::EntryTags;
+use crate::wallet::record_tags::RecordTags;
 
 #[derive(Debug, Default, Clone, TypedBuilder)]
 pub struct Record {
@@ -8,7 +8,7 @@ pub struct Record {
     name: String,
     value: String,
     #[builder(default)]
-    tags: EntryTags,
+    tags: RecordTags,
 }
 
 impl Record {
@@ -24,7 +24,7 @@ impl Record {
         &self.category
     }
 
-    pub fn tags(&self) -> &EntryTags {
+    pub fn tags(&self) -> &RecordTags {
         &self.tags
     }
 }

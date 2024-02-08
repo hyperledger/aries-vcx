@@ -6,12 +6,12 @@ use super::{
         did_data::DidData, record::Record, search_filter::SearchFilter, BaseWallet, DidWallet,
         RecordWallet,
     },
+    record_tags::RecordTags,
     structs_io::UnpackMessageOutput,
 };
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{self},
-    wallet::entry_tags::EntryTags,
 };
 
 #[derive(Debug)]
@@ -47,7 +47,7 @@ impl RecordWallet for MockWallet {
         &self,
         category: &str,
         name: &str,
-        new_tags: EntryTags,
+        new_tags: RecordTags,
     ) -> VcxCoreResult<()> {
         Ok(())
     }

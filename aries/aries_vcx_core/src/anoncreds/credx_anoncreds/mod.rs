@@ -36,7 +36,7 @@ use crate::{
     },
     wallet::{
         base_wallet::{record::Record, search_filter::SearchFilter, BaseWallet, RecordWallet},
-        entry_tags::EntryTags,
+        record_tags::RecordTags,
     },
 };
 
@@ -83,7 +83,7 @@ impl RecordWallet for WalletAdapter {
         &self,
         category: &str,
         name: &str,
-        new_tags: EntryTags,
+        new_tags: RecordTags,
     ) -> VcxCoreResult<()> {
         self.0.update_record_tags(category, name, new_tags).await
     }

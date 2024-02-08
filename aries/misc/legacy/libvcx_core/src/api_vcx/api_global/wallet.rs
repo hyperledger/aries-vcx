@@ -19,8 +19,8 @@ use aries_vcx::{
 };
 use aries_vcx_core::wallet::{
     base_wallet::{record::Record, DidWallet, RecordWallet},
-    entry_tags::EntryTags,
     indy::IndyWalletRecord,
+    record_tags::RecordTags,
 };
 use futures::FutureExt;
 use public_key::{Key, KeyType};
@@ -186,7 +186,7 @@ pub async fn wallet_add_wallet_record(
     option: Option<&str>,
 ) -> LibvcxResult<()> {
     let wallet = get_main_wallet()?;
-    let tags: Option<EntryTags> = option.map(serde_json::from_str).transpose()?;
+    let tags: Option<RecordTags> = option.map(serde_json::from_str).transpose()?;
 
     let record = if let Some(record_tags) = tags {
         Record::builder()
@@ -234,7 +234,7 @@ pub async fn wallet_add_wallet_record_tags(
     let record = wallet.get_record(xtype, id).await?;
 
     let tags = {
-        let mut tags: EntryTags = serde_json::from_str(tags_json)?;
+        let mut tags: RecordTags = serde_json::from_str(tags_json)?;
         tags.merge(record.tags().clone());
         tags
     };
@@ -248,7 +248,7 @@ pub async fn wallet_delete_wallet_record_tags(
     tags_json: &str,
 ) -> LibvcxResult<()> {
     let wallet = get_main_wallet()?;
-    let tags: EntryTags = serde_json::from_str(tags_json)?;
+    let tags: RecordTags = serde_json::from_str(tags_json)?;
 
     let record = wallet.get_record(xtype, id).await?;
 
