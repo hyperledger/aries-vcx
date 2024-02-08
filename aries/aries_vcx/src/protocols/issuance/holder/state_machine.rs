@@ -573,7 +573,7 @@ async fn _store_credential(
             wallet,
             None,
             req_meta,
-            &credential_json,
+            serde_json::from_str(&credential_json)?,
             serde_json::from_str(cred_def_json)?,
             rev_reg_def_json.clone(),
         )

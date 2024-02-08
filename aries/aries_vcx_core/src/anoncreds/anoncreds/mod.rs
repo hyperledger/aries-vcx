@@ -12,7 +12,7 @@ use anoncreds::{
             CredentialDefinition as AnoncredsCredentialDefinition,
             CredentialDefinitionId as AnoncredsCredentialDefinitionId, CL_SIGNATURE_TYPE,
         },
-        credential::Credential,
+        credential::Credential as AnoncredsCredential,
         issuer_id::IssuerId,
         rev_reg_def::{
             RevocationRegistryDefinitionId as AnoncredsRevocationRegistryDefinitionId, CL_ACCUM,
@@ -43,7 +43,10 @@ use anoncreds_types::data_types::{
         rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
         schema::Schema,
     },
-    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest, nonce::Nonce},
+    messages::{
+        cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
+        nonce::Nonce,
+    },
 };
 use async_trait::async_trait;
 use bitvec::bitvec;
@@ -722,12 +725,13 @@ impl BaseAnonCreds for Anoncreds {
         let cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
             credential_defs_json.convert(())?;
 
-        let mut present_credentials: PresentCredentials<Credential> = PresentCredentials::default();
+        let mut present_credentials: PresentCredentials<AnoncredsCredential> =
+            PresentCredentials::default();
 
         let mut proof_details_by_cred_id: HashMap<
             String,
             (
-                Credential,
+                AnoncredsCredential,
                 Option<u64>,
                 Option<CredentialRevocationState>,
                 Vec<(String, bool)>,
@@ -756,7 +760,7 @@ impl BaseAnonCreds for Anoncreds {
                 proof_details_by_cred_id.insert(
                     cred_id.to_string(),
                     (
-                        credential,
+                        credential.convert(())?,
                         timestamp,
                         rev_state,
                         vec![(reft.to_string(), revealed)],
@@ -783,7 +787,7 @@ impl BaseAnonCreds for Anoncreds {
                 proof_details_by_cred_id.insert(
                     cred_id.to_string(),
                     (
-                        credential,
+                        credential.convert(())?,
                         timestamp,
                         rev_state,
                         vec![],
@@ -1077,11 +1081,11 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         cred_id: Option<&str>,
         cred_req_metadata_json: &str,
-        cred_json: &str,
+        cred_json: Credential,
         cred_def_json: CredentialDefinition,
         rev_reg_def_json: Option<RevocationRegistryDefinition>,
     ) -> VcxCoreResult<String> {
-        let mut credential: Credential = serde_json::from_str(cred_json)?;
+        let mut credential: AnoncredsCredential = cred_json.convert(())?;
 
         let cred_def_id = credential.cred_def_id.to_string();
         let (_cred_def_method, issuer_did, _signature_type, _schema_num, _tag) =

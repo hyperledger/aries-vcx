@@ -20,13 +20,15 @@ use anoncreds_types::data_types::{
     messages::{
         cred_offer::CredentialOffer as OurCredentialOffer,
         cred_request::CredentialRequest as OurCredentialRequest,
+        credential::Credential as OurCredential,
     },
 };
 use did_parser::Did;
 use indy_credx::{
     issuer::create_schema,
     types::{
-        AttributeNames as CredxAttributeNames, CredentialDefinition as CredxCredentialDefinition,
+        AttributeNames as CredxAttributeNames, Credential as CredxCredential,
+        CredentialDefinition as CredxCredentialDefinition,
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         DidValue, RevocationRegistry as CredxRevocationRegistry,
@@ -308,5 +310,31 @@ impl Convert for HashMap<OurSchemaId, OurSchema> {
                 ))
             })
             .collect()
+    }
+}
+
+impl Convert for OurCredential {
+    type Args = ();
+    type Target = CredxCredential;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(CredxCredential {
+            schema_id: CredxSchemaId::try_from(self.schema_id.to_string())?,
+            cred_def_id: CredxCredentialDefinitionId::try_from(self.cred_def_id.to_string())?,
+            rev_reg_id: self
+                .rev_reg_id
+                .as_ref()
+                .map(ToString::to_string)
+                .map(CredxRevocationRegistryId::try_from)
+                .transpose()?,
+            values: serde_json::from_value(serde_json::to_value(self.values)?)?,
+            signature: serde_json::from_value(serde_json::to_value(self.signature)?)?,
+            signature_correctness_proof: serde_json::from_value(serde_json::to_value(
+                self.signature_correctness_proof,
+            )?)?,
+            rev_reg: serde_json::from_value(serde_json::to_value(self.rev_reg)?)?,
+            witness: serde_json::from_value(serde_json::to_value(self.witness)?)?,
+        })
     }
 }

@@ -10,7 +10,10 @@ use anoncreds_types::data_types::{
         rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
         schema::Schema,
     },
-    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest, nonce::Nonce},
+    messages::{
+        cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
+        nonce::Nonce,
+    },
 };
 use async_trait::async_trait;
 use did_parser::Did;
@@ -131,7 +134,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         wallet: &impl BaseWallet,
         cred_id: Option<&str>,
         cred_req_metadata_json: &str,
-        cred_json: &str,
+        cred_json: Credential,
         cred_def_json: CredentialDefinition,
         rev_reg_def_json: Option<RevocationRegistryDefinition>,
     ) -> VcxCoreResult<String>;

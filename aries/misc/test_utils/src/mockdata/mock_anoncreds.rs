@@ -10,7 +10,10 @@ use anoncreds_types::data_types::{
         rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
         schema::Schema,
     },
-    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest, nonce::Nonce},
+    messages::{
+        cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
+        nonce::Nonce,
+    },
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -184,7 +187,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _wallet: &impl BaseWallet,
         _cred_id: Option<&str>,
         _cred_req_metadata_json: &str,
-        _cred_json: &str,
+        _cred_json: Credential,
         _cred_def_json: CredentialDefinition,
         _rev_reg_def_json: Option<RevocationRegistryDefinition>,
     ) -> VcxCoreResult<String> {
