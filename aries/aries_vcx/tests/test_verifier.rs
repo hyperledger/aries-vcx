@@ -568,7 +568,7 @@ async fn test_pool_prover_verify_proof() -> Result<(), Box<dyn Error>> {
 
     let anoncreds = &setup.anoncreds;
     let proof_validation = anoncreds
-        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, "{}")
+        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, None)
         .await?;
 
     assert!(proof_validation);
@@ -593,7 +593,7 @@ async fn test_pool_prover_verify_proof_with_predicate_success_case() -> Result<(
 
     let anoncreds = &setup.anoncreds;
     let proof_validation = anoncreds
-        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, "{}")
+        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, None)
         .await?;
 
     assert!(proof_validation);
@@ -618,7 +618,7 @@ async fn test_pool_prover_verify_proof_with_predicate_fail_case() -> Result<(), 
 
     let anoncreds = &setup.anoncreds;
     anoncreds
-        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, "{}")
+        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, None)
         .await
         .unwrap_err();
     Ok(())

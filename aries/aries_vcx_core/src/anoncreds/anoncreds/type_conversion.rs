@@ -41,9 +41,6 @@ use anoncreds_types::data_types::{
             RevocationRegistryDefinition as OurRevocationRegistryDefinition,
             RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
         },
-        rev_reg_delta::{
-            RevocationRegistryDelta as OurRevocationRegistryDelta, RevocationRegistryDeltaValue,
-        },
         schema::{AttributeNames as OurAttributeNames, Schema as OurSchema},
     },
     messages::{
@@ -289,17 +286,15 @@ impl Convert for HashMap<OurRevocationRegistryDefinitionId, OurRevocationRegistr
     }
 }
 
-impl Convert
-    for HashMap<OurRevocationRegistryDefinitionId, HashMap<u64, OurRevocationRegistryDelta>>
-{
+impl Convert for HashMap<OurRevocationRegistryDefinitionId, HashMap<u64, OurRevocationRegistry>> {
     type Args = ();
     type Target = Vec<AnoncredsRevocationStatusList>;
     type Error = Box<dyn std::error::Error>;
 
-    fn convert(self, args: Self::Args) -> Result<Self::Target, Self::Error> {
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
         let mut lists = Vec::new();
         for (rev_reg_def_id, timestamp_map) in self.into_iter() {
-            for (timestamp, delta) in timestamp_map {
+            for (timestamp, entry) in timestamp_map {
                 let issuer_id = AnoncredsIssuerId::new(
                     rev_reg_def_id
                         .to_string()
@@ -309,8 +304,8 @@ impl Convert
                         .to_string(),
                 )
                 .unwrap();
-                let RevocationRegistryDeltaValue { accum, revoked, .. } = delta.value;
-                let registry = CryptoRevocationRegistry { accum };
+                let OurRevocationRegistry { value } = entry;
+                let registry = CryptoRevocationRegistry { accum: value.accum };
 
                 let rev_status_list = AnoncredsRevocationStatusList::new(
                     Some(&rev_reg_def_id.to_string()),

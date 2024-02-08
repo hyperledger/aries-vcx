@@ -310,15 +310,3 @@ impl Convert for HashMap<OurSchemaId, OurSchema> {
             .collect()
     }
 }
-
-impl Convert
-    for HashMap<OurRevocationRegistryDefinitionId, HashMap<u64, OurRevocationRegistryDelta>>
-{
-    type Args = ();
-    type Target = HashMap<CredxRevocationRegistryId, HashMap<u64, CredxRevocationRegistry>>;
-    type Error = Box<dyn std::error::Error>;
-
-    fn convert(self, args: Self::Args) -> Result<Self::Target, Self::Error> {
-        todo!()
-    }
-}

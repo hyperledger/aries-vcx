@@ -258,7 +258,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
         >,
         rev_regs_json: Option<
-            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistryDelta>>,
+            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>,
         >,
     ) -> VcxCoreResult<bool> {
         let presentation: Presentation = serde_json::from_str(proof_json)?;

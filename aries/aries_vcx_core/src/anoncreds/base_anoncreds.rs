@@ -31,9 +31,8 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         rev_reg_defs_json: Option<
             HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
         >,
-        // TODO: Delta is probably not necessary, entry is enough
         rev_regs_json: Option<
-            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistryDelta>>,
+            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>,
         >,
     ) -> VcxCoreResult<bool>;
 
