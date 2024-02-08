@@ -932,13 +932,13 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         wallet: &impl BaseWallet,
         prover_did: &Did,
-        credential_offer_json: &str,
+        cred_offer_json: CredentialOffer,
         credential_def_json: CredentialDefinition,
         link_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
         let prover_did = prover_did.convert(())?;
         let cred_def: CredxCredentialDefinition = credential_def_json.convert(())?;
-        let credential_offer: CredxCredentialOffer = serde_json::from_str(credential_offer_json)?;
+        let credential_offer: CredxCredentialOffer = cred_offer_json.convert(())?;
         let link_secret = Self::get_link_secret(wallet, link_secret_id).await?;
 
         let (cred_req, cred_req_metadata) = credx::prover::create_credential_request(

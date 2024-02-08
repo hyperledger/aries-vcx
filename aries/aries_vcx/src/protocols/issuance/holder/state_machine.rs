@@ -604,7 +604,7 @@ pub async fn create_anoncreds_credential_request(
         .prover_create_credential_req(
             wallet,
             prover_did,
-            cred_offer,
+            serde_json::from_str(cred_offer)?,
             cred_def_json.try_clone()?,
             master_secret_id,
         )

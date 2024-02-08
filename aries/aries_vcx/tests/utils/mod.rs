@@ -128,7 +128,7 @@ pub async fn create_and_write_credential(
         .prover_create_credential_req(
             wallet_holder,
             institution_did,
-            &serde_json::to_string(&offer).unwrap(),
+            serde_json::from_str(&serde_json::to_string(&offer).unwrap()).unwrap(),
             cred_def.get_cred_def_json().try_clone().unwrap(),
             settings::DEFAULT_LINK_SECRET_ALIAS,
         )

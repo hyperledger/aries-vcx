@@ -161,7 +161,7 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         _wallet: &impl BaseWallet,
         _prover_did: &Did,
-        _cred_offer_json: &str,
+        _cred_offer_json: CredentialOffer,
         _cred_def_json: CredentialDefinition,
         _master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {

@@ -976,12 +976,12 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         prover_did: &Did,
-        cred_offer_json: &str,
+        cred_offer_json: CredentialOffer,
         cred_def_json: CredentialDefinition,
         master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
         let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;
-        let credential_offer: AnoncredsCredentialOffer = serde_json::from_str(cred_offer_json)?;
+        let credential_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
         let link_secret = self.get_link_secret(wallet, master_secret_id).await?;
 
         let (cred_req, cred_req_metadata) = anoncreds::prover::create_credential_request(

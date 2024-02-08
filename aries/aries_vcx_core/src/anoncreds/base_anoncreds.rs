@@ -112,7 +112,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         wallet: &impl BaseWallet,
         prover_did: &Did,
-        cred_offer_json: &str,
+        cred_offer_json: CredentialOffer,
         cred_def_json: CredentialDefinition,
         master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)>;
