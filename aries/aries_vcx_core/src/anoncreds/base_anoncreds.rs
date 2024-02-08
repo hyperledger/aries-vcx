@@ -85,7 +85,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         proof_req_json: &str,
         requested_credentials_json: &str,
         master_secret_id: &str,
-        schemas_json: &str,
+        schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         revoc_states_json: Option<&str>,
     ) -> VcxCoreResult<String>;

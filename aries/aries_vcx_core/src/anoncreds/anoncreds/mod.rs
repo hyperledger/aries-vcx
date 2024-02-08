@@ -700,7 +700,7 @@ impl BaseAnonCreds for Anoncreds {
         proof_req_json: &str,
         requested_credentials_json: &str,
         master_secret_id: &str,
-        schemas_json: &str,
+        schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         revoc_states_json: Option<&str>,
     ) -> VcxCoreResult<String> {
@@ -718,19 +718,7 @@ impl BaseAnonCreds for Anoncreds {
             None
         };
 
-        let mut schemas_val: HashMap<AnoncredsSchemaId, Value> =
-            serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = HashMap::new();
-        for (schema_id, schema_json) in schemas_val.iter_mut() {
-            schema_json.as_object_mut().map(|v| {
-                v.insert(
-                    "issuerId".to_owned(),
-                    schema_id.to_string().split(':').next().into(),
-                )
-            });
-            let schema: Schema = serde_json::from_value(schema_json.clone())?;
-            schemas.insert(schema_id.clone(), schema.convert(())?);
-        }
+        let schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = schemas_json.convert(())?;
         let cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
             credential_defs_json.convert(())?;
 

@@ -656,7 +656,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         proof_req_json: &str,
         requested_credentials_json: &str,
         link_secret_id: &str,
-        schemas_json: &str,
+        schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         revoc_states_json: Option<&str>,
     ) -> VcxCoreResult<String> {
@@ -674,11 +674,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             None
         };
 
-        let schemas_: HashMap<CredxSchemaId, Schema> = serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<CredxSchemaId, CredxSchema> = HashMap::new();
-        for (key, value) in schemas_ {
-            schemas.insert(key, value.convert(())?);
-        }
+        let schemas: HashMap<CredxSchemaId, CredxSchema> = schemas_json.convert(())?;
 
         let mut present_credentials: PresentCredentials = PresentCredentials::new();
 
