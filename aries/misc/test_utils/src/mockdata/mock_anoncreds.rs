@@ -113,7 +113,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _requested_credentials_json: &str,
         _master_secret_id: &str,
         _schemas_json: &str,
-        _credential_defs_json: &str,
+        _credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         _revoc_states_json: Option<&str>,
     ) -> VcxCoreResult<String> {
         Ok(PROOF_JSON.to_owned())

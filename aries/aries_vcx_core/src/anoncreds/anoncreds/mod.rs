@@ -748,7 +748,7 @@ impl BaseAnonCreds for Anoncreds {
         requested_credentials_json: &str,
         master_secret_id: &str,
         schemas_json: &str,
-        credential_defs_json: &str,
+        credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         revoc_states_json: Option<&str>,
     ) -> VcxCoreResult<String> {
         let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
@@ -778,20 +778,8 @@ impl BaseAnonCreds for Anoncreds {
             let schema: Schema = serde_json::from_value(schema_json.clone())?;
             schemas.insert(schema_id.clone(), schema.convert(())?);
         }
-        let mut cred_defs_val: HashMap<AnoncredsCredentialDefinitionId, Value> =
-            serde_json::from_str(credential_defs_json)?;
-        let mut cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
-            HashMap::new();
-        for (cred_def_id, cred_def_json) in cred_defs_val.iter_mut() {
-            cred_def_json.as_object_mut().map(|v| {
-                v.insert(
-                    "issuerId".to_owned(),
-                    cred_def_id.to_string().split(':').next().into(),
-                )
-            });
-            let cred_def = serde_json::from_value(cred_def_json.clone())?;
-            cred_defs.insert(cred_def_id.clone(), cred_def);
-        }
+        let cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
+            credential_defs_json.convert(())?;
 
         let mut present_credentials: PresentCredentials<Credential> = PresentCredentials::default();
 
