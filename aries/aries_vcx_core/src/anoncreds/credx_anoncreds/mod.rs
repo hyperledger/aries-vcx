@@ -252,30 +252,24 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         proof_req_json: &str,
         proof_json: &str,
-        schemas_json: &str,
-        credential_defs_json: &str,
-        rev_reg_defs_json: &str,
+        schemas_json: HashMap<SchemaId, Schema>,
+        credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
+        rev_reg_defs_json: Option<
+            HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
+        >,
         rev_regs_json: &str,
     ) -> VcxCoreResult<bool> {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
 
-        let schemas_: HashMap<CredxSchemaId, Schema> = serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<CredxSchemaId, CredxSchema> = HashMap::new();
-        for (key, value) in schemas_ {
-            schemas.insert(key, value.convert(())?);
-        }
-        let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
-            serde_json::from_str(credential_defs_json)?;
+        let schemas: HashMap<CredxSchemaId, CredxSchema> = schemas_json.convert(())?;
+
         let cred_defs: HashMap<CredxCredentialDefinitionId, CredxCredentialDefinition> =
-            cred_defs.convert(())?;
+            credential_defs_json.convert(())?;
 
         let rev_reg_defs: Option<
-            HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
-        > = serde_json::from_str(rev_reg_defs_json)?;
-        let rev_reg_defs: Option<
             HashMap<CredxRevocationRegistryId, CredxRevocationRegistryDefinition>,
-        > = rev_reg_defs.map(|v| v.convert(())).transpose()?;
+        > = rev_reg_defs_json.map(|v| v.convert(())).transpose()?;
 
         let rev_regs: Option<
             HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>,

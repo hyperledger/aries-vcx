@@ -288,72 +288,25 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         proof_request_json: &str,
         proof_json: &str,
-        schemas_json: &str,
-        credential_defs_json: &str,
-        rev_reg_defs_json: &str,
+        schemas_json: HashMap<SchemaId, Schema>,
+        credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
+        rev_reg_defs_json: Option<
+            HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
+        >,
         rev_regs_json: &str,
     ) -> VcxCoreResult<bool> {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_request_json)?;
 
-        let mut schemas_val: HashMap<AnoncredsSchemaId, Value> =
-            serde_json::from_str(schemas_json)?;
-        let mut schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = HashMap::new();
-        for (schema_id, schema_json) in schemas_val.iter_mut() {
-            if let Some(v) = schema_json.as_object_mut() {
-                v.insert(
-                    "issuerId".to_owned(),
-                    schema_parts(&schema_id.to_string()).unwrap().1.did().into(),
-                );
-            }
-            let schema = serde_json::from_value(schema_json.clone())?;
-            schemas.insert(schema_id.clone(), schema);
-        }
+        let schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = schemas_json.convert(())?;
 
-        let mut cred_defs_val: HashMap<AnoncredsCredentialDefinitionId, Value> =
-            serde_json::from_str(credential_defs_json)?;
-        let mut cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
-            HashMap::new();
-        for (cred_def_id, cred_def_json) in cred_defs_val.iter_mut() {
-            if let Some(v) = cred_def_json.as_object_mut() {
-                v.insert(
-                    "issuerId".to_owned(),
-                    cred_def_parts(&cred_def_id.to_string())
-                        .unwrap()
-                        .1
-                        .did()
-                        .into(),
-                );
-            }
-            let cred_def = serde_json::from_value(cred_def_json.clone())?;
-            cred_defs.insert(cred_def_id.clone(), cred_def);
-        }
+        let cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
+            credential_defs_json.convert(())?;
 
-        let rev_reg_defs_val: Option<HashMap<AnoncredsRevocationRegistryDefinitionId, Value>> =
-            serde_json::from_str(rev_reg_defs_json)?;
         let rev_reg_defs: Option<
             HashMap<AnoncredsRevocationRegistryDefinitionId, AnoncredsRevocationRegistryDefinition>,
-        > = if let Some(mut rev_defs) = rev_reg_defs_val.clone() {
-            let mut map = HashMap::new();
-            for (rev_reg_def_id, rev_reg_def_json) in rev_defs.iter_mut() {
-                let v = rev_reg_def_json.as_object_mut().unwrap();
-                v.insert(
-                    "issuerId".to_owned(),
-                    rev_reg_def_id.to_string().split(':').next().into(),
-                );
-                v.insert("revocDefType".to_owned(), CL_ACCUM.to_owned().into());
+        > = rev_reg_defs_json.map(|v| v.convert(())).transpose()?;
 
-                map.insert(
-                    rev_reg_def_id.clone(),
-                    serde_json::from_value(rev_reg_def_json.clone())?,
-                );
-            }
-            Some(map)
-        } else {
-            None
-        };
-
-        // WTF, anoncreds-rs expects the whole status list just to use the accumulator :|
         let rev_reg_deltas: Option<
             HashMap<AnoncredsRevocationRegistryDefinitionId, HashMap<u64, RevocationRegistryDelta>>,
         > = serde_json::from_str(rev_regs_json)?;
@@ -372,11 +325,10 @@ impl BaseAnonCreds for Anoncreds {
                     )
                     .unwrap();
                     let RevocationRegistryDeltaValue { accum, revoked, .. } = delta.value;
-                    let rev_reg_defs = rev_reg_defs_val.as_ref().unwrap();
+                    let rev_reg_defs = rev_reg_defs.to_owned().unwrap();
                     let rev_reg_def = rev_reg_defs.get(&rev_reg_def_id).unwrap();
-                    let rev_reg_def_id = Some(rev_reg_def_id.0.as_str());
 
-                    let max_cred_num = rev_reg_def["value"]["maxCredNum"].as_u64().unwrap();
+                    let max_cred_num = rev_reg_def.value.max_cred_num;
                     let mut revocation_list = bitvec!(0; max_cred_num as usize);
                     revoked.into_iter().for_each(|id| {
                         revocation_list
@@ -388,7 +340,7 @@ impl BaseAnonCreds for Anoncreds {
                     let registry = CryptoRevocationRegistry { accum };
 
                     let rev_status_list = RevocationStatusList::new(
-                        rev_reg_def_id,
+                        Some(&rev_reg_def_id.to_string()),
                         issuer_id,
                         revocation_list,
                         Some(registry),
@@ -1135,8 +1087,7 @@ impl BaseAnonCreds for Anoncreds {
                 format!("Could not process cred_def_id {cred_def_id} as parts."),
             ))?;
 
-        let revoc_reg_def: AnoncredsRevocationRegistryDefinition =
-            rev_reg_def_json.convert((issuer_did.to_string(),))?;
+        let revoc_reg_def: AnoncredsRevocationRegistryDefinition = rev_reg_def_json.convert(())?;
         let tails_file_hash = revoc_reg_def.value.tails_hash.as_str();
 
         let mut tails_file_path = std::path::PathBuf::new();
@@ -1217,7 +1168,7 @@ impl BaseAnonCreds for Anoncreds {
         let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;
         let rev_reg_def: Option<AnoncredsRevocationRegistryDefinition> =
             if let Some(rev_reg_def_json) = rev_reg_def_json {
-                Some(rev_reg_def_json.convert((issuer_did.to_string(),))?)
+                Some(rev_reg_def_json.convert(())?)
             } else {
                 None
             };
@@ -1360,12 +1311,11 @@ impl BaseAnonCreds for Anoncreds {
             .unwrap_or(ledger_rev_reg_delta_json.clone());
 
         let prev_accum = ledger_rev_reg_delta_json.value.accum;
-        let (_, issuer_id, _, _, _) = cred_def_parts(&rev_reg_def.cred_def_id.to_string()).unwrap();
 
         let current_time = OffsetDateTime::now_utc().unix_timestamp() as u64;
         let rev_status_list = from_revocation_registry_delta_to_revocation_status_list(
             &last_rev_reg_delta.value,
-            &rev_reg_def.clone().convert((issuer_id.to_string(),))?,
+            &rev_reg_def.clone().convert(())?,
             rev_reg_id,
             Some(current_time),
             true,
@@ -1385,7 +1335,7 @@ impl BaseAnonCreds for Anoncreds {
 
         let updated_rev_status_list = anoncreds::issuer::update_revocation_status_list(
             &cred_def,
-            &rev_reg_def.convert((issuer_id.to_string(),))?,
+            &rev_reg_def.convert(())?,
             &rev_reg_def_priv,
             &rev_status_list,
             None,

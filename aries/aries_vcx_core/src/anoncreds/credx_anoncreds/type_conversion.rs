@@ -33,6 +33,7 @@ use indy_credx::{
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
         RevocationRegistryDelta as CredxRevocationRegistryDelta,
         RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
+        SchemaId as CredxSchemaId,
     },
 };
 
@@ -290,5 +291,22 @@ impl Convert for OurRevocationRegistryDelta {
         Ok(CredxRevocationRegistryDelta::RevocationRegistryDeltaV1(
             serde_json::from_value(serde_json::to_value(self)?)?,
         ))
+    }
+}
+
+impl Convert for HashMap<OurSchemaId, OurSchema> {
+    type Args = ();
+    type Target = HashMap<CredxSchemaId, CredxSchema>;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        self.into_iter()
+            .map(|(id, schema)| {
+                Ok((
+                    CredxSchemaId::try_from(id.to_string())?,
+                    schema.convert(())?,
+                ))
+            })
+            .collect()
     }
 }

@@ -1,8 +1,14 @@
-use std::{error::Error, time::Duration};
+use std::{collections::HashMap, error::Error, time::Duration};
 
+use anoncreds_types::data_types::{
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    ledger::{cred_def::CredentialDefinition, schema::Schema},
+};
 use aries_vcx::{
     common::{
-        primitives::{credential_definition::CredentialDef, credential_schema::Schema},
+        primitives::{
+            credential_definition::CredentialDef, credential_schema::Schema as SchemaPrimitive,
+        },
         proofs::{proof_request::ProofRequestData, verifier::validate_indy_proof},
     },
     errors::error::AriesVcxErrorKind,
@@ -31,7 +37,15 @@ async fn create_indy_proof(
     ledger_read: &impl AnoncredsLedgerRead,
     ledger_write: &impl AnoncredsLedgerWrite,
     did: &Did,
-) -> Result<(String, String, String, String), Box<dyn Error>> {
+) -> Result<
+    (
+        HashMap<SchemaId, Schema>,
+        HashMap<CredentialDefinitionId, CredentialDefinition>,
+        String,
+        String,
+    ),
+    Box<dyn Error>,
+> {
     let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
         wallet_issuer,
         wallet_holder,
@@ -102,7 +116,12 @@ async fn create_indy_proof(
             None,
         )
         .await?;
-    Ok((schemas, cred_defs, proof_req, proof))
+    Ok((
+        serde_json::from_str(&schemas).unwrap(),
+        serde_json::from_str(&cred_defs).unwrap(),
+        proof_req,
+        proof,
+    ))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -115,7 +134,15 @@ async fn create_proof_with_predicate(
     ledger_write: &impl AnoncredsLedgerWrite,
     did: &Did,
     include_predicate_cred: bool,
-) -> Result<(String, String, String, String), Box<dyn Error>> {
+) -> Result<
+    (
+        HashMap<SchemaId, Schema>,
+        HashMap<CredentialDefinitionId, CredentialDefinition>,
+        String,
+        String,
+    ),
+    Box<dyn Error>,
+> {
     let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
         wallet_issuer,
         wallet_holder,
@@ -200,7 +227,12 @@ async fn create_proof_with_predicate(
             None,
         )
         .await?;
-    Ok((schemas, cred_defs, proof_req, proof))
+    Ok((
+        serde_json::from_str(&schemas).unwrap(),
+        serde_json::from_str(&cred_defs).unwrap(),
+        proof_req,
+        proof,
+    ))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -213,7 +245,7 @@ async fn create_and_store_nonrevocable_credential(
     ledger_write: &impl AnoncredsLedgerWrite,
     issuer_did: &Did,
     attr_list: &str,
-) -> (Schema, CredentialDef, String) {
+) -> (SchemaPrimitive, CredentialDef, String) {
     let schema = create_and_write_test_schema(
         wallet_issuer,
         anoncreds_issuer,
@@ -532,7 +564,7 @@ async fn test_pool_prover_verify_proof() -> Result<(), Box<dyn Error>> {
 
     let anoncreds = &setup.anoncreds;
     let proof_validation = anoncreds
-        .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
+        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, "{}")
         .await?;
 
     assert!(proof_validation);
@@ -557,7 +589,7 @@ async fn test_pool_prover_verify_proof_with_predicate_success_case() -> Result<(
 
     let anoncreds = &setup.anoncreds;
     let proof_validation = anoncreds
-        .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
+        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, "{}")
         .await?;
 
     assert!(proof_validation);
@@ -582,7 +614,7 @@ async fn test_pool_prover_verify_proof_with_predicate_fail_case() -> Result<(), 
 
     let anoncreds = &setup.anoncreds;
     anoncreds
-        .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
+        .verifier_verify_proof(&proof_req, &proof, schemas, cred_defs, None, "{}")
         .await
         .unwrap_err();
     Ok(())

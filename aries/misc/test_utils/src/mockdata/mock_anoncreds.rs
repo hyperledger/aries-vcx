@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 use anoncreds_types::data_types::{
     identifiers::{
@@ -36,9 +36,11 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         _proof_request_json: &str,
         _proof_json: &str,
-        _schemas_json: &str,
-        _credential_defs_json: &str,
-        _rev_reg_defs_json: &str,
+        _schemas_json: HashMap<SchemaId, Schema>,
+        _credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
+        _rev_reg_defs_json: Option<
+            HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
+        >,
         _rev_regs_json: &str,
     ) -> VcxCoreResult<bool> {
         Err(AriesVcxCoreError::from_msg(

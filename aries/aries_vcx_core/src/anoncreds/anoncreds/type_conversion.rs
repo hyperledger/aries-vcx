@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anoncreds::{
     data_types::{
         cred_def::{
@@ -7,7 +9,10 @@ use anoncreds::{
         },
         issuer_id::IssuerId as AnoncredsIssuerId,
         nonce::Nonce as AnoncredsNonce,
-        rev_reg_def::RevocationRegistryDefinitionValue as AnoncredsRevocationRegistryDefinitionValue,
+        rev_reg_def::{
+            RevocationRegistryDefinitionId as AnoncredsRevocationRegistryDefinitionId,
+            RevocationRegistryDefinitionValue as AnoncredsRevocationRegistryDefinitionValue,
+        },
         schema::{Schema as AnoncredsSchema, SchemaId as AnoncredsSchemaId},
     },
     types::{
@@ -162,12 +167,12 @@ impl Convert for AnoncredsCredentialOffer {
 }
 
 impl Convert for OurRevocationRegistryDefinition {
-    type Args = (String,);
+    type Args = ();
     type Target = AnoncredsRevocationRegistryDefinition;
     type Error = Box<dyn std::error::Error>;
 
-    fn convert(self, (issuer_id,): Self::Args) -> Result<Self::Target, Self::Error> {
-        // TODO: Obtain issuer id from cred def id instead
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        let issuer_id = self.id.to_string().split(':').next().unwrap().to_string();
         Ok(AnoncredsRevocationRegistryDefinition {
             issuer_id: AnoncredsIssuerId::new(issuer_id)?,
             revoc_def_type: anoncreds::types::RegistryType::CL_ACCUM,
@@ -224,5 +229,57 @@ impl Convert for AnoncredsNonce {
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(OurNonce::from_native(self.into_native()).unwrap())
+    }
+}
+
+impl Convert for HashMap<OurSchemaId, OurSchema> {
+    type Args = ();
+    type Target = HashMap<AnoncredsSchemaId, AnoncredsSchema>;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        self.into_iter()
+            .map(|(id, schema)| {
+                Ok((
+                    AnoncredsSchemaId::try_from(id.to_string())?,
+                    schema.convert(())?,
+                ))
+            })
+            .collect()
+    }
+}
+
+impl Convert for HashMap<OurCredentialDefinitionId, OurCredentialDefinition> {
+    type Args = ();
+    type Target = HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition>;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        self.into_iter()
+            .map(|(id, def)| {
+                Ok((
+                    AnoncredsCredentialDefinitionId::try_from(id.to_string())?,
+                    def.convert(())?,
+                ))
+            })
+            .collect()
+    }
+}
+
+impl Convert for HashMap<OurRevocationRegistryDefinitionId, OurRevocationRegistryDefinition> {
+    type Args = ();
+    type Target =
+        HashMap<AnoncredsRevocationRegistryDefinitionId, AnoncredsRevocationRegistryDefinition>;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        self.into_iter()
+            .map(|(id, def)| {
+                Ok((
+                    AnoncredsRevocationRegistryDefinitionId::try_from(id.to_string())?,
+                    def.convert(())?,
+                ))
+            })
+            .collect()
     }
 }

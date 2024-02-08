@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 use anoncreds_types::data_types::{
     identifiers::{
@@ -26,9 +26,11 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         proof_request_json: &str,
         proof_json: &str,
-        schemas_json: &str,
-        credential_defs_json: &str,
-        rev_reg_defs_json: &str,
+        schemas_json: HashMap<SchemaId, Schema>,
+        credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
+        rev_reg_defs_json: Option<
+            HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
+        >,
         rev_regs_json: &str,
     ) -> VcxCoreResult<bool>;
 
