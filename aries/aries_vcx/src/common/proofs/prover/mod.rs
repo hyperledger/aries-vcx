@@ -59,7 +59,7 @@ pub async fn generate_indy_proof(
     let proof = anoncreds
         .prover_create_proof(
             wallet,
-            proof_req_data_json,
+            serde_json::from_str(&proof_req_data_json)?,
             &requested_credentials,
             settings::DEFAULT_LINK_SECRET_ALIAS,
             serde_json::from_str(&schemas_json)?,

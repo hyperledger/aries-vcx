@@ -12,7 +12,7 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
-        nonce::Nonce,
+        nonce::Nonce, pres_request::PresentationRequest,
     },
 };
 use async_trait::async_trait;
@@ -85,7 +85,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn prover_create_proof(
         &self,
         wallet: &impl BaseWallet,
-        proof_req_json: &str,
+        proof_req_json: PresentationRequest,
         requested_credentials_json: &str,
         master_secret_id: &str,
         schemas_json: HashMap<SchemaId, Schema>,

@@ -108,7 +108,7 @@ async fn create_indy_proof(
     let proof = anoncreds_holder
         .prover_create_proof(
             wallet_holder,
-            &proof_req,
+            serde_json::from_str(&proof_req)?,
             &requested_credentials_json,
             "main",
             serde_json::from_str(&schemas)?,
@@ -219,7 +219,7 @@ async fn create_proof_with_predicate(
     let proof = anoncreds_holder
         .prover_create_proof(
             wallet_holder,
-            &proof_req,
+            serde_json::from_str(&proof_req)?,
             &requested_credentials_json,
             "main",
             serde_json::from_str(&schemas)?,
@@ -311,7 +311,7 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            &proof_req_json,
+            serde_json::from_str(&proof_req_json)?,
             &json!({
               "self_attested_attributes":{
                  "attribute_0": "my_self_attested_address",
@@ -387,7 +387,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            &proof_req_json,
+            serde_json::from_str(&proof_req_json)?,
             &json!({
                 "self_attested_attributes":{
                    "attribute_2": "my_self_attested_val"
@@ -482,7 +482,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            &proof_req_json,
+            serde_json::from_str(&proof_req_json)?,
             &json!({
                 "self_attested_attributes":{
                    "attribute_2": "my_self_attested_val"

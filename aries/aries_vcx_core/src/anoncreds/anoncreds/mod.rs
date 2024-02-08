@@ -25,7 +25,7 @@ use anoncreds::{
         CredentialOffer as AnoncredsCredentialOffer,
         CredentialRequest as AnoncredsCredentialRequest, CredentialRequestMetadata,
         CredentialRevocationConfig, CredentialRevocationState, LinkSecret, PresentCredentials,
-        Presentation, PresentationRequest, RegistryType,
+        Presentation, PresentationRequest as AnoncredsPresentationRequest, RegistryType,
         RevocationRegistry as AnoncredsRevocationRegistry,
         RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
         RevocationStatusList, SignatureType,
@@ -45,7 +45,7 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
-        nonce::Nonce,
+        nonce::Nonce, pres_request::PresentationRequest,
     },
 };
 use async_trait::async_trait;
@@ -301,7 +301,7 @@ impl BaseAnonCreds for Anoncreds {
         >,
     ) -> VcxCoreResult<bool> {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
-        let pres_req: PresentationRequest = serde_json::from_str(proof_request_json)?;
+        let pres_req: AnoncredsPresentationRequest = serde_json::from_str(proof_request_json)?;
 
         let schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = schemas_json.convert(())?;
 
@@ -700,14 +700,14 @@ impl BaseAnonCreds for Anoncreds {
     async fn prover_create_proof(
         &self,
         wallet: &impl BaseWallet,
-        proof_req_json: &str,
+        proof_req_json: PresentationRequest,
         requested_credentials_json: &str,
         master_secret_id: &str,
         schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         revoc_states_json: Option<&str>,
     ) -> VcxCoreResult<String> {
-        let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
+        let pres_req: AnoncredsPresentationRequest = proof_req_json.convert(())?;
 
         let requested_credentials: Value = serde_json::from_str(requested_credentials_json)?;
         let requested_attributes = (&requested_credentials).try_get("requested_attributes")?;
