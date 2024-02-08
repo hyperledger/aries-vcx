@@ -12,7 +12,7 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
-        nonce::Nonce, pres_request::PresentationRequest,
+        nonce::Nonce, pres_request::PresentationRequest, presentation::Presentation,
     },
 };
 use aries_vcx_core::{
@@ -38,7 +38,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn verifier_verify_proof(
         &self,
         _proof_request_json: PresentationRequest,
-        _proof_json: &str,
+        _proof_json: Presentation,
         _schemas_json: HashMap<SchemaId, Schema>,
         _credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         _rev_reg_defs_json: Option<

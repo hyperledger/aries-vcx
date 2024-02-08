@@ -19,7 +19,7 @@ use anoncreds::{
     types::{
         AttributeNames as AnoncredsAttributeNames, Credential as AnoncredsCredential,
         CredentialOffer as AnoncredsCredentialOffer,
-        CredentialRequest as AnoncredsCredentialRequest,
+        CredentialRequest as AnoncredsCredentialRequest, Presentation as AnoncredsPresentation,
         PresentationRequest as AnoncredsPresentationRequest,
         RevocationRegistry as AnoncredsRevocationRegistry,
         RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
@@ -50,6 +50,7 @@ use anoncreds_types::data_types::{
         cred_request::CredentialRequest as OurCredentialRequest,
         credential::Credential as OurCredential, nonce::Nonce as OurNonce,
         pres_request::PresentationRequest as OurPresentationRequest,
+        presentation::Presentation as OurPresentation,
     },
 };
 
@@ -355,6 +356,16 @@ impl Convert for OurCredential {
 impl Convert for OurPresentationRequest {
     type Args = ();
     type Target = AnoncredsPresentationRequest;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+    }
+}
+
+impl Convert for OurPresentation {
+    type Args = ();
+    type Target = AnoncredsPresentation;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {

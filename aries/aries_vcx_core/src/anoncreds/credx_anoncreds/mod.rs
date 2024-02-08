@@ -19,7 +19,7 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
-        nonce::Nonce, pres_request::PresentationRequest,
+        nonce::Nonce, pres_request::PresentationRequest, presentation::Presentation,
     },
 };
 use async_trait::async_trait;
@@ -31,7 +31,7 @@ use credx::{
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         CredentialRequestMetadata, CredentialRevocationConfig, CredentialRevocationState,
-        IssuanceType, LinkSecret, PresentCredentials, Presentation,
+        IssuanceType, LinkSecret, PresentCredentials, Presentation as CredxPresentation,
         PresentationRequest as CredxPresentationRequest, RegistryType,
         RevocationRegistry as CredxRevocationRegistry,
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
@@ -258,7 +258,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn verifier_verify_proof(
         &self,
         proof_req_json: PresentationRequest,
-        proof_json: &str,
+        proof_json: Presentation,
         schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         rev_reg_defs_json: Option<
@@ -268,7 +268,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>,
         >,
     ) -> VcxCoreResult<bool> {
-        let presentation: Presentation = serde_json::from_str(proof_json)?;
+        let presentation: CredxPresentation = proof_json.convert(())?;
         let pres_req: CredxPresentationRequest = proof_req_json.convert(())?;
 
         let schemas: HashMap<CredxSchemaId, CredxSchema> = schemas_json.convert(())?;

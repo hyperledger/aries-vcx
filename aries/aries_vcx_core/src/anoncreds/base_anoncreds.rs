@@ -12,7 +12,7 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
-        nonce::Nonce, pres_request::PresentationRequest,
+        nonce::Nonce, pres_request::PresentationRequest, presentation::Presentation,
     },
 };
 use async_trait::async_trait;
@@ -28,7 +28,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn verifier_verify_proof(
         &self,
         proof_request_json: PresentationRequest,
-        proof_json: &str,
+        proof_json: Presentation,
         schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         rev_reg_defs_json: Option<

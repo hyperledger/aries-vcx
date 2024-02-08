@@ -22,6 +22,7 @@ use anoncreds_types::data_types::{
         cred_request::CredentialRequest as OurCredentialRequest,
         credential::Credential as OurCredential,
         pres_request::PresentationRequest as OurPresentationRequest,
+        presentation::Presentation as OurPresentation,
     },
 };
 use did_parser::Did;
@@ -32,7 +33,8 @@ use indy_credx::{
         CredentialDefinition as CredxCredentialDefinition,
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
-        DidValue, PresentationRequest as CredxPresentationRequest,
+        DidValue, Presentation as CredxPresentation,
+        PresentationRequest as CredxPresentationRequest,
         RevocationRegistry as CredxRevocationRegistry,
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
         RevocationRegistryDelta as CredxRevocationRegistryDelta,
@@ -344,6 +346,16 @@ impl Convert for OurCredential {
 impl Convert for OurPresentationRequest {
     type Args = ();
     type Target = CredxPresentationRequest;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+    }
+}
+
+impl Convert for OurPresentation {
+    type Args = ();
+    type Target = CredxPresentation;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
