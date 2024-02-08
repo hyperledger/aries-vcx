@@ -44,7 +44,7 @@ pub async fn validate_indy_proof(
             serde_json::from_str(&schemas_json)?,
             serde_json::from_str(&credential_defs_json)?,
             serde_json::from_str(&rev_reg_defs_json)?,
-            &rev_regs_json,
+            serde_json::from_str(&rev_regs_json)?,
         )
         .await
         .map_err(|err| err.into())

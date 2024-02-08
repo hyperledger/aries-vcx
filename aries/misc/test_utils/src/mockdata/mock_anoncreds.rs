@@ -41,7 +41,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _rev_reg_defs_json: Option<
             HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
         >,
-        _rev_regs_json: &str,
+        _rev_regs_json: Option<HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistryDelta>>>,
     ) -> VcxCoreResult<bool> {
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,

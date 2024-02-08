@@ -257,7 +257,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         rev_reg_defs_json: Option<
             HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
         >,
-        rev_regs_json: &str,
+        rev_regs_json: Option<
+            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistryDelta>>,
+        >,
     ) -> VcxCoreResult<bool> {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
@@ -272,11 +274,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         > = rev_reg_defs_json.map(|v| v.convert(())).transpose()?;
 
         let rev_regs: Option<
-            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>,
-        > = serde_json::from_str(rev_regs_json)?;
-        let rev_regs: Option<
             HashMap<CredxRevocationRegistryId, HashMap<u64, CredxRevocationRegistry>>,
-        > = rev_regs.map(|v| v.convert(())).transpose()?;
+        > = rev_regs_json.map(|v| v.convert(())).transpose()?;
         let rev_regs: Option<
             HashMap<CredxRevocationRegistryId, HashMap<u64, &CredxRevocationRegistry>>,
         > = rev_regs.as_ref().map(|regs| {

@@ -293,7 +293,9 @@ impl BaseAnonCreds for Anoncreds {
         rev_reg_defs_json: Option<
             HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
         >,
-        rev_regs_json: &str,
+        rev_regs_json: Option<
+            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistryDelta>>,
+        >,
     ) -> VcxCoreResult<bool> {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_request_json)?;
@@ -307,62 +309,13 @@ impl BaseAnonCreds for Anoncreds {
             HashMap<AnoncredsRevocationRegistryDefinitionId, AnoncredsRevocationRegistryDefinition>,
         > = rev_reg_defs_json.map(|v| v.convert(())).transpose()?;
 
-        let rev_reg_deltas: Option<
-            HashMap<AnoncredsRevocationRegistryDefinitionId, HashMap<u64, RevocationRegistryDelta>>,
-        > = serde_json::from_str(rev_regs_json)?;
-
-        let rev_status_lists = if let Some(map) = rev_reg_deltas {
-            let mut lists = Vec::new();
-            for (rev_reg_def_id, timestamp_map) in map {
-                for (timestamp, delta) in timestamp_map {
-                    let issuer_id = IssuerId::new(
-                        rev_reg_def_id
-                            .to_string()
-                            .split(':')
-                            .next()
-                            .unwrap()
-                            .to_string(),
-                    )
-                    .unwrap();
-                    let RevocationRegistryDeltaValue { accum, revoked, .. } = delta.value;
-                    let rev_reg_defs = rev_reg_defs.to_owned().unwrap();
-                    let rev_reg_def = rev_reg_defs.get(&rev_reg_def_id).unwrap();
-
-                    let max_cred_num = rev_reg_def.value.max_cred_num;
-                    let mut revocation_list = bitvec!(0; max_cred_num as usize);
-                    revoked.into_iter().for_each(|id| {
-                        revocation_list
-                            .get_mut(id as usize)
-                            .map(|mut b| *b = true)
-                            .unwrap_or_default()
-                    });
-
-                    let registry = CryptoRevocationRegistry { accum };
-
-                    let rev_status_list = RevocationStatusList::new(
-                        Some(&rev_reg_def_id.to_string()),
-                        issuer_id,
-                        revocation_list,
-                        Some(registry),
-                        Some(timestamp),
-                    )?;
-
-                    lists.push(rev_status_list);
-                }
-            }
-
-            Some(lists)
-        } else {
-            None
-        };
-
         Ok(anoncreds::verifier::verify_presentation(
             &presentation,
             &pres_req,
             &schemas,
             &cred_defs,
             rev_reg_defs.as_ref(),
-            rev_status_lists,
+            rev_regs_json.map(|r| r.convert(())).transpose()?,
             None, // no idea what this is
         )?)
     }

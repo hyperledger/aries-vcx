@@ -31,7 +31,10 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         rev_reg_defs_json: Option<
             HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
         >,
-        rev_regs_json: &str,
+        // TODO: Delta is probably not necessary, entry is enough
+        rev_regs_json: Option<
+            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistryDelta>>,
+        >,
     ) -> VcxCoreResult<bool>;
 
     async fn issuer_create_and_store_revoc_reg(

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anoncreds::{
+    cl::RevocationRegistry as CryptoRevocationRegistry,
     data_types::{
         cred_def::{
             CredentialDefinition as AnoncredsCredentialDefinition,
@@ -20,6 +21,7 @@ use anoncreds::{
         CredentialRequest as AnoncredsCredentialRequest,
         RevocationRegistry as AnoncredsRevocationRegistry,
         RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
+        RevocationStatusList as AnoncredsRevocationStatusList,
     },
 };
 use anoncreds_types::data_types::{
@@ -38,6 +40,9 @@ use anoncreds_types::data_types::{
         rev_reg_def::{
             RevocationRegistryDefinition as OurRevocationRegistryDefinition,
             RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
+        },
+        rev_reg_delta::{
+            RevocationRegistryDelta as OurRevocationRegistryDelta, RevocationRegistryDeltaValue,
         },
         schema::{AttributeNames as OurAttributeNames, Schema as OurSchema},
     },
@@ -281,5 +286,43 @@ impl Convert for HashMap<OurRevocationRegistryDefinitionId, OurRevocationRegistr
                 ))
             })
             .collect()
+    }
+}
+
+impl Convert
+    for HashMap<OurRevocationRegistryDefinitionId, HashMap<u64, OurRevocationRegistryDelta>>
+{
+    type Args = ();
+    type Target = Vec<AnoncredsRevocationStatusList>;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, args: Self::Args) -> Result<Self::Target, Self::Error> {
+        let mut lists = Vec::new();
+        for (rev_reg_def_id, timestamp_map) in self.into_iter() {
+            for (timestamp, delta) in timestamp_map {
+                let issuer_id = AnoncredsIssuerId::new(
+                    rev_reg_def_id
+                        .to_string()
+                        .split(':')
+                        .next()
+                        .unwrap()
+                        .to_string(),
+                )
+                .unwrap();
+                let RevocationRegistryDeltaValue { accum, revoked, .. } = delta.value;
+                let registry = CryptoRevocationRegistry { accum };
+
+                let rev_status_list = AnoncredsRevocationStatusList::new(
+                    Some(&rev_reg_def_id.to_string()),
+                    issuer_id,
+                    Default::default(),
+                    Some(registry),
+                    Some(timestamp),
+                )?;
+
+                lists.push(rev_status_list);
+            }
+        }
+        Ok(lists)
     }
 }
