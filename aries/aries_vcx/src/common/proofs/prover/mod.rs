@@ -67,5 +67,5 @@ pub async fn generate_indy_proof(
             Some(&revoc_states_json),
         )
         .await?;
-    Ok(proof)
+    Ok(serde_json::to_string(&proof)?)
 }

@@ -362,3 +362,13 @@ impl Convert for OurPresentation {
         Ok(serde_json::from_value(serde_json::to_value(self)?)?)
     }
 }
+
+impl Convert for CredxPresentation {
+    type Args = ();
+    type Target = OurPresentation;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+    }
+}

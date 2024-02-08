@@ -121,7 +121,7 @@ async fn create_indy_proof(
         serde_json::from_str(&schemas).unwrap(),
         serde_json::from_str(&cred_defs).unwrap(),
         serde_json::from_str(&proof_req).unwrap(),
-        serde_json::from_str(&proof).unwrap(),
+        proof,
     ))
 }
 
@@ -232,7 +232,7 @@ async fn create_proof_with_predicate(
         serde_json::from_str(&schemas).unwrap(),
         serde_json::from_str(&cred_defs).unwrap(),
         serde_json::from_str(&proof_req).unwrap(),
-        serde_json::from_str(&proof).unwrap(),
+        proof,
     ))
 }
 
@@ -333,7 +333,7 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
         validate_indy_proof(
             &setup.ledger_read,
             &setup.anoncreds,
-            &prover_proof_json,
+            &serde_json::to_string(&prover_proof_json)?,
             &proof_req_json,
         )
         .await?
@@ -412,7 +412,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
         validate_indy_proof(
             &setup.ledger_read,
             &setup.anoncreds,
-            &prover_proof_json,
+            &serde_json::to_string(&prover_proof_json)?,
             &proof_req_json,
         )
         .await
@@ -427,7 +427,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
         validate_indy_proof(
             &setup.ledger_read,
             &setup.anoncreds,
-            &prover_proof_json,
+            &serde_json::to_string(&prover_proof_json)?,
             &proof_req_json.to_string(),
         )
         .await?
@@ -507,13 +507,13 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
         validate_indy_proof(
             &setup.ledger_read,
             &setup.anoncreds,
-            &prover_proof_json,
+            &serde_json::to_string(&prover_proof_json)?,
             &proof_req_json,
         )
         .await?
     );
 
-    let mut proof_obj: serde_json::Value = serde_json::from_str(&prover_proof_json)?;
+    let mut proof_obj: serde_json::Value = serde_json::to_value(&prover_proof_json)?;
     {
         proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["raw"] = json!("Other Value");
         let prover_proof_json = serde_json::to_string(&proof_obj)?;

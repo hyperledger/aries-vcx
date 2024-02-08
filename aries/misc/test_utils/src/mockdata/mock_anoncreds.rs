@@ -120,8 +120,8 @@ impl BaseAnonCreds for MockAnoncreds {
         _schemas_json: HashMap<SchemaId, Schema>,
         _credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         _revoc_states_json: Option<&str>,
-    ) -> VcxCoreResult<String> {
-        Ok(PROOF_JSON.to_owned())
+    ) -> VcxCoreResult<Presentation> {
+        Ok(serde_json::from_str(PROOF_JSON).unwrap())
     }
 
     async fn prover_get_credential(

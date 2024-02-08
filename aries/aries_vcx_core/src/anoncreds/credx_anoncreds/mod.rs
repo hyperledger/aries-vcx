@@ -666,7 +666,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         revoc_states_json: Option<&str>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<Presentation> {
         let pres_req: CredxPresentationRequest = proof_req_json.convert(())?;
 
         let requested_credentials: Value = serde_json::from_str(requested_credentials_json)?;
@@ -802,7 +802,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             &hashmap_as_ref(&credential_defs_json.convert(())?),
         )?;
 
-        Ok(serde_json::to_string(&presentation)?)
+        Ok(presentation.convert(())?)
     }
 
     async fn prover_get_credential(
