@@ -270,6 +270,9 @@ impl Anoncreds {
                     attrs.push(Value::Object(restriction));
                     json!({ "$and": attrs })
                 }
+                Value::Null => {
+                    json!({ "$and": attrs })
+                }
                 _ => Err(AriesVcxCoreError::from_msg(
                     AriesVcxCoreErrorKind::InvalidInput,
                     "Invalid attribute restrictions (must be array or an object)",
@@ -882,9 +885,9 @@ impl BaseAnonCreds for Anoncreds {
     async fn prover_get_credentials_for_proof_req(
         &self,
         wallet: &impl BaseWallet,
-        proof_request_json: &str,
+        proof_request_json: PresentationRequest,
     ) -> VcxCoreResult<String> {
-        let proof_req_v: Value = serde_json::from_str(proof_request_json).map_err(|e| {
+        let proof_req_v: Value = serde_json::to_value(proof_request_json).map_err(|e| {
             AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidProofRequest, e)
         })?;
 

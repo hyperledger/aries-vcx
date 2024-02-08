@@ -80,7 +80,10 @@ impl Prover {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
         let json_retrieved_credentials = anoncreds
-            .prover_get_credentials_for_proof_req(wallet, &presentation_request)
+            .prover_get_credentials_for_proof_req(
+                wallet,
+                serde_json::from_str(&presentation_request)?,
+            )
             .await?;
         trace!(
             "Prover::retrieve_credentials >>> presentation_request: {presentation_request}, \

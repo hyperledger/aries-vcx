@@ -102,7 +102,7 @@ async fn create_indy_proof(
     .to_string();
 
     anoncreds_holder
-        .prover_get_credentials_for_proof_req(wallet_holder, &proof_req)
+        .prover_get_credentials_for_proof_req(wallet_holder, serde_json::from_str(&proof_req)?)
         .await?;
 
     let proof = anoncreds_holder
@@ -213,7 +213,7 @@ async fn create_proof_with_predicate(
     .to_string();
 
     anoncreds_holder
-        .prover_get_credentials_for_proof_req(wallet_holder, &proof_req)
+        .prover_get_credentials_for_proof_req(wallet_holder, serde_json::from_str(&proof_req)?)
         .await?;
 
     let proof = anoncreds_holder

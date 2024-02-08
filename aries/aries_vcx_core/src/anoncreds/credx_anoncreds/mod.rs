@@ -19,8 +19,7 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
-        pres_request::PresentationRequest,
-        nonce::Nonce,
+        nonce::Nonce, pres_request::PresentationRequest,
     },
 };
 use async_trait::async_trait;
@@ -32,8 +31,9 @@ use credx::{
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         CredentialRequestMetadata, CredentialRevocationConfig, CredentialRevocationState,
-        IssuanceType, LinkSecret, PresentCredentials, Presentation, PresentationRequest as CredxPresentationRequest,
-        RegistryType, RevocationRegistry as CredxRevocationRegistry,
+        IssuanceType, LinkSecret, PresentCredentials, Presentation,
+        PresentationRequest as CredxPresentationRequest, RegistryType,
+        RevocationRegistry as CredxRevocationRegistry,
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
         RevocationRegistryDelta as CredxRevocationRegistryDelta,
         RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
@@ -233,6 +233,9 @@ impl IndyCredxAnonCreds {
                 }
                 Value::Object(restriction) => {
                     attrs.push(Value::Object(restriction));
+                    json!({ "$and": attrs })
+                }
+                Value::Null => {
                     json!({ "$and": attrs })
                 }
                 _ => Err(AriesVcxCoreError::from_msg(
@@ -838,9 +841,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn prover_get_credentials_for_proof_req(
         &self,
         wallet: &impl BaseWallet,
-        proof_req: &str,
+        proof_req: PresentationRequest,
     ) -> VcxCoreResult<String> {
-        let proof_req_v: Value = serde_json::from_str(proof_req).map_err(|e| {
+        let proof_req_v: Value = serde_json::to_value(proof_req).map_err(|e| {
             AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidProofRequest, e)
         })?;
 

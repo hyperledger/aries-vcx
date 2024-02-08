@@ -151,7 +151,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn prover_get_credentials_for_proof_req(
         &self,
         _wallet: &impl BaseWallet,
-        _proof_request_json: &str,
+        _proof_request_json: PresentationRequest,
     ) -> VcxCoreResult<String> {
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
