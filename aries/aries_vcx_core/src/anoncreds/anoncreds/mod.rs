@@ -1079,7 +1079,6 @@ impl BaseAnonCreds for Anoncreds {
     async fn prover_store_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_id: Option<&str>,
         cred_req_metadata_json: &str,
         cred_json: Credential,
         cred_def_json: CredentialDefinition,
@@ -1146,7 +1145,7 @@ impl BaseAnonCreds for Anoncreds {
             tags[marker_tag_name] = Value::String("1".to_string());
         }
 
-        let credential_id = cred_id.map_or(Uuid::new_v4().to_string(), String::from);
+        let credential_id = Uuid::new_v4().to_string();
 
         let record_value = serde_json::to_string(&credential)?;
         let tags = serde_json::from_value(tags.clone())?;

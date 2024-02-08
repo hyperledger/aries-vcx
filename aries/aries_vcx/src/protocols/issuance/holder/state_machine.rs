@@ -571,7 +571,6 @@ async fn _store_credential(
     let cred_id = anoncreds
         .prover_store_credential(
             wallet,
-            None,
             req_meta,
             serde_json::from_str(&credential_json)?,
             serde_json::from_str(cred_def_json)?,

@@ -132,7 +132,6 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn prover_store_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_id: Option<&str>,
         cred_req_metadata_json: &str,
         cred_json: Credential,
         cred_def_json: CredentialDefinition,
