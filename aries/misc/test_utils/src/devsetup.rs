@@ -39,8 +39,6 @@ pub mod vdrtools_wallet;
 #[cfg(feature = "vdrtools_wallet")]
 use crate::devsetup::vdrtools_wallet::dev_build_indy_wallet;
 
-pub mod mock_wallet;
-
 const DEFAULT_AML_LABEL: &str = "eula";
 
 pub fn write_file<P: AsRef<Path>>(file: P, content: &str) -> VcxCoreResult<()>
@@ -219,7 +217,7 @@ pub async fn dev_build_featured_wallet(key_seed: &str) -> (String, impl BaseWall
 
     #[cfg(not(feature = "vdrtools_wallet"))]
     {
-        use crate::{constants::INSTITUTION_DID, devsetup::mock_wallet::MockWallet};
+        use crate::{constants::INSTITUTION_DID, mock_wallet::MockWallet};
 
         return (INSTITUTION_DID.to_owned(), MockWallet);
     }

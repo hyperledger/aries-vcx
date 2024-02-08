@@ -5,7 +5,7 @@ use aries_vcx_core::{
             did_data::DidData, record::Record, search_filter::SearchFilter, BaseWallet, DidWallet,
             RecordWallet,
         },
-        entry_tags::EntryTags,
+        record_tags::RecordTags,
         structs_io::UnpackMessageOutput,
     },
 };

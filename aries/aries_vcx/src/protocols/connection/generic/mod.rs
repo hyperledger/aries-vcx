@@ -229,7 +229,7 @@ mod connection_serde_tests {
             notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
         },
     };
-    use test_utils::{devsetup::mock_wallet::MockWallet, mockdata::mock_ledger::MockLedger};
+    use test_utils::{mock_wallet::MockWallet, mockdata::mock_ledger::MockLedger};
     use url::Url;
     use uuid::Uuid;
 
