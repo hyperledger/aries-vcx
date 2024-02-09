@@ -1099,12 +1099,6 @@ impl BaseAnonCreds for Anoncreds {
         cred_def_json: CredentialDefinition,
         master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
-        // let mut cred_def_json: Value = serde_json::from_str(cred_def_json)?;
-        // let cred_def_id = cred_def_json["id"].as_str().unwrap().to_string();
-        // cred_def_json.as_object_mut().unwrap().insert(
-        //     "issuerId".to_owned(),
-        //     cred_def_id.split(':').next().unwrap().into(),
-        // );
         let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;
         let credential_offer: AnoncredsCredentialOffer = serde_json::from_str(cred_offer_json)?;
         let link_secret = self.get_link_secret(wallet, master_secret_id).await?;
