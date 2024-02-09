@@ -79,7 +79,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_values_json: &str,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<&Path>,
-    ) -> VcxCoreResult<(String, Option<String>)>;
+    ) -> VcxCoreResult<(Credential, Option<String>)>;
 
     #[allow(clippy::too_many_arguments)]
     async fn prover_create_proof(

@@ -540,7 +540,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         cred_values_json: &str,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<&Path>,
-    ) -> VcxCoreResult<(String, Option<String>)> {
+    ) -> VcxCoreResult<(Credential, Option<String>)> {
         let rev_reg_id = rev_reg_id.map(ToString::to_string);
         let cred_offer: CredxCredentialOffer = cred_offer_json.convert(())?;
         let cred_request: CredxCredentialRequest = cred_req_json.convert(())?;
@@ -645,9 +645,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 None
             };
 
-        let str_cred = serde_json::to_string(&cred)?;
-
-        Ok((str_cred, cred_rev_id))
+        Ok((cred.convert(())?, cred_rev_id))
     }
 
     /// * `requested_credentials_json`: either a credential or self-attested attribute for each

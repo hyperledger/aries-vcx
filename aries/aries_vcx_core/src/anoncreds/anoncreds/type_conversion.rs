@@ -353,6 +353,32 @@ impl Convert for OurCredential {
     }
 }
 
+impl Convert for AnoncredsCredential {
+    type Args = ();
+    type Target = OurCredential;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(OurCredential {
+            schema_id: OurSchemaId::new_unchecked(self.schema_id.to_string()),
+            cred_def_id: OurCredentialDefinitionId::new(self.cred_def_id.to_string())?,
+            rev_reg_id: self
+                .rev_reg_id
+                .as_ref()
+                .map(ToString::to_string)
+                .map(OurRevocationRegistryDefinitionId::new)
+                .transpose()?,
+            values: serde_json::from_value(serde_json::to_value(self.values)?)?,
+            signature: serde_json::from_value(serde_json::to_value(self.signature)?)?,
+            signature_correctness_proof: serde_json::from_value(serde_json::to_value(
+                self.signature_correctness_proof,
+            )?)?,
+            rev_reg: serde_json::from_value(serde_json::to_value(self.rev_reg)?)?,
+            witness: serde_json::from_value(serde_json::to_value(self.witness)?)?,
+        })
+    }
+}
+
 impl Convert for OurPresentationRequest {
     type Args = ();
     type Target = AnoncredsPresentationRequest;

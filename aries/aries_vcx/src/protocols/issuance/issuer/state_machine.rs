@@ -1,5 +1,6 @@
 use std::{fmt::Display, path::Path};
 
+use anoncreds_types::data_types::messages::credential::Credential;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -101,12 +102,15 @@ pub struct IssuerSM {
     pub(crate) state: IssuerFullState,
 }
 
-fn build_credential_message(libindy_credential: String, thread_id: String) -> IssueCredentialV1 {
+fn build_credential_message(
+    libindy_credential: Credential,
+    thread_id: String,
+) -> IssueCredentialV1 {
     let id = Uuid::new_v4().to_string();
 
     let content = IssueCredentialV1Content::builder()
         .credentials_attach(vec![make_attach_from_str!(
-            &libindy_credential,
+            &serde_json::to_string(&libindy_credential).unwrap(),
             AttachmentId::Credential.as_ref().to_string()
         )])
         .build();

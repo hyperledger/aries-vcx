@@ -107,8 +107,8 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_values_json: &str,
         _rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         _tails_dir: Option<&Path>,
-    ) -> VcxCoreResult<(String, Option<String>)> {
-        Ok((CREDENTIAL_JSON.to_owned(), None))
+    ) -> VcxCoreResult<(Credential, Option<String>)> {
+        Ok((serde_json::from_str(CREDENTIAL_JSON)?, None))
     }
 
     async fn prover_create_proof(

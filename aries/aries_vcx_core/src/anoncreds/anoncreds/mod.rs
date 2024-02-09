@@ -562,7 +562,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_values_json: &str,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<&Path>,
-    ) -> VcxCoreResult<(String, Option<String>)> {
+    ) -> VcxCoreResult<(Credential, Option<String>)> {
         let cred_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
         let cred_request: AnoncredsCredentialRequest = cred_req_json.convert(())?;
         let cred_values = serde_json::from_str(cred_values_json)?;
@@ -694,9 +694,7 @@ impl BaseAnonCreds for Anoncreds {
                 None
             };
 
-        let str_cred = serde_json::to_string(&cred)?;
-
-        Ok((str_cred, cred_rev_id))
+        Ok((cred.convert(())?, cred_rev_id))
     }
 
     #[allow(clippy::too_many_arguments)]
