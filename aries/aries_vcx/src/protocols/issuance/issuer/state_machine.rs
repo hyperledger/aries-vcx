@@ -601,7 +601,7 @@ async fn create_credential(
             wallet,
             serde_json::from_str(&offer)?,
             serde_json::from_str(&request)?,
-            &cred_data,
+            serde_json::from_str(&cred_data)?,
             rev_reg_id
                 .to_owned()
                 .map(TryInto::try_into)

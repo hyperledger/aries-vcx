@@ -24,7 +24,8 @@ use anoncreds::{
     types::{
         CredentialOffer as AnoncredsCredentialOffer,
         CredentialRequest as AnoncredsCredentialRequest, CredentialRequestMetadata,
-        CredentialRevocationConfig, CredentialRevocationState, LinkSecret, PresentCredentials,
+        CredentialRevocationConfig, CredentialRevocationState,
+        CredentialValues as AnoncredsCredentialValues, LinkSecret, PresentCredentials,
         Presentation as AnoncredsPresentation, PresentationRequest as AnoncredsPresentationRequest,
         RegistryType, RevocationRegistry as AnoncredsRevocationRegistry,
         RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
@@ -44,8 +45,12 @@ use anoncreds_types::data_types::{
         schema::Schema,
     },
     messages::{
-        cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
-        nonce::Nonce, pres_request::PresentationRequest, presentation::Presentation,
+        cred_offer::CredentialOffer,
+        cred_request::CredentialRequest,
+        credential::{Credential, CredentialValues},
+        nonce::Nonce,
+        pres_request::PresentationRequest,
+        presentation::Presentation,
     },
 };
 use async_trait::async_trait;
@@ -559,13 +564,13 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         cred_offer_json: CredentialOffer,
         cred_req_json: CredentialRequest,
-        cred_values_json: &str,
+        cred_values_json: CredentialValues,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<&Path>,
     ) -> VcxCoreResult<(Credential, Option<u32>)> {
         let cred_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
         let cred_request: AnoncredsCredentialRequest = cred_req_json.convert(())?;
-        let cred_values = serde_json::from_str(cred_values_json)?;
+        let cred_values: AnoncredsCredentialValues = cred_values_json.convert(())?;
 
         let cred_def_id = &cred_offer.cred_def_id.0;
 

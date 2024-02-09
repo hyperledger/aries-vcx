@@ -149,7 +149,7 @@ pub async fn create_and_write_credential(
             wallet_issuer,
             offer,
             serde_json::from_str(&req).unwrap(),
-            &encoded_attributes,
+            serde_json::from_str(&encoded_attributes).unwrap(),
             rev_reg_id
                 .map(TryInto::try_into)
                 .transpose()

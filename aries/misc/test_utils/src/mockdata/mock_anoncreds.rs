@@ -11,8 +11,12 @@ use anoncreds_types::data_types::{
         schema::Schema,
     },
     messages::{
-        cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
-        nonce::Nonce, pres_request::PresentationRequest, presentation::Presentation,
+        cred_offer::CredentialOffer,
+        cred_request::CredentialRequest,
+        credential::{Credential, CredentialValues},
+        nonce::Nonce,
+        pres_request::PresentationRequest,
+        presentation::Presentation,
     },
 };
 use aries_vcx_core::{
@@ -104,7 +108,7 @@ impl BaseAnonCreds for MockAnoncreds {
         __wallet: &impl BaseWallet,
         _cred_offer_json: CredentialOffer,
         _cred_req_json: CredentialRequest,
-        _cred_values_json: &str,
+        _cred_values_json: CredentialValues,
         _rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         _tails_dir: Option<&Path>,
     ) -> VcxCoreResult<(Credential, Option<u32>)> {

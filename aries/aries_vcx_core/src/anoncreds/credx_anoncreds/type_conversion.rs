@@ -20,7 +20,7 @@ use anoncreds_types::data_types::{
     messages::{
         cred_offer::CredentialOffer as OurCredentialOffer,
         cred_request::CredentialRequest as OurCredentialRequest,
-        credential::Credential as OurCredential,
+        credential::{Credential as OurCredential, CredentialValues as OurCredentialValues},
         pres_request::PresentationRequest as OurPresentationRequest,
         presentation::Presentation as OurPresentation,
     },
@@ -33,7 +33,7 @@ use indy_credx::{
         CredentialDefinition as CredxCredentialDefinition,
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
-        DidValue, Presentation as CredxPresentation,
+        CredentialValues as CredxCredentialValues, DidValue, Presentation as CredxPresentation,
         PresentationRequest as CredxPresentationRequest,
         RevocationRegistry as CredxRevocationRegistry,
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
@@ -390,6 +390,16 @@ impl Convert for OurPresentation {
 impl Convert for CredxPresentation {
     type Args = ();
     type Target = OurPresentation;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+    }
+}
+
+impl Convert for OurCredentialValues {
+    type Args = ();
+    type Target = CredxCredentialValues;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {

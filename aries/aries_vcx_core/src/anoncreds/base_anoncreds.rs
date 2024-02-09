@@ -11,8 +11,12 @@ use anoncreds_types::data_types::{
         schema::Schema,
     },
     messages::{
-        cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
-        nonce::Nonce, pres_request::PresentationRequest, presentation::Presentation,
+        cred_offer::CredentialOffer,
+        cred_request::CredentialRequest,
+        credential::{Credential, CredentialValues},
+        nonce::Nonce,
+        pres_request::PresentationRequest,
+        presentation::Presentation,
     },
 };
 use async_trait::async_trait;
@@ -76,7 +80,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         wallet: &impl BaseWallet,
         cred_offer_json: CredentialOffer,
         cred_req_json: CredentialRequest,
-        cred_values_json: &str,
+        cred_values_json: CredentialValues,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<&Path>,
     ) -> VcxCoreResult<(Credential, Option<u32>)>;

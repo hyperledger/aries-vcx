@@ -18,8 +18,12 @@ use anoncreds_types::data_types::{
         schema::Schema,
     },
     messages::{
-        cred_offer::CredentialOffer, cred_request::CredentialRequest, credential::Credential,
-        nonce::Nonce, pres_request::PresentationRequest, presentation::Presentation,
+        cred_offer::CredentialOffer,
+        cred_request::CredentialRequest,
+        credential::{Credential, CredentialValues},
+        nonce::Nonce,
+        pres_request::PresentationRequest,
+        presentation::Presentation,
     },
 };
 use async_trait::async_trait;
@@ -31,9 +35,9 @@ use credx::{
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         CredentialRequestMetadata, CredentialRevocationConfig, CredentialRevocationState,
-        IssuanceType, LinkSecret, PresentCredentials, Presentation as CredxPresentation,
-        PresentationRequest as CredxPresentationRequest, RegistryType,
-        RevocationRegistry as CredxRevocationRegistry,
+        CredentialValues as CredxCredentialValues, IssuanceType, LinkSecret, PresentCredentials,
+        Presentation as CredxPresentation, PresentationRequest as CredxPresentationRequest,
+        RegistryType, RevocationRegistry as CredxRevocationRegistry,
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
         RevocationRegistryDelta as CredxRevocationRegistryDelta,
         RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
@@ -537,14 +541,14 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         wallet: &impl BaseWallet,
         cred_offer_json: CredentialOffer,
         cred_req_json: CredentialRequest,
-        cred_values_json: &str,
+        cred_values_json: CredentialValues,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<&Path>,
     ) -> VcxCoreResult<(Credential, Option<u32>)> {
         let rev_reg_id = rev_reg_id.map(ToString::to_string);
         let cred_offer: CredxCredentialOffer = cred_offer_json.convert(())?;
         let cred_request: CredxCredentialRequest = cred_req_json.convert(())?;
-        let cred_values = serde_json::from_str(cred_values_json)?;
+        let cred_values: CredxCredentialValues = cred_values_json.convert(())?;
 
         // TODO: Might need to qualify with offer method or something - look into how vdrtools does
         // it
