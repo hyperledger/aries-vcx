@@ -18,14 +18,14 @@ pub struct ProverCredential {
     pub schema_id: String,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
-    pub cred_rev_id: Option<String>,
+    pub cred_rev_id: Option<u32>,
 }
 
 pub async fn get_cred_rev_id(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
     cred_id: &str,
-) -> VcxResult<String> {
+) -> VcxResult<u32> {
     let cred_json = anoncreds.prover_get_credential(wallet, cred_id).await?;
     let prover_cred = serde_json::from_str::<ProverCredential>(&cred_json).map_err(|err| {
         AriesVcxError::from_msg(
@@ -42,7 +42,7 @@ pub async fn get_cred_rev_id(
 pub async fn is_cred_revoked(
     ledger: &impl AnoncredsLedgerRead,
     rev_reg_id: &str,
-    rev_id: &str,
+    rev_id: u32,
 ) -> VcxResult<bool> {
     let to = Some(OffsetDateTime::now_utc().unix_timestamp() as u64 + 100);
     let (rev_reg_delta_json, _) = ledger
@@ -51,8 +51,5 @@ pub async fn is_cred_revoked(
     let rev_reg_delta =
         RevocationRegistryDelta::create_from_ledger(&serde_json::to_string(&rev_reg_delta_json)?)
             .await?;
-    Ok(rev_reg_delta
-        .revoked()
-        .iter()
-        .any(|s| s.to_string().eq(rev_id)))
+    Ok(rev_reg_delta.revoked().iter().any(|s| s.eq(&rev_id)))
 }

@@ -84,7 +84,7 @@ impl Display for IssuerFullState {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RevocationInfoV1 {
-    pub cred_rev_id: Option<String>,
+    pub cred_rev_id: Option<u32>,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
 }
@@ -199,24 +199,18 @@ impl IssuerSM {
         }
     }
 
-    pub fn get_rev_id(&self) -> VcxResult<String> {
+    pub fn get_rev_id(&self) -> VcxResult<u32> {
         let err = AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidState,
             "No revocation info found - is this credential revokable?",
         );
         let rev_id = match &self.state {
-            IssuerFullState::CredentialSet(state) => state
-                .revocation_info_v1
-                .as_ref()
-                .ok_or(err)?
-                .cred_rev_id
-                .clone(),
-            IssuerFullState::Finished(state) => state
-                .revocation_info_v1
-                .as_ref()
-                .ok_or(err)?
-                .cred_rev_id
-                .clone(),
+            IssuerFullState::CredentialSet(state) => {
+                state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id
+            }
+            IssuerFullState::Finished(state) => {
+                state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id
+            }
             _ => None,
         };
         rev_id.ok_or(AriesVcxError::from_msg(
@@ -284,7 +278,7 @@ impl IssuerSM {
         if self.is_revokable() {
             let rev_reg_id = self.get_rev_reg_id()?;
             let rev_id = self.get_rev_id()?;
-            is_cred_revoked(ledger, &rev_reg_id, &rev_id).await
+            is_cred_revoked(ledger, &rev_reg_id, rev_id).await
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -579,7 +573,7 @@ async fn create_credential(
     offer: &OfferCredentialV1,
     cred_data: &str,
     thread_id: String,
-) -> VcxResult<(IssueCredentialV1, Option<String>)> {
+) -> VcxResult<(IssueCredentialV1, Option<u32>)> {
     let offer = get_attach_as_string!(&offer.content.offers_attach);
 
     trace!(

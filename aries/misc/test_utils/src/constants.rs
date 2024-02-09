@@ -25,7 +25,7 @@ pub static INDY_PROOF_REQ_JSON: &str = r#"{ "nonce":"123432421212", "name":"proo
 pub static DEFAULT_PROOF_NAME: &str = "PROOF_NAME";
 pub static POOL1_TXN: &str = "pool1.txn";
 pub static INSTITUTION_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
-pub static CRED_REV_ID: &str = "1";
+pub static CRED_REV_ID: u32 = 1;
 pub static SCHEMA_ID: &str = r#"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4"#;
 pub fn schema_id() -> SchemaId {
     SchemaId::new(SCHEMA_ID).unwrap()
@@ -113,7 +113,6 @@ pub fn address_schema_id() -> SchemaId {
 }
 pub static ADDRESS_CRED_DEF_ID: &str = r#"2hoqvcwupRTUNkXn6ArYzs:3:CL:2479"#;
 pub static ADDRESS_CRED_ID: &str = "2dea21e2-1404-4f85-966f-d03f403aac71";
-pub static ADDRESS_CRED_REV_ID: &str = "Address Cred Rev Id";
 pub static ADDRESS_REV_REG_ID: &str = "Address Rev Reg Id";
 pub static LICENCE_CRED_ID: &str = "92556f60-d290-4b58-9a43-05c25aac214e";
 

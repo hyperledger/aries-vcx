@@ -26,7 +26,7 @@ use crate::{
 pub struct RevocationNotificationReceiverSM {
     state: ReceiverFullState,
     rev_reg_id: String,
-    cred_rev_id: String,
+    cred_rev_id: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -37,7 +37,7 @@ pub enum ReceiverFullState {
 }
 
 impl RevocationNotificationReceiverSM {
-    pub fn create(rev_reg_id: String, cred_rev_id: String) -> Self {
+    pub fn create(rev_reg_id: String, cred_rev_id: u32) -> Self {
         Self {
             state: ReceiverFullState::Initial(InitialState),
             rev_reg_id,
@@ -217,7 +217,7 @@ impl RevocationNotificationReceiverSM {
         };
         let check_cred_rev_id = |()| -> VcxResult<()> {
             if let Some(cred_rev_id) = parts.get(1) {
-                if *cred_rev_id != self.cred_rev_id {
+                if cred_rev_id.parse::<u32>()? != self.cred_rev_id {
                     Err(AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidRevocationDetails,
                         "Credential revocation ID in received notification does not match \

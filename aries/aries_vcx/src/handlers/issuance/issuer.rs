@@ -210,7 +210,7 @@ impl Issuer {
         self.issuer_sm.is_terminal_state()
     }
 
-    pub fn get_revocation_id(&self) -> VcxResult<String> {
+    pub fn get_revocation_id(&self) -> VcxResult<u32> {
         self.issuer_sm
             .get_revocation_info()
             .ok_or(AriesVcxError::from_msg(
@@ -250,7 +250,7 @@ impl Issuer {
                 .revoke_credential_local(
                     wallet,
                     &rev_reg_id.try_into()?,
-                    cred_rev_id.parse()?,
+                    cred_rev_id,
                     rev_reg_delta_json,
                 )
                 .await?;
@@ -267,7 +267,7 @@ impl Issuer {
         self.issuer_sm.get_rev_reg_id()
     }
 
-    pub fn get_rev_id(&self) -> VcxResult<String> {
+    pub fn get_rev_id(&self) -> VcxResult<u32> {
         self.issuer_sm.get_rev_id()
     }
 

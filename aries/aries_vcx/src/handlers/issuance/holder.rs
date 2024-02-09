@@ -233,7 +233,7 @@ impl Holder {
         &self,
         wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
-    ) -> VcxResult<String> {
+    ) -> VcxResult<u32> {
         get_cred_rev_id(wallet, anoncreds, &self.get_cred_id()?).await
     }
 

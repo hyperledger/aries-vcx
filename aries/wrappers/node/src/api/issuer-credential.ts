@@ -174,7 +174,7 @@ export class IssuerCredential extends VcxBaseWithState<IIssuerCredentialData, Is
     }
   }
 
-  public getRevocationId(): string {
+  public getRevocationId(): number {
     try {
       return ffi.issuerCredentialGetRevocationId(this.handle);
     } catch (err: any) {

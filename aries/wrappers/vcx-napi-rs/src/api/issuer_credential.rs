@@ -79,7 +79,7 @@ fn issuer_credential_is_revokable(handle_credential: u32) -> napi::Result<bool> 
 }
 
 #[napi]
-fn issuer_credential_get_revocation_id(handle_credential: u32) -> napi::Result<String> {
+fn issuer_credential_get_revocation_id(handle_credential: u32) -> napi::Result<u32> {
     issuer_credential::get_revocation_id(handle_credential).map_err(to_napi_err)
 }
 

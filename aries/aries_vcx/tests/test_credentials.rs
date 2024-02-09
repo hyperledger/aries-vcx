@@ -113,7 +113,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
     .await;
     let cred_rev_id = get_cred_rev_id(&setup.wallet, &setup.anoncreds, &cred_id).await?;
 
-    assert!(!is_cred_revoked(&setup.ledger_read, &rev_reg.rev_reg_id, &cred_rev_id).await?);
+    assert!(!is_cred_revoked(&setup.ledger_read, &rev_reg.rev_reg_id, cred_rev_id).await?);
 
     let rev_reg_delta_json = setup
         .ledger_read
@@ -125,7 +125,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
         .revoke_credential_local(
             &setup.wallet,
             &rev_reg.rev_reg_id.to_owned().try_into()?,
-            cred_rev_id.parse()?,
+            cred_rev_id,
             rev_reg_delta_json,
         )
         .await?;
@@ -140,6 +140,6 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
 
     std::thread::sleep(std::time::Duration::from_millis(500));
 
-    assert!(is_cred_revoked(&setup.ledger_read, &rev_reg.rev_reg_id, &cred_rev_id).await?);
+    assert!(is_cred_revoked(&setup.ledger_read, &rev_reg.rev_reg_id, cred_rev_id).await?);
     Ok(())
 }

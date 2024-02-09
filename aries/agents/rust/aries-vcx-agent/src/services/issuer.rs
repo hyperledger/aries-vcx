@@ -181,7 +181,7 @@ impl ServiceCredentialsIssuer {
         issuer.get_rev_reg_id().map_err(|err| err.into())
     }
 
-    pub fn get_rev_id(&self, thread_id: &str) -> AgentResult<String> {
+    pub fn get_rev_id(&self, thread_id: &str) -> AgentResult<u32> {
         let issuer = self.get_issuer(thread_id)?;
         issuer.get_rev_id().map_err(|err| err.into())
     }

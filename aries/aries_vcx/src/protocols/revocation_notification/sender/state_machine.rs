@@ -34,7 +34,7 @@ pub enum SenderFullState {
 #[derive(Default, Builder)]
 pub struct SenderConfig {
     rev_reg_id: String,
-    cred_rev_id: String,
+    cred_rev_id: u32,
     comment: Option<String>,
     ack_on: Vec<AckOn>,
 }

@@ -107,7 +107,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_values_json: &str,
         _rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         _tails_dir: Option<&Path>,
-    ) -> VcxCoreResult<(Credential, Option<String>)> {
+    ) -> VcxCoreResult<(Credential, Option<u32>)> {
         Ok((serde_json::from_str(CREDENTIAL_JSON)?, None))
     }
 

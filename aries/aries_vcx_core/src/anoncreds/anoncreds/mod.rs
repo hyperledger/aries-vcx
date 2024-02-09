@@ -562,7 +562,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_values_json: &str,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<&Path>,
-    ) -> VcxCoreResult<(Credential, Option<String>)> {
+    ) -> VcxCoreResult<(Credential, Option<u32>)> {
         let cred_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
         let cred_request: AnoncredsCredentialRequest = cred_req_json.convert(())?;
         let cred_values = serde_json::from_str(cred_values_json)?;
@@ -674,7 +674,7 @@ impl BaseAnonCreds for Anoncreds {
             if let (Some(rev_reg_id), Some(rev_reg), Some((_, _, _, _, rev_reg_info, _))) =
                 (rev_reg_id, rev_reg, revocation_config_parts)
             {
-                let cred_rev_id = rev_reg_info.curr_id.to_string();
+                let cred_rev_id = rev_reg_info.curr_id;
                 let str_rev_reg_info = serde_json::to_string(&rev_reg_info)?;
 
                 let rev_reg = AnoncredsRevocationRegistry {
@@ -1402,11 +1402,9 @@ fn _make_cred_info(credential_id: &str, cred: &Credential) -> VcxCoreResult<Valu
     let schema_id = &cred.schema_id.0;
     let cred_def_id = &cred.cred_def_id.0;
     let rev_reg_id = cred.rev_reg_id.as_ref().map(|x| x.0.to_string());
-    let cred_rev_id = rev_info.and_then(|x| x.get("i")).and_then(|i| {
-        i.as_str()
-            .map(|str_i| str_i.to_string())
-            .or(i.as_i64().map(|int_i| int_i.to_string()))
-    });
+    let cred_rev_id: Option<u32> = rev_info
+        .and_then(|x| x.get("i"))
+        .and_then(|i| i.as_u64().map(|i| i as u32));
 
     let mut attrs = json!({});
     for (x, y) in cred.values.0.iter() {

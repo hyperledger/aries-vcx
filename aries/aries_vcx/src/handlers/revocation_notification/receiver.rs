@@ -14,7 +14,7 @@ pub struct RevocationNotificationReceiver {
 }
 
 impl RevocationNotificationReceiver {
-    pub fn build(rev_reg_id: String, cred_rev_id: String) -> Self {
+    pub fn build(rev_reg_id: String, cred_rev_id: u32) -> Self {
         Self {
             receiver_sm: RevocationNotificationReceiverSM::create(rev_reg_id, cred_rev_id),
         }

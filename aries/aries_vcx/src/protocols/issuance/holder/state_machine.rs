@@ -449,7 +449,7 @@ impl HolderSM {
             let rev_reg_id = self.get_rev_reg_id()?;
             let cred_id = self.get_cred_id()?;
             let rev_id = get_cred_rev_id(wallet, anoncreds, &cred_id).await?;
-            is_cred_revoked(ledger, &rev_reg_id, &rev_id).await
+            is_cred_revoked(ledger, &rev_reg_id, rev_id).await
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
