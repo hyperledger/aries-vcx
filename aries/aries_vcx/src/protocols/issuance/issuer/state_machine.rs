@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, path::Path};
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
@@ -339,7 +339,7 @@ impl IssuerSM {
                 IssuerFullState::OfferSet(OfferSetState::new(
                     cred_offer_msg,
                     &offer_info.credential_json,
-                    &offer_info.cred_def_id,
+                    offer_info.cred_def_id.clone(),
                     offer_info.rev_reg_id.clone(),
                     offer_info.tails_file.clone(),
                 ))
@@ -598,14 +598,18 @@ async fn create_credential(
     let request = get_attach_as_string!(&request.content.requests_attach);
 
     let cred_data = encode_attributes(cred_data)?;
-    let (libindy_credential, cred_rev_id, _) = anoncreds
+    let (libindy_credential, cred_rev_id) = anoncreds
         .issuer_create_credential(
             wallet,
-            &offer,
-            &request,
+            serde_json::from_str(&offer)?,
+            serde_json::from_str(&request)?,
             &cred_data,
-            rev_reg_id.clone(),
-            tails_file.clone(),
+            rev_reg_id
+                .to_owned()
+                .map(TryInto::try_into)
+                .transpose()?
+                .as_ref(),
+            tails_file.clone().as_deref().map(Path::new),
         )
         .await?;
     let msg_issue_credential = build_credential_message(libindy_credential, thread_id);

@@ -40,7 +40,7 @@ async fn test_pool_prover_get_credential() -> Result<(), Box<dyn Error>> {
         &setup.anoncreds,
         &setup.ledger_write,
         &setup.institution_did,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
     )
     .await;
     let cred_id = create_and_write_credential(
@@ -62,7 +62,10 @@ async fn test_pool_prover_get_credential() -> Result<(), Box<dyn Error>> {
     let prover_cred = serde_json::from_str::<ProverCredential>(&cred_json)?;
 
     assert_eq!(prover_cred.schema_id, schema.schema_id.to_string());
-    assert_eq!(prover_cred.cred_def_id, cred_def.get_cred_def_id());
+    assert_eq!(
+        prover_cred.cred_def_id,
+        cred_def.get_cred_def_id().to_string()
+    );
     assert_eq!(prover_cred.cred_rev_id.unwrap(), cred_rev_id);
     assert_eq!(prover_cred.rev_reg_id.unwrap(), rev_reg.rev_reg_id);
     Ok(())
@@ -95,7 +98,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
         &setup.anoncreds,
         &setup.ledger_write,
         &setup.institution_did,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
     )
     .await;
     let cred_id = create_and_write_credential(
@@ -114,16 +117,16 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
 
     let rev_reg_delta_json = setup
         .ledger_read
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+        .get_rev_reg_delta_json(&rev_reg.rev_reg_id.to_owned().try_into()?, None, None)
         .await?
-        .1;
+        .0;
     setup
         .anoncreds
         .revoke_credential_local(
             &setup.wallet,
-            &rev_reg.rev_reg_id,
-            &cred_rev_id,
-            &rev_reg_delta_json,
+            &rev_reg.rev_reg_id.to_owned().try_into()?,
+            cred_rev_id.parse()?,
+            rev_reg_delta_json,
         )
         .await?;
     rev_reg

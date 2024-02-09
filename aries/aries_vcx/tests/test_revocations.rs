@@ -43,7 +43,7 @@ async fn test_agency_pool_basic_revocation() -> Result<(), Box<dyn Error>> {
     let requested_attrs = requested_attrs_address(
         &institution.institution_did,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         None,
         Some(time_after_revocation),
     );
@@ -104,7 +104,7 @@ async fn test_agency_pool_revoked_credential_might_still_work() -> Result<(), Bo
     let requested_attrs = requested_attrs_address(
         &institution.institution_did,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some(from),
         Some(to),
     );
@@ -158,7 +158,7 @@ async fn test_agency_pool_local_revocation() -> Result<(), Box<dyn Error>> {
         &mut institution,
         &mut consumer,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request1"),
     )
     .await;
@@ -175,7 +175,7 @@ async fn test_agency_pool_local_revocation() -> Result<(), Box<dyn Error>> {
         &mut institution,
         &mut consumer,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request2"),
     )
     .await;
@@ -260,7 +260,7 @@ async fn test_agency_batch_revocation() -> Result<(), Box<dyn Error>> {
         &mut institution,
         &mut consumer1,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request1"),
     )
     .await;
@@ -272,7 +272,7 @@ async fn test_agency_batch_revocation() -> Result<(), Box<dyn Error>> {
         &mut institution,
         &mut consumer2,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request2"),
     )
     .await;
@@ -284,7 +284,7 @@ async fn test_agency_batch_revocation() -> Result<(), Box<dyn Error>> {
         &mut institution,
         &mut consumer3,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request3"),
     )
     .await;
@@ -317,7 +317,7 @@ async fn test_agency_batch_revocation() -> Result<(), Box<dyn Error>> {
         &mut institution,
         &mut consumer1,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request1"),
     )
     .await;
@@ -329,7 +329,7 @@ async fn test_agency_batch_revocation() -> Result<(), Box<dyn Error>> {
         &mut institution,
         &mut consumer2,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request2"),
     )
     .await;
@@ -341,7 +341,7 @@ async fn test_agency_batch_revocation() -> Result<(), Box<dyn Error>> {
         &mut institution,
         &mut consumer3,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request3"),
     )
     .await;
@@ -399,7 +399,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() -> Result<(), Box
     let mut proof_verifier = verifier_create_proof_and_send_request(
         &mut verifier,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request1"),
     )
     .await;
@@ -422,7 +422,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() -> Result<(), Box
     let mut proof_verifier = verifier_create_proof_and_send_request(
         &mut verifier,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request2"),
     )
     .await;
@@ -494,7 +494,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() -> Result<(), Bo
     let mut proof_verifier = verifier_create_proof_and_send_request(
         &mut verifier,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request1"),
     )
     .await;
@@ -516,7 +516,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() -> Result<(), Bo
     let mut proof_verifier = verifier_create_proof_and_send_request(
         &mut verifier,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request2"),
     )
     .await;
@@ -582,7 +582,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() -> Result<(), Box<dyn Error
     let mut proof_verifier = verifier_create_proof_and_send_request(
         &mut verifier,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request1"),
     )
     .await;
@@ -604,7 +604,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() -> Result<(), Box<dyn Error
     let mut proof_verifier = verifier_create_proof_and_send_request(
         &mut verifier,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request2"),
     )
     .await;
@@ -677,7 +677,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() -> Result<(), 
     let mut proof_verifier = verifier_create_proof_and_send_request(
         &mut verifier,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request1"),
     )
     .await;
@@ -699,7 +699,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() -> Result<(), 
     let mut proof_verifier = verifier_create_proof_and_send_request(
         &mut verifier,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request2"),
     )
     .await;
@@ -770,7 +770,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() -> Result<(),
     let mut proof_verifier = verifier_create_proof_and_send_request(
         &mut verifier,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request1"),
     )
     .await;
@@ -793,7 +793,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() -> Result<(),
     let mut proof_verifier = verifier_create_proof_and_send_request(
         &mut verifier,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request2"),
     )
     .await;

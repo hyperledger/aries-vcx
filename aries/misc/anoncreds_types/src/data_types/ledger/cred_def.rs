@@ -4,7 +4,9 @@ use anoncreds_clsignatures::CredentialPrivateKey;
 
 use crate::{
     cl::{CredentialPrimaryPublicKey, CredentialPublicKey, CredentialRevocationPublicKey},
-    data_types::identifiers::{issuer_id::IssuerId, schema_id::SchemaId},
+    data_types::identifiers::{
+        cred_def_id::CredentialDefinitionId, issuer_id::IssuerId, schema_id::SchemaId,
+    },
     error::ConversionError,
     utils::validation::Validatable,
 };
@@ -37,6 +39,7 @@ pub struct CredentialDefinitionData {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CredentialDefinition {
+    pub id: CredentialDefinitionId,
     pub schema_id: SchemaId,
     #[serde(rename = "type")]
     pub signature_type: SignatureType,
@@ -62,6 +65,7 @@ impl CredentialDefinition {
         };
 
         Ok(Self {
+            id: self.id.clone(),
             schema_id: self.schema_id.clone(),
             signature_type: self.signature_type,
             tag: self.tag.clone(),

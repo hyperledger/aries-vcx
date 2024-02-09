@@ -3,6 +3,7 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 use did_parser::Did;
+use public_key::{Key, KeyType};
 use serde_json::Value;
 
 use crate::errors::error::prelude::*;
@@ -14,7 +15,14 @@ pub async fn rotate_verkey_apply(
     temp_vk: &str,
 ) -> VcxResult<()> {
     let nym_result = indy_ledger_write
-        .publish_nym(wallet, did, did, Some(temp_vk), None, None)
+        .publish_nym(
+            wallet,
+            did,
+            did,
+            Some(&Key::from_base58(temp_vk, KeyType::Ed25519)?),
+            None,
+            None,
+        )
         .await?;
 
     let nym_result_json: Value = serde_json::from_str(&nym_result).map_err(|err| {

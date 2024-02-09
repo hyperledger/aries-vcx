@@ -47,7 +47,7 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() -> Result<(), Box
         &mut institution,
         &mut consumer,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request1"),
     )
     .await;
@@ -60,7 +60,7 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() -> Result<(), Box
         &mut institution,
         &mut consumer,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request2"),
     )
     .await;
@@ -113,7 +113,7 @@ async fn test_agency_pool_two_creds_one_rev_reg() -> Result<(), Box<dyn Error>> 
         &mut verifier,
         &mut consumer,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request1"),
     )
     .await;
@@ -126,7 +126,7 @@ async fn test_agency_pool_two_creds_one_rev_reg() -> Result<(), Box<dyn Error>> 
         &mut verifier,
         &mut consumer,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some("request2"),
     )
     .await;
@@ -158,7 +158,7 @@ async fn test_agency_pool_credential_exchange_via_proposal() -> Result<(), Box<d
         &mut consumer,
         &mut institution,
         &schema.schema_id,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
         Some(rev_reg.rev_reg_id.clone()),
         Some(rev_reg.get_tails_dir()),
         "comment",
@@ -185,7 +185,7 @@ async fn test_agency_pool_credential_exchange_via_proposal_failed() -> Result<()
     .await;
 
     let cred_proposal =
-        create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
+        create_credential_proposal(&schema.schema_id, cred_def.get_cred_def_id(), "comment");
     let mut holder = create_holder_from_proposal(cred_proposal.clone());
     let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
 
@@ -224,12 +224,12 @@ async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation(
     .await;
 
     let cred_proposal =
-        create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
+        create_credential_proposal(&schema.schema_id, cred_def.get_cred_def_id(), "comment");
     let mut holder = create_holder_from_proposal(cred_proposal.clone());
     let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
 
     let cred_proposal_1 =
-        create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
+        create_credential_proposal(&schema.schema_id, cred_def.get_cred_def_id(), "comment");
     let cred_offer_1 = accept_credential_proposal(
         &mut institution,
         &mut issuer,

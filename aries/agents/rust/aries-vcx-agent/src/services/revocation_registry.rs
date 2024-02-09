@@ -3,6 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use aries_vcx::{common::primitives::revocation_registry::RevocationRegistry, did_parser::Did};
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds,
@@ -52,7 +53,11 @@ impl ServiceRevocationRegistries {
         Ok(rev_reg.get_tails_dir())
     }
 
-    pub async fn create_rev_reg(&self, cred_def_id: &str, max_creds: u32) -> AgentResult<String> {
+    pub async fn create_rev_reg(
+        &self,
+        cred_def_id: &CredentialDefinitionId,
+        max_creds: u32,
+    ) -> AgentResult<String> {
         let rev_reg = RevocationRegistry::create(
             self.wallet.as_ref(),
             &self.anoncreds,
@@ -99,7 +104,7 @@ impl ServiceRevocationRegistries {
                 self.wallet.as_ref(),
                 &self.anoncreds,
                 self.ledger_read.as_ref(),
-                cred_rev_id,
+                cred_rev_id.parse()?,
             )
             .await?;
         Ok(())

@@ -103,9 +103,11 @@ pub async fn build_cred_defs_json_verifier(
     for cred_info in credential_data.iter() {
         if credential_json.get(&cred_info.cred_def_id).is_none() {
             let cred_def_id = &cred_info.cred_def_id;
-            let credential_def = ledger.get_cred_def(cred_def_id, None).await?;
+            let credential_def = ledger
+                .get_cred_def(&cred_def_id.to_string().try_into()?, None)
+                .await?;
 
-            let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
+            let credential_def = serde_json::to_value(&credential_def).map_err(|err| {
                 AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidProofCredentialData,
                     format!("Cannot deserialize credential definition: {}", err),
@@ -167,10 +169,12 @@ pub async fn build_rev_reg_defs_json(
             ))?;
 
         if rev_reg_defs_json.get(rev_reg_id).is_none() {
-            let json = ledger.get_rev_reg_def_json(rev_reg_id).await?;
-            let rev_reg_def_json = serde_json::from_str(&json).or(Err(AriesVcxError::from_msg(
+            let json = ledger
+                .get_rev_reg_def_json(&rev_reg_id.to_string().try_into()?)
+                .await?;
+            let rev_reg_def_json = serde_json::to_value(&json).or(Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
-                format!("Failed to deserialize as json rev_reg_def: {}", json),
+                format!("Failed to deserialize as json rev_reg_def: {:?}", json),
             )))?;
             rev_reg_defs_json[rev_reg_id] = rev_reg_def_json;
         }
@@ -205,15 +209,16 @@ pub async fn build_rev_reg_json(
         ))?;
 
         if rev_regs_json.get(rev_reg_id).is_none() {
-            let (id, rev_reg_json, timestamp) =
-                ledger.get_rev_reg(rev_reg_id, timestamp.to_owned()).await?;
-            let rev_reg_json: Value =
-                serde_json::from_str(&rev_reg_json).or(Err(AriesVcxError::from_msg(
+            let (rev_reg_json, timestamp) = ledger
+                .get_rev_reg(&rev_reg_id.to_owned().try_into()?, timestamp.to_owned())
+                .await?;
+            let rev_reg_json =
+                serde_json::to_value(rev_reg_json.clone()).or(Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidJson,
-                    format!("Failed to deserialize as json: {}", rev_reg_json),
+                    format!("Failed to deserialize as json: {:?}", rev_reg_json),
                 )))?;
             let rev_reg_json = json!({ timestamp.to_string(): rev_reg_json });
-            rev_regs_json[id] = rev_reg_json;
+            rev_regs_json[rev_reg_id] = rev_reg_json;
         }
     }
 
@@ -222,6 +227,7 @@ pub async fn build_rev_reg_json(
 
 #[cfg(test)]
 pub mod unit_tests {
+    use anoncreds_types::data_types::ledger::cred_def::CredentialDefinition;
     use test_utils::{constants::*, devsetup::*, mockdata::mock_ledger::MockLedger};
 
     use super::*;
@@ -248,7 +254,7 @@ pub mod unit_tests {
             .await
             .unwrap();
 
-        let json: Value = serde_json::from_str(CRED_DEF_JSON).unwrap();
+        let json: CredentialDefinition = serde_json::from_str(CRED_DEF_JSON).unwrap();
         let expected = json!({ CRED_DEF_ID: json }).to_string();
         assert_eq!(credential_json, expected);
     }
@@ -302,7 +308,7 @@ pub mod unit_tests {
             .await
             .unwrap();
 
-        let json: Value = serde_json::from_str(&rev_def_json()).unwrap();
+        let json: Value = serde_json::to_value(rev_def_json()).unwrap();
         let expected = json!({ REV_REG_ID: json }).to_string();
         assert_eq!(rev_reg_defs_json, expected);
     }
@@ -314,13 +320,13 @@ pub mod unit_tests {
         let cred1 = CredInfoVerifier {
             schema_id: schema_id(),
             cred_def_id: "cred_def_key1".to_string(),
-            rev_reg_id: Some("id1".to_string()),
+            rev_reg_id: Some(REV_REG_ID.to_string()),
             timestamp: Some(1),
         };
         let cred2 = CredInfoVerifier {
             schema_id: schema_id(),
             cred_def_id: "cred_def_key2".to_string(),
-            rev_reg_id: Some("id2".to_string()),
+            rev_reg_id: Some(REV_REG_ID.to_string()),
             timestamp: Some(2),
         };
         let ledger_read = MockLedger;

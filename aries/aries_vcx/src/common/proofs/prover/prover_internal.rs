@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use aries_vcx_core::{
@@ -77,7 +77,7 @@ pub async fn build_cred_defs_json_prover(
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
             let credential_def = ledger
-                .get_cred_def(&cred_info.cred_def_id, None)
+                .get_cred_def(&cred_info.cred_def_id.to_owned().try_into()?, None)
                 .await
                 .map_err(|err| {
                     err.map(
@@ -86,7 +86,7 @@ pub async fn build_cred_defs_json_prover(
                     )
                 })?;
 
-            let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
+            let credential_def = serde_json::to_value(&credential_def).map_err(|err| {
                 AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidProofCredentialData,
                     format!("Cannot deserialize credential definition: {}", err),
@@ -179,19 +179,21 @@ pub async fn build_rev_states_json(
                     (None, None)
                 };
 
-                let rev_reg_def_json = ledger_read.get_rev_reg_def_json(rev_reg_id).await?;
+                let rev_reg_def_json = ledger_read
+                    .get_rev_reg_def_json(&rev_reg_id.to_owned().try_into()?)
+                    .await?;
 
-                let (rev_reg_id, rev_reg_delta_json, timestamp) = ledger_read
-                    .get_rev_reg_delta_json(rev_reg_id, from, to)
+                let (rev_reg_delta_json, timestamp) = ledger_read
+                    .get_rev_reg_delta_json(&rev_reg_id.to_owned().try_into()?, from, to)
                     .await?;
 
                 let rev_state_json = anoncreds
                     .create_revocation_state(
-                        tails_dir,
-                        &rev_reg_def_json,
-                        &rev_reg_delta_json,
+                        Path::new(tails_dir),
+                        rev_reg_def_json,
+                        rev_reg_delta_json,
                         timestamp,
-                        cred_rev_id,
+                        cred_rev_id.parse()?,
                     )
                     .await?;
 
@@ -395,8 +397,8 @@ pub mod unit_tests {
             .await
             .unwrap();
         assert!(!credential_def.is_empty());
-        assert!(credential_def
-            .contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
+        assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1""#));
+        assert!(credential_def.contains(r#""schemaId":"47""#));
     }
 
     #[tokio::test]

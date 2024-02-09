@@ -1,4 +1,6 @@
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use anoncreds_types::data_types::identifiers::{
+    cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
+};
 use aries_vcx::common::primitives::credential_definition::{
     CredentialDef, CredentialDefConfigBuilder, PublicEntityStateType,
 };
@@ -87,8 +89,8 @@ pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
     CREDENTIALDEF_MAP.get(handle, |c| Ok(c.get_source_id().clone()))
 }
 
-pub fn get_cred_def_id(handle: u32) -> LibvcxResult<String> {
-    CREDENTIALDEF_MAP.get(handle, |c| Ok(c.get_cred_def_id()))
+pub fn get_cred_def_id(handle: u32) -> LibvcxResult<CredentialDefinitionId> {
+    CREDENTIALDEF_MAP.get(handle, |c| Ok(c.get_cred_def_id().to_owned()))
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {

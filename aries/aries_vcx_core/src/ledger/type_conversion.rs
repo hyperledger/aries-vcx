@@ -1,13 +1,49 @@
 use anoncreds_types::data_types::{
-    identifiers::{issuer_id::IssuerId, schema_id::SchemaId as OurSchemaId},
-    ledger::schema::Schema as OurSchema,
+    identifiers::{
+        cred_def_id::CredentialDefinitionId as OurCredentialDefinitionId, issuer_id::IssuerId,
+        rev_reg_def_id::RevocationRegistryDefinitionId as OurRevocationRegistryDefinitionId,
+        schema_id::SchemaId as OurSchemaId,
+    },
+    ledger::{
+        cred_def::{
+            CredentialDefinition as OurCredentialDefinition,
+            CredentialDefinitionData as OurCredentialDefinitionData,
+            SignatureType as OurSignatureType,
+        },
+        rev_reg::RevocationRegistry as OurRevocationRegistry,
+        rev_reg_def::{
+            RevocationRegistryDefinition as OurRevocationRegistryDefinition,
+            RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
+            RevocationRegistryDefinitionValuePublicKeys as OurRevocationRegistryDefinitionValuePublicKeys,
+        },
+        rev_reg_delta::RevocationRegistryDelta as OurRevocationRegistryDelta,
+        schema::Schema as OurSchema,
+    },
 };
 use did_parser::Did;
 use indy_vdr::{
     ledger::{
-        identifiers::SchemaId as IndyVdrSchemaId,
-        requests::schema::{
-            AttributeNames as IndyVdrAttributeNames, Schema as IndyVdrSchema, SchemaV1,
+        identifiers::{
+            CredentialDefinitionId as IndyVdrCredentialDefinitionId,
+            RevocationRegistryId as IndyVdrRevocationRegistryId, SchemaId as IndyVdrSchemaId,
+        },
+        requests::{
+            cred_def::{
+                CredentialDefinition as IndyVdrCredentialDefinition, CredentialDefinitionData,
+                SignatureType as IndyVdrSignatureType,
+            },
+            rev_reg::{
+                RevocationRegistry as IndyVdrRevocationRegistry,
+                RevocationRegistryDelta as IndyVdrRevocationRegistryDelta,
+                RevocationRegistryDeltaV1,
+            },
+            rev_reg_def::{
+                IssuanceType, RevocationRegistryDefinition as IndyVdrRevocationRegistryDefinition,
+                RevocationRegistryDefinitionV1,
+                RevocationRegistryDefinitionValue as IndyVdrRevocationRegistryDefinitionValue,
+                RevocationRegistryDefinitionValuePublicKeys as IndyVdrRevocationRegistryDefinitionValuePublicKeys,
+            },
+            schema::{AttributeNames as IndyVdrAttributeNames, Schema as IndyVdrSchema, SchemaV1},
         },
     },
     utils::did::DidValue,
@@ -98,5 +134,171 @@ impl Convert for &Did {
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(DidValue::new(&self.to_string(), None))
+    }
+}
+
+impl Convert for IndyVdrCredentialDefinition {
+    type Args = ();
+    type Target = OurCredentialDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            IndyVdrCredentialDefinition::CredentialDefinitionV1(cred_def) => {
+                if let Some((_method, issuer_id, _sig_type, _schema_id, _tag)) = cred_def.id.parts()
+                {
+                    Ok(OurCredentialDefinition {
+                        id: OurCredentialDefinitionId::new(cred_def.id.to_string())?,
+                        schema_id: OurSchemaId::new_unchecked(cred_def.schema_id.to_string()),
+                        signature_type: OurSignatureType::CL,
+                        tag: cred_def.tag,
+                        value: OurCredentialDefinitionData {
+                            primary: serde_json::from_value(cred_def.value.primary)?,
+                            revocation: cred_def
+                                .value
+                                .revocation
+                                .map(serde_json::from_value)
+                                .transpose()?,
+                        },
+                        issuer_id: IssuerId::new(issuer_id.to_string())?,
+                    })
+                } else {
+                    todo!()
+                }
+            }
+        }
+    }
+}
+
+impl Convert for OurCredentialDefinition {
+    type Args = ();
+    type Target = IndyVdrCredentialDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(IndyVdrCredentialDefinition::CredentialDefinitionV1(
+            indy_vdr::ledger::requests::cred_def::CredentialDefinitionV1 {
+                id: IndyVdrCredentialDefinitionId::try_from(self.id.to_string())?,
+                schema_id: IndyVdrSchemaId::try_from(self.schema_id.to_string())?,
+                signature_type: match self.signature_type {
+                    OurSignatureType::CL => IndyVdrSignatureType::CL,
+                },
+                tag: self.tag,
+                value: CredentialDefinitionData {
+                    primary: serde_json::to_value(self.value.primary)?,
+                    revocation: self
+                        .value
+                        .revocation
+                        .map(serde_json::to_value)
+                        .transpose()?,
+                },
+            },
+        ))
+    }
+}
+
+impl Convert for OurRevocationRegistryDefinition {
+    type Args = ();
+    type Target = IndyVdrRevocationRegistryDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(
+            IndyVdrRevocationRegistryDefinition::RevocationRegistryDefinitionV1(
+                RevocationRegistryDefinitionV1 {
+                    id: IndyVdrRevocationRegistryId::try_from(self.id.to_string())?,
+                    revoc_def_type: indy_vdr::ledger::requests::rev_reg_def::RegistryType::CL_ACCUM,
+                    tag: self.tag,
+                    cred_def_id: IndyVdrCredentialDefinitionId::try_from(
+                        self.cred_def_id.to_string(),
+                    )?,
+                    value: IndyVdrRevocationRegistryDefinitionValue {
+                        max_cred_num: self.value.max_cred_num,
+                        public_keys: IndyVdrRevocationRegistryDefinitionValuePublicKeys {
+                            accum_key: serde_json::to_value(self.value.public_keys.accum_key)?,
+                        },
+                        tails_hash: self.value.tails_hash,
+                        tails_location: self.value.tails_location,
+                        issuance_type: IssuanceType::ISSUANCE_BY_DEFAULT,
+                    },
+                },
+            ),
+        )
+    }
+}
+
+impl Convert for IndyVdrRevocationRegistryDefinition {
+    type Args = ();
+    type Target = OurRevocationRegistryDefinition;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            IndyVdrRevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def) => {
+                Ok(OurRevocationRegistryDefinition {
+                    id: OurRevocationRegistryDefinitionId::new(rev_reg_def.id.to_string())?,
+                    revoc_def_type:
+                        anoncreds_types::data_types::ledger::rev_reg_def::RegistryType::CL_ACCUM,
+                    tag: rev_reg_def.tag,
+                    cred_def_id: OurCredentialDefinitionId::new(
+                        rev_reg_def.cred_def_id.to_string(),
+                    )?,
+                    value: OurRevocationRegistryDefinitionValue {
+                        max_cred_num: rev_reg_def.value.max_cred_num,
+                        public_keys: OurRevocationRegistryDefinitionValuePublicKeys {
+                            accum_key: serde_json::from_value(
+                                rev_reg_def.value.public_keys.accum_key,
+                            )?,
+                        },
+                        tails_hash: rev_reg_def.value.tails_hash,
+                        tails_location: rev_reg_def.value.tails_location,
+                    },
+                })
+            }
+        }
+    }
+}
+
+impl Convert for IndyVdrRevocationRegistry {
+    type Args = ();
+    type Target = OurRevocationRegistry;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            IndyVdrRevocationRegistry::RevocationRegistryV1(rev_reg) => Ok(OurRevocationRegistry {
+                value: serde_json::from_value(rev_reg.value)?,
+            }),
+        }
+    }
+}
+
+impl Convert for IndyVdrRevocationRegistryDelta {
+    type Args = ();
+    type Target = OurRevocationRegistryDelta;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            IndyVdrRevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg) => {
+                Ok(OurRevocationRegistryDelta {
+                    value: serde_json::from_value(rev_reg.value)?,
+                })
+            }
+        }
+    }
+}
+
+impl Convert for OurRevocationRegistryDelta {
+    type Args = ();
+    type Target = IndyVdrRevocationRegistryDelta;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(IndyVdrRevocationRegistryDelta::RevocationRegistryDeltaV1(
+            RevocationRegistryDeltaV1 {
+                value: serde_json::from_value(serde_json::to_value(self.value)?)?,
+            },
+        ))
     }
 }

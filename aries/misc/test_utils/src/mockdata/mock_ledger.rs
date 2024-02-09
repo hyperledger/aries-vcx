@@ -1,4 +1,14 @@
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
+use anoncreds_types::data_types::{
+    identifiers::{
+        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+        schema_id::SchemaId,
+    },
+    ledger::{
+        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+        schema::Schema,
+    },
+};
 use aries_vcx_core::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     ledger::{
@@ -9,10 +19,11 @@ use aries_vcx_core::{
 };
 use async_trait::async_trait;
 use did_parser::Did;
+use public_key::Key;
 
 use crate::constants::{
     rev_def_json, CRED_DEF_JSON, DEFAULT_AUTHOR_AGREEMENT, REQUEST_WITH_ENDORSER,
-    REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON,
+    REV_REG_DELTA_JSON, REV_REG_JSON, SCHEMA_JSON,
 };
 
 #[derive(Debug)]
@@ -54,7 +65,7 @@ impl IndyLedgerWrite for MockLedger {
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         request: &str,
-        endorser: &str,
+        endorser: &Did,
     ) -> VcxCoreResult<String> {
         Ok(REQUEST_WITH_ENDORSER.to_string())
     }
@@ -73,7 +84,7 @@ impl IndyLedgerWrite for MockLedger {
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         target_did: &Did,
-        verkey: Option<&str>,
+        verkey: Option<&Key>,
         data: Option<&str>,
         role: Option<&str>,
     ) -> VcxCoreResult<String> {
@@ -94,7 +105,7 @@ impl IndyLedgerWrite for MockLedger {
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         target_did: &Did,
-        target_vk: &str,
+        target_vk: &Key,
         role: Option<UpdateRole>,
         alias: Option<String>,
     ) -> VcxCoreResult<String> {
@@ -115,31 +126,34 @@ impl AnoncredsLedgerRead for MockLedger {
 
     async fn get_cred_def(
         &self,
-        cred_def_id: &str,
+        cred_def_id: &CredentialDefinitionId,
         submitter_did: Option<&Did>,
-    ) -> VcxCoreResult<String> {
-        Ok(CRED_DEF_JSON.to_string())
+    ) -> VcxCoreResult<CredentialDefinition> {
+        Ok(serde_json::from_str(CRED_DEF_JSON)?)
     }
 
-    async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
+    async fn get_rev_reg_def_json(
+        &self,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+    ) -> VcxCoreResult<RevocationRegistryDefinition> {
         Ok(rev_def_json())
     }
 
     async fn get_rev_reg_delta_json(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(String, String, u64)> {
-        Ok((REV_REG_ID.to_string(), REV_REG_DELTA_JSON.to_string(), 1))
+    ) -> VcxCoreResult<(RevocationRegistryDelta, u64)> {
+        Ok((serde_json::from_str(REV_REG_DELTA_JSON).unwrap(), 1))
     }
 
     async fn get_rev_reg(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-    ) -> VcxCoreResult<(String, String, u64)> {
-        Ok((REV_REG_ID.to_string(), REV_REG_JSON.to_string(), 1))
+    ) -> VcxCoreResult<(RevocationRegistry, u64)> {
+        Ok((serde_json::from_str(REV_REG_JSON).unwrap(), 1))
     }
 }
 
@@ -151,7 +165,7 @@ impl AnoncredsLedgerWrite for MockLedger {
         wallet: &impl BaseWallet,
         schema_json: Schema,
         submitter_did: &Did,
-        endorser_did: Option<String>,
+        endorser_did: Option<&Did>,
     ) -> VcxCoreResult<()> {
         Ok(())
     }
@@ -159,7 +173,7 @@ impl AnoncredsLedgerWrite for MockLedger {
     async fn publish_cred_def(
         &self,
         wallet: &impl BaseWallet,
-        cred_def_json: &str,
+        cred_def_json: CredentialDefinition,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
         Ok(())
@@ -168,7 +182,7 @@ impl AnoncredsLedgerWrite for MockLedger {
     async fn publish_rev_reg_def(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_def: &str,
+        rev_reg_def: RevocationRegistryDefinition,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
         Ok(())
@@ -177,8 +191,8 @@ impl AnoncredsLedgerWrite for MockLedger {
     async fn publish_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
-        rev_reg_entry_json: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+        rev_reg_entry_json: RevocationRegistryDelta,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
         Ok(())

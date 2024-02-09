@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use anoncreds_types::data_types::identifiers::{
+    cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
+};
 use aries_vcx::{
     common::{
         primitives::{
@@ -54,7 +56,7 @@ use crate::utils::{scenarios::requested_attr_objects, test_agent::TestAgent};
 
 pub async fn create_proof_proposal(
     prover: &mut Prover,
-    cred_def_id: &str,
+    cred_def_id: &CredentialDefinitionId,
 ) -> ProposePresentationV1 {
     let attrs = requested_attr_objects(cred_def_id);
     let mut proposal_data = PresentationProposalData::default();
@@ -291,7 +293,7 @@ pub async fn rotate_rev_reg(
         &faber.wallet,
         &faber.anoncreds,
         &faber.institution_did,
-        &credential_def.get_cred_def_id(),
+        credential_def.get_cred_def_id(),
         &rev_reg.get_tails_dir(),
         10,
         2,
@@ -333,7 +335,7 @@ pub async fn verifier_create_proof_and_send_request(
         impl BaseWallet,
     >,
     schema_id: &SchemaId,
-    cred_def_id: &str,
+    cred_def_id: &CredentialDefinitionId,
     request_name: Option<&str>,
 ) -> Verifier {
     let requested_attrs = requested_attrs_address(
@@ -500,7 +502,7 @@ pub async fn exchange_proof(
         impl BaseWallet,
     >,
     schema_id: &SchemaId,
-    cred_def_id: &str,
+    cred_def_id: &CredentialDefinitionId,
     request_name: Option<&str>,
 ) -> Verifier {
     let mut verifier =

@@ -1,4 +1,7 @@
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
+use anoncreds_types::data_types::{
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    ledger::{cred_def::CredentialDefinition, schema::Schema},
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::AriesVcxCoreErrorKind,
@@ -47,10 +50,11 @@ impl TryFrom<u8> for PublicEntityStateType {
     }
 }
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
+// TODO: Deduplicate the data
+#[derive(Deserialize, Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct CredentialDef {
     #[serde(alias = "cred_def_id")]
-    id: String,
+    id: CredentialDefinitionId,
     tag: String,
     source_id: String,
     issuer_did: Did,
@@ -81,10 +85,10 @@ pub struct RevocationDetails {
 async fn _try_get_cred_def_from_ledger(
     ledger: &impl AnoncredsLedgerRead,
     issuer_did: &Did,
-    cred_def_id: &str,
+    cred_def_id: &CredentialDefinitionId,
 ) -> VcxResult<Option<String>> {
     match ledger.get_cred_def(cred_def_id, Some(issuer_did)).await {
-        Ok(cred_def) => Ok(Some(cred_def)),
+        Ok(cred_def) => Ok(Some(serde_json::to_string(&cred_def)?)),
         Err(err) if err.kind() == AriesVcxCoreErrorKind::LedgerItemNotFound => Ok(None),
         Err(err) => Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidLedgerResponse,
@@ -117,7 +121,7 @@ impl CredentialDef {
         let schema_json = ledger_read
             .get_schema(&schema_id, Some(&issuer_did))
             .await?;
-        let (cred_def_id, cred_def_json) = generate_cred_def(
+        let cred_def = generate_cred_def(
             wallet,
             anoncreds,
             &issuer_did,
@@ -131,8 +135,8 @@ impl CredentialDef {
         Ok(Self {
             source_id,
             tag,
-            id: cred_def_id,
-            cred_def_json,
+            id: cred_def.id.to_owned(),
+            cred_def_json: serde_json::to_string(&cred_def)?,
             issuer_did,
             support_revocation,
             schema_id,
@@ -148,8 +152,8 @@ impl CredentialDef {
         self.support_revocation
     }
 
-    pub fn get_cred_def_json(&self) -> &str {
-        &self.cred_def_json
+    pub fn get_cred_def_json(&self) -> CredentialDefinition {
+        serde_json::from_str(&self.cred_def_json).unwrap()
     }
 
     pub async fn publish_cred_def(
@@ -174,8 +178,9 @@ impl CredentialDef {
                 ),
             ));
         }
+        let cred_def_json = serde_json::from_str(&self.cred_def_json)?;
         ledger_write
-            .publish_cred_def(wallet, &self.cred_def_json, &self.issuer_did)
+            .publish_cred_def(wallet, cred_def_json, &self.issuer_did)
             .await?;
         Ok(Self {
             state: PublicEntityStateType::Published,
@@ -213,12 +218,12 @@ impl CredentialDef {
         &self.source_id
     }
 
-    pub fn get_cred_def_id(&self) -> String {
-        self.id.clone()
+    pub fn get_cred_def_id(&self) -> &CredentialDefinitionId {
+        &self.id
     }
 
-    pub fn get_schema_id(&self) -> String {
-        self.schema_id.to_string()
+    pub fn get_schema_id(&self) -> &SchemaId {
+        &self.schema_id
     }
 
     pub fn set_source_id(&mut self, source_id: String) {
@@ -226,7 +231,11 @@ impl CredentialDef {
     }
 
     pub async fn update_state(&mut self, ledger: &impl AnoncredsLedgerRead) -> VcxResult<u32> {
-        if (ledger.get_cred_def(&self.id, None).await).is_ok() {
+        if (ledger
+            .get_cred_def(&self.id.to_string().try_into()?, None)
+            .await)
+            .is_ok()
+        {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)
@@ -247,7 +256,7 @@ pub async fn generate_cred_def(
     tag: &str,
     sig_type: Option<&str>,
     support_revocation: Option<bool>,
-) -> VcxResult<(String, String)> {
+) -> VcxResult<CredentialDefinition> {
     trace!(
         "generate_cred_def >>> issuer_did: {}, schema_json: {:?}, tag: {}, sig_type: {:?}, \
          support_revocation: {:?}",
@@ -261,7 +270,7 @@ pub async fn generate_cred_def(
     let config_json =
         json!({"support_revocation": support_revocation.unwrap_or(false)}).to_string();
 
-    anoncreds
+    let cred_def = anoncreds
         .issuer_create_and_store_credential_def(
             wallet,
             issuer_did,
@@ -271,6 +280,6 @@ pub async fn generate_cred_def(
             sig_type,
             &config_json,
         )
-        .await
-        .map_err(|err| err.into())
+        .await?;
+    Ok(cred_def)
 }

@@ -4,7 +4,17 @@ use std::{
     sync::RwLock,
 };
 
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
+use anoncreds_types::data_types::{
+    identifiers::{
+        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+        schema_id::SchemaId,
+    },
+    ledger::{
+        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+        schema::Schema,
+    },
+};
 use async_trait::async_trait;
 use did_parser::Did;
 pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
@@ -12,23 +22,20 @@ use indy_ledger_response_parser::{
     ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo,
 };
 use indy_vdr as vdr;
+use public_key::Key;
 use serde_json::Value;
 use time::OffsetDateTime;
 use vdr::{
     config::PoolConfig,
     ledger::{
-        identifiers::{CredentialDefinitionId, RevocationRegistryId},
-        requests::{
-            cred_def::{CredentialDefinition, CredentialDefinitionV1},
-            rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
-            rev_reg_def::{
-                RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1,
-            },
+        identifiers::{
+            CredentialDefinitionId as IndyVdrCredentialDefinitionId, RevocationRegistryId,
         },
+        requests::rev_reg_def::RegistryType,
         RequestBuilder,
     },
     pool::{LedgerType, PreparedRequest},
-    utils::{did::DidValue, Qualifiable},
+    utils::Qualifiable,
 };
 pub use vdr::{
     ledger::constants::{LedgerRole, UpdateRole},
@@ -336,7 +343,7 @@ where
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         target_did: &Did,
-        verkey: Option<&str>,
+        verkey: Option<&Key>,
         data: Option<&str>,
         role: Option<&str>,
     ) -> VcxCoreResult<String> {
@@ -345,7 +352,7 @@ where
         let request = self.request_builder()?.build_nym_request(
             &identifier,
             &dest,
-            verkey.map(String::from),
+            verkey.map(Key::base58),
             data.map(String::from),
             role.map(UpdateRole::from_str).transpose()?,
             None,
@@ -361,10 +368,10 @@ where
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         request_json: &str,
-        endorser: &str,
+        endorser: &Did,
     ) -> VcxCoreResult<String> {
         let mut request = PreparedRequest::from_request_json(request_json)?;
-        request.set_endorser(&DidValue::from_str(endorser)?)?;
+        request.set_endorser(&endorser.convert(())?)?;
         let signature_submitter = Self::sign_request(wallet, submitter_did, &request).await?;
         request.set_multi_signature(&submitter_did.convert(())?, &signature_submitter)?;
         Ok(request.req_json.to_string())
@@ -408,18 +415,18 @@ where
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         target_did: &Did,
-        target_vk: &str,
+        target_vk: &Key,
         role: Option<UpdateRole>,
         alias: Option<String>,
     ) -> VcxCoreResult<String> {
         debug!(
             "write_did >> submitter_did: {submitter_did}, target_did: {target_did}, target_vk: \
-             {target_vk}, role: {role:?}, alias: {alias:?}"
+             {target_vk:?}, role: {role:?}, alias: {alias:?}"
         );
         let request = self.request_builder()?.build_nym_request(
             &submitter_did.convert(())?,
             &target_did.convert(())?,
-            Some(target_vk.into()),
+            Some(target_vk.base58()),
             alias,
             role,
             None,
@@ -459,12 +466,12 @@ where
 
     async fn get_cred_def(
         &self,
-        cred_def_id: &str,
+        cred_def_id: &CredentialDefinitionId,
         submitter_did: Option<&Did>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<CredentialDefinition> {
         debug!("get_cred_def >> cred_def_id: {cred_def_id}");
         let identifier = submitter_did.map(|did| did.convert(())).transpose()?;
-        let id = CredentialDefinitionId::from_str(cred_def_id)?;
+        let id = IndyVdrCredentialDefinitionId::from_str(&cred_def_id.to_string())?;
         let request = self
             .request_builder()?
             .build_get_cred_def_request(identifier.as_ref(), &id)?;
@@ -479,31 +486,36 @@ where
         let cred_def = self
             .response_parser
             .parse_get_cred_def_response(&response, None)?;
-        Ok(serde_json::to_string(&cred_def)?)
+        Ok(cred_def.convert(())?)
     }
 
-    async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
+    async fn get_rev_reg_def_json(
+        &self,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+    ) -> VcxCoreResult<RevocationRegistryDefinition> {
         debug!("get_rev_reg_def_json >> rev_reg_id: {rev_reg_id}");
-        let id = RevocationRegistryId::from_str(rev_reg_id)?;
+        let id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
         let request = self
             .request_builder()?
             .build_get_revoc_reg_def_request(None, &id)?;
-        let response = self.submit_request(Some(rev_reg_id), request).await?;
+        let response = self
+            .submit_request(Some(&rev_reg_id.to_string()), request)
+            .await?;
         debug!("get_rev_reg_def_json << response: {response}");
         let rev_reg_def = self
             .response_parser
             .parse_get_revoc_reg_def_response(&response)?;
-        Ok(serde_json::to_string(&rev_reg_def)?)
+        Ok(rev_reg_def.convert(())?)
     }
 
     async fn get_rev_reg_delta_json(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(String, String, u64)> {
+    ) -> VcxCoreResult<(RevocationRegistryDelta, u64)> {
         debug!("get_rev_reg_delta_json >> rev_reg_id: {rev_reg_id}, from: {from:?}, to: {to:?}");
-        let revoc_reg_def_id = RevocationRegistryId::from_str(rev_reg_id)?;
+        let revoc_reg_def_id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
 
         let from = from.map(|x| x as i64);
         let current_time = OffsetDateTime::now_utc().unix_timestamp();
@@ -519,26 +531,22 @@ where
         debug!("get_rev_reg_delta_json << response: {response}");
 
         let RevocationRegistryDeltaInfo {
-            revoc_reg_def_id,
             revoc_reg_delta,
             timestamp,
+            ..
         } = self
             .response_parser
             .parse_get_revoc_reg_delta_response(&response)?;
-        Ok((
-            revoc_reg_def_id.to_string(),
-            serde_json::to_string(&revoc_reg_delta)?,
-            timestamp,
-        ))
+        Ok((revoc_reg_delta.convert(())?, timestamp))
     }
 
     async fn get_rev_reg(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-    ) -> VcxCoreResult<(String, String, u64)> {
+    ) -> VcxCoreResult<(RevocationRegistry, u64)> {
         debug!("get_rev_reg >> rev_reg_id: {rev_reg_id}, timestamp: {timestamp}");
-        let revoc_reg_def_id = RevocationRegistryId::from_str(rev_reg_id)?;
+        let revoc_reg_def_id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
 
         let request = self.request_builder()?.build_get_revoc_reg_request(
             None,
@@ -549,18 +557,14 @@ where
         debug!("get_rev_reg << response: {response}");
 
         let RevocationRegistryInfo {
-            revoc_reg_def_id,
             revoc_reg,
             timestamp,
+            ..
         } = self
             .response_parser
             .parse_get_revoc_reg_response(&response)?;
 
-        Ok((
-            revoc_reg_def_id.to_string(),
-            serde_json::to_string(&revoc_reg)?,
-            timestamp,
-        ))
+        Ok((revoc_reg.convert(())?, timestamp))
     }
 }
 
@@ -574,7 +578,7 @@ where
         wallet: &impl BaseWallet,
         schema_json: Schema,
         submitter_did: &Did,
-        _endorser_did: Option<String>,
+        _endorser_did: Option<&Did>,
     ) -> VcxCoreResult<()> {
         let identifier = submitter_did.convert(())?;
         let mut request = self
@@ -608,15 +612,13 @@ where
     async fn publish_cred_def(
         &self,
         wallet: &impl BaseWallet,
-        cred_def_json: &str,
+        cred_def_json: CredentialDefinition,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
         let identifier = submitter_did.convert(())?;
-        let cred_def_data: CredentialDefinitionV1 = serde_json::from_str(cred_def_json)?;
-        let request = self.request_builder()?.build_cred_def_request(
-            &identifier,
-            CredentialDefinition::CredentialDefinitionV1(cred_def_data),
-        )?;
+        let request = self
+            .request_builder()?
+            .build_cred_def_request(&identifier, cred_def_json.convert(())?)?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(wallet, submitter_did, request)
             .await
@@ -626,15 +628,13 @@ where
     async fn publish_rev_reg_def(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_def: &str,
+        rev_reg_def: RevocationRegistryDefinition,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
         let identifier = submitter_did.convert(())?;
-        let rev_reg_def_data: RevocationRegistryDefinitionV1 = serde_json::from_str(rev_reg_def)?;
-        let request = self.request_builder()?.build_revoc_reg_def_request(
-            &identifier,
-            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def_data),
-        )?;
+        let request = self
+            .request_builder()?
+            .build_revoc_reg_def_request(&identifier, rev_reg_def.convert(())?)?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(wallet, submitter_did, request)
             .await
@@ -644,18 +644,16 @@ where
     async fn publish_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
-        rev_reg_entry_json: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+        rev_reg_entry_json: RevocationRegistryDelta,
         submitter_did: &Did,
     ) -> VcxCoreResult<()> {
         let identifier = submitter_did.convert(())?;
-        let rev_reg_delta_data: RevocationRegistryDeltaV1 =
-            serde_json::from_str(rev_reg_entry_json)?;
         let request = self.request_builder()?.build_revoc_reg_entry_request(
             &identifier,
-            &RevocationRegistryId::from_str(rev_reg_id)?,
+            &RevocationRegistryId::from_str(&rev_reg_id.to_string())?,
             &RegistryType::CL_ACCUM,
-            RevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta_data),
+            rev_reg_entry_json.convert(())?,
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(wallet, submitter_did, request)

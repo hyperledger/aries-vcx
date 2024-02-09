@@ -2,6 +2,7 @@
 
 use std::{error::Error, thread, time::Duration};
 
+use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use aries_vcx::{
     common::{
         keys::{get_verkey_from_ledger, rotate_verkey},
@@ -53,7 +54,16 @@ async fn create_and_store_nonrevocable_credential_def(
     ledger_write: &impl AnoncredsLedgerWrite,
     issuer_did: &Did,
     attr_list: &str,
-) -> Result<(String, String, String, String, CredentialDef), Box<dyn Error>> {
+) -> Result<
+    (
+        String,
+        String,
+        CredentialDefinitionId,
+        String,
+        CredentialDef,
+    ),
+    Box<dyn Error>,
+> {
     let schema =
         create_and_write_test_schema(wallet, anoncreds, ledger_write, issuer_did, attr_list).await;
     let cred_def = create_and_write_test_cred_def(
@@ -69,12 +79,14 @@ async fn create_and_store_nonrevocable_credential_def(
 
     tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
-    let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await?;
+    let cred_def_json = ledger_read
+        .get_cred_def(&cred_def_id.to_owned(), None)
+        .await?;
     Ok((
         schema.schema_id.to_string(),
         serde_json::to_string(&schema.schema_json)?,
-        cred_def_id,
-        cred_def_json,
+        cred_def_id.to_owned(),
+        serde_json::to_string(&cred_def_json)?,
         cred_def,
     ))
 }
@@ -105,7 +117,7 @@ async fn create_and_store_revocable_credential_def(
         anoncreds,
         ledger_write,
         issuer_did,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
     )
     .await;
     tokio::time::sleep(Duration::from_millis(1000)).await;
@@ -385,7 +397,7 @@ async fn test_agency_pool_get_credential_def() -> Result<(), Box<dyn Error>> {
     let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await?;
 
     let def1: serde_json::Value = serde_json::from_str(&cred_def_json)?;
-    let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json)?;
+    let def2 = serde_json::to_value(&r_cred_def_json)?;
     assert_eq!(def1, def2);
     Ok(())
 }
@@ -441,7 +453,9 @@ async fn test_pool_get_rev_reg_def_json() -> Result<(), Box<dyn Error>> {
     .await?;
 
     let ledger = &setup.ledger_read;
-    let _json = ledger.get_rev_reg_def_json(&rev_reg.rev_reg_id).await?;
+    let _json = ledger
+        .get_rev_reg_def_json(&rev_reg.rev_reg_id.try_into()?)
+        .await?;
     Ok(())
 }
 
@@ -461,11 +475,10 @@ async fn test_pool_get_rev_reg_delta_json() -> Result<(), Box<dyn Error>> {
     .await?;
 
     let ledger = &setup.ledger_read;
-    let (id, _delta, _timestamp) = ledger
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+    let (_delta, _timestamp) = ledger
+        .get_rev_reg_delta_json(&rev_reg.rev_reg_id.to_owned().try_into()?, None, None)
         .await?;
 
-    assert_eq!(id, rev_reg.rev_reg_id);
     Ok(())
 }
 
@@ -489,14 +502,13 @@ async fn test_pool_get_rev_reg() -> Result<(), Box<dyn Error>> {
     );
 
     let ledger = &setup.ledger_read;
-    let (id, _rev_reg, _timestamp) = ledger
+    let (_rev_reg, _timestamp) = ledger
         .get_rev_reg(
-            &rev_reg.rev_reg_id,
+            &rev_reg.rev_reg_id.to_owned().try_into()?,
             time::OffsetDateTime::now_utc().unix_timestamp() as u64,
         )
         .await?;
 
-    assert_eq!(id, rev_reg.rev_reg_id);
     Ok(())
 }
 
@@ -535,10 +547,11 @@ async fn test_pool_create_rev_reg_delta_from_ledger() -> Result<(), Box<dyn Erro
     )
     .await?;
 
-    let (_, rev_reg_delta_json, _) = setup
+    let (rev_reg_delta_json, _) = setup
         .ledger_read
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+        .get_rev_reg_delta_json(&rev_reg.rev_reg_id.try_into()?, None, None)
         .await?;
-    RevocationRegistryDelta::create_from_ledger(&rev_reg_delta_json).await?;
+    RevocationRegistryDelta::create_from_ledger(&serde_json::to_string(&rev_reg_delta_json)?)
+        .await?;
     Ok(())
 }

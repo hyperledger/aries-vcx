@@ -562,7 +562,7 @@ async fn _store_credential(
 
     let rev_reg_id = _parse_rev_reg_id_from_credential(&credential_json)?;
     let rev_reg_def_json = if let Some(rev_reg_id) = rev_reg_id {
-        let json = ledger.get_rev_reg_def_json(&rev_reg_id).await?;
+        let json = ledger.get_rev_reg_def_json(&rev_reg_id.try_into()?).await?;
         Some(json)
     } else {
         None
@@ -574,11 +574,17 @@ async fn _store_credential(
             None,
             req_meta,
             &credential_json,
-            cred_def_json,
-            rev_reg_def_json.as_deref(),
+            serde_json::from_str(cred_def_json)?,
+            rev_reg_def_json.clone(),
         )
         .await?;
-    Ok((cred_id, rev_reg_def_json))
+    Ok((
+        cred_id,
+        rev_reg_def_json
+            .as_ref()
+            .map(serde_json::to_string)
+            .transpose()?,
+    ))
 }
 
 pub async fn create_anoncreds_credential_request(
@@ -589,7 +595,9 @@ pub async fn create_anoncreds_credential_request(
     prover_did: &Did,
     cred_offer: &str,
 ) -> VcxResult<(String, String, String, String)> {
-    let cred_def_json = ledger.get_cred_def(cred_def_id, None).await?;
+    let cred_def_json = ledger
+        .get_cred_def(&cred_def_id.to_string().try_into()?, None)
+        .await?;
 
     let master_secret_id = settings::DEFAULT_LINK_SECRET_ALIAS;
     anoncreds
@@ -597,7 +605,7 @@ pub async fn create_anoncreds_credential_request(
             wallet,
             prover_did,
             cred_offer,
-            &cred_def_json,
+            cred_def_json.try_clone()?,
             master_secret_id,
         )
         .await
@@ -607,7 +615,14 @@ pub async fn create_anoncreds_credential_request(
                 format!("Cannot create credential request; {}", err),
             )
         })
-        .map(|(s1, s2)| (s1, s2, cred_def_id.to_string(), cred_def_json))
+        .map(|(s1, s2)| {
+            (
+                s1,
+                s2,
+                cred_def_id.to_string(),
+                serde_json::to_string(&cred_def_json).unwrap(),
+            )
+        })
 }
 
 async fn build_credential_request_msg(

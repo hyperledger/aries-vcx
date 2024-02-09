@@ -3,8 +3,6 @@ use crate::errors::error::prelude::*;
 #[derive(Clone, Deserialize, Debug, Serialize, Default)]
 pub struct RevocationRegistryDelta {
     value: RevocationRegistryDeltaValue,
-    #[serde(rename = "ver")]
-    version: String,
 }
 
 #[derive(Clone, Deserialize, Debug, Serialize, Default)]

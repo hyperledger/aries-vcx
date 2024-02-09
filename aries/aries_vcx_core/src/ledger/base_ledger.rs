@@ -1,9 +1,20 @@
 use std::fmt::Debug;
 
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
+use anoncreds_types::data_types::{
+    identifiers::{
+        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+        schema_id::SchemaId,
+    },
+    ledger::{
+        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+        schema::Schema,
+    },
+};
 use async_trait::async_trait;
 use did_parser::Did;
 use indy_vdr::ledger::constants::UpdateRole;
+use public_key::Key;
 use serde::Serialize;
 
 use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
@@ -27,7 +38,7 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         target_did: &Did,
-        verkey: Option<&str>,
+        verkey: Option<&Key>,
         data: Option<&str>,
         role: Option<&str>,
     ) -> VcxCoreResult<String>;
@@ -36,7 +47,7 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         request: &str,
-        endorser: &str,
+        endorser: &Did,
     ) -> VcxCoreResult<String>;
     async fn endorse_transaction(
         &self,
@@ -55,7 +66,7 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         target_did: &Did,
-        target_vk: &str,
+        target_vk: &Key,
         role: Option<UpdateRole>,
         alias: Option<String>,
     ) -> VcxCoreResult<String>;
@@ -70,21 +81,24 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
     ) -> VcxCoreResult<Schema>;
     async fn get_cred_def(
         &self,
-        cred_def_id: &str,
+        cred_def_id: &CredentialDefinitionId,
         submitter_did: Option<&Did>,
-    ) -> VcxCoreResult<String>;
-    async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<CredentialDefinition>;
+    async fn get_rev_reg_def_json(
+        &self,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+    ) -> VcxCoreResult<RevocationRegistryDefinition>;
     async fn get_rev_reg_delta_json(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(String, String, u64)>;
+    ) -> VcxCoreResult<(RevocationRegistryDelta, u64)>;
     async fn get_rev_reg(
         &self,
-        rev_reg_id: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-    ) -> VcxCoreResult<(String, String, u64)>;
+    ) -> VcxCoreResult<(RevocationRegistry, u64)>;
 }
 
 #[async_trait]
@@ -94,25 +108,25 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
         wallet: &impl BaseWallet,
         schema_json: Schema,
         submitter_did: &Did,
-        endorser_did: Option<String>,
+        endorser_did: Option<&Did>,
     ) -> VcxCoreResult<()>;
     async fn publish_cred_def(
         &self,
         wallet: &impl BaseWallet,
-        cred_def_json: &str,
+        cred_def_json: CredentialDefinition,
         submitter_did: &Did,
     ) -> VcxCoreResult<()>;
     async fn publish_rev_reg_def(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_def: &str,
+        rev_reg_def: RevocationRegistryDefinition,
         submitter_did: &Did,
     ) -> VcxCoreResult<()>;
     async fn publish_rev_reg_delta(
         &self,
         wallet: &impl BaseWallet,
-        rev_reg_id: &str,
-        rev_reg_entry_json: &str,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+        rev_reg_entry_json: RevocationRegistryDelta,
         submitter_did: &Did,
     ) -> VcxCoreResult<()>;
 }

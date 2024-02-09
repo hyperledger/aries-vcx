@@ -154,7 +154,7 @@ impl Issuer {
             .issuer_create_credential_offer(wallet, &offer_info.cred_def_id)
             .await?;
         self.issuer_sm = self.issuer_sm.clone().build_credential_offer_msg(
-            &libindy_cred_offer,
+            &serde_json::to_string(&libindy_cred_offer)?,
             credential_preview,
             comment,
             &offer_info,
@@ -243,11 +243,16 @@ impl Issuer {
             revocation_info.tails_file,
         ) {
             let rev_reg_delta_json = ledger
-                .get_rev_reg_delta_json(&rev_reg_id, None, None)
+                .get_rev_reg_delta_json(&rev_reg_id.to_owned().try_into()?, None, None)
                 .await?
-                .1;
+                .0;
             anoncreds
-                .revoke_credential_local(wallet, &rev_reg_id, &cred_rev_id, &rev_reg_delta_json)
+                .revoke_credential_local(
+                    wallet,
+                    &rev_reg_id.try_into()?,
+                    cred_rev_id.parse()?,
+                    rev_reg_delta_json,
+                )
                 .await?;
         } else {
             return Err(AriesVcxError::from_msg(

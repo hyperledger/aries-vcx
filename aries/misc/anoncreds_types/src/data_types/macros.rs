@@ -9,6 +9,7 @@ macro_rules! impl_anoncreds_object_identifier {
             },
         };
 
+        // TODO: Add as_str() / as_ref() method
         #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize, Default)]
         pub struct $i(pub String);
 

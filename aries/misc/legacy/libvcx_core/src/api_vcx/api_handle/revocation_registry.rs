@@ -1,6 +1,8 @@
-use aries_vcx::common::primitives::revocation_registry::{
-    RevocationRegistry, RevocationRegistryDefinition,
+use anoncreds_types::data_types::{
+    identifiers::cred_def_id::CredentialDefinitionId,
+    ledger::rev_reg_def::RevocationRegistryDefinition,
 };
+use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
 
 use crate::{
     api_vcx::{
@@ -17,7 +19,7 @@ lazy_static! {
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq)]
 pub struct RevocationRegistryConfig {
     pub issuer_did: String,
-    pub cred_def_id: String,
+    pub cred_def_id: CredentialDefinitionId,
     pub tag: u32,
     pub tails_dir: String,
     pub max_creds: u32,

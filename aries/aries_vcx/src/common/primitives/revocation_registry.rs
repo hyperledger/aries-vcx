@@ -1,3 +1,9 @@
+use std::path::Path;
+
+use anoncreds_types::data_types::{
+    identifiers::cred_def_id::CredentialDefinitionId,
+    ledger::rev_reg_def::RevocationRegistryDefinition,
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
@@ -9,7 +15,7 @@ use did_parser::Did;
 use super::credential_definition::PublicEntityStateType;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Deserialize, Debug, Serialize)]
 pub struct RevocationRegistry {
     cred_def_id: String,
     issuer_did: Did,
@@ -28,7 +34,7 @@ impl RevocationRegistry {
         wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
         issuer_did: &Did,
-        cred_def_id: &str,
+        cred_def_id: &CredentialDefinitionId,
         tails_dir: &str,
         max_creds: u32,
         tag: u32,
@@ -115,7 +121,11 @@ impl RevocationRegistry {
         );
         self.rev_reg_def.value.tails_location = String::from(tails_url);
         ledger
-            .publish_rev_reg_def(wallet, &json!(self.rev_reg_def).to_string(), issuer_did)
+            .publish_rev_reg_def(
+                wallet,
+                serde_json::from_str(&serde_json::to_string(&self.rev_reg_def)?)?,
+                issuer_did,
+            )
             .await
             .map_err(|err| {
                 AriesVcxCoreError::from_msg(
@@ -139,7 +149,12 @@ impl RevocationRegistry {
             self.rev_reg_id
         );
         ledger_write
-            .publish_rev_reg_delta(wallet, &self.rev_reg_id, &self.rev_reg_entry, issuer_did)
+            .publish_rev_reg_delta(
+                wallet,
+                &self.rev_reg_id.to_string().try_into()?,
+                serde_json::from_str(&self.rev_reg_entry)?,
+                issuer_did,
+            )
             .await
             .map_err(|err| {
                 AriesVcxCoreError::from_msg(
@@ -220,14 +235,19 @@ impl RevocationRegistry {
         wallet: &impl BaseWallet,
         anoncreds: &impl BaseAnonCreds,
         ledger: &impl AnoncredsLedgerRead,
-        cred_rev_id: &str,
+        cred_rev_id: u32,
     ) -> VcxResult<()> {
         let rev_reg_delta_json = ledger
-            .get_rev_reg_delta_json(&self.rev_reg_id, None, None)
+            .get_rev_reg_delta_json(&self.rev_reg_id.to_string().try_into()?, None, None)
             .await?
-            .1;
+            .0;
         anoncreds
-            .revoke_credential_local(wallet, &self.rev_reg_id, &rev_reg_delta_json, cred_rev_id)
+            .revoke_credential_local(
+                wallet,
+                &self.rev_reg_id.to_owned().try_into()?,
+                cred_rev_id,
+                rev_reg_delta_json,
+            )
             .await
             .map_err(|err| err.into())
     }
@@ -240,11 +260,16 @@ impl RevocationRegistry {
         submitter_did: &Did,
     ) -> VcxResult<()> {
         if let Some(delta) = anoncreds
-            .get_rev_reg_delta(wallet, &self.rev_reg_id)
+            .get_rev_reg_delta(wallet, &self.rev_reg_id.to_owned().try_into()?)
             .await?
         {
             ledger_write
-                .publish_rev_reg_delta(wallet, &self.rev_reg_id, &delta, submitter_did)
+                .publish_rev_reg_delta(
+                    wallet,
+                    &self.rev_reg_id.to_string().try_into()?,
+                    delta,
+                    submitter_did,
+                )
                 .await?;
 
             info!(
@@ -253,7 +278,7 @@ impl RevocationRegistry {
             );
 
             match anoncreds
-                .clear_rev_reg_delta(wallet, &self.rev_reg_id)
+                .clear_rev_reg_delta(wallet, &self.rev_reg_id.to_owned().try_into()?)
                 .await
             {
                 Ok(_) => {
@@ -285,31 +310,11 @@ impl RevocationRegistry {
     }
 }
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct RevocationRegistryDefinitionValue {
-    pub issuance_type: String, // FILL IN
-    pub max_cred_num: u32,
-    pub public_keys: serde_json::Value,
-    pub tails_hash: String,
-    pub tails_location: String,
-}
-
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct RevocationRegistryDefinition {
-    pub id: String, // FILL IN
-    pub revoc_def_type: String,
-    pub tag: String,
-    pub cred_def_id: String,
-    pub value: RevocationRegistryDefinitionValue,
-    pub ver: String, // FILL IN
-}
 pub async fn generate_rev_reg(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
     issuer_did: &Did,
-    cred_def_id: &str,
+    cred_def_id: &CredentialDefinitionId,
     tails_dir: &str,
     max_creds: u32,
     tag: &str,
@@ -329,22 +334,15 @@ pub async fn generate_rev_reg(
             wallet,
             issuer_did,
             cred_def_id,
-            tails_dir,
+            Path::new(tails_dir),
             max_creds,
             tag,
         )
         .await?;
 
-    let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def_json)
-        .map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::SerializationError,
-                format!(
-                    "Failed to deserialize rev_reg_def: {:?}, error: {:?}",
-                    rev_reg_def_json, err
-                ),
-            )
-        })?;
-
-    Ok((rev_reg_id, rev_reg_def, rev_reg_entry_json))
+    Ok((
+        rev_reg_id.to_string(),
+        rev_reg_def_json,
+        serde_json::to_string(&rev_reg_entry_json)?,
+    ))
 }

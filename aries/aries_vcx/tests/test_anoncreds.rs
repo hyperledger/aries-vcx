@@ -127,7 +127,7 @@ async fn test_pool_revoke_credential() -> Result<(), Box<dyn Error>> {
         &setup.anoncreds,
         &setup.ledger_write,
         &setup.institution_did,
-        &cred_def.get_cred_def_id(),
+        cred_def.get_cred_def_id(),
     )
     .await;
     let cred_id = create_and_write_credential(
@@ -144,12 +144,12 @@ async fn test_pool_revoke_credential() -> Result<(), Box<dyn Error>> {
 
     let ledger = &setup.ledger_read;
 
-    let (_, first_rev_reg_delta, first_timestamp) = ledger
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+    let (first_rev_reg_delta, first_timestamp) = ledger
+        .get_rev_reg_delta_json(&rev_reg.rev_reg_id.to_owned().try_into()?, None, None)
         .await?;
 
-    let (_, test_same_delta, test_same_timestamp) = ledger
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+    let (test_same_delta, test_same_timestamp) = ledger
+        .get_rev_reg_delta_json(&rev_reg.rev_reg_id.to_owned().try_into()?, None, None)
         .await?;
 
     assert_eq!(first_rev_reg_delta, test_same_delta);
@@ -159,15 +159,15 @@ async fn test_pool_revoke_credential() -> Result<(), Box<dyn Error>> {
 
     let rev_reg_delta_json = setup
         .ledger_read
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+        .get_rev_reg_delta_json(&rev_reg.rev_reg_id.to_owned().try_into()?, None, None)
         .await?
-        .1;
+        .0;
     anoncreds
         .revoke_credential_local(
             &setup.wallet,
-            &rev_reg.rev_reg_id,
-            &cred_rev_id,
-            &rev_reg_delta_json,
+            &rev_reg.rev_reg_id.to_owned().try_into()?,
+            cred_rev_id.parse()?,
+            rev_reg_delta_json,
         )
         .await?;
 
@@ -181,8 +181,12 @@ async fn test_pool_revoke_credential() -> Result<(), Box<dyn Error>> {
         .await?;
 
     // Delta should change after revocation
-    let (_, second_rev_reg_delta, _) = ledger
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id, Some(first_timestamp + 1), None)
+    let (second_rev_reg_delta, _) = ledger
+        .get_rev_reg_delta_json(
+            &rev_reg.rev_reg_id.try_into()?,
+            Some(first_timestamp + 1),
+            None,
+        )
         .await?;
 
     assert_ne!(first_rev_reg_delta, second_rev_reg_delta);

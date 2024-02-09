@@ -30,3 +30,9 @@ impl From<Box<dyn std::error::Error>> for AriesVcxCoreError {
         AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidState, err.to_string())
     }
 }
+
+impl From<anoncreds_types::Error> for AriesVcxCoreError {
+    fn from(err: anoncreds_types::Error) -> Self {
+        AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidState, err.to_string())
+    }
+}

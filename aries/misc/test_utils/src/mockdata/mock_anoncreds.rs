@@ -1,8 +1,20 @@
-use anoncreds_types::data_types::{identifiers::schema_id::SchemaId, ledger::schema::Schema};
+use std::path::Path;
+
+use anoncreds_types::data_types::{
+    identifiers::{
+        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+        schema_id::SchemaId,
+    },
+    ledger::{
+        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+        schema::Schema,
+    },
+    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest, nonce::Nonce},
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    global::settings::DEFAULT_LINK_SECRET_ALIAS,
     wallet::base_wallet::BaseWallet,
 };
 use async_trait::async_trait;
@@ -39,11 +51,15 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         __wallet: &impl BaseWallet,
         _issuer_did: &Did,
-        _cred_def_id: &str,
-        _tails_dir: &str,
+        _cred_def_id: &CredentialDefinitionId,
+        _tails_dir: &Path,
         _max_creds: u32,
         _tag: &str,
-    ) -> VcxCoreResult<(String, String, String)> {
+    ) -> VcxCoreResult<(
+        RevocationRegistryDefinitionId,
+        RevocationRegistryDefinition,
+        RevocationRegistry,
+    )> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -60,7 +76,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _tag: &str,
         _signature_type: Option<&str>,
         _config_json: &str,
-    ) -> VcxCoreResult<(String, String)> {
+    ) -> VcxCoreResult<CredentialDefinition> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -71,21 +87,21 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn issuer_create_credential_offer(
         &self,
         __wallet: &impl BaseWallet,
-        _cred_def_id: &str,
-    ) -> VcxCoreResult<String> {
-        Ok(LIBINDY_CRED_OFFER.to_string())
+        _cred_def_id: &CredentialDefinitionId,
+    ) -> VcxCoreResult<CredentialOffer> {
+        Ok(serde_json::from_str(LIBINDY_CRED_OFFER)?)
     }
 
     async fn issuer_create_credential(
         &self,
         __wallet: &impl BaseWallet,
-        _cred_offer_json: &str,
-        _cred_req_json: &str,
+        _cred_offer_json: CredentialOffer,
+        _cred_req_json: CredentialRequest,
         _cred_values_json: &str,
-        _rev_reg_id: Option<String>,
-        _tails_dir: Option<String>,
-    ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
-        Ok((CREDENTIAL_JSON.to_owned(), None, None))
+        _rev_reg_id: Option<&RevocationRegistryDefinitionId>,
+        _tails_dir: Option<&Path>,
+    ) -> VcxCoreResult<(String, Option<String>)> {
+        Ok((CREDENTIAL_JSON.to_owned(), None))
     }
 
     async fn prover_create_proof(
@@ -142,7 +158,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _wallet: &impl BaseWallet,
         _prover_did: &Did,
         _cred_offer_json: &str,
-        _cred_def_json: &str,
+        _cred_def_json: CredentialDefinition,
         _master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
         Ok((CREDENTIAL_REQ_STRING.to_owned(), String::new()))
@@ -150,11 +166,11 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn create_revocation_state(
         &self,
-        _tails_dir: &str,
-        _rev_reg_def_json: &str,
-        _rev_reg_delta_json: &str,
+        _tails_dir: &Path,
+        _rev_reg_def_json: RevocationRegistryDefinition,
+        _rev_reg_delta_json: RevocationRegistryDelta,
         _timestamp: u64,
-        _cred_rev_id: &str,
+        _cred_rev_id: u32,
     ) -> VcxCoreResult<String> {
         Ok(REV_STATE_JSON.to_string())
     }
@@ -165,8 +181,8 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_id: Option<&str>,
         _cred_req_metadata_json: &str,
         _cred_json: &str,
-        _cred_def_json: &str,
-        _rev_reg_def_json: Option<&str>,
+        _cred_def_json: CredentialDefinition,
+        _rev_reg_def_json: Option<RevocationRegistryDefinition>,
     ) -> VcxCoreResult<String> {
         Ok("cred_id".to_string())
     }
@@ -187,8 +203,8 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         _wallet: &impl BaseWallet,
         _link_secret_id: &str,
-    ) -> VcxCoreResult<String> {
-        Ok(DEFAULT_LINK_SECRET_ALIAS.to_string())
+    ) -> VcxCoreResult<()> {
+        Ok(())
     }
 
     async fn issuer_create_schema(
@@ -208,9 +224,9 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn revoke_credential_local(
         &self,
         _wallet: &impl BaseWallet,
-        _rev_reg_id: &str,
-        _cred_rev_id: &str,
-        _rev_reg_delta_json: &str,
+        _rev_reg_id: &RevocationRegistryDefinitionId,
+        _cred_rev_id: u32,
+        _rev_reg_delta_json: RevocationRegistryDelta,
     ) -> VcxCoreResult<()> {
         Ok(())
     }
@@ -218,20 +234,20 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn get_rev_reg_delta(
         &self,
         _wallet: &impl BaseWallet,
-        _rev_reg_id: &str,
-    ) -> VcxCoreResult<Option<String>> {
-        Ok(Some(REV_REG_DELTA_JSON.to_string()))
+        _rev_reg_id: &RevocationRegistryDefinitionId,
+    ) -> VcxCoreResult<Option<RevocationRegistryDelta>> {
+        Ok(Some(serde_json::from_str(REV_REG_DELTA_JSON)?))
     }
 
     async fn clear_rev_reg_delta(
         &self,
         _wallet: &impl BaseWallet,
-        _rev_reg_id: &str,
+        _rev_reg_id: &RevocationRegistryDefinitionId,
     ) -> VcxCoreResult<()> {
         Ok(())
     }
 
-    async fn generate_nonce(&self) -> VcxCoreResult<String> {
-        Ok(LARGE_NONCE.to_string())
+    async fn generate_nonce(&self) -> VcxCoreResult<Nonce> {
+        Ok(Nonce::from_dec(LARGE_NONCE.to_string()).unwrap())
     }
 }
