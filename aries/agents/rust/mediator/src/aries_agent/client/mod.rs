@@ -102,7 +102,10 @@ impl<T: BaseWallet + 'static, P: MediatorPersistence> Agent<T, P> {
     }
 
     pub async fn list_contacts(&self) -> Result<Vec<(String, String)>, String> {
-        self.persistence.list_accounts().await
+        self.persistence
+            .list_accounts()
+            .await
+            .map_err(string_from_std_error)
     }
     /// Workflow method to establish DidComm connection with Aries peer, given OOB invite.
     pub async fn establish_connection(

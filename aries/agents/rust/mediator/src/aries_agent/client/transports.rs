@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use async_trait::async_trait;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use log::debug;
@@ -29,13 +27,8 @@ pub trait AriesTransport {
     ) -> Result<Value, AriesTransportError>;
 }
 
-pub struct AriesReqwest {
-    pub response_queue: VecDeque<Value>,
-    pub client: reqwest::Client,
-}
-
 #[async_trait]
-impl AriesTransport for AriesReqwest {
+impl AriesTransport for reqwest::Client {
     async fn send_aries_envelope(
         &mut self,
         envelope_json: Value,
@@ -49,7 +42,6 @@ impl AriesTransport for AriesReqwest {
             serde_json::to_string(&envelope_json).unwrap()
         );
         let res = self
-            .client
             .post(oob_invited_endpoint)
             .json(&envelope_json)
             .send()

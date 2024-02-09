@@ -47,20 +47,24 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
             return Ok(Json(json!({})));
         } else {
             // Authenticated flow: Auth known VerKey then process account related messages
-            let (account_name, auth_pubkey, our_signing_key, their_diddoc) =
-                agent.auth_and_get_details(&unpacked.sender_verkey).await?;
-            log::info!("Processing message for {:?}", account_name);
+            let account_details = agent.auth_and_get_details(&unpacked.sender_verkey).await?;
+            log::info!("Processing message for {:?}", account_details.account_name);
             let aries_response = match aries_message {
                 GeneralAriesMessage::AriesVCXSupported(AriesMessage::Pickup(pickup_message)) => {
-                    let pickup_response =
-                        handle_pickup_protocol(&agent, pickup_message, &auth_pubkey).await?;
+                    let pickup_response = handle_pickup_protocol(
+                        &agent,
+                        pickup_message,
+                        &account_details.auth_pubkey,
+                    )
+                    .await?;
                     AriesMessage::Pickup(pickup_response)
                 }
                 GeneralAriesMessage::AriesVCXSupported(AriesMessage::CoordinateMediation(
                     coord_message,
                 )) => {
                     let coord_response =
-                        handle_mediation_coord(&agent, coord_message, &auth_pubkey).await?;
+                        handle_mediation_coord(&agent, coord_message, &account_details.auth_pubkey)
+                            .await?;
                     AriesMessage::CoordinateMediation(coord_response)
                 }
                 GeneralAriesMessage::AriesVCXSupported(aries_message) => {
@@ -70,7 +74,11 @@ pub async fn handle_aries<T: BaseWallet + 'static, P: MediatorPersistence>(
             let aries_response_bytes =
                 serde_json::to_vec(&aries_response).map_err(string_from_std_error)?;
             agent
-                .pack_didcomm(&aries_response_bytes, &our_signing_key, &their_diddoc)
+                .pack_didcomm(
+                    &aries_response_bytes,
+                    &account_details.our_signing_key,
+                    &account_details.their_did_doc,
+                )
                 .await?
         };
     let EncryptionEnvelope(packed_message_bytes) = packed_response;
