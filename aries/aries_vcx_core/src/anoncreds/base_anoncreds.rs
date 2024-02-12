@@ -122,7 +122,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_offer_json: CredentialOffer,
         cred_def_json: CredentialDefinition,
         master_secret_id: &str,
-    ) -> VcxCoreResult<(String, String)>;
+    ) -> VcxCoreResult<(CredentialRequest, String)>;
 
     async fn create_revocation_state(
         &self,

@@ -155,6 +155,16 @@ impl Convert for OurCredentialRequest {
     }
 }
 
+impl Convert for AnoncredsCredentialRequest {
+    type Args = ();
+    type Target = OurCredentialRequest;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+    }
+}
+
 impl Convert for OurCredentialOffer {
     type Args = ();
     type Target = AnoncredsCredentialOffer;

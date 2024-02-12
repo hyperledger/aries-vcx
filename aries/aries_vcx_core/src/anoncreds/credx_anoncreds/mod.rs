@@ -944,7 +944,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         cred_offer_json: CredentialOffer,
         credential_def_json: CredentialDefinition,
         link_secret_id: &str,
-    ) -> VcxCoreResult<(String, String)> {
+    ) -> VcxCoreResult<(CredentialRequest, String)> {
         let prover_did = prover_did.convert(())?;
         let cred_def: CredxCredentialDefinition = credential_def_json.convert(())?;
         let credential_offer: CredxCredentialOffer = cred_offer_json.convert(())?;
@@ -959,7 +959,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         )?;
 
         Ok((
-            serde_json::to_string(&cred_req)?,
+            cred_req.convert(())?,
             serde_json::to_string(&cred_req_metadata)?,
         ))
     }

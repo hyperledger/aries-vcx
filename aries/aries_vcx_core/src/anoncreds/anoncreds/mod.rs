@@ -989,7 +989,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_offer_json: CredentialOffer,
         cred_def_json: CredentialDefinition,
         master_secret_id: &str,
-    ) -> VcxCoreResult<(String, String)> {
+    ) -> VcxCoreResult<(CredentialRequest, String)> {
         let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;
         let credential_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
         let link_secret = self.get_link_secret(wallet, master_secret_id).await?;
@@ -1004,7 +1004,7 @@ impl BaseAnonCreds for Anoncreds {
         )?;
 
         Ok((
-            serde_json::to_string(&cred_req)?,
+            cred_req.convert(())?,
             serde_json::to_string(&cred_req_metadata)?,
         ))
     }

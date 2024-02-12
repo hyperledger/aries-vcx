@@ -160,6 +160,16 @@ impl Convert for OurCredentialRequest {
     }
 }
 
+impl Convert for CredxCredentialRequest {
+    type Args = ();
+    type Target = OurCredentialRequest;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+    }
+}
+
 impl Convert for HashMap<OurCredentialDefinitionId, OurCredentialDefinition> {
     type Args = ();
     type Target = HashMap<CredxCredentialDefinitionId, CredxCredentialDefinition>;

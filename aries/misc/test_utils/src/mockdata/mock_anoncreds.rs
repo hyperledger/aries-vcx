@@ -171,8 +171,11 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_offer_json: CredentialOffer,
         _cred_def_json: CredentialDefinition,
         _master_secret_id: &str,
-    ) -> VcxCoreResult<(String, String)> {
-        Ok((CREDENTIAL_REQ_STRING.to_owned(), String::new()))
+    ) -> VcxCoreResult<(CredentialRequest, String)> {
+        Ok((
+            serde_json::from_str(CREDENTIAL_REQ_STRING).unwrap(),
+            String::new(),
+        ))
     }
 
     async fn create_revocation_state(
