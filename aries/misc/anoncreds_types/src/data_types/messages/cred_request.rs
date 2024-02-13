@@ -89,8 +89,10 @@ impl CredentialRequest {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialRequestMetadata {
+    #[serde(alias = "master_secret_blinding_data")]
     pub link_secret_blinding_data: CredentialSecretsBlindingFactors,
     pub nonce: Nonce,
+    #[serde(alias = "master_secret_name")]
     pub link_secret_name: String,
 }
 

@@ -190,7 +190,13 @@ impl Convert for OurCredentialRequestMetadata {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+        Ok(CredxCredentialRequestMetadata {
+            master_secret_blinding_data: serde_json::from_value(serde_json::to_value(
+                self.link_secret_blinding_data,
+            )?)?,
+            nonce: serde_json::from_value(serde_json::to_value(self.nonce)?)?,
+            master_secret_name: self.link_secret_name,
+        })
     }
 }
 
