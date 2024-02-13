@@ -282,6 +282,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+          default: true
       - name: "Install just"
         run: sudo snap install --edge --classic just
       - name: "Run aries-vcx integration tests"
@@ -297,6 +298,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+          default: true
       - name: "Install just"
         run: sudo snap install --edge --classic just
       - name: "Run anoncreds-rs integration tests"
@@ -312,6 +314,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+          default: true
       - name: "Install just"
         run: sudo snap install --edge --classic just
       - name: "Run aries_vcx tests: mysql_test"
@@ -359,6 +362,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+          default: true
       - name: "Install just"
         run: sudo snap install --edge --classic just
       - name: "Run libvcx_core integration tests"
@@ -375,6 +379,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+          default: true
       - name: "Install just"
         run: sudo snap install --edge --classic just
       - name: "Run resolver tests"
