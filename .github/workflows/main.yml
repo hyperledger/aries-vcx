@@ -54,6 +54,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN_VERSION }}
+          default: true
       - name: "Construct CI run-info"
         id: run-info
         uses: ./.github/actions/construct-run-info
@@ -270,7 +271,6 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
           skip-docker-setup: true
       - name: "Run workspace unit tests"
         run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --exclude mediator
@@ -285,7 +285,6 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
       - name: "Run aries-vcx integration tests"
         run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F vdrtools_wallet,credx -- --ignored;
 
@@ -299,7 +298,6 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
       - name: "Run anoncreds-rs integration tests"
         run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F anoncreds --test test_revocations --test test_proof_presentation --test test_anoncreds -- --ignored
 
@@ -313,7 +311,6 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
       - name: "Run aries_vcx tests: mysql_test"
         run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" test_mysql -- --include-ignored;
 
@@ -337,7 +334,6 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
           skip-vdrproxy-setup: false
       - name: "Run aries_vcx tests: vdrproxy_test"
         run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F vdr_proxy_ledger,credx -- --ignored
@@ -358,7 +354,6 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
       - name: "Run libvcx_core integration tests"
         run: |
           RUST_TEST_THREADS=1 cargo test --manifest-path="aries/misc/legacy/libvcx_core/Cargo.toml" -- --include-ignored;
@@ -374,7 +369,6 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
       - name: "Run resolver tests"
         run: |
           cargo test --examples -p did_doc -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov -p did_resolver_web -p did_doc_sov -p did_key -p did_peer --test "*"
@@ -393,7 +387,6 @@ jobs:
         uses: ./.github/actions/setup-testing-nodejs
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
           node-version: ${{ matrix.node-version }}
       - name: "Run wrapper integration tests"
         run: (cd aries/wrappers/node && npm run test:integration)
