@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anoncreds_types::data_types::messages::cred_selection::SelectedCredentials;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -16,10 +17,7 @@ use uuid::Uuid;
 use crate::{
     common::proofs::prover::generate_indy_proof,
     errors::error::prelude::*,
-    handlers::{
-        proof_presentation::types::SelectedCredentials,
-        util::{get_attach_as_string, Status},
-    },
+    handlers::util::{get_attach_as_string, Status},
     protocols::proof_presentation::prover::states::{
         finished::FinishedState,
         presentation_preparation_failed::PresentationPreparationFailedState,

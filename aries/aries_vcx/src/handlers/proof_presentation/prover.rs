@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+use anoncreds_types::data_types::messages::cred_selection::{
+    RetrievedCredentials, SelectedCredentials,
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -27,7 +30,6 @@ use messages::{
 };
 use uuid::Uuid;
 
-use super::types::{RetrievedCredentials, SelectedCredentials};
 use crate::{
     errors::error::prelude::*,
     handlers::util::{get_attach_as_string, PresentationProposalData},

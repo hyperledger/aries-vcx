@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::messages::cred_selection::RetrievedCredentialInfo;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -5,10 +6,7 @@ use aries_vcx_core::{
 use time::OffsetDateTime;
 
 use super::primitives::revocation_registry_delta::RevocationRegistryDelta;
-use crate::{
-    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    handlers::proof_presentation::types::RetrievedCredentialInfo,
-};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 pub mod encoding;
 

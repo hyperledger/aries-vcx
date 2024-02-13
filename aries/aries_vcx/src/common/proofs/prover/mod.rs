@@ -2,6 +2,7 @@ mod prover_internal;
 
 use std::collections::HashMap;
 
+use anoncreds_types::data_types::messages::cred_selection::SelectedCredentials;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -17,7 +18,6 @@ use crate::{
     },
     errors::error::prelude::*,
     global::settings,
-    handlers::proof_presentation::types::SelectedCredentials,
 };
 
 pub async fn generate_indy_proof(

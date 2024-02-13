@@ -2,12 +2,10 @@
 
 use std::{collections::HashMap, error::Error};
 
+use anoncreds_types::data_types::messages::cred_selection::RetrievedCredentials;
 use aries_vcx::{
     common::proofs::proof_request::PresentationRequestData,
-    handlers::{
-        proof_presentation::{prover::Prover, types::RetrievedCredentials},
-        util::AttachmentId,
-    },
+    handlers::{proof_presentation::prover::Prover, util::AttachmentId},
 };
 use base64::{engine::general_purpose, Engine};
 use messages::{

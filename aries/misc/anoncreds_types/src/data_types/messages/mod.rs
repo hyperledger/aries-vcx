@@ -1,5 +1,6 @@
 pub mod cred_offer;
 pub mod cred_request;
+pub mod cred_selection;
 pub mod credential;
 pub mod link_secret;
 pub mod nonce;

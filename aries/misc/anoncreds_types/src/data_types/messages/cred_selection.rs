@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use crate::data_types::identifiers::schema_id::SchemaId;
 
 /// Data structure representing the credentials in the wallet, which are suitable
 /// for presentation against a proof request.

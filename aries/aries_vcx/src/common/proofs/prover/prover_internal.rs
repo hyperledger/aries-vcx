@@ -1,6 +1,8 @@
 use std::{collections::HashMap, path::Path};
 
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use anoncreds_types::data_types::{
+    identifiers::schema_id::SchemaId, messages::cred_selection::SelectedCredentials,
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
@@ -11,7 +13,6 @@ use serde_json::Value;
 use crate::{
     common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval},
     errors::error::prelude::*,
-    handlers::proof_presentation::types::SelectedCredentials,
 };
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]

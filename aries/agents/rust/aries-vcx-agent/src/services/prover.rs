@@ -1,10 +1,8 @@
 use std::{collections::HashMap, sync::Arc};
 
+use anoncreds_types::data_types::messages::cred_selection::SelectedCredentials;
 use aries_vcx::{
-    handlers::{
-        proof_presentation::{prover::Prover, types::SelectedCredentials},
-        util::PresentationProposalData,
-    },
+    handlers::{proof_presentation::prover::Prover, util::PresentationProposalData},
     messages::{
         msg_fields::protocols::present_proof::v1::{
             ack::AckPresentationV1, request::RequestPresentationV1,

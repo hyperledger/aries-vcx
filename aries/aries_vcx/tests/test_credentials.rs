@@ -1,9 +1,7 @@
 use std::error::Error;
 
-use aries_vcx::{
-    common::credentials::{get_cred_rev_id, is_cred_revoked},
-    handlers::proof_presentation::types::RetrievedCredentialInfo,
-};
+use anoncreds_types::data_types::messages::cred_selection::RetrievedCredentialInfo;
+use aries_vcx::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };

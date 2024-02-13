@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fmt};
 
+use anoncreds_types::data_types::messages::cred_selection::SelectedCredentials;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -24,10 +25,7 @@ use uuid::Uuid;
 
 use crate::{
     errors::error::prelude::*,
-    handlers::{
-        proof_presentation::types::SelectedCredentials,
-        util::{make_attach_from_str, AttachmentId, PresentationProposalData, Status},
-    },
+    handlers::util::{make_attach_from_str, AttachmentId, PresentationProposalData, Status},
     protocols::{
         common::build_problem_report_msg,
         proof_presentation::prover::states::{
