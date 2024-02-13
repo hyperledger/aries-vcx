@@ -192,7 +192,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn prover_store_credential(
         &self,
         _wallet: &impl BaseWallet,
-        _cred_req_metadata_json: &str,
+        _cred_req_metadata_json: CredentialRequestMetadata,
         _cred_json: Credential,
         _cred_def_json: CredentialDefinition,
         _rev_reg_def_json: Option<RevocationRegistryDefinition>,

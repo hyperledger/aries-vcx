@@ -1083,7 +1083,7 @@ impl BaseAnonCreds for Anoncreds {
     async fn prover_store_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_req_metadata_json: &str,
+        cred_req_metadata_json: CredentialRequestMetadata,
         cred_json: Credential,
         cred_def_json: CredentialDefinition,
         rev_reg_def_json: Option<RevocationRegistryDefinition>,
@@ -1098,7 +1098,7 @@ impl BaseAnonCreds for Anoncreds {
             ))?;
 
         let cred_request_metadata: AnoncredsCredentialRequestMetadata =
-            serde_json::from_str(cred_req_metadata_json)?;
+            cred_req_metadata_json.convert(())?;
         let link_secret_id = &cred_request_metadata.link_secret_name;
         let link_secret = self.get_link_secret(wallet, link_secret_id).await?;
         let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;

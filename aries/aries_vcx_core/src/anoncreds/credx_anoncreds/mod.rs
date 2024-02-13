@@ -1006,14 +1006,13 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn prover_store_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_req_meta: &str,
+        cred_req_meta: CredentialRequestMetadata,
         cred_json: Credential,
         cred_def_json: CredentialDefinition,
         rev_reg_def_json: Option<RevocationRegistryDefinition>,
     ) -> VcxCoreResult<String> {
         let mut credential: CredxCredential = cred_json.convert(())?;
-        let cred_request_metadata: CredxCredentialRequestMetadata =
-            serde_json::from_str(cred_req_meta)?;
+        let cred_request_metadata: CredxCredentialRequestMetadata = cred_req_meta.convert(())?;
         let link_secret_id = &cred_request_metadata.master_secret_name;
         let link_secret = Self::get_link_secret(wallet, link_secret_id).await?;
         let cred_def: CredxCredentialDefinition = cred_def_json.convert(())?;
