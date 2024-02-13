@@ -19,7 +19,10 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer as OurCredentialOffer,
-        cred_request::CredentialRequest as OurCredentialRequest,
+        cred_request::{
+            CredentialRequest as OurCredentialRequest,
+            CredentialRequestMetadata as OurCredentialRequestMetadata,
+        },
         credential::{Credential as OurCredential, CredentialValues as OurCredentialValues},
         pres_request::PresentationRequest as OurPresentationRequest,
         presentation::Presentation as OurPresentation,
@@ -33,6 +36,7 @@ use indy_credx::{
         CredentialDefinition as CredxCredentialDefinition,
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
+        CredentialRequestMetadata as CredxCredentialRequestMetadata,
         CredentialValues as CredxCredentialValues, DidValue, Presentation as CredxPresentation,
         PresentationRequest as CredxPresentationRequest,
         RevocationRegistry as CredxRevocationRegistry,
@@ -163,6 +167,26 @@ impl Convert for OurCredentialRequest {
 impl Convert for CredxCredentialRequest {
     type Args = ();
     type Target = OurCredentialRequest;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+    }
+}
+
+impl Convert for CredxCredentialRequestMetadata {
+    type Args = ();
+    type Target = OurCredentialRequestMetadata;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+    }
+}
+
+impl Convert for OurCredentialRequestMetadata {
+    type Args = ();
+    type Target = CredxCredentialRequestMetadata;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {

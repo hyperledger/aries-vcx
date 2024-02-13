@@ -19,7 +19,7 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer,
-        cred_request::CredentialRequest,
+        cred_request::{CredentialRequest, CredentialRequestMetadata},
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
@@ -34,10 +34,11 @@ use credx::{
         Credential as CredxCredential, CredentialDefinition as CredxCredentialDefinition,
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
-        CredentialRequestMetadata, CredentialRevocationConfig, CredentialRevocationState,
-        CredentialValues as CredxCredentialValues, IssuanceType, LinkSecret, PresentCredentials,
-        Presentation as CredxPresentation, PresentationRequest as CredxPresentationRequest,
-        RegistryType, RevocationRegistry as CredxRevocationRegistry,
+        CredentialRequestMetadata as CredxCredentialRequestMetadata, CredentialRevocationConfig,
+        CredentialRevocationState, CredentialValues as CredxCredentialValues, IssuanceType,
+        LinkSecret, PresentCredentials, Presentation as CredxPresentation,
+        PresentationRequest as CredxPresentationRequest, RegistryType,
+        RevocationRegistry as CredxRevocationRegistry,
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
         RevocationRegistryDelta as CredxRevocationRegistryDelta,
         RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
@@ -944,7 +945,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         cred_offer_json: CredentialOffer,
         credential_def_json: CredentialDefinition,
         link_secret_id: &str,
-    ) -> VcxCoreResult<(CredentialRequest, String)> {
+    ) -> VcxCoreResult<(CredentialRequest, CredentialRequestMetadata)> {
         let prover_did = prover_did.convert(())?;
         let cred_def: CredxCredentialDefinition = credential_def_json.convert(())?;
         let credential_offer: CredxCredentialOffer = cred_offer_json.convert(())?;
@@ -958,10 +959,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             &credential_offer,
         )?;
 
-        Ok((
-            cred_req.convert(())?,
-            serde_json::to_string(&cred_req_metadata)?,
-        ))
+        Ok((cred_req.convert(())?, cred_req_metadata.convert(())?))
     }
 
     async fn create_revocation_state(
@@ -1014,7 +1012,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         rev_reg_def_json: Option<RevocationRegistryDefinition>,
     ) -> VcxCoreResult<String> {
         let mut credential: CredxCredential = cred_json.convert(())?;
-        let cred_request_metadata: CredentialRequestMetadata = serde_json::from_str(cred_req_meta)?;
+        let cred_request_metadata: CredxCredentialRequestMetadata =
+            serde_json::from_str(cred_req_meta)?;
         let link_secret_id = &cred_request_metadata.master_secret_name;
         let link_secret = Self::get_link_secret(wallet, link_secret_id).await?;
         let cred_def: CredxCredentialDefinition = cred_def_json.convert(())?;

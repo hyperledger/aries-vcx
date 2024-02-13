@@ -12,7 +12,7 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer,
-        cred_request::CredentialRequest,
+        cred_request::{CredentialRequest, CredentialRequestMetadata},
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
@@ -28,8 +28,8 @@ use async_trait::async_trait;
 use did_parser::Did;
 
 use crate::constants::{
-    CREDENTIAL_JSON, CREDENTIAL_REQ_STRING, LARGE_NONCE, LIBINDY_CRED_OFFER, PROOF_JSON,
-    REV_REG_DELTA_JSON, REV_STATE_JSON,
+    CREDENTIAL_JSON, CREDENTIAL_REQ_METADATA, CREDENTIAL_REQ_STRING, LARGE_NONCE,
+    LIBINDY_CRED_OFFER, PROOF_JSON, REV_REG_DELTA_JSON, REV_STATE_JSON,
 };
 
 #[derive(Debug)]
@@ -171,10 +171,10 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_offer_json: CredentialOffer,
         _cred_def_json: CredentialDefinition,
         _master_secret_id: &str,
-    ) -> VcxCoreResult<(CredentialRequest, String)> {
+    ) -> VcxCoreResult<(CredentialRequest, CredentialRequestMetadata)> {
         Ok((
             serde_json::from_str(CREDENTIAL_REQ_STRING).unwrap(),
-            String::new(),
+            serde_json::from_str(CREDENTIAL_REQ_METADATA).unwrap(),
         ))
     }
 

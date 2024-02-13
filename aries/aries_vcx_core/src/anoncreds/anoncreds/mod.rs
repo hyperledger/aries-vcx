@@ -23,7 +23,8 @@ use anoncreds::{
     tails::TailsFileWriter,
     types::{
         CredentialOffer as AnoncredsCredentialOffer,
-        CredentialRequest as AnoncredsCredentialRequest, CredentialRequestMetadata,
+        CredentialRequest as AnoncredsCredentialRequest,
+        CredentialRequestMetadata as AnoncredsCredentialRequestMetadata,
         CredentialRevocationConfig, CredentialRevocationState,
         CredentialValues as AnoncredsCredentialValues, LinkSecret, PresentCredentials,
         Presentation as AnoncredsPresentation, PresentationRequest as AnoncredsPresentationRequest,
@@ -46,7 +47,7 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer,
-        cred_request::CredentialRequest,
+        cred_request::{CredentialRequest, CredentialRequestMetadata},
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
@@ -989,7 +990,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_offer_json: CredentialOffer,
         cred_def_json: CredentialDefinition,
         master_secret_id: &str,
-    ) -> VcxCoreResult<(CredentialRequest, String)> {
+    ) -> VcxCoreResult<(CredentialRequest, CredentialRequestMetadata)> {
         let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;
         let credential_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
         let link_secret = self.get_link_secret(wallet, master_secret_id).await?;
@@ -1003,10 +1004,7 @@ impl BaseAnonCreds for Anoncreds {
             &credential_offer,
         )?;
 
-        Ok((
-            cred_req.convert(())?,
-            serde_json::to_string(&cred_req_metadata)?,
-        ))
+        Ok((cred_req.convert(())?, cred_req_metadata.convert(())?))
     }
 
     async fn create_revocation_state(
@@ -1099,7 +1097,7 @@ impl BaseAnonCreds for Anoncreds {
                 "Could not process credential.cred_def_id as parts.",
             ))?;
 
-        let cred_request_metadata: CredentialRequestMetadata =
+        let cred_request_metadata: AnoncredsCredentialRequestMetadata =
             serde_json::from_str(cred_req_metadata_json)?;
         let link_secret_id = &cred_request_metadata.link_secret_name;
         let link_secret = self.get_link_secret(wallet, link_secret_id).await?;

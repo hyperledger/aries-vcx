@@ -1,3 +1,5 @@
+use anoncreds_clsignatures::CredentialSecretsBlindingFactors;
+
 use super::nonce::Nonce;
 use crate::{
     cl::{BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof},
@@ -85,15 +87,15 @@ impl CredentialRequest {
     }
 }
 
-// #[derive(Debug, Deserialize, Serialize)]
-// pub struct CredentialRequestMetadata {
-//     pub link_secret_blinding_data: CredentialSecretsBlindingFactors,
-//     pub nonce: Nonce,
-//     pub link_secret_name: String,
-// }
-//
-// impl Validatable for CredentialRequestMetadata {}
-//
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CredentialRequestMetadata {
+    pub link_secret_blinding_data: CredentialSecretsBlindingFactors,
+    pub nonce: Nonce,
+    pub link_secret_name: String,
+}
+
+impl Validatable for CredentialRequestMetadata {}
+
 // #[cfg(test)]
 // mod cred_req_tests {
 //     use crate::{

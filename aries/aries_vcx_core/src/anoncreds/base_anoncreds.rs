@@ -12,7 +12,7 @@ use anoncreds_types::data_types::{
     },
     messages::{
         cred_offer::CredentialOffer,
-        cred_request::CredentialRequest,
+        cred_request::{CredentialRequest, CredentialRequestMetadata},
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
@@ -122,7 +122,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_offer_json: CredentialOffer,
         cred_def_json: CredentialDefinition,
         master_secret_id: &str,
-    ) -> VcxCoreResult<(CredentialRequest, String)>;
+    ) -> VcxCoreResult<(CredentialRequest, CredentialRequestMetadata)>;
 
     async fn create_revocation_state(
         &self,

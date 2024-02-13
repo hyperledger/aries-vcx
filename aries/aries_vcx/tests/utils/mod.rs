@@ -163,7 +163,7 @@ pub async fn create_and_write_credential(
     anoncreds_holder
         .prover_store_credential(
             wallet_holder,
-            &req_meta,
+            &serde_json::to_string(&req_meta).unwrap(),
             cred,
             cred_def.get_cred_def_json().try_clone().unwrap(),
             rev_reg_def_json

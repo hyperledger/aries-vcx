@@ -617,7 +617,7 @@ pub async fn create_anoncreds_credential_request(
         .map(|(s1, s2)| {
             (
                 serde_json::to_string(&s1).unwrap(),
-                s2,
+                serde_json::to_string(&s2).unwrap(),
                 cred_def_id.to_string(),
                 serde_json::to_string(&cred_def_json).unwrap(),
             )
