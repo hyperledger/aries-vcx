@@ -50,7 +50,7 @@ debug = 0
 panic = 'unwind'
 incremental = false
 
-[lints.clippy]
+[workspace.lints.clippy]
 all = "warn"
 pedantic = "warn"
 struct_excessive_bools = "allow"
@@ -60,7 +60,7 @@ match_bool = "allow"
 no_effect_underscore_binding = "allow"
 module_name_repetitions = "allow"
 
-[lints.rust]
+[workspace.lints.rust]
 meta_variable_misuse = "warn"
 missing_abi = "warn"
 missing_copy_implementations = "warn"
