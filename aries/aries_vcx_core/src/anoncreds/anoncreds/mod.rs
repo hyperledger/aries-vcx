@@ -862,8 +862,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_id: &str,
     ) -> VcxCoreResult<RetrievedCredentialInfo> {
         let cred = self._get_credential(wallet, cred_id).await?;
-        let cred_info = _make_cred_info(cred_id, &cred)?;
-        Ok(serde_json::from_value(cred_info)?)
+        _make_cred_info(cred_id, &cred)
     }
 
     async fn prover_get_credentials(
@@ -877,7 +876,7 @@ impl BaseAnonCreds for Anoncreds {
         let creds_wql = filter_json.map_or("{}", |x| x);
         let creds = Self::_get_credentials(wallet, creds_wql).await?;
 
-        let cred_info_list: VcxCoreResult<Vec<Value>> = creds
+        let cred_info_list: VcxCoreResult<Vec<RetrievedCredentialInfo>> = creds
             .iter()
             .map(|(credential_id, cred)| _make_cred_info(credential_id, cred))
             .collect();
@@ -1398,33 +1397,31 @@ fn _normalize_attr_name(name: &str) -> String {
     name.replace(' ', "").to_lowercase()
 }
 
-fn _make_cred_info(credential_id: &str, cred: &Credential) -> VcxCoreResult<Value> {
+fn _make_cred_info(
+    credential_id: &str,
+    cred: &Credential,
+) -> VcxCoreResult<RetrievedCredentialInfo> {
     let cred_sig = serde_json::to_value(&cred.signature)?;
 
     let rev_info = cred_sig.get("r_credential");
 
-    let schema_id = &cred.schema_id.0;
-    let cred_def_id = &cred.cred_def_id.0;
-    let rev_reg_id = cred.rev_reg_id.as_ref().map(|x| x.0.to_string());
     let cred_rev_id: Option<u32> = rev_info
         .and_then(|x| x.get("i"))
         .and_then(|i| i.as_u64().map(|i| i as u32));
 
-    let mut attrs = json!({});
+    let mut attributes = HashMap::new();
     for (x, y) in cred.values.0.iter() {
-        attrs[x] = Value::String(y.raw.to_string());
+        attributes.insert(x.to_string(), y.raw.to_string());
     }
 
-    let val = json!({
-        "referent": credential_id,
-        "schema_id": schema_id,
-        "cred_def_id": cred_def_id,
-        "rev_reg_id": rev_reg_id,
-        "cred_rev_id": cred_rev_id,
-        "attrs": attrs
-    });
-
-    Ok(val)
+    Ok(RetrievedCredentialInfo {
+        referent: credential_id.to_string(),
+        attributes,
+        schema_id: cred.schema_id.clone(),
+        cred_def_id: cred.cred_def_id.to_string(),
+        rev_reg_id: cred.rev_reg_id.as_ref().map(|x| x.0.to_string()),
+        cred_rev_id,
+    })
 }
 
 fn _format_attribute_as_value_tag_name(attribute_name: &str) -> String {
