@@ -1,6 +1,7 @@
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
     ledger::{cred_def::CredentialDefinition, schema::Schema},
+    messages::cred_definition_config::CredentialDefinitionConfig,
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -267,8 +268,7 @@ pub async fn generate_cred_def(
         support_revocation
     );
 
-    let config_json =
-        json!({"support_revocation": support_revocation.unwrap_or(false)}).to_string();
+    let config_json = CredentialDefinitionConfig::new(support_revocation.unwrap_or_default());
 
     let cred_def = anoncreds
         .issuer_create_and_store_credential_def(
@@ -278,7 +278,7 @@ pub async fn generate_cred_def(
             schema_json,
             tag,
             sig_type,
-            &config_json,
+            config_json,
         )
         .await?;
     Ok(cred_def)

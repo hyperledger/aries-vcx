@@ -18,7 +18,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce,
         pres_request::PresentationRequest,
         presentation::Presentation,
-        revocation_state::CredentialRevocationState,
+        revocation_state::CredentialRevocationState, cred_definition_config::CredentialDefinitionConfig,
     },
 };
 use aries_vcx_core::{
@@ -87,7 +87,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _schema_json: Schema,
         _tag: &str,
         _signature_type: Option<&str>,
-        _config_json: &str,
+        _config_json: CredentialDefinitionConfig
     ) -> VcxCoreResult<CredentialDefinition> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(

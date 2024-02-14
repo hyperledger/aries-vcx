@@ -54,7 +54,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce,
         pres_request::PresentationRequest,
         presentation::Presentation,
-        revocation_state::CredentialRevocationState,
+        revocation_state::CredentialRevocationState, cred_definition_config::CredentialDefinitionConfig,
     },
 };
 use async_trait::async_trait;
@@ -447,12 +447,11 @@ impl BaseAnonCreds for Anoncreds {
         schema_json: Schema,
         tag: &str,
         signature_type: Option<&str>,
-        config_json: &str,
+        config_json: CredentialDefinitionConfig,
     ) -> VcxCoreResult<CredentialDefinition> {
         let sig_type = signature_type
             .map(serde_json::from_str)
             .unwrap_or(Ok(SignatureType::CL))?;
-        let config = serde_json::from_str(config_json)?;
 
         let cred_def_id =
             make_credential_definition_id(issuer_did, schema_id, schema_json.seq_no, tag, sig_type);
@@ -476,7 +475,7 @@ impl BaseAnonCreds for Anoncreds {
                 schema_json.issuer_id.clone().convert(())?,
                 tag,
                 sig_type,
-                config,
+                config_json.convert(())?,
             )?;
 
         let mut cred_def_val = serde_json::to_value(&cred_def)?;

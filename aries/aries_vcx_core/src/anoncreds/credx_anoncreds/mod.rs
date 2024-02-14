@@ -25,7 +25,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce,
         pres_request::PresentationRequest,
         presentation::Presentation,
-        revocation_state::CredentialRevocationState,
+        revocation_state::CredentialRevocationState, cred_definition_config::CredentialDefinitionConfig,
     },
 };
 use async_trait::async_trait;
@@ -426,13 +426,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         schema_json: Schema,
         tag: &str,
         sig_type: Option<&str>,
-        config_json: &str,
+        config_json: CredentialDefinitionConfig,
     ) -> VcxCoreResult<CredentialDefinition> {
         let issuer_did = issuer_did.to_owned();
         let sig_type = sig_type
             .map(serde_json::from_str)
             .unwrap_or(Ok(SignatureType::CL))?;
-        let config = serde_json::from_str(config_json)?;
 
         let schema_seq_no = schema_json.seq_no;
         let schema = schema_json.clone().convert(())?;
@@ -460,7 +459,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 &schema,
                 tag,
                 sig_type,
-                config,
+                config_json.convert(())?,
             )?;
 
         let str_cred_def = serde_json::to_string(&cred_def)?;

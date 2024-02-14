@@ -18,6 +18,7 @@ use anoncreds::{
     },
     types::{
         AttributeNames as AnoncredsAttributeNames, Credential as AnoncredsCredential,
+        CredentialDefinitionConfig as AnoncredsCredentialDefinitionConfig,
         CredentialOffer as AnoncredsCredentialOffer,
         CredentialRequest as AnoncredsCredentialRequest,
         CredentialRequestMetadata as AnoncredsCredentialRequestMetadata,
@@ -49,6 +50,7 @@ use anoncreds_types::data_types::{
         schema::{AttributeNames as OurAttributeNames, Schema as OurSchema},
     },
     messages::{
+        cred_definition_config::CredentialDefinitionConfig as OurCredentialDefinitionConfig,
         cred_offer::CredentialOffer as OurCredentialOffer,
         cred_request::{
             CredentialRequest as OurCredentialRequest,
@@ -474,5 +476,17 @@ impl Convert for OurCredentialRevocationState {
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+    }
+}
+
+impl Convert for OurCredentialDefinitionConfig {
+    type Args = ();
+    type Target = AnoncredsCredentialDefinitionConfig;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(AnoncredsCredentialDefinitionConfig {
+            support_revocation: self.support_revocation,
+        })
     }
 }

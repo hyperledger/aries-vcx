@@ -1,3 +1,4 @@
+pub mod cred_definition_config;
 pub mod cred_offer;
 pub mod cred_request;
 pub mod cred_selection;
