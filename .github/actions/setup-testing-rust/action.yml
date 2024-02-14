@@ -20,7 +20,7 @@ runs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: ${{ inputs.rust-toolchain-version }}
-
+        default: true
     - uses: Swatinem/rust-cache@v2
     - name: "Install dependencies"
       shell: bash
