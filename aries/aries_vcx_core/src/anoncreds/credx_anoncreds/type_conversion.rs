@@ -61,6 +61,14 @@ pub trait Convert {
     fn convert(self, args: Self::Args) -> Result<Self::Target, Self::Error>;
 }
 
+fn serde_convert<S, T>(arg: T) -> Result<S, Box<dyn std::error::Error>>
+where
+    S: serde::Serialize + serde::de::DeserializeOwned,
+    T: serde::Serialize + serde::de::DeserializeOwned,
+{
+    Ok(serde_json::from_value(serde_json::to_value(arg)?)?)
+}
+
 impl Convert for OurSchema {
     type Args = ();
     type Target = CredxSchema;
@@ -120,7 +128,7 @@ impl Convert for CredxCredentialDefinition {
                     signature_type: OurSignatureType::CL,
                     tag: cred_def.tag,
                     // credx doesn't expose CredentialDefinitionData
-                    value: serde_json::from_str(&serde_json::to_string(&cred_def.value)?)?,
+                    value: serde_convert(cred_def.value)?,
                     issuer_id: OurIssuerId::new(issuer_id)?,
                 })
             }
@@ -135,7 +143,7 @@ impl Convert for OurCredentialDefinition {
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(CredxCredentialDefinition::CredentialDefinitionV1(
-            serde_json::from_str(&serde_json::to_string(&self)?)?,
+            serde_convert(self)?,
         ))
     }
 }
@@ -146,7 +154,7 @@ impl Convert for OurCredentialOffer {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -156,7 +164,7 @@ impl Convert for CredxCredentialOffer {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -166,7 +174,7 @@ impl Convert for OurCredentialRequest {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -176,7 +184,7 @@ impl Convert for CredxCredentialRequest {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -186,7 +194,7 @@ impl Convert for CredxCredentialRequestMetadata {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -197,10 +205,8 @@ impl Convert for OurCredentialRequestMetadata {
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(CredxCredentialRequestMetadata {
-            master_secret_blinding_data: serde_json::from_value(serde_json::to_value(
-                self.link_secret_blinding_data,
-            )?)?,
-            nonce: serde_json::from_value(serde_json::to_value(self.nonce)?)?,
+            master_secret_blinding_data: serde_convert(self.link_secret_blinding_data)?,
+            nonce: serde_convert(self.nonce)?,
             master_secret_name: self.link_secret_name,
         })
     }
@@ -260,9 +266,7 @@ impl Convert for CredxRevocationRegistryDefinition {
                     )?,
                     value: OurRevocationRegistryDefinitionValue {
                         max_cred_num: rev_reg_def.value.max_cred_num,
-                        public_keys: serde_json::from_value(serde_json::to_value(
-                            rev_reg_def.value.public_keys,
-                        )?)?,
+                        public_keys: serde_convert(rev_reg_def.value.public_keys)?,
                         tails_hash: rev_reg_def.value.tails_hash,
                         tails_location: rev_reg_def.value.tails_location,
                     },
@@ -296,7 +300,7 @@ impl Convert for OurRevocationRegistry {
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(CredxRevocationRegistry::RevocationRegistryV1(
-            serde_json::from_value(serde_json::to_value(self)?)?,
+            serde_convert(self)?,
         ))
     }
 }
@@ -309,7 +313,7 @@ impl Convert for CredxRevocationRegistry {
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         match self {
             CredxRevocationRegistry::RevocationRegistryV1(rev_reg) => Ok(OurRevocationRegistry {
-                value: serde_json::from_value(serde_json::to_value(rev_reg.value)?)?,
+                value: serde_convert(rev_reg.value)?,
             }),
         }
     }
@@ -341,7 +345,7 @@ impl Convert for OurRevocationRegistryDelta {
 
     fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(CredxRevocationRegistryDelta::RevocationRegistryDeltaV1(
-            serde_json::from_value(serde_json::to_value(self)?)?,
+            serde_convert(self)?,
         ))
     }
 }
@@ -378,13 +382,11 @@ impl Convert for OurCredential {
                 .map(ToString::to_string)
                 .map(CredxRevocationRegistryId::try_from)
                 .transpose()?,
-            values: serde_json::from_value(serde_json::to_value(self.values)?)?,
-            signature: serde_json::from_value(serde_json::to_value(self.signature)?)?,
-            signature_correctness_proof: serde_json::from_value(serde_json::to_value(
-                self.signature_correctness_proof,
-            )?)?,
-            rev_reg: serde_json::from_value(serde_json::to_value(self.rev_reg)?)?,
-            witness: serde_json::from_value(serde_json::to_value(self.witness)?)?,
+            values: serde_convert(self.values)?,
+            signature: serde_convert(self.signature)?,
+            signature_correctness_proof: serde_convert(self.signature_correctness_proof)?,
+            rev_reg: serde_convert(self.rev_reg)?,
+            witness: serde_convert(self.witness)?,
         })
     }
 }
@@ -402,13 +404,11 @@ impl Convert for CredxCredential {
                 .rev_reg_id
                 .map(|id| OurRevocationRegistryDefinitionId::new(id.0))
                 .transpose()?,
-            values: serde_json::from_value(serde_json::to_value(self.values)?)?,
-            signature: serde_json::from_value(serde_json::to_value(self.signature)?)?,
-            signature_correctness_proof: serde_json::from_value(serde_json::to_value(
-                self.signature_correctness_proof,
-            )?)?,
-            rev_reg: serde_json::from_value(serde_json::to_value(self.rev_reg)?)?,
-            witness: serde_json::from_value(serde_json::to_value(self.witness)?)?,
+            values: serde_convert(self.values)?,
+            signature: serde_convert(self.signature)?,
+            signature_correctness_proof: serde_convert(self.signature_correctness_proof)?,
+            rev_reg: serde_convert(self.rev_reg)?,
+            witness: serde_convert(self.witness)?,
         })
     }
 }
@@ -419,7 +419,7 @@ impl Convert for OurPresentationRequest {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -429,7 +429,7 @@ impl Convert for OurPresentation {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -439,7 +439,7 @@ impl Convert for CredxPresentation {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -449,7 +449,7 @@ impl Convert for OurCredentialValues {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -459,7 +459,7 @@ impl Convert for CredxCredentialRevocationState {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -469,7 +469,7 @@ impl Convert for OurCredentialRevocationState {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+        serde_convert(self)
     }
 }
 
