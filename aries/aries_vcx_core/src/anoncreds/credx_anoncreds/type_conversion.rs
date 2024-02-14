@@ -26,6 +26,7 @@ use anoncreds_types::data_types::{
         credential::{Credential as OurCredential, CredentialValues as OurCredentialValues},
         pres_request::PresentationRequest as OurPresentationRequest,
         presentation::Presentation as OurPresentation,
+        revocation_state::CredentialRevocationState as OurCredentialRevocationState,
     },
 };
 use did_parser::Did;
@@ -37,6 +38,7 @@ use indy_credx::{
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         CredentialRequestMetadata as CredxCredentialRequestMetadata,
+        CredentialRevocationState as CredxCredentialRevocationState,
         CredentialValues as CredxCredentialValues, DidValue, Presentation as CredxPresentation,
         PresentationRequest as CredxPresentationRequest,
         RevocationRegistry as CredxRevocationRegistry,
@@ -440,6 +442,26 @@ impl Convert for CredxPresentation {
 impl Convert for OurCredentialValues {
     type Args = ();
     type Target = CredxCredentialValues;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+    }
+}
+
+impl Convert for CredxCredentialRevocationState {
+    type Args = ();
+    type Target = OurCredentialRevocationState;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+    }
+}
+
+impl Convert for OurCredentialRevocationState {
+    type Args = ();
+    type Target = CredxCredentialRevocationState;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {

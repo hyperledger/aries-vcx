@@ -18,6 +18,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce,
         pres_request::PresentationRequest,
         presentation::Presentation,
+        revocation_state::CredentialRevocationState,
     },
 };
 use async_trait::async_trait;
@@ -132,7 +133,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
         cred_rev_id: u32,
-    ) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<CredentialRevocationState>;
 
     async fn prover_store_credential(
         &self,

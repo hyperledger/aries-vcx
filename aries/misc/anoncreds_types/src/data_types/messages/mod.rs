@@ -6,3 +6,4 @@ pub mod link_secret;
 pub mod nonce;
 pub mod pres_request;
 pub mod presentation;
+pub mod revocation_state;

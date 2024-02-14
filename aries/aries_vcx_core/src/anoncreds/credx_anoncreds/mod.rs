@@ -25,6 +25,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce,
         pres_request::PresentationRequest,
         presentation::Presentation,
+        revocation_state::CredentialRevocationState,
     },
 };
 use async_trait::async_trait;
@@ -36,10 +37,10 @@ use credx::{
         CredentialDefinitionId as CredxCredentialDefinitionId,
         CredentialOffer as CredxCredentialOffer, CredentialRequest as CredxCredentialRequest,
         CredentialRequestMetadata as CredxCredentialRequestMetadata, CredentialRevocationConfig,
-        CredentialRevocationState, CredentialValues as CredxCredentialValues, IssuanceType,
-        LinkSecret, PresentCredentials, Presentation as CredxPresentation,
-        PresentationRequest as CredxPresentationRequest, RegistryType,
-        RevocationRegistry as CredxRevocationRegistry,
+        CredentialRevocationState as CredxCredentialRevocationState,
+        CredentialValues as CredxCredentialValues, IssuanceType, LinkSecret, PresentCredentials,
+        Presentation as CredxPresentation, PresentationRequest as CredxPresentationRequest,
+        RegistryType, RevocationRegistry as CredxRevocationRegistry,
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
         RevocationRegistryDelta as CredxRevocationRegistryDelta,
         RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
@@ -694,7 +695,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             (
                 CredxCredential,
                 Option<u64>,
-                Option<CredentialRevocationState>,
+                Option<CredxCredentialRevocationState>,
                 Vec<(String, bool)>,
                 Vec<String>,
             ),
@@ -723,7 +724,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                     (
                         credential,
                         timestamp,
-                        rev_state,
+                        rev_state.map(|v| v.convert(())).transpose()?,
                         vec![(reft.to_string(), revealed)],
                         vec![],
                     ),
@@ -750,7 +751,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                     (
                         credential,
                         timestamp,
-                        rev_state,
+                        rev_state.map(|v| v.convert(())).transpose()?,
                         vec![],
                         vec![reft.to_string()],
                     ),
@@ -817,7 +818,6 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let cred = Self::_get_credential(wallet, cred_id).await?;
 
         _make_cred_info(cred_id, &cred)
-
     }
 
     async fn prover_get_credentials(
@@ -965,7 +965,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
         cred_rev_id: u32,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<CredentialRevocationState> {
         let revoc_reg_def: CredxRevocationRegistryDefinition = rev_reg_def_json.convert(())?;
         let tails_file_hash = match revoc_reg_def.borrow() {
             CredxRevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => {
@@ -996,7 +996,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             None,
         )?;
 
-        Ok(serde_json::to_string(&rev_state)?)
+        Ok(rev_state.convert(())?)
     }
 
     async fn prover_store_credential(
@@ -1355,7 +1355,10 @@ fn _normalize_attr_name(name: &str) -> String {
     name.replace(' ', "").to_lowercase()
 }
 
-fn _make_cred_info(credential_id: &str, cred: &CredxCredential) -> VcxCoreResult<RetrievedCredentialInfo> {
+fn _make_cred_info(
+    credential_id: &str,
+    cred: &CredxCredential,
+) -> VcxCoreResult<RetrievedCredentialInfo> {
     let cred_sig = serde_json::to_value(&cred.signature)?;
 
     let rev_info = cred_sig.get("r_credential");
@@ -1377,7 +1380,6 @@ fn _make_cred_info(credential_id: &str, cred: &CredxCredential) -> VcxCoreResult
         rev_reg_id: cred.rev_reg_id.as_ref().map(|x| x.0.to_string()),
         cred_rev_id,
     })
-
 }
 
 fn _format_attribute_as_value_tag_name(attribute_name: &str) -> String {

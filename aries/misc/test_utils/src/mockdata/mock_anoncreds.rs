@@ -18,6 +18,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce,
         pres_request::PresentationRequest,
         presentation::Presentation,
+        revocation_state::CredentialRevocationState,
     },
 };
 use aries_vcx_core::{
@@ -186,8 +187,8 @@ impl BaseAnonCreds for MockAnoncreds {
         _rev_reg_delta_json: RevocationRegistryDelta,
         _timestamp: u64,
         _cred_rev_id: u32,
-    ) -> VcxCoreResult<String> {
-        Ok(REV_STATE_JSON.to_string())
+    ) -> VcxCoreResult<CredentialRevocationState> {
+        Ok(serde_json::from_str(REV_STATE_JSON)?)
     }
 
     async fn prover_store_credential(

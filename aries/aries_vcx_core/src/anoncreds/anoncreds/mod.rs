@@ -25,7 +25,8 @@ use anoncreds::{
         CredentialOffer as AnoncredsCredentialOffer,
         CredentialRequest as AnoncredsCredentialRequest,
         CredentialRequestMetadata as AnoncredsCredentialRequestMetadata,
-        CredentialRevocationConfig, CredentialRevocationState,
+        CredentialRevocationConfig,
+        CredentialRevocationState as AnoncredsCredentialRevocationState,
         CredentialValues as AnoncredsCredentialValues, LinkSecret, PresentCredentials,
         Presentation as AnoncredsPresentation, PresentationRequest as AnoncredsPresentationRequest,
         RegistryType, RevocationRegistry as AnoncredsRevocationRegistry,
@@ -53,6 +54,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce,
         pres_request::PresentationRequest,
         presentation::Presentation,
+        revocation_state::CredentialRevocationState,
     },
 };
 use async_trait::async_trait;
@@ -741,7 +743,7 @@ impl BaseAnonCreds for Anoncreds {
             (
                 AnoncredsCredential,
                 Option<u64>,
-                Option<CredentialRevocationState>,
+                Option<AnoncredsCredentialRevocationState>,
                 Vec<(String, bool)>,
                 Vec<String>,
             ),
@@ -770,7 +772,7 @@ impl BaseAnonCreds for Anoncreds {
                     (
                         credential.convert(())?,
                         timestamp,
-                        rev_state,
+                        rev_state.map(|v| v.convert(())).transpose()?,
                         vec![(reft.to_string(), revealed)],
                         vec![],
                     ),
@@ -797,7 +799,7 @@ impl BaseAnonCreds for Anoncreds {
                     (
                         credential.convert(())?,
                         timestamp,
-                        rev_state,
+                        rev_state.map(|v| v.convert(())).transpose()?,
                         vec![],
                         vec![reft.to_string()],
                     ),
@@ -1010,7 +1012,7 @@ impl BaseAnonCreds for Anoncreds {
         rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
         cred_rev_id: u32,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<CredentialRevocationState> {
         let cred_def_id = rev_reg_def_json.cred_def_id.to_string();
         let max_cred_num = rev_reg_def_json.value.max_cred_num;
         let rev_reg_def_id = rev_reg_def_json.id.to_string();
@@ -1073,7 +1075,7 @@ impl BaseAnonCreds for Anoncreds {
             None,
         )?;
 
-        Ok(serde_json::to_string(&rev_state)?)
+        Ok(rev_state.convert(())?)
     }
 
     async fn prover_store_credential(

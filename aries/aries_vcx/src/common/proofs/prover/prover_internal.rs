@@ -199,7 +199,7 @@ pub async fn build_rev_states_json(
                     .await?;
 
                 let rev_state_json: Value =
-                    serde_json::from_str(&rev_state_json).map_err(|err| {
+                    serde_json::to_value(&rev_state_json).map_err(|err| {
                         AriesVcxError::from_msg(
                             AriesVcxErrorKind::InvalidJson,
                             format!("Cannot deserialize RevocationState: {}", err),
@@ -721,8 +721,8 @@ pub mod unit_tests {
             .await
             .unwrap();
         let rev_state_json: Value = serde_json::from_str(REV_STATE_JSON).unwrap();
-        let expected = json!({REV_REG_ID: {"1": rev_state_json}}).to_string();
-        assert_eq!(states, expected);
+        let expected = json!({REV_REG_ID: {"1": rev_state_json}});
+        assert_eq!(serde_json::from_str::<Value>(&states).unwrap(), expected);
         assert!(cred_info[0].timestamp.is_some());
     }
 

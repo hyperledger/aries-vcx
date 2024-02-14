@@ -21,6 +21,7 @@ use anoncreds::{
         CredentialOffer as AnoncredsCredentialOffer,
         CredentialRequest as AnoncredsCredentialRequest,
         CredentialRequestMetadata as AnoncredsCredentialRequestMetadata,
+        CredentialRevocationState as AnoncredsCredentialRevocationState,
         CredentialValues as AnoncredsCredentialValues, Presentation as AnoncredsPresentation,
         PresentationRequest as AnoncredsPresentationRequest,
         RevocationRegistry as AnoncredsRevocationRegistry,
@@ -57,6 +58,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce as OurNonce,
         pres_request::PresentationRequest as OurPresentationRequest,
         presentation::Presentation as OurPresentation,
+        revocation_state::CredentialRevocationState as OurCredentialRevocationState,
     },
 };
 
@@ -448,6 +450,26 @@ impl Convert for AnoncredsPresentation {
 impl Convert for OurCredentialValues {
     type Args = ();
     type Target = AnoncredsCredentialValues;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+    }
+}
+
+impl Convert for AnoncredsCredentialRevocationState {
+    type Args = ();
+    type Target = OurCredentialRevocationState;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+    }
+}
+
+impl Convert for OurCredentialRevocationState {
+    type Args = ();
+    type Target = AnoncredsCredentialRevocationState;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
