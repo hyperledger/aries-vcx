@@ -65,7 +65,7 @@ use serde_json::{json, Value};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use super::base_anoncreds::{BaseAnonCreds, CredentialId, LinkSecretId};
+use super::base_anoncreds::{BaseAnonCreds, CredentialId, LinkSecretId, RevocationStatesMap};
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -715,7 +715,7 @@ impl BaseAnonCreds for Anoncreds {
         link_secret_id: &LinkSecretId,
         schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
-        revoc_states_json: Option<&str>,
+        revoc_states_json: Option<RevocationStatesMap>,
     ) -> VcxCoreResult<Presentation> {
         let pres_req: AnoncredsPresentationRequest = proof_req_json.convert(())?;
 
@@ -724,12 +724,6 @@ impl BaseAnonCreds for Anoncreds {
 
         let requested_predicates = (&requested_credentials).try_get("requested_predicates")?;
         let self_attested_attributes = requested_credentials.get("self_attested_attributes");
-
-        let rev_states: Option<Value> = if let Some(revoc_states_json) = revoc_states_json {
-            Some(serde_json::from_str(revoc_states_json)?)
-        } else {
-            None
-        };
 
         let schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = schemas_json.convert(())?;
         let cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
@@ -765,7 +759,7 @@ impl BaseAnonCreds for Anoncreds {
                 let credential = self._get_credential(wallet, cred_id).await?;
 
                 let (timestamp, rev_state) =
-                    get_rev_state(cred_id, &credential, detail, rev_states.as_ref())?;
+                    get_rev_state(cred_id, &credential, detail, revoc_states_json.as_ref())?;
 
                 proof_details_by_cred_id.insert(
                     cred_id.to_string(),
@@ -792,7 +786,7 @@ impl BaseAnonCreds for Anoncreds {
                 let credential = self._get_credential(wallet, cred_id).await?;
 
                 let (timestamp, rev_state) =
-                    get_rev_state(cred_id, &credential, detail, rev_states.as_ref())?;
+                    get_rev_state(cred_id, &credential, detail, revoc_states_json.as_ref())?;
 
                 proof_details_by_cred_id.insert(
                     cred_id.to_string(),
@@ -1352,7 +1346,7 @@ fn get_rev_state(
     cred_id: &str,
     credential: &Credential,
     detail: &Value,
-    rev_states: Option<&Value>,
+    rev_states: Option<&RevocationStatesMap>,
 ) -> VcxCoreResult<(Option<u64>, Option<CredentialRevocationState>)> {
     let timestamp = detail
         .get("timestamp")
@@ -1361,7 +1355,7 @@ fn get_rev_state(
     let rev_state = if let (Some(timestamp), Some(cred_rev_reg_id)) = (timestamp, cred_rev_reg_id) {
         let rev_state = rev_states
             .as_ref()
-            .and_then(|_rev_states| _rev_states.get(cred_rev_reg_id.to_string()));
+            .and_then(|_rev_states| _rev_states.get(&cred_rev_reg_id));
         let rev_state = rev_state.ok_or(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidJson,
             format!(
@@ -1371,7 +1365,7 @@ fn get_rev_state(
         ))?;
 
         let rev_state = rev_state
-            .get(timestamp.to_string())
+            .get(&timestamp)
             .ok_or(AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::InvalidJson,
                 format!(
@@ -1381,8 +1375,7 @@ fn get_rev_state(
                 ),
             ))?;
 
-        let rev_state: CredentialRevocationState = serde_json::from_value(rev_state.clone())?;
-        Some(rev_state)
+        Some(rev_state.clone())
     } else {
         None
     };

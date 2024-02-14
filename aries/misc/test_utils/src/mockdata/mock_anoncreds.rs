@@ -22,7 +22,7 @@ use anoncreds_types::data_types::{
     },
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::{BaseAnonCreds, CredentialId, LinkSecretId},
+    anoncreds::base_anoncreds::{BaseAnonCreds, CredentialId, LinkSecretId, RevocationStatesMap},
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::base_wallet::BaseWallet,
 };
@@ -125,7 +125,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _link_secret_id: &LinkSecretId,
         _schemas_json: HashMap<SchemaId, Schema>,
         _credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
-        _revoc_states_json: Option<&str>,
+        _revoc_states_json: Option<RevocationStatesMap>,
     ) -> VcxCoreResult<Presentation> {
         Ok(serde_json::from_str(PROOF_JSON).unwrap())
     }

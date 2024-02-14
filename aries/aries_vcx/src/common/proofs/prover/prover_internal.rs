@@ -1,11 +1,10 @@
 use std::{collections::HashMap, path::Path};
 
 use anoncreds_types::data_types::{
-    identifiers::schema_id::SchemaId,
-    messages::{cred_selection::SelectedCredentials, revocation_state::CredentialRevocationState},
+    identifiers::schema_id::SchemaId, messages::cred_selection::SelectedCredentials,
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
+    anoncreds::base_anoncreds::{BaseAnonCreds, RevocationStatesMap},
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
     ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -158,12 +157,12 @@ pub async fn build_rev_states_json(
     ledger_read: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
     credentials_identifiers: &mut Vec<CredInfoProver>,
-) -> VcxResult<HashMap<String, HashMap<u64, CredentialRevocationState>>> {
+) -> VcxResult<RevocationStatesMap> {
     trace!(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let mut rtn = HashMap::<String, HashMap<u64, CredentialRevocationState>>::new();
+    let mut rtn: RevocationStatesMap = HashMap::new();
     let mut timestamps: HashMap<String, u64> = HashMap::new();
 
     for cred_info in credentials_identifiers.iter_mut() {
@@ -717,7 +716,7 @@ pub mod unit_tests {
         let states = build_rev_states_json(&ledger_read, &anoncreds, cred_info.as_mut())
             .await
             .unwrap();
-        let expected: HashMap<String, HashMap<u64, CredentialRevocationState>> = vec![(
+        let expected: RevocationStatesMap = vec![(
             REV_REG_ID.to_string(),
             vec![(1, serde_json::from_str(REV_STATE_JSON).unwrap())]
                 .into_iter()

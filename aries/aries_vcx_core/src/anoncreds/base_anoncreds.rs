@@ -28,6 +28,7 @@ use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
 
 pub type CredentialId = String;
 pub type LinkSecretId = String;
+pub type RevocationStatesMap = HashMap<String, HashMap<u64, CredentialRevocationState>>;
 
 /// Trait defining standard 'anoncreds' related functionality. The APIs, including
 /// input and output types are based off the indy Anoncreds API:
@@ -99,7 +100,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         link_secret_id: &LinkSecretId,
         schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
-        revoc_states_json: Option<&str>,
+        revoc_states_json: Option<RevocationStatesMap>,
     ) -> VcxCoreResult<Presentation>;
 
     async fn prover_get_credential(
