@@ -1,4 +1,3 @@
-use anoncreds_types::data_types::messages::cred_selection::RetrievedCredentialInfo;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -16,14 +15,7 @@ pub async fn get_cred_rev_id(
     cred_id: &str,
 ) -> VcxResult<u32> {
     let cred_json = anoncreds.prover_get_credential(wallet, cred_id).await?;
-    let prover_cred =
-        serde_json::from_str::<RetrievedCredentialInfo>(&cred_json).map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::SerializationError,
-                format!("Failed to deserialize anoncreds credential: {}", err),
-            )
-        })?;
-    prover_cred.cred_rev_id.ok_or(AriesVcxError::from_msg(
+    cred_json.cred_rev_id.ok_or(AriesVcxError::from_msg(
         AriesVcxErrorKind::InvalidRevocationDetails,
         "Credenial revocation id missing on credential - is this credential revokable?",
     ))

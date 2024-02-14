@@ -20,7 +20,7 @@ use anoncreds_types::data_types::{
     messages::{
         cred_offer::CredentialOffer,
         cred_request::{CredentialRequest, CredentialRequestMetadata},
-        cred_selection::RetrievedCredentials,
+        cred_selection::{RetrievedCredentialInfo, RetrievedCredentials},
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
@@ -813,12 +813,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         wallet: &impl BaseWallet,
         cred_id: &str,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<RetrievedCredentialInfo> {
         let cred = Self::_get_credential(wallet, cred_id).await?;
 
         let cred_info = _make_cred_info(cred_id, &cred)?;
 
-        Ok(serde_json::to_string(&cred_info)?)
+        Ok(serde_json::from_value(cred_info)?)
     }
 
     async fn prover_get_credentials(

@@ -1,6 +1,5 @@
 use std::error::Error;
 
-use anoncreds_types::data_types::messages::cred_selection::RetrievedCredentialInfo;
 use aries_vcx::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
@@ -56,11 +55,10 @@ async fn test_pool_prover_get_credential() -> Result<(), Box<dyn Error>> {
     .await;
     let cred_rev_id = get_cred_rev_id(&setup.wallet, &setup.anoncreds, &cred_id).await?;
 
-    let cred_json = setup
+    let prover_cred = setup
         .anoncreds
         .prover_get_credential(&setup.wallet, &cred_id)
         .await?;
-    let prover_cred = serde_json::from_str::<RetrievedCredentialInfo>(&cred_json)?;
 
     assert_eq!(prover_cred.schema_id, schema.schema_id);
     assert_eq!(
