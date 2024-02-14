@@ -1,9 +1,7 @@
-use std::{collections::HashMap, error::Error, time::Duration};
+use std::{error::Error, time::Duration};
 
-use anoncreds_types::data_types::{
-    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
-    ledger::{cred_def::CredentialDefinition, schema::Schema},
-    messages::{pres_request::PresentationRequest, presentation::Presentation},
+use anoncreds_types::data_types::messages::{
+    pres_request::PresentationRequest, presentation::Presentation,
 };
 use aries_vcx::{
     common::{
@@ -15,7 +13,7 @@ use aries_vcx::{
     errors::error::AriesVcxErrorKind,
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
+    anoncreds::base_anoncreds::{BaseAnonCreds, CredentialDefinitionsMap, SchemasMap},
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
@@ -40,8 +38,8 @@ async fn create_indy_proof(
     did: &Did,
 ) -> Result<
     (
-        HashMap<SchemaId, Schema>,
-        HashMap<CredentialDefinitionId, CredentialDefinition>,
+        SchemasMap,
+        CredentialDefinitionsMap,
         PresentationRequest,
         Presentation,
     ),
@@ -137,8 +135,8 @@ async fn create_proof_with_predicate(
     include_predicate_cred: bool,
 ) -> Result<
     (
-        HashMap<SchemaId, Schema>,
-        HashMap<CredentialDefinitionId, CredentialDefinition>,
+        SchemasMap,
+        CredentialDefinitionsMap,
         PresentationRequest,
         Presentation,
     ),

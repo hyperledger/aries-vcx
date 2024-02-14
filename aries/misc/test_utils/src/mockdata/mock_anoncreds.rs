@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 use anoncreds_types::data_types::{
     identifiers::{
@@ -22,7 +22,10 @@ use anoncreds_types::data_types::{
     },
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::{BaseAnonCreds, CredentialId, LinkSecretId, RevocationStatesMap},
+    anoncreds::base_anoncreds::{
+        BaseAnonCreds, CredentialDefinitionsMap, CredentialId, LinkSecretId,
+        RevocationRegistriesMap, RevocationRegistryDefinitionsMap, RevocationStatesMap, SchemasMap,
+    },
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::base_wallet::BaseWallet,
 };
@@ -45,14 +48,10 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         _proof_request_json: PresentationRequest,
         _proof_json: Presentation,
-        _schemas_json: HashMap<SchemaId, Schema>,
-        _credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
-        _rev_reg_defs_json: Option<
-            HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
-        >,
-        _rev_regs_json: Option<
-            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>,
-        >,
+        _schemas_json: SchemasMap,
+        _credential_defs_json: CredentialDefinitionsMap,
+        _rev_reg_defs_json: Option<RevocationRegistryDefinitionsMap>,
+        _rev_regs_json: Option<RevocationRegistriesMap>,
     ) -> VcxCoreResult<bool> {
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -123,8 +122,8 @@ impl BaseAnonCreds for MockAnoncreds {
         _proof_req_json: PresentationRequest,
         _requested_credentials_json: &str,
         _link_secret_id: &LinkSecretId,
-        _schemas_json: HashMap<SchemaId, Schema>,
-        _credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
+        _schemas_json: SchemasMap,
+        _credential_defs_json: CredentialDefinitionsMap,
         _revoc_states_json: Option<RevocationStatesMap>,
     ) -> VcxCoreResult<Presentation> {
         Ok(serde_json::from_str(PROOF_JSON).unwrap())

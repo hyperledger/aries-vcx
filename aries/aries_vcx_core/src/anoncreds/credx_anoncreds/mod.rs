@@ -54,7 +54,10 @@ use serde_json::{json, Value};
 use type_conversion::Convert;
 use uuid::Uuid;
 
-use super::base_anoncreds::{BaseAnonCreds, CredentialId, LinkSecretId, RevocationStatesMap};
+use super::base_anoncreds::{
+    BaseAnonCreds, CredentialDefinitionsMap, CredentialId, LinkSecretId, RevocationRegistriesMap,
+    RevocationRegistryDefinitionsMap, RevocationStatesMap, SchemasMap,
+};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{
@@ -266,14 +269,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         proof_req_json: PresentationRequest,
         proof_json: Presentation,
-        schemas_json: HashMap<SchemaId, Schema>,
-        credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
-        rev_reg_defs_json: Option<
-            HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
-        >,
-        rev_regs_json: Option<
-            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>,
-        >,
+        schemas_json: SchemasMap,
+        credential_defs_json: CredentialDefinitionsMap,
+        rev_reg_defs_json: Option<RevocationRegistryDefinitionsMap>,
+        rev_regs_json: Option<RevocationRegistriesMap>,
     ) -> VcxCoreResult<bool> {
         let presentation: CredxPresentation = proof_json.convert(())?;
         let pres_req: CredxPresentationRequest = proof_req_json.convert(())?;
@@ -668,8 +667,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         proof_req_json: PresentationRequest,
         requested_credentials_json: &str,
         link_secret_id: &LinkSecretId,
-        schemas_json: HashMap<SchemaId, Schema>,
-        credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
+        schemas_json: SchemasMap,
+        credential_defs_json: CredentialDefinitionsMap,
         revoc_states_json: Option<RevocationStatesMap>,
     ) -> VcxCoreResult<Presentation> {
         let pres_req: CredxPresentationRequest = proof_req_json.convert(())?;

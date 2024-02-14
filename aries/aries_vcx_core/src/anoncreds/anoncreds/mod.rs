@@ -65,7 +65,10 @@ use serde_json::{json, Value};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use super::base_anoncreds::{BaseAnonCreds, CredentialId, LinkSecretId, RevocationStatesMap};
+use super::base_anoncreds::{
+    BaseAnonCreds, CredentialDefinitionsMap, CredentialId, LinkSecretId, RevocationRegistriesMap,
+    RevocationRegistryDefinitionsMap, RevocationStatesMap, SchemasMap,
+};
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -303,14 +306,10 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         proof_request_json: PresentationRequest,
         proof_json: Presentation,
-        schemas_json: HashMap<SchemaId, Schema>,
-        credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
-        rev_reg_defs_json: Option<
-            HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
-        >,
-        rev_regs_json: Option<
-            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>,
-        >,
+        schemas_json: SchemasMap,
+        credential_defs_json: CredentialDefinitionsMap,
+        rev_reg_defs_json: Option<RevocationRegistryDefinitionsMap>,
+        rev_regs_json: Option<RevocationRegistriesMap>,
     ) -> VcxCoreResult<bool> {
         let presentation: AnoncredsPresentation = proof_json.convert(())?;
         let pres_req: AnoncredsPresentationRequest = proof_request_json.convert(())?;
@@ -713,8 +712,8 @@ impl BaseAnonCreds for Anoncreds {
         proof_req_json: PresentationRequest,
         requested_credentials_json: &str,
         link_secret_id: &LinkSecretId,
-        schemas_json: HashMap<SchemaId, Schema>,
-        credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
+        schemas_json: SchemasMap,
+        credential_defs_json: CredentialDefinitionsMap,
         revoc_states_json: Option<RevocationStatesMap>,
     ) -> VcxCoreResult<Presentation> {
         let pres_req: AnoncredsPresentationRequest = proof_req_json.convert(())?;

@@ -28,7 +28,13 @@ use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
 
 pub type CredentialId = String;
 pub type LinkSecretId = String;
+pub type SchemasMap = HashMap<SchemaId, Schema>;
+pub type CredentialDefinitionsMap = HashMap<CredentialDefinitionId, CredentialDefinition>;
 pub type RevocationStatesMap = HashMap<String, HashMap<u64, CredentialRevocationState>>;
+pub type RevocationRegistryDefinitionsMap =
+    HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>;
+pub type RevocationRegistriesMap =
+    HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>;
 
 /// Trait defining standard 'anoncreds' related functionality. The APIs, including
 /// input and output types are based off the indy Anoncreds API:
@@ -39,14 +45,10 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         proof_request_json: PresentationRequest,
         proof_json: Presentation,
-        schemas_json: HashMap<SchemaId, Schema>,
-        credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
-        rev_reg_defs_json: Option<
-            HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>,
-        >,
-        rev_regs_json: Option<
-            HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>,
-        >,
+        schemas_json: SchemasMap,
+        credential_defs_json: CredentialDefinitionsMap,
+        rev_reg_defs_json: Option<RevocationRegistryDefinitionsMap>,
+        rev_regs_json: Option<RevocationRegistriesMap>,
     ) -> VcxCoreResult<bool>;
 
     async fn issuer_create_and_store_revoc_reg(
@@ -98,8 +100,8 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         proof_req_json: PresentationRequest,
         requested_credentials_json: &str,
         link_secret_id: &LinkSecretId,
-        schemas_json: HashMap<SchemaId, Schema>,
-        credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
+        schemas_json: SchemasMap,
+        credential_defs_json: CredentialDefinitionsMap,
         revoc_states_json: Option<RevocationStatesMap>,
     ) -> VcxCoreResult<Presentation>;
 
