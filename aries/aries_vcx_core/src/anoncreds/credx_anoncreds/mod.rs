@@ -824,21 +824,17 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         &self,
         wallet: &impl BaseWallet,
         filter_json: Option<&str>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<Vec<RetrievedCredentialInfo>> {
         // filter_json should map to WQL query directly
         // TODO - future - may wish to validate the filter_json for more accurate error reporting
 
         let creds_wql = filter_json.map_or("{}", |x| x);
         let creds = Self::_get_credentials(wallet, creds_wql).await?;
 
-        let cred_info_list: VcxCoreResult<Vec<RetrievedCredentialInfo>> = creds
+        creds
             .iter()
             .map(|(credential_id, cred)| _make_cred_info(credential_id, cred))
-            .collect();
-
-        let cred_info_list = cred_info_list?;
-
-        Ok(serde_json::to_string(&cred_info_list)?)
+            .collect()
     }
 
     async fn prover_get_credentials_for_proof_req(

@@ -12,6 +12,6 @@ pub fn get_credentials(profile_holder: Arc<ProfileHolder>) -> VcxUniFFIResult<St
             .anoncreds()
             .prover_get_credentials(profile_holder.inner.wallet(), Some("{}"))
             .await?;
-        Ok(credentials)
+        Ok(serde_json::to_string(&credentials)?)
     })
 }

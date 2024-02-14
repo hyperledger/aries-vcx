@@ -145,7 +145,7 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         __wallet: &impl BaseWallet,
         _filter_json: Option<&str>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<Vec<RetrievedCredentialInfo>> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,

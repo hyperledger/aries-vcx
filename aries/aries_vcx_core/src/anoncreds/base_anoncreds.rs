@@ -108,7 +108,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         wallet: &impl BaseWallet,
         filter_json: Option<&str>,
-    ) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<Vec<RetrievedCredentialInfo>>;
 
     async fn prover_get_credentials_for_proof_req(
         &self,
