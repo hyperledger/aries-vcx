@@ -1,7 +1,8 @@
 use std::{collections::HashMap, path::Path};
 
 use anoncreds_types::data_types::{
-    identifiers::schema_id::SchemaId, messages::cred_selection::SelectedCredentials,
+    identifiers::schema_id::SchemaId,
+    messages::{cred_selection::SelectedCredentials, revocation_state::CredentialRevocationState},
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -157,12 +158,12 @@ pub async fn build_rev_states_json(
     ledger_read: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
     credentials_identifiers: &mut Vec<CredInfoProver>,
-) -> VcxResult<String> {
+) -> VcxResult<HashMap<String, HashMap<u64, CredentialRevocationState>>> {
     trace!(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let mut rtn: Value = json!({});
+    let mut rtn = HashMap::<String, HashMap<u64, CredentialRevocationState>>::new();
     let mut timestamps: HashMap<String, u64> = HashMap::new();
 
     for cred_info in credentials_identifiers.iter_mut() {
@@ -198,17 +199,12 @@ pub async fn build_rev_states_json(
                     )
                     .await?;
 
-                let rev_state_json: Value =
-                    serde_json::to_value(&rev_state_json).map_err(|err| {
-                        AriesVcxError::from_msg(
-                            AriesVcxErrorKind::InvalidJson,
-                            format!("Cannot deserialize RevocationState: {}", err),
-                        )
-                    })?;
-
                 // TODO: proover should be able to create multiple states of same revocation policy
                 // for different timestamps see ticket IS-1108
-                rtn[rev_reg_id.to_string()] = json!({ timestamp.to_string(): rev_state_json });
+                rtn.insert(
+                    rev_reg_id.to_string(),
+                    vec![(timestamp, rev_state_json)].into_iter().collect(),
+                );
                 cred_info.timestamp = Some(timestamp);
 
                 // Cache timestamp for future attributes that have the same rev_reg_id
@@ -223,7 +219,7 @@ pub async fn build_rev_states_json(
         }
     }
 
-    Ok(rtn.to_string())
+    Ok(rtn)
 }
 
 pub fn build_requested_credentials_json(
@@ -292,6 +288,7 @@ pub mod pool_tests {
         devsetup::build_setup_profile,
     };
 
+    use super::*;
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
 
     #[tokio::test]
@@ -306,7 +303,7 @@ pub mod pool_tests {
                 empty_credential_identifiers.as_mut()
             )
             .await?,
-            "{}".to_string()
+            HashMap::new()
         );
 
         // no rev_reg_id
@@ -325,7 +322,7 @@ pub mod pool_tests {
         assert_eq!(
             build_rev_states_json(&setup.ledger_read, &setup.anoncreds, vec![cred1].as_mut())
                 .await?,
-            "{}".to_string()
+            HashMap::new()
         );
         Ok(())
     }
@@ -720,9 +717,15 @@ pub mod unit_tests {
         let states = build_rev_states_json(&ledger_read, &anoncreds, cred_info.as_mut())
             .await
             .unwrap();
-        let rev_state_json: Value = serde_json::from_str(REV_STATE_JSON).unwrap();
-        let expected = json!({REV_REG_ID: {"1": rev_state_json}});
-        assert_eq!(serde_json::from_str::<Value>(&states).unwrap(), expected);
+        let expected: HashMap<String, HashMap<u64, CredentialRevocationState>> = vec![(
+            REV_REG_ID.to_string(),
+            vec![(1, serde_json::from_str(REV_STATE_JSON).unwrap())]
+                .into_iter()
+                .collect(),
+        )]
+        .into_iter()
+        .collect();
+        assert_eq!(states, expected);
         assert!(cred_info[0].timestamp.is_some());
     }
 

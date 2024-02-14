@@ -64,7 +64,7 @@ pub async fn generate_indy_proof(
             &settings::DEFAULT_LINK_SECRET_ALIAS.to_string(),
             serde_json::from_str(&schemas_json)?,
             serde_json::from_str(&credential_defs_json)?,
-            Some(&revoc_states_json),
+            Some(&serde_json::to_string(&revoc_states_json)?),
         )
         .await?;
     Ok(serde_json::to_string(&proof)?)

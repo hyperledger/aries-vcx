@@ -2,7 +2,7 @@ use anoncreds_clsignatures::{RevocationRegistry as CryptoRevocationRegistry, Wit
 
 use crate::{invalid, utils::validation::Validatable, Error};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct CredentialRevocationState {
     pub witness: Witness,
     pub rev_reg: CryptoRevocationRegistry,
