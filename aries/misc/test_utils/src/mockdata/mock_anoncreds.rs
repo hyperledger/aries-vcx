@@ -6,9 +6,11 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
-        schema::Schema,
+        cred_def::CredentialDefinition,
+        rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition,
+        rev_reg_delta::RevocationRegistryDelta,
+        schema::{AttributeNames, Schema},
     },
     messages::{
         cred_definition_config::CredentialDefinitionConfig,
@@ -225,7 +227,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _issuer_did: &Did,
         _name: &str,
         _version: &str,
-        _attrs: &str,
+        _attrs: AttributeNames,
     ) -> VcxCoreResult<Schema> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(

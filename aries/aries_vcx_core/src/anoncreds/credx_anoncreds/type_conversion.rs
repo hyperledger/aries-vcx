@@ -496,3 +496,13 @@ impl Convert for OurSignatureType {
         }
     }
 }
+
+impl Convert for OurAttributeNames {
+    type Args = ();
+    type Target = CredxAttributeNames;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(self.0.into())
+    }
+}

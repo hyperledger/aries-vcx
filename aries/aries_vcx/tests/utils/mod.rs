@@ -43,7 +43,7 @@ pub async fn create_and_write_test_schema(
         submitter_did,
         &generate_random_schema_name(),
         &generate_random_schema_version(),
-        &serde_json::from_str::<Vec<String>>(attr_list).unwrap(),
+        serde_json::from_str::<Vec<String>>(attr_list).unwrap(),
     )
     .await
     .unwrap();

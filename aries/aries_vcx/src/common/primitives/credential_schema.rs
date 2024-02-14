@@ -11,7 +11,7 @@ use did_parser::Did;
 
 use super::credential_definition::PublicEntityStateType;
 use crate::{
-    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    errors::error::{AriesVcxError, VcxResult},
     utils::serialization::ObjectWithVersion,
 };
 
@@ -44,7 +44,7 @@ impl Schema {
         submitter_did: &Did,
         name: &str,
         version: &str,
-        data: &Vec<String>,
+        data: Vec<String>,
     ) -> VcxResult<Self> {
         trace!(
             "Schema::create >>> submitter_did: {}, name: {}, version: {}, data: {:?}",
@@ -54,21 +54,14 @@ impl Schema {
             data
         );
 
-        let data_str = serde_json::to_string(data).map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::SerializationError,
-                format!("Failed to serialize schema attributes, err: {}", err),
-            )
-        })?;
-
         let schema_json = anoncreds
-            .issuer_create_schema(submitter_did, name, version, &data_str)
+            .issuer_create_schema(submitter_did, name, version, data.to_owned().into())
             .await?;
 
         Ok(Self {
             source_id: source_id.to_string(),
             name: name.to_string(),
-            data: data.clone(),
+            data,
             version: version.to_string(),
             schema_id: schema_json.id.clone(),
             submitter_did: submitter_did.to_owned(),

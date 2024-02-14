@@ -44,7 +44,7 @@ use anoncreds_types::data_types::{
         rev_reg::RevocationRegistry,
         rev_reg_def::RevocationRegistryDefinition,
         rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
-        schema::Schema,
+        schema::{AttributeNames, Schema},
     },
     messages::{
         cred_definition_config::CredentialDefinitionConfig,
@@ -1212,15 +1212,13 @@ impl BaseAnonCreds for Anoncreds {
         issuer_did: &Did,
         name: &str,
         version: &str,
-        attrs: &str,
+        attrs: AttributeNames,
     ) -> VcxCoreResult<Schema> {
-        let attr_names = serde_json::from_str(attrs)?;
-
         let schema = anoncreds::issuer::create_schema(
             name,
             version,
             IssuerId::new(issuer_did.to_string()).unwrap(),
-            attr_names,
+            attrs.convert(())?,
         )?;
         let schema_id = make_schema_id(issuer_did, name, version);
         Ok(schema.convert((schema_id.to_string(),))?)

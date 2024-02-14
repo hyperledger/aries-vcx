@@ -49,7 +49,7 @@ pub async fn create_and_publish_schema(
         &issuer_did.parse()?,
         &name,
         &version,
-        &data,
+        data,
     )
     .await?
     .publish(

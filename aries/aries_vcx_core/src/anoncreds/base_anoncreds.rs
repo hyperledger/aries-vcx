@@ -6,9 +6,11 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
-        schema::Schema,
+        cred_def::CredentialDefinition,
+        rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition,
+        rev_reg_delta::RevocationRegistryDelta,
+        schema::{AttributeNames, Schema},
     },
     messages::{
         cred_definition_config::CredentialDefinitionConfig,
@@ -166,7 +168,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         issuer_did: &Did,
         name: &str,
         version: &str,
-        attrs: &str,
+        attrs: AttributeNames,
     ) -> VcxCoreResult<Schema>;
 
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not

@@ -13,9 +13,11 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
-        schema::Schema,
+        cred_def::CredentialDefinition,
+        rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition,
+        rev_reg_delta::RevocationRegistryDelta,
+        schema::{AttributeNames, Schema},
     },
     messages::{
         cred_definition_config::CredentialDefinitionConfig,
@@ -1143,14 +1145,16 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         issuer_did: &Did,
         name: &str,
         version: &str,
-        attrs: &str,
+        attrs: AttributeNames,
     ) -> VcxCoreResult<Schema> {
-        let origin_did = issuer_did.convert(())?;
-        let attr_names = serde_json::from_str(attrs)?;
-
-        let schema = credx::issuer::create_schema(&origin_did, name, version, attr_names, None)?;
-
-        Ok(schema.convert((issuer_did.to_string(),))?)
+        Ok(credx::issuer::create_schema(
+            &issuer_did.convert(())?,
+            name,
+            version,
+            attrs.convert(())?,
+            None,
+        )?
+        .convert((issuer_did.to_string(),))?)
     }
 
     async fn revoke_credential_local(

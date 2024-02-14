@@ -504,3 +504,13 @@ impl Convert for OurSignatureType {
         }
     }
 }
+
+impl Convert for OurAttributeNames {
+    type Args = ();
+    type Target = AnoncredsAttributeNames;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(AnoncredsAttributeNames(self.0))
+    }
+}
