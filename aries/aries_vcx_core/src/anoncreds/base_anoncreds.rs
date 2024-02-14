@@ -13,6 +13,7 @@ use anoncreds_types::data_types::{
     messages::{
         cred_offer::CredentialOffer,
         cred_request::{CredentialRequest, CredentialRequestMetadata},
+        cred_selection::RetrievedCredentials,
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
@@ -113,7 +114,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         wallet: &impl BaseWallet,
         proof_request_json: PresentationRequest,
-    ) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<RetrievedCredentials>;
 
     async fn prover_create_credential_req(
         &self,

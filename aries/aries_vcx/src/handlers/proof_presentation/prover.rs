@@ -89,9 +89,9 @@ impl Prover {
             .await?;
         trace!(
             "Prover::retrieve_credentials >>> presentation_request: {presentation_request}, \
-             json_retrieved_credentials: {json_retrieved_credentials}"
+             json_retrieved_credentials: {json_retrieved_credentials:?}"
         );
-        Ok(serde_json::from_str(&json_retrieved_credentials)?)
+        Ok(json_retrieved_credentials)
     }
 
     pub async fn generate_presentation(

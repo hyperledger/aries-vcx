@@ -48,6 +48,7 @@ use anoncreds_types::data_types::{
     messages::{
         cred_offer::CredentialOffer,
         cred_request::{CredentialRequest, CredentialRequestMetadata},
+        cred_selection::RetrievedCredentials,
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
@@ -890,7 +891,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         proof_request_json: PresentationRequest,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<RetrievedCredentials> {
         let proof_req_v: Value = serde_json::to_value(proof_request_json).map_err(|e| {
             AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidProofRequest, e)
         })?;
@@ -980,7 +981,7 @@ impl BaseAnonCreds for Anoncreds {
             cred_by_attr[ATTRS][reft] = Value::Array(credentials_json);
         }
 
-        Ok(serde_json::to_string(&cred_by_attr)?)
+        Ok(serde_json::from_value(cred_by_attr)?)
     }
 
     async fn prover_create_credential_req(
