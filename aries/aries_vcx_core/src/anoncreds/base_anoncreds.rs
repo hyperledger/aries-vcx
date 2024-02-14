@@ -11,6 +11,7 @@ use anoncreds_types::data_types::{
         schema::Schema,
     },
     messages::{
+        cred_definition_config::CredentialDefinitionConfig,
         cred_offer::CredentialOffer,
         cred_request::{CredentialRequest, CredentialRequestMetadata},
         cred_selection::{RetrievedCredentialInfo, RetrievedCredentials},
@@ -18,7 +19,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce,
         pres_request::PresentationRequest,
         presentation::Presentation,
-        revocation_state::CredentialRevocationState, cred_definition_config::CredentialDefinitionConfig,
+        revocation_state::CredentialRevocationState,
     },
 };
 use async_trait::async_trait;
@@ -72,9 +73,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         issuer_did: &Did,
         schema_id: &SchemaId,
         schema_json: Schema,
-        tag: &str,
-        signature_type: Option<&str>,
-        config_json: CredentialDefinitionConfig
+        config_json: CredentialDefinitionConfig,
     ) -> VcxCoreResult<CredentialDefinition>;
 
     async fn issuer_create_credential_offer(

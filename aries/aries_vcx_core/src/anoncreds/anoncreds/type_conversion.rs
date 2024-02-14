@@ -28,6 +28,7 @@ use anoncreds::{
         RevocationRegistry as AnoncredsRevocationRegistry,
         RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
         RevocationStatusList as AnoncredsRevocationStatusList,
+        SignatureType as AnoncredsSignatureType,
     },
 };
 use anoncreds_types::data_types::{
@@ -40,7 +41,8 @@ use anoncreds_types::data_types::{
     ledger::{
         cred_def::{
             CredentialDefinition as OurCredentialDefinition,
-            CredentialDefinitionData as OurCredentialDefinitionData, SignatureType,
+            CredentialDefinitionData as OurCredentialDefinitionData,
+            SignatureType as OurSignatureType,
         },
         rev_reg::RevocationRegistry as OurRevocationRegistry,
         rev_reg_def::{
@@ -123,7 +125,7 @@ impl Convert for AnoncredsCredentialDefinition {
         Ok(OurCredentialDefinition {
             id: OurCredentialDefinitionId::new(cred_def_id)?,
             schema_id: OurSchemaId::new_unchecked(self.schema_id.to_string()),
-            signature_type: SignatureType::CL,
+            signature_type: OurSignatureType::CL,
             tag: self.tag,
             value: OurCredentialDefinitionData {
                 primary: self.value.primary,
@@ -142,7 +144,7 @@ impl Convert for OurCredentialDefinition {
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(AnoncredsCredentialDefinition {
             schema_id: AnoncredsSchemaId::new_unchecked(self.schema_id.to_string()),
-            signature_type: anoncreds::types::SignatureType::CL,
+            signature_type: AnoncredsSignatureType::CL,
             tag: self.tag,
             value: AnoncredsCredentialDefinitionData {
                 primary: self.value.primary,
@@ -488,5 +490,17 @@ impl Convert for OurCredentialDefinitionConfig {
         Ok(AnoncredsCredentialDefinitionConfig {
             support_revocation: self.support_revocation,
         })
+    }
+}
+
+impl Convert for OurSignatureType {
+    type Args = ();
+    type Target = AnoncredsSignatureType;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            OurSignatureType::CL => Ok(AnoncredsSignatureType::CL),
+        }
     }
 }

@@ -31,7 +31,7 @@ use anoncreds::{
         Presentation as AnoncredsPresentation, PresentationRequest as AnoncredsPresentationRequest,
         RegistryType, RevocationRegistry as AnoncredsRevocationRegistry,
         RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
-        RevocationStatusList, SignatureType,
+        RevocationStatusList,
     },
 };
 use anoncreds_types::data_types::{
@@ -40,13 +40,14 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition,
+        cred_def::{CredentialDefinition, SignatureType},
         rev_reg::RevocationRegistry,
         rev_reg_def::RevocationRegistryDefinition,
         rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
         schema::Schema,
     },
     messages::{
+        cred_definition_config::CredentialDefinitionConfig,
         cred_offer::CredentialOffer,
         cred_request::{CredentialRequest, CredentialRequestMetadata},
         cred_selection::{RetrievedCredentialInfo, RetrievedCredentials},
@@ -54,7 +55,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce,
         pres_request::PresentationRequest,
         presentation::Presentation,
-        revocation_state::CredentialRevocationState, cred_definition_config::CredentialDefinitionConfig,
+        revocation_state::CredentialRevocationState,
     },
 };
 use async_trait::async_trait;
@@ -445,16 +446,21 @@ impl BaseAnonCreds for Anoncreds {
         issuer_did: &Did,
         schema_id: &SchemaId,
         schema_json: Schema,
-        tag: &str,
-        signature_type: Option<&str>,
         config_json: CredentialDefinitionConfig,
     ) -> VcxCoreResult<CredentialDefinition> {
-        let sig_type = signature_type
-            .map(serde_json::from_str)
-            .unwrap_or(Ok(SignatureType::CL))?;
+        let CredentialDefinitionConfig {
+            tag,
+            signature_type,
+            ..
+        } = config_json.clone();
 
-        let cred_def_id =
-            make_credential_definition_id(issuer_did, schema_id, schema_json.seq_no, tag, sig_type);
+        let cred_def_id = make_credential_definition_id(
+            issuer_did,
+            schema_id,
+            schema_json.seq_no,
+            &tag,
+            signature_type,
+        );
 
         // If cred def already exists, return it
         if let Ok(cred_def) = self
@@ -473,8 +479,8 @@ impl BaseAnonCreds for Anoncreds {
                 // SchemaId::new(schema_id).unwrap(),
                 &schema_json.clone().convert(())?,
                 schema_json.issuer_id.clone().convert(())?,
-                tag,
-                sig_type,
+                &tag,
+                signature_type.convert(())?,
                 config_json.convert(())?,
             )?;
 

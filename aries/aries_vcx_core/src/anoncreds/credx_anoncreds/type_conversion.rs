@@ -8,7 +8,9 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId as OurSchemaId,
     },
     ledger::{
-        cred_def::{CredentialDefinition as OurCredentialDefinition, SignatureType},
+        cred_def::{
+            CredentialDefinition as OurCredentialDefinition, SignatureType as OurSignatureType,
+        },
         rev_reg::RevocationRegistry as OurRevocationRegistry,
         rev_reg_def::{
             RevocationRegistryDefinition as OurRevocationRegistryDefinition,
@@ -47,7 +49,7 @@ use indy_credx::{
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
         RevocationRegistryDelta as CredxRevocationRegistryDelta,
         RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
-        SchemaId as CredxSchemaId,
+        SchemaId as CredxSchemaId, SignatureType as CredxSignatureType,
     },
 };
 
@@ -115,7 +117,7 @@ impl Convert for CredxCredentialDefinition {
                 Ok(OurCredentialDefinition {
                     id: OurCredentialDefinitionId::new(cred_def.id.0)?,
                     schema_id: OurSchemaId::new_unchecked(cred_def.schema_id.0),
-                    signature_type: SignatureType::CL,
+                    signature_type: OurSignatureType::CL,
                     tag: cred_def.tag,
                     // credx doesn't expose CredentialDefinitionData
                     value: serde_json::from_str(&serde_json::to_string(&cred_def.value)?)?,
@@ -480,5 +482,17 @@ impl Convert for OurCredentialDefinitionConfig {
         Ok(CredxCredentialDefinitionConfig {
             support_revocation: self.support_revocation,
         })
+    }
+}
+
+impl Convert for OurSignatureType {
+    type Args = ();
+    type Target = CredxSignatureType;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            OurSignatureType::CL => Ok(CredxSignatureType::CL),
+        }
     }
 }

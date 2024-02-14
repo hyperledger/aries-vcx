@@ -11,6 +11,7 @@ use anoncreds_types::data_types::{
         schema::Schema,
     },
     messages::{
+        cred_definition_config::CredentialDefinitionConfig,
         cred_offer::CredentialOffer,
         cred_request::{CredentialRequest, CredentialRequestMetadata},
         cred_selection::{RetrievedCredentialInfo, RetrievedCredentials},
@@ -18,7 +19,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce,
         pres_request::PresentationRequest,
         presentation::Presentation,
-        revocation_state::CredentialRevocationState, cred_definition_config::CredentialDefinitionConfig,
+        revocation_state::CredentialRevocationState,
     },
 };
 use aries_vcx_core::{
@@ -85,9 +86,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _issuer_did: &Did,
         _schema_id: &SchemaId,
         _schema_json: Schema,
-        _tag: &str,
-        _signature_type: Option<&str>,
-        _config_json: CredentialDefinitionConfig
+        _config_json: CredentialDefinitionConfig,
     ) -> VcxCoreResult<CredentialDefinition> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(

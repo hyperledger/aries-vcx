@@ -18,6 +18,7 @@ use anoncreds_types::data_types::{
         schema::Schema,
     },
     messages::{
+        cred_definition_config::CredentialDefinitionConfig,
         cred_offer::CredentialOffer,
         cred_request::{CredentialRequest, CredentialRequestMetadata},
         cred_selection::{RetrievedCredentialInfo, RetrievedCredentials},
@@ -25,7 +26,7 @@ use anoncreds_types::data_types::{
         nonce::Nonce,
         pres_request::PresentationRequest,
         presentation::Presentation,
-        revocation_state::CredentialRevocationState, cred_definition_config::CredentialDefinitionConfig,
+        revocation_state::CredentialRevocationState,
     },
 };
 use async_trait::async_trait;
@@ -44,7 +45,7 @@ use credx::{
         RevocationRegistryDefinition as CredxRevocationRegistryDefinition,
         RevocationRegistryDelta as CredxRevocationRegistryDelta,
         RevocationRegistryId as CredxRevocationRegistryId, Schema as CredxSchema,
-        SchemaId as CredxSchemaId, SignatureType,
+        SchemaId as CredxSchemaId,
     },
 };
 use did_parser::Did;
@@ -424,14 +425,15 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         issuer_did: &Did,
         _schema_id: &SchemaId,
         schema_json: Schema,
-        tag: &str,
-        sig_type: Option<&str>,
         config_json: CredentialDefinitionConfig,
     ) -> VcxCoreResult<CredentialDefinition> {
         let issuer_did = issuer_did.to_owned();
-        let sig_type = sig_type
-            .map(serde_json::from_str)
-            .unwrap_or(Ok(SignatureType::CL))?;
+
+        let CredentialDefinitionConfig {
+            signature_type,
+            tag,
+            ..
+        } = config_json.clone();
 
         let schema_seq_no = schema_json.seq_no;
         let schema = schema_json.clone().convert(())?;
@@ -440,8 +442,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             &issuer_did.convert(())?,
             schema.id(),
             schema_seq_no,
-            tag,
-            sig_type,
+            &tag,
+            signature_type.convert(())?,
         )?;
 
         // If cred def already exists, return it
@@ -457,8 +459,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             credx::issuer::create_credential_definition(
                 &issuer_did.convert(())?,
                 &schema,
-                tag,
-                sig_type,
+                &tag,
+                signature_type.convert(())?,
                 config_json.convert(())?,
             )?;
 
