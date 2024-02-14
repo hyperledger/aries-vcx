@@ -13,7 +13,7 @@ use anoncreds_types::data_types::{
     messages::{
         cred_offer::CredentialOffer,
         cred_request::{CredentialRequest, CredentialRequestMetadata},
-        cred_selection::{RetrievedCredentials, SelectedCredentialInfo},
+        cred_selection::{RetrievedCredentialInfo, RetrievedCredentials},
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
@@ -133,7 +133,7 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         __wallet: &impl BaseWallet,
         _cred_id: &str,
-    ) -> VcxCoreResult<SelectedCredentialInfo> {
+    ) -> VcxCoreResult<RetrievedCredentialInfo> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
