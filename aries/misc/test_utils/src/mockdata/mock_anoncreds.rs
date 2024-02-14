@@ -22,7 +22,7 @@ use anoncreds_types::data_types::{
     },
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::{BaseAnonCreds, CredentialId},
+    anoncreds::base_anoncreds::{BaseAnonCreds, CredentialId, LinkSecretId},
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::base_wallet::BaseWallet,
 };
@@ -122,7 +122,7 @@ impl BaseAnonCreds for MockAnoncreds {
         __wallet: &impl BaseWallet,
         _proof_req_json: PresentationRequest,
         _requested_credentials_json: &str,
-        _master_secret_id: &str,
+        _link_secret_id: &LinkSecretId,
         _schemas_json: HashMap<SchemaId, Schema>,
         _credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         _revoc_states_json: Option<&str>,
@@ -172,7 +172,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _prover_did: &Did,
         _cred_offer_json: CredentialOffer,
         _cred_def_json: CredentialDefinition,
-        _master_secret_id: &str,
+        _link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<(CredentialRequest, CredentialRequestMetadata)> {
         Ok((
             serde_json::from_str(CREDENTIAL_REQ_STRING).unwrap(),
@@ -217,7 +217,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn prover_create_link_secret(
         &self,
         _wallet: &impl BaseWallet,
-        _link_secret_id: &str,
+        _link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<()> {
         Ok(())
     }

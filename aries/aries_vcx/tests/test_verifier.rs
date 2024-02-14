@@ -111,7 +111,7 @@ async fn create_indy_proof(
             wallet_holder,
             serde_json::from_str(&proof_req)?,
             &requested_credentials_json,
-            "main",
+            &"main".to_string(),
             serde_json::from_str(&schemas)?,
             serde_json::from_str(&cred_defs)?,
             None,
@@ -222,7 +222,7 @@ async fn create_proof_with_predicate(
             wallet_holder,
             serde_json::from_str(&proof_req)?,
             &requested_credentials_json,
-            "main",
+            &"main".to_string(),
             serde_json::from_str(&schemas)?,
             serde_json::from_str(&cred_defs)?,
             None,
@@ -322,7 +322,7 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
               "requested_predicates":{}
             })
             .to_string(),
-            "main",
+            &"main".to_string(),
             Default::default(),
             Default::default(),
             None,
@@ -400,7 +400,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
                 "requested_predicates":{}
             })
             .to_string(),
-            "main",
+            &"main".to_string(),
             serde_json::from_str(&json!({ schema.schema_id: schema.schema_json }).to_string())?,
             serde_json::from_str(
                 &json!({ cred_def.get_cred_def_id().to_string(): cred_def_json }).to_string(),
@@ -495,7 +495,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
                 "requested_predicates":{}
             })
             .to_string(),
-            "main",
+            &"main".to_string(),
             serde_json::from_str(&json!({ schema.schema_id: schema.schema_json }).to_string())?,
             serde_json::from_str(
                 &json!({ cred_def.get_cred_def_id().to_string(): cred_def_json }).to_string(),

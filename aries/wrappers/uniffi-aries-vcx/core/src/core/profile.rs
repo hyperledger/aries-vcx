@@ -64,7 +64,7 @@ pub fn new_indy_profile(
         let anoncreds = IndyCredxAnonCreds;
 
         anoncreds
-            .prover_create_link_secret(&wallet, "main")
+            .prover_create_link_secret(&wallet, &"main".to_string())
             .await
             .ok();
 

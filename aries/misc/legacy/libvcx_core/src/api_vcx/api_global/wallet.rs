@@ -106,7 +106,7 @@ pub async fn create_main_wallet(config: &WalletConfig) -> LibvcxResult<()> {
 
     // If MS is already in wallet then just continue
     get_main_anoncreds()?
-        .prover_create_link_secret(wallet.as_ref(), DEFAULT_LINK_SECRET_ALIAS)
+        .prover_create_link_secret(wallet.as_ref(), &DEFAULT_LINK_SECRET_ALIAS.to_string())
         .await
         .ok();
 

@@ -54,7 +54,7 @@ use serde_json::{json, Value};
 use type_conversion::Convert;
 use uuid::Uuid;
 
-use super::base_anoncreds::{BaseAnonCreds, CredentialId};
+use super::base_anoncreds::{BaseAnonCreds, CredentialId, LinkSecretId};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{
@@ -155,7 +155,7 @@ impl IndyCredxAnonCreds {
 
     async fn get_link_secret(
         wallet: &impl BaseWallet,
-        link_secret_id: &str,
+        link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<LinkSecret> {
         let record = wallet
             .get_record(CATEGORY_LINK_SECRET, link_secret_id)
@@ -667,7 +667,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         wallet: &impl BaseWallet,
         proof_req_json: PresentationRequest,
         requested_credentials_json: &str,
-        link_secret_id: &str,
+        link_secret_id: &LinkSecretId,
         schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         revoc_states_json: Option<&str>,
@@ -940,7 +940,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         prover_did: &Did,
         cred_offer_json: CredentialOffer,
         credential_def_json: CredentialDefinition,
-        link_secret_id: &str,
+        link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<(CredentialRequest, CredentialRequestMetadata)> {
         let prover_did = prover_did.convert(())?;
         let cred_def: CredxCredentialDefinition = credential_def_json.convert(())?;
@@ -1085,7 +1085,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn prover_create_link_secret(
         &self,
         wallet: &impl BaseWallet,
-        link_secret_id: &str,
+        link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<()> {
         let existing_record = wallet
             .get_record(CATEGORY_LINK_SECRET, link_secret_id)

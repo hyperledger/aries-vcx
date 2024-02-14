@@ -65,7 +65,7 @@ use serde_json::{json, Value};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use super::base_anoncreds::{BaseAnonCreds, CredentialId};
+use super::base_anoncreds::{BaseAnonCreds, CredentialId, LinkSecretId};
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -202,7 +202,7 @@ impl Anoncreds {
     async fn get_link_secret(
         &self,
         wallet: &impl BaseWallet,
-        link_secret_id: &str,
+        link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<LinkSecret> {
         let ms_decimal = wallet
             .get_record(CATEGORY_LINK_SECRET, link_secret_id)
@@ -712,7 +712,7 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         proof_req_json: PresentationRequest,
         requested_credentials_json: &str,
-        master_secret_id: &str,
+        link_secret_id: &LinkSecretId,
         schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         revoc_states_json: Option<&str>,
@@ -844,7 +844,7 @@ impl BaseAnonCreds for Anoncreds {
             None
         };
 
-        let link_secret = self.get_link_secret(wallet, master_secret_id).await?;
+        let link_secret = self.get_link_secret(wallet, link_secret_id).await?;
 
         let presentation = anoncreds::prover::create_presentation(
             &pres_req,
@@ -987,18 +987,18 @@ impl BaseAnonCreds for Anoncreds {
         prover_did: &Did,
         cred_offer_json: CredentialOffer,
         cred_def_json: CredentialDefinition,
-        master_secret_id: &str,
+        link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<(CredentialRequest, CredentialRequestMetadata)> {
         let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;
         let credential_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
-        let link_secret = self.get_link_secret(wallet, master_secret_id).await?;
+        let link_secret = self.get_link_secret(wallet, link_secret_id).await?;
 
         let (cred_req, cred_req_metadata) = anoncreds::prover::create_credential_request(
             None,
             Some(prover_did.did()),
             &cred_def,
             &link_secret,
-            master_secret_id,
+            link_secret_id,
             &credential_offer,
         )?;
 
@@ -1175,7 +1175,7 @@ impl BaseAnonCreds for Anoncreds {
     async fn prover_create_link_secret(
         &self,
         wallet: &impl BaseWallet,
-        link_secret_id: &str,
+        link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<()> {
         let existing_record = wallet
             .get_record(CATEGORY_LINK_SECRET, link_secret_id)

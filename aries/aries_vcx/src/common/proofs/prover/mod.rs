@@ -61,7 +61,7 @@ pub async fn generate_indy_proof(
             wallet,
             serde_json::from_str(proof_req_data_json)?,
             &requested_credentials,
-            settings::DEFAULT_LINK_SECRET_ALIAS,
+            &settings::DEFAULT_LINK_SECRET_ALIAS.to_string(),
             serde_json::from_str(&schemas_json)?,
             serde_json::from_str(&credential_defs_json)?,
             Some(&revoc_states_json),

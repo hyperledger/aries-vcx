@@ -27,6 +27,7 @@ use did_parser::Did;
 use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
 
 pub type CredentialId = String;
+pub type LinkSecretId = String;
 
 /// Trait defining standard 'anoncreds' related functionality. The APIs, including
 /// input and output types are based off the indy Anoncreds API:
@@ -95,7 +96,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         wallet: &impl BaseWallet,
         proof_req_json: PresentationRequest,
         requested_credentials_json: &str,
-        master_secret_id: &str,
+        link_secret_id: &LinkSecretId,
         schemas_json: HashMap<SchemaId, Schema>,
         credential_defs_json: HashMap<CredentialDefinitionId, CredentialDefinition>,
         revoc_states_json: Option<&str>,
@@ -125,7 +126,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         prover_did: &Did,
         cred_offer_json: CredentialOffer,
         cred_def_json: CredentialDefinition,
-        master_secret_id: &str,
+        link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<(CredentialRequest, CredentialRequestMetadata)>;
 
     async fn create_revocation_state(
@@ -155,7 +156,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn prover_create_link_secret(
         &self,
         wallet: &impl BaseWallet,
-        link_secret_id: &str,
+        link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<()>;
 
     async fn issuer_create_schema(

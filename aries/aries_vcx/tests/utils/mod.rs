@@ -130,7 +130,7 @@ pub async fn create_and_write_credential(
             institution_did,
             serde_json::from_str(&serde_json::to_string(&offer).unwrap()).unwrap(),
             cred_def.get_cred_def_json().try_clone().unwrap(),
-            settings::DEFAULT_LINK_SECRET_ALIAS,
+            &settings::DEFAULT_LINK_SECRET_ALIAS.to_string(),
         )
         .await
         .unwrap();

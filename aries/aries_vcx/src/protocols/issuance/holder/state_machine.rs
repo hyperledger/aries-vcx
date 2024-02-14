@@ -605,7 +605,7 @@ pub async fn create_anoncreds_credential_request(
             prover_did,
             serde_json::from_str(cred_offer)?,
             cred_def_json.try_clone()?,
-            master_secret_id,
+            &master_secret_id.to_string(),
         )
         .await
         .map_err(|err| {
