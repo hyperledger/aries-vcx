@@ -48,7 +48,7 @@ use anoncreds_types::data_types::{
     messages::{
         cred_offer::CredentialOffer,
         cred_request::{CredentialRequest, CredentialRequestMetadata},
-        cred_selection::{RetrievedCredentialInfo, RetrievedCredentials},
+        cred_selection::{RetrievedCredentials, SelectedCredentialInfo},
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
@@ -860,7 +860,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         cred_id: &str,
-    ) -> VcxCoreResult<RetrievedCredentialInfo> {
+    ) -> VcxCoreResult<SelectedCredentialInfo> {
         let cred = self._get_credential(wallet, cred_id).await?;
         let cred_info = _make_cred_info(cred_id, &cred)?;
         Ok(serde_json::from_value(cred_info)?)
