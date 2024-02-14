@@ -297,8 +297,8 @@ dependencies = [
 
 [[package]]
 name = "anoncreds"
-version = "0.2.0-dev.5"
-source = "git+https://github.com/mirgee/anoncreds-rs.git?rev=9a7539c#9a7539c62dc0ee65891c2d94b66b7986ef33f210"
+version = "0.2.0-dev.7"
+source = "git+https://github.com/mirgee/anoncreds-rs.git?rev=a85d739#a85d739c10a90834dbd912508cbceba77b114b64"
 dependencies = [
  "anoncreds-clsignatures 0.3.1",
  "base64",
