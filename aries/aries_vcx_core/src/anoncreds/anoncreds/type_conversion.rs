@@ -84,6 +84,44 @@ impl Convert for OurIssuerId {
     }
 }
 
+fn serde_convert<S, T>(arg: T) -> Result<S, Box<dyn std::error::Error>>
+where
+    S: serde::Serialize + serde::de::DeserializeOwned,
+    T: serde::Serialize + serde::de::DeserializeOwned,
+{
+    Ok(serde_json::from_value(serde_json::to_value(arg)?)?)
+}
+
+impl Convert for AnoncredsIssuerId {
+    type Args = ();
+    type Target = OurIssuerId;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        OurIssuerId::new(self.to_string()).map_err(|e| e.into())
+    }
+}
+
+impl Convert for OurAttributeNames {
+    type Args = ();
+    type Target = AnoncredsAttributeNames;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(AnoncredsAttributeNames(self.0))
+    }
+}
+
+impl Convert for AnoncredsAttributeNames {
+    type Args = ();
+    type Target = OurAttributeNames;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(OurAttributeNames(self.0))
+    }
+}
+
 impl Convert for OurSchema {
     type Args = ();
     type Target = AnoncredsSchema;
@@ -93,7 +131,7 @@ impl Convert for OurSchema {
         Ok(AnoncredsSchema {
             name: self.name,
             version: self.version,
-            attr_names: AnoncredsAttributeNames(self.attr_names.into()),
+            attr_names: self.attr_names.convert(())?,
             issuer_id: self.issuer_id.convert(())?,
         })
     }
@@ -110,9 +148,45 @@ impl Convert for AnoncredsSchema {
             seq_no: None,
             name: self.name,
             version: self.version,
-            attr_names: OurAttributeNames(self.attr_names.into()),
-            issuer_id: OurIssuerId::new(self.issuer_id.to_string())?,
+            attr_names: self.attr_names.convert(())?,
+            issuer_id: self.issuer_id.convert(())?,
         })
+    }
+}
+
+impl Convert for OurCredentialDefinitionConfig {
+    type Args = ();
+    type Target = AnoncredsCredentialDefinitionConfig;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(AnoncredsCredentialDefinitionConfig {
+            support_revocation: self.support_revocation,
+        })
+    }
+}
+
+impl Convert for OurSignatureType {
+    type Args = ();
+    type Target = AnoncredsSignatureType;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            OurSignatureType::CL => Ok(AnoncredsSignatureType::CL),
+        }
+    }
+}
+
+impl Convert for AnoncredsSignatureType {
+    type Args = ();
+    type Target = OurSignatureType;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        match self {
+            AnoncredsSignatureType::CL => Ok(OurSignatureType::CL),
+        }
     }
 }
 
@@ -125,7 +199,7 @@ impl Convert for AnoncredsCredentialDefinition {
         Ok(OurCredentialDefinition {
             id: OurCredentialDefinitionId::new(cred_def_id)?,
             schema_id: OurSchemaId::new_unchecked(self.schema_id.to_string()),
-            signature_type: OurSignatureType::CL,
+            signature_type: self.signature_type.convert(())?,
             tag: self.tag,
             value: OurCredentialDefinitionData {
                 primary: self.value.primary,
@@ -144,74 +218,42 @@ impl Convert for OurCredentialDefinition {
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(AnoncredsCredentialDefinition {
             schema_id: AnoncredsSchemaId::new_unchecked(self.schema_id.to_string()),
-            signature_type: AnoncredsSignatureType::CL,
+            signature_type: self.signature_type.convert(())?,
             tag: self.tag,
             value: AnoncredsCredentialDefinitionData {
                 primary: self.value.primary,
                 revocation: self.value.revocation,
             },
-            issuer_id: AnoncredsIssuerId::new(self.issuer_id.to_string())?,
+            issuer_id: self.issuer_id.convert(())?,
         })
     }
 }
 
-impl Convert for OurCredentialRequest {
+impl Convert for anoncreds::types::RegistryType {
     type Args = ();
-    type Target = AnoncredsCredentialRequest;
+    type Target = anoncreds_types::data_types::ledger::rev_reg_def::RegistryType;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+        Ok(match self {
+            anoncreds::types::RegistryType::CL_ACCUM => {
+                anoncreds_types::data_types::ledger::rev_reg_def::RegistryType::CL_ACCUM
+            }
+        })
     }
 }
 
-impl Convert for AnoncredsCredentialRequest {
+impl Convert for anoncreds_types::data_types::ledger::rev_reg_def::RegistryType {
     type Args = ();
-    type Target = OurCredentialRequest;
+    type Target = anoncreds::types::RegistryType;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
-    }
-}
-
-impl Convert for OurCredentialRequestMetadata {
-    type Args = ();
-    type Target = AnoncredsCredentialRequestMetadata;
-    type Error = Box<dyn std::error::Error>;
-
-    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
-    }
-}
-
-impl Convert for AnoncredsCredentialRequestMetadata {
-    type Args = ();
-    type Target = OurCredentialRequestMetadata;
-    type Error = Box<dyn std::error::Error>;
-
-    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
-    }
-}
-
-impl Convert for OurCredentialOffer {
-    type Args = ();
-    type Target = AnoncredsCredentialOffer;
-    type Error = Box<dyn std::error::Error>;
-
-    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
-    }
-}
-
-impl Convert for AnoncredsCredentialOffer {
-    type Args = ();
-    type Target = OurCredentialOffer;
-    type Error = Box<dyn std::error::Error>;
-
-    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_str(&serde_json::to_string(&self)?)?)
+        Ok(match self {
+            anoncreds_types::data_types::ledger::rev_reg_def::RegistryType::CL_ACCUM => {
+                anoncreds::types::RegistryType::CL_ACCUM
+            }
+        })
     }
 }
 
@@ -224,12 +266,12 @@ impl Convert for OurRevocationRegistryDefinition {
         let issuer_id = self.id.to_string().split(':').next().unwrap().to_string();
         Ok(AnoncredsRevocationRegistryDefinition {
             issuer_id: AnoncredsIssuerId::new(issuer_id)?,
-            revoc_def_type: anoncreds::types::RegistryType::CL_ACCUM,
+            revoc_def_type: self.revoc_def_type.convert(())?,
             tag: self.tag,
             cred_def_id: AnoncredsCredentialDefinitionId::new(self.cred_def_id.to_string())?,
             value: AnoncredsRevocationRegistryDefinitionValue {
                 max_cred_num: self.value.max_cred_num,
-                public_keys: serde_json::from_value(serde_json::to_value(self.value.public_keys)?)?,
+                public_keys: serde_convert(self.value.public_keys)?,
                 tails_hash: self.value.tails_hash,
                 tails_location: self.value.tails_location,
             },
@@ -245,13 +287,12 @@ impl Convert for AnoncredsRevocationRegistryDefinition {
     fn convert(self, (rev_reg_def_id,): Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(OurRevocationRegistryDefinition {
             id: OurRevocationRegistryDefinitionId::new(rev_reg_def_id)?,
-            revoc_def_type:
-                anoncreds_types::data_types::ledger::rev_reg_def::RegistryType::CL_ACCUM,
+            revoc_def_type: self.revoc_def_type.convert(())?,
             tag: self.tag,
             cred_def_id: OurCredentialDefinitionId::new(self.cred_def_id.to_string())?,
             value: OurRevocationRegistryDefinitionValue {
                 max_cred_num: self.value.max_cred_num,
-                public_keys: serde_json::from_value(serde_json::to_value(self.value.public_keys)?)?,
+                public_keys: serde_convert(self.value.public_keys)?,
                 tails_hash: self.value.tails_hash,
                 tails_location: self.value.tails_location,
             },
@@ -266,7 +307,7 @@ impl Convert for AnoncredsRevocationRegistry {
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(OurRevocationRegistry {
-            value: serde_json::from_value(serde_json::to_value(self.value)?)?,
+            value: serde_convert(self.value)?,
         })
     }
 }
@@ -278,6 +319,114 @@ impl Convert for AnoncredsNonce {
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(OurNonce::from_native(self.into_native()).unwrap())
+    }
+}
+
+impl Convert for OurCredentialRequest {
+    type Args = ();
+    type Target = AnoncredsCredentialRequest;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        serde_convert(self)
+    }
+}
+
+impl Convert for AnoncredsCredentialRequest {
+    type Args = ();
+    type Target = OurCredentialRequest;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        serde_convert(self)
+    }
+}
+
+impl Convert for OurCredentialRequestMetadata {
+    type Args = ();
+    type Target = AnoncredsCredentialRequestMetadata;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        serde_convert(self)
+    }
+}
+
+impl Convert for AnoncredsCredentialRequestMetadata {
+    type Args = ();
+    type Target = OurCredentialRequestMetadata;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        serde_convert(self)
+    }
+}
+
+impl Convert for OurCredentialOffer {
+    type Args = ();
+    type Target = AnoncredsCredentialOffer;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        serde_convert(self)
+    }
+}
+
+impl Convert for AnoncredsCredentialOffer {
+    type Args = ();
+    type Target = OurCredentialOffer;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
+        serde_convert(self)
+    }
+}
+
+impl Convert for OurCredential {
+    type Args = ();
+    type Target = AnoncredsCredential;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(AnoncredsCredential {
+            schema_id: AnoncredsSchemaId::try_from(self.schema_id.to_string())?,
+            cred_def_id: AnoncredsCredentialDefinitionId::try_from(self.cred_def_id.to_string())?,
+            rev_reg_id: self
+                .rev_reg_id
+                .as_ref()
+                .map(ToString::to_string)
+                .map(AnoncredsRevocationRegistryDefinitionId::try_from)
+                .transpose()?,
+            values: serde_convert(self.values)?,
+            signature: serde_convert(self.signature)?,
+            signature_correctness_proof: serde_convert(self.signature_correctness_proof)?,
+            rev_reg: serde_convert(self.rev_reg)?,
+            witness: serde_convert(self.witness)?,
+        })
+    }
+}
+
+impl Convert for AnoncredsCredential {
+    type Args = ();
+    type Target = OurCredential;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(OurCredential {
+            schema_id: OurSchemaId::new_unchecked(self.schema_id.to_string()),
+            cred_def_id: OurCredentialDefinitionId::new(self.cred_def_id.to_string())?,
+            rev_reg_id: self
+                .rev_reg_id
+                .as_ref()
+                .map(ToString::to_string)
+                .map(OurRevocationRegistryDefinitionId::new)
+                .transpose()?,
+            values: serde_convert(self.values)?,
+            signature: serde_convert(self.signature)?,
+            signature_correctness_proof: serde_convert(self.signature_correctness_proof)?,
+            rev_reg: serde_convert(self.rev_reg)?,
+            witness: serde_convert(self.witness)?,
+        })
     }
 }
 
@@ -369,65 +518,13 @@ impl Convert for HashMap<OurRevocationRegistryDefinitionId, HashMap<u64, OurRevo
     }
 }
 
-impl Convert for OurCredential {
-    type Args = ();
-    type Target = AnoncredsCredential;
-    type Error = Box<dyn std::error::Error>;
-
-    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(AnoncredsCredential {
-            schema_id: AnoncredsSchemaId::try_from(self.schema_id.to_string())?,
-            cred_def_id: AnoncredsCredentialDefinitionId::try_from(self.cred_def_id.to_string())?,
-            rev_reg_id: self
-                .rev_reg_id
-                .as_ref()
-                .map(ToString::to_string)
-                .map(AnoncredsRevocationRegistryDefinitionId::try_from)
-                .transpose()?,
-            values: serde_json::from_value(serde_json::to_value(self.values)?)?,
-            signature: serde_json::from_value(serde_json::to_value(self.signature)?)?,
-            signature_correctness_proof: serde_json::from_value(serde_json::to_value(
-                self.signature_correctness_proof,
-            )?)?,
-            rev_reg: serde_json::from_value(serde_json::to_value(self.rev_reg)?)?,
-            witness: serde_json::from_value(serde_json::to_value(self.witness)?)?,
-        })
-    }
-}
-
-impl Convert for AnoncredsCredential {
-    type Args = ();
-    type Target = OurCredential;
-    type Error = Box<dyn std::error::Error>;
-
-    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(OurCredential {
-            schema_id: OurSchemaId::new_unchecked(self.schema_id.to_string()),
-            cred_def_id: OurCredentialDefinitionId::new(self.cred_def_id.to_string())?,
-            rev_reg_id: self
-                .rev_reg_id
-                .as_ref()
-                .map(ToString::to_string)
-                .map(OurRevocationRegistryDefinitionId::new)
-                .transpose()?,
-            values: serde_json::from_value(serde_json::to_value(self.values)?)?,
-            signature: serde_json::from_value(serde_json::to_value(self.signature)?)?,
-            signature_correctness_proof: serde_json::from_value(serde_json::to_value(
-                self.signature_correctness_proof,
-            )?)?,
-            rev_reg: serde_json::from_value(serde_json::to_value(self.rev_reg)?)?,
-            witness: serde_json::from_value(serde_json::to_value(self.witness)?)?,
-        })
-    }
-}
-
 impl Convert for OurPresentationRequest {
     type Args = ();
     type Target = AnoncredsPresentationRequest;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -437,7 +534,7 @@ impl Convert for OurPresentation {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -447,7 +544,7 @@ impl Convert for AnoncredsPresentation {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -457,7 +554,7 @@ impl Convert for OurCredentialValues {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -467,7 +564,7 @@ impl Convert for AnoncredsCredentialRevocationState {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
+        serde_convert(self)
     }
 }
 
@@ -477,40 +574,6 @@ impl Convert for OurCredentialRevocationState {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(serde_json::from_value(serde_json::to_value(self)?)?)
-    }
-}
-
-impl Convert for OurCredentialDefinitionConfig {
-    type Args = ();
-    type Target = AnoncredsCredentialDefinitionConfig;
-    type Error = Box<dyn std::error::Error>;
-
-    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(AnoncredsCredentialDefinitionConfig {
-            support_revocation: self.support_revocation,
-        })
-    }
-}
-
-impl Convert for OurSignatureType {
-    type Args = ();
-    type Target = AnoncredsSignatureType;
-    type Error = Box<dyn std::error::Error>;
-
-    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        match self {
-            OurSignatureType::CL => Ok(AnoncredsSignatureType::CL),
-        }
-    }
-}
-
-impl Convert for OurAttributeNames {
-    type Args = ();
-    type Target = AnoncredsAttributeNames;
-    type Error = Box<dyn std::error::Error>;
-
-    fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
-        Ok(AnoncredsAttributeNames(self.0))
+        serde_convert(self)
     }
 }
