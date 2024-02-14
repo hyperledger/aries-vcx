@@ -22,7 +22,7 @@ use anoncreds_types::data_types::{
     },
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
+    anoncreds::base_anoncreds::{BaseAnonCreds, CredentialId},
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::base_wallet::BaseWallet,
 };
@@ -133,7 +133,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn prover_get_credential(
         &self,
         __wallet: &impl BaseWallet,
-        _cred_id: &str,
+        _cred_id: &CredentialId,
     ) -> VcxCoreResult<RetrievedCredentialInfo> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
@@ -198,14 +198,14 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_json: Credential,
         _cred_def_json: CredentialDefinition,
         _rev_reg_def_json: Option<RevocationRegistryDefinition>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<CredentialId> {
         Ok("cred_id".to_string())
     }
 
     async fn prover_delete_credential(
         &self,
         _wallet: &impl BaseWallet,
-        _cred_id: &str,
+        _cred_id: &CredentialId,
     ) -> VcxCoreResult<()> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(

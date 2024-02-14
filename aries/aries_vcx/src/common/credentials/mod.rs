@@ -1,5 +1,6 @@
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+    anoncreds::base_anoncreds::{BaseAnonCreds, CredentialId},
+    ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
 };
 use time::OffsetDateTime;
@@ -12,7 +13,7 @@ pub mod encoding;
 pub async fn get_cred_rev_id(
     wallet: &impl BaseWallet,
     anoncreds: &impl BaseAnonCreds,
-    cred_id: &str,
+    cred_id: &CredentialId,
 ) -> VcxResult<u32> {
     let cred_json = anoncreds.prover_get_credential(wallet, cred_id).await?;
     cred_json.cred_rev_id.ok_or(AriesVcxError::from_msg(

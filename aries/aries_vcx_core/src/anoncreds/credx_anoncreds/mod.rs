@@ -54,7 +54,7 @@ use serde_json::{json, Value};
 use type_conversion::Convert;
 use uuid::Uuid;
 
-use super::base_anoncreds::BaseAnonCreds;
+use super::base_anoncreds::{BaseAnonCreds, CredentialId};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{
@@ -813,7 +813,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn prover_get_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_id: &str,
+        cred_id: &CredentialId,
     ) -> VcxCoreResult<RetrievedCredentialInfo> {
         let cred = Self::_get_credential(wallet, cred_id).await?;
 
@@ -1006,7 +1006,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         cred_json: Credential,
         cred_def_json: CredentialDefinition,
         rev_reg_def_json: Option<RevocationRegistryDefinition>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<CredentialId> {
         let mut credential: CredxCredential = cred_json.convert(())?;
         let cred_request_metadata: CredxCredentialRequestMetadata = cred_req_meta.convert(())?;
         let link_secret_id = &cred_request_metadata.master_secret_name;
@@ -1139,7 +1139,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn prover_delete_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_id: &str,
+        cred_id: &CredentialId,
     ) -> VcxCoreResult<()> {
         wallet.delete_record(CATEGORY_CREDENTIAL, cred_id).await
     }

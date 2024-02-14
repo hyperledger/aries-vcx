@@ -65,7 +65,7 @@ use serde_json::{json, Value};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use super::base_anoncreds::BaseAnonCreds;
+use super::base_anoncreds::{BaseAnonCreds, CredentialId};
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -861,7 +861,7 @@ impl BaseAnonCreds for Anoncreds {
     async fn prover_get_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_id: &str,
+        cred_id: &CredentialId,
     ) -> VcxCoreResult<RetrievedCredentialInfo> {
         let cred = self._get_credential(wallet, cred_id).await?;
         _make_cred_info(cred_id, &cred)
@@ -1085,7 +1085,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_json: Credential,
         cred_def_json: CredentialDefinition,
         rev_reg_def_json: Option<RevocationRegistryDefinition>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<CredentialId> {
         let mut credential: AnoncredsCredential = cred_json.convert(())?;
 
         let cred_def_id = credential.cred_def_id.to_string();
@@ -1167,7 +1167,7 @@ impl BaseAnonCreds for Anoncreds {
     async fn prover_delete_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_id: &str,
+        cred_id: &CredentialId,
     ) -> VcxCoreResult<()> {
         wallet.delete_record(CATEGORY_CREDENTIAL, cred_id).await
     }

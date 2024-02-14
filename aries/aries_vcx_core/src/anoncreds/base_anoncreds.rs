@@ -26,6 +26,8 @@ use did_parser::Did;
 
 use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
 
+pub type CredentialId = String;
+
 /// Trait defining standard 'anoncreds' related functionality. The APIs, including
 /// input and output types are based off the indy Anoncreds API:
 /// see: <https://github.com/hyperledger/indy-sdk/blob/main/libindy/src/api/anoncreds.rs>
@@ -102,7 +104,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn prover_get_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_id: &str,
+        cred_id: &CredentialId,
     ) -> VcxCoreResult<RetrievedCredentialInfo>;
 
     async fn prover_get_credentials(
@@ -142,12 +144,12 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_json: Credential,
         cred_def_json: CredentialDefinition,
         rev_reg_def_json: Option<RevocationRegistryDefinition>,
-    ) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<CredentialId>;
 
     async fn prover_delete_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_id: &str,
+        cred_id: &CredentialId,
     ) -> VcxCoreResult<()>;
 
     async fn prover_create_link_secret(
