@@ -31,9 +31,10 @@ jobs:
           toolchain: nightly-2023-05-08
           components: rustfmt
           override: true
+      - name: "Install just"
+        run: sudo snap install --edge --classic just
       - name: "Verify code formatting"
-        run: |
-          cargo +nightly-2023-05-08 fmt --check
+        run: just fmt-check
 
   workflow-setup:
     runs-on: ubuntu-20.04
@@ -110,11 +111,9 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
+          sudo snap install --edge --classic just
       - name: "Verify clippy across the entire workspace with default features"
-        run: |
-          cargo clippy --examples --tests --all-features
-        env:
-          RUSTFLAGS: -D warnings
+        run: just clippy-workspace
 
   aries_vcx_clippy:
     runs-on: ubuntu-20.04
@@ -134,11 +133,9 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
+          sudo snap install --edge --classic just
       - name: "Verify clippy across the entire workspace with default features"
-        run: |
-          cargo clippy -p aries_vcx --features legacy_proof --features ${{ matrix.backend }} --no-default-features
-        env:
-          RUSTFLAGS: -D warnings
+        run: just clippy-aries-vcx ${{ matrix.backend }}
 
   aries_vcx_core_clippy:
     runs-on: ubuntu-20.04
@@ -158,11 +155,9 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
+          sudo snap install --edge --classic just
       - name: "Verify clippy across the entire workspace with default features"
-        run: |
-          cargo clippy -p aries_vcx_core --features legacy_proof,vdrtools_wallet --features ${{ matrix.backend }}
-        env:
-          RUSTFLAGS: -D warnings
+        run: just clippy-aries-vcx-core ${{ matrix.backend }}
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
@@ -272,8 +267,10 @@ jobs:
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
           skip-docker-setup: true
+      - name: "Install just"
+        run: sudo snap install --edge --classic just
       - name: "Run workspace unit tests"
-        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --exclude mediator
+        run: just test-unit
 
   test-integration-aries-vcx:
     needs: workflow-setup
@@ -285,8 +282,10 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+      - name: "Install just"
+        run: sudo snap install --edge --classic just
       - name: "Run aries-vcx integration tests"
-        run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F vdrtools_wallet,credx -- --ignored;
+        run: just test-integration-aries-vcx
 
   test-integration-aries-vcx-anoncreds-rs:
     needs: workflow-setup
@@ -298,8 +297,10 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+      - name: "Install just"
+        run: sudo snap install --edge --classic just
       - name: "Run anoncreds-rs integration tests"
-        run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F anoncreds --test test_revocations --test test_proof_presentation --test test_anoncreds -- --ignored
+        run: just test-integration-aries-vcx-anoncreds-rs
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
@@ -311,8 +312,10 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+      - name: "Install just"
+        run: sudo snap install --edge --classic just
       - name: "Run aries_vcx tests: mysql_test"
-        run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" test_mysql -- --include-ignored;
+        run: just test-integration-aries-vcx-mysql
 
   test-integration-aries-vcx-vdrproxy:
     needs: [workflow-setup, build-docker-vdrproxy]
@@ -335,8 +338,10 @@ jobs:
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
           skip-vdrproxy-setup: false
+      - name: "Install just"
+        run: sudo snap install --edge --classic just
       - name: "Run aries_vcx tests: vdrproxy_test"
-        run: cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F vdr_proxy_ledger,credx -- --ignored
+        run: just test-integration-aries-vcx-vdrproxy
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -354,9 +359,10 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+      - name: "Install just"
+        run: sudo snap install --edge --classic just
       - name: "Run libvcx_core integration tests"
-        run: |
-          RUST_TEST_THREADS=1 cargo test --manifest-path="aries/misc/legacy/libvcx_core/Cargo.toml" -- --include-ignored;
+        run: just test-integration-libvcx
 
   test-integration-did-crate:
     needs: workflow-setup
@@ -369,9 +375,10 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+      - name: "Install just"
+        run: sudo snap install --edge --classic just
       - name: "Run resolver tests"
-        run: |
-          cargo test --examples -p did_doc -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov -p did_resolver_web -p did_doc_sov -p did_key -p did_peer --test "*"
+        run: just test-integration-did-crate
 
   test-integration-node-wrapper:
     needs: workflow-setup
