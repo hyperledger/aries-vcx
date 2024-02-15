@@ -6,6 +6,7 @@ use serde_json;
 use super::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
 use crate::errors::error::prelude::*;
 
+// TODO: ProofRequestData duplicated in anoncreds_types
 #[derive(Serialize, Deserialize, Builder, Debug, PartialEq, Eq, Clone)]
 #[builder(setter(into), default)]
 pub struct ProofRequestData {

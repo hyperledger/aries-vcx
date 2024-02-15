@@ -1,11 +1,12 @@
 use std::{collections::HashMap, path::Path};
 
 use anoncreds_types::data_types::{
-    identifiers::schema_id::SchemaId, messages::cred_selection::SelectedCredentials,
+    identifiers::schema_id::SchemaId, ledger::schema::Schema,
+    messages::cred_selection::SelectedCredentials,
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::{BaseAnonCreds, RevocationStatesMap},
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
+    anoncreds::base_anoncreds::{BaseAnonCreds, RevocationStatesMap, SchemasMap},
+    errors::error::AriesVcxCoreErrorKind,
     ledger::base_ledger::AnoncredsLedgerRead,
 };
 use serde_json::Value;
@@ -32,16 +33,15 @@ pub struct CredInfoProver {
 pub async fn build_schemas_json_prover(
     ledger: &impl AnoncredsLedgerRead,
     credentials_identifiers: &Vec<CredInfoProver>,
-) -> VcxResult<String> {
+) -> VcxResult<SchemasMap> {
     trace!(
         "build_schemas_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let mut rtn: Value = json!({});
+    let mut rtn = HashMap::<SchemaId, Schema>::new();
 
     for cred_info in credentials_identifiers {
-        let schema_id = cred_info.schema_id.to_string();
-        if rtn.get(&schema_id).is_none() {
+        if rtn.get(&cred_info.schema_id).is_none() {
             let schema_json = ledger
                 .get_schema(&cred_info.schema_id, None)
                 .await
@@ -52,17 +52,10 @@ pub async fn build_schemas_json_prover(
                     )
                 })?;
 
-            let schema_json = serde_json::to_value(&schema_json).map_err(|err| {
-                AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::InvalidSchema,
-                    format!("Cannot deserialize schema: {}", err),
-                )
-            })?;
-
-            rtn[schema_id] = schema_json;
+            rtn.insert(cred_info.schema_id.to_owned(), schema_json);
         }
     }
-    Ok(rtn.to_string())
+    Ok(rtn)
 }
 
 pub async fn build_cred_defs_json_prover(
@@ -407,7 +400,7 @@ pub mod unit_tests {
             build_schemas_json_prover(&ledger_read, &Vec::new())
                 .await
                 .unwrap(),
-            "{}".to_string()
+            Default::default()
         );
 
         let cred1 = CredInfoProver {
@@ -440,9 +433,9 @@ pub mod unit_tests {
         let schemas = build_schemas_json_prover(&ledger_read, &creds)
             .await
             .unwrap();
+        dbg!(&schemas);
         assert!(!schemas.is_empty());
-        assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4""#));
-        assert!(schemas.contains(r#""name":"test-licence""#));
+        assert_eq!(schemas.get(&schema_id()).unwrap().name, "test-licence".to_string());
     }
 
     #[test]
