@@ -1,11 +1,13 @@
 use std::{collections::HashMap, path::Path};
 
 use anoncreds_types::data_types::{
-    identifiers::schema_id::SchemaId, ledger::schema::Schema,
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
     messages::cred_selection::SelectedCredentials,
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::{BaseAnonCreds, RevocationStatesMap, SchemasMap},
+    anoncreds::base_anoncreds::{
+        BaseAnonCreds, CredentialDefinitionsMap, RevocationStatesMap, SchemasMap,
+    },
     errors::error::AriesVcxCoreErrorKind,
     ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -21,7 +23,7 @@ pub struct CredInfoProver {
     pub referent: String,
     pub credential_referent: String,
     pub schema_id: SchemaId,
-    pub cred_def_id: String,
+    pub cred_def_id: CredentialDefinitionId,
     pub rev_reg_id: Option<String>,
     pub cred_rev_id: Option<u32>,
     pub revocation_interval: Option<NonRevokedInterval>,
@@ -38,7 +40,7 @@ pub async fn build_schemas_json_prover(
         "build_schemas_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let mut rtn = HashMap::<SchemaId, Schema>::new();
+    let mut rtn: SchemasMap = HashMap::new();
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.schema_id).is_none() {
@@ -61,17 +63,17 @@ pub async fn build_schemas_json_prover(
 pub async fn build_cred_defs_json_prover(
     ledger: &impl AnoncredsLedgerRead,
     credentials_identifiers: &Vec<CredInfoProver>,
-) -> VcxResult<String> {
+) -> VcxResult<CredentialDefinitionsMap> {
     trace!(
         "build_cred_defs_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let mut rtn: Value = json!({});
+    let mut rtn: CredentialDefinitionsMap = HashMap::new();
 
     for cred_info in credentials_identifiers {
-        if rtn.get(&cred_info.cred_def_id).is_none() {
+        if !rtn.contains_key(&cred_info.cred_def_id) {
             let credential_def = ledger
-                .get_cred_def(&cred_info.cred_def_id.to_owned().try_into()?, None)
+                .get_cred_def(&cred_info.cred_def_id, None)
                 .await
                 .map_err(|err| {
                     err.map(
@@ -80,17 +82,10 @@ pub async fn build_cred_defs_json_prover(
                     )
                 })?;
 
-            let credential_def = serde_json::to_value(&credential_def).map_err(|err| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidProofCredentialData,
-                    format!("Cannot deserialize credential definition: {}", err),
-                )
-            })?;
-
-            rtn[cred_info.cred_def_id.to_owned()] = credential_def;
+            rtn.insert(cred_info.cred_def_id.to_owned(), credential_def);
         }
     }
-    Ok(rtn.to_string())
+    Ok(rtn)
 }
 
 pub fn credential_def_identifiers(
@@ -276,7 +271,7 @@ pub mod pool_tests {
 
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
-        constants::{schema_id, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID},
+        constants::{cred_def_id, schema_id, CRED_REV_ID, LICENCE_CRED_ID},
         devsetup::build_setup_profile,
     };
 
@@ -303,7 +298,7 @@ pub mod pool_tests {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: None,
             cred_rev_id: Some(CRED_REV_ID),
             tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
@@ -325,9 +320,9 @@ pub mod unit_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
         constants::{
-            address_schema_id, schema_id, ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_REV_REG_ID,
-            ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
-            REV_STATE_JSON, SCHEMA_ID,
+            address_cred_def_id, address_schema_id, cred_def_id, schema_id, ADDRESS_CRED_DEF_ID,
+            ADDRESS_CRED_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID,
+            LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID,
         },
         devsetup::*,
         mockdata::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
@@ -360,7 +355,7 @@ pub mod unit_tests {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -372,7 +367,7 @@ pub mod unit_tests {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: address_schema_id(),
-            cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
+            cred_def_id: address_cred_def_id(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -387,8 +382,15 @@ pub mod unit_tests {
             .await
             .unwrap();
         assert!(!credential_def.is_empty());
-        assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1""#));
-        assert!(credential_def.contains(r#""schemaId":"47""#));
+        assert_eq!(
+            credential_def.get(&cred_def_id()).unwrap().schema_id,
+            // schema_id()
+            SchemaId::new_unchecked("47")
+        );
+        assert_eq!(
+            credential_def.get(&cred_def_id()).unwrap().id,
+            cred_def_id()
+        );
     }
 
     #[tokio::test]
@@ -407,7 +409,7 @@ pub mod unit_tests {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -419,7 +421,7 @@ pub mod unit_tests {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: address_schema_id(),
-            cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
+            cred_def_id: address_cred_def_id(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -433,9 +435,11 @@ pub mod unit_tests {
         let schemas = build_schemas_json_prover(&ledger_read, &creds)
             .await
             .unwrap();
-        dbg!(&schemas);
         assert!(!schemas.is_empty());
-        assert_eq!(schemas.get(&schema_id()).unwrap().name, "test-licence".to_string());
+        assert_eq!(
+            schemas.get(&schema_id()).unwrap().name,
+            "test-licence".to_string()
+        );
     }
 
     #[test]
@@ -446,7 +450,7 @@ pub mod unit_tests {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: Some(NonRevokedInterval {
@@ -461,7 +465,7 @@ pub mod unit_tests {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: address_schema_id(),
-            cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
+            cred_def_id: address_cred_def_id(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: Some(NonRevokedInterval {
@@ -586,7 +590,7 @@ pub mod unit_tests {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: None,
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -624,7 +628,7 @@ pub mod unit_tests {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -636,7 +640,7 @@ pub mod unit_tests {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: address_schema_id(),
-            cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
+            cred_def_id: address_cred_def_id(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -695,7 +699,7 @@ pub mod unit_tests {
             referent: "height".to_string(),
             credential_referent: "abc".to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),

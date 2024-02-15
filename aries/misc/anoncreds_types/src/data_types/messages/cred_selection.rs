@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::data_types::identifiers::schema_id::SchemaId;
+use crate::data_types::identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId};
 
 /// Data structure representing the credentials in the wallet, which are suitable
 /// for presentation against a proof request.
@@ -32,7 +32,7 @@ pub struct RetrievedCredentialInfo {
     #[serde(rename = "attrs")]
     pub attributes: HashMap<String, String>,
     pub schema_id: SchemaId,
-    pub cred_def_id: String,
+    pub cred_def_id: CredentialDefinitionId,
     pub rev_reg_id: Option<String>,
     pub cred_rev_id: Option<u32>,
 }
@@ -92,7 +92,7 @@ pub struct SelectedCredentialInfo {
     /// The unique identifier of the credential in the wallet
     pub referent: String,
     pub schema_id: SchemaId,
-    pub cred_def_id: String,
+    pub cred_def_id: CredentialDefinitionId,
     pub rev_reg_id: Option<String>,
     pub cred_rev_id: Option<u32>,
     /// Whether the raw attribute value/s should be proven and sent to the verifier.
