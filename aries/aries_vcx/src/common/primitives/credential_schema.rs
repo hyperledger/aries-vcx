@@ -44,24 +44,24 @@ impl Schema {
         submitter_did: &Did,
         name: &str,
         version: &str,
-        data: Vec<String>,
+        attributes: Vec<String>,
     ) -> VcxResult<Self> {
         trace!(
-            "Schema::create >>> submitter_did: {}, name: {}, version: {}, data: {:?}",
+            "Schema::create >>> submitter_did: {}, name: {}, version: {}, attributes: {:?}",
             submitter_did,
             name,
             version,
-            data
+            attributes
         );
 
         let schema_json = anoncreds
-            .issuer_create_schema(submitter_did, name, version, data.to_owned().into())
+            .issuer_create_schema(submitter_did, name, version, attributes.to_owned().into())
             .await?;
 
         Ok(Self {
             source_id: source_id.to_string(),
             name: name.to_string(),
-            data,
+            data: attributes,
             version: version.to_string(),
             schema_id: schema_json.id.clone(),
             submitter_did: submitter_did.to_owned(),

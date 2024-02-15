@@ -259,7 +259,7 @@ pub async fn generate_cred_def(
     schema_id: &SchemaId,
     schema_json: Schema,
     tag: &str,
-    // TODOL These should not be options
+    // TODO: These should not be options
     sig_type: Option<&str>,
     support_revocation: Option<bool>,
 ) -> VcxResult<CredentialDefinition> {
