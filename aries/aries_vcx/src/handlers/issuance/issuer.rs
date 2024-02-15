@@ -222,6 +222,7 @@ impl Issuer {
                 AriesVcxErrorKind::InvalidState,
                 "Credential has not yet been created or is irrevocable",
             ))
+            .and_then(|s| s.parse().map_err(Into::into))
     }
 
     pub async fn revoke_credential_local(
@@ -250,7 +251,7 @@ impl Issuer {
                 .revoke_credential_local(
                     wallet,
                     &rev_reg_id.try_into()?,
-                    cred_rev_id,
+                    cred_rev_id.parse()?,
                     rev_reg_delta_json,
                 )
                 .await?;

@@ -84,7 +84,7 @@ impl Display for IssuerFullState {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RevocationInfoV1 {
-    pub cred_rev_id: Option<u32>,
+    pub cred_rev_id: Option<String>,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
 }
@@ -205,18 +205,26 @@ impl IssuerSM {
             "No revocation info found - is this credential revokable?",
         );
         let rev_id = match &self.state {
-            IssuerFullState::CredentialSet(state) => {
-                state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id
-            }
-            IssuerFullState::Finished(state) => {
-                state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id
-            }
+            IssuerFullState::CredentialSet(state) => state
+                .revocation_info_v1
+                .as_ref()
+                .ok_or(err)?
+                .cred_rev_id
+                .to_owned(),
+            IssuerFullState::Finished(state) => state
+                .revocation_info_v1
+                .as_ref()
+                .ok_or(err)?
+                .cred_rev_id
+                .to_owned(),
             _ => None,
         };
-        rev_id.ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidState,
-            "Revocation info does not contain rev id",
-        ))
+        rev_id
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Revocation info does not contain rev id",
+            ))
+            .and_then(|s| s.parse().map_err(Into::into))
     }
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
@@ -439,7 +447,7 @@ impl IssuerSM {
                         IssuerFullState::CredentialSet(CredentialSetState {
                             msg_issue_credential,
                             revocation_info_v1: Some(RevocationInfoV1 {
-                                cred_rev_id,
+                                cred_rev_id: cred_rev_id.as_ref().map(ToString::to_string),
                                 rev_reg_id: state_data.rev_reg_id,
                                 tails_file: state_data.tails_file,
                             }),
