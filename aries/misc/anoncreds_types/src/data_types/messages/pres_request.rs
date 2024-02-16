@@ -3,6 +3,7 @@ use std::{collections::HashMap, fmt};
 use anoncreds_clsignatures::PredicateType;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
+use typed_builder::TypedBuilder;
 
 use super::{credential::Credential, nonce::Nonce};
 use crate::{
@@ -13,16 +14,33 @@ use crate::{
     },
 };
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+// TODO: We want a builder with a fallible build method which creates the nonce so that the client
+// does not need to know about it. Not sure if this is achievable using TypedBuilder.
+// Requested attributes and predicates need to be of a dedicated type with their own builder.
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, TypedBuilder)]
 pub struct PresentationRequestPayload {
     pub nonce: Nonce,
     pub name: String,
     pub version: String,
     #[serde(default)]
+    #[builder(default)]
     pub requested_attributes: HashMap<String, AttributeInfo>,
     #[serde(default)]
+    #[builder(default)]
     pub requested_predicates: HashMap<String, PredicateInfo>,
+    #[builder(setter(strip_option))]
+    #[builder(default)]
     pub non_revoked: Option<NonRevokedInterval>,
+}
+
+impl From<PresentationRequestPayload> for PresentationRequest {
+    fn from(value: PresentationRequestPayload) -> Self {
+        match value.version.as_str() {
+            "1.0" => Self::PresentationRequestV1(value),
+            "2.0" => Self::PresentationRequestV2(value),
+            _ => unreachable!("not really"),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -166,6 +184,7 @@ impl NonRevokedInterval {
         });
     }
 
+    // TODO: Should not even be instantiated
     pub fn is_valid(&self, timestamp: u64) -> Result<(), crate::error::Error> {
         if timestamp.lt(&self.from.unwrap_or(0)) || timestamp.gt(&self.to.unwrap_or(u64::MAX)) {
             Err(invalid!("Invalid timestamp"))
@@ -175,7 +194,8 @@ impl NonRevokedInterval {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Default, TypedBuilder)]
+#[builder(field_defaults(default, setter(strip_option)))]
 pub struct AttributeInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
@@ -183,28 +203,31 @@ pub struct AttributeInfo {
     pub names: Option<Vec<String>>,
     pub restrictions: Option<Query>,
     pub non_revoked: Option<NonRevokedInterval>,
+    pub self_attest_allowed: Option<bool>,
 }
 
 pub type PredicateValue = i32;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, TypedBuilder)]
 pub struct PredicateInfo {
     pub name: String,
     pub p_type: PredicateTypes,
     pub p_value: PredicateValue,
+    #[builder(default)]
     pub restrictions: Option<Query>,
+    #[builder(default)]
     pub non_revoked: Option<NonRevokedInterval>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum PredicateTypes {
-    #[serde(rename = ">=")]
+    #[serde(alias = ">=")]
     GE,
-    #[serde(rename = "<=")]
+    #[serde(alias = "<=")]
     LE,
-    #[serde(rename = ">")]
+    #[serde(alias = ">")]
     GT,
-    #[serde(rename = "<")]
+    #[serde(alias = "<")]
     LT,
 }
 

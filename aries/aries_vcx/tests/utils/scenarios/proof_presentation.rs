@@ -2,8 +2,11 @@ use std::collections::HashMap;
 
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
-    messages::cred_selection::{
-        RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
+    messages::{
+        cred_selection::{
+            RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
+        },
+        pres_request::AttributeInfo,
     },
 };
 use aries_vcx::{
@@ -11,7 +14,7 @@ use aries_vcx::{
         primitives::{
             credential_definition::CredentialDef, revocation_registry::RevocationRegistry,
         },
-        proofs::{proof_request::PresentationRequestData, proof_request_internal::AttrInfo},
+        proofs::proof_request::PresentationRequestData,
     },
     handlers::{
         issuance::issuer::Issuer,
@@ -97,9 +100,9 @@ pub async fn accept_proof_proposal(
         .presentation_proposal
         .attributes
         .into_iter()
-        .map(|attr| AttrInfo {
+        .map(|attr| AttributeInfo {
             name: Some(attr.name),
-            ..AttrInfo::default()
+            ..AttributeInfo::default()
         })
         .collect();
     let presentation_request_data = PresentationRequestData::create(&faber.anoncreds, "request-1")

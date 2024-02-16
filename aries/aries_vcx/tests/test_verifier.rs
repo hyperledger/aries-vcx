@@ -1,7 +1,9 @@
 use std::{error::Error, time::Duration};
 
 use anoncreds_types::data_types::messages::{
-    pres_request::PresentationRequest, presentation::Presentation,
+    nonce::Nonce,
+    pres_request::{AttributeInfo, PresentationRequest, PresentationRequestPayload},
+    presentation::Presentation,
 };
 use aries_vcx::{
     common::{
@@ -283,34 +285,41 @@ async fn create_and_store_nonrevocable_credential(
 #[ignore]
 async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn Error>> {
     let setup = build_setup_profile().await;
-    let requested_attrs = json!([
-        json!({
-            "name":"address1",
-            "self_attest_allowed": true,
-        }),
-        json!({
-            "name":"zip",
-            "self_attest_allowed": true,
-        }),
-    ])
-    .to_string();
+    let requested_attributes = vec![
+        (
+            "address1_1".to_string(),
+            AttributeInfo::builder()
+                .name("address1".into())
+                .self_attest_allowed(true)
+                .build(),
+        ),
+        (
+            "zip_1".to_string(),
+            AttributeInfo::builder()
+                .name("zip".into())
+                .self_attest_allowed(true)
+                .build(),
+        ),
+    ]
+    .into_iter()
+    .collect();
     let requested_predicates = json!([]).to_string();
     let revocation_details = r#"{"support_revocation":false}"#.to_string();
     let name = "Optional".to_owned();
 
-    let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
-        .await?
-        .set_requested_attributes_as_string(requested_attrs)?
-        .set_requested_predicates_as_string(requested_predicates)?
-        .set_not_revoked_interval(revocation_details)?;
-
-    let proof_req_json = serde_json::to_string(&proof_req_json)?;
+    let proof_req_json = PresentationRequestPayload::builder()
+        .requested_attributes(requested_attributes)
+        .name(name)
+        .nonce(Nonce::new()?)
+        .version("1.0".into())
+        .build();
+    let proof_req_json_str = serde_json::to_string(&proof_req_json)?;
 
     let anoncreds = &setup.anoncreds;
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            serde_json::from_str(&proof_req_json)?,
+            proof_req_json.into(),
             &json!({
               "self_attested_attributes":{
                  "attribute_0": "my_self_attested_address",
@@ -332,7 +341,7 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
             &setup.ledger_read,
             &setup.anoncreds,
             &serde_json::to_string(&prover_proof_json)?,
-            &proof_req_json,
+            &proof_req_json_str,
         )
         .await?
     );

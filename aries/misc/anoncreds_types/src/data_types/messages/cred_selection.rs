@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use crate::data_types::identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId};
 
+use super::pres_request::NonRevokedInterval;
+
 /// Data structure representing the credentials in the wallet, which are suitable
 /// for presentation against a proof request.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -35,15 +37,6 @@ pub struct RetrievedCredentialInfo {
     pub cred_def_id: CredentialDefinitionId,
     pub rev_reg_id: Option<String>,
     pub cred_rev_id: Option<u32>,
-}
-
-// NOTE: in the future this could probably be moved to a more common location.
-// It is currently defined in `proof_request_internal`, but it feels wrong
-// to be exposing a type from an `..._internal` file.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct NonRevokedInterval {
-    pub from: Option<u64>,
-    pub to: Option<u64>,
 }
 
 /// Data structure presenting the credentials which have been selected for usage
