@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 use anoncreds_types::data_types::{
     identifiers::{
@@ -6,16 +6,38 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
-        schema::Schema,
+        cred_def::CredentialDefinition,
+        rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition,
+        rev_reg_delta::RevocationRegistryDelta,
+        schema::{AttributeNames, Schema},
     },
-    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest, nonce::Nonce},
+    messages::{
+        cred_definition_config::CredentialDefinitionConfig,
+        cred_offer::CredentialOffer,
+        cred_request::{CredentialRequest, CredentialRequestMetadata},
+        cred_selection::{RetrievedCredentialInfo, RetrievedCredentials},
+        credential::{Credential, CredentialValues},
+        nonce::Nonce,
+        pres_request::PresentationRequest,
+        presentation::Presentation,
+        revocation_state::CredentialRevocationState,
+    },
 };
 use async_trait::async_trait;
 use did_parser::Did;
 
 use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
+
+pub type CredentialId = String;
+pub type LinkSecretId = String;
+pub type SchemasMap = HashMap<SchemaId, Schema>;
+pub type CredentialDefinitionsMap = HashMap<CredentialDefinitionId, CredentialDefinition>;
+pub type RevocationStatesMap = HashMap<String, HashMap<u64, CredentialRevocationState>>;
+pub type RevocationRegistryDefinitionsMap =
+    HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>;
+pub type RevocationRegistriesMap =
+    HashMap<RevocationRegistryDefinitionId, HashMap<u64, RevocationRegistry>>;
 
 /// Trait defining standard 'anoncreds' related functionality. The APIs, including
 /// input and output types are based off the indy Anoncreds API:
@@ -24,12 +46,12 @@ use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
 pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn verifier_verify_proof(
         &self,
-        proof_request_json: &str,
-        proof_json: &str,
-        schemas_json: &str,
-        credential_defs_json: &str,
-        rev_reg_defs_json: &str,
-        rev_regs_json: &str,
+        proof_request_json: PresentationRequest,
+        proof_json: Presentation,
+        schemas_json: SchemasMap,
+        credential_defs_json: CredentialDefinitionsMap,
+        rev_reg_defs_json: Option<RevocationRegistryDefinitionsMap>,
+        rev_regs_json: Option<RevocationRegistriesMap>,
     ) -> VcxCoreResult<bool>;
 
     async fn issuer_create_and_store_revoc_reg(
@@ -53,9 +75,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         issuer_did: &Did,
         schema_id: &SchemaId,
         schema_json: Schema,
-        tag: &str,
-        signature_type: Option<&str>,
-        config_json: &str,
+        config_json: CredentialDefinitionConfig,
     ) -> VcxCoreResult<CredentialDefinition>;
 
     async fn issuer_create_credential_offer(
@@ -69,49 +89,49 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         wallet: &impl BaseWallet,
         cred_offer_json: CredentialOffer,
         cred_req_json: CredentialRequest,
-        cred_values_json: &str,
+        cred_values_json: CredentialValues,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<&Path>,
-    ) -> VcxCoreResult<(String, Option<String>)>;
+    ) -> VcxCoreResult<(Credential, Option<u32>)>;
 
     #[allow(clippy::too_many_arguments)]
     async fn prover_create_proof(
         &self,
         wallet: &impl BaseWallet,
-        proof_req_json: &str,
+        proof_req_json: PresentationRequest,
         requested_credentials_json: &str,
-        master_secret_id: &str,
-        schemas_json: &str,
-        credential_defs_json: &str,
-        revoc_states_json: Option<&str>,
-    ) -> VcxCoreResult<String>;
+        link_secret_id: &LinkSecretId,
+        schemas_json: SchemasMap,
+        credential_defs_json: CredentialDefinitionsMap,
+        revoc_states_json: Option<RevocationStatesMap>,
+    ) -> VcxCoreResult<Presentation>;
 
     async fn prover_get_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_id: &str,
-    ) -> VcxCoreResult<String>;
+        cred_id: &CredentialId,
+    ) -> VcxCoreResult<RetrievedCredentialInfo>;
 
     async fn prover_get_credentials(
         &self,
         wallet: &impl BaseWallet,
         filter_json: Option<&str>,
-    ) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<Vec<RetrievedCredentialInfo>>;
 
     async fn prover_get_credentials_for_proof_req(
         &self,
         wallet: &impl BaseWallet,
-        proof_request_json: &str,
-    ) -> VcxCoreResult<String>;
+        proof_request_json: PresentationRequest,
+    ) -> VcxCoreResult<RetrievedCredentials>;
 
     async fn prover_create_credential_req(
         &self,
         wallet: &impl BaseWallet,
         prover_did: &Did,
-        cred_offer_json: &str,
+        cred_offer_json: CredentialOffer,
         cred_def_json: CredentialDefinition,
-        master_secret_id: &str,
-    ) -> VcxCoreResult<(String, String)>;
+        link_secret_id: &LinkSecretId,
+    ) -> VcxCoreResult<(CredentialRequest, CredentialRequestMetadata)>;
 
     async fn create_revocation_state(
         &self,
@@ -120,28 +140,27 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
         cred_rev_id: u32,
-    ) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<CredentialRevocationState>;
 
     async fn prover_store_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_id: Option<&str>,
-        cred_req_metadata_json: &str,
-        cred_json: &str,
+        cred_req_metadata_json: CredentialRequestMetadata,
+        cred_json: Credential,
         cred_def_json: CredentialDefinition,
         rev_reg_def_json: Option<RevocationRegistryDefinition>,
-    ) -> VcxCoreResult<String>;
+    ) -> VcxCoreResult<CredentialId>;
 
     async fn prover_delete_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_id: &str,
+        cred_id: &CredentialId,
     ) -> VcxCoreResult<()>;
 
     async fn prover_create_link_secret(
         &self,
         wallet: &impl BaseWallet,
-        link_secret_id: &str,
+        link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<()>;
 
     async fn issuer_create_schema(
@@ -149,7 +168,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         issuer_did: &Did,
         name: &str,
         version: &str,
-        attrs: &str,
+        attrs: AttributeNames,
     ) -> VcxCoreResult<Schema>;
 
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not

@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+use anoncreds_types::data_types::messages::cred_selection::{
+    RetrievedCredentials, SelectedCredentials,
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -27,7 +30,6 @@ use messages::{
 };
 use uuid::Uuid;
 
-use super::types::{RetrievedCredentials, SelectedCredentials};
 use crate::{
     errors::error::prelude::*,
     handlers::util::{get_attach_as_string, PresentationProposalData},
@@ -80,13 +82,16 @@ impl Prover {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
         let json_retrieved_credentials = anoncreds
-            .prover_get_credentials_for_proof_req(wallet, &presentation_request)
+            .prover_get_credentials_for_proof_req(
+                wallet,
+                serde_json::from_str(&presentation_request)?,
+            )
             .await?;
         trace!(
             "Prover::retrieve_credentials >>> presentation_request: {presentation_request}, \
-             json_retrieved_credentials: {json_retrieved_credentials}"
+             json_retrieved_credentials: {json_retrieved_credentials:?}"
         );
-        Ok(serde_json::from_str(&json_retrieved_credentials)?)
+        Ok(json_retrieved_credentials)
     }
 
     pub async fn generate_presentation(

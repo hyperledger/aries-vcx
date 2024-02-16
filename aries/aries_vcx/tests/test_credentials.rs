@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use aries_vcx::common::credentials::{get_cred_rev_id, is_cred_revoked, ProverCredential};
+use aries_vcx::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -55,13 +55,12 @@ async fn test_pool_prover_get_credential() -> Result<(), Box<dyn Error>> {
     .await;
     let cred_rev_id = get_cred_rev_id(&setup.wallet, &setup.anoncreds, &cred_id).await?;
 
-    let cred_json = setup
+    let prover_cred = setup
         .anoncreds
         .prover_get_credential(&setup.wallet, &cred_id)
         .await?;
-    let prover_cred = serde_json::from_str::<ProverCredential>(&cred_json)?;
 
-    assert_eq!(prover_cred.schema_id, schema.schema_id.to_string());
+    assert_eq!(prover_cred.schema_id, schema.schema_id);
     assert_eq!(
         prover_cred.cred_def_id,
         cred_def.get_cred_def_id().to_string()
@@ -113,7 +112,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
     .await;
     let cred_rev_id = get_cred_rev_id(&setup.wallet, &setup.anoncreds, &cred_id).await?;
 
-    assert!(!is_cred_revoked(&setup.ledger_read, &rev_reg.rev_reg_id, &cred_rev_id).await?);
+    assert!(!is_cred_revoked(&setup.ledger_read, &rev_reg.rev_reg_id, cred_rev_id).await?);
 
     let rev_reg_delta_json = setup
         .ledger_read
@@ -125,7 +124,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
         .revoke_credential_local(
             &setup.wallet,
             &rev_reg.rev_reg_id.to_owned().try_into()?,
-            cred_rev_id.parse()?,
+            cred_rev_id,
             rev_reg_delta_json,
         )
         .await?;
@@ -140,6 +139,6 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
 
     std::thread::sleep(std::time::Duration::from_millis(500));
 
-    assert!(is_cred_revoked(&setup.ledger_read, &rev_reg.rev_reg_id, &cred_rev_id).await?);
+    assert!(is_cred_revoked(&setup.ledger_read, &rev_reg.rev_reg_id, cred_rev_id).await?);
     Ok(())
 }

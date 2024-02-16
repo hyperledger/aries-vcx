@@ -46,7 +46,7 @@ impl ServiceSchemas {
         &self,
         name: &str,
         version: &str,
-        attributes: &Vec<String>,
+        attributes: Vec<String>,
     ) -> AgentResult<String> {
         let schema = Schema::create(
             &self.anoncreds,

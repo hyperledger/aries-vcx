@@ -6,14 +6,29 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
-        schema::Schema,
+        cred_def::CredentialDefinition,
+        rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition,
+        rev_reg_delta::RevocationRegistryDelta,
+        schema::{AttributeNames, Schema},
     },
-    messages::{cred_offer::CredentialOffer, cred_request::CredentialRequest, nonce::Nonce},
+    messages::{
+        cred_definition_config::CredentialDefinitionConfig,
+        cred_offer::CredentialOffer,
+        cred_request::{CredentialRequest, CredentialRequestMetadata},
+        cred_selection::{RetrievedCredentialInfo, RetrievedCredentials},
+        credential::{Credential, CredentialValues},
+        nonce::Nonce,
+        pres_request::PresentationRequest,
+        presentation::Presentation,
+        revocation_state::CredentialRevocationState,
+    },
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
+    anoncreds::base_anoncreds::{
+        BaseAnonCreds, CredentialDefinitionsMap, CredentialId, LinkSecretId,
+        RevocationRegistriesMap, RevocationRegistryDefinitionsMap, RevocationStatesMap, SchemasMap,
+    },
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::base_wallet::BaseWallet,
 };
@@ -21,8 +36,8 @@ use async_trait::async_trait;
 use did_parser::Did;
 
 use crate::constants::{
-    CREDENTIAL_JSON, CREDENTIAL_REQ_STRING, LARGE_NONCE, LIBINDY_CRED_OFFER, PROOF_JSON,
-    REV_REG_DELTA_JSON, REV_STATE_JSON,
+    CREDENTIAL_JSON, CREDENTIAL_REQ_METADATA, CREDENTIAL_REQ_STRING, LARGE_NONCE,
+    LIBINDY_CRED_OFFER, PROOF_JSON, REV_REG_DELTA_JSON, REV_STATE_JSON,
 };
 
 #[derive(Debug)]
@@ -34,12 +49,12 @@ pub struct MockAnoncreds;
 impl BaseAnonCreds for MockAnoncreds {
     async fn verifier_verify_proof(
         &self,
-        _proof_request_json: &str,
-        _proof_json: &str,
-        _schemas_json: &str,
-        _credential_defs_json: &str,
-        _rev_reg_defs_json: &str,
-        _rev_regs_json: &str,
+        _proof_request_json: PresentationRequest,
+        _proof_json: Presentation,
+        _schemas_json: SchemasMap,
+        _credential_defs_json: CredentialDefinitionsMap,
+        _rev_reg_defs_json: Option<RevocationRegistryDefinitionsMap>,
+        _rev_regs_json: Option<RevocationRegistriesMap>,
     ) -> VcxCoreResult<bool> {
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -73,9 +88,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _issuer_did: &Did,
         _schema_id: &SchemaId,
         _schema_json: Schema,
-        _tag: &str,
-        _signature_type: Option<&str>,
-        _config_json: &str,
+        _config_json: CredentialDefinitionConfig,
     ) -> VcxCoreResult<CredentialDefinition> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
@@ -97,31 +110,31 @@ impl BaseAnonCreds for MockAnoncreds {
         __wallet: &impl BaseWallet,
         _cred_offer_json: CredentialOffer,
         _cred_req_json: CredentialRequest,
-        _cred_values_json: &str,
+        _cred_values_json: CredentialValues,
         _rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         _tails_dir: Option<&Path>,
-    ) -> VcxCoreResult<(String, Option<String>)> {
-        Ok((CREDENTIAL_JSON.to_owned(), None))
+    ) -> VcxCoreResult<(Credential, Option<u32>)> {
+        Ok((serde_json::from_str(CREDENTIAL_JSON)?, None))
     }
 
     async fn prover_create_proof(
         &self,
         __wallet: &impl BaseWallet,
-        _proof_req_json: &str,
+        _proof_req_json: PresentationRequest,
         _requested_credentials_json: &str,
-        _master_secret_id: &str,
-        _schemas_json: &str,
-        _credential_defs_json: &str,
-        _revoc_states_json: Option<&str>,
-    ) -> VcxCoreResult<String> {
-        Ok(PROOF_JSON.to_owned())
+        _link_secret_id: &LinkSecretId,
+        _schemas_json: SchemasMap,
+        _credential_defs_json: CredentialDefinitionsMap,
+        _revoc_states_json: Option<RevocationStatesMap>,
+    ) -> VcxCoreResult<Presentation> {
+        Ok(serde_json::from_str(PROOF_JSON).unwrap())
     }
 
     async fn prover_get_credential(
         &self,
         __wallet: &impl BaseWallet,
-        _cred_id: &str,
-    ) -> VcxCoreResult<String> {
+        _cred_id: &CredentialId,
+    ) -> VcxCoreResult<RetrievedCredentialInfo> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -133,7 +146,7 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         __wallet: &impl BaseWallet,
         _filter_json: Option<&str>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<Vec<RetrievedCredentialInfo>> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -144,8 +157,8 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn prover_get_credentials_for_proof_req(
         &self,
         _wallet: &impl BaseWallet,
-        _proof_request_json: &str,
-    ) -> VcxCoreResult<String> {
+        _proof_request_json: PresentationRequest,
+    ) -> VcxCoreResult<RetrievedCredentials> {
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnimplementedFeature,
             "mock data for `prover_get_credentials_for_proof_req` must be set",
@@ -157,11 +170,14 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         _wallet: &impl BaseWallet,
         _prover_did: &Did,
-        _cred_offer_json: &str,
+        _cred_offer_json: CredentialOffer,
         _cred_def_json: CredentialDefinition,
-        _master_secret_id: &str,
-    ) -> VcxCoreResult<(String, String)> {
-        Ok((CREDENTIAL_REQ_STRING.to_owned(), String::new()))
+        _link_secret_id: &LinkSecretId,
+    ) -> VcxCoreResult<(CredentialRequest, CredentialRequestMetadata)> {
+        Ok((
+            serde_json::from_str(CREDENTIAL_REQ_STRING).unwrap(),
+            serde_json::from_str(CREDENTIAL_REQ_METADATA).unwrap(),
+        ))
     }
 
     async fn create_revocation_state(
@@ -171,26 +187,25 @@ impl BaseAnonCreds for MockAnoncreds {
         _rev_reg_delta_json: RevocationRegistryDelta,
         _timestamp: u64,
         _cred_rev_id: u32,
-    ) -> VcxCoreResult<String> {
-        Ok(REV_STATE_JSON.to_string())
+    ) -> VcxCoreResult<CredentialRevocationState> {
+        Ok(serde_json::from_str(REV_STATE_JSON)?)
     }
 
     async fn prover_store_credential(
         &self,
         _wallet: &impl BaseWallet,
-        _cred_id: Option<&str>,
-        _cred_req_metadata_json: &str,
-        _cred_json: &str,
+        _cred_req_metadata_json: CredentialRequestMetadata,
+        _cred_json: Credential,
         _cred_def_json: CredentialDefinition,
         _rev_reg_def_json: Option<RevocationRegistryDefinition>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxCoreResult<CredentialId> {
         Ok("cred_id".to_string())
     }
 
     async fn prover_delete_credential(
         &self,
         _wallet: &impl BaseWallet,
-        _cred_id: &str,
+        _cred_id: &CredentialId,
     ) -> VcxCoreResult<()> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
@@ -202,7 +217,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn prover_create_link_secret(
         &self,
         _wallet: &impl BaseWallet,
-        _link_secret_id: &str,
+        _link_secret_id: &LinkSecretId,
     ) -> VcxCoreResult<()> {
         Ok(())
     }
@@ -212,7 +227,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _issuer_did: &Did,
         _name: &str,
         _version: &str,
-        _attrs: &str,
+        _attrs: AttributeNames,
     ) -> VcxCoreResult<Schema> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(

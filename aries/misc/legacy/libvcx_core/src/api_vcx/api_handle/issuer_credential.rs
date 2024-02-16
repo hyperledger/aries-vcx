@@ -207,7 +207,7 @@ pub fn get_credential_status(handle: u32) -> LibvcxResult<u32> {
     })
 }
 
-pub fn get_revocation_id(handle: u32) -> LibvcxResult<String> {
+pub fn get_revocation_id(handle: u32) -> LibvcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
         credential.get_revocation_id().map_err(|err| err.into())
     })

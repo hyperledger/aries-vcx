@@ -24,8 +24,8 @@ pub mod test_utils {
         String::from(REV_REG_ID)
     }
 
-    pub fn _cred_rev_id() -> String {
-        String::from("12")
+    pub fn _cred_rev_id() -> u32 {
+        12
     }
 
     pub fn _comment() -> String {

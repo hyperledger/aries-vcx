@@ -1,6 +1,10 @@
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
-    ledger::{cred_def::CredentialDefinition, schema::Schema},
+    ledger::{
+        cred_def::{CredentialDefinition, SignatureType},
+        schema::Schema,
+    },
+    messages::cred_definition_config::CredentialDefinitionConfig,
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -66,6 +70,7 @@ pub struct CredentialDef {
     pub state: PublicEntityStateType,
 }
 
+// TODO: There are multiple structs with similar name and purpose.
 #[derive(Clone, Debug, Deserialize, Serialize, Builder, Default)]
 #[builder(setter(into), default)]
 pub struct CredentialDefConfig {
@@ -254,6 +259,7 @@ pub async fn generate_cred_def(
     schema_id: &SchemaId,
     schema_json: Schema,
     tag: &str,
+    // TODO: These should not be options
     sig_type: Option<&str>,
     support_revocation: Option<bool>,
 ) -> VcxResult<CredentialDefinition> {
@@ -267,8 +273,11 @@ pub async fn generate_cred_def(
         support_revocation
     );
 
-    let config_json =
-        json!({"support_revocation": support_revocation.unwrap_or(false)}).to_string();
+    let config_json = CredentialDefinitionConfig {
+        support_revocation: support_revocation.unwrap_or_default(),
+        tag: tag.to_string(),
+        signature_type: SignatureType::CL,
+    };
 
     let cred_def = anoncreds
         .issuer_create_and_store_credential_def(
@@ -276,9 +285,7 @@ pub async fn generate_cred_def(
             issuer_did,
             schema_id,
             schema_json,
-            tag,
-            sig_type,
-            &config_json,
+            config_json,
         )
         .await?;
     Ok(cred_def)

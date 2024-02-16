@@ -43,7 +43,7 @@ pub async fn create_and_write_test_schema(
         submitter_did,
         &generate_random_schema_name(),
         &generate_random_schema_version(),
-        &serde_json::from_str::<Vec<String>>(attr_list).unwrap(),
+        serde_json::from_str::<Vec<String>>(attr_list).unwrap(),
     )
     .await
     .unwrap();
@@ -128,9 +128,9 @@ pub async fn create_and_write_credential(
         .prover_create_credential_req(
             wallet_holder,
             institution_did,
-            &serde_json::to_string(&offer).unwrap(),
+            serde_json::from_str(&serde_json::to_string(&offer).unwrap()).unwrap(),
             cred_def.get_cred_def_json().try_clone().unwrap(),
-            settings::DEFAULT_LINK_SECRET_ALIAS,
+            &settings::DEFAULT_LINK_SECRET_ALIAS.to_string(),
         )
         .await
         .unwrap();
@@ -148,8 +148,8 @@ pub async fn create_and_write_credential(
         .issuer_create_credential(
             wallet_issuer,
             offer,
-            serde_json::from_str(&req).unwrap(),
-            &encoded_attributes,
+            req,
+            serde_json::from_str(&encoded_attributes).unwrap(),
             rev_reg_id
                 .map(TryInto::try_into)
                 .transpose()
@@ -163,9 +163,8 @@ pub async fn create_and_write_credential(
     anoncreds_holder
         .prover_store_credential(
             wallet_holder,
-            None,
-            &req_meta,
-            &cred,
+            req_meta,
+            cred,
             cred_def.get_cred_def_json().try_clone().unwrap(),
             rev_reg_def_json
                 .as_deref()

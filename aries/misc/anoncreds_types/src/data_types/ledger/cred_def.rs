@@ -13,8 +13,9 @@ use crate::{
 
 pub const CL_SIGNATURE_TYPE: &str = "CL";
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum SignatureType {
+    #[default]
     CL,
 }
 

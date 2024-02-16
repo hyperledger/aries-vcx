@@ -39,12 +39,12 @@ pub async fn validate_indy_proof(
     debug!("validate_indy_proof >> rev_regs_json: {rev_regs_json}");
     anoncreds
         .verifier_verify_proof(
-            proof_req_json,
-            proof_json,
-            &schemas_json,
-            &credential_defs_json,
-            &rev_reg_defs_json,
-            &rev_regs_json,
+            serde_json::from_str(proof_req_json)?,
+            serde_json::from_str(proof_json)?,
+            serde_json::from_str(&schemas_json)?,
+            serde_json::from_str(&credential_defs_json)?,
+            serde_json::from_str(&rev_reg_defs_json)?,
+            serde_json::from_str(&rev_regs_json)?,
         )
         .await
         .map_err(|err| err.into())

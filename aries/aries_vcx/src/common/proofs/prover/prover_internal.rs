@@ -1,8 +1,10 @@
 use std::{collections::HashMap, path::Path};
 
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use anoncreds_types::data_types::{
+    identifiers::schema_id::SchemaId, messages::cred_selection::SelectedCredentials,
+};
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
+    anoncreds::base_anoncreds::{BaseAnonCreds, RevocationStatesMap},
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
     ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -11,7 +13,6 @@ use serde_json::Value;
 use crate::{
     common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval},
     errors::error::prelude::*,
-    handlers::proof_presentation::types::SelectedCredentials,
 };
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -21,7 +22,7 @@ pub struct CredInfoProver {
     pub schema_id: SchemaId,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
-    pub cred_rev_id: Option<String>,
+    pub cred_rev_id: Option<u32>,
     pub revocation_interval: Option<NonRevokedInterval>,
     pub tails_dir: Option<String>,
     pub timestamp: Option<u64>,
@@ -120,7 +121,7 @@ pub fn credential_def_identifiers(
             revocation_interval: _get_revocation_interval(referent, proof_req)?,
             timestamp: None,
             rev_reg_id: cred_info.rev_reg_id.clone(),
-            cred_rev_id: cred_info.cred_rev_id.clone(),
+            cred_rev_id: cred_info.cred_rev_id,
             tails_dir: selected_cred.tails_dir.clone(),
             revealed: cred_info.revealed,
         });
@@ -156,12 +157,12 @@ pub async fn build_rev_states_json(
     ledger_read: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
     credentials_identifiers: &mut Vec<CredInfoProver>,
-) -> VcxResult<String> {
+) -> VcxResult<RevocationStatesMap> {
     trace!(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let mut rtn: Value = json!({});
+    let mut rtn: RevocationStatesMap = HashMap::new();
     let mut timestamps: HashMap<String, u64> = HashMap::new();
 
     for cred_info in credentials_identifiers.iter_mut() {
@@ -193,21 +194,16 @@ pub async fn build_rev_states_json(
                         rev_reg_def_json,
                         rev_reg_delta_json,
                         timestamp,
-                        cred_rev_id.parse()?,
+                        *cred_rev_id,
                     )
                     .await?;
 
-                let rev_state_json: Value =
-                    serde_json::from_str(&rev_state_json).map_err(|err| {
-                        AriesVcxError::from_msg(
-                            AriesVcxErrorKind::InvalidJson,
-                            format!("Cannot deserialize RevocationState: {}", err),
-                        )
-                    })?;
-
                 // TODO: proover should be able to create multiple states of same revocation policy
                 // for different timestamps see ticket IS-1108
-                rtn[rev_reg_id.to_string()] = json!({ timestamp.to_string(): rev_state_json });
+                rtn.insert(
+                    rev_reg_id.to_string(),
+                    vec![(timestamp, rev_state_json)].into_iter().collect(),
+                );
                 cred_info.timestamp = Some(timestamp);
 
                 // Cache timestamp for future attributes that have the same rev_reg_id
@@ -222,7 +218,7 @@ pub async fn build_rev_states_json(
         }
     }
 
-    Ok(rtn.to_string())
+    Ok(rtn)
 }
 
 pub fn build_requested_credentials_json(
@@ -291,6 +287,7 @@ pub mod pool_tests {
         devsetup::build_setup_profile,
     };
 
+    use super::*;
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
 
     #[tokio::test]
@@ -305,7 +302,7 @@ pub mod pool_tests {
                 empty_credential_identifiers.as_mut()
             )
             .await?,
-            "{}".to_string()
+            HashMap::new()
         );
 
         // no rev_reg_id
@@ -315,7 +312,7 @@ pub mod pool_tests {
             schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: None,
-            cred_rev_id: Some(CRED_REV_ID.to_string()),
+            cred_rev_id: Some(CRED_REV_ID),
             tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             revocation_interval: None,
             timestamp: None,
@@ -324,7 +321,7 @@ pub mod pool_tests {
         assert_eq!(
             build_rev_states_json(&setup.ledger_read, &setup.anoncreds, vec![cred1].as_mut())
                 .await?,
-            "{}".to_string()
+            HashMap::new()
         );
         Ok(())
     }
@@ -335,9 +332,9 @@ pub mod unit_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
         constants::{
-            address_schema_id, schema_id, ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID,
-            ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID,
-            LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID,
+            address_schema_id, schema_id, ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_REV_REG_ID,
+            ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
+            REV_STATE_JSON, SCHEMA_ID,
         },
         devsetup::*,
         mockdata::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
@@ -372,7 +369,7 @@ pub mod unit_tests {
             schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
-            cred_rev_id: Some(CRED_REV_ID.to_string()),
+            cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
             tails_dir: None,
             timestamp: None,
@@ -384,7 +381,7 @@ pub mod unit_tests {
             schema_id: address_schema_id(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
-            cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
+            cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
             tails_dir: None,
             timestamp: None,
@@ -419,7 +416,7 @@ pub mod unit_tests {
             schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
-            cred_rev_id: Some(CRED_REV_ID.to_string()),
+            cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
             tails_dir: None,
             timestamp: None,
@@ -431,7 +428,7 @@ pub mod unit_tests {
             schema_id: address_schema_id(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
-            cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
+            cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
             tails_dir: None,
             timestamp: None,
@@ -458,7 +455,7 @@ pub mod unit_tests {
             schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
-            cred_rev_id: Some(CRED_REV_ID.to_string()),
+            cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: Some(NonRevokedInterval {
                 from: Some(123),
                 to: Some(456),
@@ -473,7 +470,7 @@ pub mod unit_tests {
             schema_id: address_schema_id(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
-            cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
+            cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: Some(NonRevokedInterval {
                 from: None,
                 to: Some(987),
@@ -517,7 +514,7 @@ pub mod unit_tests {
                        "schema_id":ADDRESS_SCHEMA_ID,
                        "cred_def_id":ADDRESS_CRED_DEF_ID,
                        "rev_reg_id":ADDRESS_REV_REG_ID,
-                       "cred_rev_id":ADDRESS_CRED_REV_ID
+                       "cred_rev_id":CRED_REV_ID
                     },
                     "interval":null
                 },
@@ -598,7 +595,7 @@ pub mod unit_tests {
             schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: None,
-            cred_rev_id: Some(CRED_REV_ID.to_string()),
+            cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
             tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             timestamp: None,
@@ -636,7 +633,7 @@ pub mod unit_tests {
             schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
-            cred_rev_id: Some(CRED_REV_ID.to_string()),
+            cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
             tails_dir: None,
             timestamp: Some(800),
@@ -648,7 +645,7 @@ pub mod unit_tests {
             schema_id: address_schema_id(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
-            cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
+            cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
             tails_dir: None,
             timestamp: Some(800),
@@ -707,7 +704,7 @@ pub mod unit_tests {
             schema_id: schema_id(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
-            cred_rev_id: Some(CRED_REV_ID.to_string()),
+            cred_rev_id: Some(CRED_REV_ID),
             tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             revocation_interval: None,
             timestamp: None,
@@ -719,8 +716,14 @@ pub mod unit_tests {
         let states = build_rev_states_json(&ledger_read, &anoncreds, cred_info.as_mut())
             .await
             .unwrap();
-        let rev_state_json: Value = serde_json::from_str(REV_STATE_JSON).unwrap();
-        let expected = json!({REV_REG_ID: {"1": rev_state_json}}).to_string();
+        let expected: RevocationStatesMap = vec![(
+            REV_REG_ID.to_string(),
+            vec![(1, serde_json::from_str(REV_STATE_JSON).unwrap())]
+                .into_iter()
+                .collect(),
+        )]
+        .into_iter()
+        .collect();
         assert_eq!(states, expected);
         assert!(cred_info[0].timestamp.is_some());
     }

@@ -449,7 +449,7 @@ impl HolderSM {
             let rev_reg_id = self.get_rev_reg_id()?;
             let cred_id = self.get_cred_id()?;
             let rev_id = get_cred_rev_id(wallet, anoncreds, &cred_id).await?;
-            is_cred_revoked(ledger, &rev_reg_id, &rev_id).await
+            is_cred_revoked(ledger, &rev_reg_id, rev_id).await
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -571,9 +571,8 @@ async fn _store_credential(
     let cred_id = anoncreds
         .prover_store_credential(
             wallet,
-            None,
-            req_meta,
-            &credential_json,
+            serde_json::from_str(req_meta)?,
+            serde_json::from_str(&credential_json)?,
             serde_json::from_str(cred_def_json)?,
             rev_reg_def_json.clone(),
         )
@@ -604,9 +603,9 @@ pub async fn create_anoncreds_credential_request(
         .prover_create_credential_req(
             wallet,
             prover_did,
-            cred_offer,
+            serde_json::from_str(cred_offer)?,
             cred_def_json.try_clone()?,
-            master_secret_id,
+            &master_secret_id.to_string(),
         )
         .await
         .map_err(|err| {
@@ -617,8 +616,8 @@ pub async fn create_anoncreds_credential_request(
         })
         .map(|(s1, s2)| {
             (
-                s1,
-                s2,
+                serde_json::to_string(&s1).unwrap(),
+                serde_json::to_string(&s2).unwrap(),
                 cred_def_id.to_string(),
                 serde_json::to_string(&cred_def_json).unwrap(),
             )

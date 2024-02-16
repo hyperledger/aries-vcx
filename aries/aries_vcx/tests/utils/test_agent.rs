@@ -49,7 +49,7 @@ async fn create_test_agent_from_seed(
     let anoncreds = dev_build_featured_anoncreds().await;
 
     anoncreds
-        .prover_create_link_secret(&wallet, DEFAULT_LINK_SECRET_ALIAS)
+        .prover_create_link_secret(&wallet, &DEFAULT_LINK_SECRET_ALIAS.to_string())
         .await
         .unwrap();
 

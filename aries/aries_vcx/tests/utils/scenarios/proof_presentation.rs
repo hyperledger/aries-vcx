@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
-use anoncreds_types::data_types::identifiers::{
-    cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
+use anoncreds_types::data_types::{
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    messages::cred_selection::{
+        RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
+    },
 };
 use aries_vcx::{
     common::{
@@ -12,11 +15,7 @@ use aries_vcx::{
     },
     handlers::{
         issuance::issuer::Issuer,
-        proof_presentation::{
-            prover::Prover,
-            types::{RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials},
-            verifier::Verifier,
-        },
+        proof_presentation::{prover::Prover, verifier::Verifier},
         util::PresentationProposalData,
     },
     protocols::proof_presentation::{

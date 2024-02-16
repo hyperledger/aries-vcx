@@ -130,7 +130,7 @@ interface Holder {
     boolean is_revoked(ProfileHolder profile);
 
     [Throws=VcxUniFFIError]
-    string get_cred_rev_id(ProfileHolder profile);
+    u32 get_cred_rev_id(ProfileHolder profile);
 
     [Throws=VcxUniFFIError]
     string get_problem_report();

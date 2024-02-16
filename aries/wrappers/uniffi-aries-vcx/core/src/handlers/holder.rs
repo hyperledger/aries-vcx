@@ -226,7 +226,7 @@ impl Holder {
         })
     }
 
-    pub fn get_cred_rev_id(&self, profile: Arc<ProfileHolder>) -> VcxUniFFIResult<String> {
+    pub fn get_cred_rev_id(&self, profile: Arc<ProfileHolder>) -> VcxUniFFIResult<u32> {
         let handler = self.handler.lock()?.clone();
 
         block_on(async {

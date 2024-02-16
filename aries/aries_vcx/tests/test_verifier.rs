@@ -1,14 +1,19 @@
 use std::{error::Error, time::Duration};
 
+use anoncreds_types::data_types::messages::{
+    pres_request::PresentationRequest, presentation::Presentation,
+};
 use aries_vcx::{
     common::{
-        primitives::{credential_definition::CredentialDef, credential_schema::Schema},
+        primitives::{
+            credential_definition::CredentialDef, credential_schema::Schema as SchemaPrimitive,
+        },
         proofs::{proof_request::ProofRequestData, verifier::validate_indy_proof},
     },
     errors::error::AriesVcxErrorKind,
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
+    anoncreds::base_anoncreds::{BaseAnonCreds, CredentialDefinitionsMap, SchemasMap},
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
@@ -31,7 +36,15 @@ async fn create_indy_proof(
     ledger_read: &impl AnoncredsLedgerRead,
     ledger_write: &impl AnoncredsLedgerWrite,
     did: &Did,
-) -> Result<(String, String, String, String), Box<dyn Error>> {
+) -> Result<
+    (
+        SchemasMap,
+        CredentialDefinitionsMap,
+        PresentationRequest,
+        Presentation,
+    ),
+    Box<dyn Error>,
+> {
     let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
         wallet_issuer,
         wallet_holder,
@@ -88,21 +101,26 @@ async fn create_indy_proof(
     .to_string();
 
     anoncreds_holder
-        .prover_get_credentials_for_proof_req(wallet_holder, &proof_req)
+        .prover_get_credentials_for_proof_req(wallet_holder, serde_json::from_str(&proof_req)?)
         .await?;
 
     let proof = anoncreds_holder
         .prover_create_proof(
             wallet_holder,
-            &proof_req,
+            serde_json::from_str(&proof_req)?,
             &requested_credentials_json,
-            "main",
-            &schemas,
-            &cred_defs,
+            &"main".to_string(),
+            serde_json::from_str(&schemas)?,
+            serde_json::from_str(&cred_defs)?,
             None,
         )
         .await?;
-    Ok((schemas, cred_defs, proof_req, proof))
+    Ok((
+        serde_json::from_str(&schemas).unwrap(),
+        serde_json::from_str(&cred_defs).unwrap(),
+        serde_json::from_str(&proof_req).unwrap(),
+        proof,
+    ))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -115,7 +133,15 @@ async fn create_proof_with_predicate(
     ledger_write: &impl AnoncredsLedgerWrite,
     did: &Did,
     include_predicate_cred: bool,
-) -> Result<(String, String, String, String), Box<dyn Error>> {
+) -> Result<
+    (
+        SchemasMap,
+        CredentialDefinitionsMap,
+        PresentationRequest,
+        Presentation,
+    ),
+    Box<dyn Error>,
+> {
     let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
         wallet_issuer,
         wallet_holder,
@@ -186,21 +212,26 @@ async fn create_proof_with_predicate(
     .to_string();
 
     anoncreds_holder
-        .prover_get_credentials_for_proof_req(wallet_holder, &proof_req)
+        .prover_get_credentials_for_proof_req(wallet_holder, serde_json::from_str(&proof_req)?)
         .await?;
 
     let proof = anoncreds_holder
         .prover_create_proof(
             wallet_holder,
-            &proof_req,
+            serde_json::from_str(&proof_req)?,
             &requested_credentials_json,
-            "main",
-            &schemas,
-            &cred_defs,
+            &"main".to_string(),
+            serde_json::from_str(&schemas)?,
+            serde_json::from_str(&cred_defs)?,
             None,
         )
         .await?;
-    Ok((schemas, cred_defs, proof_req, proof))
+    Ok((
+        serde_json::from_str(&schemas).unwrap(),
+        serde_json::from_str(&cred_defs).unwrap(),
+        serde_json::from_str(&proof_req).unwrap(),
+        proof,
+    ))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -213,7 +244,7 @@ async fn create_and_store_nonrevocable_credential(
     ledger_write: &impl AnoncredsLedgerWrite,
     issuer_did: &Did,
     attr_list: &str,
-) -> (Schema, CredentialDef, String) {
+) -> (SchemaPrimitive, CredentialDef, String) {
     let schema = create_and_write_test_schema(
         wallet_issuer,
         anoncreds_issuer,
@@ -279,7 +310,7 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            &proof_req_json,
+            serde_json::from_str(&proof_req_json)?,
             &json!({
               "self_attested_attributes":{
                  "attribute_0": "my_self_attested_address",
@@ -289,9 +320,9 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
               "requested_predicates":{}
             })
             .to_string(),
-            "main",
-            &json!({}).to_string(),
-            &json!({}).to_string(),
+            &"main".to_string(),
+            Default::default(),
+            Default::default(),
             None,
         )
         .await?;
@@ -300,7 +331,7 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
         validate_indy_proof(
             &setup.ledger_read,
             &setup.anoncreds,
-            &prover_proof_json,
+            &serde_json::to_string(&prover_proof_json)?,
             &proof_req_json,
         )
         .await?
@@ -355,7 +386,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            &proof_req_json,
+            serde_json::from_str(&proof_req_json)?,
             &json!({
                 "self_attested_attributes":{
                    "attribute_2": "my_self_attested_val"
@@ -367,9 +398,11 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
                 "requested_predicates":{}
             })
             .to_string(),
-            "main",
-            &json!({ schema.schema_id: schema.schema_json }).to_string(),
-            &json!({ cred_def.get_cred_def_id().to_string(): cred_def_json }).to_string(),
+            &"main".to_string(),
+            serde_json::from_str(&json!({ schema.schema_id: schema.schema_json }).to_string())?,
+            serde_json::from_str(
+                &json!({ cred_def.get_cred_def_id().to_string(): cred_def_json }).to_string(),
+            )?,
             None,
         )
         .await?;
@@ -377,7 +410,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
         validate_indy_proof(
             &setup.ledger_read,
             &setup.anoncreds,
-            &prover_proof_json,
+            &serde_json::to_string(&prover_proof_json)?,
             &proof_req_json,
         )
         .await
@@ -392,7 +425,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
         validate_indy_proof(
             &setup.ledger_read,
             &setup.anoncreds,
-            &prover_proof_json,
+            &serde_json::to_string(&prover_proof_json)?,
             &proof_req_json.to_string(),
         )
         .await?
@@ -448,7 +481,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            &proof_req_json,
+            serde_json::from_str(&proof_req_json)?,
             &json!({
                 "self_attested_attributes":{
                    "attribute_2": "my_self_attested_val"
@@ -460,9 +493,11 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
                 "requested_predicates":{}
             })
             .to_string(),
-            "main",
-            &json!({ schema.schema_id: schema.schema_json }).to_string(),
-            &json!({ cred_def.get_cred_def_id().to_string(): cred_def_json }).to_string(),
+            &"main".to_string(),
+            serde_json::from_str(&json!({ schema.schema_id: schema.schema_json }).to_string())?,
+            serde_json::from_str(
+                &json!({ cred_def.get_cred_def_id().to_string(): cred_def_json }).to_string(),
+            )?,
             None,
         )
         .await?;
@@ -470,13 +505,13 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
         validate_indy_proof(
             &setup.ledger_read,
             &setup.anoncreds,
-            &prover_proof_json,
+            &serde_json::to_string(&prover_proof_json)?,
             &proof_req_json,
         )
         .await?
     );
 
-    let mut proof_obj: serde_json::Value = serde_json::from_str(&prover_proof_json)?;
+    let mut proof_obj: serde_json::Value = serde_json::to_value(&prover_proof_json)?;
     {
         proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["raw"] = json!("Other Value");
         let prover_proof_json = serde_json::to_string(&proof_obj)?;
@@ -532,7 +567,7 @@ async fn test_pool_prover_verify_proof() -> Result<(), Box<dyn Error>> {
 
     let anoncreds = &setup.anoncreds;
     let proof_validation = anoncreds
-        .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
+        .verifier_verify_proof(proof_req, proof, schemas, cred_defs, None, None)
         .await?;
 
     assert!(proof_validation);
@@ -557,7 +592,7 @@ async fn test_pool_prover_verify_proof_with_predicate_success_case() -> Result<(
 
     let anoncreds = &setup.anoncreds;
     let proof_validation = anoncreds
-        .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
+        .verifier_verify_proof(proof_req, proof, schemas, cred_defs, None, None)
         .await?;
 
     assert!(proof_validation);
@@ -582,7 +617,7 @@ async fn test_pool_prover_verify_proof_with_predicate_fail_case() -> Result<(), 
 
     let anoncreds = &setup.anoncreds;
     anoncreds
-        .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
+        .verifier_verify_proof(proof_req, proof, schemas, cred_defs, None, None)
         .await
         .unwrap_err();
     Ok(())

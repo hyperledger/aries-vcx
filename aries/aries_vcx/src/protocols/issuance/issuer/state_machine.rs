@@ -1,5 +1,6 @@
 use std::{fmt::Display, path::Path};
 
+use anoncreds_types::data_types::messages::credential::Credential;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -101,12 +102,15 @@ pub struct IssuerSM {
     pub(crate) state: IssuerFullState,
 }
 
-fn build_credential_message(libindy_credential: String, thread_id: String) -> IssueCredentialV1 {
+fn build_credential_message(
+    libindy_credential: Credential,
+    thread_id: String,
+) -> IssueCredentialV1 {
     let id = Uuid::new_v4().to_string();
 
     let content = IssueCredentialV1Content::builder()
         .credentials_attach(vec![make_attach_from_str!(
-            &libindy_credential,
+            &serde_json::to_string(&libindy_credential).unwrap(),
             AttachmentId::Credential.as_ref().to_string()
         )])
         .build();
@@ -195,7 +199,7 @@ impl IssuerSM {
         }
     }
 
-    pub fn get_rev_id(&self) -> VcxResult<String> {
+    pub fn get_rev_id(&self) -> VcxResult<u32> {
         let err = AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidState,
             "No revocation info found - is this credential revokable?",
@@ -206,19 +210,21 @@ impl IssuerSM {
                 .as_ref()
                 .ok_or(err)?
                 .cred_rev_id
-                .clone(),
+                .to_owned(),
             IssuerFullState::Finished(state) => state
                 .revocation_info_v1
                 .as_ref()
                 .ok_or(err)?
                 .cred_rev_id
-                .clone(),
+                .to_owned(),
             _ => None,
         };
-        rev_id.ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidState,
-            "Revocation info does not contain rev id",
-        ))
+        rev_id
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Revocation info does not contain rev id",
+            ))
+            .and_then(|s| s.parse().map_err(Into::into))
     }
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
@@ -280,7 +286,7 @@ impl IssuerSM {
         if self.is_revokable() {
             let rev_reg_id = self.get_rev_reg_id()?;
             let rev_id = self.get_rev_id()?;
-            is_cred_revoked(ledger, &rev_reg_id, &rev_id).await
+            is_cred_revoked(ledger, &rev_reg_id, rev_id).await
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -441,7 +447,7 @@ impl IssuerSM {
                         IssuerFullState::CredentialSet(CredentialSetState {
                             msg_issue_credential,
                             revocation_info_v1: Some(RevocationInfoV1 {
-                                cred_rev_id,
+                                cred_rev_id: cred_rev_id.as_ref().map(ToString::to_string),
                                 rev_reg_id: state_data.rev_reg_id,
                                 tails_file: state_data.tails_file,
                             }),
@@ -575,7 +581,7 @@ async fn create_credential(
     offer: &OfferCredentialV1,
     cred_data: &str,
     thread_id: String,
-) -> VcxResult<(IssueCredentialV1, Option<String>)> {
+) -> VcxResult<(IssueCredentialV1, Option<u32>)> {
     let offer = get_attach_as_string!(&offer.content.offers_attach);
 
     trace!(
@@ -603,7 +609,7 @@ async fn create_credential(
             wallet,
             serde_json::from_str(&offer)?,
             serde_json::from_str(&request)?,
-            &cred_data,
+            serde_json::from_str(&cred_data)?,
             rev_reg_id
                 .to_owned()
                 .map(TryInto::try_into)

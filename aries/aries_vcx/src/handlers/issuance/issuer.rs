@@ -210,7 +210,7 @@ impl Issuer {
         self.issuer_sm.is_terminal_state()
     }
 
-    pub fn get_revocation_id(&self) -> VcxResult<String> {
+    pub fn get_revocation_id(&self) -> VcxResult<u32> {
         self.issuer_sm
             .get_revocation_info()
             .ok_or(AriesVcxError::from_msg(
@@ -222,6 +222,7 @@ impl Issuer {
                 AriesVcxErrorKind::InvalidState,
                 "Credential has not yet been created or is irrevocable",
             ))
+            .and_then(|s| s.parse().map_err(Into::into))
     }
 
     pub async fn revoke_credential_local(
@@ -267,7 +268,7 @@ impl Issuer {
         self.issuer_sm.get_rev_reg_id()
     }
 
-    pub fn get_rev_id(&self) -> VcxResult<String> {
+    pub fn get_rev_id(&self) -> VcxResult<u32> {
         self.issuer_sm.get_rev_id()
     }
 

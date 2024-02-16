@@ -91,7 +91,7 @@ impl Agent {
         let ledger_write = Arc::new(ledger_write);
 
         anoncreds
-            .prover_create_link_secret(wallet.as_ref(), DEFAULT_LINK_SECRET_ALIAS)
+            .prover_create_link_secret(wallet.as_ref(), &DEFAULT_LINK_SECRET_ALIAS.to_string())
             .await
             .unwrap();
 

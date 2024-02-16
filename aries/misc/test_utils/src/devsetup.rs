@@ -243,7 +243,7 @@ pub async fn build_setup_profile() -> SetupProfile<
     anoncreds
         .prover_create_link_secret(
             &wallet,
-            aries_vcx_core::global::settings::DEFAULT_LINK_SECRET_ALIAS,
+            &aries_vcx_core::global::settings::DEFAULT_LINK_SECRET_ALIAS.to_string(),
         )
         .await
         .unwrap();
