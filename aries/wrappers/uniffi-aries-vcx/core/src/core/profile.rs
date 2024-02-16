@@ -75,7 +75,7 @@ pub fn new_indy_profile(
             .build();
         let ledger_pool = IndyVdrLedgerPool::new(genesis_file_path, indy_vdr_config, vec![])?;
         let request_submitter = IndyVdrSubmitter::new(ledger_pool);
-        let ledger_read = indyvdr_build_ledger_read(request_submitter.clone(), cache_config)?;
+        let ledger_read = indyvdr_build_ledger_read(request_submitter, cache_config)?;
         let profile = UniffiProfile {
             anoncreds: IndyCredxAnonCreds,
             wallet,

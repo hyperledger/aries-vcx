@@ -9,8 +9,8 @@ use public_key::{Key, KeyType};
 
 use super::{
     base_wallet::{
-        did_data::DidData, record::Record, search_filter::SearchFilter, BaseWallet, DidWallet,
-        RecordWallet,
+        did_data::DidData, record::Record, record_category::RecordCategory,
+        search_filter::SearchFilter, BaseWallet, DidWallet, RecordWallet,
     },
     record_tags::RecordTags,
     structs_io::UnpackMessageOutput,
@@ -31,13 +31,13 @@ impl RecordWallet for AgencyClientWallet {
         Err(unimplemented_agency_client_wallet_method("add_record"))
     }
 
-    async fn get_record(&self, category: &str, name: &str) -> VcxCoreResult<Record> {
+    async fn get_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<Record> {
         Err(unimplemented_agency_client_wallet_method("get_record"))
     }
 
     async fn update_record_tags(
         &self,
-        category: &str,
+        category: RecordCategory,
         name: &str,
         new_tags: RecordTags,
     ) -> VcxCoreResult<()> {
@@ -48,7 +48,7 @@ impl RecordWallet for AgencyClientWallet {
 
     async fn update_record_value(
         &self,
-        category: &str,
+        category: RecordCategory,
         name: &str,
         new_value: &str,
     ) -> VcxCoreResult<()> {
@@ -57,13 +57,13 @@ impl RecordWallet for AgencyClientWallet {
         ))
     }
 
-    async fn delete_record(&self, category: &str, name: &str) -> VcxCoreResult<()> {
+    async fn delete_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<()> {
         Err(unimplemented_agency_client_wallet_method("delete_record"))
     }
 
     async fn search_record(
         &self,
-        category: &str,
+        category: RecordCategory,
         search_filter: Option<SearchFilter>,
     ) -> VcxCoreResult<Vec<Record>> {
         Err(unimplemented_agency_client_wallet_method("search_record"))

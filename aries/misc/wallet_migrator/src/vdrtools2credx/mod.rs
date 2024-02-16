@@ -56,11 +56,9 @@ pub fn migrate_any_record(record: IndyRecord) -> MigrationResult<Option<IndyReco
 mod tests {
     use std::collections::{HashMap, HashSet};
 
-    use aries_vcx_core::anoncreds::credx_anoncreds::{
-        RevocationRegistryInfo, CATEGORY_CREDENTIAL, CATEGORY_CRED_DEF, CATEGORY_CRED_DEF_PRIV,
-        CATEGORY_CRED_KEY_CORRECTNESS_PROOF, CATEGORY_CRED_MAP_SCHEMA_ID, CATEGORY_CRED_SCHEMA,
-        CATEGORY_LINK_SECRET, CATEGORY_REV_REG, CATEGORY_REV_REG_DEF, CATEGORY_REV_REG_DEF_PRIV,
-        CATEGORY_REV_REG_DELTA, CATEGORY_REV_REG_INFO,
+    use aries_vcx_core::{
+        anoncreds::credx_anoncreds::RevocationRegistryInfo,
+        wallet::base_wallet::record_category::RecordCategory,
     };
     use credx::{
         anoncreds_clsignatures::{bn::BigNumber, LinkSecret as ClLinkSecret},
@@ -277,61 +275,61 @@ mod tests {
         // Credential
         get_wallet_item!(
             dest_wallet_handle,
-            CATEGORY_CREDENTIAL,
+            &RecordCategory::Cred.to_string(),
             credx::types::Credential
         );
         get_wallet_item!(
             dest_wallet_handle,
-            CATEGORY_CRED_DEF,
+            &RecordCategory::CredDef.to_string(),
             credx::types::CredentialDefinition
         );
         get_wallet_item!(
             dest_wallet_handle,
-            CATEGORY_CRED_DEF_PRIV,
+            &RecordCategory::CredDefPriv.to_string(),
             credx::types::CredentialDefinitionPrivate
         );
         get_wallet_item!(
             dest_wallet_handle,
-            CATEGORY_CRED_KEY_CORRECTNESS_PROOF,
+            &RecordCategory::CredKeyCorrectnessProof.to_string(),
             credx::types::CredentialKeyCorrectnessProof
         );
 
         // Schema
         get_wallet_item!(
             dest_wallet_handle,
-            CATEGORY_CRED_SCHEMA,
+            &RecordCategory::CredSchema.to_string(),
             credx::types::Schema
         );
         get_wallet_item!(
             dest_wallet_handle,
-            CATEGORY_CRED_MAP_SCHEMA_ID,
+            &RecordCategory::CredMapSchemaId.to_string(),
             credx::types::SchemaId
         );
 
         // Revocation registry
         get_wallet_item!(
             dest_wallet_handle,
-            CATEGORY_REV_REG,
+            &RecordCategory::RevReg.to_string(),
             credx::types::RevocationRegistry
         );
         get_wallet_item!(
             dest_wallet_handle,
-            CATEGORY_REV_REG_DELTA,
+            &RecordCategory::RevRegDelta.to_string(),
             credx::types::RevocationRegistryDelta
         );
         get_wallet_item!(
             dest_wallet_handle,
-            CATEGORY_REV_REG_INFO,
+            &RecordCategory::RevRegInfo.to_string(),
             RevocationRegistryInfo
         );
         get_wallet_item!(
             dest_wallet_handle,
-            CATEGORY_REV_REG_DEF,
+            &RecordCategory::RevRegDef.to_string(),
             credx::types::RevocationRegistryDefinition
         );
         get_wallet_item!(
             dest_wallet_handle,
-            CATEGORY_REV_REG_DEF_PRIV,
+            &RecordCategory::RevRegDefPriv.to_string(),
             credx::types::RevocationRegistryDefinitionPrivate
         );
 
@@ -390,7 +388,8 @@ mod tests {
 
     // MasterSecret needs special processing
     async fn get_master_secret(wallet_handle: WalletHandle) {
-        let ms_decimal = get_wallet_item_raw(wallet_handle, CATEGORY_LINK_SECRET).await;
+        let ms_decimal =
+            get_wallet_item_raw(wallet_handle, &RecordCategory::LinkSecret.to_string()).await;
         let ms_bn = BigNumber::from_dec(&ms_decimal).unwrap();
 
         let ursa_ms: ClLinkSecret = serde_json::from_value(json!({ "ms": ms_bn })).unwrap();
