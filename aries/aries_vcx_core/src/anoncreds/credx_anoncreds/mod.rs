@@ -65,7 +65,10 @@ use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{constants::ATTRS, json::AsTypeOrDeserializationError},
     wallet::{
-        base_wallet::{record::Record, search_filter::SearchFilter, BaseWallet, RecordWallet},
+        base_wallet::{
+            record::Record, record_category::RecordCategory, search_filter::SearchFilter,
+            BaseWallet, RecordWallet,
+        },
         record_tags::{RecordTag, RecordTags},
     },
 };

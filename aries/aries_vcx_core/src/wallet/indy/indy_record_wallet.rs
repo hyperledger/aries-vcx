@@ -1,12 +1,10 @@
 use async_trait::async_trait;
 use indy_api_types::domain::wallet::IndyRecord;
-use serde::Deserialize;
-use serde_json::Value;
 use vdrtools::Locator;
 
-use super::{indy_tags::IndyTags, SEARCH_OPTIONS, WALLET_OPTIONS};
+use super::{indy_tags::IndyTags, WALLET_OPTIONS};
 use crate::{
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    errors::error::VcxCoreResult,
     wallet::{
         base_wallet::{
             record::Record, record_category::RecordCategory, search_filter::SearchFilter,
@@ -95,55 +93,11 @@ impl RecordWallet for IndySdkWallet {
             .await?)
     }
 
-    #[allow(unreachable_patterns)]
     async fn search_record(
         &self,
         category: RecordCategory,
         search_filter: Option<SearchFilter>,
     ) -> VcxCoreResult<Vec<Record>> {
-        let json_filter = search_filter
-            .map(|filter| match filter {
-                SearchFilter::JsonFilter(inner) => Ok::<String, AriesVcxCoreError>(inner),
-                _ => Err(AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::InvalidInput,
-                    "filter type not supported",
-                )),
-            })
-            .transpose()?;
-
-        let query_json = json_filter.unwrap_or("{}".into());
-
-        let search_handle = Locator::instance()
-            .non_secret_controller
-            .open_search(
-                self.wallet_handle,
-                category.to_string(),
-                query_json,
-                SEARCH_OPTIONS.into(),
-            )
-            .await?;
-
-        let next = || async {
-            let record = Locator::instance()
-                .non_secret_controller
-                .fetch_search_next_records(self.wallet_handle, search_handle, 1)
-                .await?;
-
-            let indy_res: Value = serde_json::from_str(&record)?;
-
-            indy_res
-                .get("records")
-                .and_then(|v| v.as_array())
-                .and_then(|arr| arr.first())
-                .map(|item| IndyRecord::deserialize(item).map_err(AriesVcxCoreError::from))
-                .transpose()
-        };
-
-        let mut records = Vec::new();
-        while let Some(record) = next().await? {
-            records.push(Record::try_from_indy_record(record)?);
-        }
-
-        Ok(records)
+        self.search(category, search_filter).await
     }
 }

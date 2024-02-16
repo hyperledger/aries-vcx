@@ -2,11 +2,18 @@ use std::str::FromStr;
 
 use indy_api_types::domain::wallet::IndyRecord;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use typed_builder::TypedBuilder;
+use vdrtools::Locator;
 
 use self::indy_tags::IndyTags;
-use super::base_wallet::{record::Record, record_category::RecordCategory, BaseWallet};
-use crate::{errors::error::VcxCoreResult, WalletHandle};
+use super::base_wallet::{
+    record::Record, record_category::RecordCategory, search_filter::SearchFilter, BaseWallet,
+};
+use crate::{
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    WalletHandle,
+};
 
 mod indy_did_wallet;
 mod indy_record_wallet;
@@ -26,6 +33,58 @@ impl IndySdkWallet {
 
     pub fn get_wallet_handle(&self) -> WalletHandle {
         self.wallet_handle
+    }
+
+    #[allow(unreachable_patterns)]
+    async fn search(
+        &self,
+        category: RecordCategory,
+        search_filter: Option<SearchFilter>,
+    ) -> VcxCoreResult<Vec<Record>> {
+        let json_filter = search_filter
+            .map(|filter| match filter {
+                SearchFilter::JsonFilter(inner) => Ok::<String, AriesVcxCoreError>(inner),
+                _ => Err(AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::InvalidInput,
+                    "filter type not supported",
+                )),
+            })
+            .transpose()?;
+
+        let query_json = json_filter.unwrap_or("{}".into());
+
+        let search_handle = Locator::instance()
+            .non_secret_controller
+            .open_search(
+                self.wallet_handle,
+                category.to_string(),
+                query_json,
+                SEARCH_OPTIONS.into(),
+            )
+            .await?;
+
+        let next = || async {
+            let record = Locator::instance()
+                .non_secret_controller
+                .fetch_search_next_records(self.wallet_handle, search_handle, 1)
+                .await?;
+
+            let indy_res: Value = serde_json::from_str(&record)?;
+
+            indy_res
+                .get("records")
+                .and_then(|v| v.as_array())
+                .and_then(|arr| arr.first())
+                .map(|item| IndyRecord::deserialize(item).map_err(AriesVcxCoreError::from))
+                .transpose()
+        };
+
+        let mut records = Vec::new();
+        while let Some(indy_record) = next().await? {
+            records.push(Record::try_from_indy_record(indy_record)?);
+        }
+
+        Ok(records)
     }
 }
 
@@ -102,32 +161,21 @@ impl Record {
             .name(indy_record.id)
             .category(RecordCategory::from_str(&indy_record.type_)?)
             .value(indy_record.value)
-            .tags(IndyTags::new(indy_record.tags).into_entry_tags())
+            .tags(IndyTags::new(indy_record.tags).into_record_tags())
             .build())
     }
 }
 
-// impl From<IndyRecord> for Record {
-//     fn from(ir: IndyRecord) -> Self {
-//         Self::builder()
-//             .name(ir.id)
-//             .category(ir.type_)
-//             .value(ir.value)
-//             .tags(IndyTags::new(ir.tags).into_record_tags())
-//             .build()
-//     }
-// }
-
-// impl From<Record> for IndyRecord {
-//     fn from(record: Record) -> Self {
-//         Self {
-//             id: record.name().into(),
-//             type_: record.category().into(),
-//             value: record.value().into(),
-//             tags: IndyTags::from_record_tags(record.tags().to_owned()).into_inner(),
-//         }
-//     }
-// }
+impl From<Record> for IndyRecord {
+    fn from(record: Record) -> Self {
+        Self {
+            id: record.name().into(),
+            type_: record.category().to_string(),
+            value: record.value().into(),
+            tags: IndyTags::from_record_tags(record.tags().to_owned()).into_inner(),
+        }
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RestoreWalletConfigs {

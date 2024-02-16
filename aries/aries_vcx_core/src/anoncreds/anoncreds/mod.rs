@@ -75,12 +75,12 @@ use super::base_anoncreds::{
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::base_wallet::{
-        record::Record,
-        record_category::RecordCategory,
+    wallet::{
+        base_wallet::{
+            record::Record, record_category::RecordCategory, search_filter::SearchFilter,
+            BaseWallet,
+        },
         record_tags::{RecordTag, RecordTags},
-        search_filter::SearchFilter,
-        BaseWallet,
     },
 };
 

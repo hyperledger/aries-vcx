@@ -6,17 +6,17 @@ use async_trait::async_trait;
 use public_key::Key;
 
 use super::{
-    askar_utils::{key_from_base58, local_key_to_bs58_public_key, seed_from_opt},
-    packing::Packing,
+    askar_utils::{local_key_to_public_key, seed_from_opt},
+    pack::Pack,
     rng_method::RngMethod,
     sig_type::SigType,
+    unpack::unpack,
     AskarWallet,
 };
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::{
-        base_wallet::{did_data::DidData, DidWallet},
-        constants::{DID_CATEGORY, TMP_DID_CATEGORY},
+        base_wallet::{did_data::DidData, record_category::RecordCategory, DidWallet},
         structs_io::UnpackMessageOutput,
         utils::did_from_key,
     },
@@ -24,12 +24,21 @@ use crate::{
 
 #[async_trait]
 impl DidWallet for AskarWallet {
+    async fn key_count(&self) -> VcxCoreResult<usize> {
+        let mut session = self.session().await?;
+
+        Ok(session
+            .fetch_all_keys(None, None, None, None, false)
+            .await?
+            .len())
+    }
+
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,
         _did_method_name: Option<&str>,
     ) -> VcxCoreResult<DidData> {
-        let mut tx = self.backend.transaction(self.profile.clone()).await?;
+        let mut tx = self.transaction().await?;
         let (did, local_key) = self
             .insert_key(
                 &mut tx,
@@ -38,16 +47,23 @@ impl DidWallet for AskarWallet {
                 RngMethod::RandomDet,
             )
             .await?;
-        let verkey = local_key_to_bs58_public_key(&local_key)?;
-        self.insert_did(&mut tx, &did, DID_CATEGORY, &verkey, None)
-            .await?;
+
+        let verkey = local_key_to_public_key(&local_key)?;
+        self.insert_did(
+            &mut tx,
+            &did,
+            &RecordCategory::Did.to_string(),
+            &verkey,
+            None,
+        )
+        .await?;
         tx.commit().await?;
-        Ok(DidData::new(&did, key_from_base58(&verkey)?))
+        Ok(DidData::new(&did, &verkey))
     }
 
     async fn key_for_did(&self, did: &str) -> VcxCoreResult<Key> {
         let data = self
-            .find_current_did(&mut self.backend.session(self.profile.clone()).await?, did)
+            .find_current_did(&mut self.session().await?, did)
             .await?;
 
         if let Some(did_data) = data {
@@ -61,9 +77,9 @@ impl DidWallet for AskarWallet {
     }
 
     async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxCoreResult<Key> {
-        let mut tx = self.backend.transaction(self.profile.clone()).await?;
+        let mut tx = self.transaction().await?;
         if self.find_current_did(&mut tx, did).await?.is_some() {
-            let (new_key_name, local_key) = self
+            let (_, local_key) = self
                 .insert_key(
                     &mut tx,
                     KeyAlg::Ed25519,
@@ -71,11 +87,19 @@ impl DidWallet for AskarWallet {
                     RngMethod::RandomDet,
                 )
                 .await?;
-            let verkey = local_key_to_bs58_public_key(&local_key)?;
-            self.insert_did(&mut tx, did, TMP_DID_CATEGORY, &verkey, None)
-                .await?;
+
+            let verkey = local_key_to_public_key(&local_key)?;
+            self.insert_did(
+                &mut tx,
+                did,
+                &RecordCategory::TmpDid.to_string(),
+                &verkey,
+                None,
+            )
+            .await?;
             tx.commit().await?;
-            key_from_base58(&new_key_name)
+
+            Ok(verkey)
         } else {
             Err(AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::WalletRecordNotFound,
@@ -85,13 +109,18 @@ impl DidWallet for AskarWallet {
     }
 
     async fn replace_did_key_apply(&self, did: &str) -> VcxCoreResult<()> {
-        let mut tx = self.backend.transaction(self.profile.clone()).await?;
-        if let Some(did_data) = self.find_did(&mut tx, did, TMP_DID_CATEGORY).await? {
-            let verkey_did = did_data.did_from_verkey();
-            tx.remove(TMP_DID_CATEGORY, did).await?;
-            tx.remove_key(&verkey_did).await?;
-            self.update_did(&mut tx, did, DID_CATEGORY, &verkey_did, None)
-                .await?;
+        let mut tx = self.transaction().await?;
+        if let Some(did_data) = self.find_did(&mut tx, did, RecordCategory::TmpDid).await? {
+            tx.remove(&RecordCategory::TmpDid.to_string(), did).await?;
+            tx.remove_key(did).await?;
+            self.update_did(
+                &mut tx,
+                did,
+                &RecordCategory::Did.to_string(),
+                did_data.verkey(),
+                None,
+            )
+            .await?;
             tx.commit().await?;
             return Ok(());
         } else {
@@ -104,8 +133,7 @@ impl DidWallet for AskarWallet {
 
     async fn sign(&self, key: &Key, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
         if let Some(key) = self
-            .backend
-            .session(self.profile.clone())
+            .session()
             .await?
             .fetch_key(&did_from_key(key.to_owned()), false)
             .await?
@@ -123,8 +151,7 @@ impl DidWallet for AskarWallet {
 
     async fn verify(&self, key: &Key, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
         if let Some(key) = self
-            .backend
-            .session(self.profile.clone())
+            .session()
             .await?
             .fetch_key(&did_from_key(key.to_owned()), false)
             .await?
@@ -150,29 +177,23 @@ impl DidWallet for AskarWallet {
             ))
         } else {
             let enc_key = LocalKey::generate(KeyAlg::Chacha20(Chacha20Types::C20P), true)?;
-            let packing = Packing::new();
 
             let base64_data = if let Some(sender_verkey) = sender_vk {
-                let mut session = self.backend.session(self.profile.clone()).await?;
+                let mut session = self.session().await?;
 
                 let my_key = self
                     .fetch_local_key(&mut session, &did_from_key(sender_verkey))
                     .await?;
-                packing.pack_authcrypt(&enc_key, recipient_keys, my_key)?
+                enc_key.pack_authcrypt(recipient_keys, my_key)?
             } else {
-                packing.pack_anoncrypt(&enc_key, recipient_keys)?
+                enc_key.pack_anoncrypt(recipient_keys)?
             };
 
-            Ok(packing.pack_all(base64_data, enc_key, msg)?)
+            Ok(enc_key.pack_all(base64_data, msg)?)
         }
     }
 
     async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {
-        Ok(Packing::new()
-            .unpack(
-                serde_json::from_slice(msg)?,
-                &mut self.backend.session(self.profile.clone()).await?,
-            )
-            .await?)
+        Ok(unpack(serde_json::from_slice(msg)?, &mut self.session().await?).await?)
     }
 }

@@ -1,19 +1,19 @@
 use async_trait::async_trait;
 use public_key::Key;
 
+use self::{did_data::DidData, record_category::RecordCategory};
+
 use super::record_tags::RecordTags;
 use crate::{
     errors::error::VcxCoreResult,
     wallet::{
-        base_wallet::{
-            did_data::DidData, record::Record, record_category::RecordCategory,
-            search_filter::SearchFilter,
-        },
+        base_wallet::{record::Record, search_filter::SearchFilter},
         structs_io::UnpackMessageOutput,
     },
 };
 
 pub mod did_data;
+pub mod did_value;
 pub mod record;
 pub mod record_category;
 pub mod search_filter;
@@ -29,6 +29,8 @@ pub trait DidWallet {
     ) -> VcxCoreResult<DidData>;
 
     async fn key_for_did(&self, did: &str) -> VcxCoreResult<Key>;
+
+    async fn key_count(&self) -> VcxCoreResult<usize>;
 
     async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxCoreResult<Key>;
 
@@ -83,13 +85,8 @@ mod tests {
     use crate::{
         errors::error::AriesVcxCoreErrorKind,
         wallet::{
-<<<<<<< HEAD
-            base_wallet::{record_category::RecordCategory, DidWallet, Record, RecordWallet},
-            record_tags::RecordTags,
-=======
-            base_wallet::Record,
+            base_wallet::{record_category::RecordCategory, Record},
             record_tags::{RecordTag, RecordTags},
->>>>>>> 5afbe287a (fix after rebase)
             utils::{did_from_key, random_seed},
         },
     };
@@ -112,6 +109,20 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn did_wallet_should_create_and_store_did_atomically() {
+        let wallet = build_test_wallet().await;
+        let seed = random_seed();
+        wallet
+            .create_and_store_my_did(Some(&seed), None)
+            .await
+            .unwrap();
+        let _ = wallet.create_and_store_my_did(Some(&seed), None).await;
+        let res = wallet.key_count().await.unwrap();
+
+        assert_eq!(1, res)
+    }
+
+    #[tokio::test]
     async fn did_wallet_should_sign_and_verify() {
         let wallet = build_test_wallet().await;
 
@@ -125,6 +136,34 @@ mod tests {
 
         let res = wallet.verify(did_data.verkey(), msg, &sig).await.unwrap();
         assert!(res);
+    }
+
+    #[tokio::test]
+    async fn did_wallet_should_return_correct_key() {
+        let wallet = build_test_wallet().await;
+
+        let first_data = wallet.create_and_store_my_did(None, None).await.unwrap();
+
+        let new_key = wallet
+            .replace_did_key_start(first_data.did(), Some(&random_seed()))
+            .await
+            .unwrap();
+
+        assert_eq!(new_key.key().len(), 32);
+
+        wallet
+            .replace_did_key_apply(first_data.did())
+            .await
+            .unwrap();
+
+        let new_verkey = wallet.key_for_did(first_data.did()).await.unwrap();
+        assert_eq!(new_verkey.key().len(), 32);
+
+        assert_eq!(
+            did_from_key(new_key.clone()),
+            did_from_key(new_verkey.clone())
+        );
+        assert_eq!(new_key.key(), new_verkey.key());
     }
 
     #[tokio::test]
@@ -257,12 +296,12 @@ mod tests {
 
         let record1 = Record::builder()
             .name(name.into())
-            .category(category)
+            .category(category.into())
             .value(value.into())
             .build();
         let record2 = Record::builder()
             .name("baz".into())
-            .category(category)
+            .category(category.into())
             .value("box".into())
             .build();
 
@@ -308,7 +347,7 @@ mod tests {
         let name2 = "foa";
         let name3 = "fob";
         let category1 = RecordCategory::Cred;
-        let category2 = RecordCategory::CredDef;
+        let category2 = RecordCategory::default();
         let value = "xxx";
 
         let record1 = Record::builder()
@@ -350,7 +389,7 @@ mod tests {
 
         let record = Record::builder()
             .name(name.into())
-            .category(category)
+            .category(category.into())
             .tags(tags1.clone())
             .value(value1.into())
             .build();

@@ -5,7 +5,10 @@ use super::AskarWallet;
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::{
-        base_wallet::{record::Record, search_filter::SearchFilter, RecordWallet},
+        base_wallet::{
+            record::Record, record_category::RecordCategory, search_filter::SearchFilter,
+            RecordWallet,
+        },
         record_tags::RecordTags,
     },
 };
@@ -15,11 +18,10 @@ impl RecordWallet for AskarWallet {
     async fn add_record(&self, record: Record) -> VcxCoreResult<()> {
         let tags: Option<Vec<EntryTag>> = Some(record.tags().clone().into());
         Ok(self
-            .backend
-            .session(self.profile.clone())
+            .session()
             .await?
             .insert(
-                record.category(),
+                &record.category().to_string(),
                 record.name(),
                 record.value().as_bytes(),
                 tags.as_deref(),
@@ -28,12 +30,11 @@ impl RecordWallet for AskarWallet {
             .await?)
     }
 
-    async fn get_record(&self, category: &str, name: &str) -> VcxCoreResult<Record> {
+    async fn get_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<Record> {
         Ok(self
-            .backend
-            .session(self.profile.clone())
+            .session()
             .await?
-            .fetch(category, name, false)
+            .fetch(&category.to_string(), name, false)
             .await?
             .ok_or_else(|| {
                 AriesVcxCoreError::from_msg(
@@ -46,15 +47,21 @@ impl RecordWallet for AskarWallet {
 
     async fn update_record_tags(
         &self,
-        category: &str,
+        category: RecordCategory,
         name: &str,
         new_tags: RecordTags,
     ) -> VcxCoreResult<()> {
-        let mut session = self.backend.session(self.profile.clone()).await?;
+        let mut session = self.session().await?;
         let askar_tags: Vec<EntryTag> = new_tags.into();
-        match session.fetch(category, name, true).await? {
+        match session.fetch(&category.to_string(), name, true).await? {
             Some(record) => Ok(session
-                .replace(category, name, &record.value, Some(&askar_tags), None)
+                .replace(
+                    &category.to_string(),
+                    name,
+                    &record.value,
+                    Some(&askar_tags),
+                    None,
+                )
                 .await?),
             None => Err(AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::WalletRecordNotFound,
@@ -65,15 +72,15 @@ impl RecordWallet for AskarWallet {
 
     async fn update_record_value(
         &self,
-        category: &str,
+        category: RecordCategory,
         name: &str,
         new_value: &str,
     ) -> VcxCoreResult<()> {
-        let mut session = self.backend.session(self.profile.clone()).await?;
-        match session.fetch(category, name, true).await? {
+        let mut session = self.session().await?;
+        match session.fetch(&category.to_string(), name, true).await? {
             Some(record) => Ok(session
                 .replace(
-                    category,
+                    &category.to_string(),
                     name,
                     new_value.as_bytes(),
                     Some(&record.tags),
@@ -87,27 +94,25 @@ impl RecordWallet for AskarWallet {
         }
     }
 
-    async fn delete_record(&self, category: &str, name: &str) -> VcxCoreResult<()> {
+    async fn delete_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<()> {
         Ok(self
-            .backend
-            .session(self.profile.clone())
+            .session()
             .await?
-            .remove(category, name)
+            .remove(&category.to_string(), name)
             .await?)
     }
 
     #[allow(unreachable_patterns)]
     async fn search_record(
         &self,
-        category: &str,
+        category: RecordCategory,
         search_filter: Option<SearchFilter>,
     ) -> VcxCoreResult<Vec<Record>> {
         Ok(self
-            .backend
-            .session(self.profile.clone())
+            .session()
             .await?
             .fetch_all(
-                Some(category),
+                Some(&category.to_string()),
                 search_filter
                     .map(|filter| match filter {
                         SearchFilter::TagFilter(inner) => Ok(inner),

@@ -1,8 +1,10 @@
+use std::str::FromStr;
+
 use aries_askar::entry::{Entry, EntryKind};
 
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
-    wallet::base_wallet::record::Record,
+    wallet::base_wallet::{record::Record, record_category::RecordCategory},
 };
 
 impl TryFrom<Entry> for Record {
@@ -10,7 +12,7 @@ impl TryFrom<Entry> for Record {
 
     fn try_from(entry: Entry) -> Result<Self, Self::Error> {
         Ok(Self::builder()
-            .category(entry.category)
+            .category(RecordCategory::from_str(&entry.category)?)
             .name(entry.name)
             .value(
                 std::str::from_utf8(&entry.value)

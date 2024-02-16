@@ -3,15 +3,10 @@ use aries_askar::{
     kms::{KeyAlg, KeyEntry, LocalKey},
     PassKey, Session, Store, StoreKeyMethod,
 };
+use public_key::Key;
 
-use self::{
-    askar_utils::{key_from_base58, local_key_to_bs58_name},
-    rng_method::RngMethod,
-};
-use super::{
-    base_wallet::{did_data::DidData, BaseWallet},
-    constants::DID_CATEGORY,
-};
+use self::{askar_utils::local_key_to_bs58_name, rng_method::RngMethod};
+use super::base_wallet::{did_value::DidValue, record_category::RecordCategory, BaseWallet};
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
 mod askar_did_wallet;
@@ -20,15 +15,16 @@ mod askar_utils;
 mod crypto_box;
 mod entry;
 mod entry_tags;
-mod packing;
+mod pack;
 mod packing_types;
 mod rng_method;
 mod sig_type;
+mod unpack;
 
 #[derive(Debug)]
 pub struct AskarWallet {
     backend: Store,
-    profile: Option<String>,
+    profile: String,
 }
 
 impl BaseWallet for AskarWallet {}
@@ -39,23 +35,26 @@ impl AskarWallet {
         key_method: StoreKeyMethod,
         pass_key: PassKey<'_>,
         recreate: bool,
-        profile: Option<String>,
+        profile: &str,
     ) -> Result<Self, AriesVcxCoreError> {
         let backend =
-            Store::provision(db_url, key_method, pass_key, profile.clone(), recreate).await?;
+            Store::provision(db_url, key_method, pass_key, Some(profile.into()), recreate).await?;
 
-        Ok(Self { backend, profile })
+        Ok(Self {
+            backend,
+            profile: profile.into(),
+        })
     }
 
     pub async fn open(
         db_url: &str,
         key_method: Option<StoreKeyMethod>,
         pass_key: PassKey<'_>,
-        profile: Option<String>,
+        profile: &str,
     ) -> Result<Self, AriesVcxCoreError> {
         Ok(Self {
-            backend: Store::open(db_url, key_method, pass_key, profile.clone()).await?,
-            profile,
+            backend: Store::open(db_url, key_method, pass_key, Some(profile.into())).await?,
+            profile: profile.into(),
         })
     }
 
@@ -102,9 +101,9 @@ impl AskarWallet {
         &self,
         session: &mut Session,
         did: &str,
-        category: &str,
-    ) -> VcxCoreResult<Option<DidData>> {
-        if let Some(entry) = session.fetch(category, did, false).await? {
+        category: RecordCategory,
+    ) -> VcxCoreResult<Option<DidValue>> {
+        if let Some(entry) = session.fetch(&category.to_string(), did, false).await? {
             if let Some(val) = entry.value.as_opt_str() {
                 return Ok(Some(serde_json::from_str(val)?));
             }
@@ -117,8 +116,8 @@ impl AskarWallet {
         &self,
         session: &mut Session,
         did: &str,
-    ) -> VcxCoreResult<Option<DidData>> {
-        self.find_did(session, did, DID_CATEGORY).await
+    ) -> VcxCoreResult<Option<DidValue>> {
+        self.find_did(session, did, RecordCategory::Did).await
     }
 
     async fn insert_did(
@@ -126,7 +125,7 @@ impl AskarWallet {
         session: &mut Session,
         did: &str,
         category: &str,
-        verkey: &str,
+        verkey: &Key,
         tags: Option<&[EntryTag]>,
     ) -> VcxCoreResult<()> {
         if (session.fetch(did, category, false).await?).is_some() {
@@ -139,7 +138,7 @@ impl AskarWallet {
                 .insert(
                     category,
                     did,
-                    serde_json::to_string(&DidData::new(did, key_from_base58(verkey)?))?.as_bytes(),
+                    serde_json::to_string(&DidValue::new(verkey))?.as_bytes(),
                     tags,
                     None,
                 )
@@ -152,20 +151,28 @@ impl AskarWallet {
         session: &mut Session,
         did: &str,
         category: &str,
-        verkey: &str,
+        verkey: &Key,
         tags: Option<&[EntryTag]>,
     ) -> VcxCoreResult<()> {
         session
             .replace(
                 category,
                 did,
-                serde_json::to_string(&DidData::new(did, key_from_base58(verkey)?))?.as_bytes(),
+                serde_json::to_string(&DidValue::new(verkey))?.as_bytes(),
                 tags,
                 None,
             )
             .await?;
 
         Ok(())
+    }
+
+    async fn session(&self) -> VcxCoreResult<Session> {
+        Ok(self.backend.session(Some(self.profile.clone())).await?)
+    }
+
+    async fn transaction(&self) -> VcxCoreResult<Session> {
+        Ok(self.backend.transaction(Some(self.profile.clone())).await?)
     }
 }
 
@@ -185,7 +192,7 @@ pub mod tests {
                 StoreKeyMethod::Unprotected,
                 None.into(),
                 true,
-                Some(Uuid::new_v4().to_string()),
+                &Uuid::new_v4().to_string(),
             )
             .await
             .unwrap(),
