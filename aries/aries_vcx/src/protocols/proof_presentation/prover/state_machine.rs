@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
 
-use anoncreds_types::data_types::messages::cred_selection::SelectedCredentials;
+use anoncreds_types::data_types::messages::{cred_selection::SelectedCredentials, presentation::Presentation};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -91,13 +91,13 @@ impl fmt::Display for ProverFullState {
 
 fn build_presentation_msg(
     thread_id: &str,
-    presentation_attachment: String,
+    presentation: Presentation,
 ) -> VcxResult<PresentationV1> {
     let id = Uuid::new_v4().to_string();
 
     let content = PresentationV1Content::builder()
         .presentations_attach(vec![make_attach_from_str!(
-            &presentation_attachment,
+            &serde_json::to_string(&presentation)?,
             AttachmentId::Presentation.as_ref().to_string()
         )])
         .build();

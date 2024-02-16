@@ -1,5 +1,6 @@
 use std::{collections::HashMap, vec::Vec};
 
+use anoncreds_types::data_types::messages::pres_request::PresentationRequest;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use serde_json;
 
@@ -165,6 +166,19 @@ impl Default for ProofRequestData {
 }
 
 pub type PresentationRequestData = ProofRequestData;
+
+impl TryFrom<PresentationRequest> for ProofRequestData {
+    type Error = AriesVcxError;
+
+    fn try_from(value: PresentationRequest) -> Result<Self, Self::Error> {
+        serde_json::from_value(serde_json::to_value(value).unwrap()).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot deserialize proof request: {}", err),
+            )
+        })
+    }
+}
 
 pub mod test_utils {
     use super::*;

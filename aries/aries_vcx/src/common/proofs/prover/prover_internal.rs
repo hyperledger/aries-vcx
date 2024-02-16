@@ -2,7 +2,10 @@ use std::{collections::HashMap, path::Path};
 
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
-    messages::cred_selection::SelectedCredentials,
+    messages::{
+        cred_selection::SelectedCredentials,
+        pres_request::{NonRevokedInterval, PresentationRequest},
+    },
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::{
@@ -13,10 +16,7 @@ use aries_vcx_core::{
 };
 use serde_json::Value;
 
-use crate::{
-    common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval},
-    errors::error::prelude::*,
-};
+use crate::errors::error::prelude::*;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoProver {
@@ -90,7 +90,7 @@ pub async fn build_cred_defs_json_prover(
 
 pub fn credential_def_identifiers(
     credentials: &SelectedCredentials,
-    proof_req: &ProofRequestData,
+    proof_req: &PresentationRequest,
 ) -> VcxResult<Vec<CredInfoProver>> {
     trace!(
         "credential_def_identifiers >>> credentials: {:?}, proof_req: {:?}",
@@ -120,19 +120,19 @@ pub fn credential_def_identifiers(
 
 fn _get_revocation_interval(
     attr_name: &str,
-    proof_req: &ProofRequestData,
+    proof_req: &PresentationRequest,
 ) -> VcxResult<Option<NonRevokedInterval>> {
-    if let Some(attr) = proof_req.requested_attributes.get(attr_name) {
+    if let Some(attr) = proof_req.value().requested_attributes.get(attr_name) {
         Ok(attr
             .non_revoked
             .clone()
-            .or(proof_req.non_revoked.clone().or(None)))
-    } else if let Some(attr) = proof_req.requested_predicates.get(attr_name) {
+            .or(proof_req.value().non_revoked.clone().or(None)))
+    } else if let Some(attr) = proof_req.value().requested_predicates.get(attr_name) {
         // Handle case for predicates
         Ok(attr
             .non_revoked
             .clone()
-            .or(proof_req.non_revoked.clone().or(None)))
+            .or(proof_req.value().non_revoked.clone().or(None)))
     } else {
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidProofCredentialData,
@@ -212,7 +212,7 @@ pub async fn build_rev_states_json(
 pub fn build_requested_credentials_json(
     credentials_identifiers: &Vec<CredInfoProver>,
     self_attested_attrs: &HashMap<String, String>,
-    proof_req: &ProofRequestData,
+    proof_req: &PresentationRequest,
 ) -> VcxResult<String> {
     trace!(
         "build_requested_credentials_json >> credentials_identifiers: {:?}, self_attested_attrs: \
@@ -230,6 +230,7 @@ pub fn build_requested_credentials_json(
     if let Value::Object(ref mut map) = rtn["requested_attributes"] {
         for cred_info in credentials_identifiers {
             if proof_req
+                .value()
                 .requested_attributes
                 .get(&cred_info.referent)
                 .is_some()
@@ -243,6 +244,7 @@ pub fn build_requested_credentials_json(
     if let Value::Object(ref mut map) = rtn["requested_predicates"] {
         for cred_info in credentials_identifiers {
             if proof_req
+                .value()
                 .requested_predicates
                 .get(&cred_info.referent)
                 .is_some()
@@ -330,7 +332,7 @@ pub mod unit_tests {
 
     use super::*;
 
-    fn proof_req_no_interval() -> ProofRequestData {
+    fn proof_req_no_interval() -> PresentationRequest {
         let proof_req = json!({
             "nonce": "123432421212",
             "name": "proof_req_1",
@@ -681,7 +683,7 @@ pub mod unit_tests {
             "requested_predicates": {},
             "non_revoked": {"from": 98, "to": 123}
         });
-        let proof_req: ProofRequestData = serde_json::from_value(proof_req).unwrap();
+        let proof_req: PresentationRequest = serde_json::from_value(proof_req).unwrap();
         let requested_credential = build_requested_credentials_json(
             &creds,
             &serde_json::from_str(&self_attested_attrs).unwrap(),
@@ -743,7 +745,7 @@ pub mod unit_tests {
             "requested_predicates": {},
             "non_revoked": {"from": 98, "to": 123}
         });
-        let proof_req: ProofRequestData = serde_json::from_value(proof_req).unwrap();
+        let proof_req: PresentationRequest = serde_json::from_value(proof_req).unwrap();
 
         // Attribute not found in proof req
         assert_eq!(
