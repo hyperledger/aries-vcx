@@ -21,7 +21,7 @@ use crate::{
 pub struct PresentationRequestPayload {
     pub nonce: Nonce,
     pub name: String,
-    pub version: String,
+    pub version: String, // TODO: Should be enum
     #[serde(default)]
     #[builder(default)]
     pub requested_attributes: HashMap<String, AttributeInfo>,

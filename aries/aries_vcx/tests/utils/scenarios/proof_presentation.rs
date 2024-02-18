@@ -6,15 +6,13 @@ use anoncreds_types::data_types::{
         cred_selection::{
             RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
         },
-        pres_request::AttributeInfo,
+        nonce::Nonce,
+        pres_request::{AttributeInfo, PresentationRequest, PresentationRequestPayload},
     },
 };
 use aries_vcx::{
-    common::{
-        primitives::{
-            credential_definition::CredentialDef, revocation_registry::RevocationRegistry,
-        },
-        proofs::proof_request::PresentationRequestData,
+    common::primitives::{
+        credential_definition::CredentialDef, revocation_registry::RevocationRegistry,
     },
     handlers::{
         issuance::issuer::Issuer,
@@ -100,18 +98,24 @@ pub async fn accept_proof_proposal(
         .presentation_proposal
         .attributes
         .into_iter()
-        .map(|attr| AttributeInfo {
-            name: Some(attr.name),
-            ..AttributeInfo::default()
+        .map(|attr| {
+            (
+                attr.name.to_string(),
+                AttributeInfo {
+                    name: Some(attr.name),
+                    ..AttributeInfo::default()
+                },
+            )
         })
         .collect();
-    let presentation_request_data = PresentationRequestData::create(&faber.anoncreds, "request-1")
-        .await
-        .unwrap()
-        .set_requested_attributes_as_vec(attrs)
-        .unwrap();
+    let presentation_request = PresentationRequestPayload::builder()
+        .name("request-1".into())
+        .requested_attributes(attrs)
+        .nonce(Nonce::new().unwrap())
+        .version("1.0".to_string())
+        .build();
     verifier
-        .set_presentation_request(presentation_request_data, None)
+        .set_presentation_request(presentation_request.into(), None)
         .unwrap();
     verifier.mark_presentation_request_sent().unwrap()
 }
@@ -137,7 +141,7 @@ pub async fn receive_proof_proposal_rejection(prover: &mut Prover, rejection: Pr
 }
 
 pub async fn create_proof_request_data(
-    faber: &mut TestAgent<
+    _faber: &mut TestAgent<
         impl IndyLedgerRead + AnoncredsLedgerRead,
         impl IndyLedgerWrite + AnoncredsLedgerWrite,
         impl BaseAnonCreds,
@@ -147,16 +151,16 @@ pub async fn create_proof_request_data(
     requested_preds: &str,
     revocation_interval: &str,
     request_name: Option<&str>,
-) -> PresentationRequestData {
-    PresentationRequestData::create(&faber.anoncreds, request_name.unwrap_or("name"))
-        .await
-        .unwrap()
-        .set_requested_attributes_as_string(requested_attrs.to_string())
-        .unwrap()
-        .set_requested_predicates_as_string(requested_preds.to_string())
-        .unwrap()
-        .set_not_revoked_interval(revocation_interval.to_string())
-        .unwrap()
+) -> PresentationRequest {
+    PresentationRequestPayload::builder()
+        .nonce(Nonce::new().unwrap())
+        .name(request_name.unwrap_or("name").to_string())
+        .version("1.0".to_string())
+        .requested_attributes(serde_json::from_str(requested_attrs).unwrap())
+        .requested_predicates(serde_json::from_str(requested_preds).unwrap())
+        .non_revoked(serde_json::from_str(revocation_interval).unwrap())
+        .build()
+        .into()
 }
 
 pub async fn create_prover_from_request(presentation_request: RequestPresentationV1) -> Prover {
@@ -164,7 +168,7 @@ pub async fn create_prover_from_request(presentation_request: RequestPresentatio
 }
 
 pub async fn create_verifier_from_request_data(
-    presentation_request_data: PresentationRequestData,
+    presentation_request_data: PresentationRequest,
 ) -> Verifier {
     let mut verifier =
         Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();

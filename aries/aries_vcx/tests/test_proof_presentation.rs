@@ -2,8 +2,8 @@
 
 use std::error::Error;
 
+use anoncreds_types::data_types::messages::pres_request::PresentationRequest;
 use aries_vcx::{
-    common::proofs::proof_request::PresentationRequestData,
     handlers::proof_presentation::{prover::Prover, verifier::Verifier},
     protocols::proof_presentation::{
         prover::state_machine::ProverState,
@@ -106,7 +106,7 @@ async fn test_agency_pool_generate_proof_with_predicates() -> Result<(), Box<dyn
         })
         .to_string();
 
-    let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req)?;
+    let pres_req_data: PresentationRequest = serde_json::from_str(&indy_proof_req)?;
     let mut verifier = Verifier::create_from_request("1".to_string(), &pres_req_data)?;
     let proof_req = verifier.get_presentation_request_msg()?;
     verifier.mark_presentation_request_sent()?;

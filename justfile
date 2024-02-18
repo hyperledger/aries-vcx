@@ -1,5 +1,3 @@
-export RUSTFLAGS := "-D warnings"
-
 default:
     just --list
 

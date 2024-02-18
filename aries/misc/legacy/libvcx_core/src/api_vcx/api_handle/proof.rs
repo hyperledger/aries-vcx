@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
+use anoncreds_types::data_types::messages::{
+    nonce::Nonce, pres_request::PresentationRequestPayload,
+};
 use aries_vcx::{
-    common::proofs::proof_request::PresentationRequestData,
     handlers::{
         proof_presentation::verifier::Verifier,
         util::{matches_opt_thread_id, matches_thread_id},
@@ -51,13 +53,15 @@ pub async fn create_proof(
     revocation_details: String,
     name: String,
 ) -> LibvcxResult<u32> {
-    let presentation_request =
-        PresentationRequestData::create(get_main_anoncreds()?.as_ref(), &name)
-            .await?
-            .set_requested_attributes_as_string(requested_attrs)?
-            .set_requested_predicates_as_string(requested_predicates)?
-            .set_not_revoked_interval(revocation_details)?;
-    let verifier = Verifier::create_from_request(source_id, &presentation_request)?;
+    let presentation_request = PresentationRequestPayload::builder()
+        .name(name)
+        .requested_attributes(serde_json::from_str(&requested_attrs)?)
+        .requested_predicates(serde_json::from_str(&requested_predicates)?)
+        .non_revoked(serde_json::from_str(&revocation_details)?)
+        .nonce(Nonce::new().unwrap())
+        .version("1.0".to_string())
+        .build();
+    let verifier = Verifier::create_from_request(source_id, &presentation_request.into())?;
     PROOF_MAP.add(verifier)
 }
 

@@ -1,16 +1,19 @@
 use std::{error::Error, time::Duration};
 
-use anoncreds_types::data_types::messages::{
-    nonce::Nonce,
-    pres_request::{AttributeInfo, PresentationRequest, PresentationRequestPayload},
-    presentation::Presentation,
+use anoncreds_types::{
+    data_types::messages::{
+        nonce::Nonce,
+        pres_request::{AttributeInfo, PresentationRequest, PresentationRequestPayload},
+        presentation::Presentation,
+    },
+    utils::query::Query,
 };
 use aries_vcx::{
     common::{
         primitives::{
             credential_definition::CredentialDef, credential_schema::Schema as SchemaPrimitive,
         },
-        proofs::{proof_request::ProofRequestData, verifier::validate_indy_proof},
+        proofs::verifier::validate_indy_proof,
     },
     errors::error::AriesVcxErrorKind,
 };
@@ -303,8 +306,6 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
     ]
     .into_iter()
     .collect();
-    let requested_predicates = json!([]).to_string();
-    let revocation_details = r#"{"support_revocation":false}"#.to_string();
     let name = "Optional".to_owned();
 
     let proof_req_json = PresentationRequestPayload::builder()
@@ -352,31 +353,37 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
 #[ignore]
 async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
     let setup = build_setup_profile().await;
-    let requested_attrs = json!([
-        json!({
-            "name":"address1",
-            "restrictions": [{ "issuer_did": "Not Here" }],
-        }),
-        json!({
-            "name":"zip",
-        }),
-        json!({
-            "name":"self_attest",
-            "self_attest_allowed": true,
-        }),
-    ])
-    .to_string();
-    let requested_predicates = json!([]).to_string();
-    let revocation_details = r#"{"support_revocation":true}"#.to_string();
+    let requested_attributes = vec![
+        (
+            "address1_1".to_string(),
+            AttributeInfo::builder()
+                .name("address1".into())
+                .restrictions(Query::Eq("issuer_did".to_string(), "Not Here".to_string()))
+                .build(),
+        ),
+        (
+            "zip_1".to_string(),
+            AttributeInfo::builder().name("zip".into()).build(),
+        ),
+        (
+            "self_attest_1".to_string(),
+            AttributeInfo::builder()
+                .name("self_attest".into())
+                .self_attest_allowed(true)
+                .build(),
+        ),
+    ]
+    .into_iter()
+    .collect();
     let name = "Optional".to_owned();
 
-    let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
-        .await?
-        .set_requested_attributes_as_string(requested_attrs)?
-        .set_requested_predicates_as_string(requested_predicates)?
-        .set_not_revoked_interval(revocation_details)?;
-
-    let proof_req_json = serde_json::to_string(&proof_req_json)?;
+    let proof_req_json = PresentationRequestPayload::builder()
+        .requested_attributes(requested_attributes)
+        .name(name)
+        .nonce(Nonce::new()?)
+        .version("1.0".into())
+        .build();
+    let proof_req_json_str = serde_json::to_string(&proof_req_json)?;
 
     let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
         &setup.wallet,
@@ -395,7 +402,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            serde_json::from_str(&proof_req_json)?,
+            proof_req_json.into(),
             &json!({
                 "self_attested_attributes":{
                    "attribute_2": "my_self_attested_val"
@@ -420,7 +427,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
             &setup.ledger_read,
             &setup.anoncreds,
             &serde_json::to_string(&prover_proof_json)?,
-            &proof_req_json,
+            &proof_req_json_str,
         )
         .await
         .unwrap_err()
@@ -428,14 +435,14 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
         AriesVcxErrorKind::ProofRejected
     );
 
-    let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json)?;
+    let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json_str)?;
     proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
     assert!(
         validate_indy_proof(
             &setup.ledger_read,
             &setup.anoncreds,
             &serde_json::to_string(&prover_proof_json)?,
-            &proof_req_json.to_string(),
+            &proof_req_json_str,
         )
         .await?
     );
@@ -446,32 +453,40 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
 #[ignore]
 async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
     let setup = build_setup_profile().await;
-    let requested_attrs = json!([
-        json!({
-            "name":"address1",
-            "restrictions": [json!({ "issuer_did": setup.institution_did })]
-        }),
-        json!({
-            "name":"zip",
-            "restrictions": [json!({ "issuer_did": setup.institution_did })]
-        }),
-        json!({
-            "name":"self_attest",
-            "self_attest_allowed": true,
-        }),
-    ])
-    .to_string();
-    let requested_predicates = json!([]).to_string();
-    let revocation_details = r#"{"support_revocation":true}"#.to_string();
+    let requested_attributes = vec![
+        (
+            "address1_1".to_string(),
+            AttributeInfo::builder()
+                .name("address1".into())
+                .restrictions(Query::Eq("issuer_did".to_string(), setup.institution_did.to_string()))
+                .build(),
+        ),
+        (
+            "zip_1".to_string(),
+            AttributeInfo::builder()
+                .name("zip".into())
+                .restrictions(Query::Eq("issuer_did".to_string(), setup.institution_did.to_string()))
+                .build(),
+        ),
+        (
+            "self_attest_1".to_string(),
+            AttributeInfo::builder()
+                .name("self_attest".into())
+                .self_attest_allowed(true)
+                .build(),
+        ),
+    ]
+    .into_iter()
+    .collect();
     let name = "Optional".to_owned();
 
-    let proof_req_json = ProofRequestData::create(&setup.anoncreds, &name)
-        .await?
-        .set_requested_attributes_as_string(requested_attrs)?
-        .set_requested_predicates_as_string(requested_predicates)?
-        .set_not_revoked_interval(revocation_details)?;
-
-    let proof_req_json = serde_json::to_string(&proof_req_json)?;
+    let proof_req_json = PresentationRequestPayload::builder()
+        .requested_attributes(requested_attributes)
+        .name(name)
+        .nonce(Nonce::new()?)
+        .version("1.0".into())
+        .build();
+    let proof_req_json_str = serde_json::to_string(&proof_req_json)?;
 
     let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
         &setup.wallet,
@@ -490,7 +505,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            serde_json::from_str(&proof_req_json)?,
+            proof_req_json.into(),
             &json!({
                 "self_attested_attributes":{
                    "attribute_2": "my_self_attested_val"
@@ -515,7 +530,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
             &setup.ledger_read,
             &setup.anoncreds,
             &serde_json::to_string(&prover_proof_json)?,
-            &proof_req_json,
+            &proof_req_json_str,
         )
         .await?
     );
@@ -530,7 +545,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
                 &setup.ledger_read,
                 &setup.anoncreds,
                 &prover_proof_json,
-                &proof_req_json,
+                &proof_req_json_str,
             )
             .await
             .unwrap_err()
@@ -548,7 +563,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
                 &setup.ledger_read,
                 &setup.anoncreds,
                 &prover_proof_json,
-                &proof_req_json,
+                &proof_req_json_str,
             )
             .await
             .unwrap_err()

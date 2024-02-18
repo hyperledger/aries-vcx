@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use anoncreds_types::data_types::messages::pres_request::PresentationRequest;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -25,7 +26,6 @@ use messages::{
 use uuid::Uuid;
 
 use crate::{
-    common::proofs::proof_request::PresentationRequestData,
     errors::error::prelude::*,
     handlers::util::{make_attach_from_str, verify_thread_id, AttachmentId, Status},
     protocols::{
@@ -105,7 +105,7 @@ pub fn build_verification_ack(thread_id: &str) -> AckPresentationV1 {
 
 pub fn build_starting_presentation_request(
     thread_id: &str,
-    request_data: &PresentationRequestData,
+    request_data: &PresentationRequest,
     comment: Option<String>,
 ) -> VcxResult<RequestPresentationV1> {
     let id = thread_id.to_owned();
@@ -147,7 +147,7 @@ impl VerifierSM {
     // the bottom)
     pub fn from_request(
         source_id: &str,
-        presentation_request_data: &PresentationRequestData,
+        presentation_request_data: &PresentationRequest,
     ) -> VcxResult<Self> {
         let sm = Self {
             source_id: source_id.to_string(),
@@ -322,7 +322,7 @@ impl VerifierSM {
 
     pub fn set_presentation_request(
         self,
-        request_data: &PresentationRequestData,
+        request_data: &PresentationRequest,
         comment: Option<String>,
     ) -> VcxResult<Self> {
         let Self {

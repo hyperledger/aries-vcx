@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::messages::pres_request::PresentationRequest;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -17,7 +18,6 @@ use messages::{
 };
 
 use crate::{
-    common::proofs::proof_request::PresentationRequestData,
     errors::error::prelude::*,
     handlers::util::get_attach_as_string,
     protocols::{
@@ -45,7 +45,7 @@ impl Verifier {
 
     pub fn create_from_request(
         source_id: String,
-        presentation_request: &PresentationRequestData,
+        presentation_request: &PresentationRequest,
     ) -> VcxResult<Self> {
         trace!(
             "Verifier::create_from_request >>> source_id: {:?}, presentation_request: {:?}",
@@ -110,7 +110,7 @@ impl Verifier {
 
     pub fn set_presentation_request(
         &mut self,
-        presentation_request_data: PresentationRequestData,
+        presentation_request_data: PresentationRequest,
         comment: Option<String>,
     ) -> VcxResult<()> {
         trace!(
