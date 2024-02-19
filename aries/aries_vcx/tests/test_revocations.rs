@@ -1,9 +1,9 @@
 use std::{error::Error, thread, time::Duration};
 
+use anoncreds_types::data_types::messages::pres_request::NonRevokedInterval;
 use aries_vcx::protocols::proof_presentation::verifier::{
     state_machine::VerifierState, verification_status::PresentationVerificationStatus,
 };
-use serde_json::json;
 use test_utils::devsetup::*;
 
 use crate::utils::{
@@ -50,9 +50,12 @@ async fn test_agency_pool_basic_revocation() -> Result<(), Box<dyn Error>> {
 
     let presentation_request_data = create_proof_request_data(
         &mut institution,
-        &requested_attrs.to_string(),
-        "[]",
-        &json!({"from": time_before_revocation - 100, "to": time_after_revocation}).to_string(),
+        requested_attrs,
+        Default::default(),
+        NonRevokedInterval::new(
+            Some(time_before_revocation - 100),
+            Some(time_after_revocation),
+        ),
         None,
     )
     .await;
@@ -111,9 +114,9 @@ async fn test_agency_pool_revoked_credential_might_still_work() -> Result<(), Bo
 
     let presentation_request_data = create_proof_request_data(
         &mut institution,
-        &requested_attrs.to_string(),
-        "[]",
-        &json!({"from": from, "to": to}).to_string(),
+        requested_attrs,
+        Default::default(),
+        NonRevokedInterval::new(Some(from), Some(to)),
         None,
     )
     .await;

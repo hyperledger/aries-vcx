@@ -7,7 +7,10 @@ use anoncreds_types::data_types::{
             RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
         },
         nonce::Nonce,
-        pres_request::{AttributeInfo, PresentationRequest, PresentationRequestPayload},
+        pres_request::{
+            AttributeInfo, NonRevokedInterval, PredicateInfo, PresentationRequest,
+            PresentationRequestPayload,
+        },
     },
 };
 use aries_vcx::{
@@ -147,18 +150,18 @@ pub async fn create_proof_request_data(
         impl BaseAnonCreds,
         impl BaseWallet,
     >,
-    requested_attrs: &str,
-    requested_preds: &str,
-    revocation_interval: &str,
+    requested_attrs: HashMap<String, AttributeInfo>,
+    requested_preds: HashMap<String, PredicateInfo>,
+    revocation_interval: NonRevokedInterval,
     request_name: Option<&str>,
 ) -> PresentationRequest {
     PresentationRequestPayload::builder()
         .nonce(Nonce::new().unwrap())
         .name(request_name.unwrap_or("name").to_string())
         .version("1.0".to_string())
-        .requested_attributes(serde_json::from_str(requested_attrs).unwrap())
-        .requested_predicates(serde_json::from_str(requested_preds).unwrap())
-        .non_revoked(serde_json::from_str(revocation_interval).unwrap())
+        .requested_attributes(requested_attrs)
+        .requested_predicates(requested_preds)
+        .non_revoked(revocation_interval)
         .build()
         .into()
 }
@@ -353,9 +356,9 @@ pub async fn verifier_create_proof_and_send_request(
     );
     let presentation_request_data = create_proof_request_data(
         institution,
-        &requested_attrs.to_string(),
-        "[]",
-        "{}",
+        requested_attrs,
+        Default::default(),
+        Default::default(),
         request_name,
     )
     .await;

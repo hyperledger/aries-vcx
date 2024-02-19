@@ -221,13 +221,13 @@ pub struct PredicateInfo {
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum PredicateTypes {
-    #[serde(alias = ">=")]
+    #[serde(rename = ">=", alias = "GE")]
     GE,
-    #[serde(alias = "<=")]
+    #[serde(rename = "<=", alias = "LE")]
     LE,
-    #[serde(alias = ">")]
+    #[serde(rename = ">", alias = "GT")]
     GT,
-    #[serde(alias = "<")]
+    #[serde(rename = "<", alias = "LT")]
     LT,
 }
 

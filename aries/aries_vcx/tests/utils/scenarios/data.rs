@@ -1,5 +1,11 @@
-use anoncreds_types::data_types::identifiers::{
-    cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
+use std::collections::HashMap;
+
+use anoncreds_types::{
+    data_types::{
+        identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+        messages::pres_request::{AttributeInfo, NonRevokedInterval},
+    },
+    utils::query::Query,
 };
 use did_parser::Did;
 use messages::{
@@ -37,19 +43,24 @@ pub fn requested_attrs_address(
     cred_def_id: &CredentialDefinitionId,
     from: Option<u64>,
     to: Option<u64>,
-) -> Value {
+) -> HashMap<String, AttributeInfo> {
+    let restrictions = Query::And(vec![
+        Query::Eq("issuer_did".to_string(), did.to_string()),
+        Query::Eq("schema_id".to_string(), schema_id.to_string()),
+        Query::Eq("cred_def_id".to_string(), cred_def_id.to_string()),
+    ]);
     attr_names_address_list()
-        .iter()
-        .map(|attr_name| {
-            json!({
-                "name": attr_name,
-                "non_revoked": {"from": from, "to": to},
-                "restrictions": [{
-                  "issuer_did": did,
-                  "schema_id": schema_id,
-                  "cred_def_id": cred_def_id,
-                }]
-            })
+        .into_iter()
+        .map(|name| {
+            (
+                format!("{}_1", name),
+                AttributeInfo {
+                    name: Some(name),
+                    restrictions: Some(restrictions.to_owned()),
+                    non_revoked: Some(NonRevokedInterval::new(from, to)),
+                    ..Default::default()
+                },
+            )
         })
         .collect()
 }
