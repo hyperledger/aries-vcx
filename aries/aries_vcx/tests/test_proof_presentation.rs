@@ -107,7 +107,6 @@ async fn test_agency_pool_generate_proof_with_predicates() -> Result<(), Box<dyn
         .to_string();
 
     let pres_req_data: PresentationRequest = serde_json::from_str(&indy_proof_req)?;
-    dbg!(&pres_req_data);
     let mut verifier = Verifier::create_from_request("1".to_string(), &pres_req_data)?;
     let proof_req = verifier.get_presentation_request_msg()?;
     verifier.mark_presentation_request_sent()?;
