@@ -80,7 +80,7 @@ async fn test_agency_pool_generate_proof_with_predicates() -> Result<(), Box<dyn
     let indy_proof_req = json!({
             "nonce": "123432421212",
             "name": "proof_req_1",
-            "version": "0.1",
+            "version": "1.0",
             "requested_attributes": {
                 "address1_1": {
                     "name": "address1",

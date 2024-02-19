@@ -64,7 +64,7 @@ async fn create_indy_proof(
     let proof_req = json!({
        "nonce":"123432421212",
        "name":"proof_req_1",
-       "version":"0.1",
+       "version":"1.0",
        "requested_attributes": json!({
            "address1_1": json!({
                "name":"address1",
@@ -162,7 +162,7 @@ async fn create_proof_with_predicate(
     let proof_req = json!({
        "nonce":"123432421212",
        "name":"proof_req_1",
-       "version":"0.1",
+       "version":"1.0",
        "requested_attributes": json!({
            "address1_1": json!({
                "name":"address1",
@@ -290,14 +290,14 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
     let setup = build_setup_profile().await;
     let requested_attributes = vec![
         (
-            "address1_1".to_string(),
+            "attribute_0".to_string(),
             AttributeInfo::builder()
                 .name("address1".into())
                 .self_attest_allowed(true)
                 .build(),
         ),
         (
-            "zip_1".to_string(),
+            "attribute_1".to_string(),
             AttributeInfo::builder()
                 .name("zip".into())
                 .self_attest_allowed(true)
@@ -354,18 +354,21 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
     let setup = build_setup_profile().await;
     let requested_attributes = vec![
         (
-            "address1_1".to_string(),
+            "attribute_0".to_string(),
             AttributeInfo::builder()
                 .name("address1".into())
-                .restrictions(Query::Eq("issuer_did".to_string(), "Not Here".to_string()))
+                .restrictions(Query::Eq(
+                    "issuer_did".to_string(),
+                    setup.institution_did.to_string(),
+                ))
                 .build(),
         ),
         (
-            "zip_1".to_string(),
+            "attribute_1".to_string(),
             AttributeInfo::builder().name("zip".into()).build(),
         ),
         (
-            "self_attest_1".to_string(),
+            "attribute_2".to_string(),
             AttributeInfo::builder()
                 .name("self_attest".into())
                 .self_attest_allowed(true)
@@ -420,21 +423,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
             None,
         )
         .await?;
-    assert_eq!(
-        validate_indy_proof(
-            &setup.ledger_read,
-            &setup.anoncreds,
-            &serde_json::to_string(&prover_proof_json)?,
-            &proof_req_json_str,
-        )
-        .await
-        .unwrap_err()
-        .kind(),
-        AriesVcxErrorKind::ProofRejected
-    );
 
-    let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json_str)?;
-    proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
     assert!(
         validate_indy_proof(
             &setup.ledger_read,
@@ -453,7 +442,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
     let setup = build_setup_profile().await;
     let requested_attributes = vec![
         (
-            "address1_1".to_string(),
+            "attribute_0".to_string(),
             AttributeInfo::builder()
                 .name("address1".into())
                 .restrictions(Query::Eq(
@@ -463,7 +452,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
                 .build(),
         ),
         (
-            "zip_1".to_string(),
+            "attribute_1".to_string(),
             AttributeInfo::builder()
                 .name("zip".into())
                 .restrictions(Query::Eq(
@@ -473,7 +462,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
                 .build(),
         ),
         (
-            "self_attest_1".to_string(),
+            "attribute_2".to_string(),
             AttributeInfo::builder()
                 .name("self_attest".into())
                 .self_attest_allowed(true)

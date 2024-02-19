@@ -155,7 +155,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds(
     let mut req = json!({
        "nonce":"123432421212",
        "name":"proof_req_1",
-       "version":"0.1",
+       "version":"1.0",
        "requested_attributes": json!({
            "zip_1": json!({
                "name":"zip",

@@ -336,7 +336,7 @@ pub mod unit_tests {
         let proof_req = json!({
             "nonce": "123432421212",
             "name": "proof_req_1",
-            "version": "0.1",
+            "version": "1.0",
             "requested_attributes": {
                 "address1_1": { "name": "address1" },
                 "zip_2": { "name": "zip" },
@@ -522,7 +522,7 @@ pub mod unit_tests {
         let proof_req = json!({
             "nonce": "123432421212",
             "name": "proof_req_1",
-            "version": "0.1",
+            "version": "1.0",
             "requested_attributes": {
                 "zip_2": { "name": "zip" },
                 "height_1": { "name": "height", "non_revoked": {"from": 123, "to": 456} }
@@ -671,7 +671,7 @@ pub mod unit_tests {
         let proof_req = json!({
             "nonce": "123432421212",
             "name": "proof_req_1",
-            "version": "0.1",
+            "version": "1.0",
             "requested_attributes": {
                 "height_1": {
                     "name": "height_1",
@@ -733,7 +733,7 @@ pub mod unit_tests {
         let proof_req = json!({
             "nonce": "123432421212",
             "name": "proof_req_1",
-            "version": "0.1",
+            "version": "1.0",
             "requested_attributes": {
                 "address1_1": {
                     "name": "address1",
