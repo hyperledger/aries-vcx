@@ -30,6 +30,7 @@ pub struct PresentationRequestPayload {
     #[builder(default)]
     pub requested_predicates: HashMap<String, PredicateInfo>,
     #[builder(setter(strip_option))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default)]
     pub non_revoked: Option<NonRevokedInterval>,
 }
@@ -204,8 +205,11 @@ pub struct AttributeInfo {
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub names: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub restrictions: Option<Query>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub non_revoked: Option<NonRevokedInterval>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub self_attest_allowed: Option<bool>,
 }
 
@@ -217,8 +221,10 @@ pub struct PredicateInfo {
     pub p_type: PredicateTypes,
     pub p_value: PredicateValue,
     #[builder(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub restrictions: Option<Query>,
     #[builder(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub non_revoked: Option<NonRevokedInterval>,
 }
 
