@@ -499,7 +499,7 @@ jobs:
               strip *.node
           - host: ubuntu-20.04
             target: x86_64-unknown-linux-musl
-            docker: ghcr.io/hyperledger/aries-vcx/napi-rs-alpine
+            docker: alpine
             build: |-
               set -e
               env
@@ -550,7 +550,6 @@ jobs:
           build: ${{ matrix.settings.build }}
           node-version: ${{ env.NODE_VERSION }}
           rust-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
 
   publish-napi:
     runs-on: ubuntu-20.04

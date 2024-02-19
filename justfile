@@ -40,7 +40,7 @@ test-unit test_name="":
 test-integration-aries-vcx-core features:
     cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F {{features}}
 
-test-integration-aries-vcx test_name="" features:
+test-integration-aries-vcx features test_name="":
     cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F {{features}} -- --ignored {{test_name}}
 
 test-integration-aries-vcx-anoncreds-rs test_name="":
