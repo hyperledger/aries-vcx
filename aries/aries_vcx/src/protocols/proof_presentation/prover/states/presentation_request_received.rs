@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use anoncreds_types::data_types::messages::{cred_selection::SelectedCredentials, presentation::Presentation};
+use anoncreds_types::data_types::messages::{
+    cred_selection::SelectedCredentials, presentation::Presentation,
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,

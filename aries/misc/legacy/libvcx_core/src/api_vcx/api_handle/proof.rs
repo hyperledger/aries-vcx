@@ -56,7 +56,7 @@ pub async fn create_proof(
     dbg!(&requested_attrs);
     let requested_attrs = serde_json::from_str(&requested_attrs)?;
     dbg!(&requested_predicates);
-    let requested_predicates =serde_json::from_str(&requested_predicates)?;
+    let requested_predicates = serde_json::from_str(&requested_predicates)?;
     dbg!(&revocation_details);
     let revocation_details = serde_json::from_str(&revocation_details)?;
     let presentation_request = PresentationRequestPayload::builder()

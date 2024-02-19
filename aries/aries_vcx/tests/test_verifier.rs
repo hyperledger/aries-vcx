@@ -458,14 +458,20 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
             "address1_1".to_string(),
             AttributeInfo::builder()
                 .name("address1".into())
-                .restrictions(Query::Eq("issuer_did".to_string(), setup.institution_did.to_string()))
+                .restrictions(Query::Eq(
+                    "issuer_did".to_string(),
+                    setup.institution_did.to_string(),
+                ))
                 .build(),
         ),
         (
             "zip_1".to_string(),
             AttributeInfo::builder()
                 .name("zip".into())
-                .restrictions(Query::Eq("issuer_did".to_string(), setup.institution_did.to_string()))
+                .restrictions(Query::Eq(
+                    "issuer_did".to_string(),
+                    setup.institution_did.to_string(),
+                ))
                 .build(),
         ),
         (

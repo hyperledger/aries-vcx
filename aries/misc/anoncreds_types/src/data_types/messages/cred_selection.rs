@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-use crate::data_types::identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId};
-
 use super::pres_request::NonRevokedInterval;
+use crate::data_types::identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId};
 
 /// Data structure representing the credentials in the wallet, which are suitable
 /// for presentation against a proof request.
