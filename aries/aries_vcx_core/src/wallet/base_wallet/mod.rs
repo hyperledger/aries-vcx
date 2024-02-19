@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use public_key::Key;
 
 use self::{did_data::DidData, record_category::RecordCategory};
-
 use super::record_tags::RecordTags;
 use crate::{
     errors::error::VcxCoreResult,
@@ -296,12 +295,12 @@ mod tests {
 
         let record1 = Record::builder()
             .name(name.into())
-            .category(category.into())
+            .category(category)
             .value(value.into())
             .build();
         let record2 = Record::builder()
             .name("baz".into())
-            .category(category.into())
+            .category(category)
             .value("box".into())
             .build();
 
@@ -389,7 +388,7 @@ mod tests {
 
         let record = Record::builder()
             .name(name.into())
-            .category(category.into())
+            .category(category)
             .tags(tags1.clone())
             .value(value1.into())
             .build();

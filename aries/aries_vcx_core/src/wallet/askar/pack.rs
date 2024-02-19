@@ -1,18 +1,15 @@
-use aries_askar::kms::{KeyAlg::Ed25519, LocalKey};
+use aries_askar::kms::{
+    crypto_box, crypto_box_random_nonce, crypto_box_seal, KeyAlg::Ed25519, LocalKey,
+};
 use public_key::Key;
 
 use super::{
-    askar_utils::{
-        bs58_to_bytes, bytes_to_bs58, ed25519_to_x25519_private, ed25519_to_x25519_public,
-    },
+    askar_utils::{bs58_to_bytes, bytes_to_bs58, ed25519_to_x25519},
     packing_types::{
         Base64String, Jwe, JweAlg, ProtectedData, ProtectedHeaderEnc, ProtectedHeaderTyp, Recipient,
     },
 };
-use crate::{
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::askar::crypto_box::{CryptoBox, SodiumCryptoBox},
-};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
 fn check_supported_key_alg(key: &LocalKey) -> VcxCoreResult<()> {
     let supported_algs = vec![Ed25519];
@@ -62,20 +59,23 @@ fn pack_authcrypt_recipients(
 ) -> VcxCoreResult<Vec<Recipient>> {
     let mut encrypted_recipients = Vec::with_capacity(recipient_keys.len());
 
-    let crypto_box = SodiumCryptoBox::new();
+    let sender_converted_key = ed25519_to_x25519(&sender_local_key)?;
 
     for recipient_key in recipient_keys {
-        let recipient_public_bytes =
-            ed25519_to_x25519_public(&LocalKey::from_public_bytes(Ed25519, recipient_key.key())?)?;
+        let recipient_public_key = &LocalKey::from_public_bytes(Ed25519, recipient_key.key())?;
 
-        let (enc_cek, nonce) = crypto_box.box_encrypt(
-            &ed25519_to_x25519_private(&sender_local_key)?,
-            &recipient_public_bytes,
+        let nonce = crypto_box_random_nonce()?;
+        let recipient_converted_key = ed25519_to_x25519(recipient_public_key)?;
+
+        let enc_cek = crypto_box(
+            &recipient_converted_key,
+            &sender_converted_key,
             &enc_key.to_secret_bytes()?,
+            &nonce,
         )?;
 
-        let enc_sender = crypto_box.sealedbox_encrypt(
-            &recipient_public_bytes,
+        let enc_sender = crypto_box_seal(
+            &recipient_converted_key,
             bytes_to_bs58(&sender_local_key.to_public_bytes()?).as_bytes(),
         )?;
 
@@ -98,14 +98,10 @@ fn pack_anoncrypt_recipients(
 
     let enc_key_secret = &enc_key.to_secret_bytes()?;
 
-    let crypto_box = SodiumCryptoBox::new();
-
     for recipient_key in recipient_keys {
-        let recipient_pubkey = bs58_to_bytes(&recipient_key.base58().as_bytes())?;
+        let recipient_pubkey = bs58_to_bytes(recipient_key.base58().as_bytes())?;
         let recipient_local_key = LocalKey::from_public_bytes(Ed25519, &recipient_pubkey)?;
-        let recipient_public_bytes = ed25519_to_x25519_public(&recipient_local_key)?;
-
-        let enc_cek = crypto_box.sealedbox_encrypt(&recipient_public_bytes, &enc_key_secret)?;
+        let enc_cek = crypto_box_seal(&ed25519_to_x25519(&recipient_local_key)?, enc_key_secret)?;
 
         let kid = bytes_to_bs58(&recipient_pubkey);
 

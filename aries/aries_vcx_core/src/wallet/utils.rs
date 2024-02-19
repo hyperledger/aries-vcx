@@ -10,6 +10,7 @@ pub fn random_seed() -> String {
         .collect()
 }
 
+#[allow(dead_code)]
 pub fn did_from_key(key: Key) -> String {
     key.base58()[0..16].to_string()
 }

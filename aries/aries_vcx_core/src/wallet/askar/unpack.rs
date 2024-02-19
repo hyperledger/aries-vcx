@@ -1,26 +1,21 @@
 use aries_askar::{
     crypto::alg::Chacha20Types,
     kms::{
+        crypto_box_open, crypto_box_seal_open,
         KeyAlg::{self, Ed25519},
         KeyEntry, LocalKey, ToDecrypt,
     },
     Session,
 };
-
 use public_key::{Key, KeyType};
 
+use super::{
+    askar_utils::{bs58_to_bytes, bytes_to_string, ed25519_to_x25519, from_json_str},
+    packing_types::{AnoncryptRecipient, AuthcryptRecipient, Jwe, ProtectedData, Recipient},
+};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::structs_io::UnpackMessageOutput,
-};
-
-use super::{
-    askar_utils::{
-        bs58_to_bytes, bytes_to_string, ed25519_to_x25519_pair, ed25519_to_x25519_public,
-        from_json_str,
-    },
-    crypto_box::{CryptoBox, SodiumCryptoBox},
-    packing_types::{AnoncryptRecipient, AuthcryptRecipient, Jwe, ProtectedData, Recipient},
 };
 
 trait Unpack {
@@ -78,28 +73,23 @@ fn unpack_authcrypt(
     local_key: &LocalKey,
     recipient: &AuthcryptRecipient,
 ) -> VcxCoreResult<(LocalKey, Option<Key>)> {
-    let (private_bytes, public_bytes) = ed25519_to_x25519_pair(local_key)?;
+    let recipient_key = ed25519_to_x25519(local_key)?;
+    let sender_vk = crypto_box_seal_open(&recipient_key, &recipient.header.sender.decode()?)?;
+    let sender_key = ed25519_to_x25519(&LocalKey::from_public_bytes(
+        Ed25519,
+        &bs58_to_bytes(&sender_vk.clone())?,
+    )?)?;
 
-    let crypto_box = SodiumCryptoBox::new();
-    let sender_vk_vec = crypto_box.sealedbox_decrypt(
-        &private_bytes,
-        &public_bytes,
-        &recipient.header.sender.decode()?,
+    let secret = crypto_box_open(
+        &recipient_key,
+        &sender_key,
+        &recipient.encrypted_key.decode()?,
+        &recipient.header.iv.decode()?,
     )?;
+
     Ok((
-        LocalKey::from_secret_bytes(
-            KeyAlg::Chacha20(Chacha20Types::C20P),
-            &crypto_box.box_decrypt(
-                &private_bytes,
-                &ed25519_to_x25519_public(&LocalKey::from_public_bytes(
-                    Ed25519,
-                    &bs58_to_bytes(&sender_vk_vec.clone())?,
-                )?)?,
-                &recipient.encrypted_key.decode()?,
-                &recipient.header.iv.decode()?,
-            )?,
-        )?,
-        Some(Key::new(sender_vk_vec, KeyType::Ed25519)?),
+        LocalKey::from_secret_bytes(KeyAlg::Chacha20(Chacha20Types::C20P), &secret)?,
+        Some(Key::new(sender_vk.to_vec(), KeyType::Ed25519)?),
     ))
 }
 
@@ -107,18 +97,11 @@ fn unpack_anoncrypt(
     local_key: &LocalKey,
     recipient: &AnoncryptRecipient,
 ) -> VcxCoreResult<(LocalKey, Option<Key>)> {
-    let (private_bytes, public_bytes) = ed25519_to_x25519_pair(local_key)?;
+    let recipient_key = ed25519_to_x25519(local_key)?;
+    let key = crypto_box_seal_open(&recipient_key, &recipient.encrypted_key.decode()?)?;
 
-    let crypto_box = SodiumCryptoBox::new();
     Ok((
-        LocalKey::from_secret_bytes(
-            KeyAlg::Chacha20(Chacha20Types::C20P),
-            &crypto_box.sealedbox_decrypt(
-                &private_bytes,
-                &public_bytes,
-                &recipient.encrypted_key.decode()?,
-            )?,
-        )?,
+        LocalKey::from_secret_bytes(KeyAlg::Chacha20(Chacha20Types::C20P), &key)?,
         None,
     ))
 }

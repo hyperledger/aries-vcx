@@ -23,28 +23,8 @@ pub fn local_key_to_public_key(local_key: &LocalKey) -> VcxCoreResult<Key> {
     )?)
 }
 
-pub fn ed25519_to_x25519_pair(local_key: &LocalKey) -> VcxCoreResult<(Vec<u8>, Vec<u8>)> {
-    let key = local_key.convert_key(KeyAlg::X25519)?;
-    Ok((
-        key.to_secret_bytes()?.to_vec(),
-        key.to_public_bytes()?.to_vec(),
-    ))
-}
-
-pub fn ed25519_to_x25519_public(local_key: &LocalKey) -> VcxCoreResult<Vec<u8>> {
-    // local_key_to_public_key_bytes(&local_key.convert_key(KeyAlg::X25519)?)
-    Ok(local_key
-        .convert_key(KeyAlg::X25519)?
-        .to_public_bytes()?
-        .to_vec())
-}
-
-pub fn ed25519_to_x25519_private(local_key: &LocalKey) -> VcxCoreResult<Vec<u8>> {
-    // local_key_to_private_key_bytes(&local_key.convert_key(KeyAlg::X25519)?)
-    Ok(local_key
-        .convert_key(KeyAlg::X25519)?
-        .to_secret_bytes()?
-        .to_vec())
+pub fn ed25519_to_x25519(local_key: &LocalKey) -> VcxCoreResult<LocalKey> {
+    Ok(local_key.convert_key(KeyAlg::X25519)?)
 }
 
 pub fn seed_from_opt(maybe_seed: Option<&str>) -> String {

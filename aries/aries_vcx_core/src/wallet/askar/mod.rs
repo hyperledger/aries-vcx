@@ -12,7 +12,6 @@ use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResu
 mod askar_did_wallet;
 mod askar_record_wallet;
 mod askar_utils;
-mod crypto_box;
 mod entry;
 mod entry_tags;
 mod pack;

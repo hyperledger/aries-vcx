@@ -110,14 +110,15 @@ impl DidWallet for AskarWallet {
 
     async fn replace_did_key_apply(&self, did: &str) -> VcxCoreResult<()> {
         let mut tx = self.transaction().await?;
-        if let Some(did_data) = self.find_did(&mut tx, did, RecordCategory::TmpDid).await? {
+        if let Some(did_value) = self.find_did(&mut tx, did, RecordCategory::TmpDid).await? {
             tx.remove(&RecordCategory::TmpDid.to_string(), did).await?;
-            tx.remove_key(did).await?;
+            tx.remove_key(&did_from_key(did_value.verkey().clone()))
+                .await?;
             self.update_did(
                 &mut tx,
                 did,
                 &RecordCategory::Did.to_string(),
-                did_data.verkey(),
+                did_value.verkey(),
                 None,
             )
             .await?;

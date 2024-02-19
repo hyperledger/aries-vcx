@@ -135,20 +135,13 @@ jobs:
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
           sudo snap install --edge --classic just
       - name: "Verify clippy across the entire workspace with default features"
-<<<<<<< HEAD
         run: just clippy-aries-vcx ${{ matrix.backend }}
-=======
-        run: |
-          cargo clippy -p aries_vcx --features legacy_proof --features ${{ matrix.backend }} --no-default-features --tests
-        env:
-          RUSTFLAGS: -D warnings
->>>>>>> 68a21548f (address review comments)
 
   aries_vcx_core_clippy:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        backend: ["credx,vdrtools_wallet", "vdr_proxy_ledger", "askar_wallet"]
+        backend: ["credx,vdrtools_wallet", "vdr_proxy_ledger,askar_wallet"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -164,14 +157,7 @@ jobs:
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
           sudo snap install --edge --classic just
       - name: "Verify clippy across the entire workspace with default features"
-<<<<<<< HEAD
         run: just clippy-aries-vcx-core ${{ matrix.backend }}
-=======
-        run: |
-          cargo clippy -p aries_vcx_core --features legacy_proof,vdrtools_wallet --features ${{ matrix.backend }} --tests
-        env:
-          RUSTFLAGS: -D warnings
->>>>>>> 68a21548f (address review comments)
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
@@ -301,7 +287,9 @@ jobs:
           rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
           default: true
           skip-docker-setup: true
-      - name: "Run workspace unit tests"
+      - name: "Install just"
+        run: sudo snap install --edge --classic just
+      - name: "Run aries-vcx-core integration tests"
         run: just test-integration-aries-vcx-core ${{ matrix.wallet }}
 
   test-integration-aries-vcx:
