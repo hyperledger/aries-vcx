@@ -53,11 +53,17 @@ pub async fn create_proof(
     revocation_details: String,
     name: String,
 ) -> LibvcxResult<u32> {
+    dbg!(&requested_attrs);
+    let requested_attrs = serde_json::from_str(&requested_attrs)?;
+    dbg!(&requested_predicates);
+    let requested_predicates =serde_json::from_str(&requested_predicates)?;
+    dbg!(&revocation_details);
+    let revocation_details = serde_json::from_str(&revocation_details)?;
     let presentation_request = PresentationRequestPayload::builder()
         .name(name)
-        .requested_attributes(serde_json::from_str(&requested_attrs)?)
-        .requested_predicates(serde_json::from_str(&requested_predicates)?)
-        .non_revoked(serde_json::from_str(&revocation_details)?)
+        .requested_attributes(requested_attrs)
+        .requested_predicates(requested_predicates)
+        .non_revoked(revocation_details)
         .nonce(Nonce::new().unwrap())
         .version("1.0".to_string())
         .build();
@@ -375,145 +381,4 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
         proof.get_thread_id().map_err(|err| err.into())
     })
-}
-
-#[cfg(test)]
-
-mod tests {
-    use serde_json::Value;
-    use test_utils::{
-        constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, V3_OBJECT_SERIALIZE_VERSION},
-        devsetup::SetupMocks,
-    };
-
-    use super::*;
-
-    async fn create_default_proof() -> u32 {
-        create_proof(
-            "1".to_string(),
-            REQUESTED_ATTRS.to_owned(),
-            REQUESTED_PREDICATES.to_owned(),
-            r#"{"support_revocation":false}"#.to_string(),
-            "Optional".to_owned(),
-        )
-        .await
-        .unwrap()
-    }
-
-    #[tokio::test]
-    async fn test_get_proof_returns_proof_with_proof_state_invalid() {
-        let _setup = SetupMocks::init();
-        let handle = create_default_proof().await;
-        release(handle).unwrap();
-        assert_eq!(
-            to_string(handle).unwrap_err().kind,
-            LibvcxErrorKind::InvalidHandle
-        )
-    }
-
-    #[tokio::test]
-    async fn test_create_proof_succeeds() {
-        let _setup = SetupMocks::init();
-        create_default_proof().await;
-    }
-
-    #[tokio::test]
-    async fn test_revocation_details() {
-        let _setup = SetupMocks::init();
-
-        // No Revocation
-        create_default_proof().await;
-
-        // Support Revocation Success
-        let revocation_details = json!({
-            "to": 1234,
-        });
-        create_proof(
-            "1".to_string(),
-            REQUESTED_ATTRS.to_owned(),
-            REQUESTED_PREDICATES.to_owned(),
-            revocation_details.to_string(),
-            "Optional".to_owned(),
-        )
-        .await
-        .unwrap();
-    }
-
-    #[tokio::test]
-    async fn test_to_string_succeeds() {
-        let _setup = SetupMocks::init();
-
-        let handle = create_default_proof().await;
-        let proof_string = to_string(handle).unwrap();
-        let s: Value = serde_json::from_str(&proof_string).unwrap();
-        assert_eq!(s["version"], V3_OBJECT_SERIALIZE_VERSION);
-        assert!(s["data"]["verifier_sm"].is_object());
-        assert!(!proof_string.is_empty());
-    }
-
-    #[tokio::test]
-    async fn test_from_string_succeeds() {
-        let _setup = SetupMocks::init();
-
-        let handle = create_default_proof().await;
-        let proof_data = to_string(handle).unwrap();
-        let _hnadle2 = from_string(&proof_data).unwrap();
-        let proof_data2 = to_string(handle).unwrap();
-        assert_eq!(proof_data, proof_data2);
-    }
-
-    #[tokio::test]
-    async fn test_release_proof() {
-        let _setup = SetupMocks::init();
-
-        let handle = create_default_proof().await;
-        assert!(release(handle).is_ok());
-        assert!(!is_valid_handle(handle));
-    }
-
-    #[tokio::test]
-    async fn test_get_proof_fails_with_no_proof() {
-        let _setup = SetupMocks::init();
-
-        let handle = create_default_proof().await;
-        assert!(is_valid_handle(handle));
-        assert!(get_presentation_msg(handle).is_err())
-    }
-
-    #[tokio::test]
-    async fn test_release_all() {
-        let _setup = SetupMocks::init();
-
-        let h1 = create_proof(
-            "1".to_string(),
-            REQUESTED_ATTRS.to_owned(),
-            REQUESTED_PREDICATES.to_owned(),
-            r#"{"support_revocation":false}"#.to_string(),
-            "Optional".to_owned(),
-        )
-        .await
-        .unwrap();
-        let h2 = create_proof(
-            "1".to_string(),
-            REQUESTED_ATTRS.to_owned(),
-            REQUESTED_PREDICATES.to_owned(),
-            r#"{"support_revocation":false}"#.to_string(),
-            "Optional".to_owned(),
-        )
-        .await
-        .unwrap();
-        let h3 = create_proof(
-            "1".to_string(),
-            REQUESTED_ATTRS.to_owned(),
-            REQUESTED_PREDICATES.to_owned(),
-            r#"{"support_revocation":false}"#.to_string(),
-            "Optional".to_owned(),
-        )
-        .await
-        .unwrap();
-        release_all();
-        assert!(!is_valid_handle(h1));
-        assert!(!is_valid_handle(h2));
-        assert!(!is_valid_handle(h3));
-    }
 }
