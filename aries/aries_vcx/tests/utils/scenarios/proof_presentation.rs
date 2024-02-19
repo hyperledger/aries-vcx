@@ -115,7 +115,6 @@ pub async fn accept_proof_proposal(
         .name("request-1".into())
         .requested_attributes(attrs)
         .nonce(Nonce::new().unwrap())
-        .version("1.0".to_string())
         .build();
     verifier
         .set_presentation_request(presentation_request.into(), None)
@@ -158,7 +157,6 @@ pub async fn create_proof_request_data(
     PresentationRequestPayload::builder()
         .nonce(Nonce::new().unwrap())
         .name(request_name.unwrap_or("name").to_string())
-        .version("1.0".to_string())
         .requested_attributes(requested_attrs)
         .requested_predicates(requested_preds)
         .non_revoked(revocation_interval)

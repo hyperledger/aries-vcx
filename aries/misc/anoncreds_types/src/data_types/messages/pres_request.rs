@@ -21,7 +21,8 @@ use crate::{
 pub struct PresentationRequestPayload {
     pub nonce: Nonce,
     pub name: String,
-    pub version: String, // TODO: Should be enum
+    #[builder(default)]
+    pub version: PresentationRequestVersion,
     #[serde(default)]
     #[builder(default)]
     pub requested_attributes: HashMap<String, AttributeInfo>,
@@ -35,10 +36,9 @@ pub struct PresentationRequestPayload {
 
 impl From<PresentationRequestPayload> for PresentationRequest {
     fn from(value: PresentationRequestPayload) -> Self {
-        match value.version.as_str() {
-            "1.0" => Self::PresentationRequestV1(value),
-            "2.0" => Self::PresentationRequestV2(value),
-            _ => unreachable!("not really"),
+        match value.version {
+            PresentationRequestVersion::V1 => Self::PresentationRequestV1(value),
+            PresentationRequestVersion::V2 => Self::PresentationRequestV2(value),
         }
     }
 }
@@ -49,9 +49,12 @@ pub enum PresentationRequest {
     PresentationRequestV2(PresentationRequestPayload),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub enum PresentationRequestVersion {
+    #[default]
+    #[serde(rename = "1.0")]
     V1,
+    #[serde(rename = "2.0")]
     V2,
 }
 

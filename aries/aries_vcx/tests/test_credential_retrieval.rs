@@ -32,7 +32,6 @@ async fn test_agency_pool_retrieve_credentials_empty() -> Result<(), Box<dyn Err
     let setup = build_setup_profile().await;
     let pres_req_data = PresentationRequestPayload::builder()
         .name("proof_req_1".into())
-        .version("1.0".into())
         .nonce(Nonce::new().unwrap())
         .build();
 
@@ -66,7 +65,6 @@ async fn test_agency_pool_retrieve_credentials_empty() -> Result<(), Box<dyn Err
     // populate proof request with a single attribute referent request
     let pres_req_data = PresentationRequestPayload::builder()
         .name("proof_req_1".into())
-        .version("1.0".into())
         .requested_attributes(
             vec![(
                 "address1_1".into(),

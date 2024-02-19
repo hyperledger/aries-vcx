@@ -312,7 +312,6 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
         .requested_attributes(requested_attributes)
         .name(name)
         .nonce(Nonce::new()?)
-        .version("1.0".into())
         .build();
     let proof_req_json_str = serde_json::to_string(&proof_req_json)?;
 
@@ -381,7 +380,6 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
         .requested_attributes(requested_attributes)
         .name(name)
         .nonce(Nonce::new()?)
-        .version("1.0".into())
         .build();
     let proof_req_json_str = serde_json::to_string(&proof_req_json)?;
 
@@ -490,7 +488,6 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
         .requested_attributes(requested_attributes)
         .name(name)
         .nonce(Nonce::new()?)
-        .version("1.0".into())
         .build();
     let proof_req_json_str = serde_json::to_string(&proof_req_json)?;
 

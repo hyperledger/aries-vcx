@@ -62,7 +62,6 @@ pub async fn create_proof(
         .requested_predicates(requested_predicates)
         .non_revoked(revocation_details)
         .nonce(Nonce::new()?)
-        .version("1.0".to_string())
         .build();
     let verifier = Verifier::create_from_request(source_id, &presentation_request.into())?;
     PROOF_MAP.add(verifier)
