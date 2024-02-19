@@ -2,11 +2,12 @@
 
 use std::{collections::HashMap, error::Error};
 
-use anoncreds_types::data_types::messages::cred_selection::RetrievedCredentials;
-use aries_vcx::{
-    common::proofs::proof_request::PresentationRequestData,
-    handlers::{proof_presentation::prover::Prover, util::AttachmentId},
+use anoncreds_types::data_types::messages::{
+    cred_selection::RetrievedCredentials,
+    nonce::Nonce,
+    pres_request::{AttributeInfo, PresentationRequest, PresentationRequestPayload},
 };
+use aries_vcx::handlers::{proof_presentation::prover::Prover, util::AttachmentId};
 use base64::{engine::general_purpose, Engine};
 use messages::{
     decorators::attachment::{Attachment, AttachmentData, AttachmentType},
@@ -29,14 +30,11 @@ pub mod utils;
 // TODO: This should be a unit test
 async fn test_agency_pool_retrieve_credentials_empty() -> Result<(), Box<dyn Error>> {
     let setup = build_setup_profile().await;
-    let pres_req_data = PresentationRequestData {
-        nonce: "123432421212".into(),
-        name: "proof_req_1".into(),
-        data_version: "0.1".into(),
-        requested_attributes: serde_json::from_value(json!({}))?,
-        requested_predicates: serde_json::from_value(json!({}))?,
-        non_revoked: None,
-    };
+    let pres_req_data = PresentationRequestPayload::builder()
+        .name("proof_req_1".into())
+        .version("1.0".into())
+        .nonce(Nonce::new().unwrap())
+        .build();
 
     let attach_type =
         AttachmentType::Base64(general_purpose::STANDARD.encode(json!(pres_req_data).to_string()));
@@ -66,16 +64,22 @@ async fn test_agency_pool_retrieve_credentials_empty() -> Result<(), Box<dyn Err
     assert!(retrieved_creds.credentials_by_referent.is_empty());
 
     // populate proof request with a single attribute referent request
-    let pres_req_data = PresentationRequestData {
-        nonce: "123432421212".into(),
-        name: "proof_req_1".into(),
-        data_version: "0.1".into(),
-        requested_attributes: serde_json::from_value(
-            json!({ "address1_1": {"name": "address1"} }),
-        )?,
-        requested_predicates: serde_json::from_value(json!({}))?,
-        non_revoked: None,
-    };
+    let pres_req_data = PresentationRequestPayload::builder()
+        .name("proof_req_1".into())
+        .version("1.0".into())
+        .requested_attributes(
+            vec![(
+                "address1_1".into(),
+                AttributeInfo {
+                    name: Some("address1".into()),
+                    ..Default::default()
+                },
+            )]
+            .into_iter()
+            .collect(),
+        )
+        .nonce(Nonce::new().unwrap())
+        .build();
 
     let attach_type =
         AttachmentType::Base64(general_purpose::STANDARD.encode(json!(pres_req_data).to_string()));
@@ -163,7 +167,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds(
        "requested_predicates": json!({}),
     });
 
-    let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string())?;
+    let pres_req_data: PresentationRequest = serde_json::from_str(&req.to_string())?;
     let id = "test_id".to_owned();
 
     let attach_type =
@@ -198,7 +202,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds(
 
     // First letter upper
     req["requested_attributes"]["zip_1"]["name"] = json!("Zip");
-    let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string())?;
+    let pres_req_data: PresentationRequest = serde_json::from_str(&req.to_string())?;
     let id = "test_id".to_owned();
 
     let attach_type =
@@ -231,7 +235,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds(
 
     // Entire word upper
     req["requested_attributes"]["zip_1"]["name"] = json!("ZIP");
-    let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string())?;
+    let pres_req_data: PresentationRequest = serde_json::from_str(&req.to_string())?;
     let id = "test_id".to_owned();
 
     let attach_type =
