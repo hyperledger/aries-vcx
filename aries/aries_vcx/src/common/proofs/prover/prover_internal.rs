@@ -386,7 +386,6 @@ pub mod unit_tests {
         assert!(!credential_def.is_empty());
         assert_eq!(
             credential_def.get(&cred_def_id()).unwrap().schema_id,
-            // schema_id()
             SchemaId::new_unchecked("47")
         );
         assert_eq!(

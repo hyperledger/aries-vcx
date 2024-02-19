@@ -22,6 +22,7 @@ pub enum ErrorKind {
     InvalidUserRevocId,
     ProofRejected,
     RevocationRegistryFull,
+    ConversionError,
 }
 
 impl ErrorKind {
@@ -36,6 +37,7 @@ impl ErrorKind {
             Self::InvalidUserRevocId => "Invalid revocation accumulator index",
             Self::ProofRejected => "Proof rejected",
             Self::RevocationRegistryFull => "Revocation registry full",
+            Self::ConversionError => "Conversion error",
         }
     }
 }

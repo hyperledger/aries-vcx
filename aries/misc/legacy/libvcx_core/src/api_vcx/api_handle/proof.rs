@@ -53,18 +53,15 @@ pub async fn create_proof(
     revocation_details: String,
     name: String,
 ) -> LibvcxResult<u32> {
-    dbg!(&requested_attrs);
     let requested_attrs = serde_json::from_str(&requested_attrs)?;
-    dbg!(&requested_predicates);
     let requested_predicates = serde_json::from_str(&requested_predicates)?;
-    dbg!(&revocation_details);
     let revocation_details = serde_json::from_str(&revocation_details)?;
     let presentation_request = PresentationRequestPayload::builder()
         .name(name)
         .requested_attributes(requested_attrs)
         .requested_predicates(requested_predicates)
         .non_revoked(revocation_details)
-        .nonce(Nonce::new().unwrap())
+        .nonce(Nonce::new()?)
         .version("1.0".to_string())
         .build();
     let verifier = Verifier::create_from_request(source_id, &presentation_request.into())?;
