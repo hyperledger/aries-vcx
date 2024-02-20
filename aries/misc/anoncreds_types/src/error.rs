@@ -332,18 +332,6 @@ define_error!(
 );
 
 define_error!(
-    EncryptionError,
-    "Encryption error",
-    "Error type for failure of encryption and decryption operations"
-);
-
-define_error!(
-    UnexpectedError,
-    "Unexpected error",
-    "Error type for eventualities that shouldn't normally occur"
-);
-
-define_error!(
     ValidationError,
     "Validation error",
     "Error type for failures of `Validatable::validate`"
@@ -378,24 +366,6 @@ impl From<ValidationError> for ConversionError {
 
 impl From<ConversionError> for ValidationError {
     fn from(err: ConversionError) -> Self {
-        Self {
-            context: err.context,
-            source: err.source,
-        }
-    }
-}
-
-impl From<UnexpectedError> for ConversionError {
-    fn from(err: UnexpectedError) -> Self {
-        Self {
-            context: err.context,
-            source: err.source,
-        }
-    }
-}
-
-impl From<UnexpectedError> for EncryptionError {
-    fn from(err: UnexpectedError) -> Self {
         Self {
             context: err.context,
             source: err.source,
