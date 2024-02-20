@@ -15,14 +15,6 @@ use crate::{
     utils::serialization::ObjectWithVersion,
 };
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct SchemaData {
-    pub name: String,
-    pub version: String,
-    #[serde(rename = "attrNames")]
-    pub attr_names: Vec<String>,
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Schema {
     pub data: Vec<String>,
