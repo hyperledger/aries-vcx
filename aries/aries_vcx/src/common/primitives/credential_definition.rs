@@ -79,14 +79,6 @@ pub struct CredentialDefConfig {
     tag: String,
 }
 
-#[derive(Clone, Deserialize, Debug, Serialize, Builder, Default)]
-#[builder(setter(into, strip_option), default)]
-pub struct RevocationDetails {
-    pub support_revocation: Option<bool>,
-    pub tails_dir: Option<String>,
-    pub max_creds: Option<u32>,
-}
-
 async fn _try_get_cred_def_from_ledger(
     ledger: &impl AnoncredsLedgerRead,
     issuer_did: &Did,
