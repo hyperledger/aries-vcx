@@ -7,7 +7,6 @@ use crate::{
     data_types::identifiers::{
         cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
     },
-    error::ConversionError,
     utils::validation::Validatable,
 };
 
@@ -20,12 +19,15 @@ pub enum RegistryType {
 }
 
 impl FromStr for RegistryType {
-    type Err = ConversionError;
+    type Err = crate::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             CL_ACCUM => Ok(Self::CL_ACCUM),
-            _ => Err(ConversionError::from_msg("Invalid registry type")),
+            _ => Err(crate::Error::from_msg(
+                crate::ErrorKind::ConversionError,
+                "Invalid registry type",
+            )),
         }
     }
 }

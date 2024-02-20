@@ -126,12 +126,6 @@ impl From<ErrorKind> for Error {
     }
 }
 
-impl From<ConversionError> for Error {
-    fn from(err: ConversionError) -> Self {
-        Self::from_opt_msg(ErrorKind::Input, err.context)
-    }
-}
-
 impl From<ValidationError> for Error {
     fn from(err: ValidationError) -> Self {
         Self::from_opt_msg(ErrorKind::Input, err.context)
@@ -326,49 +320,7 @@ macro_rules! define_error {
 }
 
 define_error!(
-    ConversionError,
-    "Conversion error",
-    "Error type for general data conversion errors"
-);
-
-define_error!(
     ValidationError,
     "Validation error",
     "Error type for failures of `Validatable::validate`"
 );
-
-impl From<serde_json::error::Error> for ConversionError {
-    fn from(err: serde_json::error::Error) -> Self {
-        Self::from_msg(err.to_string())
-    }
-}
-
-impl From<std::str::Utf8Error> for ConversionError {
-    fn from(_err: std::str::Utf8Error) -> Self {
-        Self::from("UTF-8 decoding error")
-    }
-}
-
-impl From<std::string::FromUtf8Error> for ConversionError {
-    fn from(_err: std::string::FromUtf8Error) -> Self {
-        Self::from("UTF-8 decoding error")
-    }
-}
-
-impl From<ValidationError> for ConversionError {
-    fn from(err: ValidationError) -> Self {
-        Self {
-            context: err.context,
-            source: err.source,
-        }
-    }
-}
-
-impl From<ConversionError> for ValidationError {
-    fn from(err: ConversionError) -> Self {
-        Self {
-            context: err.context,
-            source: err.source,
-        }
-    }
-}
