@@ -5,7 +5,6 @@ use aries_vcx_core::{
 };
 use time::OffsetDateTime;
 
-use super::primitives::revocation_registry_delta::RevocationRegistryDelta;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 pub mod encoding;
@@ -28,11 +27,8 @@ pub async fn is_cred_revoked(
     rev_id: u32,
 ) -> VcxResult<bool> {
     let to = Some(OffsetDateTime::now_utc().unix_timestamp() as u64 + 100);
-    let (rev_reg_delta_json, _) = ledger
+    let (rev_reg_delta, _) = ledger
         .get_rev_reg_delta_json(&rev_reg_id.try_into()?, None, to)
         .await?;
-    let rev_reg_delta =
-        RevocationRegistryDelta::create_from_ledger(&serde_json::to_string(&rev_reg_delta_json)?)
-            .await?;
-    Ok(rev_reg_delta.revoked().iter().any(|s| s.eq(&rev_id)))
+    Ok(rev_reg_delta.value.revoked.iter().any(|s| s.eq(&rev_id)))
 }
