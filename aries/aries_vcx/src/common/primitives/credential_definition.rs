@@ -70,15 +70,6 @@ pub struct CredentialDef {
     pub state: PublicEntityStateType,
 }
 
-// TODO: There are multiple structs with similar name and purpose.
-#[derive(Clone, Debug, Deserialize, Serialize, Builder, Default)]
-#[builder(setter(into), default)]
-pub struct CredentialDefConfig {
-    issuer_did: Did,
-    schema_id: SchemaId,
-    tag: String,
-}
-
 async fn _try_get_cred_def_from_ledger(
     ledger: &impl AnoncredsLedgerRead,
     issuer_did: &Did,
@@ -96,25 +87,20 @@ async fn _try_get_cred_def_from_ledger(
         )),
     }
 }
+
 impl CredentialDef {
+    #[allow(clippy::too_many_arguments)]
     pub async fn create(
         wallet: &impl BaseWallet,
         ledger_read: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
         source_id: String,
-        config: CredentialDefConfig,
+        issuer_did: Did,
+        schema_id: SchemaId,
+        tag: String,
         support_revocation: bool,
     ) -> VcxResult<Self> {
-        trace!(
-            "CredentialDef::create >>> source_id: {}, config: {:?}",
-            source_id,
-            config
-        );
-        let CredentialDefConfig {
-            issuer_did,
-            schema_id,
-            tag,
-        } = config;
+        trace!("CredentialDef::create >>> source_id: {}", source_id);
         let schema_json = ledger_read
             .get_schema(&schema_id, Some(&issuer_did))
             .await?;

@@ -9,8 +9,7 @@ use aries_vcx::{
     common::{
         credentials::encoding::encode_attributes,
         primitives::{
-            credential_definition::{CredentialDef, CredentialDefConfigBuilder},
-            credential_schema::Schema,
+            credential_definition::CredentialDef, credential_schema::Schema,
             revocation_registry::RevocationRegistry,
         },
     },
@@ -66,12 +65,9 @@ pub async fn create_and_write_test_cred_def(
         ledger_read,
         anoncreds,
         "1".to_string(),
-        CredentialDefConfigBuilder::default()
-            .issuer_did(issuer_did.clone())
-            .schema_id(schema_id.clone())
-            .tag("1")
-            .build()
-            .unwrap(),
+        issuer_did.clone(),
+        schema_id.clone(),
+        "1".to_string(),
         revokable,
     )
     .await

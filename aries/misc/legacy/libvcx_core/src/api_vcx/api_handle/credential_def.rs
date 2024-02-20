@@ -1,9 +1,7 @@
 use anoncreds_types::data_types::identifiers::{
     cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
 };
-use aries_vcx::common::primitives::credential_definition::{
-    CredentialDef, CredentialDefConfigBuilder, PublicEntityStateType,
-};
+use aries_vcx::common::primitives::credential_definition::{CredentialDef, PublicEntityStateType};
 
 use crate::{
     api_vcx::{
@@ -27,27 +25,14 @@ pub async fn create(
     tag: String,
     support_revocation: bool,
 ) -> LibvcxResult<u32> {
-    let config = CredentialDefConfigBuilder::default()
-        .issuer_did(did_parser::Did::parse(issuer_did)?)
-        .schema_id(SchemaId::new(schema_id)?)
-        .tag(tag)
-        .build()
-        .map_err(|err| {
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidConfiguration,
-                format!(
-                    "Failed build credential config using provided parameters: {:?}",
-                    err
-                ),
-            )
-        })?;
-
     let cred_def = CredentialDef::create(
         get_main_wallet()?.as_ref(),
         get_main_ledger_read()?.as_ref(),
         get_main_anoncreds()?.as_ref(),
         source_id,
-        config,
+        did_parser::Did::parse(issuer_did)?,
+        SchemaId::new(schema_id)?,
+        tag,
         support_revocation,
     )
     .await?;
