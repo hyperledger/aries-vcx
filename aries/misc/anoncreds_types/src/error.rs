@@ -4,8 +4,6 @@ use std::{
     result::Result as StdResult,
 };
 
-use thiserror::Error;
-
 use crate::cl::{Error as CryptoError, ErrorKind as CryptoErrorKind};
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -23,6 +21,7 @@ pub enum ErrorKind {
     ProofRejected,
     RevocationRegistryFull,
     ConversionError,
+    ValidationError,
 }
 
 impl ErrorKind {
@@ -38,6 +37,7 @@ impl ErrorKind {
             Self::ProofRejected => "Proof rejected",
             Self::RevocationRegistryFull => "Revocation registry full",
             Self::ConversionError => "Conversion error",
+            Self::ValidationError => "Validation error",
         }
     }
 }
@@ -123,12 +123,6 @@ impl From<ErrorKind> for Error {
             cause: None,
             message: None,
         }
-    }
-}
-
-impl From<ValidationError> for Error {
-    fn from(err: ValidationError) -> Self {
-        Self::from_opt_msg(ErrorKind::Input, err.context)
     }
 }
 
@@ -225,102 +219,3 @@ where
         self.map_err(|err| Error::from_msg(ErrorKind::Input, msg.to_string()).with_cause(err))
     }
 }
-
-type DynError = Box<dyn StdError + Send + Sync + 'static>;
-
-macro_rules! define_error {
-    ($name:tt, $short:expr, $doc:tt) => {
-        #[derive(Debug, Error)]
-        #[doc=$doc]
-        pub struct $name {
-            pub context: Option<String>,
-            pub source: Option<DynError>,
-        }
-
-        impl $name {
-            pub fn from_msg<T: Into<String>>(msg: T) -> Self {
-                Self::from(msg.into())
-            }
-
-            pub fn from_err<E>(err: E) -> Self
-            where
-                E: StdError + Send + Sync + 'static,
-            {
-                Self {
-                    context: None,
-                    source: Some(Box::new(err) as DynError),
-                }
-            }
-
-            pub fn from_msg_err<M, E>(msg: M, err: E) -> Self
-            where
-                M: Into<String>,
-                E: StdError + Send + Sync + 'static,
-            {
-                Self {
-                    context: Some(msg.into()),
-                    source: Some(Box::new(err) as DynError),
-                }
-            }
-        }
-
-        impl From<&str> for $name {
-            fn from(context: &str) -> Self {
-                Self {
-                    context: Some(context.to_owned()),
-                    source: None,
-                }
-            }
-        }
-
-        impl From<String> for $name {
-            fn from(context: String) -> Self {
-                Self {
-                    context: Some(context),
-                    source: None,
-                }
-            }
-        }
-
-        impl From<Option<String>> for $name {
-            fn from(context: Option<String>) -> Self {
-                Self {
-                    context,
-                    source: None,
-                }
-            }
-        }
-
-        impl<M, E> From<(M, E)> for $name
-        where
-            M: Into<String>,
-            E: StdError + Send + Sync + 'static,
-        {
-            fn from((context, err): (M, E)) -> Self {
-                Self::from_msg_err(context, err)
-            }
-        }
-
-        impl From<$name> for String {
-            fn from(s: $name) -> Self {
-                s.to_string()
-            }
-        }
-
-        impl std::fmt::Display for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                write!(f, $short)?;
-                match self.context {
-                    Some(ref context) => write!(f, ": {}", context),
-                    None => Ok(()),
-                }
-            }
-        }
-    };
-}
-
-define_error!(
-    ValidationError,
-    "Validation error",
-    "Error type for failures of `Validatable::validate`"
-);
