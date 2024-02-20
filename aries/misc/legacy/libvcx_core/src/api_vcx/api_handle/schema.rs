@@ -5,9 +5,7 @@ use serde_json;
 
 use crate::{
     api_vcx::{
-        api_global::profile::{
-            get_main_anoncreds, get_main_ledger_read, get_main_ledger_write, get_main_wallet,
-        },
+        api_global::profile::{get_main_anoncreds, get_main_ledger_write, get_main_wallet},
         api_handle::object_cache::ObjectCache,
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -99,15 +97,6 @@ pub fn release(handle: u32) -> LibvcxResult<()> {
 
 pub fn release_all() {
     SCHEMA_MAP.drain().ok();
-}
-
-pub async fn update_state(schema_handle: u32) -> LibvcxResult<u32> {
-    let mut schema = SCHEMA_MAP.get_cloned(schema_handle)?;
-    let res = schema
-        .update_state(get_main_ledger_read()?.as_ref())
-        .await?;
-    SCHEMA_MAP.insert(schema_handle, schema)?;
-    Ok(res)
 }
 
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {

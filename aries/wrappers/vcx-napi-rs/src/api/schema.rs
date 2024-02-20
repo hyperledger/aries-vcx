@@ -47,13 +47,6 @@ fn schema_release(handle_schema: u32) -> napi::Result<()> {
 }
 
 #[napi]
-async fn schema_update_state(handle_schema: u32) -> napi::Result<u32> {
-    schema::update_state(handle_schema)
-        .await
-        .map_err(to_napi_err)
-}
-
-#[napi]
 fn schema_get_state(handle_schema: u32) -> napi::Result<u32> {
     schema::get_state(handle_schema).map_err(to_napi_err)
 }

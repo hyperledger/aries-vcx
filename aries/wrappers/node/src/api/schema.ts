@@ -114,14 +114,6 @@ export class Schema extends VcxBase<ISchemaSerializedData> {
     this._schemaAttrs = schemaAttrs;
   }
 
-  public async updateState(): Promise<void> {
-    try {
-      await ffi.schemaUpdateState(this.handle);
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
-  }
-
   public getState(): SchemaState {
     try {
       return ffi.schemaGetState(this.handle);
