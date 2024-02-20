@@ -80,7 +80,7 @@ impl CredentialRequest {
             || {
                 self.prover_did
                     .clone()
-                    .ok_or_else(|| err_msg!("Entropy or prover did must be supplied"))
+                    .ok_or_else(|| crate::error::Error::from(crate::error::ErrorKind::Input))
             },
             Result::Ok,
         )
