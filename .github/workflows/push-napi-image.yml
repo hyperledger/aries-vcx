@@ -1,0 +1,27 @@
+name: Build and push napi image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-type:
+        description: 'Docker image type'
+        required: true
+        type: choice
+        options:
+          - alpine
+          - debian
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Build image"
+        run: |
+          docker build -f aries/wrappers/vcx-napi-rs/${{ inputs.image-type }}.Dockerfile .
+      - name: "Push image to ghcr.io"
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: napi-rs-${{ inputs.image-type }}
+          publish-version: latest
