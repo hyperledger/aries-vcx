@@ -1,5 +1,6 @@
 use std::sync::Arc;
-
+use display_as_json::Display;
+use serde::Serialize;
 use aries_vcx::{
     common::ledger::{
         service_didsov::{DidSovServiceType, EndpointDidSov},
@@ -37,17 +38,19 @@ use crate::{
     },
 };
 
+#[derive(Serialize, Display)]
 pub struct WalletInitConfig {
     pub wallet_name: String,
     pub wallet_key: String,
     pub wallet_kdf: String,
 }
 
+#[derive(Serialize, Display)]
 pub struct PoolInitConfig {
     pub genesis_path: String,
     pub pool_name: String,
 }
-
+#[derive(Serialize, Display)]
 pub struct InitConfig {
     pub enterprise_seed: String,
     pub pool_config: PoolInitConfig,

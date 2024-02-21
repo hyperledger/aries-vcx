@@ -391,6 +391,7 @@ dependencies = [
  "did_peer",
  "did_resolver_registry",
  "did_resolver_sov",
+ "display_as_json",
  "log",
  "public_key",
  "serde",
