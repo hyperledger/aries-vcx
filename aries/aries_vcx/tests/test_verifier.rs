@@ -205,24 +205,14 @@ async fn create_proof_with_predicate(
             )]
             .into_iter()
             .collect(),
-            requested_attributes: vec![
-                (
-                    "address1_1".to_string(),
-                    RequestedAttribute {
-                        cred_id: cred_id.clone(),
-                        timestamp: None,
-                        revealed: true,
-                    },
-                ),
-                (
-                    "zip_2".to_string(),
-                    RequestedAttribute {
-                        cred_id: cred_id.clone(),
-                        timestamp: None,
-                        revealed: false,
-                    },
-                ),
-            ]
+            requested_attributes: vec![(
+                "address1_1".to_string(),
+                RequestedAttribute {
+                    cred_id: cred_id.clone(),
+                    timestamp: None,
+                    revealed: true,
+                },
+            )]
             .into_iter()
             .collect(),
             requested_predicates: vec![(
@@ -243,24 +233,14 @@ async fn create_proof_with_predicate(
             )]
             .into_iter()
             .collect(),
-            requested_attributes: vec![
-                (
-                    "address1_1".to_string(),
-                    RequestedAttribute {
-                        cred_id: cred_id.clone(),
-                        timestamp: None,
-                        revealed: true,
-                    },
-                ),
-                (
-                    "zip_2".to_string(),
-                    RequestedAttribute {
-                        cred_id: cred_id.clone(),
-                        timestamp: None,
-                        revealed: false,
-                    },
-                ),
-            ]
+            requested_attributes: vec![(
+                "address1_1".to_string(),
+                RequestedAttribute {
+                    cred_id: cred_id.clone(),
+                    timestamp: None,
+                    revealed: true,
+                },
+            )]
             .into_iter()
             .collect(),
             requested_predicates: Default::default(),
