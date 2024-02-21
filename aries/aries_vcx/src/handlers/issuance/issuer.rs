@@ -43,7 +43,6 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
         "Issuer::_build_credential_preview >>> credential_json: {:?}",
         secret!(credential_json)
     );
-
     let cred_values: serde_json::Value = serde_json::from_str(credential_json).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,

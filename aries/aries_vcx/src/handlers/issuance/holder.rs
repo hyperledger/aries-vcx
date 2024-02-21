@@ -64,6 +64,10 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
+    pub fn get_proposal(&self) -> VcxResult<ProposeCredentialV1> {
+        self.holder_sm.get_proposal()
+    }
+
     pub fn create_with_proposal(
         source_id: &str,
         propose_credential: ProposeCredentialV1,

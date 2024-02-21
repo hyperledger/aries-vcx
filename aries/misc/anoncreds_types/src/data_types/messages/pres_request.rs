@@ -29,7 +29,6 @@ pub struct PresentationRequestPayload {
     #[serde(default)]
     #[builder(default)]
     pub requested_predicates: HashMap<String, PredicateInfo>,
-    #[builder(setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default)]
     pub non_revoked: Option<NonRevokedInterval>,

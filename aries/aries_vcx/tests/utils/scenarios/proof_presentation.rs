@@ -159,7 +159,7 @@ pub async fn create_proof_request_data(
         .name(request_name.unwrap_or("name").to_string())
         .requested_attributes(requested_attrs)
         .requested_predicates(requested_preds)
-        .non_revoked(revocation_interval)
+        .non_revoked(Some(revocation_interval))
         .build()
         .into()
 }
