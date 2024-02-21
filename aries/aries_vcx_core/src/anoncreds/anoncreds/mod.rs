@@ -241,7 +241,7 @@ impl Anoncreds {
     async fn _get_credentials_for_proof_req_for_attr_name(
         &self,
         wallet: &impl BaseWallet,
-        restrictions: Option<&Value>,
+        restrictions: Option<Value>,
         attr_names: Vec<String>,
     ) -> VcxCoreResult<Vec<(String, Credential)>> {
         let mut attrs = Vec::new();
@@ -873,81 +873,61 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         proof_request_json: PresentationRequest,
     ) -> VcxCoreResult<RetrievedCredentials> {
-        let proof_req_v: Value = serde_json::to_value(proof_request_json).map_err(|e| {
-            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidProofRequest, e)
-        })?;
-
-        let requested_attributes = proof_req_v.get("requested_attributes");
-        let requested_attributes = if let Some(requested_attributes) = requested_attributes {
-            Some(requested_attributes.try_as_object()?.clone())
-        } else {
-            None
-        };
-        let requested_predicates = proof_req_v.get("requested_predicates");
-        let requested_predicates = if let Some(requested_predicates) = requested_predicates {
-            Some(requested_predicates.try_as_object()?.clone())
-        } else {
-            None
-        };
-
-        // handle special case of "empty because json is bad" vs "empty because no attributes
-        // sepected"
-        if requested_attributes.is_none() && requested_predicates.is_none() {
-            return Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidAttributesStructure,
-                "Invalid Json Parsing of Requested Attributes Retrieved From Libindy",
-            ));
-        }
+        let requested_attributes = &proof_request_json.value().requested_attributes;
+        let requested_predicates = &proof_request_json.value().requested_predicates;
 
         let mut referents: HashSet<String> = HashSet::new();
-        if let Some(requested_attributes) = &requested_attributes {
-            requested_attributes.iter().for_each(|(k, _)| {
-                referents.insert(k.to_string());
-            })
-        };
-        if let Some(requested_predicates) = &requested_predicates {
-            requested_predicates.iter().for_each(|(k, _)| {
-                referents.insert(k.to_string());
-            });
-        }
+        requested_attributes.iter().for_each(|(k, _)| {
+            referents.insert(k.to_string());
+        });
+
+        requested_predicates.iter().for_each(|(k, _)| {
+            referents.insert(k.to_string());
+        });
 
         let mut cred_by_attr: Value = json!({});
 
         for reft in referents {
-            let requested_val = requested_attributes
-                .as_ref()
-                .and_then(|req_attrs| req_attrs.get(&reft))
-                .or_else(|| {
-                    requested_predicates
-                        .as_ref()
-                        .and_then(|req_preds| req_preds.get(&reft))
-                })
-                .ok_or(AriesVcxCoreError::from_msg(
-                    // should not happen
-                    AriesVcxCoreErrorKind::InvalidState,
-                    format!("Unknown referent: {}", reft),
-                ))?;
-
-            let name = requested_val.get("name");
-            let names = requested_val.get("names").and_then(|v| v.as_array());
-
-            let attr_names = match (name, names) {
-                (Some(name), None) => vec![_normalize_attr_name(name.try_as_str()?)],
-                (None, Some(names)) => names
-                    .iter()
-                    .map(|v| v.try_as_str().map(_normalize_attr_name))
-                    .collect::<Result<_, _>>()?,
-                _ => Err(AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::InvalidInput,
-                    "exactly one of 'name' or 'names' must be present",
-                ))?,
+            let (names, non_revoked, restrictions) = match requested_attributes.get(&reft) {
+                Some(attribute_info) => {
+                    let attr_names = match (
+                        attribute_info.name.to_owned(),
+                        attribute_info.names.to_owned(),
+                    ) {
+                        (Some(name), None) => vec![_normalize_attr_name(&name)],
+                        (None, Some(names)) => {
+                            names.iter().map(_normalize_attr_name).collect::<Vec<_>>()
+                        }
+                        _ => Err(AriesVcxCoreError::from_msg(
+                            AriesVcxCoreErrorKind::InvalidInput,
+                            "exactly one of 'name' or 'names' must be present",
+                        ))?,
+                    };
+                    (
+                        attr_names,
+                        attribute_info.non_revoked.to_owned(),
+                        attribute_info.restrictions.to_owned(),
+                    )
+                }
+                None => match requested_predicates.get(&reft) {
+                    Some(requested_val) => (
+                        vec![requested_val.name.to_owned()],
+                        requested_val.non_revoked.to_owned(),
+                        requested_val.restrictions.to_owned(),
+                    ),
+                    None => Err(AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::InvalidProofRequest,
+                        "Requested attribute or predicate not found in proof request",
+                    ))?,
+                },
             };
 
-            let non_revoked = requested_val.get("non_revoked"); // note that aca-py askar fetches from proof_req json
-            let restrictions = requested_val.get("restrictions");
-
             let credx_creds = self
-                ._get_credentials_for_proof_req_for_attr_name(wallet, restrictions, attr_names)
+                ._get_credentials_for_proof_req_for_attr_name(
+                    wallet,
+                    restrictions.map(serde_json::to_value).transpose()?,
+                    names,
+                )
                 .await?;
 
             let mut credentials_json = vec![];
@@ -1375,7 +1355,7 @@ fn get_rev_state(
     Ok((timestamp, rev_state))
 }
 
-fn _normalize_attr_name(name: &str) -> String {
+fn _normalize_attr_name(name: &String) -> String {
     // "name": string, // attribute name, (case insensitive and ignore spaces)
     name.replace(' ', "").to_lowercase()
 }
