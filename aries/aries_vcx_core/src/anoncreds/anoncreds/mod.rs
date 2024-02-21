@@ -198,20 +198,6 @@ impl Anoncreds {
         Ok(ms_decimal.value().try_into().unwrap())
     }
 
-    async fn _get_credential(
-        &self,
-        wallet: &impl BaseWallet,
-        credential_id: &str,
-    ) -> VcxCoreResult<Credential> {
-        let cred_record = wallet
-            .get_record(RecordCategory::Cred, credential_id)
-            .await?;
-
-        let credential: Credential = serde_json::from_str(cred_record.value())?;
-
-        Ok(credential)
-    }
-
     async fn _get_credentials(
         wallet: &impl BaseWallet,
         wql: &str,
@@ -739,7 +725,9 @@ impl BaseAnonCreds for Anoncreds {
                 // mapping made for this credential already, add reft and its revealed status
                 req_attr_refts_revealed.push((reft.to_string(), revealed));
             } else {
-                let credential = self._get_credential(wallet, cred_id).await?;
+                let credential = self
+                    .get_wallet_record_value(wallet, RecordCategory::Cred, cred_id)
+                    .await?;
 
                 let (timestamp, rev_state) = get_rev_state(
                     cred_id,
@@ -769,7 +757,9 @@ impl BaseAnonCreds for Anoncreds {
                 // mapping made for this credential already, add reft
                 req_preds_refts.push(reft.to_string());
             } else {
-                let credential = self._get_credential(wallet, cred_id).await?;
+                let credential = self
+                    .get_wallet_record_value(wallet, RecordCategory::Cred, cred_id)
+                    .await?;
 
                 let (timestamp, rev_state) = get_rev_state(
                     cred_id,
@@ -829,7 +819,9 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         cred_id: &CredentialId,
     ) -> VcxCoreResult<RetrievedCredentialInfo> {
-        let cred = self._get_credential(wallet, cred_id).await?;
+        let cred = self
+            .get_wallet_record_value(wallet, RecordCategory::Cred, cred_id)
+            .await?;
         _make_cred_info(cred_id, &cred)
     }
 
