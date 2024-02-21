@@ -53,7 +53,7 @@ pub async fn generate_indy_proof(
         .prover_create_proof(
             wallet,
             proof_req_data_json,
-            &serde_json::to_string(&requested_credentials)?,
+            requested_credentials,
             &settings::DEFAULT_LINK_SECRET_ALIAS.to_string(),
             schemas_json,
             credential_defs_json,

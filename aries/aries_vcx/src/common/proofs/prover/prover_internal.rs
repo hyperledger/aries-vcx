@@ -689,7 +689,7 @@ pub mod unit_tests {
             &proof_req,
         )
         .unwrap();
-        assert_eq!(test.to_string(), serde_json::to_string(&requested_credential).unwrap());
+        assert_eq!(test, serde_json::to_value(requested_credential).unwrap());
     }
 
     #[tokio::test]

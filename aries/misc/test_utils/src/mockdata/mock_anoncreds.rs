@@ -20,7 +20,7 @@ use anoncreds_types::data_types::{
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
-        presentation::Presentation,
+        presentation::{Presentation, RequestedCredentials},
         revocation_state::CredentialRevocationState,
     },
 };
@@ -121,7 +121,7 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         __wallet: &impl BaseWallet,
         _proof_req_json: PresentationRequest,
-        _requested_credentials_json: &str,
+        _requested_credentials_json: RequestedCredentials,
         _link_secret_id: &LinkSecretId,
         _schemas_json: SchemasMap,
         _credential_defs_json: CredentialDefinitionsMap,

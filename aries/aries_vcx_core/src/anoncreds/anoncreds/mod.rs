@@ -54,7 +54,7 @@ use anoncreds_types::data_types::{
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
-        presentation::Presentation,
+        presentation::{Presentation, RequestedCredentials},
         revocation_state::CredentialRevocationState,
     },
 };
@@ -73,10 +73,7 @@ use super::base_anoncreds::{
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    utils::{
-        constants::ATTRS,
-        json::{AsTypeOrDeserializationError, TryGetIndex},
-    },
+    utils::constants::ATTRS,
     wallet::base_wallet::{
         record::Record, record_category::RecordCategory, search_filter::SearchFilter, BaseWallet,
     },
@@ -701,7 +698,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         proof_req_json: PresentationRequest,
-        requested_credentials_json: &str,
+        requested_credentials_json: RequestedCredentials,
         link_secret_id: &LinkSecretId,
         schemas_json: SchemasMap,
         credential_defs_json: CredentialDefinitionsMap,
@@ -709,11 +706,9 @@ impl BaseAnonCreds for Anoncreds {
     ) -> VcxCoreResult<Presentation> {
         let pres_req: AnoncredsPresentationRequest = proof_req_json.convert(())?;
 
-        let requested_credentials: Value = serde_json::from_str(requested_credentials_json)?;
-        let requested_attributes = (&requested_credentials).try_get("requested_attributes")?;
-
-        let requested_predicates = (&requested_credentials).try_get("requested_predicates")?;
-        let self_attested_attributes = requested_credentials.get("self_attested_attributes");
+        let requested_attributes = requested_credentials_json.requested_attributes;
+        let requested_predicates = requested_credentials_json.requested_predicates;
+        let self_attested_attributes = requested_credentials_json.self_attested_attributes;
 
         let schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = schemas_json.convert(())?;
         let cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
@@ -734,11 +729,9 @@ impl BaseAnonCreds for Anoncreds {
         > = HashMap::new();
 
         // add cred data and referent details for each requested attribute
-        for (reft, detail) in requested_attributes.try_as_object()?.iter() {
-            let _cred_id = detail.try_get("cred_id")?;
-            let cred_id = _cred_id.try_as_str()?;
-
-            let revealed = detail.try_get("revealed")?.try_as_bool()?;
+        for (reft, detail) in requested_attributes {
+            let cred_id = &detail.cred_id;
+            let revealed = detail.revealed;
 
             if let Some((_, _, _, req_attr_refts_revealed, _)) =
                 proof_details_by_cred_id.get_mut(cred_id)
@@ -748,8 +741,12 @@ impl BaseAnonCreds for Anoncreds {
             } else {
                 let credential = self._get_credential(wallet, cred_id).await?;
 
-                let (timestamp, rev_state) =
-                    get_rev_state(cred_id, &credential, detail, revoc_states_json.as_ref())?;
+                let (timestamp, rev_state) = get_rev_state(
+                    cred_id,
+                    &credential,
+                    detail.timestamp,
+                    revoc_states_json.as_ref(),
+                )?;
 
                 proof_details_by_cred_id.insert(
                     cred_id.to_string(),
@@ -765,9 +762,8 @@ impl BaseAnonCreds for Anoncreds {
         }
 
         // add cred data and referent details for each requested predicate
-        for (reft, detail) in requested_predicates.try_as_object()?.iter() {
-            let _cred_id = detail.try_get("cred_id")?;
-            let cred_id = _cred_id.try_as_str()?;
+        for (reft, detail) in requested_predicates {
+            let cred_id = &detail.cred_id;
 
             if let Some((_, _, _, _, req_preds_refts)) = proof_details_by_cred_id.get_mut(cred_id) {
                 // mapping made for this credential already, add reft
@@ -775,8 +771,12 @@ impl BaseAnonCreds for Anoncreds {
             } else {
                 let credential = self._get_credential(wallet, cred_id).await?;
 
-                let (timestamp, rev_state) =
-                    get_rev_state(cred_id, &credential, detail, revoc_states_json.as_ref())?;
+                let (timestamp, rev_state) = get_rev_state(
+                    cred_id,
+                    &credential,
+                    detail.timestamp,
+                    revoc_states_json.as_ref(),
+                )?;
 
                 proof_details_by_cred_id.insert(
                     cred_id.to_string(),
@@ -810,30 +810,12 @@ impl BaseAnonCreds for Anoncreds {
             }
         }
 
-        // create self_attested by iterating thru self_attested_value
-        let self_attested = if let Some(self_attested_value) = self_attested_attributes {
-            let mut self_attested_map: HashMap<String, String> = HashMap::new();
-            let self_attested_obj = self_attested_value.try_as_object()?.clone();
-            let self_attested_iter = self_attested_obj.iter();
-            for (k, v) in self_attested_iter {
-                self_attested_map.insert(k.to_string(), v.try_as_str()?.to_string());
-            }
-
-            if self_attested_map.is_empty() {
-                None
-            } else {
-                Some(self_attested_map)
-            }
-        } else {
-            None
-        };
-
         let link_secret = self.get_link_secret(wallet, link_secret_id).await?;
 
         let presentation = anoncreds::prover::create_presentation(
             &pres_req,
             present_credentials,
-            self_attested,
+            Some(self_attested_attributes),
             &link_secret,
             &schemas,
             &cred_defs,
@@ -895,9 +877,11 @@ impl BaseAnonCreds for Anoncreds {
                         attribute_info.names.to_owned(),
                     ) {
                         (Some(name), None) => vec![_normalize_attr_name(&name)],
-                        (None, Some(names)) => {
-                            names.iter().map(_normalize_attr_name).collect::<Vec<_>>()
-                        }
+                        (None, Some(names)) => names
+                            .iter()
+                            .map(String::as_str)
+                            .map(_normalize_attr_name)
+                            .collect::<Vec<_>>(),
                         _ => Err(AriesVcxCoreError::from_msg(
                             AriesVcxCoreErrorKind::InvalidInput,
                             "exactly one of 'name' or 'names' must be present",
@@ -1101,7 +1085,7 @@ impl BaseAnonCreds for Anoncreds {
         }
 
         for (raw_attr_name, attr_value) in credential.values.0.iter() {
-            let attr_name = _normalize_attr_name(raw_attr_name);
+            let attr_name = _normalize_attr_name(raw_attr_name.as_str());
             // add attribute name and raw value pair
             let value_tag_name = _format_attribute_as_value_tag_name(&attr_name);
             tags[value_tag_name] = Value::String(attr_value.raw.to_string());
@@ -1317,12 +1301,9 @@ impl BaseAnonCreds for Anoncreds {
 fn get_rev_state(
     cred_id: &str,
     credential: &Credential,
-    detail: &Value,
+    timestamp: Option<u64>,
     rev_states: Option<&RevocationStatesMap>,
 ) -> VcxCoreResult<(Option<u64>, Option<CredentialRevocationState>)> {
-    let timestamp = detail
-        .get("timestamp")
-        .and_then(|timestamp| timestamp.as_u64());
     let cred_rev_reg_id = credential.rev_reg_id.as_ref().map(|id| id.0.to_string());
     let rev_state = if let (Some(timestamp), Some(cred_rev_reg_id)) = (timestamp, cred_rev_reg_id) {
         let rev_state = rev_states
@@ -1355,7 +1336,7 @@ fn get_rev_state(
     Ok((timestamp, rev_state))
 }
 
-fn _normalize_attr_name(name: &String) -> String {
+fn _normalize_attr_name(name: &str) -> String {
     // "name": string, // attribute name, (case insensitive and ignore spaces)
     name.replace(' ', "").to_lowercase()
 }
