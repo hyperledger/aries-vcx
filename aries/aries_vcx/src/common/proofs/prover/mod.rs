@@ -25,7 +25,7 @@ pub async fn generate_indy_proof(
     ledger: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
     credentials: &SelectedCredentials,
-    self_attested_attrs: &HashMap<String, String>,
+    self_attested_attrs: HashMap<String, String>,
     proof_req_data_json: PresentationRequest,
 ) -> VcxResult<Presentation> {
     trace!(
@@ -53,7 +53,7 @@ pub async fn generate_indy_proof(
         .prover_create_proof(
             wallet,
             proof_req_data_json,
-            &requested_credentials,
+            &serde_json::to_string(&requested_credentials)?,
             &settings::DEFAULT_LINK_SECRET_ALIAS.to_string(),
             schemas_json,
             credential_defs_json,

@@ -5,6 +5,7 @@ use anoncreds_types::data_types::{
     messages::{
         cred_selection::SelectedCredentials,
         pres_request::{NonRevokedInterval, PresentationRequest},
+        presentation::{RequestedAttribute, RequestedCredentials, RequestedPredicate},
     },
 };
 use aries_vcx_core::{
@@ -14,10 +15,10 @@ use aries_vcx_core::{
     errors::error::AriesVcxCoreErrorKind,
     ledger::base_ledger::AnoncredsLedgerRead,
 };
-use serde_json::Value;
 
 use crate::errors::error::prelude::*;
 
+// TODO: Move to anoncreds_types
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoProver {
     pub referent: String,
@@ -211,9 +212,9 @@ pub async fn build_rev_states_json(
 
 pub fn build_requested_credentials_json(
     credentials_identifiers: &Vec<CredInfoProver>,
-    self_attested_attrs: &HashMap<String, String>,
+    self_attested_attrs: HashMap<String, String>,
     proof_req: &PresentationRequest,
-) -> VcxResult<String> {
+) -> VcxResult<RequestedCredentials> {
     trace!(
         "build_requested_credentials_json >> credentials_identifiers: {:?}, self_attested_attrs: \
          {:?}, proof_req: {:?}",
@@ -221,50 +222,48 @@ pub fn build_requested_credentials_json(
         self_attested_attrs,
         proof_req
     );
-    let mut rtn: Value = json!({
-          "self_attested_attributes":{},
-          "requested_attributes":{},
-          "requested_predicates":{}
-    });
-    // do same for predicates and self_attested
-    if let Value::Object(ref mut map) = rtn["requested_attributes"] {
-        for cred_info in credentials_identifiers {
-            if proof_req
-                .value()
-                .requested_attributes
-                .get(&cred_info.referent)
-                .is_some()
-            {
-                let insert_val = json!({"cred_id": cred_info.credential_referent, "revealed": cred_info.revealed.unwrap_or(true), "timestamp": cred_info.timestamp});
-                map.insert(cred_info.referent.to_owned(), insert_val);
-            }
+
+    let mut rtn = RequestedCredentials::default();
+
+    for cred_info in credentials_identifiers {
+        if proof_req
+            .value()
+            .requested_attributes
+            .get(&cred_info.referent)
+            .is_some()
+        {
+            rtn.requested_attributes.insert(
+                cred_info.referent.to_owned(),
+                RequestedAttribute {
+                    cred_id: cred_info.credential_referent.to_owned(),
+                    timestamp: cred_info.timestamp,
+                    revealed: cred_info.revealed.unwrap_or(true),
+                },
+            );
         }
     }
 
-    if let Value::Object(ref mut map) = rtn["requested_predicates"] {
-        for cred_info in credentials_identifiers {
-            if proof_req
-                .value()
-                .requested_predicates
-                .get(&cred_info.referent)
-                .is_some()
-            {
-                let insert_val = json!({"cred_id": cred_info.credential_referent, "timestamp": cred_info.timestamp});
-                map.insert(cred_info.referent.to_owned(), insert_val);
-            }
+    for cred_info in credentials_identifiers {
+        if proof_req
+            .value()
+            .requested_predicates
+            .get(&cred_info.referent)
+            .is_some()
+        {
+            rtn.requested_predicates.insert(
+                cred_info.referent.to_owned(),
+                RequestedPredicate {
+                    cred_id: cred_info.credential_referent.to_owned(),
+                    timestamp: cred_info.timestamp,
+                },
+            );
         }
     }
 
     // handle if the attribute is not revealed
-    let self_attested_attrs: Value = serde_json::to_value(self_attested_attrs).map_err(|err| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
-            format!("Cannot deserialize self attested attributes: {}", err),
-        )
-    })?;
-    rtn["self_attested_attributes"] = self_attested_attrs;
+    rtn.self_attested_attributes = self_attested_attrs;
 
-    Ok(rtn.to_string())
+    Ok(rtn)
 }
 
 #[cfg(test)]
@@ -320,6 +319,7 @@ pub mod pool_tests {
 #[cfg(test)]
 pub mod unit_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
+    use serde_json::Value;
     use test_utils::{
         constants::{
             address_cred_def_id, address_schema_id, cred_def_id, schema_id, ADDRESS_CRED_DEF_ID,
@@ -685,11 +685,11 @@ pub mod unit_tests {
         let proof_req: PresentationRequest = serde_json::from_value(proof_req).unwrap();
         let requested_credential = build_requested_credentials_json(
             &creds,
-            &serde_json::from_str(&self_attested_attrs).unwrap(),
+            serde_json::from_str(&self_attested_attrs).unwrap(),
             &proof_req,
         )
         .unwrap();
-        assert_eq!(test.to_string(), requested_credential);
+        assert_eq!(test.to_string(), serde_json::to_string(&requested_credential).unwrap());
     }
 
     #[tokio::test]

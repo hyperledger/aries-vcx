@@ -249,7 +249,7 @@ impl ProverSM {
                         ledger,
                         anoncreds,
                         &credentials,
-                        &self_attested_attrs,
+                        self_attested_attrs,
                     )
                     .await
                 {
