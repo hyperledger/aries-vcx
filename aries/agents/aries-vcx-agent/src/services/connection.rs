@@ -2,9 +2,12 @@ use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
     handlers::util::AnyInvitation,
-    messages::msg_fields::protocols::{
-        connection::{request::Request, response::Response},
-        notification::ack::Ack,
+    messages::{
+        msg_fields::protocols::{
+            connection::{request::Request, response::Response},
+            notification::ack::Ack,
+        },
+        AriesMessage,
     },
     protocols::connection::{
         pairwise_info::PairwiseInfo, Connection, GenericConnection, State, ThinState,
@@ -42,6 +45,23 @@ impl<T: BaseWallet> ServiceConnections<T> {
             ledger_read,
             wallet,
         }
+    }
+
+    pub async fn send_message(
+        &self,
+        connection_id: &str,
+        message: &AriesMessage,
+    ) -> AgentResult<()> {
+        let connection = self.get_by_id(connection_id)?;
+        let wallet = self.wallet.as_ref();
+        info!(
+            "Sending message to connection identified by id {}. Plaintext message payload: {}",
+            connection_id, message
+        );
+        connection
+            .send_message(wallet, message, &VcxHttpClient)
+            .await?;
+        Ok(())
     }
 
     pub async fn create_invitation(

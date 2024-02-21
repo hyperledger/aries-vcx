@@ -89,6 +89,10 @@ where
     }
 
     fn insert(&self, id: &str, obj: T) -> AgentResult<String> {
+        info!(
+            "Inserting object {} into in-mem storage: {}",
+            id, self.cache_name
+        );
         let mut store = self._lock_store_write()?;
 
         match store.insert(id.to_string(), Mutex::new(obj)) {

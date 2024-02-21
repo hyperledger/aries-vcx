@@ -1,4 +1,5 @@
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use did_doc::schema::{did_doc::DidDocument, types::uri::Uri};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     msg_fields::protocols::routing::{Forward, ForwardContent},
@@ -7,15 +8,16 @@ use messages::{
 use public_key::{Key, KeyType};
 use uuid::Uuid;
 
-use crate::errors::error::prelude::*;
+use crate::{
+    errors::error::prelude::*,
+    utils::didcomm_utils::{get_routing_keys, resolve_base58_key_agreement},
+};
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
 
 impl EncryptionEnvelope {
-    /// Create an Encryption Envelope from a plaintext AriesMessage encoded as sequence of bytes.
-    /// If did_doc includes routing_keys, then also wrap in appropriate layers of forward message.
-    pub async fn create(
+    pub async fn create_from_legacy(
         wallet: &impl BaseWallet,
         data: &[u8],
         sender_vk: Option<&str>,
@@ -38,10 +40,43 @@ impl EncryptionEnvelope {
                     format!("No recipient key found in DIDDoc: {:?}", did_doc),
                 ))?;
         let routing_keys = did_doc.routing_keys();
-        Self::create2(wallet, data, sender_vk, recipient_key, routing_keys).await
+        Self::create_from_keys(wallet, data, sender_vk, recipient_key, routing_keys).await
     }
 
-    pub async fn create2(
+    /// Create encrypted message based on key agreement keys of our did document, counterparties
+    /// did document and their specific service, identified by id, which must be part of their
+    /// did document
+    ///
+    /// # Arguments
+    ///
+    /// * `our_did_doc` - Our did_document, which the counterparty should already be in possession
+    ///   of
+    /// * `their_did_doc` - The did document of the counterparty, the recipient of the encrypted
+    ///   message
+    /// * `their_service_id` - Id of service where message will be sent. The counterparty did
+    ///   document must contain Service object identified with such value.
+    pub async fn create(
+        wallet: &impl BaseWallet,
+        data: &[u8],
+        our_did_doc: &DidDocument,
+        their_did_doc: &DidDocument,
+        their_service_id: &Uri,
+    ) -> VcxResult<EncryptionEnvelope> {
+        let sender_vk = resolve_base58_key_agreement(our_did_doc)?;
+        let recipient_key = resolve_base58_key_agreement(their_did_doc)?;
+        let routing_keys = get_routing_keys(their_did_doc, their_service_id)?;
+
+        EncryptionEnvelope::create_from_keys(
+            wallet,
+            data,
+            Some(&sender_vk.to_string()),
+            recipient_key.to_string(),
+            routing_keys.iter().map(|k| k.to_string()).collect(),
+        )
+        .await
+    }
+
+    pub async fn create_from_keys(
         wallet: &impl BaseWallet,
         data: &[u8],
         sender_vk: Option<&str>,
@@ -253,7 +288,7 @@ pub mod unit_tests {
 
         let data_original = "foobar";
 
-        let envelope = EncryptionEnvelope::create2(
+        let envelope = EncryptionEnvelope::create_from_keys(
             &setup.wallet,
             data_original.as_bytes(),
             None,
@@ -288,7 +323,7 @@ pub mod unit_tests {
 
         let data_original = "foobar";
 
-        let envelope = EncryptionEnvelope::create2(
+        let envelope = EncryptionEnvelope::create_from_keys(
             &setup.wallet,
             data_original.as_bytes(),
             Some(&sender_data.verkey().base58()),
@@ -330,7 +365,7 @@ pub mod unit_tests {
 
         let data_original = "foobar";
 
-        let envelope = EncryptionEnvelope::create2(
+        let envelope = EncryptionEnvelope::create_from_keys(
             &setup.wallet,
             data_original.as_bytes(),
             Some(&sender_data.verkey().base58()),
@@ -376,7 +411,7 @@ pub mod unit_tests {
 
         let data_original = "foobar";
 
-        let envelope = EncryptionEnvelope::create2(
+        let envelope = EncryptionEnvelope::create_from_keys(
             &setup.wallet,
             data_original.as_bytes(),
             Some(&bob_data.verkey().base58()), // bob trying to impersonate alice

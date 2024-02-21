@@ -48,8 +48,8 @@ did_resolver = { path = "../../did_core/did_resolver" }
 did_doc = { path = "../../did_core/did_doc" }
 did_key = { path = "../../did_core/did_methods/did_key" }
 public_key = { path = "../../did_core/public_key" }
-did_doc_sov = { path = "../../did_core/did_doc_sov" }
 did_peer = { path = "../../did_core/did_methods/did_peer" }
+did_resolver_sov = { path = "../../did_core/did_methods/did_resolver_sov" }
 did_resolver_registry = { path = "../../did_core/did_resolver_registry" }
 bs58 = "0.5.0"
 async-trait = "0.1.53"

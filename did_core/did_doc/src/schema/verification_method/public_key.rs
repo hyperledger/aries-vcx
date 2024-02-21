@@ -3,9 +3,9 @@ use std::str::FromStr;
 use base64::{engine::general_purpose, Engine};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    error::DidDocumentBuilderError,
-    schema::types::{jsonwebkey::JsonWebKey, multibase::Multibase},
+use crate::schema::{
+    types::{jsonwebkey::JsonWebKey, multibase::Multibase},
+    verification_method::error::KeyDecodingError,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -29,7 +29,7 @@ pub enum PublicKeyField {
 }
 
 impl PublicKeyField {
-    pub fn key_decoded(&self) -> Result<Vec<u8>, DidDocumentBuilderError> {
+    pub fn key_decoded(&self) -> Result<Vec<u8>, KeyDecodingError> {
         match self {
             PublicKeyField::Multibase {
                 public_key_multibase,
@@ -37,7 +37,7 @@ impl PublicKeyField {
                 let multibase = Multibase::from_str(public_key_multibase)?;
                 Ok(multibase.as_ref().to_vec())
             }
-            PublicKeyField::Jwk { public_key_jwk } => public_key_jwk.to_vec(),
+            PublicKeyField::Jwk { public_key_jwk } => Ok(public_key_jwk.to_vec()?),
             PublicKeyField::Base58 { public_key_base58 } => {
                 Ok(bs58::decode(public_key_base58).into_vec()?)
             }
@@ -48,20 +48,22 @@ impl PublicKeyField {
             PublicKeyField::Pem { public_key_pem } => {
                 Ok(pem::parse(public_key_pem.as_bytes())?.contents().to_vec())
             }
-            PublicKeyField::Pgp { public_key_pgp: _ } => Err(
-                DidDocumentBuilderError::UnsupportedPublicKeyField("publicKeyPgp"),
-            ),
+            PublicKeyField::Pgp { public_key_pgp: _ } => Err(KeyDecodingError::new(
+                "PGP public key decoding not supported",
+            )),
         }
     }
 
     // TODO: Other formats
-    pub fn base58(&self) -> Result<String, DidDocumentBuilderError> {
+    pub fn base58(&self) -> Result<String, KeyDecodingError> {
         Ok(bs58::encode(self.key_decoded()?).into_string())
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error;
+
     use super::*;
 
     static PUBLIC_KEY_MULTIBASE: &str = "z6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc";
@@ -114,5 +116,33 @@ mod tests {
             public_key_field.key_decoded().unwrap(),
             PUBLIC_KEY_BYTES.to_vec()
         );
+    }
+
+    #[test]
+    fn test_b58_fails() {
+        let public_key_field = PublicKeyField::Base58 {
+            public_key_base58: "abcdefghijkl".to_string(),
+        };
+        let err = public_key_field.key_decoded().expect_err("Expected error");
+        println!("Error: {}", err);
+        assert!(err
+            .source()
+            .expect("Error was expected to has source set up.")
+            .is::<bs58::decode::Error>());
+        assert!(err.to_string().contains("Failed to decode base58"));
+    }
+
+    #[test]
+    fn test_pem_fails() {
+        let public_key_field = PublicKeyField::Pem {
+            public_key_pem: "abcdefghijkl".to_string(),
+        };
+        let err = public_key_field.key_decoded().unwrap_err();
+        println!("Error: {}", err);
+        assert!(err
+            .source()
+            .expect("Error was expected to has source set up.")
+            .is::<pem::PemError>());
+        assert!(err.to_string().contains("Failed to decode PEM"));
     }
 }

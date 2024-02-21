@@ -1,11 +1,12 @@
+// todo: remove text representations, and should definitely not be driven by AATH expectations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ThinState {
-    #[serde(rename = "RequestSent")]
+    #[serde(rename = "request-sent")]
     RequestSent,
-    #[serde(rename = "ResponseSent")]
+    #[serde(rename = "response-sent")]
     ResponseSent,
-    #[serde(rename = "Completed")]
+    #[serde(rename = "completed")]
     Completed,
-    #[serde(rename = "Abandoned")]
+    #[serde(rename = "abandoned")]
     Abandoned,
 }

@@ -21,10 +21,10 @@ lazy_static! {
     };
 }
 
-pub async fn post_message(body_content: Vec<u8>, url: Url) -> HttpResult<Vec<u8>> {
+pub async fn post_message(body_content: Vec<u8>, url: &Url) -> HttpResult<Vec<u8>> {
     debug!("post_message >> http client sending request POST {}", &url);
 
-    let response = send_post_request(&url, body_content).await?;
+    let response = send_post_request(url, body_content).await?;
     process_response(response).await
 }
 

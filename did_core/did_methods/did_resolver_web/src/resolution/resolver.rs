@@ -2,10 +2,10 @@ use async_trait::async_trait;
 use did_resolver::{
     did_parser::Did,
     error::GenericError,
-    shared_types::{did_document_metadata::DidDocumentMetadata, media_type::MediaType},
+    shared_types::did_document_metadata::DidDocumentMetadata,
     traits::resolvable::{
-        resolution_metadata::DidResolutionMetadata, resolution_options::DidResolutionOptions,
-        resolution_output::DidResolutionOutput, DidResolvable,
+        resolution_metadata::DidResolutionMetadata, resolution_output::DidResolutionOutput,
+        DidResolvable,
     },
 };
 use hyper::{
@@ -65,14 +65,13 @@ impl<C> DidResolvable for DidWebResolver<C>
 where
     C: Connect + Send + Sync + Clone + 'static,
 {
-    type ExtraFieldsService = ();
-    type ExtraFieldsOptions = ();
+    type DidResolutionOptions = ();
 
     async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions<Self::ExtraFieldsOptions>,
-    ) -> Result<DidResolutionOutput<()>, GenericError> {
+        _options: &Self::DidResolutionOptions,
+    ) -> Result<DidResolutionOutput, GenericError> {
         let method = did.method().ok_or_else(|| {
             DidWebError::InvalidDid("Attempted to resolve unqualified did".to_string())
         })?;
@@ -80,14 +79,6 @@ where
             return Err(Box::new(DidWebError::MethodNotSupported(
                 method.to_string(),
             )));
-        }
-
-        if let Some(accept) = options.accept() {
-            if accept != &MediaType::DidJson {
-                return Err(Box::new(DidWebError::RepresentationNotSupported(
-                    accept.to_string(),
-                )));
-            }
         }
 
         let did_parts: Vec<&str> = did.id().split(':').collect();

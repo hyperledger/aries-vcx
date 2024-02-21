@@ -13,20 +13,7 @@ pub struct EndpointDidSov {
     #[serde(default)]
     pub routing_keys: Option<Vec<String>>,
     #[serde(default)]
-    pub types: Option<Vec<DidSovServiceType>>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[cfg_attr(test, derive(PartialEq, Eq))]
-pub enum DidSovServiceType {
-    #[serde(rename = "endpoint")] // AIP 1.0
-    Endpoint,
-    #[serde(rename = "did-communication")] // AIP 2.0
-    DidCommunication,
-    #[serde(rename = "DIDComm")] // DIDComm V2
-    DIDComm,
-    #[serde(other)]
-    Unknown,
+    pub types: Option<Vec<String>>,
 }
 
 impl EndpointDidSov {
@@ -44,7 +31,7 @@ impl EndpointDidSov {
         self
     }
 
-    pub fn set_types(mut self, types: Option<Vec<DidSovServiceType>>) -> Self {
+    pub fn set_types(mut self, types: Option<Vec<String>>) -> Self {
         self.types = types;
         self
     }
@@ -62,10 +49,11 @@ impl Default for EndpointDidSov {
 
 #[cfg(test)]
 mod unit_tests {
+    use did_doc::schema::service::typed::ServiceType;
     use diddoc_legacy::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
     use test_utils::devsetup::SetupMocks;
 
-    use crate::common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov};
+    use crate::common::ledger::service_didsov::EndpointDidSov;
 
     #[test]
     fn test_service_comparison() {
@@ -97,9 +85,10 @@ mod unit_tests {
             .set_service_endpoint(_service_endpoint())
             .set_routing_keys(Some(_routing_keys()))
             .set_types(Some(vec![
-                DidSovServiceType::Endpoint,
-                DidSovServiceType::DidCommunication,
-                DidSovServiceType::DIDComm,
+                ServiceType::AIP1.to_string(),
+                ServiceType::DIDCommV1.to_string(),
+                ServiceType::DIDCommV2.to_string(),
+                "foobar".to_string(),
             ]));
 
         let expected = json!({
@@ -108,7 +97,7 @@ mod unit_tests {
                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
                 "3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU"
             ],
-            "types": ["endpoint", "did-communication", "DIDComm"]
+            "types": ["endpoint", "did-communication", "DIDCommMessaging", "foobar"]
         });
         assert_eq!(expected, json!(&service1));
     }
@@ -116,14 +105,13 @@ mod unit_tests {
     #[test]
     fn test_didsov_service_deserialization() {
         SetupMocks::init();
-
         let data = json!({
             "endpoint": "http://localhost:8080",
             "routingKeys": [
                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
                 "3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU"
             ],
-            "types": ["endpoint", "did-communication", "DIDComm", "foobar"]
+            "types": ["endpoint", "did-communication", "DIDCommMessaging", "foobar"]
         })
         .to_string();
 
@@ -133,10 +121,10 @@ mod unit_tests {
         assert_eq!(
             deserialized.types,
             Some(vec![
-                DidSovServiceType::Endpoint,
-                DidSovServiceType::DidCommunication,
-                DidSovServiceType::DIDComm,
-                DidSovServiceType::Unknown
+                ServiceType::AIP1.to_string(),
+                ServiceType::DIDCommV1.to_string(),
+                ServiceType::DIDCommV2.to_string(),
+                "foobar".to_string()
             ])
         );
     }

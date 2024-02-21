@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
+    did_parser::Did,
     handlers::issuance::holder::Holder,
     messages::{
         msg_fields::protocols::cred_issuance::v1::{
@@ -77,16 +78,11 @@ impl<T: BaseWallet> ServiceCredentialsHolder<T> {
         connection_id: &str,
         propose_credential: ProposeCredentialV1,
     ) -> AgentResult<String> {
-        let connection = self.service_connections.get_by_id(connection_id)?;
+        let holder = Holder::create_with_proposal("foobar", propose_credential)?;
 
-        let mut holder = Holder::create("")?;
-        holder.set_proposal(propose_credential.clone())?;
-        connection
-            .send_message(
-                self.wallet.as_ref(),
-                &propose_credential.into(),
-                &VcxHttpClient,
-            )
+        let aries_msg: AriesMessage = holder.get_proposal()?.into();
+        self.service_connections
+            .send_message(connection_id, &aries_msg)
             .await?;
 
         self.creds_holder.insert(
@@ -101,44 +97,34 @@ impl<T: BaseWallet> ServiceCredentialsHolder<T> {
         offer: OfferCredentialV1,
     ) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
-        let holder = Holder::create_from_offer("", offer)?;
+        let holder = Holder::create_from_offer("foobar", offer)?;
         self.creds_holder.insert(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, connection_id),
         )
     }
 
-    pub async fn send_credential_request(
-        &self,
-        thread_id: Option<&str>,
-        connection_id: Option<&str>,
-    ) -> AgentResult<String> {
-        let (mut holder, connection_id) = match (thread_id, connection_id) {
-            (Some(id), Some(connection_id)) => (self.get_holder(id)?, connection_id.to_string()),
-            (Some(id), None) => (self.get_holder(id)?, self.get_connection_id(id)?),
-            (None, Some(connection_id)) => (Holder::create("")?, connection_id.to_string()),
-            (None, None) => return Err(AgentError::from_kind(AgentErrorKind::InvalidArguments)),
-        };
+    pub async fn send_credential_request(&self, thread_id: &str) -> AgentResult<String> {
+        let connection_id = self.get_connection_id(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
+        // todo: technically doesn't need to be DID at all, and definitely need not to be pairwise
+        // DID
+        let pw_did_as_entropy = connection.pairwise_info().pw_did.to_string();
 
-        let pw_did = connection.pairwise_info().pw_did.to_string();
-
-        let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move {
-                connection
-                    .send_message(self.wallet.as_ref(), &msg, &VcxHttpClient)
-                    .await
-            })
-        });
-        let msg_response = holder
+        let mut holder = self.get_holder(thread_id)?;
+        let message = holder
             .prepare_credential_request(
                 self.wallet.as_ref(),
                 self.ledger_read.as_ref(),
                 &self.anoncreds,
-                pw_did.parse()?,
+                Did::parse(pw_did_as_entropy)?,
             )
             .await?;
-        send_closure(msg_response).await?;
+
+        self.service_connections
+            .send_message(&connection_id, &message)
+            .await?;
+
         self.creds_holder.insert(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, &connection_id),

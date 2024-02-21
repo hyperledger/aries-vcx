@@ -2,11 +2,12 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use did_resolver::{
     did_doc::schema::{
         did_doc::DidDocument,
-        service::Service,
+        service::{typed::ServiceType, Service},
         types::uri::Uri,
+        utils::OneOrList,
         verification_method::{VerificationMethod, VerificationMethodType},
     },
-    did_parser::Did,
+    did_parser::{Did, DidUrl},
     shared_types::did_document_metadata::DidDocumentMetadata,
     traits::resolvable::{
         resolution_metadata::DidResolutionMetadata, resolution_output::DidResolutionOutput,
@@ -61,40 +62,41 @@ pub(super) fn is_valid_sovrin_did_id(id: &str) -> bool {
     id.chars().all(|c| base58_chars.contains(c))
 }
 
-pub(super) async fn ledger_response_to_ddo<E: Default>(
+pub(super) async fn ledger_response_to_ddo(
     did: &str,
     resp: &str,
     verkey: String,
-) -> Result<DidResolutionOutput<E>, DidSovError> {
+) -> Result<DidResolutionOutput, DidSovError> {
+    log::info!("ledger_response_to_ddo >> did: {did}, verkey: {verkey}, resp: {resp}");
     let (service_id, ddo_id) = prepare_ids(did)?;
 
     let service_data = get_data_from_response(resp)?;
+    log::info!("ledger_response_to_ddo >> service_data: {service_data:?}");
     let endpoint: EndpointDidSov = serde_json::from_value(service_data["endpoint"].clone())?;
 
     let txn_time = get_txn_time_from_response(resp)?;
     let datetime = unix_to_datetime(txn_time);
 
-    let service = {
-        let service_types: Vec<String> = endpoint
-            .types
-            .into_iter()
-            .filter(|t| *t != DidSovServiceType::Unknown)
-            .map(|t| t.to_string())
-            .collect();
-        let mut builder = Service::builder(
-            service_id,
-            endpoint.endpoint.as_str().try_into()?,
-            Default::default(),
-        );
-        for service_type in service_types {
-            builder = builder.add_service_type(service_type)?;
-        }
-        builder.build()
-    };
+    let service_types: Vec<ServiceType> = endpoint
+        .types
+        .into_iter()
+        .map(|t| match t {
+            DidSovServiceType::Endpoint => ServiceType::AIP1,
+            DidSovServiceType::DidCommunication => ServiceType::DIDCommV1,
+            DidSovServiceType::DIDComm => ServiceType::DIDCommV2,
+            DidSovServiceType::Unknown => ServiceType::Other("Unknown".to_string()),
+        })
+        .collect();
+    let service = Service::new(
+        service_id,
+        endpoint.endpoint,
+        OneOrList::List(service_types),
+        Default::default(),
+    );
 
     // TODO: Use multibase instead of base58
     let verification_method = VerificationMethod::builder(
-        did.to_string().try_into()?,
+        DidUrl::parse("#1".to_string())?,
         did.to_string().try_into()?,
         VerificationMethodType::Ed25519VerificationKey2018,
     )
@@ -104,6 +106,7 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
     let ddo = DidDocument::builder(ddo_id)
         .add_service(service)
         .add_verification_method(verification_method)
+        .add_key_agreement_reference(DidUrl::parse("#1".to_string())?)
         .build();
 
     let ddo_metadata = {
@@ -184,10 +187,11 @@ mod tests {
             }
         }"#;
         let verkey = "9wvq2i4xUa5umXoThe83CDgx1e5bsjZKJL4DEWvTP9qe".to_string();
-        let resolution_output = ledger_response_to_ddo::<()>(did, resp, verkey)
-            .await
-            .unwrap();
-        let ddo = resolution_output.did_document();
+        let DidResolutionOutput {
+            did_document: ddo,
+            did_resolution_metadata,
+            did_document_metadata,
+        } = ledger_response_to_ddo(did, resp, verkey).await.unwrap();
         assert_eq!(ddo.id().to_string(), "did:example:1234567890");
         assert_eq!(ddo.service()[0].id().to_string(), "did:example:1234567890");
         assert_eq!(
@@ -195,14 +199,11 @@ mod tests {
             "https://example.com/"
         );
         assert_eq!(
-            resolution_output.did_document_metadata().updated().unwrap(),
-            chrono::Utc.timestamp_opt(1629272938, 0).unwrap()
+            did_document_metadata.updated().unwrap(),
+            Utc.timestamp_opt(1629272938, 0).unwrap()
         );
         assert_eq!(
-            resolution_output
-                .did_resolution_metadata()
-                .content_type()
-                .unwrap(),
+            did_resolution_metadata.content_type().unwrap(),
             "application/did+json"
         );
         if let PublicKeyField::Base58 { public_key_base58 } =

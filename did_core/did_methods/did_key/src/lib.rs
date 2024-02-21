@@ -8,6 +8,8 @@ use error::DidKeyError;
 use public_key::Key;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
+/// Represents did:key where the DID ID is public key itself
+/// See the spec: https://w3c-ccg.github.io/did-method-key/
 #[derive(Clone, Debug, PartialEq)]
 pub struct DidKey {
     key: Key,

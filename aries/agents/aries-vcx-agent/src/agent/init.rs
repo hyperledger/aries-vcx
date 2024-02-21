@@ -2,9 +2,10 @@ use std::sync::Arc;
 
 use aries_vcx::{
     common::ledger::{
-        service_didsov::{DidSovServiceType, EndpointDidSov},
+        service_didsov::EndpointDidSov,
         transactions::{add_new_did, write_endpoint},
     },
+    did_doc::schema::service::typed::ServiceType,
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
 };
 use aries_vcx_core::{
@@ -110,7 +111,7 @@ impl Agent<IndySdkWallet> {
         .await?;
         let endpoint = EndpointDidSov::create()
             .set_service_endpoint(init_config.service_endpoint.clone())
-            .set_types(Some(vec![DidSovServiceType::DidCommunication]));
+            .set_types(Some(vec![ServiceType::DIDCommV1.to_string()]));
         write_endpoint(
             wallet.as_ref(),
             ledger_write.as_ref(),
@@ -134,7 +135,6 @@ impl Agent<IndySdkWallet> {
             init_config.service_endpoint.clone(),
         ));
         let did_exchange = Arc::new(ServiceDidExchange::new(
-            ledger_read.clone(),
             wallet.clone(),
             did_resolver_registry,
             init_config.service_endpoint.clone(),

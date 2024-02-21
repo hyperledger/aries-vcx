@@ -59,4 +59,4 @@ test-integration-libvcx wallet test_name="":
     RUST_TEST_THREADS=1 cargo test --manifest-path="aries/misc/legacy/libvcx_core/Cargo.toml" -F {{wallet}} -- --include-ignored {{test_name}}
 
 test-integration-did-crate test_name="":
-    cargo test --examples -p did_doc -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov -p did_resolver_web -p did_doc_sov -p did_key -p did_peer --test "*"
+    cargo test --examples -p did_doc -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov -p did_resolver_web -p did_key -p did_peer --test "*"

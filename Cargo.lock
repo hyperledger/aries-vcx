@@ -471,12 +471,12 @@ dependencies = [
  "chrono",
  "derive_builder",
  "did_doc",
- "did_doc_sov",
  "did_key",
  "did_parser",
  "did_peer",
  "did_resolver",
  "did_resolver_registry",
+ "did_resolver_sov",
  "diddoc_legacy",
  "env_logger 0.10.0",
  "futures",
@@ -1768,29 +1768,19 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "bs58 0.5.0",
+ "did_key",
  "did_parser",
+ "display_as_json",
  "hex",
  "multibase",
  "pem",
  "public_key",
  "serde",
  "serde_json",
+ "thiserror",
+ "typed-builder 0.16.2",
  "uniresid",
  "url",
-]
-
-[[package]]
-name = "did_doc_sov"
-version = "0.1.0"
-dependencies = [
- "base64",
- "did_doc",
- "did_key",
- "display_as_json",
- "public_key",
- "serde",
- "serde_json",
- "thiserror",
 ]
 
 [[package]]
@@ -1829,12 +1819,12 @@ dependencies = [
  "base64",
  "bs58 0.5.0",
  "did_doc",
- "did_doc_sov",
  "did_parser",
  "did_resolver",
  "display_as_json",
  "multibase",
  "once_cell",
+ "pretty_assertions",
  "public_key",
  "regex",
  "serde",
@@ -1843,6 +1833,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "unsigned-varint",
+ "url",
 ]
 
 [[package]]
@@ -1854,6 +1845,7 @@ dependencies = [
  "did_doc",
  "did_parser",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1876,8 +1868,8 @@ dependencies = [
  "aries_vcx_core",
  "async-trait",
  "chrono",
- "did_doc_sov",
  "did_resolver",
+ "log",
  "mockall",
  "serde",
  "serde_json",
@@ -1914,6 +1906,12 @@ dependencies = [
  "thiserror",
  "url",
 ]
+
+[[package]]
+name = "diff"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
 
 [[package]]
 name = "difflib"
@@ -3389,7 +3387,6 @@ version = "0.62.0"
 dependencies = [
  "chrono",
  "derive_more",
- "did_doc_sov",
  "did_parser",
  "diddoc_legacy",
  "display_as_json",
@@ -4032,6 +4029,16 @@ checksum = "368ba315fb8c5052ab692e68a0eefec6ec57b23a36959c14496f0b0df2c0cecf"
 dependencies = [
  "predicates-core",
  "termtree",
+]
+
+[[package]]
+name = "pretty_assertions"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af7cee1a6c8a5b9208b3cb1061f10c0cb689087b3d8ce85fb9d2dd7a29b6ba66"
+dependencies = [
+ "diff",
+ "yansi",
 ]
 
 [[package]]
@@ -6105,6 +6112,12 @@ name = "xi-unicode"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a67300977d3dc3f8034dae89778f502b6ba20b269527b3223ba59c0cf393bb8a"
+
+[[package]]
+name = "yansi"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09041cd90cf85f7f8b2df60c646f853b7f535ce68f85244eb6731cf89fa498ec"
 
 [[package]]
 name = "zerocopy"

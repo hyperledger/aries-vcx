@@ -1,4 +1,3 @@
-use did_doc_sov::service::ServiceSov;
 use diddoc_legacy::aries::service::AriesService;
 use serde::{Deserialize, Serialize};
 use shared::maybe_known::MaybeKnown;
@@ -53,7 +52,7 @@ pub enum OobService {
     // and if service id is not a resolvable did (it must be just a URI)
     // then there is no way to resolve the recipient keys
     // must be missing something
-    SovService(ServiceSov),
+    // SovService(ServiceSov),
     AriesService(AriesService),
     Did(String),
 }

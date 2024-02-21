@@ -55,7 +55,7 @@ pub struct MockTransport;
 
 #[async_trait]
 impl Transport for MockTransport {
-    async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: url::Url) -> VcxResult<()> {
+    async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: &url::Url) -> VcxResult<()> {
         Ok(())
     }
 }

@@ -1,109 +1,177 @@
 extern crate log;
 
-use std::sync::Arc;
+use std::{error::Error, sync::Arc, thread, time::Duration};
 
 use aries_vcx::{
-    handlers::out_of_band::sender::OutOfBandSender,
+    common::ledger::transactions::write_endpoint_from_service,
     protocols::did_exchange::{
-        resolve_key_from_invitation,
+        resolve_enc_key_from_invitation,
         state_machine::{
-            generate_keypair, requester::DidExchangeRequester, responder::DidExchangeResponder,
+            create_our_did_document,
+            requester::{helpers::invitation_get_first_did_service, DidExchangeRequester},
+            responder::DidExchangeResponder,
         },
         states::{requester::request_sent::RequestSent, responder::response_sent::ResponseSent},
         transition::transition_result::TransitionResult,
     },
+    utils::{didcomm_utils::resolve_base58_key_agreement, encryption_envelope::EncryptionEnvelope},
 };
-use did_doc_sov::{
-    extra_fields::{didcommv1::ExtraFieldsDidCommV1, KeyKind},
-    service::{didcommv1::ServiceDidCommV1, ServiceSov},
+use aries_vcx_core::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
+use did_doc::schema::{
+    did_doc::DidDocument,
+    service::typed::{didcommv1::ServiceDidCommV1, ServiceType},
+    types::uri::Uri,
 };
-use did_peer::resolver::PeerDidResolver;
+use did_parser::Did;
+use did_peer::{
+    peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
+    resolver::{options::PublicKeyEncoding, PeerDidResolutionOptions, PeerDidResolver},
+};
+use did_resolver::traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable};
 use did_resolver_registry::ResolverRegistry;
-use messages::{
-    msg_fields::protocols::out_of_band::invitation::OobService,
-    msg_types::{
-        protocols::did_exchange::{DidExchangeType, DidExchangeTypeV1},
-        Protocol,
-    },
+use did_resolver_sov::resolution::DidSovResolver;
+use log::info;
+use messages::msg_fields::protocols::out_of_band::invitation::{
+    Invitation, InvitationContent, OobService,
 };
-use public_key::KeyType;
-use test_utils::devsetup::SetupPoolDirectory;
+use test_utils::devsetup::{dev_build_profile_vdr_ledger, SetupPoolDirectory};
 use url::Url;
-use uuid::Uuid;
 
-use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
+use crate::utils::test_agent::{
+    create_test_agent, create_test_agent_endorser_2, create_test_agent_trustee,
+};
 
 pub mod utils;
 
+pub(crate) async fn resolve_didpeer2(
+    did_peer: &PeerDid<Numalgo2>,
+    encoding: PublicKeyEncoding,
+) -> DidDocument {
+    let DidResolutionOutput { did_document, .. } = PeerDidResolver::new()
+        .resolve(
+            did_peer.did(),
+            &PeerDidResolutionOptions {
+                encoding: Some(encoding),
+            },
+        )
+        .await
+        .unwrap();
+    did_document
+}
+
+fn assert_key_agreement(a: DidDocument, b: DidDocument) {
+    let a_key = resolve_base58_key_agreement(&a).unwrap();
+    let b_key = resolve_base58_key_agreement(&b).unwrap();
+    assert_eq!(a_key, b_key);
+}
+
 #[tokio::test]
 #[ignore]
-async fn did_exchange_test() {
+async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     let setup = SetupPoolDirectory::init().await;
-    let institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
-    let consumer = create_test_agent(setup.genesis_file_path).await;
+    let dummy_url: Url = "http://dummyurl.org".parse().unwrap();
+    let agent_trustee = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+    // todo: patrik: update create_test_agent_endorser_2 to not consume trustee agent
+    let agent_inviter =
+        create_test_agent_endorser_2(&setup.genesis_file_path, agent_trustee).await?;
+    let create_service = ServiceDidCommV1::new(
+        Uri::new("#service-0").unwrap(),
+        dummy_url.clone(),
+        0,
+        vec![],
+        vec![],
+    );
+    write_endpoint_from_service(
+        &agent_inviter.wallet,
+        &agent_inviter.ledger_write,
+        &agent_inviter.institution_did,
+        &create_service.try_into()?,
+    )
+    .await?;
+    thread::sleep(Duration::from_millis(100));
 
-    let did_peer_resolver = PeerDidResolver::new();
+    let agent_invitee = create_test_agent(setup.genesis_file_path.clone()).await;
+
+    let (ledger_read_2, _) = dev_build_profile_vdr_ledger(setup.genesis_file_path);
+    let ledger_read_2_arc = Arc::new(ledger_read_2);
+
+    // if we were to use, more generally, the `dev_build_featured_indy_ledger`, we would need to
+    // here the type based on the feature flag (indy vs proxy vdr client) which is pain
+    // we need to improve DidSovResolver such that Rust compiler can fully infer the return type
+    let did_sov_resolver: DidSovResolver<Arc<DefaultIndyLedgerRead>, DefaultIndyLedgerRead> =
+        DidSovResolver::new(ledger_read_2_arc);
+
     let resolver_registry = Arc::new(
         ResolverRegistry::new()
-            .register_resolver::<PeerDidResolver>("peer".into(), did_peer_resolver),
+            .register_resolver::<PeerDidResolver>("peer".into(), PeerDidResolver::new())
+            .register_resolver("sov".into(), did_sov_resolver),
     );
 
-    let url: Url = "http://dummyurl.org".parse().unwrap();
-
-    let public_key = generate_keypair(&institution.wallet, KeyType::Ed25519)
-        .await
-        .unwrap();
-    let service = {
-        let service_id = Uuid::new_v4().to_string();
-        ServiceSov::DIDCommV1(
-            ServiceDidCommV1::new(
-                service_id.parse().unwrap(),
-                url.clone().into(),
-                ExtraFieldsDidCommV1::builder()
-                    .set_recipient_keys(vec![KeyKind::DidKey(public_key.try_into().unwrap())])
-                    .build(),
-            )
-            .unwrap(),
+    let invitation = Invitation::builder()
+        .id("test_invite_id".to_owned())
+        .content(
+            InvitationContent::builder()
+                .services(vec![OobService::Did(format!(
+                    "did:sov:{}",
+                    agent_inviter.institution_did
+                ))])
+                .build(),
         )
-    };
-    let invitation = OutOfBandSender::create()
-        .append_service(&OobService::SovService(service))
-        .append_handshake_protocol(Protocol::DidExchangeType(DidExchangeType::V1(
-            DidExchangeTypeV1::new_v1_0(),
-        )))
-        .unwrap()
-        .oob
-        .clone();
-
-    let invitation_id = invitation.id.clone();
-    let invitation_key = resolve_key_from_invitation(&invitation, &resolver_registry)
+        .build();
+    let invitation_key = resolve_enc_key_from_invitation(&invitation, &resolver_registry)
         .await
         .unwrap();
+    info!(
+        "Inviter prepares invitation and passes to invitee {}",
+        invitation
+    );
+
+    let (requesters_did_document, _our_verkey) =
+        create_our_did_document(&agent_invitee.wallet, dummy_url.clone(), vec![]).await?;
+    info!("Requester prepares did document: {requesters_did_document}");
+    let requesters_peer_did = PeerDid::<Numalgo2>::from_did_doc(requesters_did_document.clone())?;
+    info!("Requester prepares their peer:did: {requesters_peer_did}");
+    let did_inviter: Did = invitation_get_first_did_service(&invitation)?;
+    info!(
+        "Invitee resolves Inviter's DID from invitation {} (as a first DID service found in the \
+         invitation)",
+        did_inviter
+    );
 
     let TransitionResult {
         state: requester,
         output: request,
-    } = DidExchangeRequester::<RequestSent>::construct_request_pairwise(
-        &consumer.wallet,
-        invitation,
+    } = DidExchangeRequester::<RequestSent>::construct_request(
         resolver_registry.clone(),
-        url.clone(),
-        vec![],
+        Some(invitation.id),
+        &did_inviter,
+        &requesters_peer_did,
     )
     .await
     .unwrap();
+    info!(
+        "Invitee processes invitation, builds up request {}",
+        &request
+    );
+
+    let (responders_did_document, _our_verkey) =
+        create_our_did_document(&agent_invitee.wallet, dummy_url.clone(), vec![]).await?;
+    info!("Responder prepares did document: {responders_did_document}");
+    let responders_peer_did = PeerDid::<Numalgo2>::from_did_doc(responders_did_document.clone())?;
+    info!("Responder prepares their peer:did: {responders_peer_did}");
+
+    let check_diddoc = resolve_didpeer2(&responders_peer_did, PublicKeyEncoding::Base58).await;
+    info!("Responder decodes constructed peer:did as did document: {check_diddoc}");
 
     let TransitionResult {
-        state: responder,
         output: response,
+        state: responder,
     } = DidExchangeResponder::<ResponseSent>::receive_request(
-        &institution.wallet,
+        &agent_inviter.wallet,
         resolver_registry,
         request,
-        url.clone(),
-        vec![],
-        invitation_id,
-        invitation_key,
+        &responders_peer_did,
+        Some(invitation_key),
     )
     .await
     .unwrap();
@@ -115,43 +183,46 @@ async fn did_exchange_test() {
 
     let responder = responder.receive_complete(complete).unwrap();
 
-    let responder_key = responder
-        .our_did_doc()
-        .verification_method()
-        .first()
-        .unwrap()
-        .public_key()
-        .unwrap()
-        .base58();
-    assert_eq!(
-        requester
-            .their_did_doc()
-            .verification_method()
-            .first()
-            .unwrap()
-            .public_key()
-            .unwrap()
-            .base58(),
-        responder_key
+    info!("Asserting did document of requester");
+    assert_key_agreement(
+        requester.our_did_doc().clone(),
+        responder.their_did_doc().clone(),
+    );
+    info!("Asserting did document of responder");
+    assert_key_agreement(
+        responder.our_did_doc().clone(),
+        requester.their_did_doc().clone(),
     );
 
-    let requester_key = requester
-        .our_did_doc()
-        .verification_method()
-        .first()
-        .unwrap()
-        .public_key()
-        .unwrap()
-        .base58();
-    assert_eq!(
-        responder
-            .their_did_doc()
-            .verification_method()
-            .first()
-            .unwrap()
-            .public_key()
-            .unwrap()
-            .base58(),
-        requester_key
+    info!(
+        "Requesters did document (requesters view): {}",
+        requester.our_did_doc()
     );
+    info!(
+        "Responders did document (requesters view): {}",
+        requester.their_did_doc()
+    );
+
+    let data = "Hello world";
+    let service = requester
+        .their_did_doc()
+        .get_service_of_type(&ServiceType::DIDCommV1)?;
+    let m = EncryptionEnvelope::create(
+        &agent_invitee.wallet,
+        data.as_bytes(),
+        requester.our_did_doc(),
+        requester.their_did_doc(),
+        service.id(),
+    )
+    .await?;
+
+    info!("Encrypted message: {:?}", m);
+
+    let expected_sender_vk = resolve_base58_key_agreement(&requesters_did_document)?;
+    let unpacked =
+        EncryptionEnvelope::auth_unpack(&agent_invitee.wallet, m.0, &expected_sender_vk).await?;
+
+    info!("Unpacked message: {:?}", unpacked);
+
+    Ok(())
 }

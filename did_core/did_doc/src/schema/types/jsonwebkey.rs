@@ -1,13 +1,30 @@
 use std::{
     collections::HashMap,
+    error::Error,
     fmt::{self, Display, Formatter},
     str::FromStr,
 };
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use thiserror::Error;
 
-use crate::error::DidDocumentBuilderError;
+#[derive(Debug, Error)]
+pub struct JsonWebKeyError {
+    reason: &'static str,
+    #[source]
+    source: Box<dyn Error + Sync + Send>,
+}
+
+impl Display for JsonWebKeyError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "JsonWebKeyError, reason: {}, source: {}",
+            self.reason, self.source
+        )
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 // TODO: Introduce proper custom type
@@ -24,17 +41,24 @@ pub struct JsonWebKey {
 }
 
 impl JsonWebKey {
-    pub fn new(jwk: &str) -> Result<Self, DidDocumentBuilderError> {
-        Ok(serde_json::from_str(jwk)?)
+    // todo: More future-proof way would be creating custom error type, but seems as overkill atm?
+    pub fn new(jwk: &str) -> Result<Self, JsonWebKeyError> {
+        serde_json::from_str(jwk).map_err(|err| JsonWebKeyError {
+            reason: "Parsing JWK failed",
+            source: Box::new(err),
+        })
     }
 
-    pub fn to_vec(&self) -> Result<Vec<u8>, DidDocumentBuilderError> {
-        serde_json::to_vec(self).map_err(|e| e.into())
+    pub fn to_vec(&self) -> Result<Vec<u8>, JsonWebKeyError> {
+        serde_json::to_vec(self).map_err(|err| JsonWebKeyError {
+            reason: "Serializing JWK to vector failed",
+            source: Box::new(err),
+        })
     }
 }
 
 impl FromStr for JsonWebKey {
-    type Err = DidDocumentBuilderError;
+    type Err = JsonWebKeyError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::new(s)

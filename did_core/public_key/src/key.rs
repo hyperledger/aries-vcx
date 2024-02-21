@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::KeyType;
 use crate::error::PublicKeyError;
 
+/// Represents raw public key data along with information about the key type
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Key {
     key_type: KeyType,
@@ -46,8 +47,6 @@ impl Key {
         bs58::encode(&self.key).into_string()
     }
 
-    // TODO: base64, ...
-
     pub fn multibase58(&self) -> String {
         multibase::encode(multibase::Base::Base58Btc, &self.key)
     }
@@ -69,7 +68,6 @@ impl Key {
         })
     }
 
-    // TODO: A better name?
     pub fn short_prefixless_fingerprint(&self) -> String {
         self.prefixless_fingerprint()
             .chars()

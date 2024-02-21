@@ -2,10 +2,11 @@ pub mod parsing;
 mod resolution;
 
 use aries_vcx_core::errors::error::AriesVcxCoreError;
-use did_resolver::did_doc::error::DidDocumentBuilderError;
+use did_resolver::did_doc::{error::DidDocumentBuilderError, schema::types::uri::UriWrapperError};
 use thiserror::Error;
 
 use self::parsing::ParsingErrorSource;
+use crate::error::DidSovError::ParsingError;
 
 // TODO: DIDDocumentBuilderError should do key validation and the error
 // should me mapped accordingly
@@ -21,7 +22,7 @@ pub enum DidSovError {
     RepresentationNotSupported(String),
     #[error("Internal error")]
     InternalError,
-    #[error("Invalid DID: {0}")]
+    #[error("Invalid DID {0}")]
     InvalidDid(String),
     #[error("AriesVCX Core error: {0}")]
     AriesVcxCoreError(#[from] AriesVcxCoreError),
@@ -33,4 +34,10 @@ pub enum DidSovError {
     InvalidConfiguration(String),
     #[error(transparent)]
     Other(#[from] Box<dyn std::error::Error + Send + Sync>),
+}
+
+impl From<UriWrapperError> for DidSovError {
+    fn from(error: UriWrapperError) -> Self {
+        ParsingError(ParsingErrorSource::DidDocumentParsingUriError(error))
+    }
 }
