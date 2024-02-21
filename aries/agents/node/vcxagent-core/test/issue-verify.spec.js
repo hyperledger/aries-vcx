@@ -57,11 +57,13 @@ describe('test update state', () => {
           'last_name',
           'sex'
         ],
-        restrictions: [
-          {
-            issuer_did: 'V4SGRU86Z58d6TV7PBUe6f'
-          }
-        ]
+        restrictions: {
+          '$or': [
+            {
+              issuer_did: 'V4SGRU86Z58d6TV7PBUe6f'
+            }
+          ]
+        }
       },
       attr_date: {
         name: 'date',

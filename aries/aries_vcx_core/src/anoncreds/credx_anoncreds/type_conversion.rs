@@ -114,6 +114,16 @@ impl Convert for &Did {
     }
 }
 
+impl Convert for CredxCredentialDefinitionId {
+    type Args = ();
+    type Target = OurCredentialDefinitionId;
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        Ok(OurCredentialDefinitionId::new(self.0)?)
+    }
+}
+
 impl Convert for CredxCredentialDefinition {
     type Args = (String,);
     type Target = OurCredentialDefinition;
@@ -123,7 +133,7 @@ impl Convert for CredxCredentialDefinition {
         match self {
             CredxCredentialDefinition::CredentialDefinitionV1(cred_def) => {
                 Ok(OurCredentialDefinition {
-                    id: OurCredentialDefinitionId::new(cred_def.id.0)?,
+                    id: cred_def.id.convert(())?,
                     schema_id: OurSchemaId::new_unchecked(cred_def.schema_id.0),
                     signature_type: OurSignatureType::CL,
                     tag: cred_def.tag,

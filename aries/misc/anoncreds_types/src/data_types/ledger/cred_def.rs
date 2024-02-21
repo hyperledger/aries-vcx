@@ -7,7 +7,6 @@ use crate::{
     data_types::identifiers::{
         cred_def_id::CredentialDefinitionId, issuer_id::IssuerId, schema_id::SchemaId,
     },
-    error::ConversionError,
     utils::validation::Validatable,
 };
 
@@ -20,12 +19,15 @@ pub enum SignatureType {
 }
 
 impl FromStr for SignatureType {
-    type Err = ConversionError;
+    type Err = crate::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             CL_SIGNATURE_TYPE => Ok(Self::CL),
-            _ => Err(ConversionError::from_msg("Invalid signature type")),
+            _ => Err(crate::Error::from_msg(
+                crate::ErrorKind::ConversionError,
+                "Invalid signature type",
+            )),
         }
     }
 }
@@ -50,13 +52,9 @@ pub struct CredentialDefinition {
 }
 
 impl CredentialDefinition {
-    pub fn get_public_key(&self) -> Result<CredentialPublicKey, ConversionError> {
-        let key = CredentialPublicKey::build_from_parts(
-            &self.value.primary,
-            self.value.revocation.as_ref(),
-        )
-        .map_err(|e| e.to_string())?;
-        Ok(key)
+    pub fn get_public_key(&self) -> Result<CredentialPublicKey, crate::Error> {
+        CredentialPublicKey::build_from_parts(&self.value.primary, self.value.revocation.as_ref())
+            .map_err(|e| crate::Error::from_msg(crate::ErrorKind::ConversionError, e.to_string()))
     }
 
     pub fn try_clone(&self) -> Result<Self, crate::Error> {

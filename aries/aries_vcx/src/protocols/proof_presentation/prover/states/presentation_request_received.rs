@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use anoncreds_types::data_types::messages::cred_selection::SelectedCredentials;
+use anoncreds_types::data_types::messages::{
+    cred_selection::SelectedCredentials, presentation::Presentation,
+};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
     wallet::base_wallet::BaseWallet,
@@ -60,13 +62,13 @@ impl PresentationRequestReceived {
         anoncreds: &impl BaseAnonCreds,
         credentials: &SelectedCredentials,
         self_attested_attrs: &HashMap<String, String>,
-    ) -> VcxResult<String> {
-        let proof_req_data_json = get_attach_as_string!(
+    ) -> VcxResult<Presentation> {
+        let proof_req_data_json = serde_json::from_str(&get_attach_as_string!(
             &self
                 .presentation_request
                 .content
                 .request_presentations_attach
-        );
+        ))?;
 
         generate_indy_proof(
             wallet,
@@ -74,7 +76,7 @@ impl PresentationRequestReceived {
             anoncreds,
             credentials,
             self_attested_attrs,
-            &proof_req_data_json,
+            proof_req_data_json,
         )
         .await
     }

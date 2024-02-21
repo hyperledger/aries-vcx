@@ -3,6 +3,7 @@ use std::{collections::HashMap, fmt};
 use anoncreds_clsignatures::PredicateType;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
+use typed_builder::TypedBuilder;
 
 use super::{credential::Credential, nonce::Nonce};
 use crate::{
@@ -13,16 +14,34 @@ use crate::{
     },
 };
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+// TODO: We want a builder with a fallible build method which creates the nonce so that the client
+// does not need to know about it. Not sure if this is achievable using TypedBuilder.
+// Requested attributes and predicates need to be of a dedicated type with their own builder.
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, TypedBuilder)]
 pub struct PresentationRequestPayload {
     pub nonce: Nonce,
     pub name: String,
-    pub version: String,
+    #[builder(default)]
+    pub version: PresentationRequestVersion,
     #[serde(default)]
+    #[builder(default)]
     pub requested_attributes: HashMap<String, AttributeInfo>,
     #[serde(default)]
+    #[builder(default)]
     pub requested_predicates: HashMap<String, PredicateInfo>,
+    #[builder(setter(strip_option))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default)]
     pub non_revoked: Option<NonRevokedInterval>,
+}
+
+impl From<PresentationRequestPayload> for PresentationRequest {
+    fn from(value: PresentationRequestPayload) -> Self {
+        match value.version {
+            PresentationRequestVersion::V1 => Self::PresentationRequestV1(value),
+            PresentationRequestVersion::V2 => Self::PresentationRequestV2(value),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -31,9 +50,12 @@ pub enum PresentationRequest {
     PresentationRequestV2(PresentationRequestPayload),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub enum PresentationRequestVersion {
+    #[default]
+    #[serde(rename = "1.0")]
     V1,
+    #[serde(rename = "2.0")]
     V2,
 }
 
@@ -166,6 +188,7 @@ impl NonRevokedInterval {
         });
     }
 
+    // TODO: Should not even be instantiated
     pub fn is_valid(&self, timestamp: u64) -> Result<(), crate::error::Error> {
         if timestamp.lt(&self.from.unwrap_or(0)) || timestamp.gt(&self.to.unwrap_or(u64::MAX)) {
             Err(invalid!("Invalid timestamp"))
@@ -175,36 +198,45 @@ impl NonRevokedInterval {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Default, TypedBuilder)]
+#[builder(field_defaults(default, setter(strip_option)))]
 pub struct AttributeInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub names: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub restrictions: Option<Query>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub non_revoked: Option<NonRevokedInterval>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub self_attest_allowed: Option<bool>,
 }
 
 pub type PredicateValue = i32;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, TypedBuilder)]
 pub struct PredicateInfo {
     pub name: String,
     pub p_type: PredicateTypes,
     pub p_value: PredicateValue,
+    #[builder(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub restrictions: Option<Query>,
+    #[builder(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub non_revoked: Option<NonRevokedInterval>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum PredicateTypes {
-    #[serde(rename = ">=")]
+    #[serde(rename = ">=", alias = "GE")]
     GE,
-    #[serde(rename = "<=")]
+    #[serde(rename = "<=", alias = "LE")]
     LE,
-    #[serde(rename = ">")]
+    #[serde(rename = ">", alias = "GT")]
     GT,
-    #[serde(rename = "<")]
+    #[serde(rename = "<", alias = "LT")]
     LT,
 }
 

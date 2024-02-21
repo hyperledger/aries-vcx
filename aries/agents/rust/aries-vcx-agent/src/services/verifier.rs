@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
+use anoncreds_types::data_types::messages::pres_request::PresentationRequest;
 use aries_vcx::{
-    common::proofs::proof_request::PresentationRequestData,
     handlers::proof_presentation::verifier::Verifier,
     messages::{
         msg_fields::protocols::present_proof::v1::{
@@ -70,7 +70,7 @@ impl ServiceVerifier {
     pub async fn send_proof_request(
         &self,
         connection_id: &str,
-        request: PresentationRequestData,
+        request: PresentationRequest,
         proposal: Option<ProposePresentationV1>,
     ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;

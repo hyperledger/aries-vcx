@@ -2,10 +2,8 @@ use anoncreds_types::data_types::{
     identifiers::schema_id::SchemaId, ledger::schema::Schema as LedgerSchema,
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    global::settings::DEFAULT_SERIALIZE_VERSION,
-    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
-    wallet::base_wallet::BaseWallet,
+    anoncreds::base_anoncreds::BaseAnonCreds, global::settings::DEFAULT_SERIALIZE_VERSION,
+    ledger::base_ledger::AnoncredsLedgerWrite, wallet::base_wallet::BaseWallet,
 };
 use did_parser::Did;
 
@@ -14,14 +12,6 @@ use crate::{
     errors::error::{AriesVcxError, VcxResult},
     utils::serialization::ObjectWithVersion,
 };
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct SchemaData {
-    pub name: String,
-    pub version: String,
-    #[serde(rename = "attrNames")]
-    pub attr_names: Vec<String>,
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Schema {
@@ -109,13 +99,6 @@ impl Schema {
         ObjectWithVersion::deserialize(data)
             .map(|obj: ObjectWithVersion<Schema>| obj.data)
             .map_err(|err: AriesVcxError| err.extend("Cannot deserialize Schema"))
-    }
-
-    pub async fn update_state(&mut self, ledger: &impl AnoncredsLedgerRead) -> VcxResult<u32> {
-        if ledger.get_schema(&self.schema_id, None).await.is_ok() {
-            self.state = PublicEntityStateType::Published
-        }
-        Ok(self.state as u32)
     }
 
     pub fn get_state(&self) -> u32 {

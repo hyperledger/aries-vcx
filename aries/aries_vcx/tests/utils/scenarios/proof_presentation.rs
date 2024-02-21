@@ -2,16 +2,20 @@ use std::collections::HashMap;
 
 use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
-    messages::cred_selection::{
-        RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
+    messages::{
+        cred_selection::{
+            RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
+        },
+        nonce::Nonce,
+        pres_request::{
+            AttributeInfo, NonRevokedInterval, PredicateInfo, PresentationRequest,
+            PresentationRequestPayload,
+        },
     },
 };
 use aries_vcx::{
-    common::{
-        primitives::{
-            credential_definition::CredentialDef, revocation_registry::RevocationRegistry,
-        },
-        proofs::{proof_request::PresentationRequestData, proof_request_internal::AttrInfo},
+    common::primitives::{
+        credential_definition::CredentialDef, revocation_registry::RevocationRegistry,
     },
     handlers::{
         issuance::issuer::Issuer,
@@ -97,18 +101,23 @@ pub async fn accept_proof_proposal(
         .presentation_proposal
         .attributes
         .into_iter()
-        .map(|attr| AttrInfo {
-            name: Some(attr.name),
-            ..AttrInfo::default()
+        .map(|attr| {
+            (
+                attr.name.to_string(),
+                AttributeInfo {
+                    name: Some(attr.name),
+                    ..AttributeInfo::default()
+                },
+            )
         })
         .collect();
-    let presentation_request_data = PresentationRequestData::create(&faber.anoncreds, "request-1")
-        .await
-        .unwrap()
-        .set_requested_attributes_as_vec(attrs)
-        .unwrap();
+    let presentation_request = PresentationRequestPayload::builder()
+        .name("request-1".into())
+        .requested_attributes(attrs)
+        .nonce(Nonce::new().unwrap())
+        .build();
     verifier
-        .set_presentation_request(presentation_request_data, None)
+        .set_presentation_request(presentation_request.into(), None)
         .unwrap();
     verifier.mark_presentation_request_sent().unwrap()
 }
@@ -134,26 +143,25 @@ pub async fn receive_proof_proposal_rejection(prover: &mut Prover, rejection: Pr
 }
 
 pub async fn create_proof_request_data(
-    faber: &mut TestAgent<
+    _faber: &mut TestAgent<
         impl IndyLedgerRead + AnoncredsLedgerRead,
         impl IndyLedgerWrite + AnoncredsLedgerWrite,
         impl BaseAnonCreds,
         impl BaseWallet,
     >,
-    requested_attrs: &str,
-    requested_preds: &str,
-    revocation_interval: &str,
+    requested_attrs: HashMap<String, AttributeInfo>,
+    requested_preds: HashMap<String, PredicateInfo>,
+    revocation_interval: NonRevokedInterval,
     request_name: Option<&str>,
-) -> PresentationRequestData {
-    PresentationRequestData::create(&faber.anoncreds, request_name.unwrap_or("name"))
-        .await
-        .unwrap()
-        .set_requested_attributes_as_string(requested_attrs.to_string())
-        .unwrap()
-        .set_requested_predicates_as_string(requested_preds.to_string())
-        .unwrap()
-        .set_not_revoked_interval(revocation_interval.to_string())
-        .unwrap()
+) -> PresentationRequest {
+    PresentationRequestPayload::builder()
+        .nonce(Nonce::new().unwrap())
+        .name(request_name.unwrap_or("name").to_string())
+        .requested_attributes(requested_attrs)
+        .requested_predicates(requested_preds)
+        .non_revoked(revocation_interval)
+        .build()
+        .into()
 }
 
 pub async fn create_prover_from_request(presentation_request: RequestPresentationV1) -> Prover {
@@ -161,7 +169,7 @@ pub async fn create_prover_from_request(presentation_request: RequestPresentatio
 }
 
 pub async fn create_verifier_from_request_data(
-    presentation_request_data: PresentationRequestData,
+    presentation_request_data: PresentationRequest,
 ) -> Verifier {
     let mut verifier =
         Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();
@@ -346,9 +354,9 @@ pub async fn verifier_create_proof_and_send_request(
     );
     let presentation_request_data = create_proof_request_data(
         institution,
-        &requested_attrs.to_string(),
-        "[]",
-        "{}",
+        requested_attrs,
+        Default::default(),
+        Default::default(),
         request_name,
     )
     .await;

@@ -12,7 +12,7 @@ use serde_json::Value;
 
 use crate::{
     cl::{new_nonce, Nonce as CryptoNonce},
-    error::ConversionError,
+    ErrorKind,
 };
 
 pub struct Nonce {
@@ -22,15 +22,21 @@ pub struct Nonce {
 
 impl Nonce {
     #[inline]
-    pub fn new() -> Result<Self, ConversionError> {
-        let native = new_nonce()
-            .map_err(|err| ConversionError::from_msg(format!("Error creating nonce: {err}")))?;
+    pub fn new() -> Result<Self, crate::Error> {
+        let native = new_nonce().map_err(|err| {
+            crate::Error::from_msg(
+                ErrorKind::ConversionError,
+                format!("Error creating nonce: {err}"),
+            )
+        })?;
         Self::from_native(native)
     }
 
     #[inline]
-    pub fn from_native(native: CryptoNonce) -> Result<Self, ConversionError> {
-        let strval = native.to_dec().map_err(|e| e.to_string())?;
+    pub fn from_native(native: CryptoNonce) -> Result<Self, crate::Error> {
+        let strval = native
+            .to_dec()
+            .map_err(|e| crate::Error::from_msg(ErrorKind::ConversionError, e.to_string()))?;
         Ok(Self { strval, native })
     }
 
@@ -46,29 +52,39 @@ impl Nonce {
         self.native
     }
 
-    pub fn from_dec<S: Into<String>>(value: S) -> Result<Self, ConversionError> {
+    pub fn from_dec<S: Into<String>>(value: S) -> Result<Self, crate::Error> {
         let strval = value.into();
         if strval.is_empty() {
-            return Err("Invalid bignum: empty value".into());
+            return Err(crate::Error::from_msg(
+                ErrorKind::ConversionError,
+                "Invalid bignum: empty value".to_string(),
+            ));
         }
         for c in strval.chars() {
             if !c.is_ascii_digit() {
-                return Err("Invalid bignum value".into());
+                return Err(crate::Error::from_msg(
+                    ErrorKind::ConversionError,
+                    "Invalid bignum value".to_string(),
+                ));
             }
         }
 
-        let native = CryptoNonce::from_dec(&strval).map_err(|e| e.to_string())?;
+        let native = CryptoNonce::from_dec(&strval)
+            .map_err(|e| crate::Error::from_msg(ErrorKind::ConversionError, e.to_string()))?;
         Ok(Self { strval, native })
     }
 
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, ConversionError> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, crate::Error> {
         let native = CryptoNonce::from_bytes(bytes).map_err(|err| {
-            ConversionError::from_msg(format!("Error converting nonce from bytes: {err}"))
+            crate::Error::from_msg(
+                ErrorKind::ConversionError,
+                format!("Error converting nonce from bytes: {err}"),
+            )
         })?;
         Self::from_native(native)
     }
 
-    pub fn try_clone(&self) -> Result<Self, ConversionError> {
+    pub fn try_clone(&self) -> Result<Self, crate::Error> {
         Self::from_dec(self.strval.clone())
     }
 }
@@ -88,7 +104,7 @@ impl PartialEq for Nonce {
 impl Eq for Nonce {}
 
 impl TryFrom<i64> for Nonce {
-    type Error = ConversionError;
+    type Error = crate::Error;
 
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         Self::from_dec(value.to_string())
@@ -96,7 +112,7 @@ impl TryFrom<i64> for Nonce {
 }
 
 impl TryFrom<u64> for Nonce {
-    type Error = ConversionError;
+    type Error = crate::Error;
 
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         Self::from_dec(value.to_string())
@@ -104,7 +120,7 @@ impl TryFrom<u64> for Nonce {
 }
 
 impl TryFrom<u128> for Nonce {
-    type Error = ConversionError;
+    type Error = crate::Error;
 
     fn try_from(value: u128) -> Result<Self, Self::Error> {
         Self::from_dec(value.to_string())
@@ -112,7 +128,7 @@ impl TryFrom<u128> for Nonce {
 }
 
 impl TryFrom<&str> for Nonce {
-    type Error = ConversionError;
+    type Error = crate::Error;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Self::from_dec(value)
@@ -120,7 +136,7 @@ impl TryFrom<&str> for Nonce {
 }
 
 impl TryFrom<String> for Nonce {
-    type Error = ConversionError;
+    type Error = crate::Error;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         Self::from_dec(value)

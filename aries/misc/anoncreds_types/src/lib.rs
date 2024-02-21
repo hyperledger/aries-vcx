@@ -16,6 +16,6 @@ mod error;
 pub use self::error::Result;
 pub use self::error::{Error, ErrorKind};
 
-mod utils;
+pub mod utils;
 
 pub mod data_types;

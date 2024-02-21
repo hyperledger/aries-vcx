@@ -1401,7 +1401,7 @@ fn _make_cred_info(
         referent: credential_id.to_string(),
         attributes,
         schema_id: cred.schema_id.clone(),
-        cred_def_id: cred.cred_def_id.to_string(),
+        cred_def_id: cred.cred_def_id.clone(),
         rev_reg_id: cred.rev_reg_id.as_ref().map(|x| x.0.to_string()),
         cred_rev_id,
     })

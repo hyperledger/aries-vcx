@@ -79,7 +79,7 @@ export class Proof extends VcxBaseWithState<Record<string, unknown>, VerifierSta
       const handle = await ffi.proofCreate(
         sourceId,
         JSON.stringify(createDataRest.attrs),
-        JSON.stringify(createDataRest.preds || []),
+        JSON.stringify(createDataRest.preds || {}),
         JSON.stringify(createDataRest.revocationInterval),
         createDataRest.name,
       );

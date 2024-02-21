@@ -30,12 +30,10 @@ pub fn is_uri_identifier(id: &str) -> bool {
     URI_IDENTIFIER.captures(id).is_some()
 }
 
-/// Macro to return a new `ValidationError` with an optional message
 #[macro_export]
 macro_rules! invalid {
-    () => { $crate::error::ValidationError::from(None).into() };
     ($($arg:tt)+) => {
-        Into::<$crate::error::Error>::into($crate::error::ValidationError::from(format!($($arg)+)))
+        $crate::error::Error::from_msg($crate::ErrorKind::ConversionError, format!($($arg)+))
     };
 }
 

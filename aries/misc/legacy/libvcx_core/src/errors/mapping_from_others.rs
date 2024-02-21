@@ -32,3 +32,9 @@ impl From<did_parser::ParseError> for LibvcxError {
         LibvcxError::from_msg(LibvcxErrorKind::InvalidDid, err.to_string())
     }
 }
+
+impl From<anoncreds_types::cl::Error> for LibvcxError {
+    fn from(err: anoncreds_types::cl::Error) -> Self {
+        LibvcxError::from_msg(LibvcxErrorKind::InvalidState, err.to_string())
+    }
+}

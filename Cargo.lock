@@ -369,7 +369,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "thiserror",
+ "typed-builder 0.18.1",
 ]
 
 [[package]]

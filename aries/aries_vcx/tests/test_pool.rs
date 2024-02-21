@@ -17,7 +17,6 @@ use aries_vcx::{
             credential_definition::CredentialDef,
             credential_schema::Schema,
             revocation_registry::{generate_rev_reg, RevocationRegistry},
-            revocation_registry_delta::RevocationRegistryDelta,
         },
     },
     errors::error::AriesVcxErrorKind,
@@ -529,29 +528,5 @@ async fn test_pool_create_and_get_schema() -> Result<(), Box<dyn Error>> {
     let retrieved_schema =
         serde_json::to_string(&ledger.get_schema(&schema.schema_id, None).await?).unwrap();
     assert!(retrieved_schema.contains(&schema.schema_id.to_string()));
-    Ok(())
-}
-
-#[tokio::test]
-#[ignore]
-async fn test_pool_create_rev_reg_delta_from_ledger() -> Result<(), Box<dyn Error>> {
-    let setup = build_setup_profile().await;
-    let attrs = format!("{:?}", attr_names_address_list());
-    let (_, _, rev_reg) = create_and_store_revocable_credential_def(
-        &setup.wallet,
-        &setup.anoncreds,
-        &setup.ledger_read,
-        &setup.ledger_write,
-        &setup.institution_did,
-        &attrs,
-    )
-    .await?;
-
-    let (rev_reg_delta_json, _) = setup
-        .ledger_read
-        .get_rev_reg_delta_json(&rev_reg.rev_reg_id.try_into()?, None, None)
-        .await?;
-    RevocationRegistryDelta::create_from_ledger(&serde_json::to_string(&rev_reg_delta_json)?)
-        .await?;
     Ok(())
 }

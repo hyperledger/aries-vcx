@@ -1,24 +1,29 @@
 use std::fmt;
 
-use crate::{
-    cl::{bn::BigNumber, Prover as CryptoProver},
-    error::ConversionError,
-};
+use crate::cl::{bn::BigNumber, Prover as CryptoProver};
 
 pub struct LinkSecret(pub(crate) BigNumber);
 
 impl LinkSecret {
-    pub fn new() -> Result<Self, ConversionError> {
+    pub fn new() -> Result<Self, crate::Error> {
         let value = CryptoProver::new_link_secret()
-            .map_err(|err| ConversionError::from_msg(format!("Error creating link secret: {err}")))?
+            .map_err(|err| {
+                crate::Error::from_msg(
+                    crate::ErrorKind::ConversionError,
+                    format!("Error creating link secret: {err}"),
+                )
+            })?
             .into();
 
         Ok(Self(value))
     }
 
-    pub fn try_clone(&self) -> Result<Self, ConversionError> {
+    pub fn try_clone(&self) -> Result<Self, crate::Error> {
         let cloned = self.0.try_clone().map_err(|err| {
-            ConversionError::from_msg(format!("Error cloning link secret: {err}"))
+            crate::Error::from_msg(
+                crate::ErrorKind::ConversionError,
+                format!("Error cloning link secret: {err}"),
+            )
         })?;
 
         Ok(Self(cloned))
@@ -34,21 +39,27 @@ impl fmt::Debug for LinkSecret {
 }
 
 impl TryInto<String> for LinkSecret {
-    type Error = ConversionError;
+    type Error = crate::Error;
 
     fn try_into(self) -> Result<String, Self::Error> {
         self.0.to_dec().map_err(|err| {
-            ConversionError::from_msg(format!("Error converting link secret: {err}"))
+            crate::Error::from_msg(
+                crate::ErrorKind::ConversionError,
+                format!("Error converting link secret: {err}"),
+            )
         })
     }
 }
 
 impl TryFrom<&str> for LinkSecret {
-    type Error = ConversionError;
+    type Error = crate::Error;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(Self(BigNumber::from_dec(value).map_err(|err| {
-            ConversionError::from_msg(format!("Error converting link secret: {err}"))
+            crate::Error::from_msg(
+                crate::ErrorKind::ConversionError,
+                format!("Error converting link secret: {err}"),
+            )
         })?))
     }
 }

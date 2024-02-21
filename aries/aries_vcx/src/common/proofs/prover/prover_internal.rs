@@ -1,26 +1,29 @@
 use std::{collections::HashMap, path::Path};
 
 use anoncreds_types::data_types::{
-    identifiers::schema_id::SchemaId, messages::cred_selection::SelectedCredentials,
+    identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
+    messages::{
+        cred_selection::SelectedCredentials,
+        pres_request::{NonRevokedInterval, PresentationRequest},
+    },
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::{BaseAnonCreds, RevocationStatesMap},
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
+    anoncreds::base_anoncreds::{
+        BaseAnonCreds, CredentialDefinitionsMap, RevocationStatesMap, SchemasMap,
+    },
+    errors::error::AriesVcxCoreErrorKind,
     ledger::base_ledger::AnoncredsLedgerRead,
 };
 use serde_json::Value;
 
-use crate::{
-    common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval},
-    errors::error::prelude::*,
-};
+use crate::errors::error::prelude::*;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoProver {
     pub referent: String,
     pub credential_referent: String,
     pub schema_id: SchemaId,
-    pub cred_def_id: String,
+    pub cred_def_id: CredentialDefinitionId,
     pub rev_reg_id: Option<String>,
     pub cred_rev_id: Option<u32>,
     pub revocation_interval: Option<NonRevokedInterval>,
@@ -32,16 +35,15 @@ pub struct CredInfoProver {
 pub async fn build_schemas_json_prover(
     ledger: &impl AnoncredsLedgerRead,
     credentials_identifiers: &Vec<CredInfoProver>,
-) -> VcxResult<String> {
+) -> VcxResult<SchemasMap> {
     trace!(
         "build_schemas_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let mut rtn: Value = json!({});
+    let mut rtn: SchemasMap = HashMap::new();
 
     for cred_info in credentials_identifiers {
-        let schema_id = cred_info.schema_id.to_string();
-        if rtn.get(&schema_id).is_none() {
+        if rtn.get(&cred_info.schema_id).is_none() {
             let schema_json = ledger
                 .get_schema(&cred_info.schema_id, None)
                 .await
@@ -52,33 +54,26 @@ pub async fn build_schemas_json_prover(
                     )
                 })?;
 
-            let schema_json = serde_json::to_value(&schema_json).map_err(|err| {
-                AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::InvalidSchema,
-                    format!("Cannot deserialize schema: {}", err),
-                )
-            })?;
-
-            rtn[schema_id] = schema_json;
+            rtn.insert(cred_info.schema_id.to_owned(), schema_json);
         }
     }
-    Ok(rtn.to_string())
+    Ok(rtn)
 }
 
 pub async fn build_cred_defs_json_prover(
     ledger: &impl AnoncredsLedgerRead,
     credentials_identifiers: &Vec<CredInfoProver>,
-) -> VcxResult<String> {
+) -> VcxResult<CredentialDefinitionsMap> {
     trace!(
         "build_cred_defs_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let mut rtn: Value = json!({});
+    let mut rtn: CredentialDefinitionsMap = HashMap::new();
 
     for cred_info in credentials_identifiers {
-        if rtn.get(&cred_info.cred_def_id).is_none() {
+        if !rtn.contains_key(&cred_info.cred_def_id) {
             let credential_def = ledger
-                .get_cred_def(&cred_info.cred_def_id.to_owned().try_into()?, None)
+                .get_cred_def(&cred_info.cred_def_id, None)
                 .await
                 .map_err(|err| {
                     err.map(
@@ -87,22 +82,15 @@ pub async fn build_cred_defs_json_prover(
                     )
                 })?;
 
-            let credential_def = serde_json::to_value(&credential_def).map_err(|err| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidProofCredentialData,
-                    format!("Cannot deserialize credential definition: {}", err),
-                )
-            })?;
-
-            rtn[cred_info.cred_def_id.to_owned()] = credential_def;
+            rtn.insert(cred_info.cred_def_id.to_owned(), credential_def);
         }
     }
-    Ok(rtn.to_string())
+    Ok(rtn)
 }
 
 pub fn credential_def_identifiers(
     credentials: &SelectedCredentials,
-    proof_req: &ProofRequestData,
+    proof_req: &PresentationRequest,
 ) -> VcxResult<Vec<CredInfoProver>> {
     trace!(
         "credential_def_identifiers >>> credentials: {:?}, proof_req: {:?}",
@@ -132,19 +120,19 @@ pub fn credential_def_identifiers(
 
 fn _get_revocation_interval(
     attr_name: &str,
-    proof_req: &ProofRequestData,
+    proof_req: &PresentationRequest,
 ) -> VcxResult<Option<NonRevokedInterval>> {
-    if let Some(attr) = proof_req.requested_attributes.get(attr_name) {
+    if let Some(attr) = proof_req.value().requested_attributes.get(attr_name) {
         Ok(attr
             .non_revoked
             .clone()
-            .or(proof_req.non_revoked.clone().or(None)))
-    } else if let Some(attr) = proof_req.requested_predicates.get(attr_name) {
+            .or(proof_req.value().non_revoked.clone().or(None)))
+    } else if let Some(attr) = proof_req.value().requested_predicates.get(attr_name) {
         // Handle case for predicates
         Ok(attr
             .non_revoked
             .clone()
-            .or(proof_req.non_revoked.clone().or(None)))
+            .or(proof_req.value().non_revoked.clone().or(None)))
     } else {
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidProofCredentialData,
@@ -224,7 +212,7 @@ pub async fn build_rev_states_json(
 pub fn build_requested_credentials_json(
     credentials_identifiers: &Vec<CredInfoProver>,
     self_attested_attrs: &HashMap<String, String>,
-    proof_req: &ProofRequestData,
+    proof_req: &PresentationRequest,
 ) -> VcxResult<String> {
     trace!(
         "build_requested_credentials_json >> credentials_identifiers: {:?}, self_attested_attrs: \
@@ -242,6 +230,7 @@ pub fn build_requested_credentials_json(
     if let Value::Object(ref mut map) = rtn["requested_attributes"] {
         for cred_info in credentials_identifiers {
             if proof_req
+                .value()
                 .requested_attributes
                 .get(&cred_info.referent)
                 .is_some()
@@ -255,6 +244,7 @@ pub fn build_requested_credentials_json(
     if let Value::Object(ref mut map) = rtn["requested_predicates"] {
         for cred_info in credentials_identifiers {
             if proof_req
+                .value()
                 .requested_predicates
                 .get(&cred_info.referent)
                 .is_some()
@@ -283,7 +273,7 @@ pub mod pool_tests {
 
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
-        constants::{schema_id, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID},
+        constants::{cred_def_id, schema_id, CRED_REV_ID, LICENCE_CRED_ID},
         devsetup::build_setup_profile,
     };
 
@@ -310,7 +300,7 @@ pub mod pool_tests {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: None,
             cred_rev_id: Some(CRED_REV_ID),
             tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
@@ -332,9 +322,9 @@ pub mod unit_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
         constants::{
-            address_schema_id, schema_id, ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_REV_REG_ID,
-            ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
-            REV_STATE_JSON, SCHEMA_ID,
+            address_cred_def_id, address_schema_id, cred_def_id, schema_id, ADDRESS_CRED_DEF_ID,
+            ADDRESS_CRED_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID,
+            LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID,
         },
         devsetup::*,
         mockdata::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
@@ -342,11 +332,11 @@ pub mod unit_tests {
 
     use super::*;
 
-    fn proof_req_no_interval() -> ProofRequestData {
+    fn proof_req_no_interval() -> PresentationRequest {
         let proof_req = json!({
             "nonce": "123432421212",
             "name": "proof_req_1",
-            "version": "0.1",
+            "version": "1.0",
             "requested_attributes": {
                 "address1_1": { "name": "address1" },
                 "zip_2": { "name": "zip" },
@@ -367,7 +357,7 @@ pub mod unit_tests {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -379,7 +369,7 @@ pub mod unit_tests {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: address_schema_id(),
-            cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
+            cred_def_id: address_cred_def_id(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -394,8 +384,14 @@ pub mod unit_tests {
             .await
             .unwrap();
         assert!(!credential_def.is_empty());
-        assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1""#));
-        assert!(credential_def.contains(r#""schemaId":"47""#));
+        assert_eq!(
+            credential_def.get(&cred_def_id()).unwrap().schema_id,
+            SchemaId::new_unchecked("47")
+        );
+        assert_eq!(
+            credential_def.get(&cred_def_id()).unwrap().id,
+            cred_def_id()
+        );
     }
 
     #[tokio::test]
@@ -407,14 +403,14 @@ pub mod unit_tests {
             build_schemas_json_prover(&ledger_read, &Vec::new())
                 .await
                 .unwrap(),
-            "{}".to_string()
+            Default::default()
         );
 
         let cred1 = CredInfoProver {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -426,7 +422,7 @@ pub mod unit_tests {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: address_schema_id(),
-            cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
+            cred_def_id: address_cred_def_id(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -441,8 +437,10 @@ pub mod unit_tests {
             .await
             .unwrap();
         assert!(!schemas.is_empty());
-        assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4""#));
-        assert!(schemas.contains(r#""name":"test-licence""#));
+        assert_eq!(
+            schemas.get(&schema_id()).unwrap().name,
+            "test-licence".to_string()
+        );
     }
 
     #[test]
@@ -453,7 +451,7 @@ pub mod unit_tests {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: Some(NonRevokedInterval {
@@ -468,7 +466,7 @@ pub mod unit_tests {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: address_schema_id(),
-            cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
+            cred_def_id: address_cred_def_id(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: Some(NonRevokedInterval {
@@ -524,7 +522,7 @@ pub mod unit_tests {
         let proof_req = json!({
             "nonce": "123432421212",
             "name": "proof_req_1",
-            "version": "0.1",
+            "version": "1.0",
             "requested_attributes": {
                 "zip_2": { "name": "zip" },
                 "height_1": { "name": "height", "non_revoked": {"from": 123, "to": 456} }
@@ -593,7 +591,7 @@ pub mod unit_tests {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: None,
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -631,7 +629,7 @@ pub mod unit_tests {
             referent: "height_1".to_string(),
             credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -643,7 +641,7 @@ pub mod unit_tests {
             referent: "zip_2".to_string(),
             credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: address_schema_id(),
-            cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
+            cred_def_id: address_cred_def_id(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             revocation_interval: None,
@@ -673,7 +671,7 @@ pub mod unit_tests {
         let proof_req = json!({
             "nonce": "123432421212",
             "name": "proof_req_1",
-            "version": "0.1",
+            "version": "1.0",
             "requested_attributes": {
                 "height_1": {
                     "name": "height_1",
@@ -684,7 +682,7 @@ pub mod unit_tests {
             "requested_predicates": {},
             "non_revoked": {"from": 98, "to": 123}
         });
-        let proof_req: ProofRequestData = serde_json::from_value(proof_req).unwrap();
+        let proof_req: PresentationRequest = serde_json::from_value(proof_req).unwrap();
         let requested_credential = build_requested_credentials_json(
             &creds,
             &serde_json::from_str(&self_attested_attrs).unwrap(),
@@ -702,7 +700,7 @@ pub mod unit_tests {
             referent: "height".to_string(),
             credential_referent: "abc".to_string(),
             schema_id: schema_id(),
-            cred_def_id: CRED_DEF_ID.to_string(),
+            cred_def_id: cred_def_id(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID),
             tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
@@ -735,7 +733,7 @@ pub mod unit_tests {
         let proof_req = json!({
             "nonce": "123432421212",
             "name": "proof_req_1",
-            "version": "0.1",
+            "version": "1.0",
             "requested_attributes": {
                 "address1_1": {
                     "name": "address1",
@@ -746,7 +744,7 @@ pub mod unit_tests {
             "requested_predicates": {},
             "non_revoked": {"from": 98, "to": 123}
         });
-        let proof_req: ProofRequestData = serde_json::from_value(proof_req).unwrap();
+        let proof_req: PresentationRequest = serde_json::from_value(proof_req).unwrap();
 
         // Attribute not found in proof req
         assert_eq!(

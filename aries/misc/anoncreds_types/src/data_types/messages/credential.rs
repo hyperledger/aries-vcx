@@ -10,7 +10,6 @@ use crate::{
         cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
         schema_id::SchemaId,
     },
-    error::ConversionError,
     utils::validation::Validatable,
 };
 
@@ -35,17 +34,18 @@ impl Credential {
         "rev_reg_id",
     ];
 
-    pub fn try_clone(&self) -> Result<Self, ConversionError> {
+    pub fn try_clone(&self) -> Result<Self, crate::Error> {
         Ok(Self {
             schema_id: self.schema_id.clone(),
             cred_def_id: self.cred_def_id.clone(),
             rev_reg_id: self.rev_reg_id.clone(),
             values: self.values.clone(),
-            signature: self.signature.try_clone().map_err(|e| e.to_string())?,
-            signature_correctness_proof: self
-                .signature_correctness_proof
-                .try_clone()
-                .map_err(|e| e.to_string())?,
+            signature: self.signature.try_clone().map_err(|e| {
+                crate::Error::from_msg(crate::ErrorKind::ConversionError, e.to_string())
+            })?,
+            signature_correctness_proof: self.signature_correctness_proof.try_clone().map_err(
+                |e| crate::Error::from_msg(crate::ErrorKind::ConversionError, e.to_string()),
+            )?,
             rev_reg: self.rev_reg.clone(),
             witness: self.witness.clone(),
         })

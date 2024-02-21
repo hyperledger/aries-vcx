@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
-use aries_vcx::common::primitives::credential_definition::{CredentialDef, CredentialDefConfig};
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use aries_vcx::{common::primitives::credential_definition::CredentialDef, did_parser::Did};
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds,
     ledger::indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
@@ -36,13 +37,20 @@ impl ServiceCredentialDefinitions {
         }
     }
 
-    pub async fn create_cred_def(&self, config: CredentialDefConfig) -> AgentResult<String> {
+    pub async fn create_cred_def(
+        &self,
+        issuer_did: Did,
+        schema_id: SchemaId,
+        tag: String,
+    ) -> AgentResult<String> {
         let cd = CredentialDef::create(
             self.wallet.as_ref(),
             self.ledger_read.as_ref(),
             &self.anoncreds,
             "".to_string(),
-            config,
+            issuer_did,
+            schema_id,
+            tag,
             true,
         )
         .await?;
