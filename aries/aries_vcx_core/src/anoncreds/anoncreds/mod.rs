@@ -50,7 +50,9 @@ use anoncreds_types::data_types::{
         cred_definition_config::CredentialDefinitionConfig,
         cred_offer::CredentialOffer,
         cred_request::{CredentialRequest, CredentialRequestMetadata},
-        cred_selection::{RetrievedCredentialInfo, RetrievedCredentials},
+        cred_selection::{
+            RetrievedCredentialForReferent, RetrievedCredentialInfo, RetrievedCredentials,
+        },
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
@@ -73,7 +75,6 @@ use super::base_anoncreds::{
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    utils::constants::ATTRS,
     wallet::base_wallet::{
         record::Record, record_category::RecordCategory, search_filter::SearchFilter, BaseWallet,
     },
@@ -859,7 +860,7 @@ impl BaseAnonCreds for Anoncreds {
             referents.insert(k.to_string());
         });
 
-        let mut cred_by_attr: Value = json!({});
+        let mut cred_by_attr = RetrievedCredentials::default();
 
         for reft in referents {
             let (names, non_revoked, restrictions) = match requested_attributes.get(&reft) {
@@ -909,16 +910,18 @@ impl BaseAnonCreds for Anoncreds {
             let mut credentials_json = vec![];
 
             for (cred_id, credx_cred) in credx_creds {
-                credentials_json.push(json!({
-                    "cred_info": _make_cred_info(&cred_id, &credx_cred)?,
-                    "interval": non_revoked
-                }))
+                credentials_json.push(RetrievedCredentialForReferent {
+                    cred_info: _make_cred_info(&cred_id, &credx_cred)?,
+                    interval: non_revoked.clone(),
+                });
             }
 
-            cred_by_attr[ATTRS][reft] = Value::Array(credentials_json);
+            cred_by_attr
+                .credentials_by_referent
+                .insert(reft, credentials_json);
         }
 
-        Ok(serde_json::from_value(cred_by_attr)?)
+        Ok(cred_by_attr)
     }
 
     async fn prover_create_credential_req(

@@ -5,7 +5,7 @@ use crate::data_types::identifiers::{cred_def_id::CredentialDefinitionId, schema
 
 /// Data structure representing the credentials in the wallet, which are suitable
 /// for presentation against a proof request.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct RetrievedCredentials {
     /// A map of the proof request's requested referents (predicates and attribute referents)
     /// against a list of [RetrievedCredentialForReferent] items which represent credentials
