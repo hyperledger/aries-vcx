@@ -3,7 +3,7 @@ description: "Given image specified by <docker-img>, retag it to <publish-versio
 
 inputs:
   docker-img:
-    description: 'Source image to be published'
+    description: 'Source image to be published, with a tag'
     required: true
   publish-version:
     description: 'The image will be published as <docker-tag>:<publish-version>'
