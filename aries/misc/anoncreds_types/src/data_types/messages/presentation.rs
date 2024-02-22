@@ -77,6 +77,26 @@ impl Validatable for Presentation {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequestedAttribute {
+    pub cred_id: String,
+    pub timestamp: Option<u64>,
+    pub revealed: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequestedPredicate {
+    pub cred_id: String,
+    pub timestamp: Option<u64>,
+}
+
+#[derive(Default, Serialize, Deserialize, Debug)]
+pub struct RequestedCredentials {
+    pub self_attested_attributes: HashMap<String, String>,
+    pub requested_attributes: HashMap<String, RequestedAttribute>,
+    pub requested_predicates: HashMap<String, RequestedPredicate>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

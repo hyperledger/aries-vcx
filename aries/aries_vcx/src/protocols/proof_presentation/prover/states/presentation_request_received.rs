@@ -61,7 +61,7 @@ impl PresentationRequestReceived {
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
         credentials: &SelectedCredentials,
-        self_attested_attrs: &HashMap<String, String>,
+        self_attested_attrs: HashMap<String, String>,
     ) -> VcxResult<Presentation> {
         let proof_req_data_json = serde_json::from_str(&get_attach_as_string!(
             &self

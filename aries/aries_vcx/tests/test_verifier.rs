@@ -4,7 +4,9 @@ use anoncreds_types::{
     data_types::messages::{
         nonce::Nonce,
         pres_request::{AttributeInfo, PresentationRequest, PresentationRequestPayload},
-        presentation::Presentation,
+        presentation::{
+            Presentation, RequestedAttribute, RequestedCredentials, RequestedPredicate,
+        },
     },
     utils::query::Query,
 };
@@ -81,18 +83,35 @@ async fn create_indy_proof(
        "requested_predicates": json!({}),
     })
     .to_string();
-    let requested_credentials_json = json!({
-          "self_attested_attributes":{
-             "self_attest_3": "my_self_attested_val"
-          },
-          "requested_attributes":{
-             "address1_1": {"cred_id": cred_id, "revealed": true},
-             "zip_2": {"cred_id": cred_id, "revealed": true}
-            },
-          "requested_predicates":{}
-    })
-    .to_string();
-
+    let requested_credentials_json = RequestedCredentials {
+        self_attested_attributes: vec![(
+            "self_attest_3".to_string(),
+            "my_self_attested_val".to_string(),
+        )]
+        .into_iter()
+        .collect(),
+        requested_attributes: vec![
+            (
+                "address1_1".to_string(),
+                RequestedAttribute {
+                    cred_id: cred_id.clone(),
+                    timestamp: None,
+                    revealed: true,
+                },
+            ),
+            (
+                "zip_2".to_string(),
+                RequestedAttribute {
+                    cred_id: cred_id.clone(),
+                    timestamp: None,
+                    revealed: true,
+                },
+            ),
+        ]
+        .into_iter()
+        .collect(),
+        requested_predicates: Default::default(),
+    };
     let schema_id = schema.schema_id.clone();
     let schemas = json!({
         schema_id: schema.schema_json,
@@ -113,7 +132,7 @@ async fn create_indy_proof(
         .prover_create_proof(
             wallet_holder,
             serde_json::from_str(&proof_req)?,
-            &requested_credentials_json,
+            requested_credentials_json,
             &"main".to_string(),
             serde_json::from_str(&schemas)?,
             serde_json::from_str(&cred_defs)?,
@@ -179,30 +198,53 @@ async fn create_proof_with_predicate(
     .to_string();
 
     let requested_credentials_json = if include_predicate_cred {
-        json!({
-          "self_attested_attributes":{
-             "self_attest_3": "my_self_attested_val"
-          },
-          "requested_attributes":{
-             "address1_1": {"cred_id": cred_id, "revealed": true}
-            },
-          "requested_predicates":{
-              "zip_3": {"cred_id": cred_id}
-          }
-        })
-        .to_string()
+        RequestedCredentials {
+            self_attested_attributes: vec![(
+                "self_attest_3".to_string(),
+                "my_self_attested_val".to_string(),
+            )]
+            .into_iter()
+            .collect(),
+            requested_attributes: vec![(
+                "address1_1".to_string(),
+                RequestedAttribute {
+                    cred_id: cred_id.clone(),
+                    timestamp: None,
+                    revealed: true,
+                },
+            )]
+            .into_iter()
+            .collect(),
+            requested_predicates: vec![(
+                "zip_3".to_string(),
+                RequestedPredicate {
+                    cred_id: cred_id.clone(),
+                    timestamp: None,
+                },
+            )]
+            .into_iter()
+            .collect(),
+        }
     } else {
-        json!({
-          "self_attested_attributes":{
-             "self_attest_3": "my_self_attested_val"
-          },
-          "requested_attributes":{
-             "address1_1": {"cred_id": cred_id, "revealed": true}
-            },
-          "requested_predicates":{
-          }
-        })
-        .to_string()
+        RequestedCredentials {
+            self_attested_attributes: vec![(
+                "self_attest_3".to_string(),
+                "my_self_attested_val".to_string(),
+            )]
+            .into_iter()
+            .collect(),
+            requested_attributes: vec![(
+                "address1_1".to_string(),
+                RequestedAttribute {
+                    cred_id: cred_id.clone(),
+                    timestamp: None,
+                    revealed: true,
+                },
+            )]
+            .into_iter()
+            .collect(),
+            requested_predicates: Default::default(),
+        }
     };
 
     let schemas = json!({
@@ -224,7 +266,7 @@ async fn create_proof_with_predicate(
         .prover_create_proof(
             wallet_holder,
             serde_json::from_str(&proof_req)?,
-            &requested_credentials_json,
+            requested_credentials_json,
             &"main".to_string(),
             serde_json::from_str(&schemas)?,
             serde_json::from_str(&cred_defs)?,
@@ -320,15 +362,21 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
         .prover_create_proof(
             &setup.wallet,
             proof_req_json.into(),
-            &json!({
-              "self_attested_attributes":{
-                 "attribute_0": "my_self_attested_address",
-                 "attribute_1": "my_self_attested_zip"
-              },
-              "requested_attributes":{},
-              "requested_predicates":{}
-            })
-            .to_string(),
+            RequestedCredentials {
+                self_attested_attributes: vec![
+                    (
+                        "attribute_0".to_string(),
+                        "my_self_attested_address".to_string(),
+                    ),
+                    (
+                        "attribute_1".to_string(),
+                        "my_self_attested_zip".to_string(),
+                    ),
+                ]
+                .into_iter()
+                .collect(),
+                ..Default::default()
+            },
             &"main".to_string(),
             Default::default(),
             Default::default(),
@@ -404,17 +452,35 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
         .prover_create_proof(
             &setup.wallet,
             proof_req_json.into(),
-            &json!({
-                "self_attested_attributes":{
-                   "attribute_2": "my_self_attested_val"
-                },
-                "requested_attributes":{
-                   "attribute_0": {"cred_id": cred_id, "revealed": true},
-                   "attribute_1": {"cred_id": cred_id, "revealed": true}
-                },
-                "requested_predicates":{}
-            })
-            .to_string(),
+            RequestedCredentials {
+                self_attested_attributes: vec![(
+                    "attribute_2".to_string(),
+                    "my_self_attested_val".to_string(),
+                )]
+                .into_iter()
+                .collect(),
+                requested_attributes: vec![
+                    (
+                        "attribute_0".to_string(),
+                        RequestedAttribute {
+                            cred_id: cred_id.clone(),
+                            timestamp: None,
+                            revealed: true,
+                        },
+                    ),
+                    (
+                        "attribute_1".to_string(),
+                        RequestedAttribute {
+                            cred_id: cred_id.clone(),
+                            timestamp: None,
+                            revealed: true,
+                        },
+                    ),
+                ]
+                .into_iter()
+                .collect(),
+                requested_predicates: Default::default(),
+            },
             &"main".to_string(),
             serde_json::from_str(&json!({ schema.schema_id: schema.schema_json }).to_string())?,
             serde_json::from_str(
@@ -498,17 +564,35 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
         .prover_create_proof(
             &setup.wallet,
             proof_req_json.into(),
-            &json!({
-                "self_attested_attributes":{
-                   "attribute_2": "my_self_attested_val"
-                },
-                "requested_attributes":{
-                   "attribute_0": {"cred_id": cred_id, "revealed": true},
-                   "attribute_1": {"cred_id": cred_id, "revealed": true}
-                },
-                "requested_predicates":{}
-            })
-            .to_string(),
+            RequestedCredentials {
+                self_attested_attributes: vec![(
+                    "attribute_2".to_string(),
+                    "my_self_attested_val".to_string(),
+                )]
+                .into_iter()
+                .collect(),
+                requested_attributes: vec![
+                    (
+                        "attribute_0".to_string(),
+                        RequestedAttribute {
+                            cred_id: cred_id.clone(),
+                            timestamp: None,
+                            revealed: true,
+                        },
+                    ),
+                    (
+                        "attribute_1".to_string(),
+                        RequestedAttribute {
+                            cred_id: cred_id.clone(),
+                            timestamp: None,
+                            revealed: true,
+                        },
+                    ),
+                ]
+                .into_iter()
+                .collect(),
+                requested_predicates: Default::default(),
+            },
             &"main".to_string(),
             serde_json::from_str(&json!({ schema.schema_id: schema.schema_json }).to_string())?,
             serde_json::from_str(

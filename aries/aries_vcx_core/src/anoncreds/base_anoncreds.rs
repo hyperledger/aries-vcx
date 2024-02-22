@@ -20,7 +20,7 @@ use anoncreds_types::data_types::{
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
-        presentation::Presentation,
+        presentation::{Presentation, RequestedCredentials},
         revocation_state::CredentialRevocationState,
     },
 };
@@ -99,7 +99,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         wallet: &impl BaseWallet,
         proof_req_json: PresentationRequest,
-        requested_credentials_json: &str,
+        requested_credentials_json: RequestedCredentials,
         link_secret_id: &LinkSecretId,
         schemas_json: SchemasMap,
         credential_defs_json: CredentialDefinitionsMap,

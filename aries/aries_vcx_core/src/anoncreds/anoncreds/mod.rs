@@ -50,11 +50,13 @@ use anoncreds_types::data_types::{
         cred_definition_config::CredentialDefinitionConfig,
         cred_offer::CredentialOffer,
         cred_request::{CredentialRequest, CredentialRequestMetadata},
-        cred_selection::{RetrievedCredentialInfo, RetrievedCredentials},
+        cred_selection::{
+            RetrievedCredentialForReferent, RetrievedCredentialInfo, RetrievedCredentials,
+        },
         credential::{Credential, CredentialValues},
         nonce::Nonce,
         pres_request::PresentationRequest,
-        presentation::Presentation,
+        presentation::{Presentation, RequestedCredentials},
         revocation_state::CredentialRevocationState,
     },
 };
@@ -73,10 +75,6 @@ use super::base_anoncreds::{
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    utils::{
-        constants::ATTRS,
-        json::{AsTypeOrDeserializationError, TryGetIndex},
-    },
     wallet::base_wallet::{
         record::Record, record_category::RecordCategory, search_filter::SearchFilter, BaseWallet,
     },
@@ -201,20 +199,6 @@ impl Anoncreds {
         Ok(ms_decimal.value().try_into().unwrap())
     }
 
-    async fn _get_credential(
-        &self,
-        wallet: &impl BaseWallet,
-        credential_id: &str,
-    ) -> VcxCoreResult<Credential> {
-        let cred_record = wallet
-            .get_record(RecordCategory::Cred, credential_id)
-            .await?;
-
-        let credential: Credential = serde_json::from_str(cred_record.value())?;
-
-        Ok(credential)
-    }
-
     async fn _get_credentials(
         wallet: &impl BaseWallet,
         wql: &str,
@@ -241,7 +225,7 @@ impl Anoncreds {
     async fn _get_credentials_for_proof_req_for_attr_name(
         &self,
         wallet: &impl BaseWallet,
-        restrictions: Option<&Value>,
+        restrictions: Option<Value>,
         attr_names: Vec<String>,
     ) -> VcxCoreResult<Vec<(String, Credential)>> {
         let mut attrs = Vec::new();
@@ -701,7 +685,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         proof_req_json: PresentationRequest,
-        requested_credentials_json: &str,
+        requested_credentials_json: RequestedCredentials,
         link_secret_id: &LinkSecretId,
         schemas_json: SchemasMap,
         credential_defs_json: CredentialDefinitionsMap,
@@ -709,11 +693,9 @@ impl BaseAnonCreds for Anoncreds {
     ) -> VcxCoreResult<Presentation> {
         let pres_req: AnoncredsPresentationRequest = proof_req_json.convert(())?;
 
-        let requested_credentials: Value = serde_json::from_str(requested_credentials_json)?;
-        let requested_attributes = (&requested_credentials).try_get("requested_attributes")?;
-
-        let requested_predicates = (&requested_credentials).try_get("requested_predicates")?;
-        let self_attested_attributes = requested_credentials.get("self_attested_attributes");
+        let requested_attributes = requested_credentials_json.requested_attributes;
+        let requested_predicates = requested_credentials_json.requested_predicates;
+        let self_attested_attributes = requested_credentials_json.self_attested_attributes;
 
         let schemas: HashMap<AnoncredsSchemaId, AnoncredsSchema> = schemas_json.convert(())?;
         let cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
@@ -734,11 +716,9 @@ impl BaseAnonCreds for Anoncreds {
         > = HashMap::new();
 
         // add cred data and referent details for each requested attribute
-        for (reft, detail) in requested_attributes.try_as_object()?.iter() {
-            let _cred_id = detail.try_get("cred_id")?;
-            let cred_id = _cred_id.try_as_str()?;
-
-            let revealed = detail.try_get("revealed")?.try_as_bool()?;
+        for (reft, detail) in requested_attributes {
+            let cred_id = &detail.cred_id;
+            let revealed = detail.revealed;
 
             if let Some((_, _, _, req_attr_refts_revealed, _)) =
                 proof_details_by_cred_id.get_mut(cred_id)
@@ -746,10 +726,16 @@ impl BaseAnonCreds for Anoncreds {
                 // mapping made for this credential already, add reft and its revealed status
                 req_attr_refts_revealed.push((reft.to_string(), revealed));
             } else {
-                let credential = self._get_credential(wallet, cred_id).await?;
+                let credential = self
+                    .get_wallet_record_value(wallet, RecordCategory::Cred, cred_id)
+                    .await?;
 
-                let (timestamp, rev_state) =
-                    get_rev_state(cred_id, &credential, detail, revoc_states_json.as_ref())?;
+                let (timestamp, rev_state) = get_rev_state(
+                    cred_id,
+                    &credential,
+                    detail.timestamp,
+                    revoc_states_json.as_ref(),
+                )?;
 
                 proof_details_by_cred_id.insert(
                     cred_id.to_string(),
@@ -765,18 +751,23 @@ impl BaseAnonCreds for Anoncreds {
         }
 
         // add cred data and referent details for each requested predicate
-        for (reft, detail) in requested_predicates.try_as_object()?.iter() {
-            let _cred_id = detail.try_get("cred_id")?;
-            let cred_id = _cred_id.try_as_str()?;
+        for (reft, detail) in requested_predicates {
+            let cred_id = &detail.cred_id;
 
             if let Some((_, _, _, _, req_preds_refts)) = proof_details_by_cred_id.get_mut(cred_id) {
                 // mapping made for this credential already, add reft
                 req_preds_refts.push(reft.to_string());
             } else {
-                let credential = self._get_credential(wallet, cred_id).await?;
+                let credential = self
+                    .get_wallet_record_value(wallet, RecordCategory::Cred, cred_id)
+                    .await?;
 
-                let (timestamp, rev_state) =
-                    get_rev_state(cred_id, &credential, detail, revoc_states_json.as_ref())?;
+                let (timestamp, rev_state) = get_rev_state(
+                    cred_id,
+                    &credential,
+                    detail.timestamp,
+                    revoc_states_json.as_ref(),
+                )?;
 
                 proof_details_by_cred_id.insert(
                     cred_id.to_string(),
@@ -810,30 +801,12 @@ impl BaseAnonCreds for Anoncreds {
             }
         }
 
-        // create self_attested by iterating thru self_attested_value
-        let self_attested = if let Some(self_attested_value) = self_attested_attributes {
-            let mut self_attested_map: HashMap<String, String> = HashMap::new();
-            let self_attested_obj = self_attested_value.try_as_object()?.clone();
-            let self_attested_iter = self_attested_obj.iter();
-            for (k, v) in self_attested_iter {
-                self_attested_map.insert(k.to_string(), v.try_as_str()?.to_string());
-            }
-
-            if self_attested_map.is_empty() {
-                None
-            } else {
-                Some(self_attested_map)
-            }
-        } else {
-            None
-        };
-
         let link_secret = self.get_link_secret(wallet, link_secret_id).await?;
 
         let presentation = anoncreds::prover::create_presentation(
             &pres_req,
             present_credentials,
-            self_attested,
+            Some(self_attested_attributes),
             &link_secret,
             &schemas,
             &cred_defs,
@@ -847,7 +820,9 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         cred_id: &CredentialId,
     ) -> VcxCoreResult<RetrievedCredentialInfo> {
-        let cred = self._get_credential(wallet, cred_id).await?;
+        let cred = self
+            .get_wallet_record_value(wallet, RecordCategory::Cred, cred_id)
+            .await?;
         _make_cred_info(cred_id, &cred)
     }
 
@@ -873,96 +848,80 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         proof_request_json: PresentationRequest,
     ) -> VcxCoreResult<RetrievedCredentials> {
-        let proof_req_v: Value = serde_json::to_value(proof_request_json).map_err(|e| {
-            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidProofRequest, e)
-        })?;
-
-        let requested_attributes = proof_req_v.get("requested_attributes");
-        let requested_attributes = if let Some(requested_attributes) = requested_attributes {
-            Some(requested_attributes.try_as_object()?.clone())
-        } else {
-            None
-        };
-        let requested_predicates = proof_req_v.get("requested_predicates");
-        let requested_predicates = if let Some(requested_predicates) = requested_predicates {
-            Some(requested_predicates.try_as_object()?.clone())
-        } else {
-            None
-        };
-
-        // handle special case of "empty because json is bad" vs "empty because no attributes
-        // sepected"
-        if requested_attributes.is_none() && requested_predicates.is_none() {
-            return Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidAttributesStructure,
-                "Invalid Json Parsing of Requested Attributes Retrieved From Libindy",
-            ));
-        }
+        let requested_attributes = &proof_request_json.value().requested_attributes;
+        let requested_predicates = &proof_request_json.value().requested_predicates;
 
         let mut referents: HashSet<String> = HashSet::new();
-        if let Some(requested_attributes) = &requested_attributes {
-            requested_attributes.iter().for_each(|(k, _)| {
-                referents.insert(k.to_string());
-            })
-        };
-        if let Some(requested_predicates) = &requested_predicates {
-            requested_predicates.iter().for_each(|(k, _)| {
-                referents.insert(k.to_string());
-            });
-        }
+        requested_attributes.iter().for_each(|(k, _)| {
+            referents.insert(k.to_string());
+        });
 
-        let mut cred_by_attr: Value = json!({});
+        requested_predicates.iter().for_each(|(k, _)| {
+            referents.insert(k.to_string());
+        });
+
+        let mut cred_by_attr = RetrievedCredentials::default();
 
         for reft in referents {
-            let requested_val = requested_attributes
-                .as_ref()
-                .and_then(|req_attrs| req_attrs.get(&reft))
-                .or_else(|| {
-                    requested_predicates
-                        .as_ref()
-                        .and_then(|req_preds| req_preds.get(&reft))
-                })
-                .ok_or(AriesVcxCoreError::from_msg(
-                    // should not happen
-                    AriesVcxCoreErrorKind::InvalidState,
-                    format!("Unknown referent: {}", reft),
-                ))?;
-
-            let name = requested_val.get("name");
-            let names = requested_val.get("names").and_then(|v| v.as_array());
-
-            let attr_names = match (name, names) {
-                (Some(name), None) => vec![_normalize_attr_name(name.try_as_str()?)],
-                (None, Some(names)) => names
-                    .iter()
-                    .map(|v| v.try_as_str().map(_normalize_attr_name))
-                    .collect::<Result<_, _>>()?,
-                _ => Err(AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::InvalidInput,
-                    "exactly one of 'name' or 'names' must be present",
-                ))?,
+            let (names, non_revoked, restrictions) = match requested_attributes.get(&reft) {
+                Some(attribute_info) => {
+                    let attr_names = match (
+                        attribute_info.name.to_owned(),
+                        attribute_info.names.to_owned(),
+                    ) {
+                        (Some(name), None) => vec![_normalize_attr_name(&name)],
+                        (None, Some(names)) => names
+                            .iter()
+                            .map(String::as_str)
+                            .map(_normalize_attr_name)
+                            .collect::<Vec<_>>(),
+                        _ => Err(AriesVcxCoreError::from_msg(
+                            AriesVcxCoreErrorKind::InvalidInput,
+                            "exactly one of 'name' or 'names' must be present",
+                        ))?,
+                    };
+                    (
+                        attr_names,
+                        attribute_info.non_revoked.to_owned(),
+                        attribute_info.restrictions.to_owned(),
+                    )
+                }
+                None => match requested_predicates.get(&reft) {
+                    Some(requested_val) => (
+                        vec![requested_val.name.to_owned()],
+                        requested_val.non_revoked.to_owned(),
+                        requested_val.restrictions.to_owned(),
+                    ),
+                    None => Err(AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::InvalidProofRequest,
+                        "Requested attribute or predicate not found in proof request",
+                    ))?,
+                },
             };
 
-            let non_revoked = requested_val.get("non_revoked"); // note that aca-py askar fetches from proof_req json
-            let restrictions = requested_val.get("restrictions");
-
             let credx_creds = self
-                ._get_credentials_for_proof_req_for_attr_name(wallet, restrictions, attr_names)
+                ._get_credentials_for_proof_req_for_attr_name(
+                    wallet,
+                    restrictions.map(serde_json::to_value).transpose()?,
+                    names,
+                )
                 .await?;
 
             let mut credentials_json = vec![];
 
             for (cred_id, credx_cred) in credx_creds {
-                credentials_json.push(json!({
-                    "cred_info": _make_cred_info(&cred_id, &credx_cred)?,
-                    "interval": non_revoked
-                }))
+                credentials_json.push(RetrievedCredentialForReferent {
+                    cred_info: _make_cred_info(&cred_id, &credx_cred)?,
+                    interval: non_revoked.clone(),
+                });
             }
 
-            cred_by_attr[ATTRS][reft] = Value::Array(credentials_json);
+            cred_by_attr
+                .credentials_by_referent
+                .insert(reft, credentials_json);
         }
 
-        Ok(serde_json::from_value(cred_by_attr)?)
+        Ok(cred_by_attr)
     }
 
     async fn prover_create_credential_req(
@@ -1121,7 +1080,7 @@ impl BaseAnonCreds for Anoncreds {
         }
 
         for (raw_attr_name, attr_value) in credential.values.0.iter() {
-            let attr_name = _normalize_attr_name(raw_attr_name);
+            let attr_name = _normalize_attr_name(raw_attr_name.as_str());
             // add attribute name and raw value pair
             let value_tag_name = _format_attribute_as_value_tag_name(&attr_name);
             tags[value_tag_name] = Value::String(attr_value.raw.to_string());
@@ -1337,12 +1296,9 @@ impl BaseAnonCreds for Anoncreds {
 fn get_rev_state(
     cred_id: &str,
     credential: &Credential,
-    detail: &Value,
+    timestamp: Option<u64>,
     rev_states: Option<&RevocationStatesMap>,
 ) -> VcxCoreResult<(Option<u64>, Option<CredentialRevocationState>)> {
-    let timestamp = detail
-        .get("timestamp")
-        .and_then(|timestamp| timestamp.as_u64());
     let cred_rev_reg_id = credential.rev_reg_id.as_ref().map(|id| id.0.to_string());
     let rev_state = if let (Some(timestamp), Some(cred_rev_reg_id)) = (timestamp, cred_rev_reg_id) {
         let rev_state = rev_states
