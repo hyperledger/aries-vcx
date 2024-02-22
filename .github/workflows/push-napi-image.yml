@@ -23,5 +23,5 @@ jobs:
       - name: "Push image to ghcr.io"
         uses: ./.github/actions/publish-image
         with:
-          docker-img: napi-rs-${{ inputs.image-type }}
+          docker-img: napi-rs-${{ inputs.image-type }}:latest
           publish-version: latest
