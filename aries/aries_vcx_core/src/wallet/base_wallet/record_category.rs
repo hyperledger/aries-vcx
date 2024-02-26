@@ -17,6 +17,8 @@ const REV_REG_DELTA: &str = "VCX_REV_REG_DELTA";
 const REV_REG_INFO: &str = "VCX_REV_REG_INFO";
 const REV_REG_DEF: &str = "VCX_REV_REG_DEF";
 const REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
+const DID: &str = "Indy::Did";
+const TMP_DID: &str = "Indy::TemporaryDid";
 
 #[derive(Clone, Copy, Debug, Default)]
 pub enum RecordCategory {
@@ -33,6 +35,8 @@ pub enum RecordCategory {
     RevRegInfo,
     RevRegDef,
     RevRegDefPriv,
+    Did,
+    TmpDid,
 }
 
 impl FromStr for RecordCategory {
@@ -52,6 +56,8 @@ impl FromStr for RecordCategory {
             REV_REG_INFO => Ok(RecordCategory::RevRegInfo),
             REV_REG_DEF => Ok(RecordCategory::RevRegDef),
             REV_REG_DEF_PRIV => Ok(RecordCategory::RevRegDefPriv),
+            DID => Ok(RecordCategory::Did),
+            TMP_DID => Ok(RecordCategory::TmpDid),
             _ => Err(Self::Err::from_msg(
                 AriesVcxCoreErrorKind::InvalidInput,
                 format!("unknown category: {}", s),
@@ -75,6 +81,8 @@ impl Display for RecordCategory {
             RecordCategory::RevRegInfo => REV_REG_INFO,
             RecordCategory::RevRegDef => REV_REG_DEF,
             RecordCategory::RevRegDefPriv => REV_REG_DEF_PRIV,
+            RecordCategory::Did => DID,
+            RecordCategory::TmpDid => TMP_DID,
         };
 
         write!(f, "{}", value)

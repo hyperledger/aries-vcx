@@ -83,6 +83,10 @@ impl DidWallet for AgencyClientWallet {
         ))
     }
 
+    async fn key_count(&self) -> VcxCoreResult<usize> {
+        Err(unimplemented_agency_client_wallet_method("key_count"))
+    }
+
     async fn key_for_did(&self, name: &str) -> VcxCoreResult<Key> {
         Err(unimplemented_agency_client_wallet_method("key_for_did"))
     }

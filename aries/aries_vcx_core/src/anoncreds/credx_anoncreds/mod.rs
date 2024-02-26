@@ -69,7 +69,7 @@ use crate::{
             record::Record, record_category::RecordCategory, search_filter::SearchFilter,
             BaseWallet, RecordWallet,
         },
-        record_tags::RecordTags,
+        record_tags::{RecordTag, RecordTags},
     },
 };
 
@@ -1003,34 +1003,33 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 "Could not process credential.cred_def_id as parts.",
             ))?;
 
-        let mut tags = json!({
-            "schema_id": schema_id.0,
-            "schema_issuer_did": schema_issuer_did.0,
-            "schema_name": schema_name,
-            "schema_version": schema_version,
-            "issuer_did": issuer_did.0,
-            "cred_def_id": cred_def_id.0
-        });
+        let mut tags = RecordTags::new(vec![
+            RecordTag::new("schema_id", &schema_id.0),
+            RecordTag::new("schema_issuer_did", &schema_issuer_did.0),
+            RecordTag::new("schema_name", &schema_name),
+            RecordTag::new("schema_version", &schema_version),
+            RecordTag::new("issuer_did", &issuer_did.0),
+            RecordTag::new("cred_def_id", &cred_def_id.0),
+        ]);
 
         if let Some(rev_reg_id) = &credential.rev_reg_id {
-            tags["rev_reg_id"] = serde_json::Value::String(rev_reg_id.0.to_string())
+            tags.add(RecordTag::new("rev_reg_id", &rev_reg_id.0));
         }
 
         for (raw_attr_name, attr_value) in credential.values.0.iter() {
             let attr_name = _normalize_attr_name(raw_attr_name);
             // add attribute name and raw value pair
             let value_tag_name = _format_attribute_as_value_tag_name(&attr_name);
-            tags[value_tag_name] = Value::String(attr_value.raw.to_string());
+            tags.add(RecordTag::new(&value_tag_name, &attr_value.raw));
 
             // add attribute name and marker (used for checking existent)
             let marker_tag_name = _format_attribute_as_marker_tag_name(&attr_name);
-            tags[marker_tag_name] = Value::String("1".to_string());
+            tags.add(RecordTag::new(&marker_tag_name, "1"))
         }
 
         let credential_id = Uuid::new_v4().to_string();
 
         let record_value = serde_json::to_string(&credential)?;
-        let tags = serde_json::from_value(tags.clone())?;
 
         let record = Record::builder()
             .name(credential_id.clone())

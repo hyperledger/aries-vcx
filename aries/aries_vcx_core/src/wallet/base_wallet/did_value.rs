@@ -2,21 +2,15 @@ use public_key::Key;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct DidData {
-    did: String,
+pub struct DidValue {
     verkey: Key,
 }
 
-impl DidData {
-    pub fn new(did: &str, verkey: &Key) -> Self {
+impl DidValue {
+    pub fn new(verkey: &Key) -> Self {
         Self {
-            did: did.into(),
             verkey: verkey.clone(),
         }
-    }
-
-    pub fn did(&self) -> &str {
-        &self.did
     }
 
     pub fn verkey(&self) -> &Key {

@@ -1,6 +1,7 @@
 use typed_builder::TypedBuilder;
 
-use crate::wallet::{base_wallet::record_category::RecordCategory, record_tags::RecordTags};
+use super::record_category::RecordCategory;
+use crate::wallet::record_tags::RecordTags;
 
 #[derive(Debug, Default, Clone, TypedBuilder)]
 pub struct Record {

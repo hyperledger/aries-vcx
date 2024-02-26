@@ -5,7 +5,7 @@ use vdrtools::{DidMethod, DidValue, KeyInfo, Locator, MyDidInfo};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::{
-        base_wallet::{did_data::DidData, DidWallet},
+        base_wallet::{did_data::DidData, record_category::RecordCategory, DidWallet},
         indy::IndySdkWallet,
         structs_io::UnpackMessageOutput,
     },
@@ -13,6 +13,10 @@ use crate::{
 
 #[async_trait]
 impl DidWallet for IndySdkWallet {
+    async fn key_count(&self) -> VcxCoreResult<usize> {
+        Ok(self.search(RecordCategory::Did, None).await?.len())
+    }
+
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,
@@ -33,7 +37,7 @@ impl DidWallet for IndySdkWallet {
         let verkey = Key::from_base58(&vk, KeyType::Ed25519)
             .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::WalletError, err))?;
 
-        Ok(DidData::new(&did, verkey))
+        Ok(DidData::new(&did, &verkey))
     }
 
     async fn key_for_did(&self, did: &str) -> VcxCoreResult<Key> {

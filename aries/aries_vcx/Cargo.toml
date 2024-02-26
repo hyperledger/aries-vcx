@@ -33,6 +33,10 @@ backtrace_errors = ["backtrace"]
 # Feature for allowing legacy proof verification
 legacy_proof = ["aries_vcx_core/legacy_proof"]
 
+askar_wallet = [
+    "aries_vcx_core/askar_wallet"
+]
+
 [dependencies]
 agency_client = { path = "../misc/legacy/agency_client" }
 messages = { path = "../messages" }

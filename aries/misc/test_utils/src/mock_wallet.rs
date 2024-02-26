@@ -79,8 +79,12 @@ impl DidWallet for MockWallet {
     ) -> VcxCoreResult<DidData> {
         Ok(DidData::new(
             DID,
-            Key::new(VERKEY.into(), KeyType::Ed25519).unwrap(),
+            &Key::new(VERKEY.into(), KeyType::Ed25519).unwrap(),
         ))
+    }
+
+    async fn key_count(&self) -> VcxCoreResult<usize> {
+        Ok(0)
     }
 
     async fn key_for_did(&self, name: &str) -> VcxCoreResult<Key> {
