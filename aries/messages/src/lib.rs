@@ -12,6 +12,7 @@ pub mod msg_fields;
 pub mod msg_parts;
 pub mod msg_types;
 
+use display_as_json::Display;
 use derive_more::From;
 use display_as_json::Display;
 use misc::utils;
