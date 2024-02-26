@@ -1,6 +1,5 @@
 use std::sync::Arc;
-use display_as_json::Display;
-use serde::Serialize;
+
 use aries_vcx::{
     common::ledger::{
         service_didsov::{DidSovServiceType, EndpointDidSov},
@@ -20,6 +19,8 @@ use aries_vcx_core::{
 use did_peer::resolver::PeerDidResolver;
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::resolution::DidSovResolver;
+use display_as_json::Display;
+use serde::Serialize;
 
 use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},
