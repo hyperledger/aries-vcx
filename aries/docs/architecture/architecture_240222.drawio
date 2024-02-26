@@ -1,0 +1,172 @@
+<mxfile host="Electron" modified="2024-02-24T10:55:27.988Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.5.0 Safari/537.36" etag="AD0SDFGogS6yRltuV3NQ" version="21.6.8" type="device">
+  <diagram name="Page-1" id="2gMI9P0glSQoVap8a_1F">
+    <mxGraphModel dx="4967" dy="4096" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="wlWXBuXumkqJe68e9Swo-39" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="330" y="70" width="2730" height="1310" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-42" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="426" y="680" width="2354" height="580" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-18" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="1240" y="230" width="1020" height="340" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-19" value="&lt;font style=&quot;font-size: 30px;&quot;&gt;area: agents&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1360" y="250" width="190" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-15" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="430" y="230" width="720" height="340" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-2" value="&lt;h1&gt;&lt;font style=&quot;font-size: 60px;&quot;&gt;Legend&lt;/font&gt;&lt;/h1&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="-210" y="-280" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-4" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;STABLE&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="90" y="-260" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-5" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;NEW&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="290" y="-260" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-6" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;IN PROGRESS&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="490" y="-260" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-10" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;crate: libvcx_core&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Infra use by node FFI wrapper&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="470" y="420" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-11" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;crate: vcx-napi-rs&lt;/font&gt;&lt;br&gt;&lt;/b&gt;&lt;br&gt;- NodeJS FFI&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="470" y="320" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-13" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;crate: mediator&lt;/font&gt;&lt;br&gt;&lt;/b&gt;&lt;br&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Web service to mediate receiving&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&amp;nbsp;didcomm messages&lt;/span&gt;&lt;/div&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="1590" y="440" width="280" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-14" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;crate: uniffi-aries-vcx&lt;/font&gt;&lt;br&gt;&lt;/b&gt;&lt;br&gt;- UniFFI based wrapper mapping aries_vcx APIs 1:1&lt;br&gt;- Generates Kotlin and Swift bindings and wrappers&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="710" y="420" width="410" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-16" value="&lt;font style=&quot;font-size: 30px;&quot;&gt;area: wrappers&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="500" y="250" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-20" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;crate: aries-vcx-agent&lt;/font&gt;&lt;br&gt;&lt;/b&gt;&lt;br&gt;(simple Aries agent library)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="1290" y="440" width="280" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-21" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;AATH: aries-vcx backchannel&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Used for testing compatibility with other Aries implementations&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="1290" y="330" width="280" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-43" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;enterprise issuer/verifier&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Not yet implemented&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Web service to issue and verify credentials&lt;/span&gt;&lt;/div&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="1890" y="440" width="340" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-44" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;ON ROADMAP&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="690" y="-260" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-45" value="&lt;font style=&quot;font-size: 60px;&quot;&gt;area: aries&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="435" y="100" width="310" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="320" y="1510" width="1710" height="617.5" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-18" value="&lt;font style=&quot;font-size: 50px;&quot;&gt;area: did_core&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="390" y="1551" width="340" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-23" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;did_resolver&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Interface for implementing DID methods&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="390" y="1768.75" width="1560" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-24" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;crate: did_peer&lt;/b&gt;&lt;br&gt;&lt;br&gt;- did:peer:N method implementations&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="390" y="1678.75" width="310" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-30" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;crate: did_key&lt;/b&gt;&lt;br&gt;&lt;br&gt;- did:key method implementation&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="700" y="1678.75" width="270" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-31" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;did_parser&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Implementation to parse and construct DIDs&lt;br&gt;- Currently used by upper layers of codebase&lt;br&gt;- Deprecated in favor of crate: did_parser_nom&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="390" y="1868.75" width="430" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-32" value="&lt;b&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;did_parser_nom&lt;br&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;- Implementation to parse and construct DIDs&lt;/font&gt;&lt;b&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="820" y="1868.75" width="330" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-33" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;public_key&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Rust types to represent public key of various crypto schemes&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="1868.75" width="290" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-34" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;crate: did_resolver_registry&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Container of did resolvers of various methods&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="1678.75" width="450" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-35" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;did_doc&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Data model of DID Document, parsing, construction, manipulation, resolving fragments&lt;br&gt;- To be heavily simplified by PR #1075&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1440" y="1868.75" width="510" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-36" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;crate: did_resolver_sov&lt;/b&gt;&lt;br&gt;&lt;br&gt;- did:sov method implementation&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="970" y="1678.75" width="260" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-37" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;crate: did_resolver_web&lt;/b&gt;&lt;br&gt;&lt;br&gt;- did:web method implementation&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1230" y="1678.75" width="270" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-12" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;crate: aries_vcx&lt;/font&gt;&lt;br&gt;&lt;/b&gt;&lt;br&gt;&lt;/font&gt;&lt;div style=&quot;text-align: left; font-size: 15px;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;- Library for to process and construct Aries messages&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left; font-size: 15px;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;- Integration layer of subcomponents:&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left; font-size: 15px;&quot;&gt;&lt;ul style=&quot;&quot;&gt;&lt;li style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;wallet&lt;/font&gt;&lt;/span&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;verifiable credentials&lt;/font&gt;&lt;/span&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;did resolvers&lt;/font&gt;&lt;/span&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;anoncreds resolvers&lt;/font&gt;&lt;/span&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="510" y="770" width="1060" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-40" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;fillColor=#000000;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="650" y="580" as="sourcePoint" />
+            <mxPoint x="650" y="660" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wlWXBuXumkqJe68e9Swo-92" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;crate: messages&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Data model of Aries (didcomm v1) messages&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="1230" y="970" width="340" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-29" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;crate: aries_vcx_core&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Defines interfaces to interact with:&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;ul&gt;&lt;li&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;wallet&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;ledger&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;anoncreds&lt;/span&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;- Supplies various implementations of these interfaces&lt;br&gt;&lt;br&gt;&lt;/div&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="510" y="980" width="450" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-43" value="&lt;font style=&quot;font-size: 30px;&quot;&gt;area: aries processing&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="470" y="700" width="320" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-44" value="&lt;font size=&quot;1&quot;&gt;-&amp;nbsp;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="2300" y="230" width="680" height="340" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-46" value="&lt;font style=&quot;font-size: 30px;&quot;&gt;area: framework&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="2375" y="250" width="240" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-50" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;fillColor=#000000;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="2650" y="585" as="sourcePoint" />
+            <mxPoint x="2650" y="665" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-51" value="&lt;div style=&quot;&quot;&gt;&lt;b style=&quot;font-size: 15px; background-color: initial;&quot;&gt;processing framework&amp;nbsp;&lt;/b&gt;&lt;/div&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;br&gt;&lt;div style=&quot;&quot;&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- &quot;Batteries-included&quot; package on top of aries_vcx&lt;/span&gt;&lt;/div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Abstract patterns commonly reimplemented among&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;Aries applications. Includes dealing with:&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;ul&gt;&lt;li style=&quot;text-align: left;&quot;&gt;inbounds&lt;/li&gt;&lt;li style=&quot;text-align: left;&quot;&gt;outbounds&lt;/li&gt;&lt;li style=&quot;text-align: left;&quot;&gt;thread matching&lt;/li&gt;&lt;/ul&gt;&lt;div style=&quot;text-align: left;&quot;&gt;In the future, FFI wrappers and Aries applications might choose to&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;build on top of this layer.&lt;/div&gt;&lt;/div&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=center;" vertex="1" parent="1">
+          <mxGeometry x="2360" y="310" width="540" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-54" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;fillColor=#000000;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1749.17" y="585" as="sourcePoint" />
+            <mxPoint x="1749" y="665" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-56" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;endWidth=52.290249433106574;endSize=11.504761904761905;width=18.095238095238095;fillColor=#000000;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1110" y="1380" as="sourcePoint" />
+            <mxPoint x="1110" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-58" value="&lt;span style=&quot;font-size: 30px;&quot;&gt;aries components are built on foundation of &lt;b&gt;did_core&lt;/b&gt; implementations&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1155" y="1410" width="960" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-59" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;endWidth=52.290249433106574;endSize=11.504761904761905;width=18.095238095238095;fillColor=#000000;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="50" y="1510" as="sourcePoint" />
+            <mxPoint x="280" y="1720" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-60" value="&lt;span style=&quot;font-size: 30px;&quot;&gt;W3C implementations and &lt;br&gt;supporting components:&lt;br&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;ul&gt;&lt;li&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;DID&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;DID Document&lt;/span&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="-220" y="1648.75" width="380" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-64" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;endWidth=52.290249433106574;endSize=11.504761904761905;width=18.095238095238095;fillColor=#000000;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="30" y="50" as="sourcePoint" />
+            <mxPoint x="260" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-65" value="&lt;span style=&quot;font-size: 30px;&quot;&gt;Aries libraries, applications &lt;br&gt;and supporting components&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="-240" y="190" width="390" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="xXkkuHF4uPc2ZPr-TK46-66" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;&lt;b&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;crate: uniffi-aries-vcx-demo&lt;/font&gt;&lt;br&gt;&lt;/b&gt;&lt;br&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Mobile agent implementation based&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;on crate uniffi-aries-vcx&lt;/span&gt;&lt;/div&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1590" y="330" width="280" height="110" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
