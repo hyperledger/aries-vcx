@@ -13,6 +13,7 @@ pub mod msg_parts;
 pub mod msg_types;
 
 use derive_more::From;
+use display_as_json::Display;
 use misc::utils;
 use msg_fields::protocols::{
     cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
@@ -55,7 +56,7 @@ use crate::{
 ///
 /// It also automatically appends the correct `@type` field when serializing
 /// a message.
-#[derive(Clone, Debug, From, PartialEq)]
+#[derive(Clone, Debug, Display, From, PartialEq)]
 pub enum AriesMessage {
     Routing(Forward),
     Connection(Connection),
