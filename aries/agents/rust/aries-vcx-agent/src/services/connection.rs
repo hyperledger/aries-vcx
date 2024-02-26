@@ -150,11 +150,12 @@ impl ServiceConnections {
         Ok(())
     }
 
-    pub async fn process_ack(&self, thread_id: &str, ack: Ack) -> AgentResult<()> {
-        let inviter: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
+    pub async fn process_ack(&self, ack: Ack) -> AgentResult<()> {
+        let thread_id = ack.decorators.thread.thid.clone();
+        let inviter: Connection<_, _> = self.connections.get(&thread_id)?.try_into()?;
         let inviter = inviter.acknowledge_connection(&ack.into())?;
 
-        self.connections.insert(thread_id, inviter.into())?;
+        self.connections.insert(&thread_id, inviter.into())?;
 
         Ok(())
     }
