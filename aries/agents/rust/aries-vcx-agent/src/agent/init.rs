@@ -19,6 +19,8 @@ use aries_vcx_core::{
 use did_peer::resolver::PeerDidResolver;
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::resolution::DidSovResolver;
+use display_as_json::Display;
+use serde::Serialize;
 
 use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},
@@ -37,17 +39,19 @@ use crate::{
     },
 };
 
+#[derive(Serialize, Display)]
 pub struct WalletInitConfig {
     pub wallet_name: String,
     pub wallet_key: String,
     pub wallet_kdf: String,
 }
 
+#[derive(Serialize, Display)]
 pub struct PoolInitConfig {
     pub genesis_path: String,
     pub pool_name: String,
 }
-
+#[derive(Serialize, Display)]
 pub struct InitConfig {
     pub enterprise_seed: String,
     pub pool_config: PoolInitConfig,
