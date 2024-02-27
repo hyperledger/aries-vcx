@@ -292,6 +292,23 @@ jobs:
       - name: "Run aries-vcx-core integration tests"
         run: just test-integration-aries-vcx-core ${{ matrix.wallet }}
 
+  test-compatibility-aries-vcx-core:
+    needs: workflow-setup
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+        with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+          default: true
+          skip-docker-setup: true
+      - name: "Install just"
+        run: sudo snap install --edge --classic just
+      - name: "Run aries-vcx-core compatibility tests"
+        run: just test-compatibility-aries-vcx-core
+
   test-integration-aries-vcx:
     needs: workflow-setup
     runs-on: ubuntu-20.04
