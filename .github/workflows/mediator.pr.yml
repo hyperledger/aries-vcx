@@ -51,7 +51,7 @@ jobs:
           echo "SKIP_CI ${{ needs.setup-variables.outputs.SKIP_CI }}"
 
   test-integration-mediator:
-    needs: [ test-integration-mediator, workflow-setup ]
+    needs: [ setup-variables ]
     if: ${{ needs.setup-variables.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-22.04
     services:
