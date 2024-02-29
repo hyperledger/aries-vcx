@@ -17,6 +17,8 @@ cargo build
 
 ## Usage
 
+### Cargo
+
 You can run and test the produced binaries using cargo.
 
 ```bash
@@ -39,6 +41,23 @@ cargo run --bin mediator
 cargo test 
 ```
 
+### Docker
+
+`Dockerfile` is provided, to build the mediator and produce an image with minimal dependencies included.
+
+```bash
+# Note: Build context needs to include aries-vcx repository root. 
+docker build --tag mediator --file ./Dockerfile  ../../../../
+```
+
+Use provided `compose.yaml` to quickly bring up mediator along with mysql database.
+
+```bash
+# Note: Configuration can be customized using .env file, 
+# or by manually passing expected environment variables.
+docker compose up -d
+```
+
 ### Configurable Options
 
 Currently the mediator reads the following environment variables.
@@ -47,7 +66,7 @@ Currently the mediator reads the following environment variables.
 `ENDPOINT_ROOT`: 
 - **Description**: This is the address at which the mediator will listen for connections.
 - **Default**: "127.0.0.1:8005"
-- **Usage**: `ENDPOINT_ROOT=127.0.0.1:3000 cargo run`
+- **Usage**: `ENDPOINT_ROOT=0.0.0.0:3000`
 
 `MYSQL_URL`: 
 - **Description**: MySQL url for the MYSQL database used for mediator persistence. 
