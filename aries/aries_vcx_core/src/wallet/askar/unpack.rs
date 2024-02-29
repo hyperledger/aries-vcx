@@ -10,12 +10,15 @@ use aries_askar::{
 use public_key::{Key, KeyType};
 
 use super::{
-    askar_utils::{bs58_to_bytes, bytes_to_string, ed25519_to_x25519, from_json_str},
+    askar_utils::{ed25519_to_x25519, from_json_str},
     packing_types::{AnoncryptRecipient, AuthcryptRecipient, Jwe, ProtectedData, Recipient},
 };
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::structs_io::UnpackMessageOutput,
+    wallet::{
+        structs_io::UnpackMessageOutput,
+        utils::{bs58_to_bytes, bytes_to_string},
+    },
 };
 
 trait Unpack {
@@ -111,7 +114,7 @@ async fn find_recipient_key<'a>(
     session: &mut Session,
 ) -> VcxCoreResult<(&'a Recipient, KeyEntry)> {
     for recipient in protected_data.recipients.iter() {
-        if let Some(key_entry) = session.fetch_key(recipient.key_name(), false).await? {
+        if let Some(key_entry) = session.fetch_key(recipient.unwrap_kid(), false).await? {
             return Ok((recipient, key_entry));
         };
     }

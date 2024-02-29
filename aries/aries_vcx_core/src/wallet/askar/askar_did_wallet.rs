@@ -18,7 +18,6 @@ use crate::{
     wallet::{
         base_wallet::{did_data::DidData, did_wallet::DidWallet, record_category::RecordCategory},
         structs_io::UnpackMessageOutput,
-        utils::did_from_key,
     },
 };
 
@@ -112,8 +111,7 @@ impl DidWallet for AskarWallet {
         let mut tx = self.transaction().await?;
         if let Some(did_value) = self.find_did(&mut tx, did, RecordCategory::TmpDid).await? {
             tx.remove(&RecordCategory::TmpDid.to_string(), did).await?;
-            tx.remove_key(&did_from_key(did_value.verkey().clone()))
-                .await?;
+            tx.remove_key(&did_value.verkey().base58()).await?;
             self.update_did(
                 &mut tx,
                 did,
@@ -136,7 +134,7 @@ impl DidWallet for AskarWallet {
         if let Some(key) = self
             .session()
             .await?
-            .fetch_key(&did_from_key(key.to_owned()), false)
+            .fetch_key(&key.base58(), false)
             .await?
         {
             let local_key = key.load_local_key()?;
@@ -154,7 +152,7 @@ impl DidWallet for AskarWallet {
         if let Some(key) = self
             .session()
             .await?
-            .fetch_key(&did_from_key(key.to_owned()), false)
+            .fetch_key(&key.base58(), false)
             .await?
         {
             let local_key = key.load_local_key()?;
@@ -183,7 +181,7 @@ impl DidWallet for AskarWallet {
                 let mut session = self.session().await?;
 
                 let my_key = self
-                    .fetch_local_key(&mut session, &did_from_key(sender_verkey))
+                    .fetch_local_key(&mut session, &sender_verkey.base58())
                     .await?;
                 enc_key.pack_authcrypt(recipient_keys, my_key)?
             } else {

@@ -21,7 +21,7 @@ const DID: &str = "Indy::Did";
 const TMP_DID: &str = "Indy::TemporaryDid";
 const KEY: &str = "Indy::Key";
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum RecordCategory {
     #[default]
     LinkSecret,

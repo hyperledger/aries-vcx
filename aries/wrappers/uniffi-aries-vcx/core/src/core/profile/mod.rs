@@ -10,18 +10,18 @@ use aries_vcx::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
 };
 
-#[cfg(feature = "vdrtools_wallet")]
+#[cfg(feature = "main_vdrtools_wallet")]
 pub mod indy;
-#[cfg(feature = "vdrtools_wallet")]
+#[cfg(feature = "main_vdrtools_wallet")]
 use aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet;
-#[cfg(feature = "vdrtools_wallet")]
+#[cfg(feature = "main_vdrtools_wallet")]
 pub use indy as profile;
 
-#[cfg(feature = "askar_wallet")]
+#[cfg(feature = "main_askar_wallet")]
 pub mod askar;
-#[cfg(feature = "askar_wallet")]
+#[cfg(feature = "main_askar_wallet")]
 use aries_vcx::aries_vcx_core::wallet::askar::AskarWallet;
-#[cfg(feature = "askar_wallet")]
+#[cfg(feature = "main_askar_wallet")]
 pub use askar as profile;
 
 use crate::profile::UniffiProfile;
@@ -35,12 +35,12 @@ impl UniffiProfile {
         &self.anoncreds
     }
 
-    #[cfg(feature = "vdrtools_wallet")]
+    #[cfg(feature = "main_vdrtools_wallet")]
     pub fn wallet(&self) -> &IndySdkWallet {
         &self.wallet
     }
 
-    #[cfg(feature = "askar_wallet")]
+    #[cfg(feature = "main_askar_wallet")]
     pub fn wallet(&self) -> &AskarWallet {
         &self.wallet
     }

@@ -1,12 +1,19 @@
 use async_trait::async_trait;
 
-use self::{did_wallet::DidWallet, issuer_config::IssuerConfig, record_wallet::RecordWallet};
+use self::{
+    did_wallet::DidWallet, issuer_config::IssuerConfig, key_value::KeyValue,
+    record_wallet::RecordWallet,
+};
+use super::record_tags::RecordTags;
 use crate::errors::error::VcxCoreResult;
 
+pub mod base58_string;
+pub mod base64_string;
 pub mod did_data;
 pub mod did_value;
 pub mod did_wallet;
 pub mod issuer_config;
+pub mod key_value;
 pub mod migrate;
 pub mod record;
 pub mod record_category;
@@ -44,6 +51,9 @@ pub trait BaseWallet: RecordWallet + DidWallet + Send + Sync + std::fmt::Debug {
                 .to_string(),
         })
     }
+
+    async fn create_key(&self, name: &str, value: KeyValue, tags: &RecordTags)
+        -> VcxCoreResult<()>;
 }
 
 #[cfg(test)]
@@ -59,7 +69,7 @@ mod tests {
                 record_wallet::RecordWallet,
             },
             record_tags::{RecordTag, RecordTags},
-            utils::{did_from_key, random_seed},
+            utils::random_seed,
         },
     };
 
@@ -123,6 +133,8 @@ mod tests {
 
         assert_eq!(new_key.key().len(), 32);
 
+        println!("first did data: {:?}", first_data);
+
         wallet
             .replace_did_key_apply(first_data.did())
             .await
@@ -131,10 +143,7 @@ mod tests {
         let new_verkey = wallet.key_for_did(first_data.did()).await.unwrap();
         assert_eq!(new_verkey.key().len(), 32);
 
-        assert_eq!(
-            did_from_key(new_key.clone()),
-            did_from_key(new_verkey.clone())
-        );
+        assert_eq!(new_key.base58(), new_verkey.base58());
         assert_eq!(new_key.key(), new_verkey.key());
     }
 
@@ -156,7 +165,7 @@ mod tests {
 
         let new_verkey = wallet.key_for_did(first_data.did()).await.unwrap();
 
-        assert_eq!(did_from_key(new_key), did_from_key(new_verkey));
+        assert_eq!(new_key.base58(), new_verkey.base58());
 
         let second_new_key = wallet
             .replace_did_key_start(first_data.did(), Some(&random_seed()))
@@ -170,10 +179,7 @@ mod tests {
 
         let second_new_verkey = wallet.key_for_did(first_data.did()).await.unwrap();
 
-        assert_eq!(
-            did_from_key(second_new_key),
-            did_from_key(second_new_verkey)
-        );
+        assert_eq!(second_new_key.base58(), second_new_verkey.base58());
     }
 
     #[tokio::test]
@@ -209,11 +215,8 @@ mod tests {
         let first_new_verkey = wallet.key_for_did(first_data.did()).await.unwrap();
         let second_new_verkey = wallet.key_for_did(second_data.did()).await.unwrap();
 
-        assert_eq!(did_from_key(first_new_key), did_from_key(first_new_verkey));
-        assert_eq!(
-            did_from_key(second_new_key),
-            did_from_key(second_new_verkey)
-        );
+        assert_eq!(first_new_key.base58(), first_new_verkey.base58());
+        assert_eq!(second_new_key.base58(), second_new_verkey.base58());
     }
 
     #[tokio::test]

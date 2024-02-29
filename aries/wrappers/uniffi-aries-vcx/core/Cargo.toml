@@ -16,9 +16,11 @@ path = "uniffi-bindgen.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["vdrtools_wallet"]
-vdrtools_wallet = ["aries_vcx/vdrtools_wallet"]
+default = ["main_vdrtools_wallet"]
 askar_wallet = ["aries_vcx/askar_wallet"]
+vdrtools_wallet = ["aries_vcx/vdrtools_wallet"]
+main_vdrtools_wallet = ["vdrtools_wallet"]
+main_askar_wallet = ["askar_wallet"]
 
 [dependencies]
 uniffi = { version = "0.23.0", features = ["cli"] }

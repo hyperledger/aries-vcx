@@ -100,7 +100,8 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        wallet: ["vdrtools_wallet", "askar_wallet"]
+        main_wallet: ["main_vdrtools_wallet,vdrtools_wallet", "main_askar_wallet,askar_wallet"]
+        target_wallet: ["target_vdrtools_wallet,vdrtools_wallet", "target_askar_wallet,askar_wallet"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -115,8 +116,8 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
           sudo snap install --edge --classic just
-      - name: "Verify clippy across the entire workspace with default features"
-        run: just clippy-workspace ${{ matrix.wallet }}
+      - name: "Verify clippy across the entire workspace"
+        run: just clippy-workspace ${{ matrix.main_wallet }} ${{ matrix.target_wallet }}
 
   aries_vcx_clippy:
     runs-on: ubuntu-20.04
@@ -276,6 +277,23 @@ jobs:
         run: sudo snap install --edge --classic just
       - name: "Run workspace unit tests"
         run: just test-unit
+
+  test-wallet-migrator:
+    needs: workflow-setup
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+        with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
+          default: true
+          skip-docker-setup: true
+      - name: "Install just"
+        run: sudo snap install --edge --classic just
+      - name: "Run wallet migration tests"
+        run: just test-wallet-migrator
 
   test-intergation-aries-vcx-core:
     needs: workflow-setup
