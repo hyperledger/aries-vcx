@@ -43,11 +43,17 @@ cargo test
 
 ### Docker
 
-`Dockerfile` is provided, to build the mediator and produce an image with minimal dependencies included.
+`Dockerfile` is provided, to build the mediator image with minimal dependencies included.
 
 ```bash
 # Note: Build context needs to include aries-vcx repository root. 
 docker build --tag mediator --file ./Dockerfile  ../../../../
+```
+
+Alternatively you can pull the latest prebuilt mediator image directly.
+
+```bash
+docker pull ghcr.io/hyperledger/aries-vcx/mediator:main
 ```
 
 Use provided `compose.yaml` to quickly bring up mediator along with mysql database.
