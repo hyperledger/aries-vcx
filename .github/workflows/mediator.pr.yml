@@ -62,7 +62,6 @@ jobs:
     env:
       BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
-      DOCKER_IMAGE: mediator:${{ env.BRANCH_NAME }}
     outputs:
       image-name: ${{ steps.meta.outputs.tags }}
     steps:
@@ -77,7 +76,7 @@ jobs:
       - name: "Build and cache docker image"
         uses: ./.github/actions/build-image
         with:
-          docker-img: ${{ env.DOCKER_IMAGE }}
+          docker-img: mediator:${{ env.BRANCH_NAME }}
           dockerfile-path: "aries/agents/rust/mediator/Dockerfile"
           branch-name: ${{ env.BRANCH_NAME }}
           branch-main: ${{ env.MAIN_BRANCH }}
@@ -85,5 +84,5 @@ jobs:
       - name: "Publish versioned docker image"
         uses: ./.github/actions/publish-image
         with:
-          docker-img: ${{ env.DOCKER_IMAGE }}
+          docker-img: mediator:${{ env.BRANCH_NAME }}
           publish-version: ${{ env.PUBLISH_VERSION }}
