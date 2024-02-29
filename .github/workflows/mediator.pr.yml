@@ -118,3 +118,5 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMAGE }} 
           publish-version: ${{ needs.setup-variables.outputs.PUBLISH_VERSION }}
+        env:   
+          URL_DOCKER_REGISTRY: ghcr.io  # Required by .github/actions/publish-image
