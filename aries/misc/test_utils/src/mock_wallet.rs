@@ -5,6 +5,7 @@ use aries_vcx_core::{
             did_data::DidData,
             did_wallet::DidWallet,
             issuer_config::IssuerConfig,
+            key_value::KeyValue,
             record::{AllRecords, PartialRecord, Record},
             record_category::RecordCategory,
             record_wallet::RecordWallet,
@@ -47,6 +48,15 @@ impl BaseWallet for MockWallet {
 
     async fn configure_issuer(&self, key_seed: &str) -> VcxCoreResult<IssuerConfig> {
         Ok(IssuerConfig::builder().build())
+    }
+
+    async fn create_key(
+        &self,
+        name: &str,
+        value: KeyValue,
+        tags: &RecordTags,
+    ) -> VcxCoreResult<()> {
+        Ok(())
     }
 }
 

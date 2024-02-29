@@ -1,5 +1,8 @@
 use async_trait::async_trait;
-use indy_api_types::{domain::wallet::default_key_derivation_method, errors::IndyErrorKind};
+use indy_api_types::{
+    domain::wallet::{default_key_derivation_method, Config, Credentials},
+    errors::IndyErrorKind,
+};
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 use vdrtools::Locator;
@@ -33,12 +36,9 @@ pub struct IndyWalletConfig {
     pub rekey_derivation_method: Option<String>,
 }
 
-#[async_trait]
-impl ManageWallet for IndyWalletConfig {
-    type ManagedWalletType = IndySdkWallet;
-
-    async fn create_wallet(&self) -> VcxCoreResult<Self::ManagedWalletType> {
-        let credentials = vdrtools::types::domain::wallet::Credentials {
+impl IndyWalletConfig {
+    pub fn to_config_and_creds(&self) -> VcxCoreResult<(Config, Credentials)> {
+        let creds = Credentials {
             key: self.wallet_key.clone(),
             key_derivation_method: parse_key_derivation_method(&self.wallet_key_derivation)?,
 
@@ -52,21 +52,31 @@ impl ManageWallet for IndyWalletConfig {
                 .transpose()?,
         };
 
+        let config = Config {
+            id: self.wallet_name.clone(),
+            storage_type: self.wallet_type.clone(),
+            storage_config: self
+                .storage_config
+                .as_deref()
+                .map(serde_json::from_str)
+                .transpose()?,
+            cache: None,
+        };
+
+        Ok((config, creds))
+    }
+}
+
+#[async_trait]
+impl ManageWallet for IndyWalletConfig {
+    type ManagedWalletType = IndySdkWallet;
+
+    async fn create_wallet(&self) -> VcxCoreResult<Self::ManagedWalletType> {
+        let (config, creds) = self.to_config_and_creds()?;
+
         let res = Locator::instance()
             .wallet_controller
-            .create(
-                vdrtools::types::domain::wallet::Config {
-                    id: self.wallet_name.clone(),
-                    storage_type: self.wallet_type.clone(),
-                    storage_config: self
-                        .storage_config
-                        .as_deref()
-                        .map(serde_json::from_str)
-                        .transpose()?,
-                    cache: None,
-                },
-                credentials,
-            )
+            .create(config, creds)
             .await;
 
         match res {
@@ -88,75 +98,22 @@ impl ManageWallet for IndyWalletConfig {
     }
 
     async fn open_wallet(&self) -> VcxCoreResult<Self::ManagedWalletType> {
+        let (config, creds) = self.to_config_and_creds()?;
+
         let handle = Locator::instance()
             .wallet_controller
-            .open(
-                vdrtools::types::domain::wallet::Config {
-                    id: self.wallet_name.clone(),
-                    storage_type: self.wallet_type.clone(),
-                    storage_config: self
-                        .storage_config
-                        .as_deref()
-                        .map(serde_json::from_str)
-                        .transpose()?,
-                    cache: None,
-                },
-                vdrtools::types::domain::wallet::Credentials {
-                    key: self.wallet_key.clone(),
-                    key_derivation_method: parse_key_derivation_method(
-                        &self.wallet_key_derivation,
-                    )?,
-
-                    rekey: self.rekey.clone(),
-                    rekey_derivation_method: self
-                        .rekey_derivation_method
-                        .as_deref()
-                        .map(parse_key_derivation_method)
-                        .transpose()?
-                        .unwrap_or_else(default_key_derivation_method),
-
-                    storage_credentials: self
-                        .storage_credentials
-                        .as_deref()
-                        .map(serde_json::from_str)
-                        .transpose()?,
-                },
-            )
+            .open(config, creds)
             .await?;
 
         Ok(IndySdkWallet::new(handle))
     }
 
     async fn delete_wallet(&self) -> VcxCoreResult<()> {
-        let credentials = vdrtools::types::domain::wallet::Credentials {
-            key: self.wallet_key.clone(),
-            key_derivation_method: parse_key_derivation_method(&self.wallet_key_derivation)?,
-
-            rekey: None,
-            rekey_derivation_method: default_key_derivation_method(),
-
-            storage_credentials: self
-                .storage_credentials
-                .as_deref()
-                .map(serde_json::from_str)
-                .transpose()?,
-        };
+        let (config, creds) = self.to_config_and_creds()?;
 
         let res = Locator::instance()
             .wallet_controller
-            .delete(
-                vdrtools::types::domain::wallet::Config {
-                    id: self.wallet_name.clone(),
-                    storage_type: self.wallet_type.clone(),
-                    storage_config: self
-                        .storage_config
-                        .as_deref()
-                        .map(serde_json::from_str)
-                        .transpose()?,
-                    cache: None,
-                },
-                credentials,
-            )
+            .delete(config, creds)
             .await;
 
         match res {

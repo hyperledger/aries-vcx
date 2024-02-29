@@ -17,8 +17,8 @@ path = "uniffi-bindgen.rs"
 
 [features]
 default = ["vdrtools_wallet"]
-vdrtools_wallet = ["aries_vcx/vdrtools_wallet"]
 askar_wallet = ["aries_vcx/askar_wallet"]
+vdrtools_wallet = ["aries_vcx/vdrtools_wallet"]
 
 [dependencies]
 uniffi = { version = "0.23.0", features = ["cli"] }
