@@ -108,7 +108,7 @@ jobs:
       - name: "Build and cache docker image"
         uses: ./.github/actions/build-image
         with:
-          docker-img: ${{ DOCKER_IMAGE }} 
+          docker-img: ${{ env.DOCKER_IMAGE }} 
           dockerfile-path: "aries/agents/rust/mediator/Dockerfile"
           branch-name: ${{ needs.setup-variables.outputs.BRANCH_NAME }}
           branch-main: ${{ env.MAIN_BRANCH }}
@@ -116,5 +116,5 @@ jobs:
       - name: "Publish versioned docker image"
         uses: ./.github/actions/publish-image
         with:
-          docker-img: ${{ DOCKER_IMAGE }} 
+          docker-img: ${{ env.DOCKER_IMAGE }} 
           publish-version: ${{ needs.setup-variables.outputs.PUBLISH_VERSION }}
