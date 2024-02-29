@@ -55,13 +55,46 @@ jobs:
         with:
           name: "docker-services-${{ github.job }}"
   
-  docker-mediator:
-    needs: [ test-integration-mediator, workflow-setup ]
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+
+  docker-setup:
+    runs-on: ubuntu-22.04
+    outputs:
+      PUBLISH_VERSION: ${{ steps.run-info.outputs.publish-version }}
+      RELEASE: ${{ steps.run-info.outputs.release }}
+      PRERELEASE: ${{ steps.run-info.outputs.pre-release }}
+      BRANCH_NAME: ${{ steps.run-info.outputs.branch-name }}
+      IS_FORK: ${{ steps.run-info.outputs.is-fork }}
+      SKIP_CI: ${{ steps.skip-info.outputs.skip-ci }}
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v1
+      - name: "Construct CI run-info"
+        id: run-info
+        uses: ./.github/actions/construct-run-info
+      - name: "Detect CI skip steps"
+        id: skip-info
+        uses: ./.github/actions/detect-skip-info
+
+  docker-setup-check:
+    runs-on: ubuntu-22.04
+    needs: docker-setup
+    steps:
+      - name: "Print outputs"
+        run: |
+          echo "PUBLISH_VERSION ${{ needs.docker-setup.outputs.PUBLISH_VERSION }}"
+          echo "RELEASE ${{ needs.docker-setup.outputs.RELEASE }}"
+          echo "PRERELEASE ${{ needs.docker-setup.outputs.PRERELEASE }}"
+          echo "BRANCH_NAME ${{ needs.docker-setup.outputs.BRANCH_NAME }}"
+          echo "IS_FORK ${{ needs.docker-setup.outputs.IS_FORK }}"
+          echo "SKIP_CI ${{ needs.docker-setup.outputs.SKIP_CI }}"
+
+  docker-mediator-build:
+    needs: [ test-integration-mediator, docker-setup ]
+    if: ${{ needs.docker-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-22.04
     env:
-      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
-      PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+      BRANCH_NAME: ${{ needs.docker-setup.outputs.BRANCH_NAME }}
+      PUBLISH_VERSION: ${{ needs.docker-setup.outputs.PUBLISH_VERSION }}
     outputs:
       image-name: ${{ steps.meta.outputs.tags }}
     steps:
