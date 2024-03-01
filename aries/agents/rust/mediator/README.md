@@ -43,7 +43,10 @@ cargo test
 
 ### Docker
 
-`Dockerfile` is provided, to build the mediator image with minimal dependencies included.
+#### 1. You can build the docker image yourself or pull it from github
+
+`Dockerfile` is provided, to build the mediator image.
+The image produced includes the mediator binary and required ssl libraries.
 
 ```bash
 # Note: Build context needs to include aries-vcx repository root. 
@@ -56,13 +59,25 @@ Alternatively you can pull the latest prebuilt mediator image directly.
 docker pull ghcr.io/hyperledger/aries-vcx/mediator:main
 ```
 
-Use provided `compose.yaml` to quickly bring up mediator along with mysql database.
+#### 2. Use docker-compose with provided `compose.yaml` to quickly bring up mediator service along with mysql database
+
+This can also be used for local development purposes, when you build your own mediator image as described above.
 
 ```bash
 # Note: Configuration can be customized using .env file, 
 # or by manually passing expected environment variables.
 docker compose up -d
 ```
+
+To wind down services
+
+```bash
+docker compose down
+```
+
+When you run compose, the mediator and database containers are started on the same private network.  
+The configuration in .env file is used for database<->mediator connection parameters.  
+The mediator (but not the database) is additionally exposed on localhost:8005 by default for interaction.
 
 ### Configurable Options
 
