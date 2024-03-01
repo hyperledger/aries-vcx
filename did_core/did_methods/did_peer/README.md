@@ -18,7 +18,7 @@ need for a blockchain or other centralized registry.
 Add the Peer DID library as a dependency in your `Cargo.toml` file:
 ```toml
 [dependencies]
-peer_did = { tag = "0.61.0", git = "https://github.com/hyperledger/aries-vcx" }
+peer_did = { tag = "0.62.0", git = "https://github.com/hyperledger/aries-vcx" }
 ```
 
 ## Demo
