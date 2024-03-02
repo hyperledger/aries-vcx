@@ -92,3 +92,4 @@ runs:
       with:
         docker-img: ${{ inputs.docker-img }}
         publish-version: ${{ inputs.branch-name }}
+        url-docker-registry: ${{ env.URL_DOCKER_REGISTRY }}

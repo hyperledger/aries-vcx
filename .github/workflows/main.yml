@@ -219,6 +219,7 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.PUBLISH_VERSION }}
+          url-docker-registry: ${{ env.URL_DOCKER_REGISTRY }}
 
 #  ##########################################################################################
 #  ###############################    CODECOV    ###########################################
