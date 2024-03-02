@@ -1,5 +1,5 @@
 name: 'publish-image'
-description: "Given image specified by <docker-img>, retag it to <publish-version> and push to $URL_DOCKER_REGISTRY"
+description: "Given image specified by <docker-img>, retag it to <publish-version> and push to <url-docker-registry>"
 
 inputs:
   docker-img:
