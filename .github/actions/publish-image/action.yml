@@ -1,5 +1,5 @@
 name: 'publish-image'
-description: "Given image specified by <docker-img>, retag it to <publish-version> and push to $URL_DOCKER_REGISTRY"
+description: "Given image specified by <docker-img>, retag it to <publish-version> and push to <url-docker-registry>"
 
 inputs:
   docker-img:
@@ -8,6 +8,10 @@ inputs:
   publish-version:
     description: 'The image will be published as <docker-tag>:<publish-version>'
     required: true
+  url-docker-registry:
+    description: 'URL of the Docker registry to push the image to'
+    required: false
+    default: 'ghcr.io'
 
 runs:
   using: "composite"
@@ -28,7 +32,7 @@ runs:
         IFS=$':' read -a arr <<< ${{ inputs.docker-img }}
         DOCKER_IMG_TAGLESS=${arr[0]}
         GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
-        REMOTE_DOCKER_IMG_CACHED="${URL_DOCKER_REGISTRY}/${GITHUB_REPOSITORY_LOWERCASE}/${DOCKER_IMG_TAGLESS}:${{ inputs.publish-version }}"
+        REMOTE_DOCKER_IMG_CACHED="${{ inputs.url-docker-registry }}/${GITHUB_REPOSITORY_LOWERCASE}/${DOCKER_IMG_TAGLESS}:${{ inputs.publish-version }}"
         echo "Publishing image $REMOTE_DOCKER_IMG_CACHED"
         docker tag ${{ inputs.docker-img }} "$REMOTE_DOCKER_IMG_CACHED"
         docker push "$REMOTE_DOCKER_IMG_CACHED" || true
