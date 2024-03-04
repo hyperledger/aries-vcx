@@ -61,12 +61,25 @@ docker pull ghcr.io/hyperledger/aries-vcx/mediator:main
 
 #### 2. Use docker-compose with provided `compose.yaml` to quickly bring up mediator service along with mysql database
 
-This can also be used for local development purposes, when you build your own mediator image as described above.
-
 ```bash
 # Note: Configuration can be customized using .env file, 
 # or by manually passing expected environment variables.
 docker compose up -d
+```
+
+When you run the above, mediator and database containers are started on the same private network.  
+The configuration in .env file is used for database<->mediator connection parameters.  
+The mediator (but not the database) is additionally exposed on localhost:8005 by default for interaction.
+
+> [!IMPORTANT]  
+> While the database container uses a standard image, you will need to either build or pull the mediator image,
+> as described in previous section.
+
+For regular development work on mediator, you may want to bring up only the database,
+to test against local dev builds of mediator.
+
+```bash
+docker compose -f db-only.compose.yaml up -d
 ```
 
 To wind down services
@@ -74,10 +87,6 @@ To wind down services
 ```bash
 docker compose down
 ```
-
-When you run compose, the mediator and database containers are started on the same private network.  
-The configuration in .env file is used for database<->mediator connection parameters.  
-The mediator (but not the database) is additionally exposed on localhost:8005 by default for interaction.
 
 ### Configurable Options
 
