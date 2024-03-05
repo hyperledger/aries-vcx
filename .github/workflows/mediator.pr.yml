@@ -13,18 +13,46 @@ on:
 env:
   DOCKER_BUILDKIT: 1
   MAIN_BRANCH: main
-  URL_DOCKER_REGISTRY: ghcr.io
-  DOCKER_IMAGE_AGENCY: ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.6.0
-  DOCKER_IMAGE_POOL: ghcr.io/hyperledger/aries-vcx/indy_pool_localhost:1.15.0
-
-  DOCKER_REPO_LOCAL_VDRPROXY: vdrproxy
 
   RUST_TOOLCHAIN_VERSION: 1.74.1
-  NODE_VERSION: 18.x
 
 jobs:
 
+  setup-variables:
+    runs-on: ubuntu-22.04
+    outputs:
+      PUBLISH_VERSION: ${{ steps.run-info.outputs.publish-version }}
+      RELEASE: ${{ steps.run-info.outputs.release }}
+      PRERELEASE: ${{ steps.run-info.outputs.pre-release }}
+      BRANCH_NAME: ${{ steps.run-info.outputs.branch-name }}
+      IS_FORK: ${{ steps.run-info.outputs.is-fork }}
+      SKIP_CI: ${{ steps.skip-info.outputs.skip-ci }}
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v1
+      - name: "Construct CI run-info"
+        id: run-info
+        uses: ./.github/actions/construct-run-info
+      - name: "Detect CI skip steps"
+        id: skip-info
+        uses: ./.github/actions/detect-skip-info
+
+  check-variables:
+    runs-on: ubuntu-22.04
+    needs: setup-variables
+    steps:
+      - name: "Print outputs"
+        run: |
+          echo "PUBLISH_VERSION ${{ needs.setup-variables.outputs.PUBLISH_VERSION }}"
+          echo "RELEASE ${{ needs.setup-variables.outputs.RELEASE }}"
+          echo "PRERELEASE ${{ needs.setup-variables.outputs.PRERELEASE }}"
+          echo "BRANCH_NAME ${{ needs.setup-variables.outputs.BRANCH_NAME }}"
+          echo "IS_FORK ${{ needs.setup-variables.outputs.IS_FORK }}"
+          echo "SKIP_CI ${{ needs.setup-variables.outputs.SKIP_CI }}"
+
   test-integration-mediator:
+    needs: [ setup-variables ]
+    if: ${{ needs.setup-variables.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-22.04
     services:
       mysql:
@@ -59,3 +87,36 @@ jobs:
         uses: ./.github/actions/upload-docker-logs
         with:
           name: "docker-services-${{ github.job }}"
+
+  docker-mediator-build:
+    needs: [ test-integration-mediator, setup-variables ]
+    if: ${{ needs.setup-variables.outputs.SKIP_CI != 'true' }}
+    runs-on: ubuntu-22.04
+    env:
+      DOCKER_IMAGE: mediator:${{ needs.setup-variables.outputs.BRANCH_NAME }}
+    outputs:
+      image-name: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Build and cache docker image"
+        uses: ./.github/actions/build-image
+        with:
+          docker-img: ${{ env.DOCKER_IMAGE }} 
+          dockerfile-path: "aries/agents/rust/mediator/Dockerfile"
+          branch-name: ${{ needs.setup-variables.outputs.BRANCH_NAME }}
+          branch-main: ${{ env.MAIN_BRANCH }}
+          docker-repo-local-name: mediator
+      - name: "Publish versioned docker image"
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMAGE }} 
+          publish-version: ${{ needs.setup-variables.outputs.PUBLISH_VERSION }}
+        env:   
+          URL_DOCKER_REGISTRY: ghcr.io  # Required by .github/actions/publish-image

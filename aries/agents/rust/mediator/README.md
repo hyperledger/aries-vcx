@@ -17,6 +17,8 @@ cargo build
 
 ## Usage
 
+### Cargo
+
 You can run and test the produced binaries using cargo.
 
 ```bash
@@ -39,6 +41,53 @@ cargo run --bin mediator
 cargo test 
 ```
 
+### Docker
+
+#### 1. You can build the docker image yourself or pull it from github
+
+`Dockerfile` is provided, to build the mediator image.
+The image produced includes the mediator binary and required ssl libraries.
+
+```bash
+# Note: Build context needs to include aries-vcx repository root. 
+docker build --tag mediator --file ./Dockerfile  ../../../../
+```
+
+Alternatively you can pull the latest prebuilt mediator image directly.
+
+```bash
+docker pull ghcr.io/hyperledger/aries-vcx/mediator:main
+```
+
+#### 2. Use docker-compose with provided `compose.yaml` to quickly bring up mediator service along with mysql database
+
+```bash
+# Note: Configuration can be customized using .env file, 
+# or by manually passing expected environment variables.
+docker compose up -d
+```
+
+When you run the above, mediator and database containers are started on the same private network.  
+The configuration in .env file is used for database<->mediator connection parameters.  
+The mediator (but not the database) is additionally exposed on localhost:8005 by default for interaction.
+
+> [!IMPORTANT]  
+> While the database container uses a standard image, you will need to either build or pull the mediator image,
+> as described in previous section.
+
+For regular development work on mediator, you may want to bring up only the database,
+to test against local dev builds of mediator.
+
+```bash
+docker compose -f db-only.compose.yaml up -d
+```
+
+To wind down services
+
+```bash
+docker compose down
+```
+
 ### Configurable Options
 
 Currently the mediator reads the following environment variables.
@@ -47,7 +96,7 @@ Currently the mediator reads the following environment variables.
 `ENDPOINT_ROOT`: 
 - **Description**: This is the address at which the mediator will listen for connections.
 - **Default**: "127.0.0.1:8005"
-- **Usage**: `ENDPOINT_ROOT=127.0.0.1:3000 cargo run`
+- **Usage**: `ENDPOINT_ROOT=0.0.0.0:3000`
 
 `MYSQL_URL`: 
 - **Description**: MySQL url for the MYSQL database used for mediator persistence. 
