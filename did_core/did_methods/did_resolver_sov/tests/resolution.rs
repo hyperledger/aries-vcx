@@ -65,3 +65,45 @@ async fn test_error_handling_during_resolution() {
 
     assert!(result.is_err());
 }
+
+#[tokio::test]
+async fn write_new_nym_and_get_did_doc() {
+    let profile = build_setup_profile().await;
+    let (new_nym, verkey) = profile
+        .wallet
+        .create_and_store_my_did(None, None)
+        .await
+        .unwrap();
+
+    profile
+        .ledger_write
+        .publish_nym(
+            &profile.wallet,
+            &profile.institution_did,
+            &new_nym,
+            Some(&verkey),
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+
+    // NEED TO WRITE ENDPOINT FOR IT TO RESOLVE
+    // write_test_endpoint(&profile.wallet, &profile.ledger_write, &new_nym).await;
+
+    let resolver = DidSovResolver::new(profile.ledger_read);
+    let did = format!("did:sov:{}", new_nym);
+
+    let did_doc = resolver
+        .resolve(
+            &Did::parse(did.clone()).unwrap(),
+            &DidResolutionOptions::default(),
+        )
+        .await
+        .unwrap();
+
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&did_doc.did_document()).unwrap()
+    );
+}

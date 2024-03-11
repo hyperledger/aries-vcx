@@ -47,7 +47,7 @@ macro_rules! matches_opt_thread_id {
 #[rustfmt::skip] // This macro results in some false positives and formatting makes it harder to read
 macro_rules! get_attach_as_string {
     ($attachments:expr) => {{
-        let __attach = $attachments.get(0).as_ref().map(|a| &a.data.content);
+        let __attach = $attachments.first().as_ref().map(|a| &a.data.content);
         let err_fn = |attach: Option<&messages::decorators::attachment::Attachment>| {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::SerializationError,
@@ -55,9 +55,9 @@ macro_rules! get_attach_as_string {
             ))
         };
 
-        let Some(messages::decorators::attachment::AttachmentType::Base64(encoded_attach)) = __attach else { return err_fn($attachments.get(0)); };
-        let Ok(bytes) = base64::engine::Engine::decode(&base64::engine::general_purpose::STANDARD, &encoded_attach) else { return err_fn($attachments.get(0)); };
-        let Ok(attach_string) = String::from_utf8(bytes) else { return err_fn($attachments.get(0)); };
+        let Some(messages::decorators::attachment::AttachmentType::Base64(encoded_attach)) = __attach else { return err_fn($attachments.first()); };
+        let Ok(bytes) = base64::engine::Engine::decode(&base64::engine::general_purpose::STANDARD, &encoded_attach) else { return err_fn($attachments.first()); };
+        let Ok(attach_string) = String::from_utf8(bytes) else { return err_fn($attachments.first()); };
 
         attach_string
     }};

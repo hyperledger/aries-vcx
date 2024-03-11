@@ -53,6 +53,28 @@ fn unix_to_datetime(posix_timestamp: i64) -> Option<DateTime<Utc>> {
         .map(|date_time| DateTime::<Utc>::from_naive_utc_and_offset(date_time, Utc))
 }
 
+fn expand_abbreviated_verkey(nym: &str, verkey: &str) -> Result<String, DidSovError> {
+    if let Some(stripped_verkey) = verkey.strip_prefix('~') {
+        let mut decoded_nym = bs58::decode(nym).into_vec().map_err(|e| {
+            DidSovError::ParsingError(ParsingErrorSource::LedgerResponseParsingError(format!(
+                "Failed to decode did from base58: {} (error: {})",
+                nym, e
+            )))
+        })?;
+        let decoded_stripped_verkey = bs58::decode(stripped_verkey).into_vec().map_err(|e| {
+            DidSovError::ParsingError(ParsingErrorSource::LedgerResponseParsingError(format!(
+                "Failed to decode verkey from base58: {} (error: {})",
+                stripped_verkey, e
+            )))
+        })?;
+        decoded_nym.extend(&decoded_stripped_verkey);
+
+        Ok(bs58::encode(decoded_nym).into_string())
+    } else {
+        Ok(verkey.to_string())
+    }
+}
+
 pub(super) fn is_valid_sovrin_did_id(id: &str) -> bool {
     if id.len() < 21 || id.len() > 22 {
         return false;
@@ -68,49 +90,64 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
 ) -> Result<DidResolutionOutput<E>, DidSovError> {
     let (service_id, ddo_id) = prepare_ids(did)?;
 
-    let service_data = get_data_from_response(resp)?;
-    let endpoint: EndpointDidSov = serde_json::from_value(service_data["endpoint"].clone())?;
+    let service_data = get_data_from_response(resp);
 
-    let txn_time = get_txn_time_from_response(resp)?;
-    let datetime = unix_to_datetime(txn_time);
+    let txn_time = get_txn_time_from_response(resp);
 
-    let service = {
+    let expanded_verkey = expand_abbreviated_verkey(ddo_id.id(), &verkey)?;
+
+    // Initialize DID document builder
+    let mut ddo_builder = DidDocument::builder(ddo_id);
+
+    // Process endpoint data if available
+    if let Ok(service_data) = service_data {
+        let endpoint: EndpointDidSov = serde_json::from_value(service_data["endpoint"].clone())?;
         let service_types: Vec<String> = endpoint
             .types
             .into_iter()
             .filter(|t| *t != DidSovServiceType::Unknown)
             .map(|t| t.to_string())
             .collect();
-        let mut builder = Service::builder(
-            service_id,
-            endpoint.endpoint.as_str().try_into()?,
-            Default::default(),
-        );
-        for service_type in service_types {
-            builder = builder.add_service_type(service_type)?;
-        }
-        builder.build()
-    };
 
-    // TODO: Use multibase instead of base58
+        let service = {
+            let mut builder = Service::builder(
+                service_id,
+                endpoint.endpoint.as_str().try_into()?,
+                Default::default(),
+            );
+            for service_type in service_types {
+                builder = builder.add_service_type(service_type)?;
+            }
+
+            builder.build()
+        };
+
+        // Add service to DID document
+        ddo_builder = ddo_builder.add_service(service);
+    }
+
+    // Continue building DID document
+
     let verification_method = VerificationMethod::builder(
         did.to_string().try_into()?,
         did.to_string().try_into()?,
         VerificationMethodType::Ed25519VerificationKey2018,
     )
-    .add_public_key_base58(verkey)
+    .add_public_key_base58(expanded_verkey)
     .build();
 
-    let ddo = DidDocument::builder(ddo_id)
-        .add_service(service)
-        .add_verification_method(verification_method)
-        .build();
+    ddo_builder = ddo_builder.add_verification_method(verification_method);
+
+    let ddo = ddo_builder.build();
 
     let ddo_metadata = {
         let mut metadata_builder = DidDocumentMetadata::builder().deactivated(false);
-        if let Some(datetime) = datetime {
-            metadata_builder = metadata_builder.updated(datetime);
-        };
+        if let Ok(txn_time) = txn_time {
+            let datetime = unix_to_datetime(txn_time);
+            if let Some(datetime) = datetime {
+                metadata_builder = metadata_builder.updated(datetime);
+            };
+        }
         metadata_builder.build()
     };
 
@@ -215,5 +252,28 @@ mod tests {
         } else {
             panic!("Unexpected public key type");
         }
+    }
+
+    #[test]
+    fn test_expand_abbreviated_verkey_with_abbreviation() {
+        let nym = "7Sqc3ne5NfUVxMTrHahxz3";
+        let abbreviated_verkey = "~DczaFTexiEYv5abkEUZeZt";
+        let expected_full_verkey = "4WkksEAXsewRbDYDz66aTdjtVF2LBxbqEMyF2WEjTBKk";
+
+        assert_eq!(
+            expand_abbreviated_verkey(nym, abbreviated_verkey).unwrap(),
+            expected_full_verkey
+        );
+    }
+
+    #[test]
+    fn test_expand_abbreviated_verkey_without_abbreviation() {
+        let nym = "123456789abcdefghi";
+        let full_verkey = "123456789abcdefghixyz123";
+
+        assert_eq!(
+            expand_abbreviated_verkey(nym, full_verkey).unwrap(),
+            full_verkey
+        );
     }
 }

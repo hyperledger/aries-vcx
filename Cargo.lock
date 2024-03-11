@@ -1914,6 +1914,7 @@ dependencies = [
  "aries_vcx",
  "aries_vcx_core",
  "async-trait",
+ "bs58 0.5.0",
  "chrono",
  "did_doc_sov",
  "did_resolver",
