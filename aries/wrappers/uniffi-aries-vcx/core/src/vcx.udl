@@ -2,7 +2,7 @@ interface ProfileHolder {
 
 };
 
-dictionary WalletConfig {
+dictionary IndyWalletConfig {
     string wallet_name;
     string wallet_key;
     string wallet_key_derivation;
@@ -158,7 +158,7 @@ enum VcxUniFFIError {
 
 namespace vcx {
     [Throws=VcxUniFFIError]
-    ProfileHolder new_indy_profile(WalletConfig wallet_config, string genesis_file_path);
+    ProfileHolder new_indy_profile(IndyWalletConfig wallet_config, string genesis_file_path);
 
     [Throws=VcxUniFFIError]
     Connection create_inviter(ProfileHolder profile);

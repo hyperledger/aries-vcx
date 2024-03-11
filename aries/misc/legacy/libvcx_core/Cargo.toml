@@ -7,6 +7,8 @@ edition.workspace = true
 
 [features]
 fatal_warnings = []
+askar_wallet = ["aries_vcx/askar_wallet", "aries_vcx_core/askar_wallet"]
+vdrtools_wallet = ["aries_vcx/vdrtools_wallet", "aries_vcx_core/vdrtools_wallet"]
 
 [dependencies]
 num-traits = "0.2.0"
@@ -23,7 +25,7 @@ serde = "1.0.97"
 serde_json = "1.0.40"
 serde_derive = "1.0.97"
 futures = { version = "0.3", default-features = false }
-aries_vcx = { path = "../../../aries_vcx", features = ["credx", "vdrtools_wallet"] }
+aries_vcx = { path = "../../../aries_vcx", features = ["credx"] }
 aries_vcx_core = { path = "../../../aries_vcx_core" }
 anoncreds_types = { path = "../../../../aries/misc/anoncreds_types" }
 diddoc_legacy = { path = "../diddoc_legacy" }

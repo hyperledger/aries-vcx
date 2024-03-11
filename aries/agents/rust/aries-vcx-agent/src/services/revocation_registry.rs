@@ -8,7 +8,7 @@ use aries_vcx::{common::primitives::revocation_registry::RevocationRegistry, did
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds,
     ledger::indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
-    wallet::indy::IndySdkWallet,
+    wallet::base_wallet::BaseWallet,
 };
 
 use crate::{
@@ -16,21 +16,21 @@ use crate::{
     storage::{object_cache::ObjectCache, Storage},
 };
 
-pub struct ServiceRevocationRegistries {
+pub struct ServiceRevocationRegistries<T> {
     ledger_write: Arc<DefaultIndyLedgerWrite>,
     ledger_read: Arc<DefaultIndyLedgerRead>,
     anoncreds: IndyCredxAnonCreds,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<T>,
     issuer_did: Did,
     rev_regs: ObjectCache<RevocationRegistry>,
 }
 
-impl ServiceRevocationRegistries {
+impl<T: BaseWallet> ServiceRevocationRegistries<T> {
     pub fn new(
         ledger_write: Arc<DefaultIndyLedgerWrite>,
         ledger_read: Arc<DefaultIndyLedgerRead>,
         anoncreds: IndyCredxAnonCreds,
-        wallet: Arc<IndySdkWallet>,
+        wallet: Arc<T>,
         issuer_did: String,
     ) -> Self {
         Self {

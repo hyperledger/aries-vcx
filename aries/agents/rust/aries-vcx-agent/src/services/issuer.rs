@@ -11,7 +11,9 @@ use aries_vcx::{
     },
     protocols::{issuance::issuer::state_machine::IssuerState, SendClosure},
 };
-use aries_vcx_core::{anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::indy::IndySdkWallet};
+use aries_vcx_core::{
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::base_wallet::BaseWallet,
+};
 
 use crate::{
     error::*,
@@ -35,18 +37,18 @@ impl IssuerWrapper {
     }
 }
 
-pub struct ServiceCredentialsIssuer {
+pub struct ServiceCredentialsIssuer<T> {
     anoncreds: IndyCredxAnonCreds,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<T>,
     creds_issuer: ObjectCache<IssuerWrapper>,
-    service_connections: Arc<ServiceConnections>,
+    service_connections: Arc<ServiceConnections<T>>,
 }
 
-impl ServiceCredentialsIssuer {
+impl<T: BaseWallet> ServiceCredentialsIssuer<T> {
     pub fn new(
         anoncreds: IndyCredxAnonCreds,
-        wallet: Arc<IndySdkWallet>,
-        service_connections: Arc<ServiceConnections>,
+        wallet: Arc<T>,
+        service_connections: Arc<ServiceConnections<T>>,
     ) -> Self {
         Self {
             service_connections,
@@ -95,10 +97,12 @@ impl ServiceCredentialsIssuer {
             .build_credential_offer_msg(self.wallet.as_ref(), &self.anoncreds, offer_info, None)
             .await?;
 
-        let wallet = self.wallet.as_ref();
-
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
+            Box::pin(async move {
+                connection
+                    .send_message(self.wallet.as_ref(), &msg, &VcxHttpClient)
+                    .await
+            })
         });
 
         let credential_offer = issuer.get_credential_offer_msg()?;
@@ -146,10 +150,12 @@ impl ServiceCredentialsIssuer {
         } = self.creds_issuer.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
 
-        let wallet = self.wallet.as_ref();
-
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
+            Box::pin(async move {
+                connection
+                    .send_message(self.wallet.as_ref(), &msg, &VcxHttpClient)
+                    .await
+            })
         });
 
         issuer

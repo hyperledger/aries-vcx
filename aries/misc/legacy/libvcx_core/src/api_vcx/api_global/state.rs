@@ -1,7 +1,7 @@
 use crate::api_vcx::api_global::{
     agency_client::reset_main_agency_client,
     pool::{close_main_pool, reset_ledger_components},
-    wallet::close_main_wallet,
+    wallet::wallet::close_main_wallet,
 };
 
 pub fn state_vcx_shutdown() {

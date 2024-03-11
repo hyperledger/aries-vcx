@@ -5,7 +5,7 @@ use super::{utils::prelude::*, ArcAgent};
 use crate::mediation::forward::handle_forward;
 
 pub async fn handle_routing_forward(
-    agent: ArcAgent<impl BaseWallet + 'static, impl MediatorPersistence>,
+    agent: ArcAgent<impl BaseWallet, impl MediatorPersistence>,
     forward: Forward,
 ) -> Result<Ack, String> {
     info!("{:?}", forward);

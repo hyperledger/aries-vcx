@@ -191,6 +191,7 @@ pub fn get_taa_configuration() -> LibvcxResult<Option<TxnAuthrAgrmtOptions>> {
     super::profile::get_taa_configuration()
 }
 
+#[cfg(feature = "vdrtools_wallet")]
 #[cfg(test)]
 mod tests {
     use aries_vcx::{
@@ -205,7 +206,7 @@ mod tests {
     use crate::api_vcx::api_global::{
         ledger::{get_taa_configuration, ledger_get_txn_author_agreement, set_taa_configuration},
         pool::{open_main_pool, LibvcxLedgerConfig},
-        wallet::test_utils::_create_and_open_wallet,
+        wallet::wallet::test_utils::_create_and_open_wallet,
     };
 
     #[tokio::test]

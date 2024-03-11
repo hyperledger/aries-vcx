@@ -7,11 +7,8 @@ mod dbtests {
 
     use aries_vcx::global::settings;
     use aries_vcx_core::wallet::{
-        base_wallet::DidWallet,
-        indy::{
-            wallet::{close_wallet, create_and_open_wallet, wallet_configure_issuer},
-            IndySdkWallet, WalletConfig,
-        },
+        base_wallet::{did_wallet::DidWallet, BaseWallet, ManageWallet},
+        indy::indy_wallet_config::IndyWalletConfig,
     };
     use libvcx_logger::LibvcxDefaultLogger;
 
@@ -34,7 +31,7 @@ mod dbtests {
         })
         .to_string();
         let enterprise_seed = "000000000000000000000000Trustee1";
-        let config_wallet = WalletConfig::builder()
+        let config_wallet = IndyWalletConfig::builder()
             .wallet_name(format!("faber_wallet_{}", uuid::Uuid::new_v4()))
             .wallet_key(settings::DEFAULT_WALLET_KEY.into())
             .wallet_key_derivation(settings::WALLET_KDF_RAW.into())
@@ -43,13 +40,12 @@ mod dbtests {
             .storage_credentials(storage_credentials)
             .build();
 
-        let wallet_handle = create_and_open_wallet(&config_wallet).await?;
-        let _config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await?;
+        let wallet = config_wallet.create_wallet().await?;
+        wallet.configure_issuer(enterprise_seed).await?;
 
-        IndySdkWallet::new(wallet_handle)
-            .create_and_store_my_did(None, None)
-            .await?;
-        close_wallet(wallet_handle).await?;
+        wallet.create_and_store_my_did(None, None).await?;
+
+        wallet.close_wallet().await?;
         Ok(())
     }
 }

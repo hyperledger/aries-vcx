@@ -13,7 +13,7 @@ use aries_vcx::{
 };
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds, ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
-    wallet::indy::IndySdkWallet,
+    wallet::base_wallet::BaseWallet,
 };
 use serde_json::Value;
 
@@ -39,20 +39,20 @@ impl ProverWrapper {
     }
 }
 
-pub struct ServiceProver {
+pub struct ServiceProver<T> {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     anoncreds: IndyCredxAnonCreds,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<T>,
     provers: ObjectCache<ProverWrapper>,
-    service_connections: Arc<ServiceConnections>,
+    service_connections: Arc<ServiceConnections<T>>,
 }
 
-impl ServiceProver {
+impl<T: BaseWallet> ServiceProver<T> {
     pub fn new(
         ledger_read: Arc<DefaultIndyLedgerRead>,
         anoncreds: IndyCredxAnonCreds,
-        wallet: Arc<IndySdkWallet>,
-        service_connections: Arc<ServiceConnections>,
+        wallet: Arc<T>,
+        service_connections: Arc<ServiceConnections<T>>,
     ) -> Self {
         Self {
             service_connections,
@@ -116,10 +116,14 @@ impl ServiceProver {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut prover = Prover::create("")?;
 
-        let wallet = self.wallet.as_ref();
+        let wallet = &self.wallet;
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
+            Box::pin(async move {
+                connection
+                    .send_message(wallet.as_ref(), &msg, &VcxHttpClient)
+                    .await
+            })
         });
 
         let proposal = prover.build_presentation_proposal(proposal).await?;
@@ -160,10 +164,14 @@ impl ServiceProver {
             )
             .await?;
 
-        let wallet = self.wallet.as_ref();
+        let wallet = &self.wallet;
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(wallet, &msg, &VcxHttpClient).await })
+            Box::pin(async move {
+                connection
+                    .send_message(wallet.as_ref(), &msg, &VcxHttpClient)
+                    .await
+            })
         });
 
         let message = prover.mark_presentation_sent()?;

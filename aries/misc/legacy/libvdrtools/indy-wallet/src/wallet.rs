@@ -20,7 +20,7 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize)]
-pub(super) struct Keys {
+pub struct Keys {
     pub type_key: chacha20poly1305_ietf::Key,
     pub name_key: chacha20poly1305_ietf::Key,
     pub value_key: chacha20poly1305_ietf::Key,
@@ -30,6 +30,7 @@ pub(super) struct Keys {
     pub tags_hmac_key: hmacsha256::Key,
 }
 
+#[allow(clippy::new_without_default)]
 impl Keys {
     pub fn new() -> Keys {
         Keys {

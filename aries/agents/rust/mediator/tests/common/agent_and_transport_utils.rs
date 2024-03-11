@@ -5,7 +5,7 @@ use aries_vcx::{
     },
     utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_core::wallet::{base_wallet::BaseWallet, indy::IndySdkWallet};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediator::{
     aries_agent::{client::transports::AriesTransport, Agent},
@@ -31,7 +31,7 @@ use super::prelude::*;
 const ENDPOINT_ROOT: &str = "http://localhost:8005";
 
 pub async fn didcomm_connection(
-    agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
+    agent: &Agent<impl BaseWallet, impl MediatorPersistence>,
     aries_transport: &mut impl AriesTransport,
 ) -> Result<InviteeConnection<Completed>> {
     let client = reqwest::Client::new();
@@ -56,12 +56,12 @@ pub async fn didcomm_connection(
 
 /// Returns agent, aries transport for agent, agent's verkey, and mediator's diddoc.
 pub async fn gen_mediator_connected_agent() -> Result<(
-    Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
+    Agent<impl BaseWallet, impl MediatorPersistence>,
     impl AriesTransport,
     VerKey,
     AriesDidDoc,
 )> {
-    let agent = mediator::aries_agent::AgentBuilder::new_demo_agent().await?;
+    let agent = mediator::aries_agent::AgentBuilder::<IndySdkWallet>::new_demo_agent().await?;
     let mut aries_transport = reqwest::Client::new();
     let completed_connection = didcomm_connection(&agent, &mut aries_transport).await?;
     let our_verkey: VerKey = completed_connection.pairwise_info().pw_vk.clone();
@@ -72,7 +72,7 @@ pub async fn gen_mediator_connected_agent() -> Result<(
 /// Sends message over didcomm connection and returns unpacked response message
 pub async fn send_message_and_pop_response_message(
     message_bytes: &[u8],
-    agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
+    agent: &Agent<impl BaseWallet, impl MediatorPersistence>,
     aries_transport: &mut impl AriesTransport,
     our_verkey: &VerKey,
     their_diddoc: &AriesDidDoc,
@@ -96,7 +96,7 @@ pub async fn send_message_and_pop_response_message(
 }
 /// Register recipient keys with mediator
 pub async fn gen_and_register_recipient_key(
-    agent: &mut Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
+    agent: &mut Agent<impl BaseWallet, impl MediatorPersistence>,
     agent_aries_transport: &mut impl AriesTransport,
     agent_verkey: &VerKey,
     mediator_diddoc: &AriesDidDoc,
@@ -141,7 +141,7 @@ pub async fn gen_and_register_recipient_key(
 }
 
 pub async fn get_mediator_grant_data(
-    agent: &Agent<impl BaseWallet + 'static, impl MediatorPersistence>,
+    agent: &Agent<impl BaseWallet, impl MediatorPersistence>,
     agent_aries_transport: &mut impl AriesTransport,
     agent_verkey: &VerKey,
     mediator_diddoc: &AriesDidDoc,

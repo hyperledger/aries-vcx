@@ -13,7 +13,9 @@ use aries_vcx::{
     },
     transport::Transport,
 };
-use aries_vcx_core::{ledger::indy_vdr_ledger::DefaultIndyLedgerRead, wallet::indy::IndySdkWallet};
+use aries_vcx_core::{
+    ledger::indy_vdr_ledger::DefaultIndyLedgerRead, wallet::base_wallet::BaseWallet,
+};
 use did_resolver_registry::ResolverRegistry;
 
 use super::connection::ServiceEndpoint;
@@ -24,19 +26,19 @@ use crate::{
     AgentError, AgentErrorKind, AgentResult,
 };
 
-pub struct ServiceDidExchange {
+pub struct ServiceDidExchange<T> {
     ledger_read: Arc<DefaultIndyLedgerRead>,
-    wallet: Arc<IndySdkWallet>,
+    wallet: Arc<T>,
     resolver_registry: Arc<ResolverRegistry>,
     service_endpoint: ServiceEndpoint,
     did_exchange: Arc<ObjectCache<GenericDidExchange>>,
     public_did: String,
 }
 
-impl ServiceDidExchange {
+impl<T: BaseWallet> ServiceDidExchange<T> {
     pub fn new(
         ledger_read: Arc<DefaultIndyLedgerRead>,
-        wallet: Arc<IndySdkWallet>,
+        wallet: Arc<T>,
         resolver_registry: Arc<ResolverRegistry>,
         service_endpoint: ServiceEndpoint,
         public_did: String,

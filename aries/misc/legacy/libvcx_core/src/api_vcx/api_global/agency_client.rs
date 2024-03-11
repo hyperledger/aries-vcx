@@ -10,7 +10,7 @@ use aries_vcx::agency_client::{
     MessageStatusCode,
 };
 use aries_vcx_core::wallet::{
-    agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::DidWallet,
+    agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::did_wallet::DidWallet,
 };
 
 use super::profile::get_main_wallet;

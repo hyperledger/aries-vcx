@@ -1,5 +1,6 @@
 mod common;
 
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
 
@@ -28,7 +29,7 @@ async fn didcomm_connection_succeeds() -> Result<()> {
         "Got invitation from register endpoint {}",
         serde_json::to_string_pretty(&oobi.clone()).unwrap()
     );
-    let agent = mediator::aries_agent::AgentBuilder::new_demo_agent().await?;
+    let agent = mediator::aries_agent::AgentBuilder::<IndySdkWallet>::new_demo_agent().await?;
     let mut aries_transport = reqwest::Client::new();
     let _state = agent
         .establish_connection(oobi, &mut aries_transport)

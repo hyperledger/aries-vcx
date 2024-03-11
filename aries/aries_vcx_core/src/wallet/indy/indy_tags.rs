@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::wallet::record_tags::{RecordTag, RecordTags};
 
-pub(crate) struct IndyTags(HashMap<String, String>);
+pub struct IndyTags(HashMap<String, String>);
 
 impl IndyTags {
     pub fn new(map: HashMap<String, String>) -> Self {

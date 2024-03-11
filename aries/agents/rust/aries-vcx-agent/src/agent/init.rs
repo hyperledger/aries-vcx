@@ -11,9 +11,9 @@ use aries_vcx_core::{
     self,
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
     ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
-    wallet::indy::{
-        wallet::{create_and_open_wallet, wallet_configure_issuer},
-        IndySdkWallet, WalletConfig,
+    wallet::{
+        base_wallet::{BaseWallet, ManageWallet},
+        indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
     },
 };
 use did_peer::resolver::PeerDidResolver;
@@ -59,9 +59,9 @@ pub struct InitConfig {
     pub service_endpoint: ServiceEndpoint,
 }
 
-impl Agent {
+impl Agent<IndySdkWallet> {
     pub async fn initialize(init_config: InitConfig) -> AgentResult<Self> {
-        let config_wallet = WalletConfig {
+        let config_wallet = IndyWalletConfig {
             wallet_name: init_config.wallet_config.wallet_name,
             wallet_key: init_config.wallet_config.wallet_key,
             wallet_key_derivation: init_config.wallet_config.wallet_kdf,
@@ -72,12 +72,12 @@ impl Agent {
             rekey_derivation_method: None,
         };
 
-        let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
-        let config_issuer = wallet_configure_issuer(wallet_handle, &init_config.enterprise_seed)
+        config_wallet.create_wallet().await.unwrap();
+        let wallet = Arc::new(config_wallet.open_wallet().await.unwrap());
+        let config_issuer = wallet
+            .configure_issuer(&init_config.enterprise_seed)
             .await
             .unwrap();
-
-        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
 
         use aries_vcx_core::ledger::indy_vdr_ledger::{build_ledger_components, VcxPoolConfig};
 

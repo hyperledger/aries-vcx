@@ -9,8 +9,14 @@ use public_key::{Key, KeyType};
 
 use super::{
     base_wallet::{
-        did_data::DidData, record::Record, record_category::RecordCategory,
-        search_filter::SearchFilter, BaseWallet, DidWallet, RecordWallet,
+        did_data::DidData,
+        did_wallet::DidWallet,
+        issuer_config::IssuerConfig,
+        record::{AllRecords, Record},
+        record_category::RecordCategory,
+        record_wallet::RecordWallet,
+        search_filter::SearchFilter,
+        BaseWallet,
     },
     record_tags::RecordTags,
     structs_io::UnpackMessageOutput,
@@ -22,11 +28,31 @@ pub struct AgencyClientWallet {
     inner: Arc<dyn BaseAgencyClientWallet>,
 }
 
-impl BaseWallet for AgencyClientWallet {}
+#[allow(unused_variables)]
+#[async_trait]
+impl BaseWallet for AgencyClientWallet {
+    async fn export_wallet(&self, path: &str, backup_key: &str) -> VcxCoreResult<()> {
+        Err(unimplemented_agency_client_wallet_method("export_wallet"))
+    }
+
+    async fn close_wallet(&self) -> VcxCoreResult<()> {
+        Err(unimplemented_agency_client_wallet_method("close_wallet"))
+    }
+
+    async fn configure_issuer(&self, key_seed: &str) -> VcxCoreResult<IssuerConfig> {
+        Err(unimplemented_agency_client_wallet_method(
+            "configure_issuer",
+        ))
+    }
+}
 
 #[allow(unused_variables)]
 #[async_trait]
 impl RecordWallet for AgencyClientWallet {
+    async fn all_records(&self) -> VcxCoreResult<Box<dyn AllRecords + Send>> {
+        Err(unimplemented_agency_client_wallet_method("get_all"))
+    }
+
     async fn add_record(&self, record: Record) -> VcxCoreResult<()> {
         Err(unimplemented_agency_client_wallet_method("add_record"))
     }
