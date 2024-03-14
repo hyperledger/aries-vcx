@@ -62,8 +62,8 @@ impl Default for EndpointDidSov {
 
 #[cfg(test)]
 mod unit_tests {
-    use agency_client::testing::test_utils::SetupMocks;
     use diddoc_legacy::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
+    use test_utils::devsetup::SetupMocks;
 
     use crate::common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov};
 

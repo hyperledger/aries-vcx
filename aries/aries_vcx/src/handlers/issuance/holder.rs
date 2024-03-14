@@ -29,10 +29,7 @@ use uuid::Uuid;
 use crate::{
     common::credentials::get_cred_rev_id,
     errors::error::prelude::*,
-    handlers::{
-        mediated_connection::MediatedConnection,
-        revocation_notification::receiver::RevocationNotificationReceiver,
-    },
+    handlers::revocation_notification::receiver::RevocationNotificationReceiver,
     protocols::issuance::holder::state_machine::{HolderFullState, HolderSM, HolderState},
 };
 
@@ -242,17 +239,15 @@ impl Holder {
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
         wallet: &impl BaseWallet,
-        connection: &MediatedConnection,
         notification: Revoke,
     ) -> VcxResult<()> {
         if self.holder_sm.is_revokable(ledger).await? {
-            let send_message = connection.send_message_closure(wallet).await?;
             // TODO: Store to remember notification was received along with details
             RevocationNotificationReceiver::build(
                 self.get_rev_reg_id()?,
                 self.get_cred_rev_id(wallet, anoncreds).await?,
             )
-            .handle_revocation_notification(notification, send_message)
+            .handle_revocation_notification(notification)
             .await?;
             Ok(())
         } else {

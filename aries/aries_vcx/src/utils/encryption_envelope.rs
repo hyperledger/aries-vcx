@@ -1,5 +1,4 @@
-use agency_client::testing::mocking::AgencyMockDecrypted;
-use aries_vcx_core::{global::settings::VERKEY, wallet::base_wallet::BaseWallet};
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     msg_fields::protocols::routing::{Forward, ForwardContent},
@@ -170,17 +169,7 @@ impl EncryptionEnvelope {
             "EncryptionEnvelope::anon_unpack >>> processing payload of {} bytes",
             encrypted_data.len()
         );
-        let (message, sender_vk) = if AgencyMockDecrypted::has_decrypted_mock_messages() {
-            trace!("EncryptionEnvelope::anon_unpack >>> returning decrypted mock message");
-            (
-                AgencyMockDecrypted::get_next_decrypted_message(),
-                Some(VERKEY.to_string()),
-            )
-        } else {
-            Self::_unpack_a2a_message(wallet, encrypted_data).await?
-        };
-
-        Ok((message, sender_vk))
+        Self::_unpack_a2a_message(wallet, encrypted_data).await
     }
 
     pub async fn auth_unpack_aries_msg(
@@ -209,47 +198,39 @@ impl EncryptionEnvelope {
             expected_vk
         );
 
-        let message = if AgencyMockDecrypted::has_decrypted_mock_messages() {
-            trace!("EncryptionEnvelope::auth_unpack >>> returning decrypted mock message");
-            AgencyMockDecrypted::get_next_decrypted_message()
-        } else {
-            let (a2a_message, sender_vk) =
-                Self::_unpack_a2a_message(wallet, encrypted_data).await?;
-            trace!(
-                "anon_unpack >> a2a_msg: {:?}, sender_vk: {:?}",
-                a2a_message,
-                sender_vk
-            );
+        let (a2a_message, sender_vk) = Self::_unpack_a2a_message(wallet, encrypted_data).await?;
+        trace!(
+            "anon_unpack >> a2a_msg: {:?}, sender_vk: {:?}",
+            a2a_message,
+            sender_vk
+        );
 
-            match sender_vk {
-                Some(sender_vk) => {
-                    if sender_vk != expected_vk {
-                        error!(
-                            "auth_unpack  sender_vk != expected_vk.... sender_vk: {}, \
-                             expected_vk: {}",
-                            sender_vk, expected_vk
-                        );
-                        return Err(AriesVcxError::from_msg(
-                            AriesVcxErrorKind::AuthenticationError,
-                            format!(
-                                "Message did not pass authentication check. Expected sender \
-                                 verkey was {}, but actually was {}",
-                                expected_vk, sender_vk
-                            ),
-                        ));
-                    }
-                }
-                None => {
-                    error!("auth_unpack  message was authcrypted");
+        match sender_vk {
+            Some(sender_vk) => {
+                if sender_vk != expected_vk {
+                    error!(
+                        "auth_unpack  sender_vk != expected_vk.... sender_vk: {}, expected_vk: {}",
+                        sender_vk, expected_vk
+                    );
                     return Err(AriesVcxError::from_msg(
                         AriesVcxErrorKind::AuthenticationError,
-                        "Can't authenticate message because it was anoncrypted.",
+                        format!(
+                            "Message did not pass authentication check. Expected sender verkey \
+                             was {}, but actually was {}",
+                            expected_vk, sender_vk
+                        ),
                     ));
                 }
             }
-            a2a_message
-        };
-        Ok(message)
+            None => {
+                error!("auth_unpack  message was authcrypted");
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::AuthenticationError,
+                    "Can't authenticate message because it was anoncrypted.",
+                ));
+            }
+        }
+        Ok(a2a_message)
     }
 }
 

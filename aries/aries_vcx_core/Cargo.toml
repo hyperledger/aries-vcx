@@ -16,7 +16,6 @@ legacy_proof = []
 askar_wallet = ["dep:aries-askar", "dep:bs58"]
 
 [dependencies]
-agency_client = { path = "../misc/legacy/agency_client" }
 aries-askar = { version = "=0.3.0", optional = true }
 bs58 = { version = "0.5", optional = true }
 indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", default-features = false, features = ["log"] }
