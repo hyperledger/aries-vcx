@@ -17,14 +17,15 @@ path = "uniffi-bindgen.rs"
 
 [features]
 default = ["vdrtools_wallet"]
-askar_wallet = ["aries_vcx/askar_wallet"]
-vdrtools_wallet = ["aries_vcx/vdrtools_wallet"]
+askar_wallet = ["aries_vcx/askar_wallet", "aries_vcx_wallet/askar_wallet"]
+vdrtools_wallet = ["aries_vcx/vdrtools_wallet", "aries_vcx_wallet/vdrtools_wallet"]
 
 [dependencies]
 uniffi = { version = "0.23.0", features = ["cli"] }
-aries_vcx = { path = "../../../aries_vcx", features = [
+aries_vcx = { path = "../../../aries_vcx", default-features = false, features = [
     "credx",
 ] }
+aries_vcx_wallet = { path = "../../../aries_vcx_wallet", default-features = false }
 tokio = { version = "1.24.1", features = ["rt-multi-thread"] }
 once_cell = "1.17.0"
 thiserror = "1.0.38"

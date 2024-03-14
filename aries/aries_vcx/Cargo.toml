@@ -12,20 +12,20 @@ doctest = false
 
 [features]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
+# default = ["vdrtools_wallet"]
 credx = [
     "aries_vcx_core/credx",
-    "test_utils/vdrtools_wallet",
     "test_utils/credx"
 ]
-anoncreds = ["aries_vcx_core/anoncreds", "test_utils/anoncreds", "test_utils/vdrtools_wallet"]
+anoncreds = ["aries_vcx_core/anoncreds", "test_utils/anoncreds"]
 vdr_proxy_ledger = [
     "aries_vcx_core/vdr_proxy_ledger",
-    "aries_vcx_core/vdrtools_wallet",
     "test_utils/vdr_proxy_ledger",
     "credx",
 ]
 vdrtools_wallet = [
     "aries_vcx_core/vdrtools_wallet",
+    "aries_vcx_wallet/vdrtools_wallet",
     "test_utils/vdrtools_wallet",
 ]
 backtrace_errors = ["backtrace"]
@@ -34,13 +34,16 @@ backtrace_errors = ["backtrace"]
 legacy_proof = ["aries_vcx_core/legacy_proof"]
 
 askar_wallet = [
-    "aries_vcx_core/askar_wallet"
+    "aries_vcx_core/askar_wallet",
+    "aries_vcx_wallet/askar_wallet",
+    "test_utils/askar_wallet"
 ]
 
 [dependencies]
 messages = { path = "../messages" }
 diddoc_legacy = { path = "../misc/legacy/diddoc_legacy" }
-aries_vcx_core = { path = "../aries_vcx_core" }
+aries_vcx_core = { path = "../aries_vcx_core", default-features = false }
+aries_vcx_wallet = { path = "../aries_vcx_wallet", default-features = false }
 shared = { path = "../misc/shared" }
 anoncreds_types = { path = "../misc/anoncreds_types" }
 did_parser_nom = { path = "../../did_core/did_parser_nom" }
@@ -77,7 +80,7 @@ url = { version = "2.3", features = ["serde"] }
 backtrace = { optional = true, version = "0.3" }
 
 [dev-dependencies]
-test_utils = { path = "../misc/test_utils" }
-wallet_migrator = { path = "../misc/wallet_migrator" }
+test_utils = { path = "../misc/test_utils", default-features = false }
+# wallet_migrator = { path = "../misc/wallet_migrator" }
 async-channel = "1.7.1"
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }

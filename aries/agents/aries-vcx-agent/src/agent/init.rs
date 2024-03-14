@@ -13,11 +13,8 @@ use aries_vcx_core::{
     self,
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
     ledger::indy_vdr_ledger::{build_ledger_components, DefaultIndyLedgerRead, VcxPoolConfig},
-    wallet::{
-        base_wallet::{issuer_config::IssuerConfig, BaseWallet, ManageWallet},
-        indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
-    },
 };
+use aries_vcx_wallet::wallet::base_wallet::{issuer_config::IssuerConfig, BaseWallet};
 use did_peer::resolver::PeerDidResolver;
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::resolution::DidSovResolver;
@@ -44,10 +41,37 @@ pub struct WalletInitConfig {
     pub wallet_kdf: String,
 }
 
-pub async fn build_indy_wallet(
+// pub async fn build_wallet(
+//     wallet_config: WalletInitConfig,
+//     isser_seed: String,
+// ) -> (impl BaseWallet, IssuerConfig) {
+//     #[cfg(feature = "vdrtools_wallet")]
+//     let wallet = build_indy_wallet(wallet_config, isser_seed).await;
+
+//     #[cfg(feature = "askar_wallet")]
+//     let wallet = build_askar_wallet(wallet_config, &isser_seed).await;
+
+//     let config_issuer = wallet.configure_issuer(&isser_seed).await.unwrap();
+
+//     let anoncreds = IndyCredxAnonCreds;
+//     anoncreds
+//         .prover_create_link_secret(&wallet, &DEFAULT_LINK_SECRET_ALIAS.to_string())
+//         .await
+//         .unwrap();
+
+//     (wallet, config_issuer)
+// }
+
+#[cfg(feature = "vdrtools_wallet")]
+use aries_vcx_wallet::wallet::indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet};
+
+#[cfg(feature = "vdrtools_wallet")]
+pub async fn build_wallet(
     wallet_config: WalletInitConfig,
-    isser_seed: String,
+    isser_seed: &str,
 ) -> (IndySdkWallet, IssuerConfig) {
+    use aries_vcx_wallet::wallet::base_wallet::ManageWallet;
+
     let config_wallet = IndyWalletConfig {
         wallet_name: wallet_config.wallet_name,
         wallet_key: wallet_config.wallet_key,
@@ -59,7 +83,42 @@ pub async fn build_indy_wallet(
         rekey_derivation_method: None,
     };
     let wallet = config_wallet.create_wallet().await.unwrap();
-    let config_issuer = wallet.configure_issuer(&isser_seed).await.unwrap();
+
+    let config_issuer = wallet.configure_issuer(isser_seed).await.unwrap();
+
+    let anoncreds = IndyCredxAnonCreds;
+    anoncreds
+        .prover_create_link_secret(&wallet, &DEFAULT_LINK_SECRET_ALIAS.to_string())
+        .await
+        .unwrap();
+
+    (wallet, config_issuer)
+}
+
+#[cfg(feature = "askar_wallet")]
+use aries_vcx_wallet::wallet::askar::AskarWallet;
+
+#[cfg(feature = "askar_wallet")]
+pub async fn build_wallet(
+    _wallet_config: WalletInitConfig,
+    isser_seed: &str,
+) -> (AskarWallet, IssuerConfig) {
+    use aries_vcx_wallet::wallet::{
+        askar::{askar_wallet_config::AskarWalletConfig, key_method::KeyMethod},
+        base_wallet::ManageWallet,
+    };
+    use uuid::Uuid;
+
+    let config = AskarWalletConfig::new(
+        "sqlite://:memory:",
+        KeyMethod::Unprotected,
+        "",
+        &Uuid::new_v4().to_string(),
+    );
+
+    let wallet = config.create_wallet().await.unwrap();
+
+    let config_issuer = wallet.configure_issuer(isser_seed).await.unwrap();
 
     let anoncreds = IndyCredxAnonCreds;
     anoncreds

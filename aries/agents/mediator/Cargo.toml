@@ -8,13 +8,14 @@ edition = "2021"
 [features]
 default = ["client"]
 client = []
+vdrtools_wallet = ["aries_vcx/vdrtools_wallet", "aries_vcx_core/vdrtools_wallet", "aries_vcx_wallet/vdrtools_wallet"]
+askar_wallet = ["aries_vcx/askar_wallet", "aries_vcx_core/askar_wallet", "aries_vcx_wallet/askar_wallet"]
 
 [dependencies]
 anyhow = "1.0.75"
-aries_vcx = { path = "../../aries_vcx" }
-aries_vcx_core = { path = "../../aries_vcx_core", features = [
-    "vdrtools_wallet",
-] }
+aries_vcx = { path = "../../aries_vcx", default-features = false }
+aries_vcx_core = { path = "../../aries_vcx_core", default-features = false }
+aries_vcx_wallet = { path = "../../aries_vcx_wallet",  default-features = false }
 async-trait = "0.1.73"
 axum = "0.6"
 axum-macros = "0.3.8"
@@ -34,7 +35,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tower-http = { version = "0.4.4", features = ["catch-panic"] }
 url = "2.4.1"
 uuid = "1.4.1"
-test_utils = { path = "../../misc/test_utils" }
+test_utils = { path = "../../misc/test_utils", default-features = false }
 base64-url = "2.0.0"
 
 [dev-dependencies]

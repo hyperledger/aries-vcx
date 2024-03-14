@@ -1,5 +1,5 @@
-use aries_vcx_core::{
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+use aries_vcx_wallet::{
+    errors::error::{VcxWalletError, VcxWalletResult},
     wallet::{
         base_wallet::{
             did_data::DidData,
@@ -26,11 +26,11 @@ pub struct MockAllRecords;
 
 #[async_trait]
 impl AllRecords for MockAllRecords {
-    fn total_count(&self) -> VcxCoreResult<Option<usize>> {
+    fn total_count(&self) -> VcxWalletResult<Option<usize>> {
         Ok(Some(0))
     }
 
-    async fn next(&mut self) -> VcxCoreResult<Option<PartialRecord>> {
+    async fn next(&mut self) -> VcxWalletResult<Option<PartialRecord>> {
         Ok(None)
     }
 }
@@ -38,15 +38,15 @@ impl AllRecords for MockAllRecords {
 #[async_trait]
 #[allow(unused_variables)]
 impl BaseWallet for MockWallet {
-    async fn export_wallet(&self, path: &str, backup_key: &str) -> VcxCoreResult<()> {
+    async fn export_wallet(&self, path: &str, backup_key: &str) -> VcxWalletResult<()> {
         Ok(())
     }
 
-    async fn close_wallet(&self) -> VcxCoreResult<()> {
+    async fn close_wallet(&self) -> VcxWalletResult<()> {
         Ok(())
     }
 
-    async fn configure_issuer(&self, key_seed: &str) -> VcxCoreResult<IssuerConfig> {
+    async fn configure_issuer(&self, key_seed: &str) -> VcxWalletResult<IssuerConfig> {
         Ok(IssuerConfig::builder().build())
     }
 
@@ -55,7 +55,7 @@ impl BaseWallet for MockWallet {
         name: &str,
         value: KeyValue,
         tags: &RecordTags,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxWalletResult<()> {
         Ok(())
     }
 }
@@ -66,15 +66,15 @@ pub const VERKEY: &str = "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE";
 #[async_trait]
 #[allow(unused_variables)]
 impl RecordWallet for MockWallet {
-    async fn all_records(&self) -> VcxCoreResult<Box<dyn AllRecords + Send>> {
+    async fn all_records(&self) -> VcxWalletResult<Box<dyn AllRecords + Send>> {
         Ok(Box::new(MockAllRecords {}))
     }
 
-    async fn add_record(&self, record: Record) -> VcxCoreResult<()> {
+    async fn add_record(&self, record: Record) -> VcxWalletResult<()> {
         Ok(())
     }
 
-    async fn get_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<Record> {
+    async fn get_record(&self, category: RecordCategory, name: &str) -> VcxWalletResult<Record> {
         Ok(Record::builder()
             .name("123".into())
             .category(RecordCategory::default())
@@ -87,7 +87,7 @@ impl RecordWallet for MockWallet {
         category: RecordCategory,
         name: &str,
         new_value: &str,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxWalletResult<()> {
         Ok(())
     }
 
@@ -96,11 +96,11 @@ impl RecordWallet for MockWallet {
         category: RecordCategory,
         name: &str,
         new_tags: RecordTags,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxWalletResult<()> {
         Ok(())
     }
 
-    async fn delete_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<()> {
+    async fn delete_record(&self, category: RecordCategory, name: &str) -> VcxWalletResult<()> {
         Ok(())
     }
 
@@ -108,10 +108,9 @@ impl RecordWallet for MockWallet {
         &self,
         category: RecordCategory,
         search_filter: Option<SearchFilter>,
-    ) -> VcxCoreResult<Vec<Record>> {
-        Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::UnimplementedFeature,
-            "unimplemented mock method: search_record",
+    ) -> VcxWalletResult<Vec<Record>> {
+        Err(VcxWalletError::Unimplemented(
+            "search_record is not implemented for MockWallet".into(),
         ))
     }
 }
@@ -123,34 +122,34 @@ impl DidWallet for MockWallet {
         &self,
         seed: Option<&str>,
         method_name: Option<&str>,
-    ) -> VcxCoreResult<DidData> {
+    ) -> VcxWalletResult<DidData> {
         Ok(DidData::new(
             DID,
             &Key::new(VERKEY.into(), KeyType::Ed25519).unwrap(),
         ))
     }
 
-    async fn key_count(&self) -> VcxCoreResult<usize> {
+    async fn key_count(&self) -> VcxWalletResult<usize> {
         Ok(0)
     }
 
-    async fn key_for_did(&self, name: &str) -> VcxCoreResult<Key> {
+    async fn key_for_did(&self, name: &str) -> VcxWalletResult<Key> {
         Ok(Key::new(VERKEY.into(), KeyType::Ed25519).unwrap())
     }
 
-    async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxCoreResult<Key> {
+    async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxWalletResult<Key> {
         Ok(Key::new(VERKEY.into(), KeyType::Ed25519).unwrap())
     }
 
-    async fn replace_did_key_apply(&self, did: &str) -> VcxCoreResult<()> {
+    async fn replace_did_key_apply(&self, did: &str) -> VcxWalletResult<()> {
         Ok(())
     }
 
-    async fn sign(&self, key: &Key, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
+    async fn sign(&self, key: &Key, msg: &[u8]) -> VcxWalletResult<Vec<u8>> {
         Ok(Vec::from(msg))
     }
 
-    async fn verify(&self, key: &Key, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
+    async fn verify(&self, key: &Key, msg: &[u8], signature: &[u8]) -> VcxWalletResult<bool> {
         Ok(true)
     }
 
@@ -159,11 +158,11 @@ impl DidWallet for MockWallet {
         sender_vk: Option<Key>,
         receiver_keys: Vec<Key>,
         msg: &[u8],
-    ) -> VcxCoreResult<Vec<u8>> {
+    ) -> VcxWalletResult<Vec<u8>> {
         Ok(Vec::from(msg))
     }
 
-    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {
+    async fn unpack_message(&self, msg: &[u8]) -> VcxWalletResult<UnpackMessageOutput> {
         Ok(UnpackMessageOutput {
             message: format!("{:?}", msg),
             recipient_verkey: "".to_owned(),

@@ -1,11 +1,10 @@
 use std::{io::prelude::*, sync::Arc};
 
-use aries_vcx_agent::{
-    aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet, build_indy_wallet, Agent as AriesAgent,
-    WalletInitConfig,
-};
+use aries_vcx_agent::{build_wallet, Agent as AriesAgent, WalletInitConfig};
 use rand::{thread_rng, Rng};
 use reqwest::Url;
+
+// use aries_vcx_wallet::wallet::indy::IndySdkWallet;
 
 #[derive(Debug, Deserialize)]
 struct SeedResponse {
@@ -84,6 +83,10 @@ async fn download_genesis_file() -> std::result::Result<String, String> {
     }
 }
 
+#[cfg(feature = "vdrtools_wallet")]
+use aries_vcx_wallet::wallet::indy::IndySdkWallet;
+
+#[cfg(feature = "vdrtools_wallet")]
 pub async fn initialize(port: u32) -> AriesAgent<IndySdkWallet> {
     let trustee_submitter_seed = get_trustee_seed().await;
     let genesis_path = download_genesis_file()
@@ -97,7 +100,46 @@ pub async fn initialize(port: u32) -> AriesAgent<IndySdkWallet> {
         wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".to_string(),
         wallet_kdf: "RAW".to_string(),
     };
-    let (wallet, trustee_config) = build_indy_wallet(wallet_config, trustee_submitter_seed).await;
+    let (wallet, trustee_config) = build_wallet(wallet_config, &trustee_submitter_seed).await;
+    let wallet = Arc::new(wallet);
+
+    let issuer_did = AriesAgent::setup_ledger(
+        genesis_path.clone(),
+        wallet.clone(),
+        service_endpoint.clone(),
+        trustee_config.institution_did.parse().unwrap(),
+    )
+    .await
+    .unwrap();
+
+    AriesAgent::initialize(
+        genesis_path,
+        wallet.clone(),
+        service_endpoint.clone(),
+        issuer_did,
+    )
+    .await
+    .unwrap()
+}
+
+#[cfg(feature = "askar_wallet")]
+use aries_vcx_wallet::wallet::askar::AskarWallet;
+
+#[cfg(feature = "askar_wallet")]
+pub async fn initialize(port: u32) -> AriesAgent<AskarWallet> {
+    let trustee_submitter_seed = get_trustee_seed().await;
+    let genesis_path = download_genesis_file()
+        .await
+        .expect("Failed to download the genesis file");
+    let dockerhost = std::env::var("DOCKERHOST").unwrap_or("localhost".to_string());
+    let service_endpoint = Url::parse(&format!("http://{}:{}/didcomm", dockerhost, port)).unwrap();
+
+    let wallet_config = WalletInitConfig {
+        wallet_name: format!("rust_agent_{}", uuid::Uuid::new_v4()),
+        wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".to_string(),
+        wallet_kdf: "RAW".to_string(),
+    };
+    let (wallet, trustee_config) = build_wallet(wallet_config, &trustee_submitter_seed).await;
     let wallet = Arc::new(wallet);
 
     let issuer_did = AriesAgent::setup_ledger(

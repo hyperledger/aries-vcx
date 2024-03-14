@@ -9,14 +9,14 @@ pub mod errors;
 pub mod handlers;
 pub mod runtime;
 
+use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 #[cfg(feature = "askar_wallet")]
-use aries_vcx::aries_vcx_core::wallet::askar::{
+use aries_vcx_wallet::wallet::askar::{
     askar_wallet_config::AskarWalletConfig,
     key_method::{ArgonLevel, AskarKdfMethod, KeyMethod},
 };
 #[cfg(feature = "vdrtools_wallet")]
-use aries_vcx::aries_vcx_core::wallet::indy::indy_wallet_config::IndyWalletConfig;
-use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+use aries_vcx_wallet::wallet::indy::indy_wallet_config::IndyWalletConfig;
 use handlers::{connection::*, holder::*};
 
 use crate::{

@@ -1,15 +1,14 @@
-#[macro_use]
-extern crate serde_json;
-
+#[cfg(feature = "vdrtools_wallet")]
 #[cfg(test)]
 mod dbtests {
     use std::error::Error;
 
     use aries_vcx::global::settings;
-    use aries_vcx_core::wallet::{
+    use aries_vcx_wallet::wallet::{
         base_wallet::{did_wallet::DidWallet, BaseWallet, ManageWallet},
         indy::indy_wallet_config::IndyWalletConfig,
     };
+    use serde_json::json;
 
     #[tokio::test]
     #[ignore]

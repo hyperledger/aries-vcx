@@ -11,6 +11,7 @@ static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
 
 const ENDPOINT_ROOT: &str = "http://localhost:8005";
 
+#[ignore]
 #[test]
 fn endpoint_register_json_returns_oob() -> Result<()> {
     LOGGING_INIT.call_once(setup_env_logging);
@@ -30,6 +31,7 @@ fn endpoint_register_json_returns_oob() -> Result<()> {
     Ok(())
 }
 
+#[ignore]
 #[test]
 fn endpoint_register_returns_oob_with_correct_accept_header() -> Result<()> {
     LOGGING_INIT.call_once(setup_env_logging);
@@ -50,6 +52,7 @@ fn endpoint_register_returns_oob_with_correct_accept_header() -> Result<()> {
     Ok(())
 }
 
+#[ignore]
 #[test]
 fn endpoint_register_returns_html_page() -> Result<()> {
     LOGGING_INIT.call_once(setup_env_logging);

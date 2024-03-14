@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use axum::{body::Bytes, extract::State, Json};
 use messages::AriesMessage;
 use serde::{Deserialize, Serialize};

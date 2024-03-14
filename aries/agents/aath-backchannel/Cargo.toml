@@ -5,6 +5,11 @@ edition = "2018"
 authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 description = "Backchannel for aries-vcx"
 
+[features]
+default = ["vdrtools_wallet"]
+vdrtools_wallet = ["aries_vcx_wallet/vdrtools_wallet"]
+askar_wallet = ["aries_vcx_wallet/askar_wallet"]
+
 [dependencies]
 actix-web = "4"
 derive_more = "0.99.14"
@@ -17,6 +22,7 @@ serde_derive = "1.0.97"
 log = "^0.4.20"
 env_logger = "0.9.1"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
+aries_vcx_wallet = { path = "../../aries_vcx_wallet",  default-features = false }
 #aries-vcx-agent = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "e79316e74e" }
 #anoncreds_types = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "e79316e74e" }
 #display_as_json = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "e79316e74e" }

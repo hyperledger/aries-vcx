@@ -1,4 +1,4 @@
-use aries_vcx_core::wallet::base_wallet::{
+use aries_vcx_wallet::wallet::base_wallet::{
     did_value::DidValue, record::Record, record_category::RecordCategory,
 };
 use public_key::{Key, KeyType};
@@ -51,7 +51,7 @@ fn transform_did(record: Record, category: RecordCategory) -> Option<Record> {
 mod compat_tests {
     use std::collections::{HashMap, HashSet};
 
-    use aries_vcx_core::wallet::{
+    use aries_vcx_wallet::wallet::{
         askar::{askar_wallet_config::AskarWalletConfig, key_method::KeyMethod, AskarWallet},
         base_wallet::{
             did_wallet::DidWallet, record::Record, record_category::RecordCategory,

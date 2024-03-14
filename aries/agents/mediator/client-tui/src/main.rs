@@ -1,21 +1,18 @@
-use aries_vcx_core::wallet::indy::IndySdkWallet;
+use mediator::aries_agent::build_agent;
 
 mod tui;
 
 /// Aries Agent TUI
 #[tokio::main]
 async fn main() {
-    use mediator::{
-        aries_agent::AgentBuilder,
-        utils::binary_utils::{load_dot_env, setup_logging},
-    };
+    use mediator::utils::binary_utils::{load_dot_env, setup_logging};
 
     load_dot_env();
     setup_logging();
     log::info!("TUI initializing!");
-    let agent = AgentBuilder::<IndySdkWallet>::new_demo_agent()
-        .await
-        .unwrap();
+
+    let agent = build_agent().await;
+
     tui::init_tui(agent).await;
 }
 
