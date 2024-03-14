@@ -1343,15 +1343,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 
 [[package]]
-name = "convert_case"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec182b0ca2f35d8fc196cf3404988fd8b8c739a4d270ff118a398feb0cbec1ca"
-dependencies = [
- "unicode-segmentation",
-]
-
-[[package]]
 name = "cookie"
 version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1524,16 +1515,6 @@ dependencies = [
  "salsa20",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "ctor"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37e366bff8cd32dd8754b0991fb66b279dc48f598c3a18914852a6673deef583"
-dependencies = [
- "quote",
- "syn 2.0.48",
 ]
 
 [[package]]
@@ -1794,7 +1775,7 @@ version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
 dependencies = [
- "convert_case 0.4.0",
+ "convert_case",
  "proc-macro2",
  "quote",
  "rustc_version",
@@ -3231,16 +3212,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a08173bc88b7955d1b3145aa561539096c421ac8debde8cbc3612ec635fee29b"
 
 [[package]]
-name = "libloading"
-version = "0.7.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b67380fd3b2fbe7527a606e18729d21c6f3951633d0500574c4dc22d2d638b9f"
-dependencies = [
- "cfg-if",
- "winapi",
-]
-
-[[package]]
 name = "libm"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3265,41 +3236,6 @@ dependencies = [
  "cc",
  "pkg-config",
  "vcpkg",
-]
-
-[[package]]
-name = "libvcx_core"
-version = "0.62.0"
-dependencies = [
- "agency_client",
- "anoncreds_types",
- "aries_vcx",
- "aries_vcx_core",
- "async-trait",
- "cfg-if",
- "chrono",
- "did_parser",
- "diddoc_legacy",
- "env_logger 0.10.0",
- "futures",
- "lazy_static",
- "libc",
- "log",
- "num-traits",
- "once_cell",
- "public_key",
- "rand 0.8.5",
- "serde",
- "serde_derive",
- "serde_json",
- "shared",
- "test_utils",
- "thiserror",
- "time 0.3.20",
- "tokio",
- "url",
- "uuid 1.5.0",
- "wallet_migrator",
 ]
 
 [[package]]
@@ -3592,64 +3528,6 @@ dependencies = [
  "base-x",
  "data-encoding",
  "data-encoding-macro",
-]
-
-[[package]]
-name = "napi"
-version = "2.13.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd063c93b900149304e3ba96ce5bf210cd4f81ef5eb80ded0d100df3e85a3ac0"
-dependencies = [
- "bitflags 2.4.0",
- "ctor",
- "napi-derive",
- "napi-sys",
- "once_cell",
- "tokio",
-]
-
-[[package]]
-name = "napi-build"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "882a73d9ef23e8dc2ebbffb6a6ae2ef467c0f18ac10711e4cc59c5485d41df0e"
-
-[[package]]
-name = "napi-derive"
-version = "2.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da1c6a8fa84d549aa8708fcd062372bf8ec6e849de39016ab921067d21bde367"
-dependencies = [
- "cfg-if",
- "convert_case 0.6.0",
- "napi-derive-backend",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "napi-derive-backend"
-version = "1.0.52"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20bbc7c69168d06a848f925ec5f0e0997f98e8c8d4f2cc30157f0da51c009e17"
-dependencies = [
- "convert_case 0.6.0",
- "once_cell",
- "proc-macro2",
- "quote",
- "regex",
- "semver",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "napi-sys"
-version = "2.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "166b5ef52a3ab5575047a9fe8d4a030cdd0f63c96f071cd6907674453b07bae3"
-dependencies = [
- "libloading",
 ]
 
 [[package]]
@@ -5964,23 +5842,6 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
-
-[[package]]
-name = "vcx-napi-rs"
-version = "0.62.0"
-dependencies = [
- "chrono",
- "libvcx_core",
- "libvcx_logger",
- "log",
- "napi",
- "napi-build",
- "napi-derive",
- "serde",
- "serde_json",
- "uuid 1.5.0",
- "wallet_migrator",
-]
 
 [[package]]
 name = "version_check"

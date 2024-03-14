@@ -79,7 +79,7 @@ jobs:
         # uses: Swatinem/rust-cache@v2
         run: cargo install sqlx-cli
       - name: Setup database
-        run: DATABASE_URL=${MYSQL_URL} sqlx migrate run --source aries/agents/rust/mediator/migrations
+        run: DATABASE_URL=${MYSQL_URL} sqlx migrate run --source aries/agents/mediator/migrations
       - name: "Run mediator integration tests"
         run: cargo run --bin mediator & sleep 5 && cargo test --verbose --package mediator -- --nocapture;
       - name: "Collect docker logs on failure"
@@ -109,7 +109,7 @@ jobs:
         uses: ./.github/actions/build-image
         with:
           docker-img: ${{ env.DOCKER_IMAGE }} 
-          dockerfile-path: "aries/agents/rust/mediator/Dockerfile"
+          dockerfile-path: "aries/agents/mediator/Dockerfile"
           branch-name: ${{ needs.setup-variables.outputs.BRANCH_NAME }}
           branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: mediator
