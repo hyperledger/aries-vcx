@@ -1,6 +1,6 @@
 mod common;
 
-use aries_vcx_core::wallet::base_wallet::did_wallet::DidWallet;
+use aries_vcx_wallet::wallet::base_wallet::did_wallet::DidWallet;
 use messages::{
     msg_fields::protocols::coordinate_mediation::{
         keylist_update::{KeylistUpdateItem, KeylistUpdateItemAction},

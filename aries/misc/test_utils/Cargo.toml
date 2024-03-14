@@ -9,7 +9,7 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-vdrtools_wallet = ["aries_vcx_core/vdrtools_wallet"]
+vdrtools_wallet = ["aries_vcx_wallet/vdrtools_wallet"]
 vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "credx"]
 credx = ["aries_vcx_core/credx"]
 anoncreds = ["aries_vcx_core/anoncreds"]
@@ -17,6 +17,7 @@ anoncreds = ["aries_vcx_core/anoncreds"]
 [dependencies]
 anoncreds_types = { path = "../../misc/anoncreds_types" }
 aries_vcx_core = { path = "../../aries_vcx_core" }
+aries_vcx_wallet = { path = "../../aries_vcx_wallet" }
 did_parser = { path = "../../../did_core/did_parser" }
 public_key = { path = "../../../did_core/public_key" }
 lazy_static = "1"

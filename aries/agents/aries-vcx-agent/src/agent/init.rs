@@ -12,10 +12,11 @@ use aries_vcx_core::{
     self,
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
     ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
-    wallet::{
-        base_wallet::{BaseWallet, ManageWallet},
-        indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
-    },
+};
+
+use aries_vcx_wallet::wallet::{
+    base_wallet::{BaseWallet, ManageWallet},
+    indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
 };
 use did_peer::resolver::PeerDidResolver;
 use did_resolver_registry::ResolverRegistry;

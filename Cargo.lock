@@ -440,6 +440,7 @@ dependencies = [
  "anoncreds_types",
  "aries_vcx",
  "aries_vcx_core",
+ "aries_vcx_wallet",
  "async-trait",
  "derive_builder",
  "did_key",
@@ -463,6 +464,7 @@ version = "0.62.0"
 dependencies = [
  "anoncreds_types",
  "aries_vcx_core",
+ "aries_vcx_wallet",
  "async-channel",
  "async-trait",
  "backtrace",
@@ -509,10 +511,9 @@ version = "0.1.0"
 dependencies = [
  "anoncreds",
  "anoncreds_types",
- "aries-askar",
+ "aries_vcx_wallet",
  "async-trait",
  "bitvec",
- "bs58 0.5.0",
  "did_parser",
  "futures",
  "indy-api-types",
@@ -530,6 +531,27 @@ dependencies = [
  "serde_json",
  "thiserror",
  "time 0.3.20",
+ "tokio",
+ "typed-builder 0.18.1",
+ "uuid",
+]
+
+[[package]]
+name = "aries_vcx_wallet"
+version = "0.62.0"
+dependencies = [
+ "aries-askar",
+ "async-trait",
+ "bs58 0.5.0",
+ "indy-api-types",
+ "indy-vdr",
+ "libvdrtools",
+ "log",
+ "public_key",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "thiserror",
  "tokio",
  "typed-builder 0.18.1",
  "uuid",
@@ -1270,6 +1292,7 @@ name = "client-tui"
 version = "0.1.1"
 dependencies = [
  "aries_vcx_core",
+ "aries_vcx_wallet",
  "axum",
  "cursive",
  "futures",
@@ -1865,6 +1888,7 @@ version = "0.1.0"
 dependencies = [
  "aries_vcx",
  "aries_vcx_core",
+ "aries_vcx_wallet",
  "async-trait",
  "chrono",
  "did_resolver",
@@ -3358,6 +3382,7 @@ dependencies = [
  "anyhow",
  "aries_vcx",
  "aries_vcx_core",
+ "aries_vcx_wallet",
  "async-trait",
  "axum",
  "axum-macros",
@@ -5228,6 +5253,7 @@ version = "0.62.0"
 dependencies = [
  "anoncreds_types",
  "aries_vcx_core",
+ "aries_vcx_wallet",
  "async-trait",
  "chrono",
  "did_parser",
@@ -5864,7 +5890,7 @@ checksum = "f3c4517f54858c779bbcbf228f4fca63d121bf85fbecb2dc578cdf4a39395690"
 name = "wallet_migrator"
 version = "0.1.0"
 dependencies = [
- "aries_vcx_core",
+ "aries_vcx_wallet",
  "indy-credx",
  "libvdrtools",
  "log",
@@ -5874,7 +5900,7 @@ dependencies = [
  "test-log",
  "thiserror",
  "tokio",
- "uuid 1.5.0",
+ "uuid",
 ]
 
 [[package]]

@@ -11,9 +11,10 @@ use aries_vcx_core::{
     errors::error::AriesVcxCoreErrorKind,
     global::settings::DEFAULT_SERIALIZE_VERSION,
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
-    wallet::base_wallet::BaseWallet,
 };
 use did_parser::Did;
+
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},

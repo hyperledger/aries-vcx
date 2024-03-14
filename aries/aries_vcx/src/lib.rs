@@ -25,6 +25,8 @@ pub extern crate did_parser;
 pub extern crate did_peer;
 pub extern crate messages;
 
+pub use aries_vcx_wallet;
+
 #[macro_use]
 pub mod utils;
 

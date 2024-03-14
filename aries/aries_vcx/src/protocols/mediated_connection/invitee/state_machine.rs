@@ -1,6 +1,6 @@
 use std::{clone::Clone, collections::HashMap};
 
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
@@ -505,7 +505,7 @@ impl SmMediatedConnectionInvitee {
 
 //     pub mod invitee {
 
-//         use aries_vcx_core::wallet::base_wallet::BaseWallet;
+//         use aries_vcx_core::aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 //         use messages::diddoc::aries::diddoc::test_utils::{_did_doc_inlined_recipient_keys,
 // _service_endpoint};         use messages::protocols::connection::response::{Response,
 // SignedResponse};

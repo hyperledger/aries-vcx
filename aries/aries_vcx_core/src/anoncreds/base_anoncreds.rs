@@ -27,7 +27,8 @@ use anoncreds_types::data_types::{
 use async_trait::async_trait;
 use did_parser::Did;
 
-use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
+use crate::errors::error::VcxCoreResult;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
 pub type CredentialId = String;
 pub type LinkSecretId = String;

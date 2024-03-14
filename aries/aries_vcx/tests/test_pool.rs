@@ -27,8 +27,9 @@ use aries_vcx_core::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
         indy::pool::test_utils::get_temp_file_path,
     },
-    wallet::base_wallet::{did_wallet::DidWallet, BaseWallet},
 };
+
+use aries_vcx_wallet::wallet::base_wallet::{did_wallet::DidWallet, BaseWallet};
 use did_parser::Did;
 use diddoc_legacy::aries::service::AriesService;
 use serde_json::json;

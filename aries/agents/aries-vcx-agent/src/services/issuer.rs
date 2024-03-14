@@ -11,9 +11,9 @@ use aries_vcx::{
     },
     protocols::{issuance::issuer::state_machine::IssuerState, SendClosure},
 };
-use aries_vcx_core::{
-    anoncreds::credx_anoncreds::IndyCredxAnonCreds, wallet::base_wallet::BaseWallet,
-};
+use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
 use crate::{
     error::*,

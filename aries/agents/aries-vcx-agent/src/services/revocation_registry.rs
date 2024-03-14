@@ -8,8 +8,9 @@ use aries_vcx::{common::primitives::revocation_registry::RevocationRegistry, did
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds,
     ledger::indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
-    wallet::base_wallet::BaseWallet,
 };
+
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
 use crate::{
     error::*,

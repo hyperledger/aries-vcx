@@ -10,12 +10,12 @@ pub mod handlers;
 pub mod runtime;
 
 #[cfg(feature = "main_askar_wallet")]
-use aries_vcx::aries_vcx_core::wallet::askar::{
+use aries_vcx::aries_vcx_wallet::wallet::askar::{
     askar_wallet_config::AskarWalletConfig,
     key_method::{ArgonLevel, AskarKdfMethod, KeyMethod},
 };
 #[cfg(feature = "main_vdrtools_wallet")]
-use aries_vcx::aries_vcx_core::wallet::indy::indy_wallet_config::IndyWalletConfig;
+use aries_vcx::aries_vcx_wallet::wallet::indy::indy_wallet_config::IndyWalletConfig;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use handlers::{connection::*, holder::*};
 

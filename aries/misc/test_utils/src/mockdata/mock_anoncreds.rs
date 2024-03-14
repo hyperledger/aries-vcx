@@ -30,8 +30,9 @@ use aries_vcx_core::{
         RevocationRegistriesMap, RevocationRegistryDefinitionsMap, RevocationStatesMap, SchemasMap,
     },
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::base_wallet::BaseWallet,
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
+
 use async_trait::async_trait;
 use did_parser::Did;
 

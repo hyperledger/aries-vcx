@@ -4,6 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
+
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -18,7 +20,6 @@ use aries_vcx_core::{
             GetTxnAuthorAgreementData, VcxPoolConfig,
         },
     },
-    wallet::base_wallet::BaseWallet,
 };
 use chrono::{DateTime, Duration, Utc};
 use did_parser::Did;

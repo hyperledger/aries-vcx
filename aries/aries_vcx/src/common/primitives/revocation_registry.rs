@@ -8,9 +8,10 @@ use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
-    wallet::base_wallet::BaseWallet,
 };
 use did_parser::Did;
+
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
 use super::credential_definition::PublicEntityStateType;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};

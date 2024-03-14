@@ -3,9 +3,11 @@ use anoncreds_types::data_types::{
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, global::settings::DEFAULT_SERIALIZE_VERSION,
-    ledger::base_ledger::AnoncredsLedgerWrite, wallet::base_wallet::BaseWallet,
+    ledger::base_ledger::AnoncredsLedgerWrite,
 };
 use did_parser::Did;
+
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
 use super::credential_definition::PublicEntityStateType;
 use crate::{

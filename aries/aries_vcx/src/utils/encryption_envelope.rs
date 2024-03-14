@@ -1,5 +1,7 @@
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use did_doc::schema::{did_doc::DidDocument, types::uri::Uri};
+
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
+
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     msg_fields::protocols::routing::{Forward, ForwardContent},
@@ -275,7 +277,7 @@ pub mod unit_tests {
     use test_utils::devsetup::build_setup_profile;
 
     use super::*;
-    use crate::aries_vcx_core::wallet::base_wallet::did_wallet::DidWallet;
+    use aries_vcx_wallet::wallet::base_wallet::did_wallet::DidWallet;
 
     #[tokio::test]
     async fn test_pack_unpack_anon() {

@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
-use aries_vcx_core::{
-    ledger::{
-        base_ledger::{IndyLedgerRead, IndyLedgerWrite},
-        indy_vdr_ledger::{LedgerRole, UpdateRole},
-    },
-    wallet::base_wallet::BaseWallet,
+use aries_vcx_core::ledger::{
+    base_ledger::{IndyLedgerRead, IndyLedgerWrite},
+    indy_vdr_ledger::{LedgerRole, UpdateRole},
 };
+
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_doc::schema::service::Service;
 use did_parser::Did;
 use diddoc_legacy::aries::service::AriesService;

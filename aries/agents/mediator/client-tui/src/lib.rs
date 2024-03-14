@@ -1,4 +1,4 @@
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use mediator::{aries_agent::ArcAgent, persistence::MediatorPersistence};
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use serde_json::{json, Value};

@@ -1,7 +1,8 @@
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
-    wallet::base_wallet::BaseWallet,
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
+
 use messages::{
     misc::MimeType,
     msg_fields::protocols::{

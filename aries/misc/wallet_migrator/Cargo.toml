@@ -5,11 +5,12 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-vdrtools_wallet = ["aries_vcx_core/vdrtools_wallet"]
-askar_wallet = ["aries_vcx_core/askar_wallet"]
+vdrtools_wallet = ["aries_vcx_wallet/vdrtools_wallet"]
+askar_wallet = ["aries_vcx_wallet/askar_wallet"]
 
 [dependencies]
-aries_vcx_core = { path = "../../aries_vcx_core", features = ["credx"] }
+# aries_vcx_core = { path = "../../aries_vcx_core", features = ["credx"] }
+aries_vcx_wallet = { path = "../../aries_vcx_wallet" }
 credx = { package = "indy-credx", git = "https://github.com/hyperledger/indy-shared-rs", tag = "v1.1.0" }
 vdrtools = { package = "libvdrtools", path = "../legacy/libvdrtools" }
 serde = { version = "1.0.159", features = ["derive"] }

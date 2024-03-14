@@ -15,6 +15,7 @@ use anoncreds_types::data_types::{
         schema::Schema,
     },
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use async_trait::async_trait;
 use did_parser::Did;
 pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
@@ -61,7 +62,6 @@ use crate::{
         common::verify_transaction_can_be_endorsed,
         type_conversion::Convert,
     },
-    wallet::base_wallet::BaseWallet,
 };
 
 pub type DefaultIndyLedgerRead = IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>;

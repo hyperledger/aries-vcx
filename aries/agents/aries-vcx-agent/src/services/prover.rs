@@ -13,9 +13,10 @@ use aries_vcx::{
 };
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds, ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
-    wallet::base_wallet::BaseWallet,
 };
 use serde_json::Value;
+
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
 use super::connection::ServiceConnections;
 use crate::{

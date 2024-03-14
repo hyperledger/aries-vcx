@@ -1,4 +1,4 @@
-use aries_vcx_core::wallet::{
+use aries_vcx_wallet::wallet::{
     base_wallet::issuer_config::IssuerConfig, indy::indy_wallet_config::IndyWalletConfig,
 };
 use display_as_json::Display;

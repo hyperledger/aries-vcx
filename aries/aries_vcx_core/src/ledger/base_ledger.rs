@@ -11,13 +11,14 @@ use anoncreds_types::data_types::{
         schema::Schema,
     },
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use async_trait::async_trait;
 use did_parser::Did;
 use indy_vdr::ledger::constants::UpdateRole;
 use public_key::Key;
 use serde::Serialize;
 
-use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
+use crate::errors::error::VcxCoreResult;
 
 #[async_trait]
 pub trait IndyLedgerRead: Debug + Send + Sync {

@@ -75,13 +75,13 @@ use super::base_anoncreds::{
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::{
-        base_wallet::{
-            record::Record, record_category::RecordCategory, search_filter::SearchFilter,
-            BaseWallet,
-        },
-        record_tags::{RecordTag, RecordTags},
+};
+
+use aries_vcx_wallet::wallet::{
+    base_wallet::{
+        record::Record, record_category::RecordCategory, search_filter::SearchFilter, BaseWallet,
     },
+    record_tags::{RecordTag, RecordTags},
 };
 
 fn from_revocation_registry_delta_to_revocation_status_list(
@@ -1115,7 +1115,7 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         cred_id: &CredentialId,
     ) -> VcxCoreResult<()> {
-        wallet.delete_record(RecordCategory::Cred, cred_id).await
+        Ok(wallet.delete_record(RecordCategory::Cred, cred_id).await?)
     }
 
     async fn prover_create_link_secret(
