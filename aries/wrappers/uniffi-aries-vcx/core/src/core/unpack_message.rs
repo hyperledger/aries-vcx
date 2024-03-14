@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aries_vcx::aries_vcx_core::wallet::{
+use aries_vcx::aries_vcx_wallet::wallet::{
     base_wallet::did_wallet::DidWallet, structs_io::UnpackMessageOutput,
 };
 

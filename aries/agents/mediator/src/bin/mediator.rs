@@ -1,4 +1,4 @@
-use aries_vcx_core::wallet::indy::IndySdkWallet;
+use aries_vcx_wallet::wallet::indy::IndySdkWallet;
 use log::info;
 use mediator::aries_agent::AgentBuilder;
 

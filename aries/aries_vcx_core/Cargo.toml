@@ -5,7 +5,7 @@ edition = "2021"
 
 [features]
 ########################## DEP FLAGS ################################
-vdrtools_wallet = ["dep:libvdrtools", "dep:indy-api-types"]
+vdrtools_wallet = ["dep:libvdrtools", "dep:indy-api-types", "aries_vcx_wallet/vdrtools_wallet"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 credx = ["dep:indy-credx"]
 anoncreds = ["dep:anoncreds"]
@@ -13,11 +13,10 @@ vdr_proxy_ledger = ["credx", "dep:indy-vdr-proxy-client"]
 # Feature flag to allow legacy proof verification
 legacy_proof = []
 
-askar_wallet = ["dep:aries-askar"]
+askar_wallet = ["aries_vcx_wallet/askar_wallet"]
 
 [dependencies]
-aries-askar = { version = "=0.3.0", optional = true }
-bs58 = { version = "0.5" }
+aries_vcx_wallet = { path = "../aries_vcx_wallet" }
 indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", default-features = false, features = ["log"] }
 indy-credx = { git = "https://github.com/hyperledger/indy-shared-rs", tag = "v1.1.0", optional = true }
 # anoncreds = { git = "https://github.com/hyperledger/anoncreds-rs", tag = "v0.2.0-dev.5", optional = true }

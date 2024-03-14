@@ -6,7 +6,7 @@ mod dbtests {
     use std::error::Error;
 
     use aries_vcx::global::settings;
-    use aries_vcx_core::wallet::{
+    use aries_vcx_wallet::wallet::{
         base_wallet::{did_wallet::DidWallet, BaseWallet, ManageWallet},
         indy::indy_wallet_config::IndyWalletConfig,
     };

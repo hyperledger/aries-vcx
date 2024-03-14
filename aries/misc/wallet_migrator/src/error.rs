@@ -1,4 +1,4 @@
-use aries_vcx_core::errors::error::AriesVcxCoreError;
+use aries_vcx_wallet::errors::error::VcxWalletError;
 use serde_json::Error as JsonError;
 use thiserror::Error as ThisError;
 
@@ -8,8 +8,8 @@ pub type MigrationResult<T> = Result<T, MigrationError>;
 pub enum MigrationError {
     #[error("JSON error: {0}")]
     Json(#[from] JsonError),
-    #[error("VcxCore error: {0}")]
-    VcxCore(#[from] AriesVcxCoreError),
+    #[error("VcxWallet error: {0}")]
+    VcxWallet(#[from] VcxWalletError),
     #[error("Unsupported wallet migration")]
     Unsupported,
 }
