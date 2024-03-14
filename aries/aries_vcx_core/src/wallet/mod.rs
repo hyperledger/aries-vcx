@@ -1,4 +1,3 @@
-pub mod agency_client_wallet;
 #[cfg(feature = "askar_wallet")]
 pub mod askar;
 pub mod base_wallet;

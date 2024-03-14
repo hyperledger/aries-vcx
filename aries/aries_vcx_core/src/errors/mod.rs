@@ -1,5 +1,4 @@
 pub mod error;
-mod mapping_agency_client;
 #[cfg(feature = "anoncreds")]
 mod mapping_anoncreds;
 #[cfg(feature = "askar_wallet")]

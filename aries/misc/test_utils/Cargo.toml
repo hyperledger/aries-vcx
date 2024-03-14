@@ -17,7 +17,6 @@ anoncreds = ["aries_vcx_core/anoncreds"]
 [dependencies]
 anoncreds_types = { path = "../../misc/anoncreds_types" }
 aries_vcx_core = { path = "../../aries_vcx_core" }
-agency_client = { path = "../legacy/agency_client" }
 libvcx_logger = { path = "../legacy/libvcx_logger" }
 did_parser = { path = "../../../did_core/did_parser" }
 public_key = { path = "../../../did_core/public_key" }

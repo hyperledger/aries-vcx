@@ -232,24 +232,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "agency_client"
-version = "0.62.0"
-dependencies = [
- "async-trait",
- "env_logger 0.9.3",
- "lazy_static",
- "log",
- "regex",
- "serde",
- "serde_derive",
- "serde_json",
- "shared",
- "thiserror",
- "url",
- "uuid 0.8.2",
-]
-
-[[package]]
 name = "ahash"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -472,14 +454,13 @@ dependencies = [
  "shared",
  "thiserror",
  "url",
- "uuid 1.5.0",
+ "uuid",
 ]
 
 [[package]]
 name = "aries_vcx"
 version = "0.62.0"
 dependencies = [
- "agency_client",
  "anoncreds_types",
  "aries_vcx_core",
  "async-channel",
@@ -519,7 +500,7 @@ dependencies = [
  "time 0.3.20",
  "tokio",
  "url",
- "uuid 1.5.0",
+ "uuid",
  "wallet_migrator",
 ]
 
@@ -527,7 +508,6 @@ dependencies = [
 name = "aries_vcx_core"
 version = "0.1.0"
 dependencies = [
- "agency_client",
  "anoncreds",
  "anoncreds_types",
  "aries-askar",
@@ -553,7 +533,7 @@ dependencies = [
  "time 0.3.20",
  "tokio",
  "typed-builder 0.18.1",
- "uuid 1.5.0",
+ "uuid",
 ]
 
 [[package]]
@@ -667,7 +647,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "url",
- "uuid 1.5.0",
+ "uuid",
  "zeroize",
 ]
 
@@ -1905,7 +1885,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "url",
- "uuid 1.5.0",
+ "uuid",
 ]
 
 [[package]]
@@ -3394,7 +3374,7 @@ dependencies = [
  "tokio",
  "tower-http",
  "url",
- "uuid 1.5.0",
+ "uuid",
 ]
 
 [[package]]
@@ -5211,7 +5191,6 @@ checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 name = "test_utils"
 version = "0.62.0"
 dependencies = [
- "agency_client",
  "anoncreds_types",
  "aries_vcx_core",
  "async-trait",
@@ -5223,7 +5202,7 @@ dependencies = [
  "public_key",
  "rand 0.8.5",
  "serde_json",
- "uuid 1.5.0",
+ "uuid",
 ]
 
 [[package]]
@@ -5811,15 +5790,6 @@ dependencies = [
  "time 0.1.45",
  "wasm-bindgen",
  "zeroize",
-]
-
-[[package]]
-name = "uuid"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
-dependencies = [
- "getrandom 0.2.10",
 ]
 
 [[package]]

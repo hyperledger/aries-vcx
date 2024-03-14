@@ -24,14 +24,10 @@ impl RevocationNotificationReceiver {
         self.receiver_sm.get_thread_id()
     }
 
-    pub async fn handle_revocation_notification(
-        self,
-        notification: Revoke,
-        send_message: SendClosure<'_>,
-    ) -> VcxResult<Self> {
+    pub async fn handle_revocation_notification(self, notification: Revoke) -> VcxResult<Self> {
         let receiver_sm = self
             .receiver_sm
-            .handle_revocation_notification(notification, send_message)
+            .handle_revocation_notification(notification)
             .await?;
         Ok(Self { receiver_sm })
     }

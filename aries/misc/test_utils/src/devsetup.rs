@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -24,7 +23,7 @@ use aries_vcx_core::{
 use chrono::{DateTime, Duration, Utc};
 use did_parser::Did;
 use libvcx_logger::init_test_logging;
-use log::{debug, info, warn};
+use log::{debug, info};
 
 use crate::constants::{POOL1_TXN, TRUSTEE_SEED};
 
@@ -130,22 +129,10 @@ pub struct SetupPoolDirectory {
     pub genesis_file_path: String,
 }
 
-pub fn reset_global_state() {
-    warn!("reset_global_state >>");
-    AgencyMockDecrypted::clear_mocks();
-}
-
 impl SetupMocks {
     pub fn init() -> SetupMocks {
         init_test_logging();
-        enable_agency_mocks();
         SetupMocks
-    }
-}
-
-impl Drop for SetupMocks {
-    fn drop(&mut self) {
-        reset_global_state();
     }
 }
 

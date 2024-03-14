@@ -67,11 +67,7 @@ impl RevocationNotificationReceiverSM {
         }
     }
 
-    pub async fn handle_revocation_notification(
-        self,
-        notification: Revoke,
-        send_message: SendClosure<'_>,
-    ) -> VcxResult<Self> {
+    pub async fn handle_revocation_notification(self, notification: Revoke) -> VcxResult<Self> {
         let state = match self.state {
             ReceiverFullState::Initial(_) => {
                 self.validate_revocation_notification(&notification)?;
@@ -81,37 +77,13 @@ impl RevocationNotificationReceiverSM {
                     .as_ref()
                     .map(|d| d.on.is_empty())
                     .unwrap_or(false)
-                {
-                    ReceiverFullState::Finished(FinishedState::new(notification))
-                } else if notification
-                    .decorators
-                    .please_ack
-                    .as_ref()
-                    .map(|d| d.on.contains(&AckOn::Receipt))
-                    .unwrap_or(false)
-                {
-                    let id = Uuid::new_v4().to_string();
-                    let content = AckContent::builder().status(AckStatus::Ok).build();
-
-                    let thread_id = notification
+                    || notification
                         .decorators
-                        .thread
+                        .please_ack
                         .as_ref()
-                        .map(|t| t.thid.clone())
-                        .unwrap_or(notification.id.clone());
-
-                    let decorators = AckDecorators::builder()
-                        .thread(Thread::builder().thid(thread_id).build())
-                        .timing(Timing::builder().out_time(Utc::now()).build())
-                        .build();
-
-                    let ack = AckRevoke::builder()
-                        .id(id)
-                        .content(content)
-                        .decorators(decorators)
-                        .build();
-
-                    send_message(ack).await?;
+                        .map(|d| d.on.contains(&AckOn::Receipt))
+                        .unwrap_or(false)
+                {
                     ReceiverFullState::Finished(FinishedState::new(notification))
                 } else {
                     ReceiverFullState::NotificationReceived(NotificationReceivedState::new(
