@@ -1,17 +1,19 @@
 use std::sync::Arc;
 
-use aries_vcx::aries_vcx_core::{
-    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
-    ledger::{
-        indy_vdr_ledger::{indyvdr_build_ledger_read, IndyVdrLedgerRead},
-        request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
-        response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
+use aries_vcx::{
+    aries_vcx_core::{
+        anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+        ledger::{
+            indy_vdr_ledger::{indyvdr_build_ledger_read, IndyVdrLedgerRead},
+            request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
+            response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
+        },
+        PoolConfig,
     },
-    wallet::{
+    aries_vcx_wallet::wallet::{
         base_wallet::ManageWallet,
         indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
     },
-    PoolConfig,
 };
 
 use crate::{

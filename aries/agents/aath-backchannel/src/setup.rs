@@ -1,8 +1,8 @@
 use std::{io::prelude::*, sync::Arc};
 
 use aries_vcx_agent::{
-    aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet, build_indy_wallet, Agent as AriesAgent,
-    WalletInitConfig,
+    aries_vcx::aries_vcx_wallet::wallet::indy::IndySdkWallet, build_indy_wallet,
+    Agent as AriesAgent, WalletInitConfig,
 };
 use rand::{thread_rng, Rng};
 use reqwest::Url;

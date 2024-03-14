@@ -20,12 +20,12 @@ credx = [
 anoncreds = ["aries_vcx_core/anoncreds", "test_utils/anoncreds", "test_utils/vdrtools_wallet"]
 vdr_proxy_ledger = [
     "aries_vcx_core/vdr_proxy_ledger",
-    "aries_vcx_core/vdrtools_wallet",
+    "aries_vcx_wallet/vdrtools_wallet",
     "test_utils/vdr_proxy_ledger",
     "credx",
 ]
 vdrtools_wallet = [
-    "aries_vcx_core/vdrtools_wallet",
+    "aries_vcx_wallet/vdrtools_wallet",
     "test_utils/vdrtools_wallet",
 ]
 backtrace_errors = ["backtrace"]
@@ -34,13 +34,14 @@ backtrace_errors = ["backtrace"]
 legacy_proof = ["aries_vcx_core/legacy_proof"]
 
 askar_wallet = [
-    "aries_vcx_core/askar_wallet"
+    "aries_vcx_wallet/askar_wallet"
 ]
 
 [dependencies]
 messages = { path = "../messages" }
 diddoc_legacy = { path = "../misc/legacy/diddoc_legacy" }
 aries_vcx_core = { path = "../aries_vcx_core" }
+aries_vcx_wallet = { path = "../aries_vcx_wallet" }
 shared = { path = "../misc/shared" }
 anoncreds_types = { path = "../misc/anoncreds_types" }
 did_parser_nom = { path = "../../did_core/did_parser_nom" }

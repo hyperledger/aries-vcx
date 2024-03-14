@@ -1,6 +1,6 @@
 mod common;
 
-use aries_vcx_core::wallet::indy::IndySdkWallet;
+use aries_vcx_wallet::wallet::indy::IndySdkWallet;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::ACCEPT;
 
