@@ -31,7 +31,7 @@ use did_resolver_sov::did_resolver::did_doc::schema::did_doc::DidDocument;
 use super::connection::ServiceEndpoint;
 use crate::{
     http::VcxHttpClient,
-    storage::{object_cache::ObjectCache, Storage},
+    storage::{object_cache::AgentStorageInMem, AgentStorage},
     AgentError, AgentErrorKind, AgentResult,
 };
 
@@ -40,7 +40,7 @@ pub struct ServiceDidExchange<T> {
     wallet: Arc<T>,
     resolver_registry: Arc<ResolverRegistry>,
     service_endpoint: ServiceEndpoint,
-    did_exchange: Arc<ObjectCache<(GenericDidExchange, Option<AriesMessage>)>>,
+    did_exchange: Arc<AgentStorageInMem<(GenericDidExchange, Option<AriesMessage>)>>,
     public_did: String,
 }
 
@@ -55,7 +55,7 @@ impl<T: BaseWallet> ServiceDidExchange<T> {
             wallet,
             service_endpoint,
             resolver_registry,
-            did_exchange: Arc::new(ObjectCache::new("did-exchange")),
+            did_exchange: Arc::new(AgentStorageInMem::new("did-exchange")),
             public_did,
         }
     }

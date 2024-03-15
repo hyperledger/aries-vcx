@@ -21,7 +21,7 @@ use url::Url;
 use crate::{
     error::*,
     http::VcxHttpClient,
-    storage::{object_cache::ObjectCache, Storage},
+    storage::{object_cache::AgentStorageInMem, AgentStorage},
 };
 
 pub type ServiceEndpoint = Url;
@@ -30,7 +30,7 @@ pub struct ServiceConnections<T> {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     wallet: Arc<T>,
     service_endpoint: ServiceEndpoint,
-    connections: Arc<ObjectCache<GenericConnection>>,
+    connections: Arc<AgentStorageInMem<GenericConnection>>,
 }
 
 impl<T: BaseWallet> ServiceConnections<T> {
@@ -41,7 +41,7 @@ impl<T: BaseWallet> ServiceConnections<T> {
     ) -> Self {
         Self {
             service_endpoint,
-            connections: Arc::new(ObjectCache::new("connections")),
+            connections: Arc::new(AgentStorageInMem::new("connections")),
             ledger_read,
             wallet,
         }

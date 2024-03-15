@@ -19,7 +19,7 @@ use crate::{
     error::*,
     http::VcxHttpClient,
     services::connection::ServiceConnections,
-    storage::{object_cache::ObjectCache, Storage},
+    storage::{object_cache::AgentStorageInMem, AgentStorage},
 };
 
 #[derive(Clone)]
@@ -40,7 +40,7 @@ impl IssuerWrapper {
 pub struct ServiceCredentialsIssuer<T> {
     anoncreds: IndyCredxAnonCreds,
     wallet: Arc<T>,
-    creds_issuer: ObjectCache<IssuerWrapper>,
+    creds_issuer: AgentStorageInMem<IssuerWrapper>,
     service_connections: Arc<ServiceConnections<T>>,
 }
 
@@ -52,7 +52,7 @@ impl<T: BaseWallet> ServiceCredentialsIssuer<T> {
     ) -> Self {
         Self {
             service_connections,
-            creds_issuer: ObjectCache::new("creds-issuer"),
+            creds_issuer: AgentStorageInMem::new("creds-issuer"),
             anoncreds,
             wallet,
         }

@@ -19,14 +19,14 @@ use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 
 use super::connection::ServiceEndpoint;
 use crate::{
-    storage::{object_cache::ObjectCache, Storage},
+    storage::{object_cache::AgentStorageInMem, AgentStorage},
     AgentResult,
 };
 
 pub struct ServiceOutOfBand<T> {
     wallet: Arc<T>,
     service_endpoint: ServiceEndpoint,
-    out_of_band: Arc<ObjectCache<GenericOutOfBand>>,
+    out_of_band: Arc<AgentStorageInMem<GenericOutOfBand>>,
 }
 
 impl<T: BaseWallet> ServiceOutOfBand<T> {
@@ -34,7 +34,7 @@ impl<T: BaseWallet> ServiceOutOfBand<T> {
         Self {
             wallet,
             service_endpoint,
-            out_of_band: Arc::new(ObjectCache::new("out-of-band")),
+            out_of_band: Arc::new(AgentStorageInMem::new("out-of-band")),
         }
     }
 

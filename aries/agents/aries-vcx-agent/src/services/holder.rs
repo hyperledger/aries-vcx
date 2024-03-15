@@ -21,7 +21,7 @@ use crate::{
     error::*,
     http::VcxHttpClient,
     services::connection::ServiceConnections,
-    storage::{object_cache::ObjectCache, Storage},
+    storage::{object_cache::AgentStorageInMem, AgentStorage},
 };
 
 #[derive(Clone)]
@@ -43,7 +43,7 @@ pub struct ServiceCredentialsHolder<T> {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     anoncreds: IndyCredxAnonCreds,
     wallet: Arc<T>,
-    creds_holder: ObjectCache<HolderWrapper>,
+    creds_holder: AgentStorageInMem<HolderWrapper>,
     service_connections: Arc<ServiceConnections<T>>,
 }
 
@@ -56,7 +56,7 @@ impl<T: BaseWallet> ServiceCredentialsHolder<T> {
     ) -> Self {
         Self {
             service_connections,
-            creds_holder: ObjectCache::new("creds-holder"),
+            creds_holder: AgentStorageInMem::new("creds-holder"),
             ledger_read,
             anoncreds,
             wallet,
