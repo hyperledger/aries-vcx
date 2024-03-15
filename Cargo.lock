@@ -481,7 +481,6 @@ dependencies = [
  "env_logger 0.10.0",
  "futures",
  "lazy_static",
- "libvcx_logger",
  "log",
  "messages",
  "num-bigint",
@@ -3217,17 +3216,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libvcx_logger"
-version = "0.62.0"
-dependencies = [
- "android_logger",
- "aries_vcx_core",
- "chrono",
- "env_logger 0.10.0",
- "log",
-]
-
-[[package]]
 name = "libvdrtools"
 version = "0.8.6"
 dependencies = [
@@ -5203,8 +5191,8 @@ dependencies = [
  "async-trait",
  "chrono",
  "did_parser",
+ "env_logger 0.10.0",
  "lazy_static",
- "libvcx_logger",
  "log",
  "public_key",
  "rand 0.8.5",
