@@ -74,10 +74,14 @@ impl<T: BaseWallet> ServiceCredentialsIssuer<T> {
         proposal: &ProposeCredentialV1,
     ) -> AgentResult<String> {
         let issuer = Issuer::create_from_proposal("", proposal)?;
-        self.creds_issuer.insert(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, connection_id),
-        )
+        let thread_id = issuer.get_thread_id()?;
+        self.creds_issuer
+            .insert(&thread_id, IssuerWrapper::new(issuer, connection_id))?;
+        info!(
+            "Created new IssuerCredential with resource id: {}",
+            thread_id
+        );
+        Ok(thread_id)
     }
 
     pub async fn send_credential_offer(

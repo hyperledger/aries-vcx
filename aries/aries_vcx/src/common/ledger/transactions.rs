@@ -7,6 +7,7 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::BaseWallet,
 };
+use did_doc::schema::service::Service;
 use did_parser::Did;
 use diddoc_legacy::aries::service::AriesService;
 use messages::msg_fields::protocols::out_of_band::invitation::OobService;
@@ -16,7 +17,6 @@ use serde_json::Value;
 use crate::{
     common::{keys::get_verkey_from_ledger, ledger::service_didsov::EndpointDidSov},
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    utils::from_service_sov_to_legacy,
 };
 
 #[derive(Deserialize, Debug)]
@@ -74,7 +74,6 @@ pub async fn resolve_service(
 ) -> VcxResult<AriesService> {
     match service {
         OobService::AriesService(service) => Ok(service.clone()),
-        OobService::SovService(service) => Ok(from_service_sov_to_legacy(service.to_owned())),
         OobService::Did(did) => get_service(indy_ledger, &did.clone().parse()?).await,
     }
 }
@@ -194,6 +193,31 @@ pub async fn write_endpoint(
         .await?;
     check_response(&res)?;
     Ok(res)
+}
+
+fn _service_to_didsov_endpoint_attribute(service: &Service) -> EndpointDidSov {
+    let routing_keys: Option<Vec<String>> = service
+        .extra_field_routing_keys()
+        .ok()
+        .map(|keys| keys.iter().map(|key| key.to_string()).collect());
+
+    let service_types = service.service_types();
+    let types_str: Vec<String> = service_types.iter().map(|t| t.to_string()).collect();
+    EndpointDidSov::create()
+        .set_routing_keys(routing_keys)
+        .set_types(Some(types_str))
+        .set_service_endpoint(service.service_endpoint().clone())
+}
+
+pub async fn write_endpoint_from_service(
+    wallet: &impl BaseWallet,
+    indy_ledger_write: &impl IndyLedgerWrite,
+    did: &Did,
+    service: &Service,
+) -> VcxResult<(String, EndpointDidSov)> {
+    let attribute = _service_to_didsov_endpoint_attribute(service);
+    let res = write_endpoint(wallet, indy_ledger_write, did, &attribute).await?;
+    Ok((res, attribute))
 }
 
 pub async fn add_attr(

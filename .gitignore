@@ -8,3 +8,4 @@
 *.code-workspace
 **/tails.txt
 .session.vim
+**/rust/aath-backchannel

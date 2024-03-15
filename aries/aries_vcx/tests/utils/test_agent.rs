@@ -85,6 +85,33 @@ pub async fn create_test_agent(
     create_test_agent_from_seed(&generate_random_seed(), genesis_file_path).await
 }
 
+pub async fn create_test_agent_endorser_2(
+    genesis_file_path: &str,
+    test_agent_trustee: TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+) -> Result<
+    TestAgent<
+        impl IndyLedgerRead + AnoncredsLedgerRead,
+        impl IndyLedgerWrite + AnoncredsLedgerWrite,
+        impl BaseAnonCreds,
+        impl BaseWallet,
+    >,
+    Box<dyn std::error::Error>,
+> {
+    let agent_endorser = create_test_agent_endorser(
+        test_agent_trustee.ledger_write,
+        test_agent_trustee.wallet,
+        genesis_file_path,
+        &test_agent_trustee.institution_did,
+    )
+    .await?;
+    Ok(agent_endorser)
+}
+
 pub async fn create_test_agent_endorser<LW, W>(
     ledger_write: LW,
     trustee_wallet: W,

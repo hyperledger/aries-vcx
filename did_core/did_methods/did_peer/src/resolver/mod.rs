@@ -1,18 +1,17 @@
 use async_trait::async_trait;
-use did_doc_sov::extra_fields::ExtraFieldsSov;
+use did_doc::schema::did_doc::DidDocumentBuilder;
 use did_parser::Did;
 use did_resolver::{
     error::GenericError,
     traits::resolvable::{
-        resolution_metadata::DidResolutionMetadata, resolution_options::DidResolutionOptions,
-        resolution_output::DidResolutionOutput, DidResolvable,
+        resolution_metadata::DidResolutionMetadata, resolution_output::DidResolutionOutput,
+        DidResolvable,
     },
 };
+use serde::{Deserialize, Serialize};
 
 use crate::{
-    error::DidPeerError,
-    peer_did::{generic::AnyPeerDid, numalgos::numalgo2::resolve::resolve_numalgo2},
-    resolver::options::ExtraFieldsOptions,
+    error::DidPeerError, peer_did::generic::AnyPeerDid, resolver::options::PublicKeyEncoding,
 };
 
 pub mod options;
@@ -26,23 +25,27 @@ impl PeerDidResolver {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Default, Serialize, Deserialize)]
+pub struct PeerDidResolutionOptions {
+    pub encoding: Option<PublicKeyEncoding>,
+}
 #[async_trait]
 impl DidResolvable for PeerDidResolver {
-    type ExtraFieldsService = ExtraFieldsSov;
-    type ExtraFieldsOptions = ExtraFieldsOptions;
+    type DidResolutionOptions = PeerDidResolutionOptions;
 
     async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions<Self::ExtraFieldsOptions>,
-    ) -> Result<DidResolutionOutput<Self::ExtraFieldsService>, GenericError> {
+        options: &Self::DidResolutionOptions,
+    ) -> Result<DidResolutionOutput, GenericError> {
         let peer_did = AnyPeerDid::parse(did.to_owned())?;
         match peer_did {
             AnyPeerDid::Numalgo2(peer_did) => {
-                let did_doc =
-                    resolve_numalgo2(peer_did.did(), options.extra().public_key_encoding())?
-                        .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
-                        .build();
+                let encoding = options.encoding.unwrap_or(PublicKeyEncoding::Multibase);
+                let builder: DidDocumentBuilder = peer_did.to_did_doc_builder(encoding)?;
+                let did_doc = builder
+                    .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
+                    .build();
                 let resolution_metadata = DidResolutionMetadata::builder()
                     .content_type("application/did+json".to_string())
                     .build();

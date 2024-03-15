@@ -1,6 +1,7 @@
 use std::{num::ParseIntError, sync::PoisonError};
 
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
+use did_doc::schema::{types::uri::UriWrapperError, utils::error::DidDocumentLookupError};
 use shared::errors::http_error::HttpError;
 
 use crate::{
@@ -45,8 +46,8 @@ impl From<did_doc::error::DidDocumentBuilderError> for AriesVcxError {
     }
 }
 
-impl From<did_doc_sov::error::DidDocumentSovError> for AriesVcxError {
-    fn from(err: did_doc_sov::error::DidDocumentSovError) -> Self {
+impl From<DidDocumentLookupError> for AriesVcxError {
+    fn from(err: DidDocumentLookupError) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
     }
 }
@@ -78,6 +79,12 @@ impl From<did_key::error::DidKeyError> for AriesVcxError {
 impl From<anoncreds_types::Error> for AriesVcxError {
     fn from(err: anoncreds_types::Error) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+impl From<UriWrapperError> for AriesVcxError {
+    fn from(err: UriWrapperError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err.to_string())
     }
 }
 

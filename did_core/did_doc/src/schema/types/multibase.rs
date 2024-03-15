@@ -1,12 +1,29 @@
 use std::{
+    error::Error,
     fmt::{self, Display, Formatter},
     str::FromStr,
 };
 
 use multibase::{decode, Base};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
-use crate::error::DidDocumentBuilderError;
+#[derive(Debug, Error)]
+pub struct MultibaseWrapperError {
+    reason: &'static str,
+    #[source]
+    source: Box<dyn Error + Sync + Send>,
+}
+
+impl Display for MultibaseWrapperError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "MultibaseWrapperError, reason: {}, source: {}",
+            self.reason, self.source
+        )
+    }
+}
 
 // https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-07
 #[derive(Clone, Debug, PartialEq)]
@@ -16,9 +33,10 @@ pub struct Multibase {
 }
 
 impl Multibase {
-    pub fn new(multibase: String) -> Result<Self, DidDocumentBuilderError> {
-        let (base, bytes) = decode(multibase).map_err(|err| {
-            DidDocumentBuilderError::InvalidInput(format!("Invalid multibase key: {}", err))
+    pub fn new(multibase: String) -> Result<Self, MultibaseWrapperError> {
+        let (base, bytes) = decode(multibase).map_err(|err| MultibaseWrapperError {
+            reason: "Decoding multibase value failed",
+            source: Box::new(err),
         })?;
         Ok(Self { base, bytes })
     }
@@ -52,7 +70,7 @@ impl<'de> Deserialize<'de> for Multibase {
 }
 
 impl FromStr for Multibase {
-    type Err = DidDocumentBuilderError;
+    type Err = MultibaseWrapperError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::new(s.to_string())
@@ -118,7 +136,14 @@ mod tests {
     #[test]
     fn test_multibase_from_str_invalid() {
         let multibase = "invalidmultibasekey".parse::<Multibase>();
-        assert!(multibase.is_err());
+        let err = multibase.expect_err("Error was expected.");
+        assert!(err
+            .source()
+            .expect("Error was expected to has source set up.")
+            .is::<multibase::Error>());
+        assert!(err
+            .to_string()
+            .contains("Decoding multibase value failed, source: "));
     }
 
     #[test]

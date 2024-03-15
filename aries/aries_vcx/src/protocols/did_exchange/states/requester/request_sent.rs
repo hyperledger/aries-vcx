@@ -1,19 +1,14 @@
-use crate::protocols::did_exchange::states::traits::{InvitationId, ThreadId};
+use crate::protocols::did_exchange::states::traits::ThreadId;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RequestSent {
-    pub invitation_id: String,
-    pub request_id: String,
+    pub request_id: String, /* Note: Historical artifact in Aries RFC, used to fill pthread
+                             * value in Complete message       See more info here: https://github.com/hyperledger/aries-rfcs/issues/817
+                             * pub invitation_id: Option<String> */
 }
 
 impl ThreadId for RequestSent {
     fn thread_id(&self) -> &str {
         self.request_id.as_str()
-    }
-}
-
-impl InvitationId for RequestSent {
-    fn invitation_id(&self) -> &str {
-        self.invitation_id.as_str()
     }
 }

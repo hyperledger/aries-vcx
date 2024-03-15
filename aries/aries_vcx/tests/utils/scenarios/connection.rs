@@ -51,7 +51,7 @@ async fn establish_connection_from_invite(
 
     #[async_trait]
     impl Transport for DummyHttpClient {
-        async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: Url) -> VcxResult<()> {
+        async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: &Url) -> VcxResult<()> {
             Ok(())
         }
     }

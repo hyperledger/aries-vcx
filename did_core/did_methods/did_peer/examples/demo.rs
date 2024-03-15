@@ -2,36 +2,24 @@ use std::error::Error;
 
 use did_doc::schema::{
     did_doc::DidDocument,
-    service::ServiceBuilder,
-    types::{uri::Uri, url::Url},
     verification_method::{VerificationMethod, VerificationMethodType},
 };
-use did_doc_sov::extra_fields::{didcommv1::ExtraFieldsDidCommV1, ExtraFieldsSov, KeyKind};
 use did_parser::{Did, DidUrl};
-use did_peer::peer_did::{
-    numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
-    PeerDid,
+use did_peer::{
+    peer_did::{
+        numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
+        PeerDid,
+    },
+    resolver::{options::PublicKeyEncoding, PeerDidResolutionOptions, PeerDidResolver},
 };
+use did_resolver::traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable};
 
-fn main() -> Result<(), Box<dyn Error>> {
-    demo()
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<(), Box<dyn Error>> {
+    demo().await
 }
 
-fn demo() -> Result<(), Box<dyn Error>> {
-    let recipient_key = KeyKind::Value("foo".to_string());
-    let sov_service_extra = ExtraFieldsSov::DIDCommV1(
-        ExtraFieldsDidCommV1::builder()
-            .set_recipient_keys(vec![recipient_key])
-            .build(),
-    );
-    let service = ServiceBuilder::<ExtraFieldsSov>::new(
-        Uri::new("xyz://example.org")?,
-        Url::new("http://example.org")?,
-        sov_service_extra,
-    )
-    .add_service_type("DIDCommMessaging".to_string())?
-    .build();
-
+async fn demo() -> Result<(), Box<dyn Error>> {
     let did_url = DidUrl::parse("did:foo:bar#key-1".into())?;
     let did = Did::parse("did:foo:bar".into())?;
     let verification_method = VerificationMethod::builder(
@@ -44,7 +32,6 @@ fn demo() -> Result<(), Box<dyn Error>> {
 
     let ddo = DidDocument::builder(did)
         .add_verification_method(verification_method)
-        .add_service(service)
         .build();
     println!("Did document: \n{}", serde_json::to_string_pretty(&ddo)?);
 
@@ -60,10 +47,24 @@ fn demo() -> Result<(), Box<dyn Error>> {
         peer_did_3_v2
     );
 
+    let DidResolutionOutput { did_document, .. } = PeerDidResolver::new()
+        .resolve(
+            peer_did_2.did(),
+            &PeerDidResolutionOptions {
+                encoding: Some(PublicKeyEncoding::Base58),
+            },
+        )
+        .await
+        .unwrap();
+    println!(
+        "Decoded did document: \n{}",
+        serde_json::to_string_pretty(&did_document)?
+    );
+
     Ok(())
 }
 
-#[test]
-fn demo_test() -> Result<(), Box<dyn Error>> {
-    demo()
+#[tokio::test]
+async fn demo_test() -> Result<(), Box<dyn Error>> {
+    demo().await
 }

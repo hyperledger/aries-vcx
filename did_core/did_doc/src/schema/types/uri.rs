@@ -4,22 +4,32 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-
-use crate::error::DidDocumentBuilderError;
+use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Uri(uniresid::Uri);
 
+#[derive(Debug, Error)]
+pub struct UriWrapperError {
+    reason: uniresid::Error,
+}
+
+impl Display for UriWrapperError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "UriWrapperError: {}", self.reason)
+    }
+}
+
 impl Uri {
-    pub fn new(uri: &str) -> Result<Self, DidDocumentBuilderError> {
-        Ok(Self(uniresid::Uri::try_from(uri).map_err(|e| {
-            DidDocumentBuilderError::InvalidInput(format!("Invalid URI: {}", e))
-        })?))
+    pub fn new(uri: &str) -> Result<Self, UriWrapperError> {
+        Ok(Self(
+            uniresid::Uri::try_from(uri).map_err(|e| UriWrapperError { reason: e })?,
+        ))
     }
 }
 
 impl FromStr for Uri {
-    type Err = DidDocumentBuilderError;
+    type Err = UriWrapperError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::new(s)

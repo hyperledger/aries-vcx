@@ -12,3 +12,4 @@ did_doc = { path = "../did_doc" }
 async-trait = "0.1.68"
 chrono = { version = "0.4.24", default-features = false, features = ["serde"] }
 serde = { version = "1.0.160", default-features = false, features = ["derive"] }
+serde_json = "1.0.103"

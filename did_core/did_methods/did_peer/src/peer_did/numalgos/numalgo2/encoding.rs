@@ -3,24 +3,22 @@ use std::cmp::Ordering;
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{
     did_doc::DidDocument,
-    service::Service,
-    utils::OneOrList,
     verification_method::{VerificationMethod, VerificationMethodKind},
 };
-use did_doc_sov::extra_fields::ExtraFieldsSov;
 use public_key::Key;
 
 use crate::{
     error::DidPeerError,
     peer_did::numalgos::numalgo2::{
-        purpose::ElementPurpose, service_abbreviated::ServiceAbbreviated,
+        purpose::ElementPurpose,
+        service_abbreviation::{abbreviate_service, ServiceAbbreviatedDidPeer2},
         verification_method::get_key_by_verification_method,
     },
 };
 
-pub fn append_encoded_key_segments(
+pub(crate) fn append_encoded_key_segments(
     mut did: String,
-    did_document: &DidDocument<ExtraFieldsSov>,
+    did_document: &DidDocument,
 ) -> Result<String, DidPeerError> {
     for am in did_document.assertion_method() {
         did = append_encoded_key_segment(did, did_document, am, ElementPurpose::Assertion)?;
@@ -64,15 +62,15 @@ pub fn append_encoded_key_segments(
     Ok(did)
 }
 
-pub fn append_encoded_service_segment(
+pub(crate) fn append_encoded_service_segment(
     mut did: String,
-    did_document: &DidDocument<ExtraFieldsSov>,
+    did_document: &DidDocument,
 ) -> Result<String, DidPeerError> {
     let services_abbreviated = did_document
         .service()
         .iter()
         .map(abbreviate_service)
-        .collect::<Result<Vec<ServiceAbbreviated>, _>>()?;
+        .collect::<Result<Vec<ServiceAbbreviatedDidPeer2>, _>>()?;
 
     let service_encoded = match services_abbreviated.len().cmp(&1) {
         Ordering::Less => None,
@@ -81,7 +79,10 @@ pub fn append_encoded_service_segment(
             Some(STANDARD_NO_PAD.encode(serde_json::to_vec(&service_abbreviated)?))
         }
         Ordering::Greater => {
-            Some(STANDARD_NO_PAD.encode(serde_json::to_vec(&services_abbreviated)?))
+            // todo: Easy fix; this should be implemented by iterating over each service and then
+            //       appending the services in peer did, separated by a dot.
+            //       See https://identity.foundation/peer-did-method-spec/
+            unimplemented!("Multiple services are not supported yet")
         }
     };
 
@@ -95,7 +96,7 @@ pub fn append_encoded_service_segment(
 
 fn append_encoded_key_segment(
     did: String,
-    did_document: &DidDocument<ExtraFieldsSov>,
+    did_document: &DidDocument,
     vm: &VerificationMethodKind,
     purpose: ElementPurpose,
 ) -> Result<String, DidPeerError> {
@@ -105,7 +106,7 @@ fn append_encoded_key_segment(
 }
 
 fn resolve_verification_method<'a>(
-    did_document: &'a DidDocument<ExtraFieldsSov>,
+    did_document: &'a DidDocument,
     vm: &'a VerificationMethodKind,
 ) -> Result<&'a VerificationMethod, DidPeerError> {
     match vm {
@@ -122,54 +123,27 @@ fn append_key_to_did(mut did: String, key: Key, purpose: ElementPurpose) -> Stri
     did
 }
 
-fn abbreviate_service(
-    service: &Service<ExtraFieldsSov>,
-) -> Result<ServiceAbbreviated, DidPeerError> {
-    let service_endpoint = service.service_endpoint().clone();
-    let (routing_keys, accept) = match service.extra() {
-        ExtraFieldsSov::DIDCommV2(extra) => {
-            (extra.routing_keys().to_vec(), extra.accept().to_vec())
-        }
-        ExtraFieldsSov::DIDCommV1(extra) => {
-            (extra.routing_keys().to_vec(), extra.accept().to_vec())
-        }
-        _ => (vec![], vec![]),
-    };
-    let service_type = match service.service_type() {
-        OneOrList::One(service_type) => service_type,
-        OneOrList::List(service_types) => {
-            if let Some(first_service) = service_types.first() {
-                first_service
-            } else {
-                return Err(DidPeerError::InvalidServiceType);
-            }
-        }
-    };
-
-    let service_type_abbr = if service_type.to_lowercase() == "didcommmessaging" {
-        "dm"
-    } else {
-        service_type
-    };
-
-    Ok(ServiceAbbreviated::builder()
-        .set_service_type(service_type_abbr.to_string())
-        .set_service_endpoint(service_endpoint)
-        .set_routing_keys(routing_keys)
-        .set_accept_types(accept)
-        .build())
-}
-
 #[cfg(test)]
 mod tests {
     use did_doc::schema::{
-        service::Service,
+        service::{
+            service_key_kind::ServiceKeyKind,
+            typed::{didcommv2::ExtraFieldsDidCommV2, ServiceType},
+            Service,
+        },
+        types::uri::Uri,
+        utils::OneOrList,
         verification_method::{VerificationMethod, VerificationMethodType},
     };
-    use did_doc_sov::extra_fields::{didcommv2::ExtraFieldsDidCommV2, KeyKind};
     use did_parser::DidUrl;
+    use pretty_assertions::assert_eq;
 
     use super::*;
+    use crate::{
+        helpers::convert_to_hashmap,
+        peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
+        resolver::options::PublicKeyEncoding,
+    };
 
     fn create_verification_method(
         did_full: String,
@@ -183,15 +157,6 @@ mod tests {
         )
         .add_public_key_multibase(key)
         .build()
-    }
-
-    fn create_did_document_with_service(
-        did_full: String,
-        service: Service<ExtraFieldsSov>,
-    ) -> DidDocument<ExtraFieldsSov> {
-        DidDocument::<ExtraFieldsSov>::builder(did_full.parse().unwrap())
-            .add_service(service)
-            .build()
     }
 
     #[test]
@@ -212,7 +177,7 @@ mod tests {
             VerificationMethodType::Ed25519VerificationKey2020,
         );
 
-        let did_document = DidDocument::<ExtraFieldsSov>::builder(did_full.parse().unwrap())
+        let did_document = DidDocument::builder(did_full.parse().unwrap())
             .add_key_agreement(vm_0)
             .add_verification_method(vm_1)
             .build();
@@ -221,33 +186,46 @@ mod tests {
         assert_eq!(did, did_full);
     }
 
-    #[test]
-    fn test_append_encoded_service_segment() {
+    #[tokio::test]
+    async fn test_append_encoded_service_segment() {
         let did = "did:peer:2";
-        let service = "eyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0";
-        let did_full = format!("{}.S{}", did, service);
+        let service = "eyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0";
+        let did_expected = format!("{}.S{}", did, service);
 
-        let extra = ExtraFieldsSov::DIDCommV2(
-            ExtraFieldsDidCommV2::builder()
-                .set_routing_keys(vec![KeyKind::Reference(
-                    "did:example:somemediator#somekey".parse().unwrap(),
-                )])
-                .add_accept("didcomm/aip2;env=rfc587".into())
-                .build(),
-        );
-        let service = Service::<ExtraFieldsSov>::builder(
-            did_full.parse().unwrap(),
+        let extra = ExtraFieldsDidCommV2::builder()
+            .routing_keys(vec![ServiceKeyKind::Reference(
+                "did:example:somemediator#somekey".parse().unwrap(),
+            )])
+            .accept(vec!["didcomm/v2".into(), "didcomm/aip2;env=rfc587".into()])
+            .build();
+
+        let service = Service::new(
+            Uri::new("#service-0").unwrap(),
             "https://example.com/endpoint".parse().unwrap(),
-            extra,
-        )
-        .add_service_type("DIDCommMessaging".to_string())
-        .unwrap()
-        .build();
+            OneOrList::One(ServiceType::DIDCommV2),
+            convert_to_hashmap(&extra).unwrap(),
+        );
 
-        let did_document = create_did_document_with_service(did_full.to_string(), service);
+        let did_document = DidDocument::builder(did_expected.parse().unwrap())
+            .add_service(service)
+            .build();
 
         let did = append_encoded_service_segment(did.to_string(), &did_document).unwrap();
-        assert_eq!(did, did_full);
+
+        let did_parsed = PeerDid::<Numalgo2>::parse(did.clone()).unwrap();
+        let ddo = did_parsed
+            .to_did_doc_builder(PublicKeyEncoding::Base58)
+            .unwrap()
+            .build();
+
+        let did_expected_parsed = PeerDid::<Numalgo2>::parse(did_expected.clone()).unwrap();
+        let ddo_expected = did_expected_parsed
+            .to_did_doc_builder(PublicKeyEncoding::Base58)
+            .unwrap()
+            .build();
+
+        assert_eq!(ddo, ddo_expected);
+        assert_eq!(did, did_expected);
     }
 
     #[test]
@@ -262,7 +240,7 @@ mod tests {
             VerificationMethodType::X25519KeyAgreementKey2020,
         );
 
-        let did_document = DidDocument::<ExtraFieldsSov>::builder(did_full.parse().unwrap())
+        let did_document = DidDocument::builder(did_full.parse().unwrap())
             .add_key_agreement(vm)
             .build();
 
@@ -294,7 +272,7 @@ mod tests {
             VerificationMethodType::Ed25519VerificationKey2020,
         );
 
-        let did_document = DidDocument::<ExtraFieldsSov>::builder(did_full.parse().unwrap())
+        let did_document = DidDocument::builder(did_full.parse().unwrap())
             .add_assertion_method(vm_0)
             .add_key_agreement(vm_1)
             .add_verification_method(vm_2)
@@ -317,7 +295,7 @@ mod tests {
             VerificationMethodType::X25519KeyAgreementKey2020,
         );
 
-        let did_document = DidDocument::<ExtraFieldsSov>::builder(did_full.parse().unwrap())
+        let did_document = DidDocument::builder(did_full.parse().unwrap())
             .add_verification_method(vm)
             .add_key_agreement_reference(DidUrl::from_fragment(reference.to_string()).unwrap())
             .build();

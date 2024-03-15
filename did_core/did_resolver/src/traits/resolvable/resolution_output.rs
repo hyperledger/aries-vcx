@@ -9,41 +9,29 @@ use crate::shared_types::did_document_metadata::DidDocumentMetadata;
 // non-empty field in DidResolutionOutput in the error case.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct DidResolutionOutput<E: Default> {
-    pub did_document: DidDocument<E>,
+pub struct DidResolutionOutput {
+    pub did_document: DidDocument,
     pub did_resolution_metadata: DidResolutionMetadata,
     pub did_document_metadata: DidDocumentMetadata,
 }
 
-impl<E: Default> DidResolutionOutput<E> {
-    pub fn builder(did_document: DidDocument<E>) -> DidResolutionOutputBuilder<E> {
+impl DidResolutionOutput {
+    pub fn builder(did_document: DidDocument) -> DidResolutionOutputBuilder {
         DidResolutionOutputBuilder {
             did_document,
             did_resolution_metadata: None,
             did_document_metadata: None,
         }
     }
-
-    pub fn did_document(&self) -> &DidDocument<E> {
-        &self.did_document
-    }
-
-    pub fn did_resolution_metadata(&self) -> &DidResolutionMetadata {
-        &self.did_resolution_metadata
-    }
-
-    pub fn did_document_metadata(&self) -> &DidDocumentMetadata {
-        &self.did_document_metadata
-    }
 }
 
-pub struct DidResolutionOutputBuilder<E: Default> {
-    did_document: DidDocument<E>,
+pub struct DidResolutionOutputBuilder {
+    did_document: DidDocument,
     did_resolution_metadata: Option<DidResolutionMetadata>,
     did_document_metadata: Option<DidDocumentMetadata>,
 }
 
-impl<E: Default> DidResolutionOutputBuilder<E> {
+impl DidResolutionOutputBuilder {
     pub fn did_resolution_metadata(
         mut self,
         did_resolution_metadata: DidResolutionMetadata,
@@ -57,7 +45,7 @@ impl<E: Default> DidResolutionOutputBuilder<E> {
         self
     }
 
-    pub fn build(self) -> DidResolutionOutput<E> {
+    pub fn build(self) -> DidResolutionOutput {
         DidResolutionOutput {
             did_document: self.did_document,
             did_resolution_metadata: self.did_resolution_metadata.unwrap_or_default(),

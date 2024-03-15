@@ -2,11 +2,11 @@ use std::{convert::From, num::ParseIntError};
 
 use aries_vcx::{
     did_doc::error::DidDocumentBuilderError,
-    did_doc_sov::error::DidDocumentSovError,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::state_machine::generic::GenericDidExchange,
 };
 use aries_vcx_core::errors::error::AriesVcxCoreError;
+use did_resolver_sov::did_resolver::did_doc::schema::utils::error::DidDocumentLookupError;
 
 use crate::error::*;
 
@@ -30,19 +30,10 @@ impl From<serde_json::Error> for AgentError {
     }
 }
 
-// TODO
 impl From<AriesVcxCoreError> for AgentError {
     fn from(err: AriesVcxCoreError) -> Self {
         let kind = AgentErrorKind::GenericAriesVcxError;
         let message = format!("AriesVcxCore Error; err: {:?}", err.to_string());
-        AgentError { message, kind }
-    }
-}
-
-impl From<DidDocumentSovError> for AgentError {
-    fn from(err: DidDocumentSovError) -> Self {
-        let kind = AgentErrorKind::GenericAriesVcxError;
-        let message = format!("DidDocumentSovError; err: {:?}", err.to_string());
         AgentError { message, kind }
     }
 }
@@ -59,6 +50,14 @@ impl From<aries_vcx::did_parser::ParseError> for AgentError {
     fn from(err: aries_vcx::did_parser::ParseError) -> Self {
         let kind = AgentErrorKind::GenericAriesVcxError;
         let message = format!("DidParseError; err: {:?}", err.to_string());
+        AgentError { message, kind }
+    }
+}
+
+impl From<did_peer::error::DidPeerError> for AgentError {
+    fn from(err: did_peer::error::DidPeerError) -> Self {
+        let kind = AgentErrorKind::GenericAriesVcxError;
+        let message = format!("DidPeerError; err: {:?}", err.to_string());
         AgentError { message, kind }
     }
 }
@@ -83,6 +82,13 @@ impl From<(GenericDidExchange, AriesVcxError)> for AgentError {
     fn from(err: (GenericDidExchange, AriesVcxError)) -> Self {
         let kind = AgentErrorKind::GenericAriesVcxError;
         let message = format!("GenericDidExchange; err: {:?}", err.1.to_string());
+        AgentError { message, kind }
+    }
+}
+impl From<DidDocumentLookupError> for AgentError {
+    fn from(err: DidDocumentLookupError) -> Self {
+        let kind = AgentErrorKind::GenericAriesVcxError;
+        let message = format!("DidDocumentLookupError; err: {:?}", err.to_string());
         AgentError { message, kind }
     }
 }

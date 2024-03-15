@@ -9,7 +9,6 @@ use core::fmt;
 use std::{fmt::Display, marker::PhantomData};
 
 use did_doc::schema::did_doc::DidDocument;
-use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
 use serde::{
     de::{self, Visitor},
@@ -43,17 +42,13 @@ impl<N: Numalgo> PeerDid<N> {
 }
 
 pub trait FromDidDoc: Numalgo {
-    fn from_did_doc(
-        did_document: DidDocument<ExtraFieldsSov>,
-    ) -> Result<PeerDid<Self>, DidPeerError>
+    fn from_did_doc(did_document: DidDocument) -> Result<PeerDid<Self>, DidPeerError>
     where
         Self: Sized;
 }
 
 impl<N: Numalgo + FromDidDoc> PeerDid<N> {
-    pub fn from_did_doc(
-        did_document: DidDocument<ExtraFieldsSov>,
-    ) -> Result<PeerDid<N>, DidPeerError> {
+    pub fn from_did_doc(did_document: DidDocument) -> Result<PeerDid<N>, DidPeerError> {
         N::from_did_doc(did_document)
     }
 }
@@ -108,18 +103,29 @@ impl<N: Numalgo> From<PeerDid<N>> for Did {
     }
 }
 
+impl<N: Numalgo> AsRef<Did> for PeerDid<N> {
+    fn as_ref(&self) -> &Did {
+        self.did()
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::peer_did::numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3};
+    use crate::{
+        error::DidPeerError,
+        peer_did::{
+            numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
+            PeerDid,
+        },
+    };
 
     const VALID_PEER_DID_NUMALGO2: &str = "did:peer:2\
        .Ez6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH\
        .VzXwpBnMdCm1cLmKuzgESn29nqnonp1ioqrQMRHNsmjMyppzx8xB2pv7cw8q1PdDacSrdWE3dtB9f7Nxk886mdzNFoPtY\
-       .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0";
+       .SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0";
 
     const VALID_PEER_DID_NUMALGO3: &str =
-        "did:peer:3.d8da5079c166b183cf815ee27747f34e116977103d8b23c96dcba9a9d9429688";
+        "did:peer:3.71ae6ec6f44acf6bc5dcd7ad1f3364a3a328f6f9c06da2be15786dcabbb18c2a";
 
     fn peer_did_numalgo2() -> PeerDid<Numalgo2> {
         PeerDid {
@@ -136,6 +142,8 @@ mod tests {
     }
 
     mod parse {
+        use pretty_assertions::assert_eq;
+
         use super::*;
 
         macro_rules! generate_negative_parse_test {
@@ -189,6 +197,8 @@ mod tests {
     }
 
     mod to_numalgo3 {
+        use pretty_assertions::assert_eq;
+
         use super::*;
 
         #[test]
@@ -221,6 +231,8 @@ mod tests {
     }
 
     mod deserialize {
+        use pretty_assertions::assert_eq;
+
         use super::*;
 
         #[test]

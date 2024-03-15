@@ -6,6 +6,11 @@ pub fn parse_numalgo(did: &Did) -> Result<NumalgoKind, DidPeerError> {
     did.id()
         .chars()
         .next()
-        .ok_or_else(|| DidPeerError::DidValidationError(format!("Invalid did: {}", did.did())))?
+        .ok_or_else(|| {
+            DidPeerError::DidValidationError(format!(
+                "Invalid peer did: {} because numalgo couldn't be parsed",
+                did.did()
+            ))
+        })?
         .try_into()
 }

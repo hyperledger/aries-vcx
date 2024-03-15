@@ -1,3 +1,4 @@
+pub mod helpers;
 mod request_sent;
 
 use super::DidExchange;
