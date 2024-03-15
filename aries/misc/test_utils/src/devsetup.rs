@@ -22,7 +22,6 @@ use aries_vcx_core::{
 };
 use chrono::{DateTime, Duration, Utc};
 use did_parser::Did;
-use libvcx_logger::init_test_logging;
 use log::{debug, info};
 
 use crate::constants::{POOL1_TXN, TRUSTEE_SEED};
@@ -32,6 +31,7 @@ pub mod vdr_proxy_ledger;
 
 #[cfg(feature = "vdr_proxy_ledger")]
 use crate::devsetup::vdr_proxy_ledger::dev_build_profile_vdr_proxy_ledger;
+use crate::logger::init_logger;
 
 #[cfg(feature = "vdrtools_wallet")]
 pub mod vdrtools_wallet;
@@ -131,7 +131,7 @@ pub struct SetupPoolDirectory {
 
 impl SetupMocks {
     pub fn init() -> SetupMocks {
-        init_test_logging();
+        init_logger();
         SetupMocks
     }
 }
@@ -216,7 +216,7 @@ pub async fn build_setup_profile() -> SetupProfile<
     impl BaseAnonCreds,
     impl BaseWallet,
 > {
-    init_test_logging();
+    init_logger();
 
     let genesis_file_path = get_temp_file_path(POOL1_TXN).to_str().unwrap().to_string();
     create_testpool_genesis_txn_file(&genesis_file_path);
@@ -249,7 +249,7 @@ pub async fn build_setup_profile() -> SetupProfile<
 impl SetupPoolDirectory {
     pub async fn init() -> SetupPoolDirectory {
         debug!("SetupPoolDirectory init >> going to setup agency environment");
-        init_test_logging();
+        init_logger();
 
         let genesis_file_path = get_temp_file_path(POOL1_TXN).to_str().unwrap().to_string();
         create_testpool_genesis_txn_file(&genesis_file_path);

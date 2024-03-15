@@ -17,13 +17,13 @@ anoncreds = ["aries_vcx_core/anoncreds"]
 [dependencies]
 anoncreds_types = { path = "../../misc/anoncreds_types" }
 aries_vcx_core = { path = "../../aries_vcx_core" }
-libvcx_logger = { path = "../legacy/libvcx_logger" }
 did_parser = { path = "../../../did_core/did_parser" }
 public_key = { path = "../../../did_core/public_key" }
 lazy_static = "1"
 serde_json = "1"
-log = "0.4"
-chrono = "0.4"
 rand = "0.8"
 uuid = { version = "1", default-features = false, features = ["v4"] }
 async-trait = "0.1"
+chrono = "0.4"
+env_logger = "0.10"
+log = "0.4"
