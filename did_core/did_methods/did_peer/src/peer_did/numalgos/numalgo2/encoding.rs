@@ -23,11 +23,9 @@ pub(crate) fn append_encoded_key_segments(
     for am in did_document.assertion_method() {
         did = append_encoded_key_segment(did, did_document, am, ElementPurpose::Assertion)?;
     }
-
     for ka in did_document.key_agreement() {
         did = append_encoded_key_segment(did, did_document, ka, ElementPurpose::Encryption)?;
     }
-
     for vm in did_document.verification_method() {
         did = append_encoded_key_segment(
             did,
@@ -36,11 +34,9 @@ pub(crate) fn append_encoded_key_segments(
             ElementPurpose::Verification,
         )?;
     }
-
     for a in did_document.authentication() {
         did = append_encoded_key_segment(did, did_document, a, ElementPurpose::Verification)?;
     }
-
     for ci in did_document.capability_invocation() {
         did = append_encoded_key_segment(
             did,
@@ -49,7 +45,6 @@ pub(crate) fn append_encoded_key_segments(
             ElementPurpose::CapabilityInvocation,
         )?;
     }
-
     for cd in did_document.capability_delegation() {
         did = append_encoded_key_segment(
             did,
@@ -58,7 +53,6 @@ pub(crate) fn append_encoded_key_segments(
             ElementPurpose::CapabilityDelegation,
         )?;
     }
-
     Ok(did)
 }
 
@@ -111,9 +105,14 @@ fn resolve_verification_method<'a>(
 ) -> Result<&'a VerificationMethod, DidPeerError> {
     match vm {
         VerificationMethodKind::Resolved(vm) => Ok(vm),
-        VerificationMethodKind::Resolvable(did_url) => did_document
-            .dereference_key(did_url)
-            .ok_or(DidPeerError::InvalidKeyReference(did_url.to_string())),
+        VerificationMethodKind::Resolvable(did_url) => {
+            did_document
+                .dereference_key(did_url)
+                .ok_or(DidPeerError::InvalidKeyReference(format!(
+                    "Could not resolve verification method: {} on DID document: {}",
+                    did_url, did_document
+                )))
+        }
     }
 }
 
@@ -146,13 +145,14 @@ mod tests {
     };
 
     fn create_verification_method(
-        did_full: String,
+        verification_method_id: String,
+        controller_did: String,
         key: String,
         verification_type: VerificationMethodType,
     ) -> VerificationMethod {
         VerificationMethod::builder(
-            did_full.parse().unwrap(),
-            did_full.parse().unwrap(),
+            verification_method_id.parse().unwrap(),
+            controller_did.parse().unwrap(),
             verification_type,
         )
         .add_public_key_multibase(key)
@@ -167,11 +167,13 @@ mod tests {
         let did_full = format!("{}.E{}.V{}", did, key_0, key_1);
 
         let vm_0 = create_verification_method(
+            "#key-1".to_string(),
             did_full.to_string(),
             key_0.to_string(),
             VerificationMethodType::X25519KeyAgreementKey2020,
         );
         let vm_1 = create_verification_method(
+            "#key-2".to_string(),
             did_full.to_string(),
             key_1.to_string(),
             VerificationMethodType::Ed25519VerificationKey2020,
@@ -235,6 +237,7 @@ mod tests {
         let did_full = format!("{}.E{}", did, key);
 
         let vm = create_verification_method(
+            "#key-1".to_string(),
             did_full.to_string(),
             key.to_string(),
             VerificationMethodType::X25519KeyAgreementKey2020,
@@ -257,16 +260,19 @@ mod tests {
         let did_full = format!("{}.A{}.E{}.V{}", did, key_0, key_1, key_2);
 
         let vm_0 = create_verification_method(
+            "#key-1".to_string(),
             did_full.to_string(),
             key_0.to_string(),
             VerificationMethodType::X25519KeyAgreementKey2020,
         );
         let vm_1 = create_verification_method(
+            "#key-2".to_string(),
             did_full.to_string(),
             key_1.to_string(),
             VerificationMethodType::Ed25519VerificationKey2020,
         );
         let vm_2 = create_verification_method(
+            "#key-3".to_string(),
             did_full.to_string(),
             key_2.to_string(),
             VerificationMethodType::Ed25519VerificationKey2020,
@@ -284,13 +290,17 @@ mod tests {
 
     #[test]
     fn test_append_encoded_key_segments_resolvable_key() {
+        let env = env_logger::Env::default().default_filter_or("info");
+        env_logger::init_from_env(env);
+
         let did = "did:peer:2";
         let key = "z6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc";
         let did_full = format!("{}.E{}.V{}", did, key, key);
-        let reference = "ref-1";
+        let reference = "key-1";
 
         let vm = create_verification_method(
-            format!("{did_full}#{reference}"),
+            format!("#{}", reference.to_string()),
+            did_full.to_string(),
             key.to_string(),
             VerificationMethodType::X25519KeyAgreementKey2020,
         );

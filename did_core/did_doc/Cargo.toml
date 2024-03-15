@@ -19,3 +19,9 @@ display_as_json = { path = "../../misc/display_as_json" }
 did_key = { path = "../did_methods/did_key" }
 thiserror = "1.0.40"
 typed-builder = "0.16.0"
+log = "0.4"
+
+[dev-dependencies]
+pretty_assertions = "1.4.0"
+env_logger = "0.10"
+

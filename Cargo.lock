@@ -501,7 +501,6 @@ dependencies = [
  "env_logger 0.10.0",
  "futures",
  "lazy_static",
- "libvcx_logger",
  "log",
  "messages",
  "num-bigint",
@@ -1791,9 +1790,12 @@ dependencies = [
  "did_key",
  "did_parser_nom",
  "display_as_json",
+ "env_logger 0.10.0",
  "hex",
+ "log",
  "multibase",
  "pem",
+ "pretty_assertions",
  "public_key",
  "serde",
  "serde_json",
@@ -1834,6 +1836,8 @@ dependencies = [
  "did_parser_nom",
  "did_resolver",
  "display_as_json",
+ "env_logger 0.10.0",
+ "log",
  "multibase",
  "once_cell",
  "pretty_assertions",
@@ -3245,17 +3249,6 @@ dependencies = [
  "cc",
  "pkg-config",
  "vcpkg",
-]
-
-[[package]]
-name = "libvcx_logger"
-version = "0.62.0"
-dependencies = [
- "android_logger",
- "aries_vcx_core",
- "chrono",
- "env_logger 0.10.0",
- "log",
 ]
 
 [[package]]
@@ -5256,8 +5249,8 @@ dependencies = [
  "async-trait",
  "chrono",
  "did_parser_nom",
+ "env_logger 0.10.0",
  "lazy_static",
- "libvcx_logger",
  "log",
  "public_key",
  "rand 0.8.5",

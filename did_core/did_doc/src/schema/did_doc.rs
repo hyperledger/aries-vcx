@@ -94,7 +94,6 @@ impl DidDocument {
     }
 
     pub fn dereference_key(&self, reference: &DidUrl) -> Option<&VerificationMethod> {
-        // TODO: Should check controller (if present)
         self.verification_method
             .iter()
             .find(|vm| vm.id().fragment() == reference.fragment())
