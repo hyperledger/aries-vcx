@@ -1,9 +1,11 @@
-use super::{askar_utils::value_from_entry, key_value::KeyValue};
+use super::askar_utils::value_from_entry;
 use crate::{
     errors::error::VcxCoreResult,
     wallet::{
         askar::askar_utils::{local_key_to_bs58_private_key, local_key_to_bs58_public_key},
-        base_wallet::{record::PartialRecord, record_category::RecordCategory},
+        base_wallet::{
+            key_value::KeyValue, record::PartialRecord, record_category::RecordCategory,
+        },
     },
 };
 

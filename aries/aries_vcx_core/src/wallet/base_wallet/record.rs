@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use typed_builder::TypedBuilder;
 
-use super::record_category::RecordCategory;
+use super::{key_value::KeyValue, record_category::RecordCategory};
 use crate::{errors::error::VcxCoreResult, wallet::record_tags::RecordTags};
 
 #[derive(Debug, Default, Clone, TypedBuilder)]
@@ -28,6 +28,14 @@ impl Record {
 
     pub fn tags(&self) -> &RecordTags {
         &self.tags
+    }
+
+    pub fn is_key(&self) -> bool {
+        self.category == RecordCategory::Key
+    }
+
+    pub fn key_value(&self) -> VcxCoreResult<KeyValue> {
+        Ok(serde_json::from_str(&self.value)?)
     }
 }
 

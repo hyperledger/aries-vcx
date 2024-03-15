@@ -1,5 +1,5 @@
 #[cfg(feature = "vdrtools_wallet")]
-uniffi::include_scaffolding!("vcx");
+uniffi::include_scaffolding!("vcx_indy");
 
 #[cfg(feature = "askar_wallet")]
 uniffi::include_scaffolding!("vcx_askar");

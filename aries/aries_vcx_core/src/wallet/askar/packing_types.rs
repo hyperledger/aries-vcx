@@ -1,10 +1,6 @@
-use indy_vdr::utils::base64::{decode_urlsafe, encode_urlsafe};
 use serde::{de::Unexpected, Deserialize, Serialize};
 
-use crate::{
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::askar::askar_utils::bytes_to_string,
-};
+use crate::wallet::base_wallet::base64_string::Base64String;
 
 pub const PROTECTED_HEADER_ENC: &str = "xchacha20poly1305_ietf";
 pub const PROTECTED_HEADER_TYP: &str = "JWM/1.0";
@@ -76,29 +72,6 @@ impl<'de> Deserialize<'de> for ProtectedHeaderTyp {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(transparent)]
-pub struct Base64String(String);
-
-impl Base64String {
-    pub fn from_bytes(content: &[u8]) -> Self {
-        Self(encode_urlsafe(content))
-    }
-
-    pub fn decode(&self) -> VcxCoreResult<Vec<u8>> {
-        decode_urlsafe(&self.0)
-            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, e))
-    }
-
-    pub fn decode_to_string(&self) -> VcxCoreResult<String> {
-        bytes_to_string(self.decode()?)
-    }
-
-    pub fn as_bytes(&self) -> Vec<u8> {
-        self.0.as_bytes().into()
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 pub struct Jwe {
     pub protected: Base64String,
     pub iv: Base64String,
@@ -156,10 +129,6 @@ impl Recipient {
             Self::Anoncrypt(inner) => &inner.header.kid,
             Self::Authcrypt(inner) => &inner.header.kid,
         }
-    }
-
-    pub fn key_name(&self) -> &str {
-        &self.unwrap_kid()[0..16]
     }
 }
 

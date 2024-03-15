@@ -1,14 +1,21 @@
 use std::str::FromStr;
 
 use async_trait::async_trait;
-use indy_api_types::domain::wallet::{default_key_derivation_method, IndyRecord};
+use indy_api_types::{
+    domain::wallet::{default_key_derivation_method, IndyRecord},
+    errors::IndyErrorKind,
+};
 use serde::Deserialize;
 use serde_json::Value;
 use vdrtools::Locator;
 
-use self::indy_tags::IndyTags;
-use super::base_wallet::{
-    record::Record, record_category::RecordCategory, search_filter::SearchFilter, BaseWallet,
+use self::{indy_tags::IndyTags, indy_wallet_config::IndyWalletConfig};
+use super::{
+    base_wallet::{
+        key_value::KeyValue, record::Record, record_category::RecordCategory,
+        record_wallet::RecordWallet, search_filter::SearchFilter, BaseWallet,
+    },
+    record_tags::RecordTags,
 };
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
@@ -55,6 +62,46 @@ pub struct IndySdkWallet {
 impl IndySdkWallet {
     pub fn new(wallet_handle: WalletHandle) -> Self {
         IndySdkWallet { wallet_handle }
+    }
+
+    pub async fn create(wallet_config: &IndyWalletConfig) -> VcxCoreResult<Self> {
+        let (config, creds) = wallet_config.to_config_and_creds()?;
+
+        let res = Locator::instance()
+            .wallet_controller
+            .create(config, creds)
+            .await;
+
+        match res {
+            Ok(()) => Self::open(wallet_config).await,
+
+            Err(err) if err.kind() == IndyErrorKind::WalletAlreadyExists => {
+                warn!(
+                    "wallet \"{}\" already exists. skipping creation",
+                    wallet_config.wallet_name
+                );
+                Self::open(wallet_config).await
+            }
+
+            Err(err) => Err(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::WalletCreate,
+                format!(
+                    "could not create wallet {}: {}",
+                    wallet_config.wallet_name, err,
+                ),
+            )),
+        }
+    }
+
+    async fn open(wallet_config: &IndyWalletConfig) -> VcxCoreResult<Self> {
+        let (config, creds) = wallet_config.to_config_and_creds()?;
+
+        let handle = Locator::instance()
+            .wallet_controller
+            .open(config, creds)
+            .await?;
+
+        Ok(Self::new(handle))
     }
 
     pub fn get_wallet_handle(&self) -> WalletHandle {
@@ -145,6 +192,23 @@ impl BaseWallet for IndySdkWallet {
             .await?;
 
         Ok(())
+    }
+
+    async fn create_key(
+        &self,
+        name: &str,
+        value: KeyValue,
+        tags: &RecordTags,
+    ) -> VcxCoreResult<()> {
+        let value = serde_json::to_string(&value)?;
+        let record = Record::builder()
+            .name(name.into())
+            .value(value)
+            .category(RecordCategory::Key)
+            .tags(tags.clone())
+            .build();
+
+        Ok(self.add_record(record).await?)
     }
 }
 

@@ -43,6 +43,9 @@ test-integration-aries-vcx-core features:
 test-compatibility-aries-vcx-core:
     cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F vdrtools_wallet,askar_wallet wallet_compatibility_
 
+test-wallet-migrator:
+    cargo test --manifest-path="aries/misc/wallet_migrator/Cargo.toml" -F vdrtools_wallet,askar_wallet
+
 test-integration-aries-vcx features test_name="":
     cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F {{features}} -- --ignored {{test_name}}
 
@@ -50,13 +53,10 @@ test-integration-aries-vcx-anoncreds-rs test_name="":
     cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F anoncreds --test test_revocations --test test_proof_presentation --test test_anoncreds --test test_verifier -- --ignored {{test_name}}
 
 test-integration-aries-vcx-mysql test_name="":
-    cargo test --manifest-path="aries/aries_vcx/Cargo.toml" test_mysql -- --include-ignored {{test_name}}
+    cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F vdrtools_wallet test_mysql -- --include-ignored {{test_name}}
 
 test-integration-aries-vcx-vdrproxy test_name="":
     cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F vdr_proxy_ledger,credx -- --ignored {{test_name}}
-
-test-integration-libvcx wallet test_name="":
-    RUST_TEST_THREADS=1 cargo test --manifest-path="aries/misc/legacy/libvcx_core/Cargo.toml" -F {{wallet}} -- --include-ignored {{test_name}}
 
 test-integration-did-crate test_name="":
     cargo test --examples -p did_doc -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov -p did_resolver_web -p did_key -p did_peer --test "*"

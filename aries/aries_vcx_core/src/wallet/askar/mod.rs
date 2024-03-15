@@ -7,10 +7,15 @@ use async_trait::async_trait;
 use public_key::Key;
 
 use self::{
-    askar_utils::local_key_to_bs58_name, askar_wallet_config::AskarWalletConfig,
+    askar_utils::local_key_to_bs58_public_key, askar_wallet_config::AskarWalletConfig,
     rng_method::RngMethod,
 };
-use super::base_wallet::{did_value::DidValue, record_category::RecordCategory, BaseWallet};
+use super::{
+    base_wallet::{
+        did_value::DidValue, key_value::KeyValue, record_category::RecordCategory, BaseWallet,
+    },
+    record_tags::RecordTags,
+};
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
 mod all_askar_records;
@@ -22,7 +27,6 @@ pub mod askar_wallet_config;
 mod entry;
 mod entry_tags;
 pub mod key_method;
-mod key_value;
 mod pack;
 mod packing_types;
 mod partial_record;
@@ -44,6 +48,20 @@ impl BaseWallet for AskarWallet {
 
     async fn close_wallet(&self) -> VcxCoreResult<()> {
         todo!()
+    }
+
+    async fn create_key(
+        &self,
+        name: &str,
+        value: KeyValue,
+        tags: &RecordTags,
+    ) -> VcxCoreResult<()> {
+        let mut session = self.session().await?;
+        let tg: Vec<_> = tags.clone().into();
+        let key = LocalKey::from_secret_bytes(KeyAlg::Ed25519, &value.signkey().decode()?[0..32])?;
+        Ok(session
+            .insert_key(name, &key, None, Some(&tg), None)
+            .await?)
     }
 }
 
@@ -112,7 +130,7 @@ impl AskarWallet {
         rng_method: RngMethod,
     ) -> Result<(String, LocalKey), AriesVcxCoreError> {
         let key = LocalKey::from_seed(alg, seed, rng_method.into())?;
-        let key_name = local_key_to_bs58_name(&key)?;
+        let key_name = local_key_to_bs58_public_key(&key)?.into_inner();
         session
             .insert_key(&key_name, &key, None, None, None)
             .await?;

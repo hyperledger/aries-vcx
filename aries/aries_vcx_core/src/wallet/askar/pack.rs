@@ -4,12 +4,18 @@ use aries_askar::kms::{
 use public_key::Key;
 
 use super::{
-    askar_utils::{bs58_to_bytes, bytes_to_bs58, ed25519_to_x25519},
+    askar_utils::ed25519_to_x25519,
     packing_types::{
-        Base64String, Jwe, JweAlg, ProtectedData, ProtectedHeaderEnc, ProtectedHeaderTyp, Recipient,
+        Jwe, JweAlg, ProtectedData, ProtectedHeaderEnc, ProtectedHeaderTyp, Recipient,
     },
 };
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::{
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    wallet::{
+        base_wallet::base64_string::Base64String,
+        utils::{bs58_to_bytes, bytes_to_bs58},
+    },
+};
 
 fn check_supported_key_alg(key: &LocalKey) -> VcxCoreResult<()> {
     let supported_algs = vec![Ed25519];
