@@ -29,7 +29,7 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::{did_wallet::DidWallet, BaseWallet},
 };
-use did_parser::Did;
+use did_parser_nom::Did;
 use diddoc_legacy::aries::service::AriesService;
 use serde_json::json;
 use test_utils::{

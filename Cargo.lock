@@ -492,7 +492,7 @@ dependencies = [
  "derive_builder",
  "did_doc",
  "did_key",
- "did_parser",
+ "did_parser_nom",
  "did_peer",
  "did_resolver",
  "did_resolver_registry",
@@ -501,6 +501,7 @@ dependencies = [
  "env_logger 0.10.0",
  "futures",
  "lazy_static",
+ "libvcx_logger",
  "log",
  "messages",
  "num-bigint",
@@ -533,7 +534,7 @@ dependencies = [
  "async-trait",
  "bitvec",
  "bs58 0.5.0",
- "did_parser",
+ "did_parser_nom",
  "futures",
  "indy-api-types",
  "indy-credx",
@@ -1788,7 +1789,7 @@ dependencies = [
  "base64",
  "bs58 0.5.0",
  "did_key",
- "did_parser",
+ "did_parser_nom",
  "display_as_json",
  "hex",
  "multibase",
@@ -1806,19 +1807,11 @@ dependencies = [
 name = "did_key"
 version = "0.1.0"
 dependencies = [
- "did_parser",
+ "did_parser_nom",
  "public_key",
  "serde",
  "serde_json",
  "thiserror",
-]
-
-[[package]]
-name = "did_parser"
-version = "0.1.0"
-dependencies = [
- "serde",
- "shared",
 ]
 
 [[package]]
@@ -1838,7 +1831,7 @@ dependencies = [
  "base64",
  "bs58 0.5.0",
  "did_doc",
- "did_parser",
+ "did_parser_nom",
  "did_resolver",
  "display_as_json",
  "multibase",
@@ -1862,7 +1855,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "did_doc",
- "did_parser",
+ "did_parser_nom",
  "serde",
  "serde_json",
 ]
@@ -3255,6 +3248,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "libvcx_logger"
+version = "0.62.0"
+dependencies = [
+ "android_logger",
+ "aries_vcx_core",
+ "chrono",
+ "env_logger 0.10.0",
+ "log",
+]
+
+[[package]]
 name = "libvdrtools"
 version = "0.8.6"
 dependencies = [
@@ -3414,7 +3418,7 @@ version = "0.62.0"
 dependencies = [
  "chrono",
  "derive_more",
- "did_parser",
+ "did_parser_nom",
  "diddoc_legacy",
  "display_as_json",
  "isolang",
@@ -5251,9 +5255,9 @@ dependencies = [
  "aries_vcx_core",
  "async-trait",
  "chrono",
- "did_parser",
- "env_logger 0.10.0",
+ "did_parser_nom",
  "lazy_static",
+ "libvcx_logger",
  "log",
  "public_key",
  "rand 0.8.5",
@@ -5655,7 +5659,7 @@ dependencies = [
  "android_logger",
  "aries_vcx",
  "async-trait",
- "did_parser",
+ "did_parser_nom",
  "diddoc_legacy",
  "log",
  "once_cell",

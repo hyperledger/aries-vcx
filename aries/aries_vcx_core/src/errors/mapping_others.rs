@@ -1,6 +1,6 @@
 use std::sync::PoisonError;
 
-use did_parser::ParseError;
+use did_parser_nom::ParseError;
 use public_key::PublicKeyError;
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};

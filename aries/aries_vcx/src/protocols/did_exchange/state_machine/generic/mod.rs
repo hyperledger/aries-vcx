@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use did_doc::schema::did_doc::DidDocument;
-use did_parser::Did;
+use did_parser_nom::Did;
 use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use messages::msg_fields::protocols::did_exchange::{

@@ -26,8 +26,8 @@ impl From<FromUtf8Error> for VcxUniFFIError {
     }
 }
 
-impl From<did_parser::ParseError> for VcxUniFFIError {
-    fn from(e: did_parser::ParseError) -> Self {
+impl From<did_parser_nom::ParseError> for VcxUniFFIError {
+    fn from(e: did_parser_nom::ParseError) -> Self {
         VcxUniFFIError::StringParseError {
             error_msg: e.to_string(),
         }

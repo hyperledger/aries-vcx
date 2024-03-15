@@ -5,7 +5,7 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 use chrono::Utc;
-use did_parser::Did;
+use did_parser_nom::Did;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{

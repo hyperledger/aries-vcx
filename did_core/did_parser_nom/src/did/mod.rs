@@ -11,7 +11,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use self::parsing::parse_did;
 use crate::{error::ParseError, DidRange, DidUrl};
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash, Default)]
 pub struct Did {
     did: String,
     method: Option<DidRange>,

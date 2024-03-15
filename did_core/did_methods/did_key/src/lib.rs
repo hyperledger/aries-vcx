@@ -3,7 +3,7 @@ pub mod error;
 use core::fmt;
 use std::fmt::Display;
 
-use did_parser::Did;
+use did_parser_nom::Did;
 use error::DidKeyError;
 use public_key::Key;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};

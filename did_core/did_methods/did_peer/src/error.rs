@@ -10,7 +10,7 @@ use crate::peer_did::numalgos::kind::NumalgoKind;
 #[derive(Debug, thiserror::Error)]
 pub enum DidPeerError {
     #[error("DID parser error: {0}")]
-    DidParserError(#[from] did_parser::ParseError),
+    DidParserError(#[from] did_parser_nom::ParseError),
     #[error("Parsing error: {0}")]
     ParsingError(String),
     #[error("DID validation error: {0}")]

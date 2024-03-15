@@ -6,7 +6,7 @@ pub mod dereferencing_output;
 use std::io::Read;
 
 use async_trait::async_trait;
-use did_parser::DidUrl;
+use did_parser_nom::DidUrl;
 
 use self::{
     dereferencing_options::DidDereferencingOptions, dereferencing_output::DidDereferencingOutput,

@@ -43,7 +43,7 @@ diddoc_legacy = { path = "../misc/legacy/diddoc_legacy" }
 aries_vcx_core = { path = "../aries_vcx_core" }
 shared = { path = "../misc/shared" }
 anoncreds_types = { path = "../misc/anoncreds_types" }
-did_parser = { path = "../../did_core/did_parser" }
+did_parser_nom = { path = "../../did_core/did_parser_nom" }
 did_resolver = { path = "../../did_core/did_resolver" }
 did_doc = { path = "../../did_core/did_doc" }
 did_key = { path = "../../did_core/did_methods/did_key" }

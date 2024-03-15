@@ -1,5 +1,5 @@
 use chrono::Utc;
-use did_parser::Did;
+use did_parser_nom::Did;
 use messages::{
     decorators::{
         thread::{Thread, ThreadGoalCode},

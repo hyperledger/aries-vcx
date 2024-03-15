@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use did_key::DidKey;
-use did_parser::DidUrl;
+use did_parser_nom::DidUrl;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

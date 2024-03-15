@@ -3,7 +3,7 @@ use std::fmt;
 #[derive(Debug)]
 pub enum ParseError {
     InvalidInput(&'static str),
-    ParserError(Box<dyn std::error::Error + 'static>),
+    ParserError(Box<dyn std::error::Error + 'static + Send + Sync>),
 }
 
 impl std::error::Error for ParseError {
@@ -29,3 +29,20 @@ impl From<nom::Err<nom::error::Error<&str>>> for ParseError {
         ParseError::ParserError(err.to_owned().into())
     }
 }
+
+// use std::fmt;
+//
+// #[derive(Debug)]
+// pub enum ParseError {
+//     InvalidInput(&'static str),
+// }
+//
+// impl std::error::Error for ParseError {}
+//
+// impl fmt::Display for ParseError {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         match self {
+//             ParseError::InvalidInput(input) => write!(f, "Invalid input: {}", input),
+//         }
+//     }
+// }

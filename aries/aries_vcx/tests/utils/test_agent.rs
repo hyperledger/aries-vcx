@@ -10,7 +10,7 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::{did_wallet::DidWallet, BaseWallet},
 };
-use did_parser::Did;
+use did_parser_nom::Did;
 use test_utils::{
     constants::TRUSTEE_SEED,
     devsetup::{

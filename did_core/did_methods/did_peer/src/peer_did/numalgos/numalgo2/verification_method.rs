@@ -1,7 +1,7 @@
 use did_doc::schema::verification_method::{
     IncompleteVerificationMethodBuilder, VerificationMethod, VerificationMethodType,
 };
-use did_parser::{Did, DidUrl};
+use did_parser_nom::{Did, DidUrl};
 use public_key::{Key, KeyType};
 
 use crate::{error::DidPeerError, resolver::options::PublicKeyEncoding};
@@ -119,7 +119,7 @@ fn to_did_url_reference(key: &Key) -> Result<DidUrl, DidPeerError> {
 #[cfg(test)]
 mod tests {
     use did_doc::schema::verification_method::{VerificationMethod, VerificationMethodType};
-    use did_parser::Did;
+    use did_parser_nom::Did;
     use public_key::Key;
 
     fn did() -> Did {

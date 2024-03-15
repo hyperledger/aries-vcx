@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-did_parser = { path = "../../did_parser" }
+did_parser_nom = { path = "../../did_parser_nom" }
 did_doc = { path = "../../did_doc" }
 did_resolver = { path = "../../did_resolver" }
 public_key = { path = "../../public_key" }

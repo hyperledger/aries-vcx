@@ -5,7 +5,7 @@ pub mod numalgo2;
 pub mod numalgo3;
 
 use did_doc::schema::did_doc::DidDocument;
-use did_parser::Did;
+use did_parser_nom::Did;
 
 use crate::{
     error::DidPeerError,

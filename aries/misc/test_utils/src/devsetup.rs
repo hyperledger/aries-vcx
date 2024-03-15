@@ -21,7 +21,7 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 use chrono::{DateTime, Duration, Utc};
-use did_parser::Did;
+use did_parser_nom::Did;
 use log::{debug, info};
 
 use crate::constants::{POOL1_TXN, TRUSTEE_SEED};

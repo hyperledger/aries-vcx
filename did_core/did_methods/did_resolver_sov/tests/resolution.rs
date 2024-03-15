@@ -4,7 +4,7 @@ use aries_vcx::common::ledger::{service_didsov::EndpointDidSov, transactions::wr
 use aries_vcx_core::{ledger::base_ledger::IndyLedgerWrite, wallet::base_wallet::BaseWallet};
 use did_resolver::{
     did_doc::schema::service::typed::ServiceType,
-    did_parser::Did,
+    did_parser_nom::Did,
     traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };
 use did_resolver_sov::resolution::DidSovResolver;

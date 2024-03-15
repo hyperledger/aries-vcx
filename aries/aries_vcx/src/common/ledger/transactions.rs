@@ -8,7 +8,7 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 use did_doc::schema::service::Service;
-use did_parser::Did;
+use did_parser_nom::Did;
 use diddoc_legacy::aries::service::AriesService;
 use messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use public_key::{Key, KeyType};

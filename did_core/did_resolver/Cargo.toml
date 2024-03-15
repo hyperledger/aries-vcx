@@ -7,7 +7,7 @@ edition = "2021"
 default = []
 
 [dependencies]
-did_parser = { path = "../did_parser" }
+did_parser_nom = { path = "../did_parser_nom" }
 did_doc = { path = "../did_doc" }
 async-trait = "0.1.68"
 chrono = { version = "0.4.24", default-features = false, features = ["serde"] }

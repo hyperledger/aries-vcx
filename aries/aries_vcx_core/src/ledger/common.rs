@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use did_parser::Did;
+use did_parser_nom::Did;
 use serde::Deserialize;
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};

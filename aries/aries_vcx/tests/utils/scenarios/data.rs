@@ -7,7 +7,7 @@ use anoncreds_types::{
     },
     utils::query::Query,
 };
-use did_parser::Did;
+use did_parser_nom::Did;
 use messages::{
     misc::MimeType,
     msg_fields::protocols::{

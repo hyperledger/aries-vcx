@@ -135,7 +135,7 @@ mod tests {
         utils::OneOrList,
         verification_method::{VerificationMethod, VerificationMethodType},
     };
-    use did_parser::DidUrl;
+    use did_parser_nom::DidUrl;
     use pretty_assertions::assert_eq;
 
     use super::*;

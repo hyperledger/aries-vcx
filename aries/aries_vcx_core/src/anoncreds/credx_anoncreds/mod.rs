@@ -50,7 +50,7 @@ use credx::{
         SchemaId as CredxSchemaId,
     },
 };
-use did_parser::Did;
+use did_parser_nom::Did;
 use indy_credx as credx;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};

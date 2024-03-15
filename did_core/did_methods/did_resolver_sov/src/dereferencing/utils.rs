@@ -4,7 +4,7 @@ use did_resolver::{
     did_doc::schema::{
         did_doc::DidDocument, service::Service, verification_method::VerificationMethod,
     },
-    did_parser::DidUrl,
+    did_parser_nom::DidUrl,
     traits::{
         dereferenceable::{
             dereferencing_metadata::DidDereferencingMetadata,
@@ -95,7 +95,7 @@ mod tests {
             did_doc::DidDocumentBuilder, service::typed::ServiceType, utils::OneOrList,
             verification_method::VerificationMethodType,
         },
-        did_parser::DidUrl,
+        did_parser_nom::DidUrl,
         traits::resolvable::resolution_output::DidResolutionOutput,
     };
     use serde_json::Value;
