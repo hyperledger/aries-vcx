@@ -299,7 +299,7 @@ mod tests {
         let reference = "key-1";
 
         let vm = create_verification_method(
-            format!("#{}", reference.to_string()),
+            format!("#{}", reference),
             did_full.to_string(),
             key.to_string(),
             VerificationMethodType::X25519KeyAgreementKey2020,
