@@ -20,7 +20,7 @@ use anoncreds_types::data_types::{
         schema::Schema as OurSchema,
     },
 };
-use did_parser::Did;
+use did_parser_nom::Did;
 use indy_vdr::{
     ledger::{
         identifiers::{

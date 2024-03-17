@@ -4,7 +4,7 @@ mod verification_method_kind;
 mod verification_method_type;
 
 use ::public_key::Key;
-use did_parser::{Did, DidUrl};
+use did_parser_nom::{Did, DidUrl};
 use serde::{Deserialize, Serialize};
 pub use verification_method_kind::VerificationMethodKind;
 pub use verification_method_type::VerificationMethodType;

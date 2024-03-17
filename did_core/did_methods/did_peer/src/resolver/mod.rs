@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use did_doc::schema::did_doc::DidDocumentBuilder;
-use did_parser::Did;
+use did_parser_nom::Did;
 use did_resolver::{
     error::GenericError,
     traits::resolvable::{

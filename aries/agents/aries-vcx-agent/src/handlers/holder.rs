@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    did_parser::Did,
+    did_parser_nom::Did,
     handlers::issuance::holder::Holder,
     messages::{
         msg_fields::protocols::cred_issuance::v1::{

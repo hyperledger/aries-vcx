@@ -2,7 +2,7 @@ use std::{borrow::Borrow, marker::PhantomData};
 
 use async_trait::async_trait;
 use did_resolver::{
-    did_parser::Did,
+    did_parser_nom::Did,
     error::GenericError,
     traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };

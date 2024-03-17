@@ -2,7 +2,7 @@ use std::sync::RwLock;
 
 use actix_web::{get, post, web, Responder};
 use aries_vcx_agent::aries_vcx::{
-    did_parser::Did,
+    did_parser_nom::Did,
     messages::{msg_fields::protocols::did_exchange::DidExchange, AriesMessage},
     protocols::did_exchange::state_machine::requester::helpers::invitation_get_first_did_service,
 };

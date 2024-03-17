@@ -62,7 +62,7 @@ use anoncreds_types::data_types::{
 };
 use async_trait::async_trait;
 use bitvec::bitvec;
-use did_parser::Did;
+use did_parser_nom::Did;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};
 use time::OffsetDateTime;

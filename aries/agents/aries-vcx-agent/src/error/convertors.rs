@@ -46,8 +46,8 @@ impl From<DidDocumentBuilderError> for AgentError {
     }
 }
 
-impl From<aries_vcx::did_parser::ParseError> for AgentError {
-    fn from(err: aries_vcx::did_parser::ParseError) -> Self {
+impl From<aries_vcx::did_parser_nom::ParseError> for AgentError {
+    fn from(err: aries_vcx::did_parser_nom::ParseError) -> Self {
         let kind = AgentErrorKind::GenericAriesVcxError;
         let message = format!("DidParseError; err: {:?}", err.to_string());
         AgentError { message, kind }

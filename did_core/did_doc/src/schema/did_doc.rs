@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use did_parser::{Did, DidUrl};
+use did_parser_nom::{Did, DidUrl};
 use display_as_json::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -94,7 +94,6 @@ impl DidDocument {
     }
 
     pub fn dereference_key(&self, reference: &DidUrl) -> Option<&VerificationMethod> {
-        // TODO: Should check controller (if present)
         self.verification_method
             .iter()
             .find(|vm| vm.id().fragment() == reference.fragment())
@@ -369,7 +368,7 @@ mod tests {
 
     use std::str::FromStr;
 
-    use did_parser::{Did, DidUrl};
+    use did_parser_nom::{Did, DidUrl};
     use serde_json::Value;
 
     use crate::schema::{

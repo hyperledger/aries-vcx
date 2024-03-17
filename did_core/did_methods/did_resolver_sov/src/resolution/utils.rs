@@ -7,7 +7,7 @@ use did_resolver::{
         utils::OneOrList,
         verification_method::{VerificationMethod, VerificationMethodType},
     },
-    did_parser::{Did, DidUrl},
+    did_parser_nom::{Did, DidUrl},
     shared_types::did_document_metadata::DidDocumentMetadata,
     traits::resolvable::{
         resolution_metadata::DidResolutionMetadata, resolution_output::DidResolutionOutput,

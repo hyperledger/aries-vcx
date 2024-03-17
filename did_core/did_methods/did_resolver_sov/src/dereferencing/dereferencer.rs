@@ -2,7 +2,7 @@ use std::{borrow::Borrow, io::Cursor};
 
 use async_trait::async_trait;
 use did_resolver::{
-    did_parser::DidUrl,
+    did_parser_nom::DidUrl,
     error::GenericError,
     traits::{
         dereferenceable::{

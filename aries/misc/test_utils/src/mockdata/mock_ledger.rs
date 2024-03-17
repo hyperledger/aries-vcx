@@ -18,7 +18,7 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 use async_trait::async_trait;
-use did_parser::Did;
+use did_parser_nom::Did;
 use public_key::Key;
 
 use crate::constants::{

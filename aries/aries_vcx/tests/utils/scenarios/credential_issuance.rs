@@ -24,7 +24,7 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::BaseWallet,
 };
-use did_parser::Did;
+use did_parser_nom::Did;
 use messages::msg_fields::protocols::{
     cred_issuance::v1::{
         offer_credential::OfferCredentialV1, propose_credential::ProposeCredentialV1,

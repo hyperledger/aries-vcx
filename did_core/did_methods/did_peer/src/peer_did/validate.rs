@@ -1,4 +1,4 @@
-use did_parser::Did;
+use did_parser_nom::Did;
 use once_cell::sync::Lazy;
 use regex::Regex;
 

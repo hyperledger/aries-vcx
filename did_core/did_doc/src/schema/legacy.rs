@@ -1,5 +1,5 @@
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
-use did_parser::{Did, DidUrl};
+use did_parser_nom::{Did, DidUrl};
 use public_key::{Key, KeyType};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};

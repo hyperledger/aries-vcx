@@ -25,7 +25,7 @@ anoncreds = { git = "https://github.com/mirgee/anoncreds-rs.git", rev = "a85d739
 anoncreds_types = { path = "../misc/anoncreds_types" }
 libvdrtools = { path = "../misc/legacy/libvdrtools", optional = true }
 indy-api-types = { path = "../misc/legacy/libvdrtools/indy-api-types", optional = true }
-did_parser = { path = "../../did_core/did_parser" }
+did_parser_nom = { path = "../../did_core/did_parser_nom" }
 async-trait = "0.1.68"
 futures = { version = "0.3", default-features = false }
 serde_json = "1.0.95"

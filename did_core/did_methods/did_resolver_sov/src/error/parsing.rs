@@ -1,4 +1,4 @@
-use did_resolver::{did_doc::schema::types::uri::UriWrapperError, did_parser};
+use did_resolver::{did_doc::schema::types::uri::UriWrapperError, did_parser_nom};
 use thiserror::Error;
 
 use super::DidSovError;
@@ -6,7 +6,7 @@ use super::DidSovError;
 #[derive(Error, Debug)]
 pub enum ParsingErrorSource {
     #[error("DID document parsing error: {0}")]
-    DidDocumentParsingError(#[from] did_parser::ParseError),
+    DidDocumentParsingError(#[from] did_parser_nom::ParseError),
     #[error("DID document parsing URI error: {0}")]
     DidDocumentParsingUriError(#[from] UriWrapperError),
     #[error("Serde error: {0}")]
@@ -15,8 +15,8 @@ pub enum ParsingErrorSource {
     LedgerResponseParsingError(String),
 }
 
-impl From<did_parser::ParseError> for DidSovError {
-    fn from(error: did_parser::ParseError) -> Self {
+impl From<did_parser_nom::ParseError> for DidSovError {
+    fn from(error: did_parser_nom::ParseError) -> Self {
         DidSovError::ParsingError(ParsingErrorSource::DidDocumentParsingError(error))
     }
 }

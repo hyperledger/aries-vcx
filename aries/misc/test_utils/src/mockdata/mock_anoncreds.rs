@@ -33,7 +33,7 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 use async_trait::async_trait;
-use did_parser::Did;
+use did_parser_nom::Did;
 
 use crate::constants::{
     CREDENTIAL_JSON, CREDENTIAL_REQ_METADATA, CREDENTIAL_REQ_STRING, LARGE_NONCE,

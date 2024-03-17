@@ -492,7 +492,7 @@ dependencies = [
  "derive_builder",
  "did_doc",
  "did_key",
- "did_parser",
+ "did_parser_nom",
  "did_peer",
  "did_resolver",
  "did_resolver_registry",
@@ -533,7 +533,7 @@ dependencies = [
  "async-trait",
  "bitvec",
  "bs58 0.5.0",
- "did_parser",
+ "did_parser_nom",
  "futures",
  "indy-api-types",
  "indy-credx",
@@ -1788,11 +1788,14 @@ dependencies = [
  "base64",
  "bs58 0.5.0",
  "did_key",
- "did_parser",
+ "did_parser_nom",
  "display_as_json",
+ "env_logger 0.10.0",
  "hex",
+ "log",
  "multibase",
  "pem",
+ "pretty_assertions",
  "public_key",
  "serde",
  "serde_json",
@@ -1806,19 +1809,11 @@ dependencies = [
 name = "did_key"
 version = "0.1.0"
 dependencies = [
- "did_parser",
+ "did_parser_nom",
  "public_key",
  "serde",
  "serde_json",
  "thiserror",
-]
-
-[[package]]
-name = "did_parser"
-version = "0.1.0"
-dependencies = [
- "serde",
- "shared",
 ]
 
 [[package]]
@@ -1838,9 +1833,11 @@ dependencies = [
  "base64",
  "bs58 0.5.0",
  "did_doc",
- "did_parser",
+ "did_parser_nom",
  "did_resolver",
  "display_as_json",
+ "env_logger 0.10.0",
+ "log",
  "multibase",
  "once_cell",
  "pretty_assertions",
@@ -1862,7 +1859,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "did_doc",
- "did_parser",
+ "did_parser_nom",
  "serde",
  "serde_json",
 ]
@@ -3414,7 +3411,7 @@ version = "0.62.0"
 dependencies = [
  "chrono",
  "derive_more",
- "did_parser",
+ "did_parser_nom",
  "diddoc_legacy",
  "display_as_json",
  "isolang",
@@ -5251,7 +5248,7 @@ dependencies = [
  "aries_vcx_core",
  "async-trait",
  "chrono",
- "did_parser",
+ "did_parser_nom",
  "env_logger 0.10.0",
  "lazy_static",
  "log",
@@ -5655,7 +5652,7 @@ dependencies = [
  "android_logger",
  "aries_vcx",
  "async-trait",
- "did_parser",
+ "did_parser_nom",
  "diddoc_legacy",
  "log",
  "once_cell",

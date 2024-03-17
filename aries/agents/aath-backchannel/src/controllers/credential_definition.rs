@@ -4,7 +4,7 @@ use actix_web::{get, post, web, Responder};
 use anoncreds_types::data_types::identifiers::{
     cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
 };
-use aries_vcx_agent::aries_vcx::did_parser::Did;
+use aries_vcx_agent::aries_vcx::did_parser_nom::Did;
 use reqwest::multipart;
 
 use crate::{

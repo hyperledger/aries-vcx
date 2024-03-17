@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use did_parser::Did;
+use did_parser_nom::Did;
 use did_peer::{
     peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
     resolver::options::PublicKeyEncoding,

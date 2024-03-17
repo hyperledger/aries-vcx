@@ -6,7 +6,7 @@ use aries_vcx::{
         transactions::{add_new_did, write_endpoint},
     },
     did_doc::schema::service::typed::ServiceType,
-    did_parser::Did,
+    did_parser_nom::Did,
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
 };
 use aries_vcx_core::{

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     did_doc::schema::{service::typed::ServiceType, types::uri::Uri},
-    did_parser::Did,
+    did_parser_nom::Did,
     messages::{
         msg_fields::protocols::{
             did_exchange::{

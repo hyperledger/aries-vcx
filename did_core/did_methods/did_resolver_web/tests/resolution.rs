@@ -2,7 +2,7 @@ use std::{convert::Infallible, net::SocketAddr};
 
 use did_resolver::{
     did_doc::schema::did_doc::DidDocument,
-    did_parser::Did,
+    did_parser_nom::Did,
     traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };
 use did_resolver_web::resolution::resolver::DidWebResolver;

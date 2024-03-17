@@ -1,6 +1,6 @@
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::did_doc::DidDocumentBuilder;
-use did_parser::Did;
+use did_parser_nom::Did;
 use public_key::Key;
 
 use crate::{

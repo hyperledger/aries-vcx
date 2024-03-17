@@ -34,8 +34,8 @@ impl From<HttpError> for AriesVcxError {
     }
 }
 
-impl From<did_parser::ParseError> for AriesVcxError {
-    fn from(err: did_parser::ParseError) -> Self {
+impl From<did_parser_nom::ParseError> for AriesVcxError {
+    fn from(err: did_parser_nom::ParseError) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
     }
 }

@@ -21,7 +21,7 @@ extern crate derive_builder;
 
 pub extern crate aries_vcx_core;
 pub extern crate did_doc;
-pub extern crate did_parser;
+pub extern crate did_parser_nom;
 pub extern crate did_peer;
 pub extern crate messages;
 

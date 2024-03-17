@@ -9,7 +9,7 @@ use core::fmt;
 use std::{fmt::Display, marker::PhantomData};
 
 use did_doc::schema::did_doc::DidDocument;
-use did_parser::Did;
+use did_parser_nom::Did;
 use serde::{
     de::{self, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,

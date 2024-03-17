@@ -12,7 +12,7 @@ use anoncreds_types::data_types::{
     },
 };
 use async_trait::async_trait;
-use did_parser::Did;
+use did_parser_nom::Did;
 use indy_vdr::ledger::constants::UpdateRole;
 use public_key::Key;
 use serde::Serialize;

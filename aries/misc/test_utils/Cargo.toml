@@ -17,7 +17,7 @@ anoncreds = ["aries_vcx_core/anoncreds"]
 [dependencies]
 anoncreds_types = { path = "../../misc/anoncreds_types" }
 aries_vcx_core = { path = "../../aries_vcx_core" }
-did_parser = { path = "../../../did_core/did_parser" }
+did_parser_nom = { path = "../../../did_core/did_parser_nom" }
 public_key = { path = "../../../did_core/public_key" }
 lazy_static = "1"
 serde_json = "1"

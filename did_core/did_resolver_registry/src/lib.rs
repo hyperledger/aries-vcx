@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use did_resolver::{
     did_doc::schema::did_doc::DidDocument,
-    did_parser::Did,
+    did_parser_nom::Did,
     error::GenericError,
     traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };

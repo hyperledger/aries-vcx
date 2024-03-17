@@ -1,4 +1,4 @@
-use did_parser::Did;
+use did_parser_nom::Did;
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 use url::Url;

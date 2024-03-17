@@ -22,7 +22,7 @@ use did_doc::schema::{
     service::typed::{didcommv1::ServiceDidCommV1, ServiceType},
     types::uri::Uri,
 };
-use did_parser::Did;
+use did_parser_nom::Did;
 use did_peer::{
     peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
     resolver::{options::PublicKeyEncoding, PeerDidResolutionOptions, PeerDidResolver},

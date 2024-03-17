@@ -4,7 +4,7 @@ use std::{
 };
 
 use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
-use aries_vcx::{common::primitives::revocation_registry::RevocationRegistry, did_parser::Did};
+use aries_vcx::{common::primitives::revocation_registry::RevocationRegistry, did_parser_nom::Did};
 use aries_vcx_core::{
     anoncreds::credx_anoncreds::IndyCredxAnonCreds,
     ledger::indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},

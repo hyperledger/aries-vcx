@@ -32,7 +32,7 @@ use anoncreds_types::data_types::{
         revocation_state::CredentialRevocationState as OurCredentialRevocationState,
     },
 };
-use did_parser::Did;
+use did_parser_nom::Did;
 use indy_credx::{
     issuer::create_schema,
     types::{

@@ -10,7 +10,7 @@ use aries_vcx_core::{
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     wallet::base_wallet::BaseWallet,
 };
-use did_parser::Did;
+use did_parser_nom::Did;
 
 use super::credential_definition::PublicEntityStateType;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};

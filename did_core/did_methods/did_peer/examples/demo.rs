@@ -4,7 +4,7 @@ use did_doc::schema::{
     did_doc::DidDocument,
     verification_method::{VerificationMethod, VerificationMethodType},
 };
-use did_parser::{Did, DidUrl};
+use did_parser_nom::{Did, DidUrl};
 use did_peer::{
     peer_did::{
         numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},

@@ -16,7 +16,7 @@ use anoncreds_types::data_types::{
     },
 };
 use async_trait::async_trait;
-use did_parser::Did;
+use did_parser_nom::Did;
 pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
 use indy_ledger_response_parser::{
     ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo,

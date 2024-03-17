@@ -23,7 +23,7 @@ use aries_vcx_core::{
     },
     wallet::base_wallet::BaseWallet,
 };
-use did_parser::Did;
+use did_parser_nom::Did;
 use test_utils::{
     constants::TEST_TAILS_URL,
     random::{generate_random_schema_name, generate_random_schema_version},

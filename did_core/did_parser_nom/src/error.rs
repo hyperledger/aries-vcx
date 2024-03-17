@@ -3,7 +3,7 @@ use std::fmt;
 #[derive(Debug)]
 pub enum ParseError {
     InvalidInput(&'static str),
-    ParserError(Box<dyn std::error::Error + 'static>),
+    ParserError(Box<dyn std::error::Error + 'static + Send + Sync>),
 }
 
 impl std::error::Error for ParseError {

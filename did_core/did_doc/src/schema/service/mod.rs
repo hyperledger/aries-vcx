@@ -162,7 +162,7 @@ impl Service {
 mod tests {
     use std::collections::HashMap;
 
-    use did_parser::DidUrl;
+    use did_parser_nom::DidUrl;
     use serde_json::json;
 
     use crate::schema::{

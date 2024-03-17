@@ -10,7 +10,7 @@ use did_doc::schema::{
     verification_method::{VerificationMethod, VerificationMethodType},
 };
 use did_key::DidKey;
-use did_parser::{Did, DidUrl};
+use did_parser_nom::{Did, DidUrl};
 use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 use messages::{
     decorators::{

@@ -1,7 +1,7 @@
 use actix_web::{error, http::StatusCode, HttpResponse, HttpResponseBuilder};
 use aries_vcx_agent::{
     aries_vcx,
-    aries_vcx::{did_parser::ParseError, messages::error::MsgTypeError},
+    aries_vcx::{did_parser_nom::ParseError, messages::error::MsgTypeError},
     AgentError,
 };
 use derive_more::{Display, Error};
