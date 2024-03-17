@@ -57,35 +57,35 @@ pub struct InitConfig {
     pub service_endpoint: ServiceEndpoint,
 }
 
-impl <W: BaseWallet> Agent<W> {
-    pub async fn build_indy_wallet(wallet_config: WalletInitConfig, isser_seed: String) -> (IndySdkWallet, IssuerConfig) {
-        let config_wallet = IndyWalletConfig {
-            wallet_name: wallet_config.wallet_name,
-            wallet_key: wallet_config.wallet_key,
-            wallet_key_derivation: wallet_config.wallet_kdf,
-            wallet_type: None,
-            storage_config: None,
-            storage_credentials: None,
-            rekey: None,
-            rekey_derivation_method: None,
-        };
-        config_wallet.create_wallet().await.unwrap();
-        let wallet = config_wallet.open_wallet().await.unwrap();
-        let config_issuer = wallet
-            .configure_issuer(&isser_seed)
-            .await
-            .unwrap();
-        (wallet, config_issuer)
-    }
+pub async fn build_indy_wallet(wallet_config: WalletInitConfig, isser_seed: String) -> (IndySdkWallet, IssuerConfig) {
+    let config_wallet = IndyWalletConfig {
+        wallet_name: wallet_config.wallet_name,
+        wallet_key: wallet_config.wallet_key,
+        wallet_key_derivation: wallet_config.wallet_kdf,
+        wallet_type: None,
+        storage_config: None,
+        storage_credentials: None,
+        rekey: None,
+        rekey_derivation_method: None,
+    };
+    config_wallet.create_wallet().await.unwrap();
+    let wallet = config_wallet.open_wallet().await.unwrap();
+    let config_issuer = wallet
+        .configure_issuer(&isser_seed)
+        .await
+        .unwrap();
+    (wallet, config_issuer)
+}
 
+impl <W: BaseWallet> Agent<W> {
     pub async fn setup_ledger (
-        wallet: W,
+        &self,
         ledger_write: Arc<DefaultIndyLedgerWrite>,
         institution_did: &Did,
         service_endpoint: Url
     ) -> AgentResult<()> {
         let (public_did, _verkey) = add_new_did(
-            &wallet,
+            self.wallet().as_ref(),
             ledger_write.as_ref(),
             institution_did,
             None,
@@ -95,7 +95,7 @@ impl <W: BaseWallet> Agent<W> {
             .set_service_endpoint(service_endpoint)
             .set_types(Some(vec![ServiceType::DIDCommV1.to_string()]));
         write_endpoint(
-            &wallet,
+            self.wallet().as_ref(),
             ledger_write.as_ref(),
             &public_did,
             &endpoint,

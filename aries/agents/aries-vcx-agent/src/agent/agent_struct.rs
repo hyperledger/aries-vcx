@@ -67,8 +67,8 @@ impl<T: BaseWallet> Agent<T> {
         &self.anoncreds
     }
 
-    pub fn wallet(&self) -> &Arc<T> {
-        &self.wallet
+    pub fn wallet(&self) -> Arc<T> {
+        self.wallet.clone()
     }
 
     pub fn issuer_did(&self) -> String {

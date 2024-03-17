@@ -1,8 +1,8 @@
-use aries_vcx_agent::{Agent as AriesAgent, WalletInitConfig};
+use aries_vcx_agent::{Agent as AriesAgent, build_indy_wallet, WalletInitConfig};
 use rand::{thread_rng, Rng};
 use std::io::prelude::*;
 use std::sync::Arc;
-use aries_vcx_agent::aries_vcx::aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_agent::aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet;
 
 #[derive(Debug, Deserialize)]
 struct SeedResponse {
@@ -81,7 +81,7 @@ async fn download_genesis_file() -> std::result::Result<String, String> {
     }
 }
 
-pub async fn initialize<W: BaseWallet>(port: u32) -> AriesAgent<W> {
+pub async fn initialize(port: u32) -> AriesAgent<IndySdkWallet> {
     let enterprise_seed = get_trustee_seed().await;
     let genesis_path = download_genesis_file()
         .await
@@ -95,6 +95,6 @@ pub async fn initialize<W: BaseWallet>(port: u32) -> AriesAgent<W> {
         wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".to_string(),
         wallet_kdf: "RAW".to_string(),
     };
-    let (wallet, issuer_config) = AriesAgent::build_indy_wallet(wallet_config, enterprise_seed).await;
+    let (wallet, issuer_config) = build_indy_wallet(wallet_config, enterprise_seed).await;
     AriesAgent::initialize(genesis_path, Arc::new(wallet), service_endpoint, issuer_config.institution_did).await.unwrap()
 }

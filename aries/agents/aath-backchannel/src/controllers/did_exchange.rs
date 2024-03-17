@@ -27,7 +27,7 @@ impl HarnessAgent {
         let (thid, pthid) = self
             .aries_agent
             .did_exchange()
-            .send_request(did_inviter.to_string(), Some(invitation_id))
+            .handle_msg_invitation(did_inviter.to_string(), Some(invitation_id))
             .await?;
         if let Some(ref pthid) = pthid {
             self.store_mapping_pthid_thid(pthid.clone(), thid.clone());
@@ -57,7 +57,7 @@ impl HarnessAgent {
         let (thid, pthid) = self
             .aries_agent
             .did_exchange()
-            .send_request(req.their_public_did.clone(), None)
+            .handle_msg_invitation(req.their_public_did.clone(), None) // todo: separate the case with/without invitation on did_exchange handler
             .await?;
         let connection_id = pthid.unwrap_or(thid);
         Ok(json!({ "connection_id": connection_id }).to_string())
@@ -127,7 +127,7 @@ impl HarnessAgent {
             let (thid, pthid) = self
                 .aries_agent
                 .did_exchange()
-                .process_request(request.clone().into(), opt_invitation)
+                .handle_msg_request(request.clone().into(), opt_invitation)
                 .await?;
 
             if let Some(pthid) = pthid {
