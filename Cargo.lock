@@ -454,27 +454,7 @@ dependencies = [
  "shared",
  "thiserror",
  "url",
- "uuid 1.5.0",
-]
-
-[[package]]
-name = "aries-vcx-backchannel"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "anoncreds_types",
- "aries-vcx-agent",
- "clap",
- "derive_more",
- "display_as_json",
- "env_logger 0.9.3",
- "log",
- "rand 0.8.5",
- "reqwest",
- "serde",
- "serde_derive",
- "serde_json",
- "uuid 0.8.2",
+ "uuid",
 ]
 
 [[package]]
@@ -519,7 +499,7 @@ dependencies = [
  "time 0.3.20",
  "tokio",
  "url",
- "uuid 1.5.0",
+ "uuid",
  "wallet_migrator",
 ]
 
@@ -552,7 +532,7 @@ dependencies = [
  "time 0.3.20",
  "tokio",
  "typed-builder 0.18.1",
- "uuid 1.5.0",
+ "uuid",
 ]
 
 [[package]]
@@ -666,7 +646,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "url",
- "uuid 1.5.0",
+ "uuid",
  "zeroize",
 ]
 
@@ -1896,7 +1876,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "url",
- "uuid 1.5.0",
+ "uuid",
 ]
 
 [[package]]
@@ -3399,7 +3379,7 @@ dependencies = [
  "tokio",
  "tower-http",
  "url",
- "uuid 1.5.0",
+ "uuid",
 ]
 
 [[package]]
@@ -4287,7 +4267,6 @@ dependencies = [
  "js-sys",
  "log",
  "mime",
- "mime_guess",
  "native-tls",
  "once_cell",
  "percent-encoding",
@@ -5258,7 +5237,7 @@ dependencies = [
  "public_key",
  "rand 0.8.5",
  "serde_json",
- "uuid 1.5.0",
+ "uuid",
 ]
 
 [[package]]
@@ -5846,16 +5825,6 @@ dependencies = [
  "time 0.1.45",
  "wasm-bindgen",
  "zeroize",
-]
-
-[[package]]
-name = "uuid"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
-dependencies = [
- "getrandom 0.2.10",
- "serde",
 ]
 
 [[package]]

@@ -11,7 +11,6 @@ members = [
     "aries/agents/mediator",
     "aries/agents/mediator/client-tui",
     "aries/agents/aries-vcx-agent",
-    "aries/agents/aath-backchannel",
     "aries/wrappers/uniffi-aries-vcx/core",
     "aries/aries_vcx_core",
     "aries/misc/indy_ledger_response_parser",
