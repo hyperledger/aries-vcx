@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use url::Url;
 
 use aries_vcx::{
     handlers::out_of_band::{
@@ -17,6 +16,7 @@ use aries_vcx::{
 };
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
+use url::Url;
 
 use crate::{
     storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},

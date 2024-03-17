@@ -9,8 +9,8 @@ extern crate uuid;
 
 mod agent;
 mod error;
-mod http;
 mod handlers;
+mod http;
 mod storage;
 
 pub use agent::*;

@@ -6,14 +6,12 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 
-use crate::{
-    handlers::{
-        connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
-        did_exchange::DidcommHandlerDidExchange, holder::ServiceCredentialsHolder,
-        issuer::ServiceCredentialsIssuer, out_of_band::ServiceOutOfBand, prover::ServiceProver,
-        revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
-        verifier::ServiceVerifier,
-    },
+use crate::handlers::{
+    connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
+    did_exchange::DidcommHandlerDidExchange, holder::ServiceCredentialsHolder,
+    issuer::ServiceCredentialsIssuer, out_of_band::ServiceOutOfBand, prover::ServiceProver,
+    revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
+    verifier::ServiceVerifier,
 };
 
 pub struct Agent<W> {
@@ -34,15 +32,16 @@ pub struct Agent<W> {
     pub(super) did_exchange: Arc<DidcommHandlerDidExchange<W>>,
 }
 
-// Note: We do this manually, otherwise compiler is requesting us to implement Clone for generic type W,
-//       which is not in fact needed - W is wrapped in Arc. Underlying W has no reason to be cloned.
-impl <W> Clone for Agent<W> {
+// Note: We do this manually, otherwise compiler is requesting us to implement Clone for generic
+// type W,       which is not in fact needed - W is wrapped in Arc. Underlying W has no reason to be
+// cloned.
+impl<W> Clone for Agent<W> {
     fn clone(&self) -> Self {
         Self {
             issuer_did: self.issuer_did.clone(),
             ledger_read: self.ledger_read.clone(),
             ledger_write: self.ledger_write.clone(),
-            anoncreds: self.anoncreds.clone(),
+            anoncreds: self.anoncreds,
             wallet: self.wallet.clone(),
             connections: self.connections.clone(),
             schemas: self.schemas.clone(),

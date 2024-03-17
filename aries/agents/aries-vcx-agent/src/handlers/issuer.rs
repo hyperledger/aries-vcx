@@ -17,8 +17,8 @@ use aries_vcx_core::{
 
 use crate::{
     error::*,
-    http::VcxHttpClient,
     handlers::connection::ServiceConnections,
+    http::VcxHttpClient,
     storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
 };
 

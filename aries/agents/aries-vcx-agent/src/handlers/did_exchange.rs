@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use url::Url;
 
 use aries_vcx::{
     did_doc::schema::{service::typed::ServiceType, types::uri::Uri},
@@ -28,6 +27,7 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::did_resolver::did_doc::schema::did_doc::DidDocument;
+use url::Url;
 
 use crate::{
     http::VcxHttpClient,

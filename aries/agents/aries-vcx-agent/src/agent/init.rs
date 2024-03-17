@@ -6,15 +6,16 @@ use aries_vcx::{
         transactions::{add_new_did, write_endpoint},
     },
     did_doc::schema::service::typed::ServiceType,
+    did_parser::Did,
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
 };
 use aries_vcx_core::{
     self,
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
-    ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
+    ledger::indy_vdr_ledger::{build_ledger_components, DefaultIndyLedgerRead, VcxPoolConfig},
     wallet::{
-        base_wallet::{BaseWallet, ManageWallet},
-        indy::{indy_wallet_config::IndyWalletConfig},
+        base_wallet::{issuer_config::IssuerConfig, BaseWallet, ManageWallet},
+        indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
     },
 };
 use did_peer::resolver::PeerDidResolver;
@@ -23,24 +24,15 @@ use did_resolver_sov::resolution::DidSovResolver;
 use display_as_json::Display;
 use serde::Serialize;
 use url::Url;
-use aries_vcx::did_parser::Did;
-use aries_vcx_core::ledger::indy_vdr_ledger::{build_ledger_components, VcxPoolConfig};
-use aries_vcx_core::wallet::base_wallet::issuer_config::IssuerConfig;
-use aries_vcx_core::wallet::indy::IndySdkWallet;
 
 use crate::{
     agent::agent_struct::Agent,
     error::AgentResult,
     handlers::{
-        connection::ServiceConnections,
-        credential_definition::ServiceCredentialDefinitions,
-        did_exchange::DidcommHandlerDidExchange,
-        holder::ServiceCredentialsHolder,
-        issuer::ServiceCredentialsIssuer,
-        out_of_band::ServiceOutOfBand,
-        prover::ServiceProver,
-        revocation_registry::ServiceRevocationRegistries,
-        schema::ServiceSchemas,
+        connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
+        did_exchange::DidcommHandlerDidExchange, holder::ServiceCredentialsHolder,
+        issuer::ServiceCredentialsIssuer, out_of_band::ServiceOutOfBand, prover::ServiceProver,
+        revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
         verifier::ServiceVerifier,
     },
 };
@@ -52,7 +44,10 @@ pub struct WalletInitConfig {
     pub wallet_kdf: String,
 }
 
-pub async fn build_indy_wallet(wallet_config: WalletInitConfig, isser_seed: String) -> (IndySdkWallet, IssuerConfig) {
+pub async fn build_indy_wallet(
+    wallet_config: WalletInitConfig,
+    isser_seed: String,
+) -> (IndySdkWallet, IssuerConfig) {
     let config_wallet = IndyWalletConfig {
         wallet_name: wallet_config.wallet_name,
         wallet_key: wallet_config.wallet_key,
@@ -64,10 +59,7 @@ pub async fn build_indy_wallet(wallet_config: WalletInitConfig, isser_seed: Stri
         rekey_derivation_method: None,
     };
     let wallet = config_wallet.create_wallet().await.unwrap();
-    let config_issuer = wallet
-        .configure_issuer(&isser_seed)
-        .await
-        .unwrap();
+    let config_issuer = wallet.configure_issuer(&isser_seed).await.unwrap();
 
     let anoncreds = IndyCredxAnonCreds;
     anoncreds
@@ -78,12 +70,12 @@ pub async fn build_indy_wallet(wallet_config: WalletInitConfig, isser_seed: Stri
     (wallet, config_issuer)
 }
 
-impl <W: BaseWallet> Agent<W> {
-    pub async fn setup_ledger (
+impl<W: BaseWallet> Agent<W> {
+    pub async fn setup_ledger(
         genesis_path: String,
         wallet: Arc<W>,
         service_endpoint: Url,
-        submiter_did: Did
+        submiter_did: Did,
     ) -> AgentResult<Did> {
         let vcx_pool_config = VcxPoolConfig {
             indy_vdr_config: None,
@@ -91,28 +83,25 @@ impl <W: BaseWallet> Agent<W> {
             genesis_file_path: genesis_path,
         };
         let (_, ledger_write) = build_ledger_components(vcx_pool_config.clone()).unwrap();
-        let (public_did, _verkey) = add_new_did(
-            wallet.as_ref(),
-            &ledger_write,
-            &submiter_did,
-            None,
-        )
-            .await?;
+        let (public_did, _verkey) =
+            add_new_did(wallet.as_ref(), &ledger_write, &submiter_did, None).await?;
         let endpoint = EndpointDidSov::create()
             .set_service_endpoint(service_endpoint.clone())
             .set_types(Some(vec![ServiceType::DIDCommV1.to_string()]));
-        write_endpoint(
-            wallet.as_ref(),
-            &ledger_write,
-            &public_did,
-            &endpoint,
-        )
-            .await?;
-        info!("Agent::setup_ledger >> wrote data on ledger, public_did: {}, endpoint: {}", public_did, service_endpoint);
+        write_endpoint(wallet.as_ref(), &ledger_write, &public_did, &endpoint).await?;
+        info!(
+            "Agent::setup_ledger >> wrote data on ledger, public_did: {}, endpoint: {}",
+            public_did, service_endpoint
+        );
         Ok(public_did)
     }
 
-    pub async fn initialize(genesis_path: String, wallet: Arc<W>, service_endpoint: Url, issuer_did: Did) -> AgentResult<Agent<W>> {
+    pub async fn initialize(
+        genesis_path: String,
+        wallet: Arc<W>,
+        service_endpoint: Url,
+        issuer_did: Did,
+    ) -> AgentResult<Agent<W>> {
         info!("dev_build_profile_modular >>");
         let vcx_pool_config = VcxPoolConfig {
             indy_vdr_config: None,
@@ -146,10 +135,7 @@ impl <W: BaseWallet> Agent<W> {
             service_endpoint.clone(),
             issuer_did.to_string(),
         ));
-        let out_of_band = Arc::new(ServiceOutOfBand::new(
-            wallet.clone(),
-            service_endpoint,
-        ));
+        let out_of_band = Arc::new(ServiceOutOfBand::new(wallet.clone(), service_endpoint));
         let schemas = Arc::new(ServiceSchemas::new(
             ledger_read.clone(),
             ledger_write.clone(),
@@ -168,7 +154,7 @@ impl <W: BaseWallet> Agent<W> {
             ledger_read.clone(),
             anoncreds,
             wallet.clone(),
-            issuer_did.to_string()
+            issuer_did.to_string(),
         ));
         let issuer = Arc::new(ServiceCredentialsIssuer::new(
             anoncreds,

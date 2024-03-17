@@ -29,15 +29,13 @@ where
     fn lock_store_read(&self) -> AgentResult<RwLockReadGuard<HashMap<String, Mutex<T>>>> {
         match self.store.read() {
             Ok(g) => Ok(g),
-            Err(e) => {
-                Err(AgentError::from_msg(
-                    AgentErrorKind::LockError,
-                    &format!(
-                        "Unable to obtain read lock for in-memory protocol store {} due to error: {:?}",
-                        self.name, e
-                    ),
-                ))
-            }
+            Err(e) => Err(AgentError::from_msg(
+                AgentErrorKind::LockError,
+                &format!(
+                    "Unable to obtain read lock for in-memory protocol store {} due to error: {:?}",
+                    self.name, e
+                ),
+            )),
         }
     }
 
@@ -49,7 +47,8 @@ where
                 Err(AgentError::from_msg(
                     AgentErrorKind::LockError,
                     &format!(
-                        "Unable to obtain write lock for in-memory protocol store {} due to error: {:?}",
+                        "Unable to obtain write lock for in-memory protocol store {} due to \
+                         error: {:?}",
                         self.name, e
                     ),
                 ))
@@ -79,19 +78,13 @@ where
             },
             None => Err(AgentError::from_msg(
                 AgentErrorKind::NotFound,
-                &format!(
-                    "Object {} not found in in-memory store {}",
-                    id, self.name
-                ),
+                &format!("Object {} not found in in-memory store {}", id, self.name),
             )),
         }
     }
 
     fn insert(&self, id: &str, obj: T) -> AgentResult<String> {
-        info!(
-            "Inserting object {} into in-memory store {}",
-            id, self.name
-        );
+        info!("Inserting object {} into in-memory store {}", id, self.name);
         let mut store = self.lock_store_write()?;
 
         match store.insert(id.to_string(), Mutex::new(obj)) {
