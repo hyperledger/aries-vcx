@@ -19,7 +19,7 @@ use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 
 use super::connection::ServiceEndpoint;
 use crate::{
-    storage::{object_cache::AgentStorageInMem, AgentStorage},
+    storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
     AgentResult,
 };
 

@@ -17,12 +17,12 @@ serde_derive = "1.0.97"
 log = "^0.4.20"
 env_logger = "0.9.1"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
-aries-vcx-agent = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "4ee2f6ff25" }
-anoncreds_types = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "4ee2f6ff25" }
-display_as_json = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "4ee2f6ff25" }
-#aries-vcx-agent = { path = "../../../../aries/agents/rust/aries-vcx-agent" }
-#anoncreds_types = { path = "../../../../aries/misc/anoncreds_types" }
-#display_as_json = { path = "../../../../misc/display_as_json" }
+#aries-vcx-agent = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "4ee2f6ff25" }
+#anoncreds_types = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "4ee2f6ff25" }
+#display_as_json = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "4ee2f6ff25" }
+aries-vcx-agent = { path = "../../../aries/agents/aries-vcx-agent" }
+anoncreds_types = { path = "../../../aries/misc/anoncreds_types" }
+display_as_json = { path = "../../../misc/display_as_json" }
 
 [profile.release]
 debug = 0

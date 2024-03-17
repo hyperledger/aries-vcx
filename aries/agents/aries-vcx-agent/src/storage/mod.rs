@@ -1,6 +1,6 @@
 use crate::AgentResult;
 
-pub(crate) mod object_cache;
+pub(crate) mod agent_storage_inmem;
 
 pub trait AgentStorage<T> {
     type Value;

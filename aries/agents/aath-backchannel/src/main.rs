@@ -22,6 +22,7 @@ use actix_web::{middleware, web, App, HttpServer};
 use clap::Parser;
 
 use aries_vcx_agent::{aries_vcx::messages::AriesMessage, Agent as AriesAgent};
+use aries_vcx_agent::aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet;
 use controllers::out_of_band;
 
 #[derive(Parser)]
@@ -60,7 +61,7 @@ enum Status {
 }
 
 pub struct HarnessAgent {
-    aries_agent: AriesAgent,
+    aries_agent: AriesAgent<IndySdkWallet>,
     status: Status,
     // did-exchange specific
     // todo: extra didx specific AATH service

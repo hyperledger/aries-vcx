@@ -120,12 +120,16 @@ impl EncryptionEnvelope {
             .map_err(|err| err.into())
     }
 
-    async fn wrap_into_forward_messages(
-        wallet: &impl BaseWallet,
+    async fn wrap_into_forward_messages<W, T>(
+        wallet: T,
         mut data: Vec<u8>,
         recipient_key: String,
         routing_keys: Vec<String>,
-    ) -> VcxResult<Vec<u8>> {
+    ) -> VcxResult<Vec<u8>>
+        where
+            T: AsRef<W> + Send + Sync,
+            W: BaseWallet + Send + Sync,
+    {
         let mut forward_to_key = recipient_key;
 
         for routing_key in routing_keys.iter() {
@@ -141,12 +145,16 @@ impl EncryptionEnvelope {
         Ok(data)
     }
 
-    async fn wrap_into_forward(
-        wallet: &impl BaseWallet,
+    async fn wrap_into_forward<W, T>(
+        wallet: T,
         data: Vec<u8>,
         forward_to_key: &str,
         routing_key: &str,
-    ) -> VcxResult<Vec<u8>> {
+    ) -> VcxResult<Vec<u8>>
+        where
+            T: AsRef<W> + Send + Sync,
+            W: BaseWallet + Send + Sync,
+    {
         let content = ForwardContent::builder()
             .to(forward_to_key.to_string())
             .msg(serde_json::from_slice(&data)?)
@@ -182,11 +190,16 @@ impl EncryptionEnvelope {
         Ok((unpacked_msg.message, unpacked_msg.sender_verkey))
     }
 
-    pub async fn anon_unpack_aries_msg(
-        wallet: &impl BaseWallet,
+    pub async fn anon_unpack_aries_msg<W, T>(
+        wallet: T,
         encrypted_data: Vec<u8>,
-    ) -> VcxResult<(AriesMessage, Option<String>)> {
-        let (message, sender_vk) = Self::anon_unpack(wallet, encrypted_data).await?;
+    ) -> VcxResult<(AriesMessage, Option<String>)>
+        where
+            T: AsRef<W> + Send + Sync,
+            W: BaseWallet + Send + Sync,
+    {
+        let wallet_ref = wallet.as_ref();
+        let (message, sender_vk) = Self::anon_unpack(wallet_ref, encrypted_data).await?;
         let a2a_message = serde_json::from_str(&message).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,

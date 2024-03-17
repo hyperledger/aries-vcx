@@ -21,7 +21,7 @@ use super::connection::ServiceConnections;
 use crate::{
     error::*,
     http::VcxHttpClient,
-    storage::{object_cache::AgentStorageInMem, AgentStorage},
+    storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
 };
 
 #[derive(Clone)]

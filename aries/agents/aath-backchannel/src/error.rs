@@ -89,20 +89,6 @@ impl std::convert::From<aries_vcx::aries_vcx_core::errors::error::AriesVcxCoreEr
     }
 }
 
-impl std::convert::From<aries_vcx::agency_client::errors::error::AgencyClientError>
-    for HarnessError
-{
-    fn from(
-        agency_client_error: aries_vcx::agency_client::errors::error::AgencyClientError,
-    ) -> HarnessError {
-        let kind = HarnessErrorType::InternalServerError;
-        HarnessError {
-            message: agency_client_error.to_string(),
-            kind,
-        }
-    }
-}
-
 impl std::convert::From<serde_json::Error> for HarnessError {
     fn from(serde_err: serde_json::Error) -> HarnessError {
         let kind = HarnessErrorType::InternalServerError;

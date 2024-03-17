@@ -31,12 +31,12 @@ use did_resolver_sov::did_resolver::did_doc::schema::did_doc::DidDocument;
 use super::connection::ServiceEndpoint;
 use crate::{
     http::VcxHttpClient,
-    storage::{object_cache::AgentStorageInMem, AgentStorage},
+    storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
     AgentError, AgentErrorKind, AgentResult,
 };
 
 // todo: break down into requester and responder services?
-pub struct ServiceDidExchange<T> {
+pub struct DidcommHandlerDidExchange<T> {
     wallet: Arc<T>,
     resolver_registry: Arc<ResolverRegistry>,
     service_endpoint: ServiceEndpoint,
@@ -44,7 +44,7 @@ pub struct ServiceDidExchange<T> {
     public_did: String,
 }
 
-impl<T: BaseWallet> ServiceDidExchange<T> {
+impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
     pub fn new(
         wallet: Arc<T>,
         resolver_registry: Arc<ResolverRegistry>,
@@ -60,7 +60,7 @@ impl<T: BaseWallet> ServiceDidExchange<T> {
         }
     }
 
-    pub async fn send_request(
+    pub async fn handle_msg_invitation(
         &self,
         their_did: String,
         invitation_id: Option<String>,
@@ -135,7 +135,7 @@ impl<T: BaseWallet> ServiceDidExchange<T> {
 
     // todo: whether invitation exists should handle the framework based on (p)thread matching
     //       rather than being supplied by upper layers
-    pub async fn process_request(
+    pub async fn handle_msg_request(
         &self,
         request: Request,
         invitation: Option<OobInvitation>,
@@ -230,7 +230,7 @@ impl<T: BaseWallet> ServiceDidExchange<T> {
     }
 
     // todo: break down into "process_response" and "send_complete"
-    pub async fn send_complete(&self, response: Response) -> AgentResult<String> {
+    pub async fn handle_msg_response(&self, response: Response) -> AgentResult<String> {
         let thid = response.decorators.thread.thid.clone();
 
         let (requester, _) = self.did_exchange.get(&thid)?;
@@ -254,7 +254,7 @@ impl<T: BaseWallet> ServiceDidExchange<T> {
         Ok(thid)
     }
 
-    pub fn receive_complete(&self, complete: Complete) -> AgentResult<String> {
+    pub fn handle_msg_complete(&self, complete: Complete) -> AgentResult<String> {
         let thread_id = complete.decorators.thread.thid.clone();
         let (requester, _) = self.did_exchange.get(&thread_id)?;
         let requester = requester.handle_complete(complete)?;
@@ -280,9 +280,6 @@ impl<T: BaseWallet> ServiceDidExchange<T> {
         self.public_did.as_ref()
     }
 
-    // TODO: this 'thread_or_pthread' ugliness exists because in case of inviter, AATH identifies
-    //       the instance of protocol by thid, but for invitee, it expects identification by pthid
-    //       Created issue https://github.com/hyperledger/aries-agent-test-harness/issues/784
     pub fn get_state(&self, thid: &str) -> AgentResult<ThinState> {
         let (protocol, _) = self.did_exchange.get(thid)?;
         Ok(protocol.get_state())

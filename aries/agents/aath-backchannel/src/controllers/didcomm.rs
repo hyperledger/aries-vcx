@@ -202,14 +202,14 @@ impl HarnessAgent {
                 let res = self
                     .aries_agent
                     .did_exchange()
-                    .send_complete(response)
+                    .handle_msg_response(response)
                     .await;
                 if let Err(err) = res {
                     error!("Error sending complete: {:?}", err);
                 };
             }
             DidExchange::Complete(complete) => {
-                self.aries_agent.did_exchange().receive_complete(complete)?;
+                self.aries_agent.did_exchange().handle_msg_complete(complete)?;
             }
             DidExchange::ProblemReport(problem_report) => {
                 self.aries_agent

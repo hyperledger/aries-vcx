@@ -21,7 +21,7 @@ use url::Url;
 use crate::{
     error::*,
     http::VcxHttpClient,
-    storage::{object_cache::AgentStorageInMem, AgentStorage},
+    storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
 };
 
 pub type ServiceEndpoint = Url;
@@ -186,7 +186,7 @@ impl<T: BaseWallet> ServiceConnections<T> {
         Ok(self.connections.get(thread_id)?.state())
     }
 
-    pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<GenericConnection> {
+    pub(in crate::handlers) fn get_by_id(&self, thread_id: &str) -> AgentResult<GenericConnection> {
         self.connections.get(thread_id)
     }
 

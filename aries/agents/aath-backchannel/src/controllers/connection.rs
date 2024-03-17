@@ -7,6 +7,7 @@ use aries_vcx_agent::aries_vcx::messages::msg_fields::protocols::connection::inv
 use aries_vcx_agent::aries_vcx::messages::msg_fields::protocols::notification::ack::Ack;
 use aries_vcx_agent::aries_vcx::protocols::connection::{State as ConnectionState, ThinState};
 use std::sync::RwLock;
+use aries_vcx_agent::aries_vcx::aries_vcx_core::wallet::base_wallet::BaseWallet;
 
 #[allow(dead_code)]
 #[derive(Deserialize, Default)]
@@ -98,12 +99,12 @@ impl HarnessAgent {
 }
 
 #[post("/create-invitation")]
-pub async fn create_invitation(agent: web::Data<RwLock<HarnessAgent>>) -> impl Responder {
+pub async fn create_invitation<W: BaseWallet>(agent: web::Data<RwLock<HarnessAgent>>) -> impl Responder {
     agent.read().unwrap().create_connection_invitation().await
 }
 
 #[post("/receive-invitation")]
-pub async fn receive_invitation(
+pub async fn receive_invitation<W: BaseWallet>(
     req: web::Json<Request<Option<Invitation>>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {

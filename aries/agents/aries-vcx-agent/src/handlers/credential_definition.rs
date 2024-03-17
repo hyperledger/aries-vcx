@@ -10,7 +10,7 @@ use aries_vcx_core::{
 
 use crate::{
     error::*,
-    storage::{object_cache::AgentStorageInMem, AgentStorage},
+    storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
 };
 
 pub struct ServiceCredentialDefinitions<T> {
