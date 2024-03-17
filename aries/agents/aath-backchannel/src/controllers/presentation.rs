@@ -1,19 +1,26 @@
-use crate::controllers::Request;
-use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use crate::soft_assert_eq;
-use crate::{HarnessAgent, State};
+use std::{collections::HashMap, sync::RwLock};
+
 use actix_web::{get, post, web, Responder};
-use aries_vcx_agent::aries_vcx::handlers::util::PresentationProposalData;
-use aries_vcx_agent::aries_vcx::messages::msg_fields::protocols::present_proof::v1::propose::{
-    Predicate, PresentationAttr,
+use anoncreds_types::data_types::messages::pres_request::{
+    AttributeInfo, NonRevokedInterval, PredicateInfo, PresentationRequestPayload,
 };
-use aries_vcx_agent::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-use aries_vcx_agent::aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-use aries_vcx_agent::aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-use std::collections::HashMap;
-use std::sync::RwLock;
-use anoncreds_types::data_types::messages::pres_request::{AttributeInfo, NonRevokedInterval, PredicateInfo, PresentationRequestPayload};
-use aries_vcx_agent::aries_vcx::aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_agent::aries_vcx::{
+    aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds,
+    handlers::util::PresentationProposalData,
+    messages::msg_fields::protocols::present_proof::v1::propose::{Predicate, PresentationAttr},
+    protocols::proof_presentation::{
+        prover::state_machine::ProverState,
+        verifier::{
+            state_machine::VerifierState, verification_status::PresentationVerificationStatus,
+        },
+    },
+};
+
+use crate::{
+    controllers::Request,
+    error::{HarnessError, HarnessErrorType, HarnessResult},
+    soft_assert_eq, HarnessAgent, State,
+};
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct PresentationRequestWrapper {
@@ -99,11 +106,7 @@ impl HarnessAgent {
         let id = self
             .aries_agent
             .verifier()
-            .send_proof_request(
-                &presentation_request.connection_id,
-                request.into(),
-                None,
-            )
+            .send_proof_request(&presentation_request.connection_id, request.into(), None)
             .await?;
         let state = self.aries_agent.verifier().get_state(&id)?;
         Ok(json!({ "state": to_backchannel_state_verifier(state), "thread_id": id }).to_string())

@@ -1,7 +1,8 @@
-use crate::error::HarnessResult;
-use crate::HarnessAgent;
-use actix_web::{get, web, HttpResponse, Responder};
 use std::sync::RwLock;
+
+use actix_web::{get, web, HttpResponse, Responder};
+
+use crate::{error::HarnessResult, HarnessAgent};
 
 impl HarnessAgent {
     pub fn get_status_json(&self) -> HarnessResult<String> {

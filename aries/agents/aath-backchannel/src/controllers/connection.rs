@@ -1,12 +1,17 @@
-use crate::controllers::Request;
-use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use crate::{soft_assert_eq, HarnessAgent, State};
-use actix_web::{get, post, web, Responder};
-use aries_vcx_agent::aries_vcx::handlers::util::AnyInvitation;
-use aries_vcx_agent::aries_vcx::messages::msg_fields::protocols::connection::invitation::Invitation;
-use aries_vcx_agent::aries_vcx::messages::msg_fields::protocols::notification::ack::Ack;
-use aries_vcx_agent::aries_vcx::protocols::connection::{State as ConnectionState, ThinState};
 use std::sync::RwLock;
+
+use actix_web::{get, post, web, Responder};
+use aries_vcx_agent::aries_vcx::{
+    handlers::util::AnyInvitation,
+    messages::msg_fields::protocols::{connection::invitation::Invitation, notification::ack::Ack},
+    protocols::connection::{State as ConnectionState, ThinState},
+};
+
+use crate::{
+    controllers::Request,
+    error::{HarnessError, HarnessErrorType, HarnessResult},
+    soft_assert_eq, HarnessAgent, State,
+};
 
 #[allow(dead_code)]
 #[derive(Deserialize, Default)]
@@ -44,10 +49,7 @@ impl HarnessAgent {
         Ok(json!({ "connection_id": id, "invitation": invitation }).to_string())
     }
 
-    pub async fn receive_connection_invitation(
-        &self,
-        invite: Invitation,
-    ) -> HarnessResult<String> {
+    pub async fn receive_connection_invitation(&self, invite: Invitation) -> HarnessResult<String> {
         let id = self
             .aries_agent
             .connections()

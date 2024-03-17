@@ -1,7 +1,9 @@
 use actix_web::{error, http::StatusCode, HttpResponse, HttpResponseBuilder};
-use aries_vcx_agent::aries_vcx::messages::error::MsgTypeError;
-use aries_vcx_agent::{AgentError, aries_vcx};
-use aries_vcx_agent::aries_vcx::did_parser::ParseError;
+use aries_vcx_agent::{
+    aries_vcx,
+    aries_vcx::{did_parser::ParseError, messages::error::MsgTypeError},
+    AgentError,
+};
 use derive_more::{Display, Error};
 
 pub type HarnessResult<T> = Result<T, HarnessError>;

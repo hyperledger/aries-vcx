@@ -1,11 +1,11 @@
-use std::io::prelude::*;
-use std::sync::Arc;
+use std::{io::prelude::*, sync::Arc};
 
-use rand::{Rng, thread_rng};
+use aries_vcx_agent::{
+    aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet, build_indy_wallet, Agent as AriesAgent,
+    WalletInitConfig,
+};
+use rand::{thread_rng, Rng};
 use reqwest::Url;
-
-use aries_vcx_agent::{Agent as AriesAgent, build_indy_wallet, WalletInitConfig};
-use aries_vcx_agent::aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet;
 
 #[derive(Debug, Deserialize)]
 struct SeedResponse {
@@ -21,7 +21,7 @@ async fn get_trustee_seed() -> String {
             "role": "TRUST_ANCHOR",
             "seed": format!("my_seed_000000000000000000{}", rng.gen_range(100000..1000000))
         })
-            .to_string();
+        .to_string();
         client
             .post(&url)
             .body(body)
@@ -104,18 +104,18 @@ pub async fn initialize(port: u32) -> AriesAgent<IndySdkWallet> {
         genesis_path.clone(),
         wallet.clone(),
         service_endpoint.clone(),
-        trustee_config.institution_did.parse().unwrap()
+        trustee_config.institution_did.parse().unwrap(),
     )
-        .await
-        .unwrap();
+    .await
+    .unwrap();
 
     let agent = AriesAgent::initialize(
         genesis_path,
         wallet.clone(),
         service_endpoint.clone(),
-        issuer_did
+        issuer_did,
     )
-        .await
-        .unwrap();
+    .await
+    .unwrap();
     agent
 }

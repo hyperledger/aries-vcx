@@ -1,17 +1,15 @@
-use crate::controllers::Request;
-use crate::error::HarnessResult;
-use crate::HarnessAgent;
+use std::sync::RwLock;
 
 use actix_web::{get, post, web, Responder};
 
-use std::sync::RwLock;
+use crate::{controllers::Request, error::HarnessResult, HarnessAgent};
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct CredentialRevocationData {
     cred_rev_id: String,
     rev_registry_id: String,
     publish_immediately: bool,
-    notify_connection_id: String
+    notify_connection_id: String,
 }
 
 impl HarnessAgent {
@@ -25,9 +23,15 @@ impl HarnessAgent {
             publish_immediately,
             ..
         } = revocation_data;
-        self.aries_agent.rev_regs().revoke_credential_locally(rev_registry_id, cred_rev_id).await?;
+        self.aries_agent
+            .rev_regs()
+            .revoke_credential_locally(rev_registry_id, cred_rev_id)
+            .await?;
         if *publish_immediately {
-            self.aries_agent.rev_regs().publish_local_revocations(rev_registry_id).await?;
+            self.aries_agent
+                .rev_regs()
+                .publish_local_revocations(rev_registry_id)
+                .await?;
         };
         Ok("".to_string())
     }
@@ -44,11 +48,7 @@ pub async fn revoke_credential(
     agent: web::Data<RwLock<HarnessAgent>>,
     req: web::Json<Request<CredentialRevocationData>>,
 ) -> impl Responder {
-    agent
-        .read()
-        .unwrap()
-        .revoke_credential(&req.data)
-        .await
+    agent.read().unwrap().revoke_credential(&req.data).await
 }
 
 #[get("/{cred_id}")]
@@ -63,6 +63,8 @@ pub async fn get_rev_reg_info_for_credential(
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::scope("/response/revocation-registry").service(get_rev_reg_info_for_credential))
-        .service(web::scope("/command/revocation").service(revoke_credential));
+    cfg.service(
+        web::scope("/response/revocation-registry").service(get_rev_reg_info_for_credential),
+    )
+    .service(web::scope("/command/revocation").service(revoke_credential));
 }

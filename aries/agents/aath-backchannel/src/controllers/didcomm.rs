@@ -1,19 +1,24 @@
-use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
-use crate::HarnessAgent;
+use std::sync::RwLock;
+
 use actix_web::{web, HttpResponse, Responder};
-use aries_vcx_agent::aries_vcx::messages::msg_fields::protocols::did_exchange::DidExchange;
-use aries_vcx_agent::aries_vcx::messages::AriesMessage;
 use aries_vcx_agent::aries_vcx::{
-    messages::msg_fields::protocols::{
-        connection::Connection, cred_issuance::CredentialIssuance, present_proof::PresentProof,
+    messages::{
+        msg_fields::protocols::{
+            connection::Connection,
+            cred_issuance::{v1::CredentialIssuanceV1, CredentialIssuance},
+            did_exchange::DidExchange,
+            notification::Notification,
+            present_proof::{v1::PresentProofV1, PresentProof},
+        },
+        AriesMessage,
     },
     utils::encryption_envelope::EncryptionEnvelope,
 };
 
-use std::sync::RwLock;
-use aries_vcx_agent::aries_vcx::messages::msg_fields::protocols::cred_issuance::v1::CredentialIssuanceV1;
-use aries_vcx_agent::aries_vcx::messages::msg_fields::protocols::notification::Notification;
-use aries_vcx_agent::aries_vcx::messages::msg_fields::protocols::present_proof::v1::PresentProofV1;
+use crate::{
+    error::{HarnessError, HarnessErrorType, HarnessResult},
+    HarnessAgent,
+};
 
 impl HarnessAgent {
     async fn handle_connection_msg(&self, msg: Connection) -> HarnessResult<()> {
@@ -72,7 +77,8 @@ impl HarnessAgent {
     ) -> HarnessResult<()> {
         match msg {
             CredentialIssuance::V1(msg) => {
-                self.handle_issuance_msg_v1(msg, connection_ids, sender_vk).await
+                self.handle_issuance_msg_v1(msg, connection_ids, sender_vk)
+                    .await
             }
             CredentialIssuance::V2(_) => {
                 unimplemented!("V2 issuance is not implemented for aries-vcx aath")
@@ -80,7 +86,7 @@ impl HarnessAgent {
         }
     }
 
-        async fn handle_issuance_msg_v1(
+    async fn handle_issuance_msg_v1(
         &self,
         msg: CredentialIssuanceV1,
         connection_ids: Vec<String>,
@@ -137,7 +143,6 @@ impl HarnessAgent {
         Ok(())
     }
 
-
     async fn handle_presentation_msg(
         &self,
         msg: PresentProof,
@@ -146,7 +151,8 @@ impl HarnessAgent {
     ) -> HarnessResult<()> {
         match msg {
             PresentProof::V1(msg) => {
-                self.handle_presentation_msg_v1(msg, connection_ids, sender_vk).await
+                self.handle_presentation_msg_v1(msg, connection_ids, sender_vk)
+                    .await
             }
             PresentProof::V2(_) => {
                 unimplemented!("V2 issuance is not implemented for aries-vcx aath")
@@ -189,10 +195,7 @@ impl HarnessAgent {
         Ok(())
     }
 
-    async fn handle_did_exchange_msg(
-        &self,
-        msg: DidExchange
-    ) -> HarnessResult<()> {
+    async fn handle_did_exchange_msg(&self, msg: DidExchange) -> HarnessResult<()> {
         match msg {
             DidExchange::Request(request) => {
                 // self.aries_agent.receive_message(request.into());
@@ -209,7 +212,9 @@ impl HarnessAgent {
                 };
             }
             DidExchange::Complete(complete) => {
-                self.aries_agent.did_exchange().handle_msg_complete(complete)?;
+                self.aries_agent
+                    .did_exchange()
+                    .handle_msg_complete(complete)?;
             }
             DidExchange::ProblemReport(problem_report) => {
                 self.aries_agent
@@ -220,10 +225,7 @@ impl HarnessAgent {
         Ok(())
     }
 
-    pub async fn receive_message(
-        &self,
-        payload: Vec<u8>
-    ) -> HarnessResult<HttpResponse> {
+    pub async fn receive_message(&self, payload: Vec<u8>) -> HarnessResult<HttpResponse> {
         let (message, sender_vk) = EncryptionEnvelope::anon_unpack_aries_msg(
             self.aries_agent.wallet().as_ref(),
             payload.clone(),
@@ -241,11 +243,15 @@ impl HarnessAgent {
             AriesMessage::Notification(msg) => {
                 match msg {
                     Notification::Ack(ack) => {
-                        self.aries_agent.connections().process_ack(ack.clone()).await?;
+                        self.aries_agent
+                            .connections()
+                            .process_ack(ack.clone())
+                            .await?;
                     }
                     Notification::ProblemReport(err) => {
                         error!("Received problem report: {:?}", err);
-                        // todo: we should reflect this in the status of connection so aath won't keep polling
+                        // todo: we should reflect this in the status of connection so aath won't
+                        // keep polling
                     }
                 }
             }
@@ -272,9 +278,5 @@ pub async fn receive_message(
     agent: web::Data<RwLock<HarnessAgent>>,
     _msg_buffer: web::Data<RwLock<Vec<AriesMessage>>>,
 ) -> impl Responder {
-    agent
-        .read()
-        .unwrap()
-        .receive_message(req.to_vec())
-        .await
+    agent.read().unwrap().receive_message(req.to_vec()).await
 }

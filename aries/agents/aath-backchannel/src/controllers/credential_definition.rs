@@ -1,15 +1,17 @@
-use actix_web::{get, post, web, Responder};
-use reqwest::multipart;
 use std::sync::RwLock;
-use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 
-use crate::error::{HarnessError, HarnessErrorType, HarnessResult};
+use actix_web::{get, post, web, Responder};
+use anoncreds_types::data_types::identifiers::{
+    cred_def_id::CredentialDefinitionId, schema_id::SchemaId,
+};
 use aries_vcx_agent::aries_vcx::did_parser::Did;
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use reqwest::multipart;
 
-use crate::controllers::Request;
-use crate::soft_assert_eq;
-use crate::HarnessAgent;
+use crate::{
+    controllers::Request,
+    error::{HarnessError, HarnessErrorType, HarnessResult},
+    soft_assert_eq, HarnessAgent,
+};
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct CredentialDefinition {
@@ -57,11 +59,15 @@ impl HarnessAgent {
             .cred_defs()
             .find_by_schema_id(&cred_def.schema_id)?;
         let cred_def_id = if cred_def_ids.is_empty() {
-            let cred_def_id = self.aries_agent.cred_defs().create_cred_def(
-                Did::parse(self.aries_agent.issuer_did())?,
-                SchemaId::new(&cred_def.schema_id)?,
-                cred_def.tag.clone(),
-            ).await?;
+            let cred_def_id = self
+                .aries_agent
+                .cred_defs()
+                .create_cred_def(
+                    Did::parse(self.aries_agent.issuer_did())?,
+                    SchemaId::new(&cred_def.schema_id)?,
+                    cred_def.tag.clone(),
+                )
+                .await?;
             self.aries_agent
                 .cred_defs()
                 .publish_cred_def(&cred_def_id)
