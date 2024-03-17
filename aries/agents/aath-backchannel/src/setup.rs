@@ -109,13 +109,12 @@ pub async fn initialize(port: u32) -> AriesAgent<IndySdkWallet> {
     .await
     .unwrap();
 
-    let agent = AriesAgent::initialize(
+    AriesAgent::initialize(
         genesis_path,
         wallet.clone(),
         service_endpoint.clone(),
         issuer_did,
     )
     .await
-    .unwrap();
-    agent
+    .unwrap()
 }

@@ -1,3 +1,4 @@
+#[allow(clippy::await_holding_lock)]
 mod controllers;
 mod error;
 mod setup;

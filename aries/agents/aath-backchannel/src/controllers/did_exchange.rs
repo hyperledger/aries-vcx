@@ -47,11 +47,11 @@ impl HarnessAgent {
     }
 
     pub async fn store_didcomm_message(&self, msg: AriesMessage) -> HarnessResult<String> {
-        let mut msg_buffer = self.didx_msg_buffer.write().or_else(|_| {
-            Err(HarnessError::from_msg(
+        let mut msg_buffer = self.didx_msg_buffer.write().map_err(|_| {
+            HarnessError::from_msg(
                 HarnessErrorType::InvalidState,
                 "Failed to lock message buffer",
-            ))
+            )
         })?;
         msg_buffer.push(msg);
         Ok(json!({ "status": "ok" }).to_string())
@@ -79,11 +79,11 @@ impl HarnessAgent {
     ) -> HarnessResult<String> {
         let request = {
             debug!("receive_did_exchange_request_resolvable_did >>");
-            let msgs = self.didx_msg_buffer.write().or_else(|_| {
-                Err(HarnessError::from_msg(
+            let msgs = self.didx_msg_buffer.write().map_err(|_| {
+                HarnessError::from_msg(
                     HarnessErrorType::InvalidState,
                     "Failed to lock message buffer",
-                ))
+                )
             })?;
             msgs.first()
                 .ok_or_else(|| {
@@ -122,11 +122,11 @@ impl HarnessAgent {
 
     pub async fn didx_responder_send_did_exchange_response(&self) -> HarnessResult<String> {
         let request = {
-            let mut request_guard = self.didx_msg_buffer.write().or_else(|_| {
-                Err(HarnessError::from_msg(
+            let mut request_guard = self.didx_msg_buffer.write().map_err(|_| {
+                HarnessError::from_msg(
                     HarnessErrorType::InvalidState,
                     "Failed to lock message buffer",
-                ))
+                )
             })?;
             request_guard.pop().ok_or_else(|| {
                 HarnessError::from_msg(
@@ -147,7 +147,7 @@ impl HarnessAgent {
             let (thid, pthid) = self
                 .aries_agent
                 .did_exchange()
-                .handle_msg_request(request.clone().into(), opt_invitation)
+                .handle_msg_request(request.clone(), opt_invitation)
                 .await?;
 
             if let Some(pthid) = pthid {

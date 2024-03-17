@@ -62,7 +62,7 @@ impl HarnessAgent {
                     .accept_response(&thread_id, response)
                     .await?;
             }
-            m @ _ => {
+            m=> {
                 warn!("Received unexpected connection protocol message: {:?}", m);
             }
         };
@@ -136,7 +136,7 @@ impl HarnessAgent {
                     .process_credential(&thread_id, credential)
                     .await?;
             }
-            m @ _ => {
+            m=> {
                 warn!("Received unexpected issuance protocol message: {:?}", m);
             }
         };
@@ -187,7 +187,7 @@ impl HarnessAgent {
                     .verify_presentation(&thread_id, presentation)
                     .await?;
             }
-            m @ _ => {
+            m=> {
                 // todo: use {} display formatter
                 warn!("Received unexpected presentation protocol message: {:?}", m);
             }
@@ -265,7 +265,7 @@ impl HarnessAgent {
                 self.handle_presentation_msg(msg, connection_ids, &sender_vk)
                     .await?
             }
-            m @ _ => {
+            m=> {
                 warn!("Received message of unexpected type: {}", m);
             }
         };
