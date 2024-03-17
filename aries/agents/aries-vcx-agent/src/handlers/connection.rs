@@ -24,12 +24,10 @@ use crate::{
     storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
 };
 
-pub type ServiceEndpoint = Url;
-
 pub struct ServiceConnections<T> {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     wallet: Arc<T>,
-    service_endpoint: ServiceEndpoint,
+    service_endpoint: Url,
     connections: Arc<AgentStorageInMem<GenericConnection>>,
 }
 
@@ -37,7 +35,7 @@ impl<T: BaseWallet> ServiceConnections<T> {
     pub fn new(
         ledger_read: Arc<DefaultIndyLedgerRead>,
         wallet: Arc<T>,
-        service_endpoint: ServiceEndpoint,
+        service_endpoint: Url,
     ) -> Self {
         Self {
             service_endpoint,

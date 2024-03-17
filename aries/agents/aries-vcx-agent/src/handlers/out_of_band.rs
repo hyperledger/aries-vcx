@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use url::Url;
 
 use aries_vcx::{
     handlers::out_of_band::{
@@ -17,7 +18,6 @@ use aries_vcx::{
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 
-use super::connection::ServiceEndpoint;
 use crate::{
     storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
     AgentResult,
@@ -25,12 +25,12 @@ use crate::{
 
 pub struct ServiceOutOfBand<T> {
     wallet: Arc<T>,
-    service_endpoint: ServiceEndpoint,
+    service_endpoint: Url,
     out_of_band: Arc<AgentStorageInMem<GenericOutOfBand>>,
 }
 
 impl<T: BaseWallet> ServiceOutOfBand<T> {
-    pub fn new(wallet: Arc<T>, service_endpoint: ServiceEndpoint) -> Self {
+    pub fn new(wallet: Arc<T>, service_endpoint: Url) -> Self {
         Self {
             wallet,
             service_endpoint,

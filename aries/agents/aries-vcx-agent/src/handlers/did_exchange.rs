@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use url::Url;
 
 use aries_vcx::{
     did_doc::schema::{service::typed::ServiceType, types::uri::Uri},
@@ -28,7 +29,6 @@ use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::did_resolver::did_doc::schema::did_doc::DidDocument;
 
-use super::connection::ServiceEndpoint;
 use crate::{
     http::VcxHttpClient,
     storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
@@ -39,7 +39,7 @@ use crate::{
 pub struct DidcommHandlerDidExchange<T> {
     wallet: Arc<T>,
     resolver_registry: Arc<ResolverRegistry>,
-    service_endpoint: ServiceEndpoint,
+    service_endpoint: Url,
     did_exchange: Arc<AgentStorageInMem<(GenericDidExchange, Option<AriesMessage>)>>,
     public_did: String,
 }
@@ -48,7 +48,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
     pub fn new(
         wallet: Arc<T>,
         resolver_registry: Arc<ResolverRegistry>,
-        service_endpoint: ServiceEndpoint,
+        service_endpoint: Url,
         public_did: String,
     ) -> Self {
         Self {

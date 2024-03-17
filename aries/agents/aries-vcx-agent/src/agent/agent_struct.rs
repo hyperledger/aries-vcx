@@ -16,7 +16,6 @@ use crate::{
     },
 };
 
-#[derive(Clone)]
 pub struct Agent<W> {
     pub(super) issuer_did: String,
     pub(super) ledger_read: Arc<DefaultIndyLedgerRead>,
@@ -34,25 +33,30 @@ pub struct Agent<W> {
     pub(super) out_of_band: Arc<ServiceOutOfBand<W>>,
     pub(super) did_exchange: Arc<DidcommHandlerDidExchange<W>>,
 }
-//
-// trait Agent {
-//     fn ledger_read(&self) -> &DefaultIndyLedgerRead;
-//     fn ledger_write(&self) -> &DefaultIndyLedgerWrite;
-//     fn anoncreds(&self) -> &IndyCredxAnonCreds;
-//     fn wallet(&self) -> &Arc<T>;
-//     fn issuer_did(&self) -> String;
-//     fn connections(&self) -> Arc<ServiceConnections<T>>;
-//     fn out_of_band(&self) -> Arc<ServiceOutOfBand<T>>;
-//     fn did_exchange(&self) -> Arc<DidcommHandlerDidExchange<T>>;
-//     fn schemas(&self) -> Arc<ServiceSchemas<T>>;
-//     fn cred_defs(&self) -> Arc<ServiceCredentialDefinitions<T>>;
-//     fn rev_regs(&self) -> Arc<ServiceRevocationRegistries<T>>;
-//     fn issuer(&self) -> Arc<ServiceCredentialsIssuer<T>>;
-//     fn holder(&self) -> Arc<ServiceCredentialsHolder<T>>;
-//     fn verifier(&self) -> Arc<ServiceVerifier<T>>;
-//     fn prover(&self) -> Arc<ServiceProver<T>>;
-//     fn public_did(&self) -> &str;
-// }
+
+// Note: We do this manually, otherwise compiler is requesting us to implement Clone for generic type W,
+//       which is not in fact needed - W is wrapped in Arc. Underlying W has no reason to be cloned.
+impl <W> Clone for Agent<W> {
+    fn clone(&self) -> Self {
+        Self {
+            issuer_did: self.issuer_did.clone(),
+            ledger_read: self.ledger_read.clone(),
+            ledger_write: self.ledger_write.clone(),
+            anoncreds: self.anoncreds.clone(),
+            wallet: self.wallet.clone(),
+            connections: self.connections.clone(),
+            schemas: self.schemas.clone(),
+            cred_defs: self.cred_defs.clone(),
+            rev_regs: self.rev_regs.clone(),
+            holder: self.holder.clone(),
+            issuer: self.issuer.clone(),
+            verifier: self.verifier.clone(),
+            prover: self.prover.clone(),
+            out_of_band: self.out_of_band.clone(),
+            did_exchange: self.did_exchange.clone(),
+        }
+    }
+}
 
 impl<T: BaseWallet> Agent<T> {
     pub fn ledger_read(&self) -> &DefaultIndyLedgerRead {
