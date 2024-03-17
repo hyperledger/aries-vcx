@@ -12,5 +12,5 @@ Rust crate for parsing [DIDs](https://www.w3.org/TR/did-core/#did-syntax) and [D
 Add the did_parser library as a dependency in your `Cargo.toml` file:
 ```toml
 [dependencies]
-did_parser_nom = { tag = "0.62.0", git = "https://github.com/hyperledger/aries-vcx" }
+did_parser_nom = { tag = "0.63.0", git = "https://github.com/hyperledger/aries-vcx" }
 ```

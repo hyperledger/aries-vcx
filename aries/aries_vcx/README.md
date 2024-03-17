@@ -18,7 +18,7 @@ webservers for VC issuance/verification, didcomm mediator service etc.
 To use `aries_vcx` in your project, you need to add GitHub dependency to your `Cargo.toml`, and best
 define a version through a `tag`:
 ```toml
-aries-vcx = { tag = "0.62.0", git = "https://github.com/hyperledger/aries-vcx" }
+aries-vcx = { tag = "0.63.0", git = "https://github.com/hyperledger/aries-vcx" }
 ```
 It's also advisable to follow these [instructions](TUTORIAL.md) to check your environment is properly configured.
 
