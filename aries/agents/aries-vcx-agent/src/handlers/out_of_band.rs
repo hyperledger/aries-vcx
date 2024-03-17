@@ -16,25 +16,25 @@ use aries_vcx::{
 };
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
+use url::Url;
 
-use super::connection::ServiceEndpoint;
 use crate::{
-    storage::{object_cache::ObjectCache, Storage},
+    storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
     AgentResult,
 };
 
 pub struct ServiceOutOfBand<T> {
     wallet: Arc<T>,
-    service_endpoint: ServiceEndpoint,
-    out_of_band: Arc<ObjectCache<GenericOutOfBand>>,
+    service_endpoint: Url,
+    out_of_band: Arc<AgentStorageInMem<GenericOutOfBand>>,
 }
 
 impl<T: BaseWallet> ServiceOutOfBand<T> {
-    pub fn new(wallet: Arc<T>, service_endpoint: ServiceEndpoint) -> Self {
+    pub fn new(wallet: Arc<T>, service_endpoint: Url) -> Self {
         Self {
             wallet,
             service_endpoint,
-            out_of_band: Arc::new(ObjectCache::new("out-of-band")),
+            out_of_band: Arc::new(AgentStorageInMem::new("out-of-band")),
         }
     }
 

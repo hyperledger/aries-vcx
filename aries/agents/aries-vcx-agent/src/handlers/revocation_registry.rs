@@ -13,7 +13,7 @@ use aries_vcx_core::{
 
 use crate::{
     error::*,
-    storage::{object_cache::ObjectCache, Storage},
+    storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
 };
 
 pub struct ServiceRevocationRegistries<T> {
@@ -22,7 +22,7 @@ pub struct ServiceRevocationRegistries<T> {
     anoncreds: IndyCredxAnonCreds,
     wallet: Arc<T>,
     issuer_did: Did,
-    rev_regs: ObjectCache<RevocationRegistry>,
+    rev_regs: AgentStorageInMem<RevocationRegistry>,
 }
 
 impl<T: BaseWallet> ServiceRevocationRegistries<T> {
@@ -35,7 +35,7 @@ impl<T: BaseWallet> ServiceRevocationRegistries<T> {
     ) -> Self {
         Self {
             issuer_did: Did::parse(issuer_did).unwrap(), // TODO
-            rev_regs: ObjectCache::new("rev-regs"),
+            rev_regs: AgentStorageInMem::new("rev-regs"),
             ledger_write,
             ledger_read,
             anoncreds,

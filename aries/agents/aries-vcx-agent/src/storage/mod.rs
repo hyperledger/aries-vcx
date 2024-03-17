@@ -1,8 +1,8 @@
 use crate::AgentResult;
 
-pub(crate) mod object_cache;
+pub(crate) mod agent_storage_inmem;
 
-pub trait Storage<T> {
+pub trait AgentStorage<T> {
     type Value;
     fn get(&self, id: &str) -> AgentResult<T>;
     fn insert(&self, id: &str, obj: T) -> AgentResult<String>;

@@ -12,7 +12,7 @@ use aries_vcx_core::{
 
 use crate::{
     error::*,
-    storage::{object_cache::ObjectCache, Storage},
+    storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
 };
 
 pub struct ServiceSchemas<T> {
@@ -21,7 +21,7 @@ pub struct ServiceSchemas<T> {
     anoncreds: IndyCredxAnonCreds,
     wallet: Arc<T>,
     issuer_did: Did,
-    schemas: ObjectCache<Schema>,
+    schemas: AgentStorageInMem<Schema>,
 }
 
 impl<T: BaseWallet> ServiceSchemas<T> {
@@ -34,7 +34,7 @@ impl<T: BaseWallet> ServiceSchemas<T> {
     ) -> Self {
         Self {
             issuer_did: Did::parse(issuer_did).unwrap(), // TODO
-            schemas: ObjectCache::new("schemas"),
+            schemas: AgentStorageInMem::new("schemas"),
             ledger_read,
             ledger_write,
             anoncreds,

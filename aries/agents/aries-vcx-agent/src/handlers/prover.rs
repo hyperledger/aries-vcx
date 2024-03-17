@@ -21,7 +21,7 @@ use super::connection::ServiceConnections;
 use crate::{
     error::*,
     http::VcxHttpClient,
-    storage::{object_cache::ObjectCache, Storage},
+    storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
 };
 
 #[derive(Clone)]
@@ -43,7 +43,7 @@ pub struct ServiceProver<T> {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     anoncreds: IndyCredxAnonCreds,
     wallet: Arc<T>,
-    provers: ObjectCache<ProverWrapper>,
+    provers: AgentStorageInMem<ProverWrapper>,
     service_connections: Arc<ServiceConnections<T>>,
 }
 
@@ -56,7 +56,7 @@ impl<T: BaseWallet> ServiceProver<T> {
     ) -> Self {
         Self {
             service_connections,
-            provers: ObjectCache::new("provers"),
+            provers: AgentStorageInMem::new("provers"),
             ledger_read,
             anoncreds,
             wallet,

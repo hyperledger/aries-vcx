@@ -21,27 +21,25 @@ use url::Url;
 use crate::{
     error::*,
     http::VcxHttpClient,
-    storage::{object_cache::ObjectCache, Storage},
+    storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
 };
-
-pub type ServiceEndpoint = Url;
 
 pub struct ServiceConnections<T> {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     wallet: Arc<T>,
-    service_endpoint: ServiceEndpoint,
-    connections: Arc<ObjectCache<GenericConnection>>,
+    service_endpoint: Url,
+    connections: Arc<AgentStorageInMem<GenericConnection>>,
 }
 
 impl<T: BaseWallet> ServiceConnections<T> {
     pub fn new(
         ledger_read: Arc<DefaultIndyLedgerRead>,
         wallet: Arc<T>,
-        service_endpoint: ServiceEndpoint,
+        service_endpoint: Url,
     ) -> Self {
         Self {
             service_endpoint,
-            connections: Arc::new(ObjectCache::new("connections")),
+            connections: Arc::new(AgentStorageInMem::new("connections")),
             ledger_read,
             wallet,
         }
@@ -186,7 +184,7 @@ impl<T: BaseWallet> ServiceConnections<T> {
         Ok(self.connections.get(thread_id)?.state())
     }
 
-    pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<GenericConnection> {
+    pub(in crate::handlers) fn get_by_id(&self, thread_id: &str) -> AgentResult<GenericConnection> {
         self.connections.get(thread_id)
     }
 

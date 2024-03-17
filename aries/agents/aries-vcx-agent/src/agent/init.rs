@@ -6,14 +6,15 @@ use aries_vcx::{
         transactions::{add_new_did, write_endpoint},
     },
     did_doc::schema::service::typed::ServiceType,
+    did_parser::Did,
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
 };
 use aries_vcx_core::{
     self,
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
-    ledger::indy_vdr_ledger::DefaultIndyLedgerRead,
+    ledger::indy_vdr_ledger::{build_ledger_components, DefaultIndyLedgerRead, VcxPoolConfig},
     wallet::{
-        base_wallet::{BaseWallet, ManageWallet},
+        base_wallet::{issuer_config::IssuerConfig, BaseWallet, ManageWallet},
         indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
     },
 };
@@ -22,20 +23,16 @@ use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::resolution::DidSovResolver;
 use display_as_json::Display;
 use serde::Serialize;
+use url::Url;
 
 use crate::{
-    agent::{agent_config::AgentConfig, agent_struct::Agent},
+    agent::agent_struct::Agent,
     error::AgentResult,
-    services::{
-        connection::{ServiceConnections, ServiceEndpoint},
-        credential_definition::ServiceCredentialDefinitions,
-        did_exchange::ServiceDidExchange,
-        holder::ServiceCredentialsHolder,
-        issuer::ServiceCredentialsIssuer,
-        out_of_band::ServiceOutOfBand,
-        prover::ServiceProver,
-        revocation_registry::ServiceRevocationRegistries,
-        schema::ServiceSchemas,
+    handlers::{
+        connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
+        did_exchange::DidcommHandlerDidExchange, holder::ServiceCredentialsHolder,
+        issuer::ServiceCredentialsIssuer, out_of_band::ServiceOutOfBand, prover::ServiceProver,
+        revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
         verifier::ServiceVerifier,
     },
 };
@@ -47,46 +44,69 @@ pub struct WalletInitConfig {
     pub wallet_kdf: String,
 }
 
-#[derive(Serialize, Display)]
-pub struct PoolInitConfig {
-    pub genesis_path: String,
-    pub pool_name: String,
-}
-#[derive(Serialize, Display)]
-pub struct InitConfig {
-    pub enterprise_seed: String,
-    pub pool_config: PoolInitConfig,
-    pub wallet_config: WalletInitConfig,
-    pub service_endpoint: ServiceEndpoint,
+pub async fn build_indy_wallet(
+    wallet_config: WalletInitConfig,
+    isser_seed: String,
+) -> (IndySdkWallet, IssuerConfig) {
+    let config_wallet = IndyWalletConfig {
+        wallet_name: wallet_config.wallet_name,
+        wallet_key: wallet_config.wallet_key,
+        wallet_key_derivation: wallet_config.wallet_kdf,
+        wallet_type: None,
+        storage_config: None,
+        storage_credentials: None,
+        rekey: None,
+        rekey_derivation_method: None,
+    };
+    let wallet = config_wallet.create_wallet().await.unwrap();
+    let config_issuer = wallet.configure_issuer(&isser_seed).await.unwrap();
+
+    let anoncreds = IndyCredxAnonCreds;
+    anoncreds
+        .prover_create_link_secret(&wallet, &DEFAULT_LINK_SECRET_ALIAS.to_string())
+        .await
+        .unwrap();
+
+    (wallet, config_issuer)
 }
 
-impl Agent<IndySdkWallet> {
-    pub async fn initialize(init_config: InitConfig) -> AgentResult<Self> {
-        let config_wallet = IndyWalletConfig {
-            wallet_name: init_config.wallet_config.wallet_name,
-            wallet_key: init_config.wallet_config.wallet_key,
-            wallet_key_derivation: init_config.wallet_config.wallet_kdf,
-            wallet_type: None,
-            storage_config: None,
-            storage_credentials: None,
-            rekey: None,
-            rekey_derivation_method: None,
+impl<W: BaseWallet> Agent<W> {
+    pub async fn setup_ledger(
+        genesis_path: String,
+        wallet: Arc<W>,
+        service_endpoint: Url,
+        submiter_did: Did,
+    ) -> AgentResult<Did> {
+        let vcx_pool_config = VcxPoolConfig {
+            indy_vdr_config: None,
+            response_cache_config: None,
+            genesis_file_path: genesis_path,
         };
+        let (_, ledger_write) = build_ledger_components(vcx_pool_config.clone()).unwrap();
+        let (public_did, _verkey) =
+            add_new_did(wallet.as_ref(), &ledger_write, &submiter_did, None).await?;
+        let endpoint = EndpointDidSov::create()
+            .set_service_endpoint(service_endpoint.clone())
+            .set_types(Some(vec![ServiceType::DIDCommV1.to_string()]));
+        write_endpoint(wallet.as_ref(), &ledger_write, &public_did, &endpoint).await?;
+        info!(
+            "Agent::setup_ledger >> wrote data on ledger, public_did: {}, endpoint: {}",
+            public_did, service_endpoint
+        );
+        Ok(public_did)
+    }
 
-        config_wallet.create_wallet().await.unwrap();
-        let wallet = Arc::new(config_wallet.open_wallet().await.unwrap());
-        let config_issuer = wallet
-            .configure_issuer(&init_config.enterprise_seed)
-            .await
-            .unwrap();
-
-        use aries_vcx_core::ledger::indy_vdr_ledger::{build_ledger_components, VcxPoolConfig};
-
+    pub async fn initialize(
+        genesis_path: String,
+        wallet: Arc<W>,
+        service_endpoint: Url,
+        issuer_did: Did,
+    ) -> AgentResult<Agent<W>> {
         info!("dev_build_profile_modular >>");
         let vcx_pool_config = VcxPoolConfig {
             indy_vdr_config: None,
             response_cache_config: None,
-            genesis_file_path: init_config.pool_config.genesis_path,
+            genesis_file_path: genesis_path,
         };
 
         let anoncreds = IndyCredxAnonCreds;
@@ -94,31 +114,6 @@ impl Agent<IndySdkWallet> {
 
         let ledger_read = Arc::new(ledger_read);
         let ledger_write = Arc::new(ledger_write);
-
-        anoncreds
-            .prover_create_link_secret(wallet.as_ref(), &DEFAULT_LINK_SECRET_ALIAS.to_string())
-            .await
-            .unwrap();
-
-        // TODO: This setup should be easier
-        // The default issuer did can't be used - its verkey is not in base58 - TODO: double-check
-        let (public_did, _verkey) = add_new_did(
-            wallet.as_ref(),
-            ledger_write.as_ref(),
-            &config_issuer.institution_did.parse()?,
-            None,
-        )
-        .await?;
-        let endpoint = EndpointDidSov::create()
-            .set_service_endpoint(init_config.service_endpoint.clone())
-            .set_types(Some(vec![ServiceType::DIDCommV1.to_string()]));
-        write_endpoint(
-            wallet.as_ref(),
-            ledger_write.as_ref(),
-            &public_did,
-            &endpoint,
-        )
-        .await?;
 
         let did_peer_resolver = PeerDidResolver::new();
         let did_sov_resolver: DidSovResolver<Arc<DefaultIndyLedgerRead>, DefaultIndyLedgerRead> =
@@ -132,24 +127,21 @@ impl Agent<IndySdkWallet> {
         let connections = Arc::new(ServiceConnections::new(
             ledger_read.clone(),
             wallet.clone(),
-            init_config.service_endpoint.clone(),
+            service_endpoint.clone(),
         ));
-        let did_exchange = Arc::new(ServiceDidExchange::new(
+        let did_exchange = Arc::new(DidcommHandlerDidExchange::new(
             wallet.clone(),
             did_resolver_registry,
-            init_config.service_endpoint.clone(),
-            public_did.to_string(),
+            service_endpoint.clone(),
+            issuer_did.to_string(),
         ));
-        let out_of_band = Arc::new(ServiceOutOfBand::new(
-            wallet.clone(),
-            init_config.service_endpoint,
-        ));
+        let out_of_band = Arc::new(ServiceOutOfBand::new(wallet.clone(), service_endpoint));
         let schemas = Arc::new(ServiceSchemas::new(
             ledger_read.clone(),
             ledger_write.clone(),
             anoncreds,
             wallet.clone(),
-            config_issuer.institution_did.clone(),
+            issuer_did.to_string(),
         ));
         let cred_defs = Arc::new(ServiceCredentialDefinitions::new(
             ledger_read.clone(),
@@ -162,7 +154,7 @@ impl Agent<IndySdkWallet> {
             ledger_read.clone(),
             anoncreds,
             wallet.clone(),
-            config_issuer.institution_did.clone(),
+            issuer_did.to_string(),
         ));
         let issuer = Arc::new(ServiceCredentialsIssuer::new(
             anoncreds,
@@ -203,10 +195,7 @@ impl Agent<IndySdkWallet> {
             holder,
             verifier,
             prover,
-            config: AgentConfig {
-                config_wallet,
-                config_issuer,
-            },
+            issuer_did: issuer_did.to_string(),
         })
     }
 }

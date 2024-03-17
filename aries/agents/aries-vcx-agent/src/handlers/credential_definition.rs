@@ -10,7 +10,7 @@ use aries_vcx_core::{
 
 use crate::{
     error::*,
-    storage::{object_cache::ObjectCache, Storage},
+    storage::{agent_storage_inmem::AgentStorageInMem, AgentStorage},
 };
 
 pub struct ServiceCredentialDefinitions<T> {
@@ -18,7 +18,7 @@ pub struct ServiceCredentialDefinitions<T> {
     ledger_write: Arc<DefaultIndyLedgerWrite>,
     anoncreds: IndyCredxAnonCreds,
     wallet: Arc<T>,
-    cred_defs: ObjectCache<CredentialDef>,
+    cred_defs: AgentStorageInMem<CredentialDef>,
 }
 
 impl<T: BaseWallet> ServiceCredentialDefinitions<T> {
@@ -29,7 +29,7 @@ impl<T: BaseWallet> ServiceCredentialDefinitions<T> {
         wallet: Arc<T>,
     ) -> Self {
         Self {
-            cred_defs: ObjectCache::new("cred-defs"),
+            cred_defs: AgentStorageInMem::new("cred-defs"),
             ledger_read,
             ledger_write,
             anoncreds,

@@ -6,34 +6,55 @@ use aries_vcx_core::{
     wallet::base_wallet::BaseWallet,
 };
 
-use crate::{
-    agent::agent_config::AgentConfig,
-    services::{
-        connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
-        did_exchange::ServiceDidExchange, holder::ServiceCredentialsHolder,
-        issuer::ServiceCredentialsIssuer, out_of_band::ServiceOutOfBand, prover::ServiceProver,
-        revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
-        verifier::ServiceVerifier,
-    },
+use crate::handlers::{
+    connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
+    did_exchange::DidcommHandlerDidExchange, holder::ServiceCredentialsHolder,
+    issuer::ServiceCredentialsIssuer, out_of_band::ServiceOutOfBand, prover::ServiceProver,
+    revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
+    verifier::ServiceVerifier,
 };
 
-#[derive(Clone)]
-pub struct Agent<T> {
+pub struct Agent<W> {
+    pub(super) issuer_did: String,
     pub(super) ledger_read: Arc<DefaultIndyLedgerRead>,
     pub(super) ledger_write: Arc<DefaultIndyLedgerWrite>,
     pub(super) anoncreds: IndyCredxAnonCreds,
-    pub(super) wallet: Arc<T>,
-    pub(super) config: AgentConfig,
-    pub(super) connections: Arc<ServiceConnections<T>>,
-    pub(super) schemas: Arc<ServiceSchemas<T>>,
-    pub(super) cred_defs: Arc<ServiceCredentialDefinitions<T>>,
-    pub(super) rev_regs: Arc<ServiceRevocationRegistries<T>>,
-    pub(super) holder: Arc<ServiceCredentialsHolder<T>>,
-    pub(super) issuer: Arc<ServiceCredentialsIssuer<T>>,
-    pub(super) verifier: Arc<ServiceVerifier<T>>,
-    pub(super) prover: Arc<ServiceProver<T>>,
-    pub(super) out_of_band: Arc<ServiceOutOfBand<T>>,
-    pub(super) did_exchange: Arc<ServiceDidExchange<T>>,
+    pub(super) wallet: Arc<W>,
+    pub(super) connections: Arc<ServiceConnections<W>>,
+    pub(super) schemas: Arc<ServiceSchemas<W>>,
+    pub(super) cred_defs: Arc<ServiceCredentialDefinitions<W>>,
+    pub(super) rev_regs: Arc<ServiceRevocationRegistries<W>>,
+    pub(super) holder: Arc<ServiceCredentialsHolder<W>>,
+    pub(super) issuer: Arc<ServiceCredentialsIssuer<W>>,
+    pub(super) verifier: Arc<ServiceVerifier<W>>,
+    pub(super) prover: Arc<ServiceProver<W>>,
+    pub(super) out_of_band: Arc<ServiceOutOfBand<W>>,
+    pub(super) did_exchange: Arc<DidcommHandlerDidExchange<W>>,
+}
+
+// Note: We do this manually, otherwise compiler is requesting us to implement Clone for generic
+// type W,       which is not in fact needed - W is wrapped in Arc. Underlying W has no reason to be
+// cloned.
+impl<W> Clone for Agent<W> {
+    fn clone(&self) -> Self {
+        Self {
+            issuer_did: self.issuer_did.clone(),
+            ledger_read: self.ledger_read.clone(),
+            ledger_write: self.ledger_write.clone(),
+            anoncreds: self.anoncreds,
+            wallet: self.wallet.clone(),
+            connections: self.connections.clone(),
+            schemas: self.schemas.clone(),
+            cred_defs: self.cred_defs.clone(),
+            rev_regs: self.rev_regs.clone(),
+            holder: self.holder.clone(),
+            issuer: self.issuer.clone(),
+            verifier: self.verifier.clone(),
+            prover: self.prover.clone(),
+            out_of_band: self.out_of_band.clone(),
+            did_exchange: self.did_exchange.clone(),
+        }
+    }
 }
 
 impl<T: BaseWallet> Agent<T> {
@@ -49,16 +70,12 @@ impl<T: BaseWallet> Agent<T> {
         &self.anoncreds
     }
 
-    pub fn wallet(&self) -> &Arc<T> {
-        &self.wallet
-    }
-
-    pub fn agent_config(&self) -> AgentConfig {
-        self.config.clone()
+    pub fn wallet(&self) -> Arc<T> {
+        self.wallet.clone()
     }
 
     pub fn issuer_did(&self) -> String {
-        self.config.config_issuer.institution_did.clone()
+        self.issuer_did.clone()
     }
 
     pub fn connections(&self) -> Arc<ServiceConnections<T>> {
@@ -69,7 +86,7 @@ impl<T: BaseWallet> Agent<T> {
         self.out_of_band.clone()
     }
 
-    pub fn did_exchange(&self) -> Arc<ServiceDidExchange<T>> {
+    pub fn did_exchange(&self) -> Arc<DidcommHandlerDidExchange<T>> {
         self.did_exchange.clone()
     }
 
