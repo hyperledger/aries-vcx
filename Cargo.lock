@@ -1820,6 +1820,7 @@ dependencies = [
 name = "did_parser_nom"
 version = "0.1.0"
 dependencies = [
+ "env_logger 0.10.0",
  "log",
  "nom",
  "serde",

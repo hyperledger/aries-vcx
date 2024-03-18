@@ -22,9 +22,6 @@ use crate::{
 };
 
 pub mod encoded_document;
-mod encoding;
-mod helpers;
-mod verification_method;
 
 // // The document MUST NOT include an id at the root. For DID Documents, this is populated with the
 // DID itself. Since we are in the process of generating a DID, we do not yet know the value of the
@@ -102,75 +99,6 @@ mod tests {
             .build()
             .unwrap();
         let did = PeerDid::<Numalgo4>::new(encoded_document).unwrap();
-        assert_eq!(did.to_string(), "did:peer:4<hash>:Ez6MkkukgyKAdBN46UAHvia2nxmioo74F6YdvW1nBT1wfKKha.Vz6MkfoapUdLHHgSMq5PYhdHYCoqGuRku2i17cQ9zAoR5cLSm.SeyJpZCI6IiNmb29iYXIiLCJ0IjpbImRpZC1jb21tdW5pY2F0aW9uIl0sInMiOiJodHRwOi8vZHVtbXl1cmwub3JnLyIsInIiOlsiIzZNa2t1a2d5Il0sImEiOlsiZGlkY29tbS9haXAyO2Vudj1yZmMxOSJdfQ");
+        assert_eq!(did.to_string(), "did:peer:4z84UjLJ6ugExV8TJ5gJUtZap5q67uD34LU26m1Ljo2u9PZ4xHa9XnknHLc3YMST5orPXh3LKi6qEYSHdNSgRMvassKP:z27uFkiqJVwvvn2ke5M19UCvByS79r5NppqwjiGAJzkj1EM4sf2JmiUySkANKy4YNu8M7yKjSmvPJTqbcyhPrJs9TASzDs2fWE1vFegmaRJxHRF5M9wGTPwGR1NbPkLGsvcnXum7aN2f8kX3BnhWWWp");
     }
 }
-
-//
-// #[derive(Clone, Copy, Default, Debug, PartialEq)]
-// pub struct Numalgo4;
-//
-// impl Numalgo for Numalgo4 {
-//     const NUMALGO_CHAR: char = '2';
-// }
-
-// #[cfg(test)]
-// mod test {
-//     use did_doc::schema::did_doc::DidDocument;
-//     use pretty_assertions::assert_eq;
-//     use serde_json::{from_value, json};
-//
-//     use crate::{
-//         peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-//         resolver::options::PublicKeyEncoding,
-//     };
-//
-//     #[test]
-//     fn test_peer_did_2_encode_decode() {
-//         let expected_did_peer =
-// "did:peer:2.Ez6MkkukgyKAdBN46UAHvia2nxmioo74F6YdvW1nBT1wfKKha.
-// Vz6MkfoapUdLHHgSMq5PYhdHYCoqGuRku2i17cQ9zAoR5cLSm.
-// SeyJpZCI6IiNmb29iYXIiLCJ0IjpbImRpZC1jb21tdW5pY2F0aW9uIl0sInMiOiJodHRwOi8vZHVtbXl1cmwub3JnLyIsInIiOlsiIzZNa2t1a2d5Il0sImEiOlsiZGlkY29tbS9haXAyO2Vudj1yZmMxOSJdfQ"
-// ;         let value = json!({
-//             "id": expected_did_peer,
-//             "verificationMethod": [
-//                 {
-//                     "id": "#6MkfoapU",
-//                     "controller": expected_did_peer,
-//                     "type": "Ed25519VerificationKey2020",
-//                     "publicKeyBase58": "2MKmtP5qx8wtiaYr24KhMiHH5rV3cpkkvPF4LXT4h7fP"
-//                 }
-//             ],
-//             "keyAgreement": [
-//                 {
-//                     "id": "#6Mkkukgy",
-//                     "controller": expected_did_peer,
-//                     "type": "Ed25519VerificationKey2020",
-//                     "publicKeyBase58": "7TVeP4vBqpZdMfTE314x7gAoyXnPgfPZozsFcjyeQ6vC"
-//                 }
-//             ],
-//             "service": [
-//                 {
-//                     "id": "#foobar",
-//                     "type": [
-//                         "did-communication"
-//                     ],
-//                     "serviceEndpoint": "http://dummyurl.org/",
-//                     "routingKeys": ["#6Mkkukgy"],
-//                     "accept": [
-//                         "didcomm/aip2;env=rfc19"
-//                     ],
-//                 }
-//             ]
-//         });
-//         let ddo_original: DidDocument = from_value(value).unwrap();
-//         let did_peer: PeerDid<Numalgo2> = PeerDid::from_did_doc(ddo_original.clone()).unwrap();
-//         assert_eq!(did_peer.to_string(), expected_did_peer);
-//
-//         let ddo_decoded: DidDocument = did_peer
-//             .to_did_doc_builder(PublicKeyEncoding::Base58)
-//             .unwrap()
-//             .build();
-//         assert_eq!(ddo_original, ddo_decoded);
-//     }
-// }

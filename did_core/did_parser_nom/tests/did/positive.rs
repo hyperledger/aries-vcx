@@ -1,10 +1,24 @@
+use std::sync::Once;
+
 use did_parser_nom::Did;
+
+static TEST_LOGGING_INIT: Once = Once::new();
+
+pub fn init_logger() {
+    TEST_LOGGING_INIT.call_once(|| {
+        let env = env_logger::Env::default().default_filter_or("info");
+        env_logger::init_from_env(env);
+    })
+}
 
 macro_rules! test_cases_positive {
     ($($name:ident: $input_did:expr, $expected_method:expr, $expected_namespace:expr, $expected_id:expr)*) => {
         $(
             #[test]
             fn $name() {
+                init_logger();
+
+                log::debug!("Testing parsing of {}", $input_did);
                 let parsed_did = Did::parse($input_did.to_string()).unwrap();
 
                 assert_eq!(parsed_did.did(), $input_did, "DID");
