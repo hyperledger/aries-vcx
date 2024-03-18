@@ -5,7 +5,6 @@ macro_rules! test_cases_negative {
         $(
             #[test]
             fn $name() {
-                println!("Testing {}", $input);
                 assert!(DidUrl::parse($input.to_string()).is_err());
             }
         )*

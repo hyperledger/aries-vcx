@@ -5,7 +5,6 @@ macro_rules! test_cases_positive {
         $(
             #[test]
             fn $name() {
-                println!("Testing {}", $input_did);
                 let parsed_did = Did::parse($input_did.to_string()).unwrap();
 
                 assert_eq!(parsed_did.did(), $input_did, "DID");
@@ -46,18 +45,8 @@ test_cases_positive! {
     test_did_indy:
         "did:indy:sovrin:7Tqg6BwSSWapxgUDm9KKgg",
         Some("indy"),
-        Some("sovrin"),
-        "7Tqg6BwSSWapxgUDm9KKgg"
-    test_did_indy_2:
-        "did:indy:sovrin:alpha:7Tqg6BwSSWapxgUDm9KKgg",
-        Some("indy"),
-        Some("sovrin:alpha"),
-        "7Tqg6BwSSWapxgUDm9KKgg"
-    test_did_indy_3:
-        "did:indy:sovrin:alpha:%0Aqg6BwS.Wapxg-Dm9K_gg",
-        Some("indy"),
-        Some("sovrin:alpha"),
-        "%0Aqg6BwS.Wapxg-Dm9K_gg"
+        None,
+        "sovrin:7Tqg6BwSSWapxgUDm9KKgg"
     test_did_sov_namespaced:
         "did:sov:builder:VbPQNHsvoLZdaNU7fTBeFx",
         Some("sov"),

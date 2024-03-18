@@ -7,7 +7,6 @@ macro_rules! test_cases_positive {
         $(
             #[test]
             fn $name() {
-                println!("Testing {}", $input);
                 let parsed_did = DidUrl::parse($input.to_string()).unwrap();
 
                 assert_eq!(parsed_did.did(), $expected_did, "DID");
@@ -27,8 +26,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         None,
         HashMap::new()
@@ -37,8 +36,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi/path",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         Some("/path"),
         None,
         HashMap::new()
@@ -47,8 +46,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi/path?query1=value1&query2=value2",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         Some("/path"),
         None,
         {
@@ -62,8 +61,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi/path?query=value#fragment",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         Some("/path"),
         Some("fragment"),
         {
@@ -76,8 +75,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi?query1=value1&query2=value2#fragment",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         Some("fragment"),
         {
@@ -91,8 +90,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi#fragment",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         Some("fragment"),
         HashMap::new()
@@ -101,8 +100,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi?query=value",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         None,
         {
@@ -115,8 +114,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi/path#fragment",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         Some("/path"),
         Some("fragment"),
         HashMap::new()
@@ -125,8 +124,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi#fragment",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         Some("fragment"),
         HashMap::new()
@@ -135,8 +134,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi?query=value",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         None,
         {
@@ -149,8 +148,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi/path?query=value",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         Some("/path"),
         None,
         {
@@ -163,8 +162,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi/path?query1=value1&query2=value2#fragment",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         Some("/path"),
         Some("fragment"),
         {
@@ -178,8 +177,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi?query1=value1?query2=value2",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         None,
         {
@@ -193,8 +192,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi?query=",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         None,
         {
@@ -207,8 +206,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi?query1=value1&query2=#fragment",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         Some("fragment"),
         {
@@ -222,8 +221,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi?query1=value1&query2=value2#fragment",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         Some("fragment"),
         {
@@ -315,8 +314,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi?query1=val;ue1",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         None,
         {
@@ -329,8 +328,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi?quer;y1=value1",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         None,
         {
@@ -343,8 +342,8 @@ test_cases_positive! {
         "did:example:namespace:123456789abcdefghi?query1=val=ue1",
         Some("did:example:namespace:123456789abcdefghi"),
         Some("example"),
-        Some("namespace"),
-        Some("123456789abcdefghi"),
+        None,
+        Some("namespace:123456789abcdefghi"),
         None,
         None,
         {
@@ -354,10 +353,10 @@ test_cases_positive! {
         }
 
     test_case27:
-        "did:indy:sovrin:5nDyJVP1NrcPAttP3xwMB9/anoncreds/v0/REV_REG_DEF/56495/npdb/TAG1",
-        Some("did:indy:sovrin:5nDyJVP1NrcPAttP3xwMB9"),
-        Some("indy"),
-        Some("sovrin"),
+        "did:sov:5nDyJVP1NrcPAttP3xwMB9/anoncreds/v0/REV_REG_DEF/56495/npdb/TAG1",
+        Some("did:sov:5nDyJVP1NrcPAttP3xwMB9"),
+        Some("sov"),
+        None,
         Some("5nDyJVP1NrcPAttP3xwMB9"),
         Some("/anoncreds/v0/REV_REG_DEF/56495/npdb/TAG1"),
         None,

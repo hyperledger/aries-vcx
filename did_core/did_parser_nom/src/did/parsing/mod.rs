@@ -62,14 +62,15 @@ fn to_did_ranges((did_prefix, method, namespace, id): DidPart) -> DidRanges {
 }
 
 pub fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
-    alt((
+    let res = alt((
         map(parse_did_peer_4, to_did_ranges),
         map(parse_did_web, to_did_ranges),
         map(parse_did_key, to_did_ranges),
         map(parse_qualified_sovrin_did, to_did_ranges),
         map(parse_qualified_did, to_did_ranges),
         map(parse_unqualified_sovrin_did, to_id_range),
-    ))(input)
+    ))(input);
+    res
 }
 
 pub fn parse_did(did: String) -> Result<Did, ParseError> {
