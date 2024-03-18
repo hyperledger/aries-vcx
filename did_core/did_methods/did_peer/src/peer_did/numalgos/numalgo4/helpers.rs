@@ -75,8 +75,8 @@
 //     let decoded = STANDARD_NO_PAD.decode(element)?;
 //     let service: ServiceAbbreviatedDidPeer2 = serde_json::from_slice(&decoded)?;
 //
-//     did_doc_builder = did_doc_builder.add_service(deabbreviate_service(service, *service_index)?);
-//     *service_index += 1;
+//     did_doc_builder = did_doc_builder.add_service(deabbreviate_service(service,
+// *service_index)?);     *service_index += 1;
 //
 //     Ok(did_doc_builder)
 // }
@@ -140,7 +140,8 @@
 //     fn test_process_elements_with_multiple_elements() {
 //         let did: Did =
 //             "did:peer:2.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V.\
-//              SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCJ9"
+//              
+// SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCJ9"
 //                 .parse()
 //                 .unwrap();
 //
@@ -161,7 +162,8 @@
 //     fn test_process_elements_error_on_invalid_element() {
 //         let did: Did =
 //             "did:peer:2.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V.\
-//              SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCJ9.\
+//              
+// SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCJ9.\
 //              Xinvalid"
 //                 .parse()
 //                 .unwrap();

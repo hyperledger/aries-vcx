@@ -53,6 +53,16 @@ impl DidResolvable for PeerDidResolver {
                     .did_resolution_metadata(resolution_metadata);
                 Ok(builder.build())
             }
+            AnyPeerDid::Numalgo4(_peer_did) => {
+                todo!("Resolving peer:did:4 not yet implemented");
+                // let encoding = peer_did
+                // let resolution_metadata = DidResolutionMetadata::builder()
+                //     .content_type("application/did+json".to_string())
+                //     .build();
+                // let builder = DidResolutionOutput::builder(did_doc)
+                //     .did_resolution_metadata(resolution_metadata);
+                // Ok(builder.build())
+            }
             n => Err(Box::new(DidPeerError::UnsupportedNumalgo(n.numalgo()))),
         }
     }

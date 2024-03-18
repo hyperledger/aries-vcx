@@ -13,10 +13,12 @@ pub(super) fn parse_did_web(input: &str) -> IResult<&str, DidPart> {
         delimited(char(':'), tag("web"), char(':'))(input)
     }
 
-    tuple((
+    let (input_left, (prefix, method, namespace, id)) = tuple((
         tag("did"),
         did_web_method,
         opt(fail::<_, &str, _>),
         take_till(|c| "?/#".contains(c)),
-    ))(input)
+    ))(input)?;
+
+    Ok((input_left, (prefix, method, namespace, id)))
 }

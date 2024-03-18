@@ -3,7 +3,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
     character::complete::{alphanumeric1, char, satisfy},
-    combinator::{all_consuming, cut, opt, recognize},
+    combinator::recognize,
     multi::many1,
     sequence::{delimited, tuple},
     AsChar, IResult,
@@ -19,6 +19,11 @@ fn hexadecimal_digit(input: &str) -> IResult<&str, &str> {
     recognize(satisfy(is_hexadecimal_digit))(input)
 }
 
+// todo: is this better?
+// fn hexadecimal_digit(input: &str) -> IResult<&str, &str> {
+//     recognize(alt((nom::character::is_hex_digit, nom::character::is_hex_digit)))(input)
+// }
+
 fn is_lowercase_alphanumeric(c: char) -> bool {
     c.is_ascii_lowercase() || c.is_dec_digit()
 }
@@ -29,7 +34,7 @@ fn pct_encoded(input: &str) -> IResult<&str, &str> {
 }
 
 // idchar = ALPHA / DIGIT / "." / "-" / "_" / pct-encoded
-fn idchar(input: &str) -> IResult<&str, &str> {
+pub(super) fn idchar(input: &str) -> IResult<&str, &str> {
     alt((alphanumeric1, tag("."), tag("-"), tag("_"), pct_encoded))(input)
 }
 
@@ -44,22 +49,10 @@ fn method_specific_id(input: &str) -> IResult<&str, &str> {
     recognize(many1(idchar))(input)
 }
 
-// namespace =  *idchar ":"
-pub(super) fn namespace(input: &str) -> IResult<&str, &str> {
-    if let Some((before_last_colon, after_last_colon)) = input.rsplit_once(':') {
-        match cut(all_consuming(many1(alt((idchar, tag(":"))))))(before_last_colon) {
-            Ok(_) => Ok((after_last_colon, before_last_colon)),
-            Err(err) => Err(err),
-        }
-    } else {
-        Err(nom::Err::Error(nom::error::Error::new(
-            input,
-            nom::error::ErrorKind::Tag,
-        )))
-    }
-}
-
 // did = "did:" method-name ":" method-specific-id
 pub(super) fn parse_qualified_did(input: &str) -> IResult<&str, DidPart> {
-    tuple((tag("did"), method_name, opt(namespace), method_specific_id))(input)
+    let (input_left, (prefix, method, id)) =
+        tuple((tag("did"), method_name, method_specific_id))(input)?;
+
+    Ok((input_left, (prefix, method, None, id)))
 }

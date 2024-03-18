@@ -4,7 +4,6 @@ use std::{
     str::FromStr,
 };
 
-use multibase::{decode, Base};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -28,20 +27,20 @@ impl Display for MultibaseWrapperError {
 // https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-07
 #[derive(Clone, Debug, PartialEq)]
 pub struct Multibase {
-    base: Base,
+    base: multibase::Base,
     bytes: Vec<u8>,
 }
 
 impl Multibase {
     pub fn new(multibase: String) -> Result<Self, MultibaseWrapperError> {
-        let (base, bytes) = decode(multibase).map_err(|err| MultibaseWrapperError {
+        let (base, bytes) = multibase::decode(multibase).map_err(|err| MultibaseWrapperError {
             reason: "Decoding multibase value failed",
             source: Box::new(err),
         })?;
         Ok(Self { base, bytes })
     }
 
-    pub fn base_to_multibase(base: Base, encoded: &str) -> Self {
+    pub fn base_to_multibase(base: multibase::Base, encoded: &str) -> Self {
         let multibase_encoded = format!("{}{}", base.code(), encoded);
         Self {
             base,

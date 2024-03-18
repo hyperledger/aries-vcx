@@ -102,8 +102,8 @@
 // ) -> VerificationMethod {
 //     match public_key_encoding {
 //         PublicKeyEncoding::Base58 => builder.add_public_key_base58(key.base58()).build(),
-//         PublicKeyEncoding::Multibase => builder.add_public_key_multibase(key.fingerprint()).build(),
-//     }
+//         PublicKeyEncoding::Multibase =>
+// builder.add_public_key_multibase(key.fingerprint()).build(),     }
 // }
 //
 // fn to_did_url_reference(key: &Key) -> Result<DidUrl, DidPeerError> {
@@ -175,8 +175,8 @@
 //     mod get_verification_methods_by_key {
 //         use super::*;
 //         use crate::{
-//             peer_did::numalgos::numalgo2::verification_method, resolver::options::PublicKeyEncoding,
-//         };
+//             peer_did::numalgos::numalgo2::verification_method,
+// resolver::options::PublicKeyEncoding,         };
 //
 //         // Multibase encoded keys are multicodec-prefixed by their encoding type ...
 //         fn test_get_verification_methods_by_key_multibase(key: &Key) {

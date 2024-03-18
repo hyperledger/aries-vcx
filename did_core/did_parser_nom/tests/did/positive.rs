@@ -1,14 +1,14 @@
 use did_parser_nom::Did;
 
 macro_rules! test_cases_positive {
-    ($($name:ident: $input:expr, $expected_did:expr, $expected_method:expr, $expected_namespace:expr, $expected_id:expr)*) => {
+    ($($name:ident: $input_did:expr, $expected_method:expr, $expected_namespace:expr, $expected_id:expr)*) => {
         $(
             #[test]
             fn $name() {
-                println!("Testing {}", $input);
-                let parsed_did = Did::parse($input.to_string()).unwrap();
+                println!("Testing {}", $input_did);
+                let parsed_did = Did::parse($input_did.to_string()).unwrap();
 
-                assert_eq!(parsed_did.did(), $expected_did, "DID");
+                assert_eq!(parsed_did.did(), $input_did, "DID");
                 assert_eq!(parsed_did.method(), $expected_method, "Method");
                 assert_eq!(parsed_did.namespace(), $expected_namespace, "Namespace");
                 assert_eq!(parsed_did.id(), $expected_id, "ID");
@@ -18,76 +18,64 @@ macro_rules! test_cases_positive {
 }
 
 test_cases_positive! {
-    test_case1:
-        "did:example:123456789abcdefghi",
+    test_did_unknown_method:
         "did:example:123456789abcdefghi",
         Some("example"),
         None,
         "123456789abcdefghi"
-    test_case2:
-        "did:web:w3c-ccg.github.io",
+    test_did_web:
         "did:web:w3c-ccg.github.io",
         Some("web"),
         None,
         "w3c-ccg.github.io"
-    test_case3:
-        "2ZHFFhzA2XtTD6hJqzL7ux",
+    test_did_sov_unqualified:
         "2ZHFFhzA2XtTD6hJqzL7ux",
         None,
         None,
         "2ZHFFhzA2XtTD6hJqzL7ux"
-    test_case4:
-        "did:sov:2wJPyULfLLnYTEFYzByfUR",
+    test_did_sov:
         "did:sov:2wJPyULfLLnYTEFYzByfUR",
         Some("sov"),
         None,
         "2wJPyULfLLnYTEFYzByfUR"
-    test_case5:
-        "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+    test_did_key:
         "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
         Some("key"),
         None,
         "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-    test_case6:
-        "did:indy:sovrin:7Tqg6BwSSWapxgUDm9KKgg",
+    test_did_indy:
         "did:indy:sovrin:7Tqg6BwSSWapxgUDm9KKgg",
         Some("indy"),
         Some("sovrin"),
         "7Tqg6BwSSWapxgUDm9KKgg"
-    test_case7:
-        "did:indy:sovrin:alpha:7Tqg6BwSSWapxgUDm9KKgg",
+    test_did_indy_2:
         "did:indy:sovrin:alpha:7Tqg6BwSSWapxgUDm9KKgg",
         Some("indy"),
         Some("sovrin:alpha"),
         "7Tqg6BwSSWapxgUDm9KKgg"
-    test_case8:
-        "did:indy:sovrin:alpha:%0Aqg6BwS.Wapxg-Dm9K_gg",
+    test_did_indy_3:
         "did:indy:sovrin:alpha:%0Aqg6BwS.Wapxg-Dm9K_gg",
         Some("indy"),
         Some("sovrin:alpha"),
         "%0Aqg6BwS.Wapxg-Dm9K_gg"
-    test_case9:
-        "did:sov:builder:VbPQNHsvoLZdaNU7fTBeFx",
+    test_did_sov_namespaced:
         "did:sov:builder:VbPQNHsvoLZdaNU7fTBeFx",
         Some("sov"),
         Some("builder"),
         "VbPQNHsvoLZdaNU7fTBeFx"
-    test_case10:
-        "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-        "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-        Some("key"),
-        None,
-        "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-    test_case11:
-        "did:peer:2.Vz6Mkj3PUd1WjvaDhNZhhhXQdz5UnZXmS7ehtx8bsPpD47kKc.Ez6LSg8zQom395jKLrGiBNruB9MM6V8PWuf2FpEy4uRFiqQBR.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6Imh0dHA6Ly9leGFtcGxlLmNvbS9kaWRjb21tIiwiYSI6WyJkaWRjb21tL3YyIl0sInIiOlsiZGlkOmV4YW1wbGU6MTIzNDU2Nzg5YWJjZGVmZ2hpI2tleS0xIl19fQ.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6Imh0dHA6Ly9leGFtcGxlLmNvbS9hbm90aGVyIiwiYSI6WyJkaWRjb21tL3YyIl0sInIiOlsiZGlkOmV4YW1wbGU6MTIzNDU2Nzg5YWJjZGVmZ2hpI2tleS0yIl19fQ",
+    test_did_peer_2:
         "did:peer:2.Vz6Mkj3PUd1WjvaDhNZhhhXQdz5UnZXmS7ehtx8bsPpD47kKc.Ez6LSg8zQom395jKLrGiBNruB9MM6V8PWuf2FpEy4uRFiqQBR.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6Imh0dHA6Ly9leGFtcGxlLmNvbS9kaWRjb21tIiwiYSI6WyJkaWRjb21tL3YyIl0sInIiOlsiZGlkOmV4YW1wbGU6MTIzNDU2Nzg5YWJjZGVmZ2hpI2tleS0xIl19fQ.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6Imh0dHA6Ly9leGFtcGxlLmNvbS9hbm90aGVyIiwiYSI6WyJkaWRjb21tL3YyIl0sInIiOlsiZGlkOmV4YW1wbGU6MTIzNDU2Nzg5YWJjZGVmZ2hpI2tleS0yIl19fQ",
         Some("peer"),
         None,
         "2.Vz6Mkj3PUd1WjvaDhNZhhhXQdz5UnZXmS7ehtx8bsPpD47kKc.Ez6LSg8zQom395jKLrGiBNruB9MM6V8PWuf2FpEy4uRFiqQBR.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6Imh0dHA6Ly9leGFtcGxlLmNvbS9kaWRjb21tIiwiYSI6WyJkaWRjb21tL3YyIl0sInIiOlsiZGlkOmV4YW1wbGU6MTIzNDU2Nzg5YWJjZGVmZ2hpI2tleS0xIl19fQ.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6Imh0dHA6Ly9leGFtcGxlLmNvbS9hbm90aGVyIiwiYSI6WyJkaWRjb21tL3YyIl0sInIiOlsiZGlkOmV4YW1wbGU6MTIzNDU2Nzg5YWJjZGVmZ2hpI2tleS0yIl19fQ"
-    test_case12:
-        "did:peer:3zQmS19jtYDvGtKVrJhQnRFpBQAx3pJ9omx2HpNrcXFuRCz9",
+    test_did_peer_3:
         "did:peer:3zQmS19jtYDvGtKVrJhQnRFpBQAx3pJ9omx2HpNrcXFuRCz9",
         Some("peer"),
         None,
         "3zQmS19jtYDvGtKVrJhQnRFpBQAx3pJ9omx2HpNrcXFuRCz9"
+    test_did_peer_4:
+        "did:peer:4z84UjLJ6ugExV8TJ5gJUtZap5q67uD34LU26m1Ljo2u9PZ4xHa9XnknHLc3YMST5orPXh3LKi6qEYSHdNSgRMvassKP:z27uFkiqJVwvvn2ke5M19UCvByS79r5NppqwjiGAJzkj1EM4sf2JmiUySkANKy4YNu8M7yKjSmvPJTqbcyhPrJs9TASzDs2fWE1vFegmaRJxHRF5M9wGTPwGR1NbPkLGsvcnXum7aN2f8kX3BnhWWWp",
+        Some("peer"),
+        None,
+        "4z84UjLJ6ugExV8TJ5gJUtZap5q67uD34LU26m1Ljo2u9PZ4xHa9XnknHLc3YMST5orPXh3LKi6qEYSHdNSgRMvassKP:z27uFkiqJVwvvn2ke5M19UCvByS79r5NppqwjiGAJzkj1EM4sf2JmiUySkANKy4YNu8M7yKjSmvPJTqbcyhPrJs9TASzDs2fWE1vFegmaRJxHRF5M9wGTPwGR1NbPkLGsvcnXum7aN2f8kX3BnhWWWp"
 }

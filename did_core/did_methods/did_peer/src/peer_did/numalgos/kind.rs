@@ -3,7 +3,8 @@ use std::fmt::Display;
 use crate::{
     error::DidPeerError,
     peer_did::numalgos::{
-        numalgo0::Numalgo0, numalgo1::Numalgo1, numalgo2::Numalgo2, numalgo3::Numalgo3, Numalgo,
+        numalgo0::Numalgo0, numalgo1::Numalgo1, numalgo2::Numalgo2, numalgo3::Numalgo3,
+        numalgo4::Numalgo4, Numalgo,
     },
 };
 
@@ -13,6 +14,7 @@ pub enum NumalgoKind {
     GenesisDoc(Numalgo1),
     MultipleInceptionKeys(Numalgo2),
     DidShortening(Numalgo3),
+    DidPeer4(Numalgo4),
 }
 
 impl NumalgoKind {
@@ -22,6 +24,7 @@ impl NumalgoKind {
             NumalgoKind::GenesisDoc(_) => Numalgo1::NUMALGO_CHAR,
             NumalgoKind::MultipleInceptionKeys(_) => Numalgo2::NUMALGO_CHAR,
             NumalgoKind::DidShortening(_) => Numalgo3::NUMALGO_CHAR,
+            NumalgoKind::DidPeer4(_) => Numalgo4::NUMALGO_CHAR,
         }
     }
 }
@@ -41,6 +44,7 @@ impl TryFrom<char> for NumalgoKind {
             Numalgo1::NUMALGO_CHAR => Ok(NumalgoKind::GenesisDoc(Numalgo1)),
             Numalgo2::NUMALGO_CHAR => Ok(NumalgoKind::MultipleInceptionKeys(Numalgo2)),
             Numalgo3::NUMALGO_CHAR => Ok(NumalgoKind::DidShortening(Numalgo3)),
+            Numalgo4::NUMALGO_CHAR => Ok(NumalgoKind::DidShortening(Numalgo3)),
             c => Err(DidPeerError::InvalidNumalgoCharacter(c)),
         }
     }

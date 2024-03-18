@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
+use did_doc::schema::{
+    service::Service,
+    types::uri::Uri,
+    verification_method::{PublicKeyField, VerificationMethodType},
+};
+use did_parser_nom::{Did, DidUrl};
+use display_as_json::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-
-use did_doc::schema::service::Service;
-use did_doc::schema::types::uri::Uri;
-use did_doc::schema::verification_method::{PublicKeyField, VerificationMethodType};
-use did_parser::{Did, DidUrl};
-use display_as_json::Display;
 
 /// The following DidPeer4* structs are similar to those defined in did_doc crate,
 /// however with minor differences defined by https://identity.foundation/peer-did-method-spec/#creating-a-did
@@ -15,10 +16,13 @@ use display_as_json::Display;
 /// - The document MUST NOT include an id at the root.
 /// - All identifiers within this document MUST be relative
 /// - All references pointing to resources within this document MUST be relative
-/// - For verification methods, the controller MUST be omitted if the controller is the document owner.
+/// - For verification methods, the controller MUST be omitted if the controller is the document
+///   owner.
 ///
 /// These structures are **only** used for construction of did:peer:4 DIDs
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default, Display, derive_builder::Builder)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Default, Display, derive_builder::Builder,
+)]
 #[serde(default)]
 #[serde(rename_all = "camelCase")]
 #[builder(default)]
@@ -48,7 +52,8 @@ pub struct DidPeer4EncodedDocument {
 #[serde(untagged)]
 pub enum DidPeer4VerificationMethodKind {
     Resolved(DidPeer4VerificationMethod),
-    Resolvable(DidUrl), // must be relative, can we break down DidUrl into new type RelativeDidUrl?
+    Resolvable(DidUrl), /* must be relative, can we break down DidUrl into new type
+                         * RelativeDidUrl? */
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -63,15 +68,15 @@ pub struct DidPeer4VerificationMethod {
     public_key: PublicKeyField,
 }
 
-
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
 
-    use did_doc::schema::service::Service;
-    use did_doc::schema::service::typed::ServiceType;
-    use did_doc::schema::types::uri::Uri;
-    use did_doc::schema::utils::OneOrList;
+    use did_doc::schema::{
+        service::{typed::ServiceType, Service},
+        types::uri::Uri,
+        utils::OneOrList,
+    };
 
     use crate::peer_did::numalgos::numalgo4::encoded_document::DidPeer4EncodedDocumentBuilder;
 
@@ -84,7 +89,7 @@ mod tests {
             HashMap::default(),
         );
         let encoded_document = DidPeer4EncodedDocumentBuilder::default()
-            .service(vec!(service))
+            .service(vec![service])
             .build()
             .unwrap();
         assert_eq!(encoded_document.service.len(), 1);

@@ -189,8 +189,9 @@
 //     #[tokio::test]
 //     async fn test_append_encoded_service_segment() {
 //         let did = "did:peer:2";
-//         let service = "eyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0";
-//         let did_expected = format!("{}.S{}", did, service);
+//         let service =
+// "eyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0"
+// ;         let did_expected = format!("{}.S{}", did, service);
 //
 //         let extra = ExtraFieldsDidCommV2::builder()
 //             .routing_keys(vec![ServiceKeyKind::Reference(

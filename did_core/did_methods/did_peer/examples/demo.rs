@@ -1,24 +1,24 @@
-use std::collections::HashMap;
-use std::error::Error;
+use std::{collections::HashMap, error::Error};
 
 use did_doc::schema::{
     did_doc::DidDocument,
+    service::{typed::ServiceType, Service},
+    types::uri::Uri,
+    utils::OneOrList,
     verification_method::{VerificationMethod, VerificationMethodType},
 };
-use did_doc::schema::service::Service;
-use did_doc::schema::service::typed::ServiceType;
-use did_doc::schema::types::uri::Uri;
-use did_doc::schema::utils::OneOrList;
 use did_parser_nom::{Did, DidUrl};
 use did_peer::{
     peer_did::{
-        numalgos::{numalgo2::Numalgo2, numalgo3::Numalgo3},
+        numalgos::{
+            numalgo2::Numalgo2,
+            numalgo3::Numalgo3,
+            numalgo4::{encoded_document::DidPeer4EncodedDocumentBuilder, Numalgo4},
+        },
         PeerDid,
     },
     resolver::{options::PublicKeyEncoding, PeerDidResolutionOptions, PeerDidResolver},
 };
-use did_peer::peer_did::numalgos::numalgo4::encoded_document::DidPeer4EncodedDocumentBuilder;
-use did_peer::peer_did::numalgos::numalgo4::Numalgo4;
 use did_resolver::traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable};
 
 #[tokio::main(flavor = "current_thread")]
@@ -34,8 +34,8 @@ async fn demo_did_peer_2_and_3() -> Result<(), Box<dyn Error>> {
         did.clone(),
         VerificationMethodType::Ed25519VerificationKey2018,
     )
-        .add_public_key_base64("Zm9vYmFyCg".to_string())
-        .build();
+    .add_public_key_base64("Zm9vYmFyCg".to_string())
+    .build();
 
     let ddo = DidDocument::builder(did)
         .add_verification_method(verification_method)
@@ -78,10 +78,13 @@ async fn demo_did_peer_4() -> Result<(), Box<dyn Error>> {
         HashMap::default(),
     );
     let encoded_document = DidPeer4EncodedDocumentBuilder::default()
-        .service(vec!(service))
+        .service(vec![service])
         .build()
         .unwrap();
-    println!("Pseudo DidDocument, input for did:peer:4 construction: {}", serde_json::to_string_pretty(&encoded_document)?);
+    println!(
+        "Pseudo DidDocument, input for did:peer:4 construction: {}",
+        serde_json::to_string_pretty(&encoded_document)?
+    );
 
     let peer_did_4 = PeerDid::<Numalgo4>::new(encoded_document)?;
     println!("as did:peer numalgo(4): {}", peer_did_4);
@@ -103,6 +106,9 @@ async fn demo_did_peer_4() -> Result<(), Box<dyn Error>> {
 }
 
 async fn demo() -> Result<(), Box<dyn Error>> {
+    let env = env_logger::Env::default().default_filter_or("info");
+    env_logger::init_from_env(env);
+
     demo_did_peer_2_and_3().await?;
     demo_did_peer_4().await?;
 

@@ -23,10 +23,12 @@ pub(super) fn parse_did_key(input: &str) -> IResult<&str, DidPart> {
         delimited(char(':'), tag("key"), char(':'))(input)
     }
 
-    tuple((
+    let (input_left, (prefix, method, namespace, id)) = tuple((
         tag("did"),
         did_key_method,
         opt(fail::<_, &str, _>),
         cut(parse_mb_value),
-    ))(input)
+    ))(input)?;
+
+    Ok((input_left, (prefix, method, namespace, id)))
 }
