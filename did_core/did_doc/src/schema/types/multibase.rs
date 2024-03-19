@@ -4,6 +4,7 @@ use std::{
     str::FromStr,
 };
 
+use multibase::decode;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -33,7 +34,7 @@ pub struct Multibase {
 
 impl Multibase {
     pub fn new(multibase: String) -> Result<Self, MultibaseWrapperError> {
-        let (base, bytes) = multibase::decode(multibase).map_err(|err| MultibaseWrapperError {
+        let (base, bytes) = decode(multibase).map_err(|err| MultibaseWrapperError {
             reason: "Decoding multibase value failed",
             source: Box::new(err),
         })?;
@@ -90,6 +91,8 @@ impl AsRef<[u8]> for Multibase {
 
 #[cfg(test)]
 mod tests {
+    use multibase::Base::Base58Btc;
+
     use super::*;
 
     #[test]
@@ -112,7 +115,7 @@ mod tests {
         assert_eq!(
             multibase,
             Multibase {
-                base: Base::Base58Btc,
+                base: Base58Btc,
                 bytes: decode("zQmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e")
                     .unwrap()
                     .1
@@ -158,13 +161,13 @@ mod tests {
     #[test]
     fn test_base_to_multibase() {
         let multibase = Multibase::base_to_multibase(
-            Base::Base58Btc,
+            Base58Btc,
             "QmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e",
         );
         assert_eq!(
             multibase,
             Multibase {
-                base: Base::Base58Btc,
+                base: Base58Btc,
                 bytes: "zQmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e"
                     .as_bytes()
                     .to_vec()

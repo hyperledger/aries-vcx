@@ -50,6 +50,7 @@ pub struct DidPeer4EncodedDocument {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
+#[allow(clippy::large_enum_variant)] // todo: revisit this
 pub enum DidPeer4VerificationMethodKind {
     Resolved(DidPeer4VerificationMethod),
     Resolvable(DidUrl), /* must be relative, can we break down DidUrl into new type
