@@ -350,7 +350,7 @@ impl BaseAnonCreds for Anoncreds {
             Some(timestamp),
         )?;
 
-        let opt_rev_reg: Option<CryptoRevocationRegistry> = (&rev_status_list).try_into().unwrap();
+        let opt_rev_reg: Option<CryptoRevocationRegistry> = (&rev_status_list).into();
         let rev_reg = opt_rev_reg
             .expect("creating a RevocationStatusList always generates a CryptoRevocationRegistry");
 

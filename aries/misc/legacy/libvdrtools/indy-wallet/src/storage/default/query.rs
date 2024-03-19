@@ -281,7 +281,7 @@ fn like_to_sql<'a>(
 
 fn in_to_sql<'a>(
     name: &'a TagName,
-    values: &'a Vec<TargetValue>,
+    values: &'a [TargetValue],
     arguments: &mut Vec<ToSQL<'a>>,
 ) -> IndyResult<String> {
     let mut in_string = String::new();

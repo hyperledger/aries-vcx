@@ -188,7 +188,7 @@ impl SmMediatedConnectionInviter {
         ))?;
         did_did
             .recipient_keys()?
-            .get(0)
+            .first()
             .ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
                 "Can't resolve recipient key from the counterparty diddoc.",

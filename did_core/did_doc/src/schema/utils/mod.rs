@@ -129,7 +129,7 @@ mod tests {
     #[test]
     fn should_resolve_key_agreement() {
         let did_document: DidDocument = serde_json::from_str(DID_DOC).unwrap();
-        let methods = &vec![
+        let methods = &[
             VerificationMethodType::Ed25519VerificationKey2020,
             VerificationMethodType::X25519KeyAgreementKey2020,
         ];
@@ -140,7 +140,7 @@ mod tests {
     #[test]
     fn should_not_resolve_key_agreement() {
         let did_document: DidDocument = serde_json::from_str(DID_DOC).unwrap();
-        let methods = &vec![VerificationMethodType::Bls12381G1Key2020];
+        let methods = &[VerificationMethodType::Bls12381G1Key2020];
         let err = did_document
             .get_key_agreement_of_type(methods)
             .expect_err("expected error");

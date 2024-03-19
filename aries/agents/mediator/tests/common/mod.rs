@@ -24,6 +24,6 @@ pub mod test_setup {
 
 pub mod prelude {
     pub use anyhow::Result;
-    pub use log::{debug, error, info};
+    pub use log::info;
     pub use url::Url;
 }

@@ -233,11 +233,7 @@ fn like_to_sql(
     }
 }
 
-fn in_to_sql(
-    tag_name: &TagName,
-    tag_values: &Vec<TargetValue>,
-    arguments: &mut Vec<Value>,
-) -> String {
+fn in_to_sql(tag_name: &TagName, tag_values: &[TargetValue], arguments: &mut Vec<Value>) -> String {
     let tag_path = format!(r#"'$."{}"'"#, tag_name.to_plain());
     let mut in_string = format!("JSON_UNQUOTE(JSON_EXTRACT(tags, {})) IN (", tag_path);
 
