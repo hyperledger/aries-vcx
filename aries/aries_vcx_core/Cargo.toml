@@ -14,7 +14,7 @@ vdr_proxy_ledger = ["credx", "dep:indy-vdr-proxy-client"]
 # Feature flag to allow legacy proof verification
 legacy_proof = []
 
-askar_wallet = ["aries_vcx_wallet/askar_wallet"]
+askar_wallet = []
 
 [dependencies]
 aries_vcx_wallet = { path = "../aries_vcx_wallet" }

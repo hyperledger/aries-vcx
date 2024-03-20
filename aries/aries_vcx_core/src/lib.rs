@@ -25,7 +25,6 @@ extern crate log;
 pub mod anoncreds;
 pub mod errors;
 pub mod global;
-pub mod ledger;
 pub mod utils;
 
 pub use indy_ledger_response_parser::ResponseParser;

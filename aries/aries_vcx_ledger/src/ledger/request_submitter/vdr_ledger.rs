@@ -10,10 +10,11 @@ use indy_vdr::{
     config::PoolConfig,
     pool::{PoolBuilder, PoolRunner, PoolTransactions, PreparedRequest, RequestResult},
 };
+use log::info;
 use tokio::sync::oneshot;
 
 use super::RequestSubmitter;
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::errors::error::{VcxLedgerError, VcxLedgerResult};
 
 #[derive(Clone)]
 pub struct IndyVdrLedgerPool {
@@ -38,7 +39,7 @@ impl IndyVdrLedgerPool {
         genesis_file_path: String,
         indy_vdr_config: PoolConfig,
         exclude_nodes: Vec<String>,
-    ) -> VcxCoreResult<Self> {
+    ) -> VcxLedgerResult<Self> {
         info!(
             "IndyVdrLedgerPool::new >> genesis_file_path: {genesis_file_path}, indy_vdr_config: \
              {indy_vdr_config:?}"
@@ -66,7 +67,7 @@ impl Debug for IndyVdrLedgerPool {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct IndyVdrSubmitter {
     pool: IndyVdrLedgerPool,
 }
@@ -79,7 +80,7 @@ impl IndyVdrSubmitter {
 
 #[async_trait]
 impl RequestSubmitter for IndyVdrSubmitter {
-    async fn submit(&self, request: PreparedRequest) -> VcxCoreResult<String> {
+    async fn submit(&self, request: PreparedRequest) -> VcxLedgerResult<String> {
         // indyvdr send_request is Async via a callback.
         // Use oneshot channel to send result from callback, converting the fn to future.
         type VdrSendRequestResult = Result<
@@ -100,7 +101,7 @@ impl RequestSubmitter for IndyVdrSubmitter {
 
         let send_req_result: VdrSendRequestResult = recv
             .await
-            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidState, e))?;
+            .map_err(|e| VcxLedgerError::InvalidState(e.to_string()))?;
         let (result, _) = send_req_result?;
 
         let reply = match result {

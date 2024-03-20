@@ -558,6 +558,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "aries_vcx_ledger"
+version = "0.63.0"
+dependencies = [
+ "anoncreds_types",
+ "aries_vcx_wallet",
+ "async-trait",
+ "did_parser_nom",
+ "indy-ledger-response-parser",
+ "indy-vdr",
+ "log",
+ "lru",
+ "public_key",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "time 0.3.20",
+ "tokio",
+]
+
+[[package]]
 name = "aries_vcx_wallet"
 version = "0.63.0"
 dependencies = [

@@ -5,13 +5,14 @@ use std::{sync::Arc, time::Instant};
 
 use async_trait::async_trait;
 pub use config::*;
+use log::info;
 use lru::LruCache;
 pub use options::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 use super::ResponseCacher;
-use crate::errors::error::VcxCoreResult;
+use crate::errors::error::VcxLedgerResult;
 
 pub struct InMemoryResponseCacher {
     cache: Arc<Mutex<LruCache<String, (String, Instant)>>>,
@@ -32,7 +33,7 @@ impl InMemoryResponseCacher {
 impl ResponseCacher for InMemoryResponseCacher {
     type Options = InMemoryResponseCacherOptions;
 
-    async fn put<S, T>(&self, id: S, obj: T) -> VcxCoreResult<()>
+    async fn put<S, T>(&self, id: S, obj: T) -> VcxLedgerResult<()>
     where
         S: ToString + Send,
         T: Serialize + for<'de> Deserialize<'de> + Send,
@@ -45,7 +46,7 @@ impl ResponseCacher for InMemoryResponseCacher {
         Ok(())
     }
 
-    async fn get<S, T>(&self, id: S, opt: Option<Self::Options>) -> VcxCoreResult<Option<T>>
+    async fn get<S, T>(&self, id: S, opt: Option<Self::Options>) -> VcxLedgerResult<Option<T>>
     where
         S: ToString + Send,
         T: Serialize + for<'de> Deserialize<'de> + Send,
@@ -104,7 +105,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_put_and_get() -> VcxCoreResult<()> {
+    async fn test_put_and_get() -> VcxLedgerResult<()> {
         let cacher = InMemoryResponseCacher::new(_cacher_config(Duration::from_secs(1)));
         let test_object = _test_object();
 
@@ -117,7 +118,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_expiration() -> VcxCoreResult<()> {
+    async fn test_expiration() -> VcxLedgerResult<()> {
         let cacher = InMemoryResponseCacher::new(_cacher_config(Duration::from_millis(1)));
         let test_object = _test_object();
 
@@ -132,7 +133,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_capacity() -> VcxCoreResult<()> {
+    async fn test_capacity() -> VcxLedgerResult<()> {
         let cacher = InMemoryResponseCacher::new(_cacher_config(Duration::from_secs(1)));
         let test_object = _test_object();
 
@@ -147,7 +148,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_nonexistent_key() -> VcxCoreResult<()> {
+    async fn test_nonexistent_key() -> VcxLedgerResult<()> {
         let cacher = InMemoryResponseCacher::new(_cacher_config(Duration::from_secs(1)));
 
         let cached_object: Option<TestStruct> = cacher.get("nonexistent", None).await?;
@@ -157,7 +158,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_options_ttl_override_global_config_ttl() -> VcxCoreResult<()> {
+    async fn test_get_options_ttl_override_global_config_ttl() -> VcxLedgerResult<()> {
         let cacher = InMemoryResponseCacher::new(_cacher_config(Duration::from_millis(1)));
         let test_object = _test_object();
 
