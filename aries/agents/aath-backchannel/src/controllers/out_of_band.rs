@@ -4,7 +4,7 @@ use actix_web::{get, post, web, Responder};
 use aries_vcx_agent::aries_vcx::messages::AriesMessage;
 
 use crate::{
-    controllers::Request,
+    controllers::AathRequest,
     error::{HarnessError, HarnessErrorType, HarnessResult},
     soft_assert_eq, HarnessAgent,
 };
@@ -38,7 +38,7 @@ async fn send_invitation_message(agent: web::Data<RwLock<HarnessAgent>>) -> impl
 
 #[post("/receive-invitation")]
 async fn receive_invitation_message(
-    req: web::Json<Request<Option<AriesMessage>>>,
+    req: web::Json<AathRequest<Option<AriesMessage>>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent

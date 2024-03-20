@@ -14,7 +14,7 @@ use display_as_json::Display;
 use uuid::Uuid;
 
 use crate::{
-    controllers::Request,
+    controllers::AathRequest,
     error::{HarnessError, HarnessErrorType, HarnessResult},
     soft_assert_eq, HarnessAgent, State,
 };
@@ -295,7 +295,7 @@ impl HarnessAgent {
 
 #[post("/send-proposal")]
 pub async fn send_credential_proposal(
-    req: web::Json<Request<CredentialProposal>>,
+    req: web::Json<AathRequest<CredentialProposal>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
@@ -307,7 +307,7 @@ pub async fn send_credential_proposal(
 
 #[post("/send-offer")]
 pub async fn send_credential_offer(
-    req: web::Json<Request<CredentialOffer>>,
+    req: web::Json<AathRequest<CredentialOffer>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
@@ -319,7 +319,7 @@ pub async fn send_credential_offer(
 
 #[post("/send-request")]
 pub async fn send_credential_request(
-    req: web::Json<Request<String>>,
+    req: web::Json<AathRequest<String>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent.read().unwrap().send_credential_request(&req.id).await
@@ -339,7 +339,7 @@ pub async fn get_issuer_state(
 
 #[post("/issue")]
 pub async fn issue_credential(
-    req: web::Json<Request<Credential>>,
+    req: web::Json<AathRequest<Credential>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
@@ -351,7 +351,7 @@ pub async fn issue_credential(
 
 #[post("/store")]
 pub async fn store_credential(
-    req: web::Json<Request<CredentialId>>,
+    req: web::Json<AathRequest<CredentialId>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent.read().unwrap().store_credential(&req.id).await

@@ -3,7 +3,7 @@ use std::sync::RwLock;
 use actix_web::{get, post, web, Responder};
 
 use crate::{
-    controllers::Request,
+    controllers::AathRequest,
     error::{HarnessError, HarnessErrorType, HarnessResult},
     soft_assert_eq, HarnessAgent,
 };
@@ -60,7 +60,7 @@ impl HarnessAgent {
 
 #[post("")]
 pub async fn create_schema(
-    req: web::Json<Request<Schema>>,
+    req: web::Json<AathRequest<Schema>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent.read().unwrap().create_schema(&req.data).await

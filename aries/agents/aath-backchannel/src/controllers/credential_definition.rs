@@ -8,7 +8,7 @@ use aries_vcx_agent::aries_vcx::did_parser_nom::Did;
 use reqwest::multipart;
 
 use crate::{
-    controllers::Request,
+    controllers::AathRequest,
     error::{HarnessError, HarnessErrorType, HarnessResult},
     soft_assert_eq, HarnessAgent,
 };
@@ -109,7 +109,7 @@ impl HarnessAgent {
 
 #[post("")]
 pub async fn create_credential_definition(
-    req: web::Json<Request<CredentialDefinition>>,
+    req: web::Json<AathRequest<CredentialDefinition>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent

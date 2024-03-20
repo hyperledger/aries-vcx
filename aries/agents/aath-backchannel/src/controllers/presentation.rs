@@ -17,7 +17,7 @@ use aries_vcx_agent::aries_vcx::{
 };
 
 use crate::{
-    controllers::Request,
+    controllers::AathRequest,
     error::{HarnessError, HarnessErrorType, HarnessResult},
     soft_assert_eq, HarnessAgent, State,
 };
@@ -182,7 +182,7 @@ impl HarnessAgent {
 
 #[post("/send-request")]
 pub async fn send_proof_request(
-    req: web::Json<Request<PresentationRequestWrapper>>,
+    req: web::Json<AathRequest<PresentationRequestWrapper>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent.read().unwrap().send_proof_request(&req.data).await
@@ -190,7 +190,7 @@ pub async fn send_proof_request(
 
 #[post("/send-proposal")]
 pub async fn send_proof_proposal(
-    req: web::Json<Request<PresentationProposalWrapper>>,
+    req: web::Json<AathRequest<PresentationProposalWrapper>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent.read().unwrap().send_proof_proposal(&req.data).await
@@ -198,7 +198,7 @@ pub async fn send_proof_proposal(
 
 #[post("/send-presentation")]
 pub async fn send_presentation(
-    req: web::Json<Request<serde_json::Value>>,
+    req: web::Json<AathRequest<serde_json::Value>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent.read().unwrap().send_presentation(&req.id).await
@@ -206,7 +206,7 @@ pub async fn send_presentation(
 
 #[post("/verify-presentation")]
 pub async fn verify_presentation(
-    req: web::Json<Request<serde_json::Value>>,
+    req: web::Json<AathRequest<serde_json::Value>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent.read().unwrap().verify_presentation(&req.id).await

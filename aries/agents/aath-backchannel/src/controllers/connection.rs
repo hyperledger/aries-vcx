@@ -8,7 +8,7 @@ use aries_vcx_agent::aries_vcx::{
 };
 
 use crate::{
-    controllers::Request,
+    controllers::AathRequest,
     error::{HarnessError, HarnessErrorType, HarnessResult},
     soft_assert_eq, HarnessAgent, State,
 };
@@ -106,7 +106,7 @@ pub async fn create_invitation(agent: web::Data<RwLock<HarnessAgent>>) -> impl R
 
 #[post("/receive-invitation")]
 pub async fn receive_invitation(
-    req: web::Json<Request<Option<Invitation>>>,
+    req: web::Json<AathRequest<Option<Invitation>>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
@@ -126,7 +126,7 @@ pub async fn receive_invitation(
 
 #[post("/accept-invitation")]
 pub async fn send_request(
-    req: web::Json<Request<()>>,
+    req: web::Json<AathRequest<()>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent.read().unwrap().send_connection_request(&req.id).await
@@ -134,7 +134,7 @@ pub async fn send_request(
 
 #[post("/accept-request")]
 pub async fn accept_request(
-    req: web::Json<Request<()>>,
+    req: web::Json<AathRequest<()>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
@@ -172,7 +172,7 @@ pub async fn get_connection(
 
 #[post("/send-ping")]
 pub async fn send_ack(
-    req: web::Json<Request<Comment>>,
+    req: web::Json<AathRequest<Comment>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent.read().unwrap().send_connection_ack(&req.id).await
