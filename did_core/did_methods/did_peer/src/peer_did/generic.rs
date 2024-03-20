@@ -90,13 +90,8 @@ mod tests {
        .VzXwpBnMdCm1cLmKuzgESn29nqnonp1ioqrQMRHNsmjMyppzx8xB2pv7cw8q1PdDacSrdWE3dtB9f7Nxk886mdzNFoPtY\
        .SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0";
 
-    const INVALID_PEER_DID_NUMALGO2: &str = "did:peer:2.Qqqq";
-
     const VALID_PEER_DID_NUMALGO3: &str =
         "did:peer:3.d8da5079c166b183cf815ee27747f34e116977103d8b23c96dcba9a9d9429688";
-
-    const INVALID_PEER_DID_NUMALGO3: &str =
-        "did:peer:3.d8da5079c166b183cfz15ee27747f34e116977103d8b23c96dcba9a9d9429689";
 
     fn generic_peer_did_numalgo2() -> AnyPeerDid {
         AnyPeerDid::Numalgo2(PeerDid {
