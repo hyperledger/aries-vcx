@@ -9,7 +9,6 @@ use crate::{
     peer_did::{
         numalgos::{kind::NumalgoKind, numalgo2::Numalgo2, numalgo3::Numalgo3, numalgo4::Numalgo4},
         parse::parse_numalgo,
-        validate::validate,
     },
 };
 
@@ -32,7 +31,6 @@ impl AnyPeerDid {
         log::info!("AnyPeerDid >> parsed did {}", did);
         let numalgo = parse_numalgo(&did)?;
         log::info!("AnyPeerDid >> parsed numalgo {}", numalgo.to_char());
-        validate(&did)?;
         let parsed = match numalgo {
             NumalgoKind::MultipleInceptionKeys(numalgo2) => AnyPeerDid::Numalgo2(PeerDid {
                 did,

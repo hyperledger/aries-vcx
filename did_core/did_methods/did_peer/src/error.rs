@@ -39,6 +39,8 @@ pub enum DidPeerError {
     RegexError(#[from] regex::Error),
     #[error("Public key error: {0}")]
     PublicKeyError(#[from] public_key::PublicKeyError),
+    #[error("General error: {0}")]
+    GeneralError(String),
 }
 
 impl From<Infallible> for DidPeerError {

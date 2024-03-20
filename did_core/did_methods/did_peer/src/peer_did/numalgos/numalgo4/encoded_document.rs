@@ -1,14 +1,19 @@
 use std::collections::HashMap;
 
 use did_doc::schema::{
+    did_doc::DidDocument,
     service::Service,
     types::uri::Uri,
-    verification_method::{PublicKeyField, VerificationMethodType},
+    verification_method::{
+        PublicKeyField, VerificationMethod, VerificationMethodKind, VerificationMethodType,
+    },
 };
-use did_parser_nom::{Did, DidUrl};
+use did_parser_nom::DidUrl;
 use display_as_json::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+use crate::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 
 /// The following DidPeer4* structs are similar to those defined in did_doc crate,
 /// however with minor differences defined by https://identity.foundation/peer-did-method-spec/#creating-a-did
@@ -30,7 +35,7 @@ pub struct DidPeer4EncodedDocument {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     also_known_as: Vec<Uri>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    verification_method: Vec<DidPeer4VerificationMethodKind>,
+    verification_method: Vec<DidPeer4VerificationMethod>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     authentication: Vec<DidPeer4VerificationMethodKind>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -48,25 +53,67 @@ pub struct DidPeer4EncodedDocument {
     extra: HashMap<String, Value>,
 }
 
+impl DidPeer4EncodedDocument {
+    // - Performs DidDocument "contextualization" as described here: https://identity.foundation/peer-did-method-spec/#resolving-a-did
+    pub(crate) fn contextualize_to_did_doc(&self, did_peer_4: &PeerDid<Numalgo4>) -> DidDocument {
+        let mut builder =
+            DidDocument::builder(did_peer_4.did().clone()).set_service(self.service.clone());
+        for vm in &self.verification_method {
+            builder.add_verification_method_2(vm.contextualize(did_peer_4));
+        }
+        builder.build()
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 #[allow(clippy::large_enum_variant)] // todo: revisit this
 pub enum DidPeer4VerificationMethodKind {
     Resolved(DidPeer4VerificationMethod),
-    Resolvable(DidUrl), /* must be relative, can we break down DidUrl into new type
-                         * RelativeDidUrl? */
+    Resolvable(DidUrl), /* MUST be relative,
+                        TODO: Should we have subtype such as RelativeDidUrl? */
 }
 
+impl DidPeer4VerificationMethodKind {
+    pub fn contextualize(&self, did_peer_4: &PeerDid<Numalgo4>) -> VerificationMethodKind {
+        match self {
+            DidPeer4VerificationMethodKind::Resolved(vm) => {
+                VerificationMethodKind::Resolved(vm.contextualize(did_peer_4))
+            }
+            DidPeer4VerificationMethodKind::Resolvable(did_url) => {
+                VerificationMethodKind::Resolvable(did_url.clone())
+            }
+        }
+    }
+}
+
+// TODO: use builder instead of pub(crate) ?
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct DidPeer4VerificationMethod {
-    id: DidUrl,
-    // must be relative, can we break down DidUrl into new type RelativeDidUrl?
-    controller: Option<Did>,
+    pub(crate) id: DidUrl,
+    // - Controller MUST be relative, can we break down DidUrl into new type RelativeDidUrl?
+    // - Controller MUST be omitted, if the controller is the document owner (main reason why this
+    //   is different from did_doc::schema::verification_method::VerificationMethod)
+    // - TODO: add support for controller different than the document owner (how does that work for
+    //   peer DIDs?)
+    // controller: Option<Did>,
     #[serde(rename = "type")]
-    verification_method_type: VerificationMethodType,
+    pub(crate) verification_method_type: VerificationMethodType,
     #[serde(flatten)]
-    public_key: PublicKeyField,
+    pub(crate) public_key: PublicKeyField,
+}
+
+impl DidPeer4VerificationMethod {
+    pub(crate) fn contextualize(&self, did_peer_4: &PeerDid<Numalgo4>) -> VerificationMethod {
+        VerificationMethod::builder(
+            self.id.clone(),
+            did_peer_4.did().clone(),
+            self.verification_method_type,
+        )
+        .add_public_key_field(self.public_key.clone())
+        .build()
+    }
 }
 
 #[cfg(test)]

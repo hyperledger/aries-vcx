@@ -142,6 +142,12 @@ impl DidDocumentBuilder {
         self
     }
 
+    // This was needed fo peer:did:4 implementation, but it's assymetric with other methods here
+    // TODO: Find better approach for the builder
+    pub fn add_verification_method_2(&mut self, verification_method: VerificationMethod) {
+        self.verification_method.push(verification_method);
+    }
+
     pub fn add_authentication_method(mut self, method: VerificationMethod) -> Self {
         self.authentication
             .push(VerificationMethodKind::Resolved(method));
@@ -204,6 +210,11 @@ impl DidDocumentBuilder {
 
     pub fn add_service(mut self, service: Service) -> Self {
         self.service.push(service);
+        self
+    }
+
+    pub fn set_service(mut self, service: Vec<Service>) -> Self {
+        self.service = service;
         self
     }
 

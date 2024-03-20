@@ -84,6 +84,18 @@ impl IncompleteVerificationMethodBuilder {
         }
     }
 
+    pub fn add_public_key_field(
+        self,
+        public_key: PublicKeyField,
+    ) -> CompleteVerificationMethodBuilder {
+        CompleteVerificationMethodBuilder {
+            id: self.id,
+            controller: self.controller,
+            verification_method_type: self.verification_method_type,
+            public_key: Some(public_key),
+        }
+    }
+
     pub fn add_public_key_multibase(
         self,
         public_key_multibase: String,

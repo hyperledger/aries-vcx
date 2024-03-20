@@ -40,7 +40,7 @@ impl Did {
     }
 
     pub fn id(&self) -> &str {
-        self.did[self.id.clone()].as_ref()
+        self.did[self.id.start..self.id.end].as_ref()
     }
 
     pub(crate) fn from_parts(
@@ -63,6 +63,14 @@ impl TryFrom<String> for Did {
 
     fn try_from(did: String) -> Result<Self, Self::Error> {
         Self::parse(did)
+    }
+}
+
+impl TryFrom<&str> for Did {
+    type Error = ParseError;
+
+    fn try_from(did: &str) -> Result<Self, Self::Error> {
+        Did::from_str(did)
     }
 }
 

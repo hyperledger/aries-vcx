@@ -44,7 +44,7 @@ impl TryFrom<char> for NumalgoKind {
             Numalgo1::NUMALGO_CHAR => Ok(NumalgoKind::GenesisDoc(Numalgo1)),
             Numalgo2::NUMALGO_CHAR => Ok(NumalgoKind::MultipleInceptionKeys(Numalgo2)),
             Numalgo3::NUMALGO_CHAR => Ok(NumalgoKind::DidShortening(Numalgo3)),
-            Numalgo4::NUMALGO_CHAR => Ok(NumalgoKind::DidShortening(Numalgo3)),
+            Numalgo4::NUMALGO_CHAR => Ok(NumalgoKind::DidPeer4(Numalgo4)),
             c => Err(DidPeerError::InvalidNumalgoCharacter(c)),
         }
     }

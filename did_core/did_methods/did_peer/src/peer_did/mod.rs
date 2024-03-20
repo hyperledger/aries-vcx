@@ -1,7 +1,6 @@
 pub mod numalgos;
 
 mod parse;
-mod validate;
 
 pub mod generic;
 
