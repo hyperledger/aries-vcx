@@ -82,24 +82,16 @@ async fn demo_did_peer_4() -> Result<(), Box<dyn Error>> {
         .build()
         .unwrap();
     println!(
-        "Pseudo DidDocument, input for did:peer:4 construction: {}",
+        "Pseudo did document as input for did:peer:4 construction: {}",
         serde_json::to_string_pretty(&encoded_document)?
     );
 
     let peer_did_4 = PeerDid::<Numalgo4>::new(encoded_document)?;
-    println!("as did:peer numalgo(4): {}", peer_did_4);
+    println!("Instance of peer did: {}", peer_did_4);
 
-    let DidResolutionOutput { did_document, .. } = PeerDidResolver::new()
-        .resolve(
-            peer_did_4.did(),
-            &PeerDidResolutionOptions {
-                encoding: Some(PublicKeyEncoding::Base58),
-            },
-        )
-        .await
-        .unwrap();
+    let did_document = peer_did_4.resolve_did_doc()?;
     println!(
-        "Decoded did document: \n{}",
+        "Resolved did document: {}",
         serde_json::to_string_pretty(&did_document)?
     );
     Ok(())

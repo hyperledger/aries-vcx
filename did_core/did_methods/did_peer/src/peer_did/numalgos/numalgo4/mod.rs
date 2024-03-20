@@ -112,7 +112,7 @@ impl PeerDid<Numalgo4> {
         Ok(encoded_document)
     }
 
-    pub fn decode_did_doc(&self) -> Result<DidDocument, DidPeerError> {
+    pub fn resolve_did_doc(&self) -> Result<DidDocument, DidPeerError> {
         let did_doc_peer4_encoded = self.to_did_peer_4_encoded_diddoc()?;
         Ok(did_doc_peer4_encoded.contextualize_to_did_doc(self))
     }
@@ -165,7 +165,7 @@ mod tests {
         let did = PeerDid::<Numalgo4>::new(encoded_document).unwrap();
         assert_eq!(did.to_string(), "did:peer:4z84Vmeih9kTUrnxVanw9DhiVX9JNuW5cEz1RJx9dwrKcqh4bq96Z6zuc9m6oPV4gc6tafguyzd8dYih4N153Gh3XmWK:z2FrKwFgfDgrV5fdpSvPvBThURtNvDa3RWfoueUsEVQQmzJpMxXhAiutkPRRbuvVVeJDMZd2wdjeeNsRPx1csnDyQsoyhQWviaBd2LRen8fp9vZSkzmFmP1sgoKDXztkREhiUnKbXCiArA6t2nKed2NoGALYXFw1D72NbSgEhcMVzLL2wwgovV4D1HhEcvzXJQDKXwqUDaW1B3YgCMBKeEvy4vsaYhxf7JFcZzS5Ga8mSSUk3nAC9nXMWG3GT8XxzviQWxdfB2fwyKoy3bC3ihxwwjkpxVNuB72mJ");
 
-        let resolved_did_doc = did.decode_did_doc().unwrap();
+        let resolved_did_doc = did.resolve_did_doc().unwrap();
         assert_eq!(resolved_did_doc.id().to_string(), did.did().to_string());
         println!(
             "resolved document: {}",

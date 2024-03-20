@@ -47,7 +47,7 @@ impl DidResolvable for PeerDidResolver {
                     .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
                     .build()
             }
-            AnyPeerDid::Numalgo4(peer_did) => peer_did.decode_did_doc()?,
+            AnyPeerDid::Numalgo4(peer_did) => peer_did.resolve_did_doc()?,
             n => return Err(Box::new(DidPeerError::UnsupportedNumalgo(n.numalgo()))),
         };
         let resolution_metadata = DidResolutionMetadata::builder()
