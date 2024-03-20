@@ -12,7 +12,7 @@ pub mod revocation;
 pub mod schema;
 
 #[derive(Deserialize)]
-pub struct Request<T> {
+pub struct AathRequest<T> {
     #[serde(default)]
     pub id: String,
     #[serde(default)]

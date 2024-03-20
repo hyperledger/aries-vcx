@@ -198,8 +198,7 @@ impl HarnessAgent {
     async fn handle_did_exchange_msg(&self, msg: DidExchange) -> HarnessResult<()> {
         match msg {
             DidExchange::Request(request) => {
-                // self.aries_agent.receive_message(request.into());
-                self.didx_msg_buffer.write().unwrap().push(request.into());
+                self.queue_didexchange_request(request)?;
             }
             DidExchange::Response(response) => {
                 let res = self

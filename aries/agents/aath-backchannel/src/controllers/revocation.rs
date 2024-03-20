@@ -2,7 +2,7 @@ use std::sync::RwLock;
 
 use actix_web::{get, post, web, Responder};
 
-use crate::{controllers::Request, error::HarnessResult, HarnessAgent};
+use crate::{controllers::AathRequest, error::HarnessResult, HarnessAgent};
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct CredentialRevocationData {
@@ -46,7 +46,7 @@ impl HarnessAgent {
 #[post("/revoke")]
 pub async fn revoke_credential(
     agent: web::Data<RwLock<HarnessAgent>>,
-    req: web::Json<Request<CredentialRevocationData>>,
+    req: web::Json<AathRequest<CredentialRevocationData>>,
 ) -> impl Responder {
     agent.read().unwrap().revoke_credential(&req.data).await
 }

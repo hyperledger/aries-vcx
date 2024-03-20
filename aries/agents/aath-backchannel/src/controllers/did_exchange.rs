@@ -3,12 +3,15 @@ use std::sync::RwLock;
 use actix_web::{get, post, web, Responder};
 use aries_vcx_agent::aries_vcx::{
     did_parser_nom::Did,
-    messages::{msg_fields::protocols::did_exchange::DidExchange, AriesMessage},
+    messages::{
+        msg_fields::protocols::did_exchange::{request::Request, DidExchange},
+        AriesMessage,
+    },
     protocols::did_exchange::state_machine::requester::helpers::invitation_get_first_did_service,
 };
 
 use crate::{
-    controllers::Request,
+    controllers::AathRequest,
     error::{HarnessError, HarnessErrorType, HarnessResult},
     HarnessAgent,
 };
@@ -46,15 +49,16 @@ impl HarnessAgent {
         Ok(json!({ "connection_id" : connection_id }).to_string())
     }
 
-    pub async fn store_didcomm_message(&self, msg: AriesMessage) -> HarnessResult<String> {
+    pub fn queue_didexchange_request(&self, request: Request) -> HarnessResult<()> {
+        info!("queue_didexchange_request >> request: {}", request);
         let mut msg_buffer = self.didx_msg_buffer.write().map_err(|_| {
             HarnessError::from_msg(
                 HarnessErrorType::InvalidState,
                 "Failed to lock message buffer",
             )
         })?;
-        msg_buffer.push(msg);
-        Ok(json!({ "status": "ok" }).to_string())
+        msg_buffer.push(request.into());
+        Ok(())
     }
 
     // Note: used by test-case did-exchange @T005-RFC0023
@@ -71,9 +75,8 @@ impl HarnessAgent {
         Ok(json!({ "connection_id": connection_id }).to_string())
     }
 
-    // While in real-life setting, requester would send the request to a service resolved from DID
-    // Document AATH play role of "mediator" such that it explicitly takes request from
-    // requester and passes it to responder (eg. this method)
+    // Looks up an oldest unprocessed did-exchange request message
+    // Messages received via didcomm are unprocessed
     pub async fn didx_responder_receive_request_from_resolvable_did(
         &self,
     ) -> HarnessResult<String> {
@@ -197,7 +200,7 @@ impl HarnessAgent {
 
 #[post("/send-request")]
 async fn send_did_exchange_request(
-    req: web::Json<Request<()>>,
+    req: web::Json<AathRequest<()>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
@@ -209,7 +212,7 @@ async fn send_did_exchange_request(
 
 #[post("/create-request-resolvable-did")]
 async fn send_did_exchange_request_resolvable_did(
-    req: web::Json<Request<Option<CreateResolvableDidRequest>>>,
+    req: web::Json<AathRequest<Option<CreateResolvableDidRequest>>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
@@ -240,7 +243,7 @@ async fn receive_did_exchange_request_resolvable_did(
 
 #[post("/send-response")]
 async fn send_did_exchange_response(
-    _req: web::Json<Request<()>>,
+    _req: web::Json<AathRequest<()>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent
