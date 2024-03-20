@@ -38,7 +38,6 @@ use aries_vcx_wallet::{
             record::{AllRecords, Record},
             record_category::RecordCategory,
             record_wallet::RecordWallet,
-            search_filter::SearchFilter,
             BaseWallet,
         },
         record_tags::{RecordTag, RecordTags},
@@ -65,6 +64,7 @@ use credx::{
 };
 use did_parser_nom::Did;
 use indy_credx as credx;
+use log::warn;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};
 use type_conversion::Convert;
@@ -130,7 +130,7 @@ impl RecordWallet for WalletAdapter {
     async fn search_record(
         &self,
         category: RecordCategory,
-        search_filter: Option<SearchFilter>,
+        search_filter: Option<String>,
     ) -> VcxWalletResult<Vec<Record>> {
         self.0.search_record(category, search_filter).await
     }
@@ -192,10 +192,7 @@ impl IndyCredxAnonCreds {
         wql: &str,
     ) -> VcxCoreResult<Vec<(String, CredxCredential)>> {
         let records = wallet
-            .search_record(
-                RecordCategory::Cred,
-                Some(SearchFilter::JsonFilter(wql.into())),
-            )
+            .search_record(RecordCategory::Cred, Some(wql.into()))
             .await?;
 
         let id_cred_tuple_list: VcxCoreResult<Vec<(String, CredxCredential)>> = records

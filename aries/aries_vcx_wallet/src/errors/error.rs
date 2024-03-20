@@ -8,7 +8,7 @@ use thiserror::Error as ThisError;
 #[cfg(feature = "vdrtools_wallet")]
 use vdrtools::IndyError;
 
-use crate::wallet::base_wallet::{record_category::RecordCategory, search_filter::SearchFilter};
+use crate::wallet::base_wallet::record_category::RecordCategory;
 
 pub type VcxWalletResult<T> = Result<T, VcxWalletError>;
 
@@ -54,7 +54,6 @@ pub enum VcxWalletError {
     NotBase64(ConversionError),
     RecordNotFound(NotFoundInfo),
     UnknownRecordCategory(String),
-    FilterTypeNotsupported(SearchFilter),
     #[cfg(feature = "vdrtools_wallet")]
     IndyApiError(IndyError),
     InvalidInput(String),
@@ -86,9 +85,6 @@ impl Display for VcxWalletError {
             VcxWalletError::UnknownRecordCategory(inner) => {
                 write!(f, "Unknown RecordCategory: {}", inner)
             }
-            VcxWalletError::FilterTypeNotsupported(inner) => {
-                write!(f, "Filter type is not supported: {}", inner)
-            }
             #[cfg(feature = "vdrtools_wallet")]
             VcxWalletError::IndyApiError(inner) => write!(f, "Indy API error: {}", inner),
             VcxWalletError::InvalidInput(inner) => write!(f, "Invalid input: {}", inner),
@@ -111,7 +107,6 @@ impl std::error::Error for VcxWalletError {
             VcxWalletError::NotBase64(inner) => Some(inner),
             VcxWalletError::RecordNotFound(_) => None,
             VcxWalletError::UnknownRecordCategory(_) => None,
-            VcxWalletError::FilterTypeNotsupported(_) => None,
             #[cfg(feature = "vdrtools_wallet")]
             VcxWalletError::IndyApiError(inner) => Some(inner),
             VcxWalletError::InvalidInput(_) => None,

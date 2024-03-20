@@ -1,4 +1,6 @@
-use aries_askar::entry::EntryTag;
+use std::str::FromStr;
+
+use aries_askar::entry::{EntryTag, TagFilter};
 use async_trait::async_trait;
 
 use super::{all_askar_records::AllAskarRecords, AskarWallet};
@@ -9,7 +11,6 @@ use crate::{
             record::{AllRecords, PartialRecord, Record},
             record_category::RecordCategory,
             record_wallet::RecordWallet,
-            search_filter::SearchFilter,
         },
         record_tags::RecordTags,
     },
@@ -94,22 +95,17 @@ impl RecordWallet for AskarWallet {
     async fn search_record(
         &self,
         category: RecordCategory,
-        search_filter: Option<SearchFilter>,
+        search_filter: Option<String>,
     ) -> VcxWalletResult<Vec<Record>> {
+        let filter = search_filter
+            .map(|inner| TagFilter::from_str(&inner))
+            .transpose()
+            .map_err(|err| VcxWalletError::InvalidInput(err.to_string()))?;
+
         Ok(self
             .session()
             .await?
-            .fetch_all(
-                Some(&category.to_string()),
-                search_filter
-                    .map(|filter| match filter {
-                        SearchFilter::TagFilter(inner) => Ok(inner),
-                        filter => Err(VcxWalletError::FilterTypeNotsupported(filter)),
-                    })
-                    .transpose()?,
-                None,
-                false,
-            )
+            .fetch_all(Some(&category.to_string()), filter, None, false)
             .await?
             .into_iter()
             .map(TryFrom::try_from)

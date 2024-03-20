@@ -14,7 +14,7 @@ use self::{indy_tags::IndyTags, indy_wallet_config::IndyWalletConfig};
 use super::{
     base_wallet::{
         key_value::KeyValue, record::Record, record_category::RecordCategory,
-        record_wallet::RecordWallet, search_filter::SearchFilter, BaseWallet,
+        record_wallet::RecordWallet, BaseWallet,
     },
     record_tags::RecordTags,
 };
@@ -104,16 +104,9 @@ impl IndySdkWallet {
     async fn search(
         &self,
         category: RecordCategory,
-        search_filter: Option<SearchFilter>,
+        search_filter: Option<String>,
     ) -> VcxWalletResult<Vec<Record>> {
-        let json_filter = search_filter
-            .map(|filter| match filter {
-                SearchFilter::JsonFilter(inner) => Ok::<String, VcxWalletError>(inner),
-                other => Err(VcxWalletError::FilterTypeNotsupported(other)),
-            })
-            .transpose()?;
-
-        let query_json = json_filter.unwrap_or("{}".into());
+        let query_json = search_filter.unwrap_or("{}".into());
 
         let search_handle = Locator::instance()
             .non_secret_controller

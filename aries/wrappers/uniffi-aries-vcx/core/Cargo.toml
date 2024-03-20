@@ -25,6 +25,7 @@ uniffi = { version = "0.23.0", features = ["cli"] }
 aries_vcx = { path = "../../../aries_vcx", features = [
     "credx",
 ] }
+aries_vcx_ledger = { path = "../../../aries_vcx_ledger" }
 tokio = { version = "1.24.1", features = ["rt-multi-thread"] }
 once_cell = "1.17.0"
 thiserror = "1.0.38"

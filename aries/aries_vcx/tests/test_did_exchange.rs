@@ -16,7 +16,7 @@ use aries_vcx::{
     },
     utils::{didcomm_utils::resolve_base58_key_agreement, encryption_envelope::EncryptionEnvelope},
 };
-use aries_vcx_core::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
+use aries_vcx_ledger::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
 use did_doc::schema::{
     did_doc::DidDocument,
     service::typed::{didcommv1::ServiceDidCommV1, ServiceType},

@@ -1,4 +1,4 @@
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
 
 use crate::errors::error::prelude::*;
 

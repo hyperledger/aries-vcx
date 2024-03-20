@@ -1,7 +1,7 @@
 pub mod parsing;
 mod resolution;
 
-use aries_vcx_core::errors::error::AriesVcxCoreError;
+use aries_vcx_ledger::errors::error::VcxLedgerError;
 use did_resolver::did_doc::{error::DidDocumentBuilderError, schema::types::uri::UriWrapperError};
 use thiserror::Error;
 
@@ -24,8 +24,8 @@ pub enum DidSovError {
     InternalError,
     #[error("Invalid DID {0}")]
     InvalidDid(String),
-    #[error("AriesVCX Core error: {0}")]
-    AriesVcxCoreError(#[from] AriesVcxCoreError),
+    #[error("AriesVCX Ledger error: {0}")]
+    AriesVcxLedgerError(#[from] VcxLedgerError),
     #[error("DID Document Builder Error: {0}")]
     DidDocumentBuilderError(#[from] DidDocumentBuilderError),
     #[error("Parsing error: {0}")]

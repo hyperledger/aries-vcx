@@ -10,7 +10,6 @@ use crate::{
             record::{AllRecords, Record},
             record_category::RecordCategory,
             record_wallet::RecordWallet,
-            search_filter::SearchFilter,
         },
         indy::IndySdkWallet,
         record_tags::RecordTags,
@@ -107,7 +106,7 @@ impl RecordWallet for IndySdkWallet {
     async fn search_record(
         &self,
         category: RecordCategory,
-        search_filter: Option<SearchFilter>,
+        search_filter: Option<String>,
     ) -> VcxWalletResult<Vec<Record>> {
         self.search(category, search_filter).await
     }

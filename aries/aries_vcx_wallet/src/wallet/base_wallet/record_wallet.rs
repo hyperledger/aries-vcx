@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use super::{
     record::{AllRecords, Record},
     record_category::RecordCategory,
-    search_filter::SearchFilter,
+    // search_filter::SearchFilter,
 };
 use crate::{errors::error::VcxWalletResult, wallet::record_tags::RecordTags};
 
@@ -34,6 +34,6 @@ pub trait RecordWallet {
     async fn search_record(
         &self,
         category: RecordCategory,
-        search_filter: Option<SearchFilter>,
+        search_filter: Option<String>,
     ) -> VcxWalletResult<Vec<Record>>;
 }

@@ -23,6 +23,7 @@ use indy_ledger_response_parser::{
     ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo,
 };
 use indy_vdr as vdr;
+use log::{debug, trace};
 use public_key::Key;
 use serde_json::Value;
 use time::OffsetDateTime;
@@ -56,7 +57,7 @@ use super::{
     },
 };
 use crate::{
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    errors::error::{VcxLedgerError, VcxLedgerResult},
     ledger::{
         base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions},
         common::verify_transaction_can_be_endorsed,
@@ -123,7 +124,7 @@ where
         }
     }
 
-    pub fn request_builder(&self) -> VcxCoreResult<RequestBuilder> {
+    pub fn request_builder(&self) -> VcxLedgerResult<RequestBuilder> {
         Ok(RequestBuilder::new(self.protocol_version))
     }
 
@@ -131,7 +132,7 @@ where
         &self,
         cache_id: Option<&str>,
         request: PreparedRequest,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxLedgerResult<String> {
         trace!(
             "submit_request >> Submitting ledger request, cache_id: {cache_id:?}, request: \
              {request:?}"
@@ -175,7 +176,7 @@ where
         }
     }
 
-    pub fn request_builder(&self) -> VcxCoreResult<RequestBuilder> {
+    pub fn request_builder(&self) -> VcxLedgerResult<RequestBuilder> {
         Ok(RequestBuilder::new(self.protocol_version))
     }
 
@@ -183,7 +184,7 @@ where
         wallet: &impl BaseWallet,
         did: &Did,
         request: &PreparedRequest,
-    ) -> VcxCoreResult<Vec<u8>> {
+    ) -> VcxLedgerResult<Vec<u8>> {
         let to_sign = request.get_signature_input()?;
         let signer_verkey = wallet.key_for_did(&did.to_string()).await?;
         let signature = wallet.sign(&signer_verkey, to_sign.as_bytes()).await?;
@@ -195,7 +196,7 @@ where
         wallet: &impl BaseWallet,
         submitter_did: &Did,
         request: PreparedRequest,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxLedgerResult<String> {
         let mut request = request;
         let signature = Self::sign_request(wallet, submitter_did, &request).await?;
         request.set_signature(&signature)?;
@@ -210,13 +211,13 @@ where
     fn set_txn_author_agreement_options(
         &self,
         taa_options: TxnAuthrAgrmtOptions,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxLedgerResult<()> {
         let mut m = self.taa_options.write()?;
         *m = Some(taa_options);
         Ok(())
     }
 
-    fn get_txn_author_agreement_options(&self) -> VcxCoreResult<Option<TxnAuthrAgrmtOptions>> {
+    fn get_txn_author_agreement_options(&self) -> VcxLedgerResult<Option<TxnAuthrAgrmtOptions>> {
         Ok(self.taa_options.read()?.clone())
     }
 }
@@ -246,7 +247,7 @@ where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
-    async fn get_attr(&self, target_did: &Did, attr_name: &str) -> VcxCoreResult<String> {
+    async fn get_attr(&self, target_did: &Did, attr_name: &str) -> VcxLedgerResult<String> {
         debug!("get_attr >> target_did: {target_did}, attr_name: {attr_name}");
         let request = self.request_builder()?.build_get_attrib_request(
             None,
@@ -262,7 +263,7 @@ where
         Ok(response)
     }
 
-    async fn get_nym(&self, did: &Did) -> VcxCoreResult<String> {
+    async fn get_nym(&self, did: &Did) -> VcxLedgerResult<String> {
         debug!("get_nym >> did: {did}");
         let request =
             self.request_builder()?
@@ -272,7 +273,7 @@ where
         Ok(response)
     }
 
-    async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>> {
+    async fn get_txn_author_agreement(&self) -> VcxLedgerResult<Option<String>> {
         debug!("get_txn_author_agreement >>");
         let request = self
             .request_builder()?
@@ -291,7 +292,7 @@ where
         &self,
         seq_no: i32,
         submitter_did: Option<&Did>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxLedgerResult<String> {
         debug!("get_ledger_txn >> seq_no: {seq_no}");
         let identifier = submitter_did.map(|did| did.convert(())).transpose()?;
         let request = self.request_builder()?.build_get_txn_request(
@@ -312,7 +313,7 @@ where
     async fn append_txn_author_agreement_to_request(
         &self,
         request: PreparedRequest,
-    ) -> VcxCoreResult<PreparedRequest> {
+    ) -> VcxLedgerResult<PreparedRequest> {
         let taa_options = (*self.taa_options.read()?).clone();
         if let Some(taa_options) = taa_options {
             let mut request = request;
@@ -346,7 +347,7 @@ where
         verkey: Option<&Key>,
         data: Option<&str>,
         role: Option<&str>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxLedgerResult<String> {
         let identifier = submitter_did.convert(())?;
         let dest = target_did.convert(())?;
         let request = self.request_builder()?.build_nym_request(
@@ -369,7 +370,7 @@ where
         submitter_did: &Did,
         request_json: &str,
         endorser: &Did,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxLedgerResult<String> {
         let mut request = PreparedRequest::from_request_json(request_json)?;
         request.set_endorser(&endorser.convert(())?)?;
         let signature_submitter = Self::sign_request(wallet, submitter_did, &request).await?;
@@ -382,7 +383,7 @@ where
         wallet: &impl BaseWallet,
         endorser_did: &Did,
         request_json: &str,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxLedgerResult<()> {
         let mut request = PreparedRequest::from_request_json(request_json)?;
         verify_transaction_can_be_endorsed(request_json, endorser_did)?;
         let signature_endorser = Self::sign_request(wallet, endorser_did, &request).await?;
@@ -395,7 +396,7 @@ where
         wallet: &impl BaseWallet,
         target_did: &Did,
         attrib_json: &str,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxLedgerResult<String> {
         let identifier = target_did.convert(())?;
         let dest = target_did.convert(())?;
         let request = self.request_builder()?.build_attrib_request(
@@ -418,7 +419,7 @@ where
         target_vk: &Key,
         role: Option<UpdateRole>,
         alias: Option<String>,
-    ) -> VcxCoreResult<String> {
+    ) -> VcxLedgerResult<String> {
         debug!(
             "write_did >> submitter_did: {submitter_did}, target_did: {target_did}, target_vk: \
              {target_vk:?}, role: {role:?}, alias: {alias:?}"
@@ -451,7 +452,7 @@ where
         &self,
         schema_id: &SchemaId,
         _submitter_did: Option<&Did>,
-    ) -> VcxCoreResult<Schema> {
+    ) -> VcxLedgerResult<Schema> {
         debug!("get_schema >> schema_id: {schema_id}");
         let request = self
             .request_builder()?
@@ -468,7 +469,7 @@ where
         &self,
         cred_def_id: &CredentialDefinitionId,
         submitter_did: Option<&Did>,
-    ) -> VcxCoreResult<CredentialDefinition> {
+    ) -> VcxLedgerResult<CredentialDefinition> {
         debug!("get_cred_def >> cred_def_id: {cred_def_id}");
         let identifier = submitter_did.map(|did| did.convert(())).transpose()?;
         let id = IndyVdrCredentialDefinitionId::from_str(&cred_def_id.to_string())?;
@@ -492,7 +493,7 @@ where
     async fn get_rev_reg_def_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
-    ) -> VcxCoreResult<RevocationRegistryDefinition> {
+    ) -> VcxLedgerResult<RevocationRegistryDefinition> {
         debug!("get_rev_reg_def_json >> rev_reg_id: {rev_reg_id}");
         let id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
         let request = self
@@ -513,7 +514,7 @@ where
         rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(RevocationRegistryDelta, u64)> {
+    ) -> VcxLedgerResult<(RevocationRegistryDelta, u64)> {
         debug!("get_rev_reg_delta_json >> rev_reg_id: {rev_reg_id}, from: {from:?}, to: {to:?}");
         let revoc_reg_def_id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
 
@@ -544,7 +545,7 @@ where
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-    ) -> VcxCoreResult<(RevocationRegistry, u64)> {
+    ) -> VcxLedgerResult<(RevocationRegistry, u64)> {
         debug!("get_rev_reg >> rev_reg_id: {rev_reg_id}, timestamp: {timestamp}");
         let revoc_reg_def_id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
 
@@ -579,7 +580,7 @@ where
         schema_json: Schema,
         submitter_did: &Did,
         _endorser_did: Option<&Did>,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxLedgerResult<()> {
         let identifier = submitter_did.convert(())?;
         let mut request = self
             .request_builder()?
@@ -595,16 +596,8 @@ where
             .sign_and_submit_request(wallet, submitter_did, request)
             .await;
 
-        if let Err(err) = &sign_result {
-            if let AriesVcxCoreErrorKind::InvalidLedgerResponse = err.kind() {
-                return Err(AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::DuplicationSchema,
-                    format!(
-                        "Schema probably already exists, ledger request failed: {:?}",
-                        &err
-                    ),
-                ));
-            }
+        if let Err(VcxLedgerError::InvalidLedgerResponse) = &sign_result {
+            return Err(VcxLedgerError::DuplicationSchema);
         }
         sign_result.map(|_| ())
     }
@@ -614,7 +607,7 @@ where
         wallet: &impl BaseWallet,
         cred_def_json: CredentialDefinition,
         submitter_did: &Did,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxLedgerResult<()> {
         let identifier = submitter_did.convert(())?;
         let request = self
             .request_builder()?
@@ -630,7 +623,7 @@ where
         wallet: &impl BaseWallet,
         rev_reg_def: RevocationRegistryDefinition,
         submitter_did: &Did,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxLedgerResult<()> {
         let identifier = submitter_did.convert(())?;
         let request = self
             .request_builder()?
@@ -647,7 +640,7 @@ where
         rev_reg_id: &RevocationRegistryDefinitionId,
         rev_reg_entry_json: RevocationRegistryDelta,
         submitter_did: &Did,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxLedgerResult<()> {
         let identifier = submitter_did.convert(())?;
         let request = self.request_builder()?.build_revoc_reg_entry_request(
             &identifier,
@@ -665,7 +658,7 @@ where
 pub fn indyvdr_build_ledger_read(
     request_submitter: IndyVdrSubmitter,
     cache_config: InMemoryResponseCacherConfig,
-) -> VcxCoreResult<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>> {
+) -> VcxLedgerResult<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>> {
     let response_parser = ResponseParser;
     let response_cacher = InMemoryResponseCacher::new(cache_config);
 
@@ -699,7 +692,7 @@ pub struct VcxPoolConfig {
 
 pub fn build_ledger_components(
     pool_config: VcxPoolConfig,
-) -> VcxCoreResult<(DefaultIndyLedgerRead, DefaultIndyLedgerWrite)> {
+) -> VcxLedgerResult<(DefaultIndyLedgerRead, DefaultIndyLedgerWrite)> {
     let indy_vdr_config = match pool_config.indy_vdr_config {
         None => PoolConfig::default(),
         Some(cfg) => cfg,

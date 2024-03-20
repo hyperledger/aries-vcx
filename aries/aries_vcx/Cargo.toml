@@ -42,6 +42,8 @@ messages = { path = "../messages" }
 diddoc_legacy = { path = "../misc/legacy/diddoc_legacy" }
 aries_vcx_core = { path = "../aries_vcx_core" }
 aries_vcx_wallet = { path = "../aries_vcx_wallet" }
+aries_vcx_ledger = { path = "../aries_vcx_ledger" }
+indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", default-features = false, features = ["log"] }
 shared = { path = "../misc/shared" }
 anoncreds_types = { path = "../misc/anoncreds_types" }
 did_parser_nom = { path = "../../did_core/did_parser_nom" }

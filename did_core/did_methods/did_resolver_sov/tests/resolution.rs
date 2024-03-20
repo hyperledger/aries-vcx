@@ -1,7 +1,7 @@
 use std::{thread, time::Duration};
 
 use aries_vcx::common::ledger::{service_didsov::EndpointDidSov, transactions::write_endpoint};
-use aries_vcx_core::ledger::base_ledger::IndyLedgerWrite;
+use aries_vcx_ledger::ledger::base_ledger::IndyLedgerWrite;
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_resolver::{
     did_doc::schema::service::typed::ServiceType,
