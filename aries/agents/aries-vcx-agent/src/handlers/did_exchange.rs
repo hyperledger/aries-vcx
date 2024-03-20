@@ -16,7 +16,7 @@ use aries_vcx::{
     protocols::did_exchange::{
         resolve_enc_key_from_invitation,
         state_machine::{
-            create_our_did_document,
+            create_peer_did_2,
             generic::{GenericDidExchange, ThinState},
         },
     },
@@ -24,7 +24,6 @@ use aries_vcx::{
     utils::encryption_envelope::EncryptionEnvelope,
 };
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::did_resolver::did_doc::schema::did_doc::DidDocument;
 use url::Url;
@@ -66,17 +65,16 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
         invitation_id: Option<String>,
     ) -> AgentResult<(String, Option<String>)> {
         // todo: type the return type
-        let (our_did_document, _our_verkey) =
-            create_our_did_document(self.wallet.as_ref(), self.service_endpoint.clone(), vec![])
+        let (our_peer_did_2, _our_verkey) =
+            create_peer_did_2(self.wallet.as_ref(), self.service_endpoint.clone(), vec![])
                 .await?;
 
         let their_did: Did = their_did.parse()?;
-        let our_peer_did = PeerDid::<Numalgo2>::from_did_doc(our_did_document.clone())?;
         let (requester, request) = GenericDidExchange::construct_request(
             self.resolver_registry.clone(),
             invitation_id,
             &their_did,
-            &our_peer_did,
+            &our_peer_did_2,
         )
         .await?;
 
@@ -168,10 +166,9 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             }
         };
 
-        let (our_did_document, _our_verkey) =
-            create_our_did_document(self.wallet.as_ref(), self.service_endpoint.clone(), vec![])
+        let (peer_did_2_invitee, _our_verkey) =
+            create_peer_did_2(self.wallet.as_ref(), self.service_endpoint.clone(), vec![])
                 .await?;
-        let peer_did_invitee = PeerDid::<Numalgo2>::from_did_doc(our_did_document.clone())?;
 
         let pthid = request
             .clone()
@@ -190,7 +187,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             self.wallet.as_ref(),
             self.resolver_registry.clone(),
             request,
-            &peer_did_invitee,
+            &peer_did_2_invitee,
             invitation_key,
         )
         .await?;

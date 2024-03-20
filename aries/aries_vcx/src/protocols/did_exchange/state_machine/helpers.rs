@@ -26,6 +26,8 @@ use public_key::{Key, KeyType};
 use serde_json::Value;
 use url::Url;
 use uuid::Uuid;
+use did_peer::peer_did::numalgos::numalgo4::encoded_document::DidPeer4VerificationMethod;
+use did_peer::peer_did::numalgos::numalgo4::Numalgo4;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
@@ -63,11 +65,11 @@ pub async fn generate_keypair(
     Ok(Key::from_base58(&pairwise_info.pw_vk, key_type)?)
 }
 
-pub async fn create_our_did_document(
+pub async fn create_peer_did_2(
     wallet: &impl BaseWallet,
     service_endpoint: Url,
     routing_keys: Vec<String>,
-) -> Result<(DidDocument, Key), AriesVcxError> {
+) -> Result<(PeerDid<Numalgo2>, Key), AriesVcxError> {
     let key_enc = generate_keypair(wallet, KeyType::Ed25519).await?;
 
     let service: Service = ServiceDidCommV1::new(
@@ -90,7 +92,58 @@ pub async fn create_our_did_document(
     );
     let peer_did = PeerDid::<Numalgo2>::from_did_doc(did_document.clone())?;
     did_document.set_id(peer_did.did().clone());
-    Ok((did_document, key_enc))
+
+    let requesters_peer_did = PeerDid::<Numalgo2>::from_did_doc(did_document)?;
+    info!("Created peer did: {requesters_peer_did}");
+
+    Ok((requesters_peer_did, key_enc))
+}
+
+pub async fn create_peer_did_4(
+    wallet: &impl BaseWallet,
+    service_endpoint: Url,
+    routing_keys: Vec<String>,
+) -> Result<(PeerDid<Numalgo4>, Key), AriesVcxError> {
+    let key_enc = generate_keypair(wallet, KeyType::Ed25519).await?;
+
+    let service: Service = ServiceDidCommV1::new(
+        Uri::new("#0")?,
+        service_endpoint,
+        0,
+        vec![],
+        routing_keys
+            .into_iter()
+            .map(ServiceKeyKind::Value)
+            .collect(),
+    )
+        .try_into()?;
+
+    info!("Prepared service for peer:did:2 generation: {} ", service);
+    let vm_ka_id = DidUrl::from_fragment(key_enc.short_prefixless_fingerprint())?;
+    let vm_ka = DidPeer4VerificationMethod {
+        id: Default::default(),
+        verification_method_type: VerificationMethodType::JsonWebKey2020,
+        public_key: (),
+    }
+        .add_public_key_base58(key_enc.base58())
+        .build();
+    Ok(DidDocument::builder(did)
+        .add_service(service)
+        .add_key_agreement(vm_ka)
+        .build())
+
+
+    info!(
+        "Created did document for peer:did:2 generation: {} ",
+        did_document
+    );
+    let peer_did = PeerDid::<Numalgo2>::from_did_doc(did_document.clone())?;
+    did_document.set_id(peer_did.did().clone());
+
+    let requesters_peer_did = PeerDid::<Numalgo2>::from_did_doc(did_document)?;
+    info!("Created peer did: {requesters_peer_did}");
+
+    Ok((requesters_peer_did, key_enc))
 }
 
 fn did_doc_from_keys(
