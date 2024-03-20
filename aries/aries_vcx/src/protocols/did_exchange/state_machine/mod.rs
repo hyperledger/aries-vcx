@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 
 use chrono::Utc;
 use did_doc::schema::did_doc::DidDocument;
-pub use helpers::{create_our_did_document, generate_keypair};
+pub use helpers::{create_peer_did_2, generate_keypair};
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::did_exchange::problem_report::{
