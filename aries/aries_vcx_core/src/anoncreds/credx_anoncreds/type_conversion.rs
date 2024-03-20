@@ -367,12 +367,7 @@ impl Convert for HashMap<OurSchemaId, OurSchema> {
 
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
         self.into_iter()
-            .map(|(id, schema)| {
-                Ok((
-                    CredxSchemaId::try_from(id.to_string())?,
-                    schema.convert(())?,
-                ))
-            })
+            .map(|(id, schema)| Ok((CredxSchemaId::from(id.to_string()), schema.convert(())?)))
             .collect()
     }
 }
@@ -384,8 +379,8 @@ impl Convert for OurCredential {
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(CredxCredential {
-            schema_id: CredxSchemaId::try_from(self.schema_id.to_string())?,
-            cred_def_id: CredxCredentialDefinitionId::try_from(self.cred_def_id.to_string())?,
+            schema_id: CredxSchemaId::from(self.schema_id.to_string()),
+            cred_def_id: CredxCredentialDefinitionId::from(self.cred_def_id.to_string()),
             rev_reg_id: self
                 .rev_reg_id
                 .as_ref()

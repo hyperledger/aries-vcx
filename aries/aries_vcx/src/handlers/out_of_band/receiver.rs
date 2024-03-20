@@ -50,7 +50,7 @@ impl OutOfBandReceiver {
             .content
             .requests_attach
             .as_ref()
-            .and_then(|v| v.get(0))
+            .and_then(|v| v.first())
         {
             attachment_to_aries_message(attach)
         } else {

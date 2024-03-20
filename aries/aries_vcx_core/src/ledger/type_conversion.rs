@@ -178,8 +178,8 @@ impl Convert for OurCredentialDefinition {
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
         Ok(IndyVdrCredentialDefinition::CredentialDefinitionV1(
             indy_vdr::ledger::requests::cred_def::CredentialDefinitionV1 {
-                id: IndyVdrCredentialDefinitionId::try_from(self.id.to_string())?,
-                schema_id: IndyVdrSchemaId::try_from(self.schema_id.to_string())?,
+                id: IndyVdrCredentialDefinitionId::from(self.id.to_string()),
+                schema_id: IndyVdrSchemaId::from(self.schema_id.to_string()),
                 signature_type: match self.signature_type {
                     OurSignatureType::CL => IndyVdrSignatureType::CL,
                 },
@@ -206,12 +206,10 @@ impl Convert for OurRevocationRegistryDefinition {
         Ok(
             IndyVdrRevocationRegistryDefinition::RevocationRegistryDefinitionV1(
                 RevocationRegistryDefinitionV1 {
-                    id: IndyVdrRevocationRegistryId::try_from(self.id.to_string())?,
+                    id: IndyVdrRevocationRegistryId::from(self.id.to_string()),
                     revoc_def_type: indy_vdr::ledger::requests::rev_reg_def::RegistryType::CL_ACCUM,
                     tag: self.tag,
-                    cred_def_id: IndyVdrCredentialDefinitionId::try_from(
-                        self.cred_def_id.to_string(),
-                    )?,
+                    cred_def_id: IndyVdrCredentialDefinitionId::from(self.cred_def_id.to_string()),
                     value: IndyVdrRevocationRegistryDefinitionValue {
                         max_cred_num: self.value.max_cred_num,
                         public_keys: IndyVdrRevocationRegistryDefinitionValuePublicKeys {

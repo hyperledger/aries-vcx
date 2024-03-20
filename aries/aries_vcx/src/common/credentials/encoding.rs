@@ -17,7 +17,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                     // old style input such as {"address2":["101 Wilson Lane"]}
                     serde_json::Value::Array(array_type) => {
                         let attrib_value: &str =
-                            match array_type.get(0).and_then(serde_json::Value::as_str) {
+                            match array_type.first().and_then(serde_json::Value::as_str) {
                                 Some(x) => x,
                                 None => {
                                     return Err(AriesVcxError::from_msg(
