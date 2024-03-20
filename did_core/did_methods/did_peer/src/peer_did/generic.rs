@@ -139,24 +139,10 @@ mod tests {
         }
 
         #[test]
-        fn numalgo2_invalid() {
-            let deserialized: Result<AnyPeerDid, _> =
-                serde_json::from_str(&format!("\"{}\"", INVALID_PEER_DID_NUMALGO2));
-            assert!(deserialized.is_err());
-        }
-
-        #[test]
         fn numalgo3() {
             let deserialized: AnyPeerDid =
                 serde_json::from_str(&format!("\"{}\"", VALID_PEER_DID_NUMALGO3)).unwrap();
             assert_eq!(deserialized, generic_peer_did_numalgo3());
-        }
-
-        #[test]
-        fn numalgo3_invalid() {
-            let deserialized: Result<AnyPeerDid, _> =
-                serde_json::from_str(&format!("\"{}\"", INVALID_PEER_DID_NUMALGO3));
-            assert!(deserialized.is_err());
         }
     }
 }

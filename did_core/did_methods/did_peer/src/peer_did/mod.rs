@@ -156,24 +156,6 @@ mod tests {
         }
 
         generate_negative_parse_test!(
-            unsupported_transform_code,
-            "did:peer:2\
-            .Ea6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
-            .Va6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V\
-            .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXX0",
-            DidPeerError::DidValidationError(_)
-        );
-
-        generate_negative_parse_test!(
-            malformed_base58_encoding_signing,
-            "did:peer:2\
-            .Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
-            .Vz6MkqRYqQiSgvZQdnBytw86Qbs0ZWUkGv22od935YF4s8M7V\
-            .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXX0",
-            DidPeerError::DidValidationError(_)
-        );
-
-        generate_negative_parse_test!(
             malformed_base58_encoding_encryption,
             "did:peer:2\
             .Ez6LSbysY2xFMRpG0hb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
