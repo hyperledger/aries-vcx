@@ -5,7 +5,7 @@ use did_doc::schema::{
     service::{typed::ServiceType, Service},
     types::uri::Uri,
     utils::OneOrList,
-    verification_method::{VerificationMethod, VerificationMethodType},
+    verification_method::{PublicKeyField, VerificationMethod, VerificationMethodType},
 };
 use did_parser_nom::{Did, DidUrl};
 use did_peer::{
@@ -29,13 +29,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 async fn demo_did_peer_2_and_3() -> Result<(), Box<dyn Error>> {
     let did_url = DidUrl::parse("did:foo:bar#key-1".into())?;
     let did = Did::parse("did:foo:bar".into())?;
-    let verification_method = VerificationMethod::builder(
-        did_url,
-        did.clone(),
-        VerificationMethodType::Ed25519VerificationKey2018,
-    )
-    .add_public_key_base64("Zm9vYmFyCg".to_string())
-    .build();
+    let verification_method = VerificationMethod::builder()
+        .id(did_url)
+        .controller(did.clone())
+        .verification_method_type(VerificationMethodType::Ed25519VerificationKey2018)
+        .public_key(PublicKeyField::Base64 {
+            public_key_base64: "Zm9vYmFyCg".to_string(),
+        })
+        .build();
 
     let ddo = DidDocument::builder(did)
         .add_verification_method(verification_method)

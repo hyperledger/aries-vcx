@@ -280,21 +280,24 @@ mod tests {
         let controller = Did::parse("did:example:controller".to_string()).unwrap();
 
         let vm1_id = DidUrl::parse("did:example:vm1#vm1".to_string()).unwrap();
-        let verification_method = VerificationMethod::builder(
-            vm1_id.clone(),
-            Did::parse("did:example:vm1".to_string()).unwrap(),
-            VerificationMethodType::Ed25519VerificationKey2018,
-        )
-        .add_public_key_base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string())
-        .build();
+        let verification_method = VerificationMethod::builder()
+            .id(vm1_id.clone())
+            .controller(Did::parse("did:example:vm1".to_string()).unwrap())
+            .verification_method_type(VerificationMethodType::Ed25519VerificationKey2018)
+            .public_key(PublicKeyField::Base58 {
+                public_key_base58: "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string(),
+            })
+            .build();
+
         let authentication_reference = DidUrl::parse("did:example:authref".to_string()).unwrap();
-        let assertion_method = VerificationMethod::builder(
-            DidUrl::parse("did:example:am1".to_string()).unwrap(),
-            Did::parse("did:example:am2".to_string()).unwrap(),
-            VerificationMethodType::Ed25519VerificationKey2018,
-        )
-        .add_public_key_base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string())
-        .build();
+        let assertion_method = VerificationMethod::builder()
+            .id(DidUrl::parse("did:example:am1".to_string()).unwrap())
+            .controller(Did::parse("did:example:am2".to_string()).unwrap())
+            .verification_method_type(VerificationMethodType::Ed25519VerificationKey2018)
+            .public_key(PublicKeyField::Base58 {
+                public_key_base58: "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string(),
+            })
+            .build();
 
         let service_id = Uri::new("did:example:123456789abcdefghi;service-1").unwrap();
         let service_endpoint = "https://example.com/service";
@@ -473,39 +476,34 @@ mod tests {
         .unwrap();
 
         let vm1_id = DidUrl::parse("#g1".to_string()).unwrap();
-        let vm1 = VerificationMethod::builder(
-            vm1_id,
-            controller.clone(),
-            VerificationMethodType::JsonWebKey2020,
-        )
-        .add_public_key_jwk(
-            JsonWebKey::from_str(
-                r#"{
+        let vm1 = VerificationMethod::builder()
+            .id(vm1_id)
+            .controller(controller.clone())
+            .verification_method_type(VerificationMethodType::JsonWebKey2020)
+            .public_key(PublicKeyField::Jwk {
+                public_key_jwk: JsonWebKey::from_str(
+                    r#"{
                 "kty": "EC",
                 "crv": "BLS12381_G1",
                 "x": "hxF12gtsn9ju4-kJq2-nUjZQKVVWpcBAYX5VHnUZMDilClZsGuOaDjlXS8pFE1GG"
-            }"#,
-            )
-            .unwrap(),
-        )
-        .build();
+                }"#,
+                )
+                .unwrap(),
+            })
+            .build();
 
         let vm2_id = DidUrl::parse("#g2".to_string()).unwrap();
-        let vm2 = VerificationMethod::builder(
-            vm2_id,
-            controller.clone(),
-            VerificationMethodType::JsonWebKey2020,
-        )
-            .add_public_key_jwk(
-                JsonWebKey::from_str(
-                    r#"{
+        let vm2 = VerificationMethod::builder()
+            .id(vm2_id)
+            .controller(controller.clone())
+            .verification_method_type(VerificationMethodType::JsonWebKey2020)
+            .public_key(PublicKeyField::Jwk { public_key_jwk: JsonWebKey::from_str(
+                r#"{
                 "kty": "EC",
                 "crv": "BLS12381_G2",
                 "x": "l4MeBsn_OGa2OEDtHeHdq0TBC8sYh6QwoI7QsNtZk9oAru1OnGClaAPlMbvvs73EABDB6GjjzybbOHarkBmP6pon8H1VuMna0nkEYihZi8OodgdbwReDiDvWzZuXXMl-"
             }"#,
-                )
-                    .unwrap(),
-            )
+            ).unwrap()})
             .build();
 
         assert_eq!(did_doc.verification_method().first().unwrap().clone(), vm1);
@@ -550,13 +548,14 @@ mod tests {
             "did:web:did-actor-alice#zC8GybikEfyNaausDA4mkT4egP7SNLx2T1d1kujLQbcP6h".to_string(),
         )
         .unwrap();
-        let ka1 = VerificationMethod::builder(
-            ka1_id,
-            controller,
-            VerificationMethodType::X25519KeyAgreementKey2019,
-        )
-        .add_public_key_base58("CaSHXEvLKS6SfN9aBfkVGBpp15jSnaHazqHgLHp8KZ3Y".to_string())
-        .build();
+        let ka1 = VerificationMethod::builder()
+            .id(ka1_id)
+            .controller(controller.clone())
+            .verification_method_type(VerificationMethodType::X25519KeyAgreementKey2019)
+            .public_key(PublicKeyField::Base58 {
+                public_key_base58: "CaSHXEvLKS6SfN9aBfkVGBpp15jSnaHazqHgLHp8KZ3Y".to_string(),
+            })
+            .build();
 
         assert_eq!(
             did_doc.key_agreement(),

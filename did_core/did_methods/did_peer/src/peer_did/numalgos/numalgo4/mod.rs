@@ -132,13 +132,14 @@ mod tests {
             OneOrList::One(ServiceType::DIDCommV2),
             HashMap::default(),
         );
-        let vm = DidPeer4VerificationMethod {
-            id: DidUrl::parse("#key-1".to_string()).unwrap(),
-            verification_method_type: VerificationMethodType::Ed25519VerificationKey2020,
-            public_key: PublicKeyField::Base58 {
+        let vm = DidPeer4VerificationMethod::builder()
+            .id(DidUrl::parse("#key-1".to_string()).unwrap())
+            .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
+            .public_key(PublicKeyField::Base58 {
                 public_key_base58: "z27uFkiq".to_string(),
-            },
-        };
+            })
+            .build();
+
         let encoded_document = DidPeer4EncodedDocumentBuilder::default()
             .service(vec![service])
             .verification_method(vec![vm])

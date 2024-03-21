@@ -132,9 +132,9 @@ mod tests {
         },
         types::uri::Uri,
         utils::OneOrList,
-        verification_method::{VerificationMethod, VerificationMethodType},
+        verification_method::{PublicKeyField, VerificationMethod, VerificationMethodType},
     };
-    use did_parser_nom::DidUrl;
+    use did_parser_nom::{Did, DidUrl};
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -150,13 +150,14 @@ mod tests {
         key: String,
         verification_type: VerificationMethodType,
     ) -> VerificationMethod {
-        VerificationMethod::builder(
-            verification_method_id.parse().unwrap(),
-            controller_did.parse().unwrap(),
-            verification_type,
-        )
-        .add_public_key_multibase(key)
-        .build()
+        VerificationMethod::builder()
+            .id(verification_method_id.parse().unwrap())
+            .controller(Did::parse(controller_did).unwrap())
+            .verification_method_type(verification_type)
+            .public_key(PublicKeyField::Multibase {
+                public_key_multibase: key,
+            })
+            .build()
     }
 
     #[test]
