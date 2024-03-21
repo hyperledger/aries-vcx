@@ -40,16 +40,16 @@ async fn demo_did_peer_2_and_3() -> Result<(), Box<dyn Error>> {
     let ddo = DidDocument::builder(did)
         .add_verification_method(verification_method)
         .build();
-    println!("Did document: \n{}", serde_json::to_string_pretty(&ddo)?);
+    log::info!("Did document: \n{}", serde_json::to_string_pretty(&ddo)?);
 
     let peer_did_2 = PeerDid::<Numalgo2>::from_did_doc(ddo.clone())?;
-    println!("as did:peer numalgo(2): {}", peer_did_2);
+    log::info!("as did:peer numalgo(2): {}", peer_did_2);
 
     let peer_did_3 = PeerDid::<Numalgo3>::from_did_doc(ddo)?;
-    println!("as did:peer numalgo(3): {}", peer_did_3);
+    log::info!("as did:peer numalgo(3): {}", peer_did_3);
 
     let peer_did_3_v2 = peer_did_2.to_numalgo3()?;
-    println!(
+    log::info!(
         "as did:peer numalgo(2) converted to numalgo(3): {}",
         peer_did_3_v2
     );
@@ -63,7 +63,7 @@ async fn demo_did_peer_2_and_3() -> Result<(), Box<dyn Error>> {
         )
         .await
         .unwrap();
-    println!(
+    log::info!(
         "Decoded did document: \n{}",
         serde_json::to_string_pretty(&did_document)?
     );
@@ -81,16 +81,16 @@ async fn demo_did_peer_4() -> Result<(), Box<dyn Error>> {
         .service(vec![service])
         .build()
         .unwrap();
-    println!(
+    log::info!(
         "Pseudo did document as input for did:peer:4 construction: {}",
         serde_json::to_string_pretty(&encoded_document)?
     );
 
     let peer_did_4 = PeerDid::<Numalgo4>::new(encoded_document)?;
-    println!("Instance of peer did: {}", peer_did_4);
+    log::info!("Instance of peer did: {}", peer_did_4);
 
     let did_document = peer_did_4.resolve_did_doc()?;
-    println!(
+    log::info!(
         "Resolved did document: {}",
         serde_json::to_string_pretty(&did_document)?
     );
