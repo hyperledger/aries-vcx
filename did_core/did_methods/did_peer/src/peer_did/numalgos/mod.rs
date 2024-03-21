@@ -22,7 +22,6 @@ pub trait Numalgo: Sized + Default {
         Did: TryFrom<T>,
         <Did as TryFrom<T>>::Error: Into<DidPeerError>,
     {
-        println!("parsing did inside parse<T> function in numalgo.rs");
         let did: Did = did.try_into().map_err(Into::into)?;
         let numalgo_char = parse_numalgo(&did)?.to_char();
         if numalgo_char != Self::NUMALGO_CHAR {

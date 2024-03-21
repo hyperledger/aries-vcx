@@ -11,20 +11,6 @@ use crate::{
 
 pub mod encoded_document;
 
-// // The document MUST NOT include an id at the root. For DID Documents, this is populated with the
-// DID itself. Since we are in the process of generating a DID, we do not yet know the value of the
-// DID. When the DID is resolved later, this value will be correctly filled in. // All identifiers
-// within this document MUST be relative. For example, the id of a verificationMethod might be
-// #key-1 instead of something like did:example:abc123#key-1. // All references pointing to
-// resources within this document MUST be relative. For example, a verification method reference in
-// a verification relationship such as authentication might be #key-1 instead of something like
-// did:example:abc123#key-1. // For verification methods, the controller MUST be omitted if the
-// controller is the document owner. If it is controlled by a DID other than the owner of the
-// document, it MUST be included. fn validate_did_document(did_document: EncodedDocument) ->
-// Result<(), DidPeerError> { //     did_document.verification_method()
-//
-// }
-
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct Numalgo4;
 
@@ -158,7 +144,7 @@ mod tests {
             .verification_method(vec![vm])
             .build()
             .unwrap();
-        println!(
+        log::info!(
             "original didpeer4 document: {}",
             serde_json::to_string_pretty(&encoded_document).unwrap()
         );
@@ -167,7 +153,7 @@ mod tests {
 
         let resolved_did_doc = did.resolve_did_doc().unwrap();
         assert_eq!(resolved_did_doc.id().to_string(), did.did().to_string());
-        println!(
+        log::info!(
             "resolved document: {}",
             serde_json::to_string_pretty(&resolved_did_doc).unwrap()
         );
