@@ -12,6 +12,7 @@ use did_parser_nom::DidUrl;
 use display_as_json::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use typed_builder::TypedBuilder;
 
 use crate::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 
@@ -87,21 +88,20 @@ impl DidPeer4VerificationMethodKind {
     }
 }
 
-// TODO: use builder instead of pub(crate) ?
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct DidPeer4VerificationMethod {
-    pub(crate) id: DidUrl,
+    id: DidUrl,
     // - Controller MUST be relative, can we break down DidUrl into new type RelativeDidUrl?
     // - Controller MUST be omitted, if the controller is the document owner (main reason why this
     //   is different from did_doc::schema::verification_method::VerificationMethod)
     // - TODO: add support for controller different than the document owner (how does that work for
     //   peer DIDs?)
-    // controller: Option<Did>,
+    // pub(crate) controller: Option<Did>,
     #[serde(rename = "type")]
-    pub(crate) verification_method_type: VerificationMethodType,
+    verification_method_type: VerificationMethodType,
     #[serde(flatten)]
-    pub(crate) public_key: PublicKeyField,
+    public_key: PublicKeyField,
 }
 
 impl DidPeer4VerificationMethod {
