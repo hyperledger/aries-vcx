@@ -3,13 +3,14 @@ pub mod numalgo0;
 pub mod numalgo1;
 pub mod numalgo2;
 pub mod numalgo3;
+pub mod numalgo4;
 
 use did_doc::schema::did_doc::DidDocument;
 use did_parser_nom::Did;
 
 use crate::{
     error::DidPeerError,
-    peer_did::{parse::parse_numalgo, validate::validate, PeerDid},
+    peer_did::{parse::parse_numalgo, PeerDid},
     resolver::options::PublicKeyEncoding,
 };
 
@@ -26,7 +27,6 @@ pub trait Numalgo: Sized + Default {
         if numalgo_char != Self::NUMALGO_CHAR {
             return Err(DidPeerError::InvalidNumalgoCharacter(numalgo_char));
         }
-        validate(&did)?;
         Ok(PeerDid::from_parts(did, Self::default()))
     }
 }

@@ -39,21 +39,22 @@ impl DidResolvable for PeerDidResolver {
         options: &Self::DidResolutionOptions,
     ) -> Result<DidResolutionOutput, GenericError> {
         let peer_did = AnyPeerDid::parse(did.to_owned())?;
-        match peer_did {
+        let did_doc = match peer_did {
             AnyPeerDid::Numalgo2(peer_did) => {
                 let encoding = options.encoding.unwrap_or(PublicKeyEncoding::Multibase);
                 let builder: DidDocumentBuilder = peer_did.to_did_doc_builder(encoding)?;
-                let did_doc = builder
+                builder
                     .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
-                    .build();
-                let resolution_metadata = DidResolutionMetadata::builder()
-                    .content_type("application/did+json".to_string())
-                    .build();
-                let builder = DidResolutionOutput::builder(did_doc)
-                    .did_resolution_metadata(resolution_metadata);
-                Ok(builder.build())
+                    .build()
             }
-            n => Err(Box::new(DidPeerError::UnsupportedNumalgo(n.numalgo()))),
-        }
+            AnyPeerDid::Numalgo4(peer_did) => peer_did.resolve_did_doc()?,
+            n => return Err(Box::new(DidPeerError::UnsupportedNumalgo(n.numalgo()))),
+        };
+        let resolution_metadata = DidResolutionMetadata::builder()
+            .content_type("application/did+json".to_string())
+            .build();
+        let builder =
+            DidResolutionOutput::builder(did_doc).did_resolution_metadata(resolution_metadata);
+        Ok(builder.build())
     }
 }

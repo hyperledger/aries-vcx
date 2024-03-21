@@ -1,5 +1,6 @@
 mod did_core;
 mod did_key;
+mod did_peer_4;
 mod did_sov;
 mod did_web;
 
@@ -15,7 +16,7 @@ use self::{
     did_sov::{parse_qualified_sovrin_did, parse_unqualified_sovrin_did},
     did_web::parse_did_web,
 };
-use crate::{Did, DidRange, ParseError};
+use crate::{did::parsing::did_peer_4::parse_did_peer_4, Did, DidRange, ParseError};
 
 type DidPart<'a> = (&'a str, &'a str, Option<&'a str>, &'a str);
 pub type DidRanges = (Option<DidRange>, Option<DidRange>, Option<DidRange>);
@@ -62,6 +63,7 @@ fn to_did_ranges((did_prefix, method, namespace, id): DidPart) -> DidRanges {
 
 pub fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
     alt((
+        map(parse_did_peer_4, to_did_ranges),
         map(parse_did_web, to_did_ranges),
         map(parse_did_key, to_did_ranges),
         map(parse_qualified_sovrin_did, to_did_ranges),

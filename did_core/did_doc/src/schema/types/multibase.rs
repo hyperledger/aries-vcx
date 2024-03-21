@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use multibase::{decode, Base};
+use multibase::decode;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -28,7 +28,7 @@ impl Display for MultibaseWrapperError {
 // https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-07
 #[derive(Clone, Debug, PartialEq)]
 pub struct Multibase {
-    base: Base,
+    base: multibase::Base,
     bytes: Vec<u8>,
 }
 
@@ -41,7 +41,7 @@ impl Multibase {
         Ok(Self { base, bytes })
     }
 
-    pub fn base_to_multibase(base: Base, encoded: &str) -> Self {
+    pub fn base_to_multibase(base: multibase::Base, encoded: &str) -> Self {
         let multibase_encoded = format!("{}{}", base.code(), encoded);
         Self {
             base,
@@ -91,6 +91,8 @@ impl AsRef<[u8]> for Multibase {
 
 #[cfg(test)]
 mod tests {
+    use multibase::Base::Base58Btc;
+
     use super::*;
 
     #[test]
@@ -113,7 +115,7 @@ mod tests {
         assert_eq!(
             multibase,
             Multibase {
-                base: Base::Base58Btc,
+                base: Base58Btc,
                 bytes: decode("zQmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e")
                     .unwrap()
                     .1
@@ -159,13 +161,13 @@ mod tests {
     #[test]
     fn test_base_to_multibase() {
         let multibase = Multibase::base_to_multibase(
-            Base::Base58Btc,
+            Base58Btc,
             "QmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e",
         );
         assert_eq!(
             multibase,
             Multibase {
-                base: Base::Base58Btc,
+                base: Base58Btc,
                 bytes: "zQmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e"
                     .as_bytes()
                     .to_vec()

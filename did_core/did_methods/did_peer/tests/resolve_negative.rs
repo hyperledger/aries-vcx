@@ -55,18 +55,6 @@ async fn test_resolve_numalgo_2_invalid_2() {
 }
 
 #[test]
-async fn test_resolve_numalgo_2_invalid_3() {
-    let peer_did = "did:peer:2\
-        .Cz6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
-        .Vz6MkgoLTnTypo3tDRwCkZXSccTPHRLhF4ZnjhueYAFpEX6vg\
-        .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXX0";
-    assert!(matches!(
-        resolve_error(peer_did).await,
-        DidPeerError::DidValidationError(_)
-    ));
-}
-
-#[test]
 async fn test_resolve_numalgo_2_invalid_4() {
     let peer_did = "did:peer:2\
         .Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\

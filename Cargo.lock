@@ -1820,6 +1820,8 @@ dependencies = [
 name = "did_parser_nom"
 version = "0.1.0"
 dependencies = [
+ "env_logger 0.10.0",
+ "log",
  "nom",
  "serde",
  "serde_test",
@@ -1832,6 +1834,7 @@ dependencies = [
  "async-trait",
  "base64",
  "bs58 0.5.0",
+ "derive_builder",
  "did_doc",
  "did_parser_nom",
  "did_resolver",

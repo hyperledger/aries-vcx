@@ -3,9 +3,9 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
     character::complete::{alphanumeric1, char, satisfy},
-    combinator::{all_consuming, cut, opt, recognize},
-    multi::many1,
-    sequence::{delimited, tuple},
+    combinator::recognize,
+    multi::{many0, many1},
+    sequence::{delimited, terminated, tuple},
     AsChar, IResult,
 };
 
@@ -19,6 +19,11 @@ fn hexadecimal_digit(input: &str) -> IResult<&str, &str> {
     recognize(satisfy(is_hexadecimal_digit))(input)
 }
 
+// todo: is this better?
+// fn hexadecimal_digit(input: &str) -> IResult<&str, &str> {
+//     recognize(alt((nom::character::is_hex_digit, nom::character::is_hex_digit)))(input)
+// }
+
 fn is_lowercase_alphanumeric(c: char) -> bool {
     c.is_ascii_lowercase() || c.is_dec_digit()
 }
@@ -29,7 +34,7 @@ fn pct_encoded(input: &str) -> IResult<&str, &str> {
 }
 
 // idchar = ALPHA / DIGIT / "." / "-" / "_" / pct-encoded
-fn idchar(input: &str) -> IResult<&str, &str> {
+pub(super) fn idchar(input: &str) -> IResult<&str, &str> {
     alt((alphanumeric1, tag("."), tag("-"), tag("_"), pct_encoded))(input)
 }
 
@@ -39,27 +44,47 @@ fn method_name(input: &str) -> IResult<&str, &str> {
     delimited(char(':'), take_while1(is_lowercase_alphanumeric), char(':'))(input)
 }
 
-// method-specific-id = *namespace 1*idchar
-fn method_specific_id(input: &str) -> IResult<&str, &str> {
-    recognize(many1(idchar))(input)
+fn method_specific_id_optional_repeat(input: &str) -> IResult<&str, &str> {
+    log::trace!(
+        "did_core::method_specific_id_optional_repeat >> input: {:?}",
+        input
+    );
+    let ret = recognize(many0(terminated(many0(idchar), char(':'))))(input); // First half of DID Syntax ABNF rule method-specific-id: *( *idchar ":"
+                                                                             // )recognize(many1(idchar))(input)
+    log::trace!(
+        "did_core::method_specific_id_optional_repeat >> ret: {:?}",
+        ret
+    );
+    ret
 }
 
-// namespace =  *idchar ":"
-pub(super) fn namespace(input: &str) -> IResult<&str, &str> {
-    if let Some((before_last_colon, after_last_colon)) = input.rsplit_once(':') {
-        match cut(all_consuming(many1(alt((idchar, tag(":"))))))(before_last_colon) {
-            Ok(_) => Ok((after_last_colon, before_last_colon)),
-            Err(err) => Err(err),
-        }
-    } else {
-        Err(nom::Err::Error(nom::error::Error::new(
-            input,
-            nom::error::ErrorKind::Tag,
-        )))
-    }
+fn method_specific_id_required_characters(input: &str) -> IResult<&str, &str> {
+    log::trace!(
+        "did_core::method_specific_id_required_characters >> input: {:?}",
+        input
+    );
+    let ret = recognize(many1(idchar))(input); // Second half of DID Syntax ABNF rule method-specific-id: 1*idchar
+    log::trace!(
+        "did_core::method_specific_id_required_characters >> ret: {:?}",
+        ret
+    );
+    ret
+}
+
+pub(super) fn general_did_id(input: &str) -> IResult<&str, &str> {
+    log::trace!("did_core::general_did_id >> input: {:?}", input);
+    let (input, did_id) = recognize(tuple((
+        method_specific_id_optional_repeat,
+        method_specific_id_required_characters,
+    )))(input)?;
+    log::trace!("did_core::general_did_id >> did_id: {:?}", did_id);
+    Ok((input, did_id))
 }
 
 // did = "did:" method-name ":" method-specific-id
 pub(super) fn parse_qualified_did(input: &str) -> IResult<&str, DidPart> {
-    tuple((tag("did"), method_name, opt(namespace), method_specific_id))(input)
+    let (input_left, (prefix, method, id)) =
+        tuple((tag("did"), method_name, general_did_id))(input)?;
+
+    Ok((input_left, (prefix, method, None, id)))
 }

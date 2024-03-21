@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use did_parser_nom::Did;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -5,9 +7,8 @@ use super::PeerDid;
 use crate::{
     error::DidPeerError,
     peer_did::{
-        numalgos::{kind::NumalgoKind, numalgo2::Numalgo2, numalgo3::Numalgo3},
+        numalgos::{kind::NumalgoKind, numalgo2::Numalgo2, numalgo3::Numalgo3, numalgo4::Numalgo4},
         parse::parse_numalgo,
-        validate::validate,
     },
 };
 
@@ -15,25 +16,35 @@ use crate::{
 pub enum AnyPeerDid {
     Numalgo2(PeerDid<Numalgo2>),
     Numalgo3(PeerDid<Numalgo3>),
+    Numalgo4(PeerDid<Numalgo4>),
 }
 
 impl AnyPeerDid {
     pub fn parse<T>(did: T) -> Result<AnyPeerDid, DidPeerError>
     where
+        T: Display,
         Did: TryFrom<T>,
         <Did as TryFrom<T>>::Error: Into<DidPeerError>,
     {
+        log::info!("AnyPeerDid >> parsing input {} as peer:did", did);
         let did: Did = did.try_into().map_err(Into::into)?;
+        log::info!("AnyPeerDid >> parsed did {}", did);
         let numalgo = parse_numalgo(&did)?;
-        validate(&did)?;
+        log::info!("AnyPeerDid >> parsed numalgo {}", numalgo.to_char());
         let parsed = match numalgo {
-            NumalgoKind::MultipleInceptionKeys(numalgo) => {
-                AnyPeerDid::Numalgo2(PeerDid { did, numalgo })
-            }
-            _ => AnyPeerDid::Numalgo3(PeerDid {
+            NumalgoKind::MultipleInceptionKeys(numalgo2) => AnyPeerDid::Numalgo2(PeerDid {
                 did,
-                numalgo: Numalgo3,
+                numalgo: numalgo2,
             }),
+            NumalgoKind::DidShortening(numalgo3) => AnyPeerDid::Numalgo3(PeerDid {
+                did,
+                numalgo: numalgo3,
+            }),
+            NumalgoKind::DidPeer4(numalgo4) => AnyPeerDid::Numalgo4(PeerDid {
+                did,
+                numalgo: numalgo4,
+            }),
+            o => unimplemented!("Parsing numalgo {} is not supported", o.to_char()),
         };
         Ok(parsed)
     }
@@ -42,6 +53,7 @@ impl AnyPeerDid {
         match self {
             AnyPeerDid::Numalgo2(peer_did) => NumalgoKind::MultipleInceptionKeys(peer_did.numalgo),
             AnyPeerDid::Numalgo3(peer_did) => NumalgoKind::DidShortening(peer_did.numalgo),
+            AnyPeerDid::Numalgo4(peer_did) => NumalgoKind::DidPeer4(peer_did.numalgo),
         }
     }
 }
@@ -54,6 +66,7 @@ impl Serialize for AnyPeerDid {
         match &self {
             AnyPeerDid::Numalgo2(peer_did) => serializer.serialize_str(peer_did.did().did()),
             AnyPeerDid::Numalgo3(peer_did) => serializer.serialize_str(peer_did.did().did()),
+            AnyPeerDid::Numalgo4(peer_did) => serializer.serialize_str(peer_did.did().did()),
         }
     }
 }
@@ -77,13 +90,8 @@ mod tests {
        .VzXwpBnMdCm1cLmKuzgESn29nqnonp1ioqrQMRHNsmjMyppzx8xB2pv7cw8q1PdDacSrdWE3dtB9f7Nxk886mdzNFoPtY\
        .SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0";
 
-    const INVALID_PEER_DID_NUMALGO2: &str = "did:peer:2.Qqqq";
-
     const VALID_PEER_DID_NUMALGO3: &str =
         "did:peer:3.d8da5079c166b183cf815ee27747f34e116977103d8b23c96dcba9a9d9429688";
-
-    const INVALID_PEER_DID_NUMALGO3: &str =
-        "did:peer:3.d8da5079c166b183cfz15ee27747f34e116977103d8b23c96dcba9a9d9429689";
 
     fn generic_peer_did_numalgo2() -> AnyPeerDid {
         AnyPeerDid::Numalgo2(PeerDid {
@@ -126,24 +134,10 @@ mod tests {
         }
 
         #[test]
-        fn numalgo2_invalid() {
-            let deserialized: Result<AnyPeerDid, _> =
-                serde_json::from_str(&format!("\"{}\"", INVALID_PEER_DID_NUMALGO2));
-            assert!(deserialized.is_err());
-        }
-
-        #[test]
         fn numalgo3() {
             let deserialized: AnyPeerDid =
                 serde_json::from_str(&format!("\"{}\"", VALID_PEER_DID_NUMALGO3)).unwrap();
             assert_eq!(deserialized, generic_peer_did_numalgo3());
-        }
-
-        #[test]
-        fn numalgo3_invalid() {
-            let deserialized: Result<AnyPeerDid, _> =
-                serde_json::from_str(&format!("\"{}\"", INVALID_PEER_DID_NUMALGO3));
-            assert!(deserialized.is_err());
         }
     }
 }
