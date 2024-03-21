@@ -62,12 +62,13 @@ fn build_verification_methods_from_type_and_key(
     did: Did,
     public_key_encoding: PublicKeyEncoding,
 ) -> Vec<VerificationMethod> {
-    vec![VerificationMethod {
-        id,
-        controller: did.to_owned(),
-        verification_method_type: vm_type,
-        public_key: key_to_key_field(key, public_key_encoding),
-    }]
+    let vm = VerificationMethod::builder()
+        .id(id)
+        .controller(did.to_owned())
+        .verification_method_type(vm_type)
+        .public_key(key_to_key_field(key, public_key_encoding))
+        .build();
+    vec![vm]
 }
 
 fn build_verification_methods_from_bls_multikey(
@@ -78,18 +79,18 @@ fn build_verification_methods_from_bls_multikey(
 ) -> Vec<VerificationMethod> {
     let id1 = to_did_url_reference(g1_key).unwrap();
     let id2 = to_did_url_reference(g2_key).unwrap();
-    let vm1 = VerificationMethod {
-        id: id1,
-        controller: did.to_owned(),
-        verification_method_type: VerificationMethodType::Bls12381G1Key2020,
-        public_key: key_to_key_field(g1_key, public_key_encoding),
-    };
-    let vm2 = VerificationMethod {
-        id: id2,
-        controller: did.to_owned(),
-        verification_method_type: VerificationMethodType::Bls12381G2Key2020,
-        public_key: key_to_key_field(g2_key, public_key_encoding),
-    };
+    let vm1 = VerificationMethod::builder()
+        .id(id1)
+        .controller(did.to_owned())
+        .verification_method_type(VerificationMethodType::Bls12381G1Key2020)
+        .public_key(key_to_key_field(g1_key, public_key_encoding))
+        .build();
+    let vm2 = VerificationMethod::builder()
+        .id(id2)
+        .controller(did.to_owned())
+        .verification_method_type(VerificationMethodType::Bls12381G2Key2020)
+        .public_key(key_to_key_field(g2_key, public_key_encoding))
+        .build();
     vec![vm1, vm2]
 }
 

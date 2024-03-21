@@ -29,14 +29,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 async fn demo_did_peer_2_and_3() -> Result<(), Box<dyn Error>> {
     let did_url = DidUrl::parse("did:foo:bar#key-1".into())?;
     let did = Did::parse("did:foo:bar".into())?;
-    let verification_method = VerificationMethod {
-        id: did_url,
-        controller: did.clone(),
-        verification_method_type: VerificationMethodType::Ed25519VerificationKey2018,
-        public_key: PublicKeyField::Base64 {
+    let verification_method = VerificationMethod::builder()
+        .id(did_url)
+        .controller(did.clone())
+        .verification_method_type(VerificationMethodType::Ed25519VerificationKey2018)
+        .public_key(PublicKeyField::Base64 {
             public_key_base64: "Zm9vYmFyCg".to_string(),
-        },
-    };
+        })
+        .build();
 
     let ddo = DidDocument::builder(did)
         .add_verification_method(verification_method)

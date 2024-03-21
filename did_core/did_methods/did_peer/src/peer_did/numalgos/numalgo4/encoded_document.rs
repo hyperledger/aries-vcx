@@ -106,12 +106,12 @@ pub struct DidPeer4VerificationMethod {
 
 impl DidPeer4VerificationMethod {
     pub(crate) fn contextualize(&self, did_peer_4: &PeerDid<Numalgo4>) -> VerificationMethod {
-        VerificationMethod {
-            id: self.id.clone(),
-            controller: did_peer_4.did().clone(),
-            verification_method_type: self.verification_method_type,
-            public_key: self.public_key.clone(),
-        }
+        VerificationMethod::builder()
+            .id(self.id.clone())
+            .controller(did_peer_4.did().clone())
+            .verification_method_type(self.verification_method_type)
+            .public_key(self.public_key.clone())
+            .build()
     }
 }
 

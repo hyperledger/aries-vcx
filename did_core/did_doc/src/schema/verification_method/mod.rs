@@ -13,16 +13,15 @@ pub use verification_method_type::VerificationMethodType;
 pub use self::public_key::PublicKeyField;
 use crate::error::DidDocumentBuilderError;
 
-// todo: should we change pub(crate) to builder?
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct VerificationMethod {
-    pub id: DidUrl,
-    pub controller: Did,
+    id: DidUrl,
+    controller: Did,
     #[serde(rename = "type")]
-    pub verification_method_type: VerificationMethodType,
+    verification_method_type: VerificationMethodType,
     #[serde(flatten)]
-    pub public_key: PublicKeyField,
+    public_key: PublicKeyField,
 }
 
 impl VerificationMethod {
