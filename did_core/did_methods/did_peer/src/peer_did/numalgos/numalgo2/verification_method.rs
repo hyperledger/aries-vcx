@@ -1,5 +1,5 @@
 use did_doc::schema::verification_method::{
-    IncompleteVerificationMethodBuilder, VerificationMethod, VerificationMethodType,
+    PublicKeyField, VerificationMethod, VerificationMethodType,
 };
 use did_parser_nom::{Did, DidUrl};
 use public_key::{Key, KeyType};
@@ -62,11 +62,12 @@ fn build_verification_methods_from_type_and_key(
     did: Did,
     public_key_encoding: PublicKeyEncoding,
 ) -> Vec<VerificationMethod> {
-    vec![add_public_key_to_builder(
-        VerificationMethod::builder(id, did, vm_type),
-        key,
-        public_key_encoding,
-    )]
+    vec![VerificationMethod {
+        id,
+        controller: did.to_owned(),
+        verification_method_type: vm_type,
+        public_key: key_to_key_field(key, public_key_encoding),
+    }]
 }
 
 fn build_verification_methods_from_bls_multikey(
@@ -77,32 +78,29 @@ fn build_verification_methods_from_bls_multikey(
 ) -> Vec<VerificationMethod> {
     let id1 = to_did_url_reference(g1_key).unwrap();
     let id2 = to_did_url_reference(g2_key).unwrap();
-
-    let vm1 = add_public_key_to_builder(
-        VerificationMethod::builder(
-            id1,
-            did.to_owned(),
-            VerificationMethodType::Bls12381G1Key2020,
-        ),
-        g1_key,
-        public_key_encoding,
-    );
-    let vm2 = add_public_key_to_builder(
-        VerificationMethod::builder(id2, did, VerificationMethodType::Bls12381G2Key2020),
-        g2_key,
-        public_key_encoding,
-    );
+    let vm1 = VerificationMethod {
+        id: id1,
+        controller: did.to_owned(),
+        verification_method_type: VerificationMethodType::Bls12381G1Key2020,
+        public_key: key_to_key_field(g1_key, public_key_encoding),
+    };
+    let vm2 = VerificationMethod {
+        id: id2,
+        controller: did.to_owned(),
+        verification_method_type: VerificationMethodType::Bls12381G2Key2020,
+        public_key: key_to_key_field(g2_key, public_key_encoding),
+    };
     vec![vm1, vm2]
 }
 
-fn add_public_key_to_builder(
-    builder: IncompleteVerificationMethodBuilder,
-    key: &Key,
-    public_key_encoding: PublicKeyEncoding,
-) -> VerificationMethod {
+fn key_to_key_field(key: &Key, public_key_encoding: PublicKeyEncoding) -> PublicKeyField {
     match public_key_encoding {
-        PublicKeyEncoding::Base58 => builder.add_public_key_base58(key.base58()).build(),
-        PublicKeyEncoding::Multibase => builder.add_public_key_multibase(key.fingerprint()).build(),
+        PublicKeyEncoding::Base58 => PublicKeyField::Base58 {
+            public_key_base58: key.base58(),
+        },
+        PublicKeyEncoding::Multibase => PublicKeyField::Multibase {
+            public_key_multibase: key.fingerprint(),
+        },
     }
 }
 
@@ -118,7 +116,9 @@ fn to_did_url_reference(key: &Key) -> Result<DidUrl, DidPeerError> {
 
 #[cfg(test)]
 mod tests {
-    use did_doc::schema::verification_method::{VerificationMethod, VerificationMethodType};
+    use did_doc::schema::verification_method::{
+        PublicKeyField, VerificationMethod, VerificationMethodType,
+    };
     use did_parser_nom::Did;
     use public_key::Key;
 
@@ -143,33 +143,36 @@ mod tests {
     }
 
     fn verification_method_0() -> VerificationMethod {
-        VerificationMethod::builder(
-            did().into(),
-            did(),
-            VerificationMethodType::X25519KeyAgreementKey2020,
-        )
-        .add_public_key_multibase(key_0().fingerprint())
-        .build()
+        VerificationMethod::builder()
+            .id(did().into())
+            .controller(did())
+            .verification_method_type(VerificationMethodType::X25519KeyAgreementKey2020)
+            .public_key(PublicKeyField::Multibase {
+                public_key_multibase: key_0().fingerprint(),
+            })
+            .build()
     }
 
     fn verification_method_1() -> VerificationMethod {
-        VerificationMethod::builder(
-            did().into(),
-            did(),
-            VerificationMethodType::Ed25519VerificationKey2020,
-        )
-        .add_public_key_multibase(key_1().fingerprint())
-        .build()
+        VerificationMethod::builder()
+            .id(did().into())
+            .controller(did())
+            .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
+            .public_key(PublicKeyField::Multibase {
+                public_key_multibase: key_1().fingerprint(),
+            })
+            .build()
     }
 
     fn verification_method_2() -> VerificationMethod {
-        VerificationMethod::builder(
-            did().into(),
-            did(),
-            VerificationMethodType::Ed25519VerificationKey2020,
-        )
-        .add_public_key_multibase(key_2().fingerprint())
-        .build()
+        VerificationMethod::builder()
+            .id(did().into())
+            .controller(did())
+            .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
+            .public_key(PublicKeyField::Multibase {
+                public_key_multibase: key_2().fingerprint(),
+            })
+            .build()
     }
 
     mod get_verification_methods_by_key {

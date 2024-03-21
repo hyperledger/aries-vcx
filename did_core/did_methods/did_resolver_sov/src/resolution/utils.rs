@@ -5,7 +5,7 @@ use did_resolver::{
         service::{typed::ServiceType, Service},
         types::uri::Uri,
         utils::OneOrList,
-        verification_method::{VerificationMethod, VerificationMethodType},
+        verification_method::{PublicKeyField, VerificationMethod, VerificationMethodType},
     },
     did_parser_nom::{Did, DidUrl},
     shared_types::did_document_metadata::DidDocumentMetadata,
@@ -94,13 +94,14 @@ pub(super) async fn ledger_response_to_ddo(
     );
 
     // TODO: Use multibase instead of base58
-    let verification_method = VerificationMethod::builder(
-        DidUrl::parse("#1".to_string())?,
-        did.to_string().try_into()?,
-        VerificationMethodType::Ed25519VerificationKey2018,
-    )
-    .add_public_key_base58(verkey)
-    .build();
+    let verification_method = VerificationMethod {
+        id: DidUrl::parse("#1".to_string())?,
+        controller: did.to_string().try_into()?,
+        verification_method_type: VerificationMethodType::Ed25519VerificationKey2018,
+        public_key: PublicKeyField::Base58 {
+            public_key_base58: verkey,
+        },
+    };
 
     let ddo = DidDocument::builder(ddo_id)
         .add_service(service)

@@ -21,6 +21,7 @@ pub struct DidUrl {
 }
 
 impl DidUrl {
+    // todo: can be &str
     pub fn parse(did_url: String) -> Result<Self, ParseError> {
         parse_did_url(did_url)
     }

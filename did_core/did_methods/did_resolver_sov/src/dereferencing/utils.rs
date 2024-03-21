@@ -92,8 +92,10 @@ pub(crate) fn dereference_did_document(
 mod tests {
     use did_resolver::{
         did_doc::schema::{
-            did_doc::DidDocumentBuilder, service::typed::ServiceType, utils::OneOrList,
-            verification_method::VerificationMethodType,
+            did_doc::DidDocumentBuilder,
+            service::typed::ServiceType,
+            utils::OneOrList,
+            verification_method::{PublicKeyField, VerificationMethodType},
         },
         did_parser_nom::DidUrl,
         traits::resolvable::resolution_output::DidResolutionOutput,
@@ -103,16 +105,14 @@ mod tests {
     use super::*;
 
     fn example_did_document_builder() -> DidDocumentBuilder {
-        let verification_method = VerificationMethod::builder(
-            DidUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap(),
-            "did:example:123456789abcdefghi"
-                .to_string()
-                .try_into()
-                .unwrap(),
-            VerificationMethodType::Ed25519VerificationKey2018,
-        )
-        .add_public_key_base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string())
-        .build();
+        let verification_method = VerificationMethod::builder()
+            .id(DidUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap())
+            .controller("did:example:123456789abcdefghi".parse().unwrap())
+            .verification_method_type(VerificationMethodType::Ed25519VerificationKey2018)
+            .public_key(PublicKeyField::Base58 {
+                public_key_base58: "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string(),
+            })
+            .build();
 
         let agent_service = Service::new(
             "did:example:123456789abcdefghi#agent".parse().unwrap(),

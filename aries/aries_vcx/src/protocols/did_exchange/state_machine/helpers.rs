@@ -7,7 +7,7 @@ use did_doc::schema::{
     did_doc::DidDocument,
     service::{service_key_kind::ServiceKeyKind, typed::didcommv1::ServiceDidCommV1, Service},
     types::uri::Uri,
-    verification_method::{VerificationMethod, VerificationMethodType},
+    verification_method::{PublicKeyField, VerificationMethod, VerificationMethodType},
 };
 use did_key::DidKey;
 use did_parser_nom::{Did, DidUrl};
@@ -99,13 +99,14 @@ fn did_doc_from_keys(
     service: Service,
 ) -> Result<DidDocument, AriesVcxError> {
     let vm_ka_id = DidUrl::from_fragment(key_enc.short_prefixless_fingerprint())?;
-    let vm_ka = VerificationMethod::builder(
-        vm_ka_id,
-        did.clone(),
-        VerificationMethodType::Ed25519VerificationKey2020,
-    )
-    .add_public_key_base58(key_enc.base58())
-    .build();
+    let vm_ka = VerificationMethod::builder()
+        .id(vm_ka_id)
+        .controller(did.clone())
+        .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
+        .public_key(PublicKeyField::Base58 {
+            public_key_base58: key_enc.base58(),
+        })
+        .build();
     Ok(DidDocument::builder(did)
         .add_service(service)
         .add_key_agreement(vm_ka)
