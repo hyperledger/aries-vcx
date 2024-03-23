@@ -26,7 +26,7 @@ use public_key::{Key, KeyType};
 use serde_json::Value;
 use url::Url;
 use uuid::Uuid;
-use did_peer::peer_did::numalgos::numalgo4::encoded_document::DidPeer4VerificationMethod;
+use did_peer::peer_did::numalgos::numalgo4::encoded_document::{DidPeer4EncodedDocument, DidPeer4VerificationMethod};
 use did_peer::peer_did::numalgos::numalgo4::Numalgo4;
 
 use crate::{
@@ -120,17 +120,15 @@ pub async fn create_peer_did_4(
 
     info!("Prepared service for peer:did:2 generation: {} ", service);
     let vm_ka_id = DidUrl::from_fragment(key_enc.short_prefixless_fingerprint())?;
-    let vm_ka = DidPeer4VerificationMethod {
-        id: Default::default(),
-        verification_method_type: VerificationMethodType::JsonWebKey2020,
-        public_key: (),
-    }
-        .add_public_key_base58(key_enc.base58())
+    let vm_ka = DidPeer4VerificationMethod::builder()
+        .id(DidUrl::from_fragment("#key1".to_string())?)
+        .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
+        .public_key(PublicKeyField::Base58 {
+            public_key_base58: key_enc.base58(),
+        })
         .build();
-    Ok(DidDocument::builder(did)
-        .add_service(service)
-        .add_key_agreement(vm_ka)
-        .build())
+    DidPeer4EncodedDocument::builder()
+        .
 
 
     info!(
