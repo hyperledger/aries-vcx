@@ -181,22 +181,18 @@ impl DidDocument {
             .push(VerificationMethodKind::Resolvable(reference));
     }
 
-    // Setter for `service`
     pub fn set_service(&mut self, services: Vec<Service>) {
         self.service = services;
     }
 
-    // Add a service
     pub fn add_service(&mut self, service: Service) {
         self.service.push(service);
     }
 
-    // Setter for an extra field
     pub fn set_extra_field(&mut self, key: String, value: Value) {
         self.extra.insert(key, value);
     }
 
-    // Remove an extra field
     pub fn remove_extra_field(&mut self, key: &str) {
         self.extra.remove(key);
     }
