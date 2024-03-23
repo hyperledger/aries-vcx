@@ -57,12 +57,13 @@ pub struct DidPeer4EncodedDocument {
 impl DidPeer4EncodedDocument {
     // - Performs DidDocument "contextualization" as described here: https://identity.foundation/peer-did-method-spec/#resolving-a-did
     pub(crate) fn contextualize_to_did_doc(&self, did_peer_4: &PeerDid<Numalgo4>) -> DidDocument {
-        let mut builder =
-            DidDocument::builder(did_peer_4.did().clone()).set_service(self.service.clone());
+        let did_doc_id = did_peer_4.did().clone();
+        let mut did_doc = DidDocument::new(did_doc_id);
+        did_doc.set_service(self.service.clone());
         for vm in &self.verification_method {
-            builder.add_verification_method_2(vm.contextualize(did_peer_4));
+            did_doc.add_verification_method(vm.contextualize(did_peer_4));
         }
-        builder.build()
+        did_doc
     }
 }
 
