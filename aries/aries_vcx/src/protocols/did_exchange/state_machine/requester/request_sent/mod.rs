@@ -1,11 +1,7 @@
 use std::sync::Arc;
 
 use did_parser_nom::Did;
-use did_peer::{
-    peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-    resolver::options::PublicKeyEncoding,
-};
-use did_peer::peer_did::numalgos::numalgo4::Numalgo4;
+use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 use did_resolver_registry::ResolverRegistry;
 use messages::msg_fields::protocols::did_exchange::{
@@ -22,7 +18,7 @@ use crate::{
         },
         states::{completed::Completed, requester::request_sent::RequestSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
-    }
+    },
 };
 
 impl DidExchangeRequester<RequestSent> {
@@ -92,14 +88,16 @@ impl DidExchangeRequester<RequestSent> {
                 "DidExchangeRequester<RequestSent>::receive_response >> the Response message \
                  contains pairwise DID, resolving to DID Document"
             );
-            let DidResolutionOutput { did_document, .. } = resolver_registry.resolve(&Did::parse(response.content.did)?, Default::default()).await
+            let did =
+                &Did::parse(response.content.did).map_err(to_transition_error(self.clone()))?;
+            let DidResolutionOutput { did_document, .. } = resolver_registry
+                .resolve(did, &Default::default())
+                .await
                 .map_err(to_transition_error(self.clone()))?;
             did_document
         };
 
-        let complete_message = construct_didexchange_complete(
-            self.state.request_id.clone(),
-        );
+        let complete_message = construct_didexchange_complete(self.state.request_id.clone());
         info!(
             "DidExchangeRequester<RequestSent>::receive_response << complete_message: {}",
             complete_message
