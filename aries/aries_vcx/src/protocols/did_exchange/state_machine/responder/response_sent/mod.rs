@@ -2,11 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use did_doc::schema::did_doc::DidDocument;
-use did_peer::{
-    peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-    resolver::options::PublicKeyEncoding,
-};
-use did_peer::peer_did::numalgos::numalgo4::Numalgo4;
+use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use messages::msg_fields::protocols::did_exchange::{
     complete::Complete, request::Request, response::Response,

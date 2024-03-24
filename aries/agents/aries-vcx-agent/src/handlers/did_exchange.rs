@@ -16,8 +16,8 @@ use aries_vcx::{
     protocols::did_exchange::{
         resolve_enc_key_from_invitation,
         state_machine::{
-            create_peer_did_2,
             generic::{GenericDidExchange, ThinState},
+            helpers::create_peer_did_4,
         },
     },
     transport::Transport,
@@ -66,8 +66,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
     ) -> AgentResult<(String, Option<String>)> {
         // todo: type the return type
         let (our_peer_did_2, _our_verkey) =
-            create_peer_did_2(self.wallet.as_ref(), self.service_endpoint.clone(), vec![])
-                .await?;
+            create_peer_did_4(self.wallet.as_ref(), self.service_endpoint.clone(), vec![]).await?;
 
         let their_did: Did = their_did.parse()?;
         let (requester, request) = GenericDidExchange::construct_request(
@@ -167,8 +166,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
         };
 
         let (peer_did_2_invitee, _our_verkey) =
-            create_peer_did_2(self.wallet.as_ref(), self.service_endpoint.clone(), vec![])
-                .await?;
+            create_peer_did_4(self.wallet.as_ref(), self.service_endpoint.clone(), vec![]).await?;
 
         let pthid = request
             .clone()
@@ -232,7 +230,9 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
 
         let (requester, _) = self.did_exchange.get(&thid)?;
 
-        let (requester, complete) = requester.handle_response(response).await?;
+        let (requester, complete) = requester
+            .handle_response(response, self.resolver_registry.clone())
+            .await?;
         let ddo_their = requester.their_did_doc();
         let ddo_our = requester.our_did_document();
         let service = ddo_their.get_service_of_type(&ServiceType::DIDCommV1)?;

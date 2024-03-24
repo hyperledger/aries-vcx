@@ -7,7 +7,7 @@ use aries_vcx::{
     protocols::did_exchange::{
         resolve_enc_key_from_invitation,
         state_machine::{
-            create_peer_did_2,
+            helpers::create_peer_did_4,
             requester::{helpers::invitation_get_first_did_service, DidExchangeRequester},
             responder::DidExchangeResponder,
         },
@@ -23,11 +23,7 @@ use did_doc::schema::{
     types::uri::Uri,
 };
 use did_parser_nom::Did;
-use did_peer::{
-    peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-    resolver::{options::PublicKeyEncoding, PeerDidResolutionOptions, PeerDidResolver},
-};
-use did_resolver::traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable};
+use did_peer::resolver::PeerDidResolver;
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::resolution::DidSovResolver;
 use log::info;
@@ -36,29 +32,12 @@ use messages::msg_fields::protocols::out_of_band::invitation::{
 };
 use test_utils::devsetup::{dev_build_profile_vdr_ledger, SetupPoolDirectory};
 use url::Url;
-use did_peer::peer_did::numalgos::Numalgo;
 
 use crate::utils::test_agent::{
     create_test_agent, create_test_agent_endorser_2, create_test_agent_trustee,
 };
 
 pub mod utils;
-
-pub(crate) async fn resolve_didpeer<N>(
-    did_peer: &PeerDid<N: Numalgo>,
-    encoding: PublicKeyEncoding,
-) -> DidDocument {
-    let DidResolutionOutput { did_document, .. } = PeerDidResolver::new()
-        .resolve(
-            did_peer.did(),
-            &PeerDidResolutionOptions {
-                encoding: Some(encoding),
-            },
-        )
-        .await
-        .unwrap();
-    did_document
-}
 
 fn assert_key_agreement(a: DidDocument, b: DidDocument) {
     let a_key = resolve_base58_key_agreement(&a).unwrap();
@@ -128,7 +107,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     );
 
     let (requesters_peer_did, _our_verkey) =
-        create_peer_did_2(&agent_invitee.wallet, dummy_url.clone(), vec![]).await?;
+        create_peer_did_4(&agent_invitee.wallet, dummy_url.clone(), vec![]).await?;
     let did_inviter: Did = invitation_get_first_did_service(&invitation)?;
     info!(
         "Invitee resolves Inviter's DID from invitation {} (as a first DID service found in the \
@@ -153,11 +132,11 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     );
 
     let (responders_peer_did, _our_verkey) =
-        create_peer_did_2(&agent_invitee.wallet, dummy_url.clone(), vec![]).await?;
-    let responders_did_document = resolve_didpeer(&responders_peer_did, PublicKeyEncoding::Base58).await;
+        create_peer_did_4(&agent_invitee.wallet, dummy_url.clone(), vec![]).await?;
+    let responders_did_document = responders_peer_did.resolve_did_doc()?;
     info!("Responder prepares did document: {responders_did_document}");
 
-    let check_diddoc = resolve_didpeer(&responders_peer_did, PublicKeyEncoding::Base58).await;
+    let check_diddoc = responders_peer_did.resolve_did_doc()?;
     info!("Responder decodes constructed peer:did as did document: {check_diddoc}");
 
     let TransitionResult {
@@ -165,7 +144,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         state: responder,
     } = DidExchangeResponder::<ResponseSent>::receive_request(
         &agent_inviter.wallet,
-        resolver_registry,
+        resolver_registry.clone(),
         request,
         &responders_peer_did,
         Some(invitation_key),
@@ -176,7 +155,10 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     let TransitionResult {
         state: requester,
         output: complete,
-    } = requester.receive_response(response).await.unwrap();
+    } = requester
+        .receive_response(response, resolver_registry)
+        .await
+        .unwrap();
 
     let responder = responder.receive_complete(complete).unwrap();
 
@@ -215,7 +197,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
 
     info!("Encrypted message: {:?}", m);
 
-    let requesters_peer_did = resolve_didpeer(&requesters_peer_did, PublicKeyEncoding::Base58).await;
+    let requesters_peer_did = requesters_peer_did.resolve_did_doc()?;
     let expected_sender_vk = resolve_base58_key_agreement(&requesters_peer_did)?;
     let unpacked =
         EncryptionEnvelope::auth_unpack(&agent_invitee.wallet, m.0, &expected_sender_vk).await?;
