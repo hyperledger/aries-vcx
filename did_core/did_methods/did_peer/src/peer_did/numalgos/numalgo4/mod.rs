@@ -126,6 +126,16 @@ mod tests {
         PeerDid,
     };
 
+    fn prepare_verification_method(key_id: &str) -> DidPeer4VerificationMethod {
+        DidPeer4VerificationMethod::builder()
+            .id(DidUrl::parse(key_id.to_string()).unwrap())
+            .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
+            .public_key(PublicKeyField::Base58 {
+                public_key_base58: "z27uFkiq".to_string(),
+            })
+            .build()
+    }
+
     #[test]
     fn test_create_did_peer_4() {
         let service = Service::new(
@@ -134,26 +144,31 @@ mod tests {
             OneOrList::One(ServiceType::DIDCommV2),
             HashMap::default(),
         );
-        let vm = DidPeer4VerificationMethod::builder()
-            .id(DidUrl::parse("#key-1".to_string()).unwrap())
-            .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
-            .public_key(PublicKeyField::Base58 {
-                public_key_base58: "z27uFkiq".to_string(),
-            })
-            .build();
+        let vm = prepare_verification_method("#shared-key-1");
+        let vm_ka = prepare_verification_method("#key_agreement-1");
+        let vm_auth = prepare_verification_method("#key-authentication-1");
+        let vm_deleg = prepare_verification_method("#key-delegation-1");
+        let vm_invoc = prepare_verification_method("#key-invocation-1");
 
         let mut construction_did_doc = DidPeer4ConstructionDidDocument::new();
         construction_did_doc.add_service(service);
         construction_did_doc.add_verification_method(vm);
-        log::info!(
-            "original didpeer4 document: {}",
-            serde_json::to_string_pretty(&construction_did_doc).unwrap()
-        );
+        construction_did_doc.add_key_agreement(vm_ka);
+        construction_did_doc.add_authentication(vm_auth);
+        construction_did_doc.add_capability_delegation(vm_deleg);
+        construction_did_doc.add_capability_invocation(vm_invoc);
+
         let did = PeerDid::<Numalgo4>::new(construction_did_doc).unwrap();
-        assert_eq!(did.to_string(), "did:peer:4z84Vmeih9kTUrnxVanw9DhiVX9JNuW5cEz1RJx9dwrKcqh4bq96Z6zuc9m6oPV4gc6tafguyzd8dYih4N153Gh3XmWK:z2FrKwFgfDgrV5fdpSvPvBThURtNvDa3RWfoueUsEVQQmzJpMxXhAiutkPRRbuvVVeJDMZd2wdjeeNsRPx1csnDyQsoyhQWviaBd2LRen8fp9vZSkzmFmP1sgoKDXztkREhiUnKbXCiArA6t2nKed2NoGALYXFw1D72NbSgEhcMVzLL2wwgovV4D1HhEcvzXJQDKXwqUDaW1B3YgCMBKeEvy4vsaYhxf7JFcZzS5Ga8mSSUk3nAC9nXMWG3GT8XxzviQWxdfB2fwyKoy3bC3ihxwwjkpxVNuB72mJ");
+        let did_expected = "did:peer:4z84UnqbnKs1uK42FKCz3QCr6JFMFYBZk2cPzkhHXETruZZpcdu6PtPyxzRdTYEdq7jWTWtqKykYxbtgmx34DUqyYEnT:zKj4qM7Uj9TKfiRp9DfxJMy1X7vBJEG9p7GnBbLLhA226Yh1SoYrcK942ZmBpAQXuXLLkohiPdJAYjbaatt2fFmhBvSR39zWMsWNqGBqmKW8vuy7uHwXKmuChtngE1WyMCM8r5DvwjubumVYq8uZWaurrdvzkdX57aM5y32kH5oFYjpBFDmugQAvzYP1VkTL8zF3G6wVHKvdAAzp8KracRWF7M6KnPHz3psRJ41Lktdk4NyNTfPZc1ztFV1v95ECazdRKwpFwmyZ9Gs5JhSCx1zYd9Ki4Zongb1VBCgFNVCjiADoUDfkNKoVu4QfzFGd1wCQEJFaYTcZ9N55r5cY215bAHq9fudyUvn2EeGd8FCfPyHPZxHZE5yFsKXmtauTLGJyFuWt31Kk31JN35zRui4nu3HRcnQNmkxADjVYnC7o4cb1D1DYKk2i3xL7mSwsDXUg2NN4mXfnM2JN6WFmGrDe2wKiKW4qc6w4RtmzGPN68LJVDh49dpwsaZM4hdkWc8s1D8mztRBbMDxKtJkDeZE23kpHCMfcfzQQCcPdpoXnpsNMoFaWh1q96cp72J1yNN4bQnSNxzNvMLjfdatmZrrqCkYd8ND4qU5eaE4HibjNsfx87dR2FN6mor8ktrXDirp1JezwU3NepeeHfs5EnY8V4aeMw3LAAEv4qrVTnr4jYmQHdfYVRJnP3qGkWwuHB2x9QhhMy8M4j5xHkNtVdV8Z9CFFuUGrnrPKvBMn2P5W5G3b4MxnWydmDdhdwirQAmHpJwRFoMDW9R55ckGhA6ZVo88BMwwCtKkeWibTHxjcHYdahYjYKzC6ZJGzU3DfHdmcprrN2oLRDcEPDxe6EejPSUu12iTHsCCV9r3txtuC2hvkRtmsgLChVD4Fh6VH22SzetPf513mToJvjfdVSdqaiftxj6";
+        assert_eq!(did.to_string(), did_expected);
 
         let resolved_did_doc = did.resolve_did_doc().unwrap();
-        assert_eq!(resolved_did_doc.id().to_string(), did.did().to_string());
+        assert_eq!(&resolved_did_doc.id().to_string(), did.did().to_string());
+        assert_eq!(&resolved_did_doc.verification_method()[0].id().to_string(), "#shared-key-1");
+        assert_eq!(&resolved_did_doc.key_agreement()[0].id().to_string(), "#key_agreement-1");
+        assert_eq!(&resolved_did_doc.authentication()[0].id().to_string(), "#key-authentication-1");
+        assert_eq!(&resolved_did_doc.capability_delegation()[0].id().to_string(), "#key-delegation-1");
+        assert_eq!(&resolved_did_doc.capability_invocation()[0].id().to_string(), "#key-invocation-1");
         log::info!(
             "resolved document: {}",
             serde_json::to_string_pretty(&resolved_did_doc).unwrap()

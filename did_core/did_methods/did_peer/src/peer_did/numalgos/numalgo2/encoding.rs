@@ -181,7 +181,7 @@ mod tests {
         );
 
         let mut did_document = DidDocument::new(Did::parse(did_full.clone()).unwrap());
-        did_document.add_key_agreement(vm_0);
+        did_document.add_key_agreement_object(vm_0);
         did_document.add_verification_method(vm_1);
 
         let did = append_encoded_key_segments(did.to_string(), &did_document).unwrap();
@@ -241,7 +241,7 @@ mod tests {
         );
 
         let mut did_document = DidDocument::new(did_full.parse().unwrap());
-        did_document.add_key_agreement(vm);
+        did_document.add_key_agreement_object(vm);
 
         let result = append_encoded_key_segments(did.to_string(), &did_document);
         assert!(result.is_err());
@@ -275,8 +275,8 @@ mod tests {
         );
 
         let mut did_document = DidDocument::new(did_full.parse().unwrap());
-        did_document.add_assertion_method(vm_0);
-        did_document.add_key_agreement(vm_1);
+        did_document.add_assertion_method_object(vm_0);
+        did_document.add_key_agreement_object(vm_1);
         did_document.add_verification_method(vm_2);
 
         let did = append_encoded_key_segments(did.to_string(), &did_document).unwrap();

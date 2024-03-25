@@ -36,10 +36,12 @@ use url::Url;
 use crate::utils::test_agent::{
     create_test_agent, create_test_agent_endorser_2, create_test_agent_trustee,
 };
+use pretty_assertions::assert_eq;
 
 pub mod utils;
 
 fn assert_key_agreement(a: DidDocument, b: DidDocument) {
+    log::warn!("comparing did doc a: {}, b: {}", a, b);
     let a_key = resolve_base58_key_agreement(&a).unwrap();
     let b_key = resolve_base58_key_agreement(&b).unwrap();
     assert_eq!(a_key, b_key);
