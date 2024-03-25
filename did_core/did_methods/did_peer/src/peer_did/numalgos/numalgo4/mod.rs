@@ -59,9 +59,9 @@ impl PeerDid<Numalgo4> {
             DidPeerError::GeneralError(format!("Failed to parse short form of PeerDid: {}", e))
         });
         // Safety note:
-        // - This should never throw, because we are working with <self> DID which has already be parsed
-        //   and its ID portion is ought to be valid DID ID.
-        //   If we then append this valid ID to the "did:peer:" prefix, the resulting DID should be valid as well.
+        // - This should never throw, because we are working with <self> DID which has already be
+        //   parsed and its ID portion is ought to be valid DID ID. If we then append this valid ID
+        //   to the "did:peer:" prefix, the resulting DID should be valid as well.
         parse_result.expect("Failed to parse short form of PeerDid")
     }
 
@@ -162,7 +162,10 @@ mod tests {
         assert_eq!(did.to_string(), did_expected);
 
         let resolved_did_doc = did.resolve_did_doc().unwrap();
-        println!("resolved document: {}", serde_json::to_string_pretty(&resolved_did_doc).unwrap());
+        println!(
+            "resolved document: {}",
+            serde_json::to_string_pretty(&resolved_did_doc).unwrap()
+        );
         assert_eq!(resolved_did_doc.id().to_string(), did.did().to_string());
         assert!(resolved_did_doc
             .verification_method_by_id("shared-key-1")

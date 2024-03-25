@@ -91,8 +91,13 @@ impl DidPeer4ConstructionDidDocument {
             did_doc.add_capability_invocation(vm.contextualize(did_peer_4))
         }
         let did_short_form = did_peer_4.short_form().to_string();
-        let did_as_uri = Uri::new(&did_short_form)
-            .unwrap_or_else(|_| panic!("DID or URI implementation is buggy, because DID {} failed to be parsed as URI, but per spec: The generic DID scheme is a URI scheme conformant with [RFC3986].", did_short_form));
+        let did_as_uri = Uri::new(&did_short_form).unwrap_or_else(|_| {
+            panic!(
+                "DID or URI implementation is buggy, because DID {} failed to be parsed as URI, \
+                 but per spec: The generic DID scheme is a URI scheme conformant with [RFC3986].",
+                did_short_form
+            )
+        });
         did_doc.add_also_known_as(did_as_uri);
         did_doc
     }
