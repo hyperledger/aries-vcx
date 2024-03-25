@@ -65,7 +65,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
         invitation_id: Option<String>,
     ) -> AgentResult<(String, Option<String>)> {
         // todo: type the return type
-        let (our_peer_did_2, _our_verkey) =
+        let (our_peer_did, _our_verkey) =
             create_peer_did_4(self.wallet.as_ref(), self.service_endpoint.clone(), vec![]).await?;
 
         let their_did: Did = their_did.parse()?;
@@ -73,7 +73,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             self.resolver_registry.clone(),
             invitation_id,
             &their_did,
-            &our_peer_did_2,
+            &our_peer_did,
         )
         .await?;
 
@@ -165,7 +165,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             }
         };
 
-        let (peer_did_2_invitee, _our_verkey) =
+        let (peer_did_4_invitee, _our_verkey) =
             create_peer_did_4(self.wallet.as_ref(), self.service_endpoint.clone(), vec![]).await?;
 
         let pthid = request
@@ -185,7 +185,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             self.wallet.as_ref(),
             self.resolver_registry.clone(),
             request,
-            &peer_did_2_invitee,
+            &peer_did_4_invitee,
             invitation_key,
         )
         .await?;
