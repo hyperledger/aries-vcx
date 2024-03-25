@@ -53,21 +53,20 @@ impl PeerDid<Numalgo4> {
         Ok(self.did().clone())
     }
 
-    pub fn short_form(&self) -> Result<Did, DidPeerError> {
-        let short_id = self
-            .did()
-            .id()
-            .to_string()
-            .split(':')
-            .collect::<Vec<&str>>()[0]
-            .to_string();
-        Did::parse(format!("did:peer:{}", short_id)).map_err(|e| {
+    pub fn short_form(&self) -> Did {
+        let short_id = self.did().id().split(':').collect::<Vec<&str>>()[0].to_string();
+        let parse_result = Did::parse(format!("did:peer:{}", short_id)).map_err(|e| {
             DidPeerError::GeneralError(format!("Failed to parse short form of PeerDid: {}", e))
-        })
+        });
+        // Safety note:
+        // - This should never throw, because we are working with <self> DID which has already be parsed
+        //   and its ID portion is ought to be valid DID ID.
+        //   If we then append this valid ID to the "did:peer:" prefix, the resulting DID should be valid as well.
+        parse_result.expect("Failed to parse short form of PeerDid")
     }
 
     pub fn hash(&self) -> Result<String, DidPeerError> {
-        let short_form_did = self.short_form()?;
+        let short_form_did = self.short_form();
         let hash = short_form_did.id()[1..].to_string(); // the first character of id did:peer:4 ID is always "4", followed by hash
         Ok(hash)
     }
@@ -163,12 +162,23 @@ mod tests {
         assert_eq!(did.to_string(), did_expected);
 
         let resolved_did_doc = did.resolve_did_doc().unwrap();
-        assert_eq!(&resolved_did_doc.id().to_string(), did.did().to_string());
-        assert_eq!(&resolved_did_doc.verification_method()[0].id().to_string(), "#shared-key-1");
-        assert_eq!(&resolved_did_doc.key_agreement()[0].id().to_string(), "#key_agreement-1");
-        assert_eq!(&resolved_did_doc.authentication()[0].id().to_string(), "#key-authentication-1");
-        assert_eq!(&resolved_did_doc.capability_delegation()[0].id().to_string(), "#key-delegation-1");
-        assert_eq!(&resolved_did_doc.capability_invocation()[0].id().to_string(), "#key-invocation-1");
+        println!("resolved document: {}", serde_json::to_string_pretty(&resolved_did_doc).unwrap());
+        assert_eq!(resolved_did_doc.id().to_string(), did.did().to_string());
+        assert!(resolved_did_doc
+            .verification_method_by_id("shared-key-1")
+            .is_some());
+        assert!(resolved_did_doc
+            .key_agreement_by_id("key_agreement-1")
+            .is_some());
+        assert!(resolved_did_doc
+            .authentication_by_id("key-authentication-1")
+            .is_some());
+        assert!(resolved_did_doc
+            .capability_delegation_by_id("key-delegation-1")
+            .is_some());
+        assert!(resolved_did_doc
+            .capability_invocation_by_id("key-invocation-1")
+            .is_some());
         log::info!(
             "resolved document: {}",
             serde_json::to_string_pretty(&resolved_did_doc).unwrap()
@@ -179,14 +189,14 @@ mod tests {
     fn long_form_to_short_form() {
         let peer_did = "did:peer:4z84UjLJ6ugExV8TJ5gJUtZap5q67uD34LU26m1Ljo2u9PZ4xHa9XnknHLc3YMST5orPXh3LKi6qEYSHdNSgRMvassKP:z27uFkiqJVwvvn2ke5M19UCvByS79r5NppqwjiGAJzkj1EM4sf2JmiUySkANKy4YNu8M7yKjSmvPJTqbcyhPrJs9TASzDs2fWE1vFegmaRJxHRF5M9wGTPwGR1NbPkLGsvcnXum7aN2f8kX3BnhWWWp";
         let peer_did = PeerDid::<Numalgo4>::parse(peer_did).unwrap();
-        assert_eq!(peer_did.short_form().unwrap().to_string(), "did:peer:4z84UjLJ6ugExV8TJ5gJUtZap5q67uD34LU26m1Ljo2u9PZ4xHa9XnknHLc3YMST5orPXh3LKi6qEYSHdNSgRMvassKP".to_string());
+        assert_eq!(peer_did.short_form().to_string(), "did:peer:4z84UjLJ6ugExV8TJ5gJUtZap5q67uD34LU26m1Ljo2u9PZ4xHa9XnknHLc3YMST5orPXh3LKi6qEYSHdNSgRMvassKP".to_string());
     }
 
     #[test]
     fn short_form_to_short_form() {
         let peer_did = "did:peer:4z84UjLJ6ugExV8TJ5gJUtZap5q67uD34LU26m1Ljo2u9PZ4xHa9XnknHLc3YMST5orPXh3LKi6qEYSHdNSgRMvassKP";
         let peer_did = PeerDid::<Numalgo4>::parse(peer_did).unwrap();
-        assert_eq!(peer_did.short_form().unwrap().to_string(), "did:peer:4z84UjLJ6ugExV8TJ5gJUtZap5q67uD34LU26m1Ljo2u9PZ4xHa9XnknHLc3YMST5orPXh3LKi6qEYSHdNSgRMvassKP".to_string());
+        assert_eq!(peer_did.short_form().to_string(), "did:peer:4z84UjLJ6ugExV8TJ5gJUtZap5q67uD34LU26m1Ljo2u9PZ4xHa9XnknHLc3YMST5orPXh3LKi6qEYSHdNSgRMvassKP".to_string());
     }
 
     #[test]

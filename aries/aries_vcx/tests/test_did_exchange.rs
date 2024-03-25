@@ -30,13 +30,13 @@ use log::info;
 use messages::msg_fields::protocols::out_of_band::invitation::{
     Invitation, InvitationContent, OobService,
 };
+use pretty_assertions::assert_eq;
 use test_utils::devsetup::{dev_build_profile_vdr_ledger, SetupPoolDirectory};
 use url::Url;
 
 use crate::utils::test_agent::{
     create_test_agent, create_test_agent_endorser_2, create_test_agent_trustee,
 };
-use pretty_assertions::assert_eq;
 
 pub mod utils;
 

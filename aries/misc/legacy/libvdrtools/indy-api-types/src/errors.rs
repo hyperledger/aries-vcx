@@ -587,7 +587,7 @@ where
 }
 
 thread_local! {
-    pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = RefCell::new(None);
+    pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = const { RefCell::new(None) };
 }
 
 pub fn set_current_error(err: &IndyError) {

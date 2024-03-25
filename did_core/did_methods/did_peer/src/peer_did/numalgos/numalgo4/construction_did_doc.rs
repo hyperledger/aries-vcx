@@ -90,6 +90,10 @@ impl DidPeer4ConstructionDidDocument {
         for vm in &self.capability_invocation {
             did_doc.add_capability_invocation(vm.contextualize(did_peer_4))
         }
+        let did_short_form = did_peer_4.short_form().to_string();
+        let did_as_uri = Uri::new(&did_short_form)
+            .expect(&format!("DID or URI implementation is buggy, because DID {} failed to be parsed as URI, but per spec: The generic DID scheme is a URI scheme conformant with [RFC3986].", did_short_form));
+        did_doc.add_also_known_as(did_as_uri);
         did_doc
     }
 
@@ -226,7 +230,7 @@ impl DidPeer4VerificationMethod {
     pub(crate) fn contextualize(&self, did_peer_4: &PeerDid<Numalgo4>) -> VerificationMethod {
         VerificationMethod::builder()
             .id(self.id.clone())
-            .controller(did_peer_4.did().clone())
+            .controller(did_peer_4.short_form().clone())
             .verification_method_type(self.verification_method_type)
             .public_key(self.public_key.clone())
             .build()
