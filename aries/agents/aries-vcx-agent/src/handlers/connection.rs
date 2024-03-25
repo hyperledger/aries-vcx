@@ -13,9 +13,8 @@ use aries_vcx::{
         pairwise_info::PairwiseInfo, Connection, GenericConnection, State, ThinState,
     },
 };
-use aries_vcx_core::{
-    ledger::indy_vdr_ledger::DefaultIndyLedgerRead, wallet::base_wallet::BaseWallet,
-};
+use aries_vcx_core::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use url::Url;
 
 use crate::{

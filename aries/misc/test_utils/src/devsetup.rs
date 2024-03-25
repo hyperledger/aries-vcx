@@ -18,8 +18,8 @@ use aries_vcx_core::{
             GetTxnAuthorAgreementData, VcxPoolConfig,
         },
     },
-    wallet::base_wallet::BaseWallet,
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use chrono::{DateTime, Duration, Utc};
 use did_parser_nom::Did;
 use log::{debug, info};
@@ -33,8 +33,7 @@ pub mod vdr_proxy_ledger;
 use crate::devsetup::vdr_proxy_ledger::dev_build_profile_vdr_proxy_ledger;
 use crate::logger::init_logger;
 
-#[cfg(feature = "vdrtools_wallet")]
-pub mod vdrtools_wallet;
+pub mod wallet;
 
 const DEFAULT_AML_LABEL: &str = "eula";
 
@@ -198,15 +197,23 @@ pub async fn dev_build_featured_wallet(key_seed: &str) -> (String, impl BaseWall
     return {
         info!("SetupProfile >> using indy wallet");
 
-        use crate::devsetup::vdrtools_wallet::dev_setup_wallet_indy;
+        use crate::devsetup::wallet::dev_setup_wallet_indy;
         dev_setup_wallet_indy(key_seed).await
     };
 
-    #[cfg(not(feature = "vdrtools_wallet"))]
+    #[cfg(feature = "askar_wallet")]
+    return {
+        info!("SetupProfile >> using askar wallet");
+
+        use crate::devsetup::wallet::dev_setup_wallet_askar;
+        dev_setup_wallet_askar(key_seed).await
+    };
+
+    #[cfg(all(not(feature = "vdrtools_wallet"), not(feature = "askar_wallet")))]
     {
         use crate::{constants::INSTITUTION_DID, mock_wallet::MockWallet};
 
-        return (INSTITUTION_DID.to_owned(), MockWallet);
+        (INSTITUTION_DID.to_owned(), MockWallet)
     }
 }
 

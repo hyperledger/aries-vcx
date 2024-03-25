@@ -1,4 +1,4 @@
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_doc::schema::{did_doc::DidDocument, types::uri::Uri};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
@@ -271,11 +271,11 @@ impl EncryptionEnvelope {
 
 #[cfg(test)]
 pub mod unit_tests {
+    use aries_vcx_wallet::wallet::base_wallet::did_wallet::DidWallet;
     use serde_json::Value;
     use test_utils::devsetup::build_setup_profile;
 
     use super::*;
-    use crate::aries_vcx_core::wallet::base_wallet::did_wallet::DidWallet;
 
     #[tokio::test]
     async fn test_pack_unpack_anon() {

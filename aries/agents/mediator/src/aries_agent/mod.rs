@@ -5,13 +5,10 @@ use aries_vcx::{
     messages::msg_fields::protocols::out_of_band::invitation::OobService,
     utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx_core::{
-    errors::error::AriesVcxCoreError,
-    wallet::{
-        base_wallet::{BaseWallet, ManageWallet},
-        indy::indy_wallet_config::IndyWalletConfig,
-        structs_io::UnpackMessageOutput,
-    },
+use aries_vcx_core::errors::error::AriesVcxCoreError;
+use aries_vcx_wallet::wallet::{
+    base_wallet::{BaseWallet, ManageWallet},
+    structs_io::UnpackMessageOutput,
 };
 use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
 use messages::{
@@ -44,6 +41,27 @@ pub type ArcAgent<T, P> = Arc<Agent<T, P>>;
 pub struct AgentBuilder<T: BaseWallet> {
     _type_wallet: PhantomData<T>,
 }
+
+#[allow(unused_variables)]
+pub async fn build_agent() -> Agent<impl BaseWallet, sqlx::MySqlPool> {
+    #[cfg(feature = "vdrtools_wallet")]
+    let agent = {
+        use aries_vcx_wallet::wallet::indy::IndySdkWallet;
+
+        AgentBuilder::<IndySdkWallet>::new_demo_agent()
+            .await
+            .unwrap()
+    };
+
+    #[cfg(feature = "askar_wallet")]
+    let agent = {
+        use aries_vcx_wallet::wallet::askar::AskarWallet;
+        AgentBuilder::<AskarWallet>::new_demo_agent().await.unwrap()
+    };
+
+    agent
+}
+
 /// Constructors
 impl<T: BaseWallet> AgentBuilder<T> {
     pub async fn new_from_wallet_config(
@@ -59,18 +77,40 @@ impl<T: BaseWallet> AgentBuilder<T> {
             service: None,
         })
     }
+
+    #[allow(unused_variables)]
     pub async fn new_demo_agent(
     ) -> Result<Agent<impl BaseWallet, sqlx::MySqlPool>, AriesVcxCoreError> {
-        let config = IndyWalletConfig {
-            wallet_name: uuid::Uuid::new_v4().to_string(),
-            wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
-            wallet_key_derivation: "RAW".into(),
-            wallet_type: None,
-            storage_config: None,
-            storage_credentials: None,
-            rekey: None,
-            rekey_derivation_method: None,
+        #[cfg(feature = "vdrtools_wallet")]
+        let config = {
+            use aries_vcx_wallet::wallet::indy::indy_wallet_config::IndyWalletConfig;
+
+            IndyWalletConfig {
+                wallet_name: uuid::Uuid::new_v4().to_string(),
+                wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
+                wallet_key_derivation: "RAW".into(),
+                wallet_type: None,
+                storage_config: None,
+                storage_credentials: None,
+                rekey: None,
+                rekey_derivation_method: None,
+            }
         };
+
+        #[cfg(feature = "askar_wallet")]
+        let config = {
+            use aries_vcx_wallet::wallet::askar::{
+                askar_wallet_config::AskarWalletConfig, key_method::KeyMethod,
+            };
+
+            AskarWalletConfig::new(
+                "sqlite://:memory:",
+                KeyMethod::Unprotected,
+                "",
+                &uuid::Uuid::new_v4().to_string(),
+            )
+        };
+
         Self::new_from_wallet_config(config).await
     }
 }
@@ -239,20 +279,33 @@ mod test {
         protocols::oob::oob_invitation_to_legacy_did_doc,
         utils::encryption_envelope::EncryptionEnvelope,
     };
-    use aries_vcx_core::wallet::indy::IndySdkWallet;
     use log::info;
     use serde_json::Value;
     use test_utils::mockdata::mock_ledger::MockLedger;
 
     use super::AgentBuilder;
 
+    #[ignore]
+    #[allow(unused_variables, unused_mut)]
     #[tokio::test]
     pub async fn test_pack_unpack() {
         let message: Value = serde_json::from_str("{}").unwrap();
         let message_bytes = serde_json::to_vec(&message).unwrap();
-        let mut agent = AgentBuilder::<IndySdkWallet>::new_demo_agent()
-            .await
-            .unwrap();
+
+        #[cfg(feature = "vdrtools_wallet")]
+        let mut agent = {
+            use aries_vcx_wallet::wallet::indy::IndySdkWallet;
+            AgentBuilder::<IndySdkWallet>::new_demo_agent()
+                .await
+                .unwrap()
+        };
+
+        #[cfg(feature = "askar_wallet")]
+        let mut agent = {
+            use aries_vcx_wallet::wallet::askar::AskarWallet;
+            AgentBuilder::<AskarWallet>::new_demo_agent().await.unwrap()
+        };
+
         agent
             .init_service(
                 vec![],

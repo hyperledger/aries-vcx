@@ -12,8 +12,8 @@ use aries_vcx_core::{
     ledger::base_ledger::{
         AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
     },
-    wallet::base_wallet::BaseWallet,
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use async_trait::async_trait;
 use messages::{
     msg_fields::protocols::{

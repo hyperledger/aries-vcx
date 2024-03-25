@@ -1,7 +1,7 @@
 pub mod error;
 pub mod migrate2askar;
 
-use aries_vcx_core::wallet::base_wallet::{
+use aries_vcx_wallet::wallet::base_wallet::{
     migrate::{migrate_records, MigrationStats},
     record::Record,
     BaseWallet,

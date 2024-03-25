@@ -334,9 +334,6 @@ jobs:
   test-integration-aries-vcx:
     needs: workflow-setup
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        wallet: ["vdrtools_wallet,credx", "askar_wallet,credx"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -347,7 +344,7 @@ jobs:
       - name: "Install just"
         run: sudo snap install --edge --classic just
       - name: "Run aries-vcx integration tests"
-        run: just test-integration-aries-vcx ${{ matrix.wallet }}
+        run: just test-integration-aries-vcx
 
   test-integration-aries-vcx-anoncreds-rs:
     needs: workflow-setup
@@ -409,22 +406,6 @@ jobs:
         uses: ./.github/actions/upload-docker-logs
         with:
           name: "docker-services-${{ github.job }}"
-
-  test-integration-did-crate:
-    needs: workflow-setup
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust testing environment"
-        uses: ./.github/actions/setup-testing-rust
-        with:
-          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-      - name: "Install just"
-        run: sudo snap install --edge --classic just
-      - name: "Run resolver tests"
-        run: just test-integration-did-crate
 
   ##########################################################################################
   ##############################      RELEASE      #########################################

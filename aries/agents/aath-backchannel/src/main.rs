@@ -1,6 +1,7 @@
 #[allow(clippy::await_holding_lock)]
 mod controllers;
 mod error;
+mod harness_agent;
 mod setup;
 
 extern crate serde;
@@ -15,22 +16,19 @@ extern crate clap;
 extern crate reqwest;
 extern crate uuid;
 
-use std::{
-    collections::HashMap,
-    sync::{Mutex, RwLock},
-};
+use std::sync::RwLock;
 
 use actix_web::{middleware, web, App, HttpServer};
-use aries_vcx_agent::{
-    aries_vcx::{aries_vcx_core::wallet::indy::IndySdkWallet, messages::AriesMessage},
-    Agent as AriesAgent,
-};
+use aries_vcx_agent::aries_vcx::messages::AriesMessage;
 use clap::Parser;
 use controllers::out_of_band;
 
-use crate::controllers::{
-    connection, credential_definition, did_exchange, didcomm, general, issuance, presentation,
-    revocation, schema,
+use crate::{
+    controllers::{
+        connection, credential_definition, did_exchange, didcomm, general, issuance, presentation,
+        revocation, schema,
+    },
+    harness_agent::HarnessAgent,
 };
 
 #[derive(Parser)]
@@ -68,15 +66,6 @@ enum Status {
     Active,
 }
 
-pub struct HarnessAgent {
-    aries_agent: AriesAgent<IndySdkWallet>,
-    status: Status,
-    // did-exchange specific
-    // todo: extra didx specific AATH service
-    didx_msg_buffer: RwLock<Vec<AriesMessage>>,
-    didx_pthid_to_thid: Mutex<HashMap<String, String>>,
-}
-
 #[macro_export]
 macro_rules! soft_assert_eq {
     ($left:expr, $right:expr) => {{
@@ -110,18 +99,19 @@ async fn main() -> std::io::Result<()> {
     let aries_agent = setup::initialize(opts.port).await;
 
     info!("Starting aries back-channel on port {}", opts.port);
+
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
             .wrap(middleware::NormalizePath::new(
                 middleware::TrailingSlash::Trim,
             ))
-            .app_data(web::Data::new(RwLock::new(HarnessAgent {
-                aries_agent: aries_agent.clone(),
-                status: Status::Active,
-                didx_msg_buffer: Default::default(),
-                didx_pthid_to_thid: Mutex::new(Default::default()),
-            })))
+            .app_data(web::Data::new(RwLock::new(HarnessAgent::new(
+                &aries_agent,
+                Status::Active,
+                Default::default(),
+                Default::default(),
+            ))))
             .app_data(web::Data::new(RwLock::new(Vec::<AriesMessage>::new())))
             .service(
                 web::scope("/agent")

@@ -7,11 +7,11 @@ use aries_vcx::aries_vcx_core::{
         request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
     },
-    wallet::{
-        base_wallet::ManageWallet,
-        indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
-    },
     PoolConfig,
+};
+use aries_vcx_wallet::wallet::{
+    base_wallet::ManageWallet,
+    indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
 };
 
 use crate::{

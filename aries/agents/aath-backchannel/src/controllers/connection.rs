@@ -82,6 +82,7 @@ impl HarnessAgent {
         Ok(json!({ "connection_id": id }).to_string())
     }
 
+    #[allow(dead_code)]
     pub async fn process_connection_ack(&self, ack: Ack) -> HarnessResult<String> {
         let thid = ack.decorators.thread.thid.to_string();
         self.aries_agent.connections().process_ack(ack).await?;

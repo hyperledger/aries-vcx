@@ -1,4 +1,4 @@
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use base64::{self, engine::general_purpose, Engine};
 use messages::msg_fields::protocols::connection::{
     response::{ConnectionSignature, ResponseContent},

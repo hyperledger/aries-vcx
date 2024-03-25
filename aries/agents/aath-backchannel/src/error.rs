@@ -12,6 +12,7 @@ pub type HarnessResult<T> = Result<T, HarnessError>;
 pub enum HarnessErrorType {
     #[display(fmt = "Internal server error")]
     InternalServerError,
+    #[allow(dead_code)]
     #[display(fmt = "Request not accepted")]
     RequestNotAcceptedError,
     #[display(fmt = "Request not received")]
@@ -20,6 +21,7 @@ pub enum HarnessErrorType {
     NotFoundError,
     #[display(fmt = "Invalid JSON")]
     InvalidJson,
+    #[allow(dead_code)]
     #[display(fmt = "Protocol error")]
     ProtocolError,
     #[display(fmt = "Invalid state for requested operation")]

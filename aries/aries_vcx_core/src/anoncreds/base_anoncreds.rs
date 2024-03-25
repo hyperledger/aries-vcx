@@ -24,10 +24,11 @@ use anoncreds_types::data_types::{
         revocation_state::CredentialRevocationState,
     },
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use async_trait::async_trait;
 use did_parser_nom::Did;
 
-use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
+use crate::errors::error::VcxCoreResult;
 
 pub type CredentialId = String;
 pub type LinkSecretId = String;

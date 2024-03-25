@@ -14,7 +14,7 @@ use aries_vcx::{
     },
     protocols::did_exchange::state_machine::create_our_did_document,
 };
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
 use url::Url;
 

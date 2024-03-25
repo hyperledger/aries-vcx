@@ -1,4 +1,5 @@
 use aries_vcx::{aries_vcx_core::errors::error::AriesVcxCoreError, errors::error::AriesVcxError};
+use aries_vcx_wallet::errors::error::VcxWalletError;
 
 use super::error::VcxUniFFIError;
 
@@ -16,6 +17,15 @@ impl From<AriesVcxCoreError> for VcxUniFFIError {
         let default = e;
         VcxUniFFIError::AriesVcxError {
             error_msg: format!("AriesVcxCoreError: {default}"),
+        }
+    }
+}
+
+impl From<VcxWalletError> for VcxUniFFIError {
+    fn from(e: VcxWalletError) -> Self {
+        let default = e;
+        VcxUniFFIError::AriesVcxWalletError {
+            error_msg: format!("AriesVcxWalletError: {default}"),
         }
     }
 }

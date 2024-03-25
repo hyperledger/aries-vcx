@@ -7,8 +7,8 @@ use aries_vcx_core::{
         base_ledger::AnoncredsLedgerRead,
         indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
     },
-    wallet::base_wallet::BaseWallet,
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
 use crate::{
     error::*,

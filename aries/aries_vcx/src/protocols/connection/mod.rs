@@ -6,7 +6,7 @@ pub mod pairwise_info;
 mod serializable;
 mod trait_bounds;
 
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     msg_fields::protocols::discover_features::{

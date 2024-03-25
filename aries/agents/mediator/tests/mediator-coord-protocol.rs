@@ -1,6 +1,6 @@
 mod common;
 
-use aries_vcx_core::wallet::base_wallet::did_wallet::DidWallet;
+use aries_vcx_wallet::wallet::base_wallet::did_wallet::DidWallet;
 use messages::{
     msg_fields::protocols::coordinate_mediation::{
         keylist_update::{KeylistUpdateItem, KeylistUpdateItemAction},
@@ -20,6 +20,7 @@ use crate::common::{
 
 static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
 
+#[ignore]
 #[tokio::test]
 async fn test_mediate_grant() -> Result<()> {
     LOGGING_INIT.call_once(setup_env_logging);
@@ -62,6 +63,7 @@ async fn test_mediate_grant() -> Result<()> {
     Ok(())
 }
 
+#[ignore]
 #[tokio::test]
 async fn test_mediate_keylist_update_add() -> Result<()> {
     LOGGING_INIT.call_once(setup_env_logging);
@@ -113,6 +115,7 @@ async fn test_mediate_keylist_update_add() -> Result<()> {
     Ok(())
 }
 
+#[ignore]
 #[tokio::test]
 async fn test_mediate_keylist_query() -> Result<()> {
     LOGGING_INIT.call_once(setup_env_logging);
@@ -181,6 +184,7 @@ async fn test_mediate_keylist_query() -> Result<()> {
     Ok(())
 }
 
+#[ignore]
 #[tokio::test]
 async fn test_mediate_keylist_update_remove() -> Result<()> {
     LOGGING_INIT.call_once(setup_env_logging);

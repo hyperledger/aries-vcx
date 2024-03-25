@@ -5,8 +5,8 @@ use anoncreds_types::data_types::messages::{
 };
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
-    wallet::base_wallet::BaseWallet,
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
 use messages::{
     decorators::{thread::Thread, timing::Timing},

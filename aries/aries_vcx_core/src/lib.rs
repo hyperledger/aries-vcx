@@ -27,11 +27,8 @@ pub mod errors;
 pub mod global;
 pub mod ledger;
 pub mod utils;
-pub mod wallet;
 
 pub use indy_ledger_response_parser::ResponseParser;
 pub use indy_vdr::config::PoolConfig;
 #[cfg(feature = "vdr_proxy_ledger")]
 pub use indy_vdr_proxy_client::VdrProxyClient;
-#[cfg(feature = "vdrtools_wallet")]
-pub use vdrtools::{SearchHandle, WalletHandle, INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE};

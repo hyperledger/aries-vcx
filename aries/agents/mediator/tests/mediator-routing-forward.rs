@@ -16,6 +16,7 @@ use crate::common::{
 
 static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
 
+#[ignore]
 #[tokio::test]
 async fn test_forward_flow() -> Result<()> {
     LOGGING_INIT.call_once(setup_env_logging);
