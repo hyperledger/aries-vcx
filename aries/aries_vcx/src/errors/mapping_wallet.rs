@@ -12,20 +12,11 @@ impl From<VcxWalletError> for AriesVcxError {
             VcxWalletError::RecordNotFound { .. } => {
                 Self::from_msg(AriesVcxErrorKind::WalletRecordNotFound, value.to_string())
             }
-            VcxWalletError::UnknownRecordCategory(_) => {
-                Self::from_msg(AriesVcxErrorKind::InvalidInput, value.to_string())
-            }
-            VcxWalletError::FilterTypeNotsupported(_) => {
-                Self::from_msg(AriesVcxErrorKind::InvalidInput, value.to_string())
-            }
-            #[cfg(feature = "vdrtools_wallet")]
-            VcxWalletError::IndyApiError(_) => {
-                Self::from_msg(AriesVcxErrorKind::InvalidLedgerResponse, value.to_string())
-            }
-            VcxWalletError::InvalidInput(_) => {
-                Self::from_msg(AriesVcxErrorKind::InvalidInput, value.to_string())
-            }
-            VcxWalletError::InvalidWql(_) => {
+            VcxWalletError::UnknownRecordCategory(_)
+            | VcxWalletError::FilterTypeNotsupported(_)
+            | VcxWalletError::InvalidInput(_)
+            | VcxWalletError::InvalidWql(_)
+            | VcxWalletError::PublicKeyError(_) => {
                 Self::from_msg(AriesVcxErrorKind::InvalidInput, value.to_string())
             }
             VcxWalletError::NoRecipientKeyFound => {
@@ -33,9 +24,6 @@ impl From<VcxWalletError> for AriesVcxError {
             }
             VcxWalletError::InvalidJson(_) => {
                 Self::from_msg(AriesVcxErrorKind::InvalidJson, value.to_string())
-            }
-            VcxWalletError::PublicKeyError(_) => {
-                Self::from_msg(AriesVcxErrorKind::InvalidInput, value.to_string())
             }
             VcxWalletError::Unimplemented(_) => {
                 Self::from_msg(AriesVcxErrorKind::UnimplementedFeature, value.to_string())

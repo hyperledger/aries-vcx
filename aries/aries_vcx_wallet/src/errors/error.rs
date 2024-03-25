@@ -5,58 +5,42 @@ use std::{
 
 use indy_vdr::utils::ConversionError;
 use thiserror::Error as ThisError;
-#[cfg(feature = "vdrtools_wallet")]
-use vdrtools::IndyError;
 
 use crate::wallet::base_wallet::{record_category::RecordCategory, search_filter::SearchFilter};
 
 pub type VcxWalletResult<T> = Result<T, VcxWalletError>;
 
-pub struct NotFoundInfo(Option<(RecordCategory, String)>);
-
-impl NotFoundInfo {
-    pub fn new(category: RecordCategory, name: &str) -> Self {
-        Self(Some((category, name.to_string())))
-    }
-
-    pub fn new_without_details() -> Self {
-        Self(None)
-    }
-}
-
-impl fmt::Debug for NotFoundInfo {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.0 {
-            None => write!(f, "no details provided"),
-            Some(payload) => write!(f, "category: {}, name: {}", payload.0, payload.1),
-        }
-    }
-}
-
-impl fmt::Display for NotFoundInfo {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        fmt::Debug::fmt(self, f)
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, ThisError)]
 pub enum VcxWalletError {
-    #[cfg(feature = "vdrtools_wallet")]
-    IndyApiError(IndyError),
+    #[error("Duplicate record: {0}")]
     DuplicateRecord(String),
+    #[error("Not UTF-8: {0}")]
     NotUtf8(FromUtf8Error),
+    #[error("Not Base58: {0}")]
     NotBase58(bs58::decode::Error),
+    #[error("Not Base64: {0}")]
     NotBase64(ConversionError),
+    #[error("Record not found: {0}")]
     RecordNotFound(String),
+    #[error("Unknown record category: {0}")]
     UnknownRecordCategory(String),
+    #[error("Filter type not supported: {0}")]
     FilterTypeNotsupported(SearchFilter),
+    #[error("Invalid input: {0}")]
     InvalidInput(String),
+    #[error("Invalid WQL: {0}")]
     InvalidWql(String),
+    #[error("No recipient found")]
     NoRecipientKeyFound,
+    #[error("Invalid JSON: {0}")]
     InvalidJson(serde_json::Error),
+    #[error("Public key error: {0}")]
     PublicKeyError(public_key::PublicKeyError),
+    #[error("Unimplemented: {0}")]
     Unimplemented(String),
+    #[error("Unknown error: {0}")]
     Unknown(OpaqueError),
+    #[error("Error when creating a wallet: {0}")]
     WalletCreate(OpaqueError),
 }
 
@@ -66,66 +50,6 @@ pub struct OpaqueError(anyhow::Error);
 impl Display for OpaqueError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
-    }
-}
-
-impl Display for VcxWalletError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            VcxWalletError::DuplicateRecord(inner) => write!(f, "Duplicate record: {}", inner),
-            VcxWalletError::NotUtf8(inner) => write!(f, "Not UTF-8: {}", inner),
-            VcxWalletError::NotBase58(inner) => write!(f, "Not Base58: {}", inner),
-            VcxWalletError::NotBase64(inner) => write!(f, "Not Base64: {}", inner),
-            VcxWalletError::RecordNotFound(inner) => write!(f, "Record not found: {}", inner),
-            VcxWalletError::UnknownRecordCategory(inner) => {
-                write!(f, "Unknown RecordCategory: {}", inner)
-            }
-            VcxWalletError::FilterTypeNotsupported(inner) => {
-                write!(f, "Filter type is not supported: {}", inner)
-            }
-            #[cfg(feature = "vdrtools_wallet")]
-            VcxWalletError::IndyApiError(inner) => write!(f, "Indy API error: {}", inner),
-            VcxWalletError::InvalidWql(inner) => write!(f, "Invalid wql: {}", inner),
-            VcxWalletError::InvalidInput(inner) => write!(f, "Invalid input: {}", inner),
-            VcxWalletError::NoRecipientKeyFound => write!(f, "No recipient key found"),
-            VcxWalletError::InvalidJson(inner) => write!(f, "Invalid JSON: {}", inner),
-            VcxWalletError::PublicKeyError(inner) => write!(f, "Public key error: {}", inner),
-            VcxWalletError::Unimplemented(inner) => write!(f, "Not implemented: {}", inner),
-            VcxWalletError::Unknown(inner) => write!(f, "Unknown error: {}", inner),
-            VcxWalletError::WalletCreate(inner) => write!(f, "Error creating a wallet: {}", inner),
-        }
-    }
-}
-
-impl std::error::Error for VcxWalletError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            VcxWalletError::DuplicateRecord(_) => None,
-            VcxWalletError::NotUtf8(inner) => Some(inner),
-            VcxWalletError::NotBase58(inner) => Some(inner),
-            VcxWalletError::NotBase64(inner) => Some(inner),
-            VcxWalletError::RecordNotFound(_) => None,
-            VcxWalletError::UnknownRecordCategory(_) => None,
-            VcxWalletError::FilterTypeNotsupported(_) => None,
-            #[cfg(feature = "vdrtools_wallet")]
-            VcxWalletError::IndyApiError(inner) => Some(inner),
-            VcxWalletError::InvalidWql(_) => None,
-            VcxWalletError::InvalidInput(_) => None,
-            VcxWalletError::NoRecipientKeyFound => None,
-            VcxWalletError::InvalidJson(inner) => Some(inner),
-            VcxWalletError::PublicKeyError(inner) => Some(inner),
-            VcxWalletError::Unimplemented(_) => None,
-            VcxWalletError::Unknown(inner) => Some(inner),
-            VcxWalletError::WalletCreate(inner) => Some(inner),
-        }
-    }
-
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
-    }
-
-    fn cause(&self) -> Option<&dyn std::error::Error> {
-        self.source()
     }
 }
 

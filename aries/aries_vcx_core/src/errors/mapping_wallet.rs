@@ -13,17 +13,11 @@ impl From<VcxWalletError> for AriesVcxCoreError {
                 AriesVcxCoreErrorKind::WalletRecordNotFound,
                 value.to_string(),
             ),
-            VcxWalletError::UnknownRecordCategory(_) => {
-                Self::from_msg(AriesVcxCoreErrorKind::InvalidInput, value.to_string())
-            }
-            VcxWalletError::FilterTypeNotsupported(_) => {
-                Self::from_msg(AriesVcxCoreErrorKind::InvalidInput, value.to_string())
-            }
-            #[cfg(feature = "vdrtools_wallet")]
-            VcxWalletError::IndyApiError(_) => {
-                Self::from_msg(AriesVcxCoreErrorKind::InvalidInput, value.to_string())
-            }
-            VcxWalletError::InvalidInput(_) => {
+            VcxWalletError::UnknownRecordCategory(_)
+            | VcxWalletError::FilterTypeNotsupported(_)
+            | VcxWalletError::InvalidInput(_)
+            | VcxWalletError::PublicKeyError(_)
+            | VcxWalletError::InvalidWql(_) => {
                 Self::from_msg(AriesVcxCoreErrorKind::InvalidInput, value.to_string())
             }
             VcxWalletError::NoRecipientKeyFound => Self::from_msg(
@@ -32,9 +26,6 @@ impl From<VcxWalletError> for AriesVcxCoreError {
             ),
             VcxWalletError::InvalidJson(_) => {
                 Self::from_msg(AriesVcxCoreErrorKind::InvalidJson, value.to_string())
-            }
-            VcxWalletError::PublicKeyError(_) => {
-                Self::from_msg(AriesVcxCoreErrorKind::InvalidInput, value.to_string())
             }
             VcxWalletError::Unimplemented(_) => Self::from_msg(
                 AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -54,9 +45,6 @@ impl From<VcxWalletError> for AriesVcxCoreError {
             }
             VcxWalletError::NotBase64(_) => {
                 Self::from_msg(AriesVcxCoreErrorKind::ParsingError, value.to_string())
-            }
-            VcxWalletError::InvalidWql(_) => {
-                Self::from_msg(AriesVcxCoreErrorKind::InvalidInput, value.to_string())
             }
         }
     }

@@ -7,7 +7,7 @@ impl From<IndyError> for VcxWalletError {
     fn from(value: IndyError) -> Self {
         match value.kind() {
             IndyErrorKind::WalletItemNotFound => Self::RecordNotFound(value.to_string()),
-            _ => Self::IndyApiError(value),
+            _ => VcxWalletError::unknown_error(value),
         }
     }
 }
