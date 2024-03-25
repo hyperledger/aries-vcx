@@ -504,6 +504,7 @@ dependencies = [
  "log",
  "messages",
  "num-bigint",
+ "pretty_assertions",
  "public_key",
  "rand 0.8.5",
  "regex",

@@ -65,6 +65,7 @@ async fn download_genesis_file() -> std::result::Result<String, String> {
                 let mut f = std::fs::OpenOptions::new()
                     .write(true)
                     .create(true)
+                    .truncate(true)
                     .open(path.clone())
                     .expect("Unable to open file");
                 f.write_all(body.as_bytes()).expect("Unable to write data");

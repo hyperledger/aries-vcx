@@ -93,16 +93,16 @@ fn add_key_from_element(
     for vm in vms.into_iter() {
         match purpose {
             ElementPurpose::Assertion => {
-                did_doc.add_assertion_method(vm);
+                did_doc.add_assertion_method_object(vm);
             }
             ElementPurpose::Encryption => {
-                did_doc.add_key_agreement(vm);
+                did_doc.add_key_agreement_object(vm);
             }
             ElementPurpose::Verification => {
                 did_doc.add_verification_method(vm);
             }
-            ElementPurpose::CapabilityInvocation => did_doc.add_capability_invocation(vm),
-            ElementPurpose::CapabilityDelegation => did_doc.add_capability_delegation(vm),
+            ElementPurpose::CapabilityInvocation => did_doc.add_capability_invocation_object(vm),
+            ElementPurpose::CapabilityDelegation => did_doc.add_capability_delegation_object(vm),
             _ => return Err(DidPeerError::UnsupportedPurpose(purpose.into())),
         }
     }
