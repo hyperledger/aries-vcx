@@ -180,10 +180,9 @@ mod tests {
             VerificationMethodType::Ed25519VerificationKey2020,
         );
 
-        let did_document = DidDocument::builder(did_full.parse().unwrap())
-            .add_key_agreement(vm_0)
-            .add_verification_method(vm_1)
-            .build();
+        let mut did_document = DidDocument::new(Did::parse(did_full.clone()).unwrap());
+        did_document.add_key_agreement(vm_0);
+        did_document.add_verification_method(vm_1);
 
         let did = append_encoded_key_segments(did.to_string(), &did_document).unwrap();
         assert_eq!(did, did_full);
@@ -209,23 +208,20 @@ mod tests {
             convert_to_hashmap(&extra).unwrap(),
         );
 
-        let did_document = DidDocument::builder(did_expected.parse().unwrap())
-            .add_service(service)
-            .build();
+        let mut did_document = DidDocument::new(did_expected.parse().unwrap());
+        did_document.add_service(service);
 
         let did = append_encoded_service_segment(did.to_string(), &did_document).unwrap();
 
         let did_parsed = PeerDid::<Numalgo2>::parse(did.clone()).unwrap();
         let ddo = did_parsed
             .to_did_doc_builder(PublicKeyEncoding::Base58)
-            .unwrap()
-            .build();
+            .unwrap();
 
         let did_expected_parsed = PeerDid::<Numalgo2>::parse(did_expected.clone()).unwrap();
         let ddo_expected = did_expected_parsed
             .to_did_doc_builder(PublicKeyEncoding::Base58)
-            .unwrap()
-            .build();
+            .unwrap();
 
         assert_eq!(ddo, ddo_expected);
         assert_eq!(did, did_expected);
@@ -244,9 +240,8 @@ mod tests {
             VerificationMethodType::X25519KeyAgreementKey2020,
         );
 
-        let did_document = DidDocument::builder(did_full.parse().unwrap())
-            .add_key_agreement(vm)
-            .build();
+        let mut did_document = DidDocument::new(did_full.parse().unwrap());
+        did_document.add_key_agreement(vm);
 
         let result = append_encoded_key_segments(did.to_string(), &did_document);
         assert!(result.is_err());
@@ -279,11 +274,10 @@ mod tests {
             VerificationMethodType::Ed25519VerificationKey2020,
         );
 
-        let did_document = DidDocument::builder(did_full.parse().unwrap())
-            .add_assertion_method(vm_0)
-            .add_key_agreement(vm_1)
-            .add_verification_method(vm_2)
-            .build();
+        let mut did_document = DidDocument::new(did_full.parse().unwrap());
+        did_document.add_assertion_method(vm_0);
+        did_document.add_key_agreement(vm_1);
+        did_document.add_verification_method(vm_2);
 
         let did = append_encoded_key_segments(did.to_string(), &did_document).unwrap();
         assert_eq!(did, did_full);
@@ -306,10 +300,9 @@ mod tests {
             VerificationMethodType::X25519KeyAgreementKey2020,
         );
 
-        let did_document = DidDocument::builder(did_full.parse().unwrap())
-            .add_verification_method(vm)
-            .add_key_agreement_reference(DidUrl::from_fragment(reference.to_string()).unwrap())
-            .build();
+        let mut did_document = DidDocument::new(did_full.parse().unwrap());
+        did_document.add_verification_method(vm);
+        did_document.add_key_agreement_ref(DidUrl::from_fragment(reference.to_string()).unwrap());
 
         let did = append_encoded_key_segments(did.to_string(), &did_document).unwrap();
         assert_eq!(did, did_full);

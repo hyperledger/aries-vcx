@@ -1,5 +1,5 @@
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
-use did_doc::schema::did_doc::DidDocumentBuilder;
+use did_doc::schema::did_doc::DidDocument;
 use did_parser_nom::Did;
 use public_key::Key;
 
@@ -13,34 +13,34 @@ use crate::{
     resolver::options::PublicKeyEncoding,
 };
 
-pub fn didpeer_elements_to_diddoc(
-    mut did_doc_builder: DidDocumentBuilder,
+pub fn diddoc_from_peerdid2_elements(
+    mut did_doc: DidDocument,
     did: &Did,
     public_key_encoding: PublicKeyEncoding,
-) -> Result<DidDocumentBuilder, DidPeerError> {
+) -> Result<DidDocument, DidPeerError> {
     let mut service_index: usize = 0;
 
     // Skipping one here because the first element is empty string
     for element in did.id()[1..].split('.').skip(1) {
-        did_doc_builder = process_element(
+        did_doc = add_attributes_from_element(
             element,
-            did_doc_builder,
+            did_doc,
             &mut service_index,
             did,
             public_key_encoding,
         )?;
     }
 
-    Ok(did_doc_builder)
+    Ok(did_doc)
 }
 
-fn process_element(
+fn add_attributes_from_element(
     element: &str,
-    mut did_doc_builder: DidDocumentBuilder,
+    mut did_doc: DidDocument,
     service_index: &mut usize,
     did: &Did,
     public_key_encoding: PublicKeyEncoding,
-) -> Result<DidDocumentBuilder, DidPeerError> {
+) -> Result<DidDocument, DidPeerError> {
     let purpose: ElementPurpose = element
         .chars()
         .next()
@@ -52,67 +52,62 @@ fn process_element(
     let purposeless_element = &element[1..];
 
     if purpose == ElementPurpose::Service {
-        did_doc_builder =
-            process_service_element(purposeless_element, did_doc_builder, service_index)?;
+        did_doc = add_service_from_element(purposeless_element, did_doc, service_index)?;
     } else {
-        did_doc_builder = process_key_element(
+        did_doc = add_key_from_element(
             purposeless_element,
-            did_doc_builder,
+            did_doc,
             did,
             public_key_encoding,
             purpose,
         )?;
     }
 
-    Ok(did_doc_builder)
+    Ok(did_doc)
 }
 
-fn process_service_element(
+fn add_service_from_element(
     element: &str,
-    mut did_doc_builder: DidDocumentBuilder,
+    mut did_doc: DidDocument,
     service_index: &mut usize,
-) -> Result<DidDocumentBuilder, DidPeerError> {
+) -> Result<DidDocument, DidPeerError> {
     let decoded = STANDARD_NO_PAD.decode(element)?;
     let service: ServiceAbbreviatedDidPeer2 = serde_json::from_slice(&decoded)?;
 
-    did_doc_builder = did_doc_builder.add_service(deabbreviate_service(service, *service_index)?);
+    did_doc.add_service(deabbreviate_service(service, *service_index)?);
     *service_index += 1;
 
-    Ok(did_doc_builder)
+    Ok(did_doc)
 }
 
-fn process_key_element(
+fn add_key_from_element(
     element: &str,
-    mut did_doc_builder: DidDocumentBuilder,
+    mut did_doc: DidDocument,
     did: &Did,
     public_key_encoding: PublicKeyEncoding,
     purpose: ElementPurpose,
-) -> Result<DidDocumentBuilder, DidPeerError> {
+) -> Result<DidDocument, DidPeerError> {
     let key = Key::from_fingerprint(element)?;
     let vms = get_verification_methods_by_key(&key, did, public_key_encoding)?;
 
     for vm in vms.into_iter() {
         match purpose {
             ElementPurpose::Assertion => {
-                did_doc_builder = did_doc_builder.add_assertion_method(vm);
+                did_doc.add_assertion_method(vm);
             }
             ElementPurpose::Encryption => {
-                did_doc_builder = did_doc_builder.add_key_agreement(vm);
+                did_doc.add_key_agreement(vm);
             }
             ElementPurpose::Verification => {
-                did_doc_builder = did_doc_builder.add_verification_method(vm);
+                did_doc.add_verification_method(vm);
             }
-            ElementPurpose::CapabilityInvocation => {
-                did_doc_builder = did_doc_builder.add_capability_invocation(vm)
-            }
-            ElementPurpose::CapabilityDelegation => {
-                did_doc_builder = did_doc_builder.add_capability_delegation(vm)
-            }
+            ElementPurpose::CapabilityInvocation => did_doc.add_capability_invocation(vm),
+            ElementPurpose::CapabilityDelegation => did_doc.add_capability_delegation(vm),
             _ => return Err(DidPeerError::UnsupportedPurpose(purpose.into())),
         }
     }
 
-    Ok(did_doc_builder)
+    Ok(did_doc)
 }
 
 #[cfg(test)]
@@ -126,14 +121,13 @@ mod tests {
     fn test_process_elements_empty_did() {
         let did: Did = "did:peer:2".parse().unwrap();
 
-        let built_ddo = didpeer_elements_to_diddoc(
-            DidDocumentBuilder::new(did.clone()),
+        let did_doc = diddoc_from_peerdid2_elements(
+            DidDocument::new(did.clone()),
             &did,
             PublicKeyEncoding::Base58,
         )
-        .unwrap()
-        .build();
-        assert_eq!(built_ddo.id().to_string(), did.to_string());
+        .unwrap();
+        assert_eq!(did_doc.id().to_string(), did.to_string());
     }
 
     #[test]
@@ -144,17 +138,16 @@ mod tests {
                 .parse()
                 .unwrap();
 
-        let processed_did_doc_builder = didpeer_elements_to_diddoc(
-            DidDocumentBuilder::new(did.clone()),
+        let did_doc = diddoc_from_peerdid2_elements(
+            DidDocument::new(did.clone()),
             &did,
             PublicKeyEncoding::Multibase,
         )
         .unwrap();
-        let built_ddo = processed_did_doc_builder.build();
 
-        assert_eq!(built_ddo.id().to_string(), did.to_string());
-        assert_eq!(built_ddo.verification_method().len(), 1);
-        assert_eq!(built_ddo.service().len(), 1);
+        assert_eq!(did_doc.id().to_string(), did.to_string());
+        assert_eq!(did_doc.verification_method().len(), 1);
+        assert_eq!(did_doc.service().len(), 1);
     }
 
     #[test]
@@ -166,8 +159,8 @@ mod tests {
                 .parse()
                 .unwrap();
 
-        match didpeer_elements_to_diddoc(
-            DidDocumentBuilder::new(did.clone()),
+        match diddoc_from_peerdid2_elements(
+            DidDocument::new(did.clone()),
             &did,
             PublicKeyEncoding::Multibase,
         ) {
@@ -186,13 +179,11 @@ mod tests {
             .parse()
             .unwrap();
         let mut index = 0;
-        let ddo_builder = DidDocumentBuilder::new(did);
-        let built_ddo =
-            process_service_element(purposeless_service_element, ddo_builder, &mut index)
-                .unwrap()
-                .build();
-        assert_eq!(built_ddo.service().len(), 1);
-        let service = built_ddo.service().first().unwrap();
+        let ddo_builder = DidDocument::new(did);
+        let did_doc =
+            add_service_from_element(purposeless_service_element, ddo_builder, &mut index).unwrap();
+        assert_eq!(did_doc.service().len(), 1);
+        let service = did_doc.service().first().unwrap();
         assert_eq!(service.id().to_string(), "#service-0".to_string());
         assert_eq!(service.service_types(), vec!(ServiceType::DIDCommV2));
         assert_eq!(
@@ -208,20 +199,19 @@ mod tests {
             .parse()
             .unwrap();
 
-        let ddo_builder = DidDocumentBuilder::new(did.clone());
+        let ddo_builder = DidDocument::new(did.clone());
         let public_key_encoding = PublicKeyEncoding::Multibase;
-        let built_ddo = process_key_element(
+        let did_doc = add_key_from_element(
             purposeless_key_element,
             ddo_builder,
             &did,
             public_key_encoding,
             ElementPurpose::Verification,
         )
-        .unwrap()
-        .build();
+        .unwrap();
 
-        assert_eq!(built_ddo.verification_method().len(), 1);
-        let vm = built_ddo.verification_method().first().unwrap();
+        assert_eq!(did_doc.verification_method().len(), 1);
+        let vm = did_doc.verification_method().first().unwrap();
         assert_eq!(vm.id().to_string(), "#6MkqRYqQ");
         assert_eq!(vm.controller().to_string(), did.to_string());
     }
@@ -229,9 +219,9 @@ mod tests {
     #[test]
     fn test_process_key_element_negative() {
         let did: Did = "did:peer:2".parse().unwrap();
-        assert!(process_key_element(
+        assert!(add_key_from_element(
             "z6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V",
-            DidDocumentBuilder::new(did.clone()),
+            DidDocument::new(did.clone()),
             &did,
             PublicKeyEncoding::Multibase,
             ElementPurpose::Service

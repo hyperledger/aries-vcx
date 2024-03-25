@@ -108,7 +108,7 @@ mod tests {
     use std::{error::Error, pin::Pin};
 
     use async_trait::async_trait;
-    use did_resolver::did_doc::schema::did_doc::DidDocumentBuilder;
+    use did_resolver::did_doc::schema::did_doc::DidDocument;
     use mockall::automock;
 
     use super::*;
@@ -125,10 +125,7 @@ mod tests {
             did: &Did,
             _options: &Self::DidResolutionOptions,
         ) -> Result<DidResolutionOutput, GenericError> {
-            Ok(DidResolutionOutput::builder(
-                DidDocumentBuilder::new(Did::parse(did.did().to_string()).unwrap()).build(),
-            )
-            .build())
+            Ok(DidResolutionOutput::builder(DidDocument::new(did.clone())).build())
         }
     }
 
@@ -177,6 +174,7 @@ mod tests {
     async fn test_resolve_success() {
         let did = "did:example:1234";
         let parsed_did = Did::parse(did.to_string()).unwrap();
+        let parsed_did_cp = parsed_did.clone();
         let method = parsed_did.method().unwrap().to_string();
 
         let mut mock_resolver = MockDummyDidResolver::new();
@@ -187,10 +185,7 @@ mod tests {
             .return_once(move |_, _| {
                 let future = async move {
                     Ok::<DidResolutionOutput, GenericError>(
-                        DidResolutionOutput::builder(
-                            DidDocumentBuilder::new(Did::parse(did.to_string()).unwrap()).build(),
-                        )
-                        .build(),
+                        DidResolutionOutput::builder(DidDocument::new(parsed_did_cp)).build(),
                     )
                 };
                 Pin::from(Box::new(future))
@@ -243,6 +238,7 @@ mod tests {
     async fn test_resolve_after_registering_resolver() {
         let did = "did:example:1234";
         let parsed_did = Did::parse(did.to_string()).unwrap();
+        let parsed_did_cp = parsed_did.clone();
         let method = parsed_did.method().unwrap().to_string();
 
         let mut mock_resolver = MockDummyDidResolver::new();
@@ -253,10 +249,7 @@ mod tests {
             .return_once(move |_, _| {
                 let future = async move {
                     Ok::<DidResolutionOutput, GenericError>(
-                        DidResolutionOutput::builder(
-                            DidDocumentBuilder::new(Did::parse(did.to_string()).unwrap()).build(),
-                        )
-                        .build(),
+                        DidResolutionOutput::builder(DidDocument::new(parsed_did_cp)).build(),
                     )
                 };
                 Pin::from(Box::new(future))

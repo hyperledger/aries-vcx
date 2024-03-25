@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use did_doc::schema::did_doc::DidDocumentBuilder;
+use did_doc::schema::did_doc::DidDocument;
 use did_parser_nom::Did;
 use did_resolver::{
     error::GenericError,
@@ -42,10 +42,9 @@ impl DidResolvable for PeerDidResolver {
         let did_doc = match peer_did {
             AnyPeerDid::Numalgo2(peer_did) => {
                 let encoding = options.encoding.unwrap_or(PublicKeyEncoding::Multibase);
-                let builder: DidDocumentBuilder = peer_did.to_did_doc_builder(encoding)?;
-                builder
-                    .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
-                    .build()
+                let mut did_doc: DidDocument = peer_did.to_did_doc_builder(encoding)?;
+                did_doc.add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?);
+                did_doc
             }
             AnyPeerDid::Numalgo4(peer_did) => peer_did.resolve_did_doc()?,
             n => return Err(Box::new(DidPeerError::UnsupportedNumalgo(n.numalgo()))),

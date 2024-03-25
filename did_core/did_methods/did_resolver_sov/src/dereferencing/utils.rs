@@ -92,7 +92,6 @@ pub(crate) fn dereference_did_document(
 mod tests {
     use did_resolver::{
         did_doc::schema::{
-            did_doc::DidDocumentBuilder,
             service::typed::ServiceType,
             utils::OneOrList,
             verification_method::{PublicKeyField, VerificationMethodType},
@@ -104,7 +103,7 @@ mod tests {
 
     use super::*;
 
-    fn example_did_document_builder() -> DidDocumentBuilder {
+    fn example_did_document() -> DidDocument {
         let verification_method = VerificationMethod::builder()
             .id(DidUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap())
             .controller("did:example:123456789abcdefghi".parse().unwrap())
@@ -128,19 +127,20 @@ mod tests {
             Default::default(),
         );
 
-        DidDocument::builder(Default::default())
-            .add_verification_method(verification_method)
-            .add_service(agent_service)
-            .add_service(messaging_service)
+        let mut did_doc = DidDocument::new(Default::default());
+        did_doc.add_verification_method(verification_method);
+        did_doc.add_service(agent_service);
+        did_doc.add_service(messaging_service);
+        did_doc
     }
 
     fn example_resolution_output() -> DidResolutionOutput {
-        DidResolutionOutput::builder(example_did_document_builder().build()).build()
+        DidResolutionOutput::builder(example_did_document()).build()
     }
 
     #[test]
     fn test_content_stream_from() {
-        let did_document = example_did_document_builder().build();
+        let did_document = example_did_document();
         let did_url = DidUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap();
         let content_stream = content_stream_from(&did_document, &did_url).unwrap();
         let content_value: Value = serde_json::from_reader(content_stream).unwrap();
@@ -196,18 +196,19 @@ mod tests {
 
     #[test]
     fn test_dereference_did_document_ambiguous() {
-        let did_document = {
-            let did_document_builder = example_did_document_builder();
+        let did_doc = {
+            let mut did_doc = example_did_document();
             let additional_service = Service::new(
                 "did:example:123456789abcdefghi#keys-1".parse().unwrap(),
                 "https://example.com/duplicated/8377464".try_into().unwrap(),
                 OneOrList::One(ServiceType::Other("DuplicatedService".to_string())),
                 Default::default(),
             );
-            did_document_builder.add_service(additional_service).build()
+            did_doc.add_service(additional_service);
+            did_doc
         };
 
-        let resolution_output = DidResolutionOutput::builder(did_document).build();
+        let resolution_output = DidResolutionOutput::builder(did_doc).build();
         let did_url = DidUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap();
         let result = dereference_did_document(&resolution_output, &did_url);
         assert!(matches!(result, Err(DidSovError::InvalidDid(_))));

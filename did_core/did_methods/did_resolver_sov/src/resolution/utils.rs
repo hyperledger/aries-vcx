@@ -103,11 +103,10 @@ pub(super) async fn ledger_response_to_ddo(
         })
         .build();
 
-    let ddo = DidDocument::builder(ddo_id)
-        .add_service(service)
-        .add_verification_method(verification_method)
-        .add_key_agreement_reference(DidUrl::parse("#1".to_string())?)
-        .build();
+    let mut ddo = DidDocument::new(ddo_id);
+    ddo.add_service(service);
+    ddo.add_verification_method(verification_method);
+    ddo.add_key_agreement_ref(DidUrl::parse("#1".to_string())?);
 
     let ddo_metadata = {
         let mut metadata_builder = DidDocumentMetadata::builder().deactivated(false);

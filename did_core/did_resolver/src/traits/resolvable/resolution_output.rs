@@ -4,9 +4,6 @@ use serde::{Deserialize, Serialize};
 use super::resolution_metadata::DidResolutionMetadata;
 use crate::shared_types::did_document_metadata::DidDocumentMetadata;
 
-// This struct is only returned in the happy case. In the error case, user may convert
-// DidSovError into DidResolutionMetadata, as DidResolutionMetadata is be the only
-// non-empty field in DidResolutionOutput in the error case.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct DidResolutionOutput {

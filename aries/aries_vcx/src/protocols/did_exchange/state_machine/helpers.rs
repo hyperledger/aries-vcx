@@ -107,10 +107,10 @@ fn did_doc_from_keys(
             public_key_base58: key_enc.base58(),
         })
         .build();
-    Ok(DidDocument::builder(did)
-        .add_service(service)
-        .add_key_agreement(vm_ka)
-        .build())
+    let mut did_doc = DidDocument::new(did);
+    did_doc.add_service(service);
+    did_doc.add_key_agreement(vm_ka);
+    Ok(did_doc)
 }
 
 pub fn ddo_to_attach(ddo: DidDocument) -> Result<Attachment, AriesVcxError> {

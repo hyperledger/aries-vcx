@@ -13,7 +13,7 @@ use did_peer::{
         numalgos::{
             numalgo2::Numalgo2,
             numalgo3::Numalgo3,
-            numalgo4::{encoded_document::DidPeer4EncodedDocumentBuilder, Numalgo4},
+            numalgo4::{construction_did_doc::DidPeer4ConstructionDidDocument, Numalgo4},
         },
         PeerDid,
     },
@@ -38,15 +38,17 @@ async fn demo_did_peer_2_and_3() -> Result<(), Box<dyn Error>> {
         })
         .build();
 
-    let ddo = DidDocument::builder(did)
-        .add_verification_method(verification_method)
-        .build();
-    log::info!("Did document: \n{}", serde_json::to_string_pretty(&ddo)?);
+    let mut did_doc = DidDocument::new(did);
+    did_doc.add_verification_method(verification_method);
+    log::info!(
+        "Did document: \n{}",
+        serde_json::to_string_pretty(&did_doc)?
+    );
 
-    let peer_did_2 = PeerDid::<Numalgo2>::from_did_doc(ddo.clone())?;
+    let peer_did_2 = PeerDid::<Numalgo2>::from_did_doc(did_doc.clone())?;
     log::info!("as did:peer numalgo(2): {}", peer_did_2);
 
-    let peer_did_3 = PeerDid::<Numalgo3>::from_did_doc(ddo)?;
+    let peer_did_3 = PeerDid::<Numalgo3>::from_did_doc(did_doc)?;
     log::info!("as did:peer numalgo(3): {}", peer_did_3);
 
     let peer_did_3_v2 = peer_did_2.to_numalgo3()?;
@@ -78,16 +80,14 @@ async fn demo_did_peer_4() -> Result<(), Box<dyn Error>> {
         OneOrList::One(ServiceType::DIDCommV2),
         HashMap::default(),
     );
-    let encoded_document = DidPeer4EncodedDocumentBuilder::default()
-        .service(vec![service])
-        .build()
-        .unwrap();
+    let mut construction_did_doc = DidPeer4ConstructionDidDocument::new();
+    construction_did_doc.add_service(service);
     log::info!(
         "Pseudo did document as input for did:peer:4 construction: {}",
-        serde_json::to_string_pretty(&encoded_document)?
+        serde_json::to_string_pretty(&construction_did_doc)?
     );
 
-    let peer_did_4 = PeerDid::<Numalgo4>::new(encoded_document)?;
+    let peer_did_4 = PeerDid::<Numalgo4>::new(construction_did_doc)?;
     log::info!("Instance of peer did: {}", peer_did_4);
 
     let did_document = peer_did_4.resolve_did_doc()?;

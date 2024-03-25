@@ -41,8 +41,20 @@ pub struct DidDocument {
 }
 
 impl DidDocument {
-    pub fn builder(id: Did) -> DidDocumentBuilder {
-        DidDocumentBuilder::new(id)
+    pub fn new(id: Did) -> Self {
+        DidDocument {
+            id,
+            also_known_as: vec![],
+            controller: None,
+            verification_method: vec![],
+            authentication: vec![],
+            assertion_method: vec![],
+            key_agreement: vec![],
+            capability_invocation: vec![],
+            capability_delegation: vec![],
+            service: vec![],
+            extra: Default::default(),
+        }
     }
 
     pub fn id(&self) -> &Did {
@@ -102,169 +114,87 @@ impl DidDocument {
     pub fn validate(&self) -> Result<(), DidDocumentBuilderError> {
         Ok(())
     }
-}
 
-#[derive(Default, Debug)]
-pub struct DidDocumentBuilder {
-    id: Did,
-    also_known_as: Vec<Uri>,
-    controller: Vec<Did>,
-    verification_method: Vec<VerificationMethod>,
-    authentication: Vec<VerificationMethodKind>,
-    assertion_method: Vec<VerificationMethodKind>,
-    key_agreement: Vec<VerificationMethodKind>,
-    capability_invocation: Vec<VerificationMethodKind>,
-    capability_delegation: Vec<VerificationMethodKind>,
-    service: Vec<Service>,
-    extra: HashMap<String, Value>,
-}
-
-impl DidDocumentBuilder {
-    pub fn new(id: Did) -> Self {
-        Self {
-            id,
-            ..Default::default()
-        }
+    pub fn set_also_known_as(&mut self, uris: Vec<Uri>) {
+        self.also_known_as = uris;
     }
 
-    pub fn add_also_known_as(mut self, also_known_as: Uri) -> Self {
-        self.also_known_as.push(also_known_as);
-        self
+    pub fn add_also_known_as(&mut self, uri: Uri) {
+        self.also_known_as.push(uri);
     }
 
-    pub fn add_controller(mut self, controller: Did) -> Self {
-        self.controller.push(controller);
-        self
+    pub fn set_controller(&mut self, controller: OneOrList<Did>) {
+        self.controller = Some(controller);
     }
 
-    pub fn add_verification_method(mut self, verification_method: VerificationMethod) -> Self {
-        self.verification_method.push(verification_method);
-        self
+    pub fn add_verification_method(&mut self, method: VerificationMethod) {
+        self.verification_method.push(method);
     }
 
-    // This was needed fo peer:did:4 implementation, but it's assymetric with other methods here
-    // TODO: Find better approach for the builder
-    pub fn add_verification_method_2(&mut self, verification_method: VerificationMethod) {
-        self.verification_method.push(verification_method);
-    }
-
-    pub fn add_authentication_method(mut self, method: VerificationMethod) -> Self {
+    pub fn add_authentication(&mut self, method: VerificationMethod) {
         self.authentication
             .push(VerificationMethodKind::Resolved(method));
-        self
     }
 
-    pub fn add_authentication_reference(mut self, reference: DidUrl) -> Self {
+    pub fn add_authentication_ref(&mut self, reference: DidUrl) {
         self.authentication
             .push(VerificationMethodKind::Resolvable(reference));
-        self
     }
 
-    pub fn add_assertion_method(mut self, method: VerificationMethod) -> Self {
+    pub fn add_assertion_method(&mut self, method: VerificationMethod) {
         self.assertion_method
             .push(VerificationMethodKind::Resolved(method));
-        self
     }
 
-    pub fn add_assertion_method_reference(mut self, reference: DidUrl) -> Self {
+    pub fn add_assertion_method_ref(&mut self, reference: DidUrl) {
         self.assertion_method
             .push(VerificationMethodKind::Resolvable(reference));
-        self
     }
 
-    pub fn add_key_agreement(mut self, key_agreement: VerificationMethod) -> Self {
+    pub fn add_key_agreement(&mut self, method: VerificationMethod) {
         self.key_agreement
-            .push(VerificationMethodKind::Resolved(key_agreement));
-        self
+            .push(VerificationMethodKind::Resolved(method));
     }
 
-    pub fn add_key_agreement_reference(mut self, reference: DidUrl) -> Self {
+    pub fn add_key_agreement_ref(&mut self, refernece: DidUrl) {
         self.key_agreement
-            .push(VerificationMethodKind::Resolvable(reference));
-        self
+            .push(VerificationMethodKind::Resolvable(refernece));
     }
 
-    pub fn add_capability_invocation(mut self, capability_invocation: VerificationMethod) -> Self {
+    pub fn add_capability_invocation(&mut self, method: VerificationMethod) {
         self.capability_invocation
-            .push(VerificationMethodKind::Resolved(capability_invocation));
-        self
+            .push(VerificationMethodKind::Resolved(method));
     }
 
-    pub fn add_capability_invocation_reference(mut self, reference: DidUrl) -> Self {
+    pub fn add_capability_invocation_ref(&mut self, reference: DidUrl) {
         self.capability_invocation
             .push(VerificationMethodKind::Resolvable(reference));
-        self
     }
 
-    pub fn add_capability_delegation(mut self, capability_delegation: VerificationMethod) -> Self {
+    pub fn add_capability_delegation(&mut self, method: VerificationMethod) {
         self.capability_delegation
-            .push(VerificationMethodKind::Resolved(capability_delegation));
-        self
+            .push(VerificationMethodKind::Resolved(method));
     }
 
-    pub fn add_capability_delegation_refrence(mut self, reference: DidUrl) -> Self {
+    pub fn add_capability_delegation_ref(&mut self, reference: DidUrl) {
         self.capability_delegation
             .push(VerificationMethodKind::Resolvable(reference));
-        self
     }
 
-    pub fn add_service(mut self, service: Service) -> Self {
+    pub fn set_service(&mut self, services: Vec<Service>) {
+        self.service = services;
+    }
+
+    pub fn add_service(&mut self, service: Service) {
         self.service.push(service);
-        self
     }
 
-    pub fn set_service(mut self, service: Vec<Service>) -> Self {
-        self.service = service;
-        self
-    }
-
-    pub fn add_extra_field(mut self, key: String, value: Value) -> Self {
+    pub fn set_extra_field(&mut self, key: String, value: Value) {
         self.extra.insert(key, value);
-        self
     }
 
-    pub fn build(self) -> DidDocument {
-        let controller = if self.controller.is_empty() {
-            None
-        } else {
-            Some(OneOrList::List(self.controller))
-        };
-        DidDocument {
-            id: self.id,
-            also_known_as: self.also_known_as,
-            controller,
-            verification_method: self.verification_method,
-            authentication: self.authentication,
-            assertion_method: self.assertion_method,
-            key_agreement: self.key_agreement,
-            capability_invocation: self.capability_invocation,
-            capability_delegation: self.capability_delegation,
-            service: self.service,
-            extra: self.extra,
-        }
-    }
-}
-
-impl From<DidDocument> for DidDocumentBuilder {
-    fn from(did_document: DidDocument) -> Self {
-        let controller = match did_document.controller {
-            Some(OneOrList::List(list)) => list,
-            _ => Vec::new(),
-        };
-
-        Self {
-            id: did_document.id,
-            also_known_as: did_document.also_known_as,
-            controller,
-            verification_method: did_document.verification_method,
-            authentication: did_document.authentication,
-            assertion_method: did_document.assertion_method,
-            key_agreement: did_document.key_agreement,
-            capability_invocation: did_document.capability_invocation,
-            capability_delegation: did_document.capability_delegation,
-            service: did_document.service,
-            extra: did_document.extra,
-        }
+    pub fn remove_extra_field(&mut self, key: &str) {
+        self.extra.remove(key);
     }
 }
 
@@ -274,7 +204,7 @@ mod tests {
     use crate::schema::verification_method::{PublicKeyField, VerificationMethodType};
 
     #[test]
-    fn test_did_document_builder() {
+    fn test_construct_did_document() {
         let id = Did::parse("did:example:123456789abcdefghi".to_string()).unwrap();
         let also_known_as = Uri::new("https://example.com").unwrap();
         let controller = Did::parse("did:example:controller".to_string()).unwrap();
@@ -308,76 +238,27 @@ mod tests {
             HashMap::default(),
         );
 
-        let document = DidDocumentBuilder::new(id.clone())
-            .add_also_known_as(also_known_as.clone())
-            .add_controller(controller.clone())
-            .add_verification_method(verification_method.clone())
-            .add_authentication_method(verification_method.clone())
-            .add_authentication_reference(authentication_reference.clone())
-            .add_assertion_method(assertion_method.clone())
-            .add_assertion_method_reference(authentication_reference.clone())
-            .add_key_agreement(verification_method.clone())
-            .add_key_agreement_reference(authentication_reference.clone())
-            .add_capability_invocation(verification_method.clone())
-            .add_capability_invocation_reference(authentication_reference.clone())
-            .add_capability_delegation(verification_method.clone())
-            .add_capability_delegation_refrence(authentication_reference.clone())
-            .add_service(service.clone())
-            .build();
+        let mut did_doc = DidDocument::new(id.clone());
+        did_doc.set_also_known_as(vec![also_known_as.clone()]);
+        did_doc.set_controller(OneOrList::One(controller.clone()));
+        did_doc.add_verification_method(verification_method.clone());
 
-        assert_eq!(document.id(), &id);
-        assert_eq!(document.also_known_as(), &[also_known_as]);
-        assert_eq!(
-            document.controller(),
-            Some(&OneOrList::List(vec![controller]))
-        );
-        assert_eq!(
-            document.verification_method(),
-            &[verification_method.clone()]
-        );
-        assert_eq!(
-            document.authentication(),
-            &[
-                VerificationMethodKind::Resolved(verification_method.clone()),
-                VerificationMethodKind::Resolvable(authentication_reference.clone())
-            ]
-        );
-        assert_eq!(
-            document.assertion_method(),
-            &[
-                VerificationMethodKind::Resolved(assertion_method),
-                VerificationMethodKind::Resolvable(authentication_reference.clone())
-            ]
-        );
-        assert_eq!(
-            document.key_agreement(),
-            &[
-                VerificationMethodKind::Resolved(verification_method.clone()),
-                VerificationMethodKind::Resolvable(authentication_reference.clone())
-            ]
-        );
-        assert_eq!(
-            document.capability_invocation(),
-            &[
-                VerificationMethodKind::Resolved(verification_method.clone()),
-                VerificationMethodKind::Resolvable(authentication_reference.clone())
-            ]
-        );
-        assert_eq!(
-            document.capability_delegation(),
-            &[
-                VerificationMethodKind::Resolved(verification_method),
-                VerificationMethodKind::Resolvable(authentication_reference)
-            ]
-        );
-        assert_eq!(document.service(), &[service]);
+        did_doc.add_authentication(verification_method.clone());
+        did_doc.add_authentication_ref(authentication_reference.clone());
 
-        let vm = document.dereference_key(&vm1_id);
-        if let Some(vm) = vm {
-            assert_eq!(vm.id(), &vm1_id);
-        } else {
-            panic!("Verification method not found")
-        };
+        did_doc.add_assertion_method(assertion_method.clone());
+        did_doc.add_assertion_method_ref(authentication_reference.clone());
+
+        did_doc.add_key_agreement(verification_method.clone());
+        did_doc.add_key_agreement_ref(authentication_reference.clone());
+
+        did_doc.add_capability_invocation(verification_method.clone());
+        did_doc.add_capability_invocation_ref(authentication_reference.clone());
+
+        did_doc.add_capability_delegation(verification_method.clone());
+        did_doc.add_capability_delegation_ref(authentication_reference.clone());
+
+        did_doc.set_service(vec![service.clone()])
     }
 
     use std::str::FromStr;

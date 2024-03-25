@@ -1,11 +1,11 @@
-use did_doc::schema::did_doc::{DidDocument, DidDocumentBuilder};
+use did_doc::schema::did_doc::DidDocument;
 use encoding::{append_encoded_key_segments, append_encoded_service_segment};
 use sha256::digest;
 
 use crate::{
     error::DidPeerError,
     peer_did::{
-        numalgos::{numalgo2::helpers::didpeer_elements_to_diddoc, numalgo3::Numalgo3, Numalgo},
+        numalgos::{numalgo2::helpers::diddoc_from_peerdid2_elements, numalgo3::Numalgo3, Numalgo},
         FromDidDoc, PeerDid,
     },
     resolver::options::PublicKeyEncoding,
@@ -36,10 +36,10 @@ impl PeerDid<Numalgo2> {
     pub(crate) fn to_did_doc_builder(
         &self,
         public_key_encoding: PublicKeyEncoding,
-    ) -> Result<DidDocumentBuilder, DidPeerError> {
-        let mut did_doc_builder: DidDocumentBuilder = DidDocument::builder(self.did().clone());
+    ) -> Result<DidDocument, DidPeerError> {
+        let mut did_doc_builder: DidDocument = DidDocument::new(self.did().clone());
         did_doc_builder =
-            didpeer_elements_to_diddoc(did_doc_builder, self.did(), public_key_encoding)?;
+            diddoc_from_peerdid2_elements(did_doc_builder, self.did(), public_key_encoding)?;
         Ok(did_doc_builder)
     }
 }
@@ -103,8 +103,7 @@ mod test {
 
         let ddo_decoded: DidDocument = did_peer
             .to_did_doc_builder(PublicKeyEncoding::Base58)
-            .unwrap()
-            .build();
+            .unwrap();
         assert_eq!(ddo_original, ddo_decoded);
     }
 }

@@ -4,12 +4,12 @@ use did_parser_nom::Did;
 use crate::{
     error::DidPeerError,
     peer_did::{
-        numalgos::{numalgo4::encoded_document::DidPeer4EncodedDocument, Numalgo},
+        numalgos::{numalgo4::construction_did_doc::DidPeer4ConstructionDidDocument, Numalgo},
         PeerDid,
     },
 };
 
-pub mod encoded_document;
+pub mod construction_did_doc;
 
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct Numalgo4;
@@ -19,7 +19,7 @@ impl Numalgo for Numalgo4 {
 }
 
 impl PeerDid<Numalgo4> {
-    pub fn new(encoded_document: DidPeer4EncodedDocument) -> Result<Self, DidPeerError> {
+    pub fn new(encoded_document: DidPeer4ConstructionDidDocument) -> Result<Self, DidPeerError> {
         let serialized = serde_json::to_string(&encoded_document)?;
         let mut prefixed_bytes = Vec::new();
         prefixed_bytes.push(0x02u8); // multi-codec prefix for json is 0x0200, see https://github.com/multiformats/multicodec/blob/master/table.csv
@@ -77,7 +77,9 @@ impl PeerDid<Numalgo4> {
         did.id().split(':').collect::<Vec<_>>().get(1).copied()
     }
 
-    fn to_did_peer_4_encoded_diddoc(&self) -> Result<DidPeer4EncodedDocument, DidPeerError> {
+    fn to_did_peer_4_encoded_diddoc(
+        &self,
+    ) -> Result<DidPeer4ConstructionDidDocument, DidPeerError> {
         let encoded_did_doc =
             self.encoded_did_peer_4_document()
                 .ok_or(DidPeerError::GeneralError(format!(
@@ -93,7 +95,7 @@ impl PeerDid<Numalgo4> {
             })?;
         // without first 2 bytes
         let peer4_did_doc: &[u8] = &diddoc_with_multibase_prefix[2..];
-        let encoded_document: DidPeer4EncodedDocument =
+        let encoded_document: DidPeer4ConstructionDidDocument =
             serde_json::from_slice(peer4_did_doc).unwrap();
         Ok(encoded_document)
     }
@@ -118,7 +120,7 @@ mod tests {
 
     use crate::peer_did::{
         numalgos::numalgo4::{
-            encoded_document::{DidPeer4EncodedDocumentBuilder, DidPeer4VerificationMethod},
+            construction_did_doc::{DidPeer4ConstructionDidDocument, DidPeer4VerificationMethod},
             Numalgo4,
         },
         PeerDid,
@@ -140,16 +142,14 @@ mod tests {
             })
             .build();
 
-        let encoded_document = DidPeer4EncodedDocumentBuilder::default()
-            .service(vec![service])
-            .verification_method(vec![vm])
-            .build()
-            .unwrap();
+        let mut construction_did_doc = DidPeer4ConstructionDidDocument::new();
+        construction_did_doc.add_service(service);
+        construction_did_doc.add_verification_method(vm);
         log::info!(
             "original didpeer4 document: {}",
-            serde_json::to_string_pretty(&encoded_document).unwrap()
+            serde_json::to_string_pretty(&construction_did_doc).unwrap()
         );
-        let did = PeerDid::<Numalgo4>::new(encoded_document).unwrap();
+        let did = PeerDid::<Numalgo4>::new(construction_did_doc).unwrap();
         assert_eq!(did.to_string(), "did:peer:4z84Vmeih9kTUrnxVanw9DhiVX9JNuW5cEz1RJx9dwrKcqh4bq96Z6zuc9m6oPV4gc6tafguyzd8dYih4N153Gh3XmWK:z2FrKwFgfDgrV5fdpSvPvBThURtNvDa3RWfoueUsEVQQmzJpMxXhAiutkPRRbuvVVeJDMZd2wdjeeNsRPx1csnDyQsoyhQWviaBd2LRen8fp9vZSkzmFmP1sgoKDXztkREhiUnKbXCiArA6t2nKed2NoGALYXFw1D72NbSgEhcMVzLL2wwgovV4D1HhEcvzXJQDKXwqUDaW1B3YgCMBKeEvy4vsaYhxf7JFcZzS5Ga8mSSUk3nAC9nXMWG3GT8XxzviQWxdfB2fwyKoy3bC3ihxwwjkpxVNuB72mJ");
 
         let resolved_did_doc = did.resolve_did_doc().unwrap();
