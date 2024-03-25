@@ -5,7 +5,6 @@ edition = "2021"
 
 [features]
 ########################## DEP FLAGS ################################
-# default = ["vdrtools_wallet"]
 vdrtools_wallet = ["aries_vcx_wallet/vdrtools_wallet"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 credx = ["dep:indy-credx"]

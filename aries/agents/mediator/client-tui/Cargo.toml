@@ -5,7 +5,6 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-# default = ["vdrtools_wallet"]
 vdrtools_wallet = ["aries_vcx_core/vdrtools_wallet", "aries_vcx_wallet/vdrtools_wallet"]
 askar_wallet = ["aries_vcx_core/askar_wallet", "aries_vcx_wallet/askar_wallet"]
 

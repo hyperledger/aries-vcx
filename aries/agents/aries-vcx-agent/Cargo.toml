@@ -6,7 +6,6 @@ license.workspace = true
 edition.workspace = true
 
 [features]
-# default = ["vdrtools_wallet"]
 vdrtools_wallet = ["aries_vcx_core/vdrtools_wallet", "aries_vcx_wallet/vdrtools_wallet"]
 askar_wallet = ["aries_vcx_core/askar_wallet", "aries_vcx_wallet/askar_wallet"]
 

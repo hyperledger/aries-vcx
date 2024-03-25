@@ -4,8 +4,6 @@ use aries_vcx_agent::{build_wallet, Agent as AriesAgent, WalletInitConfig};
 use rand::{thread_rng, Rng};
 use reqwest::Url;
 
-// use aries_vcx_wallet::wallet::indy::IndySdkWallet;
-
 #[derive(Debug, Deserialize)]
 struct SeedResponse {
     seed: String,

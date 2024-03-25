@@ -41,27 +41,6 @@ pub struct WalletInitConfig {
     pub wallet_kdf: String,
 }
 
-// pub async fn build_wallet(
-//     wallet_config: WalletInitConfig,
-//     isser_seed: String,
-// ) -> (impl BaseWallet, IssuerConfig) {
-//     #[cfg(feature = "vdrtools_wallet")]
-//     let wallet = build_indy_wallet(wallet_config, isser_seed).await;
-
-//     #[cfg(feature = "askar_wallet")]
-//     let wallet = build_askar_wallet(wallet_config, &isser_seed).await;
-
-//     let config_issuer = wallet.configure_issuer(&isser_seed).await.unwrap();
-
-//     let anoncreds = IndyCredxAnonCreds;
-//     anoncreds
-//         .prover_create_link_secret(&wallet, &DEFAULT_LINK_SECRET_ALIAS.to_string())
-//         .await
-//         .unwrap();
-
-//     (wallet, config_issuer)
-// }
-
 #[cfg(feature = "vdrtools_wallet")]
 use aries_vcx_wallet::wallet::indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet};
 
