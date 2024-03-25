@@ -75,6 +75,21 @@ impl DidPeer4ConstructionDidDocument {
         for vm in &self.verification_method {
             did_doc.add_verification_method(vm.contextualize(did_peer_4));
         }
+        for vm in &self.key_agreement {
+            did_doc.add_key_agreement(vm.contextualize(did_peer_4))
+        }
+        for vm in &self.authentication {
+            did_doc.add_authentication(vm.contextualize(did_peer_4))
+        }
+        for vm in &self.assertion_method {
+            did_doc.add_assertion_method(vm.contextualize(did_peer_4))
+        }
+        for vm in &self.capability_delegation {
+            did_doc.add_capability_delegation(vm.contextualize(did_peer_4))
+        }
+        for vm in &self.capability_invocation {
+            did_doc.add_capability_invocation(vm.contextualize(did_peer_4))
+        }
         did_doc
     }
 

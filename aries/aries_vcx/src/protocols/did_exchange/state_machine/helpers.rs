@@ -88,9 +88,9 @@ pub async fn create_peer_did_4(
     )
     .try_into()?;
 
-    info!("Prepared service for peer:did:2 generation: {} ", service);
+    info!("Prepared service for peer:did:4 generation: {} ", service);
     let vm_ka = DidPeer4VerificationMethod::builder()
-        .id(DidUrl::from_fragment("#key1".to_string())?)
+        .id(DidUrl::from_fragment("key1".to_string())?)
         .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
         .public_key(PublicKeyField::Base58 {
             public_key_base58: key_enc.base58(),
