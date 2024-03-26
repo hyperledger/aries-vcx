@@ -1,6 +1,7 @@
 mod common;
 
 use anyhow::Result;
+use mediator_client::mediator_client::MediatorClient;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use reqwest::header::{ACCEPT, CONTENT_TYPE};
 use url::Url;
@@ -11,21 +12,11 @@ static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
 
 const ENDPOINT_ROOT: &str = "http://localhost:8005";
 
-#[test]
-fn endpoint_register_json_returns_oob() -> Result<()> {
-    LOGGING_INIT.call_once(setup_env_logging);
+#[tokio::test]
+async fn endpoint_register_json_returns_oob() -> Result<()> {
+    let client = MediatorClient::new(ENDPOINT_ROOT).unwrap();
 
-    let client = reqwest::blocking::Client::new();
-    let base: Url = ENDPOINT_ROOT.parse().unwrap();
-    let endpoint_register_json = base.join("/register.json").unwrap();
-
-    let res = client
-        .get(endpoint_register_json)
-        .send()?
-        .error_for_status()?;
-    info!("{:?}", res);
-
-    let _oob: OOBInvitation = res.json()?;
+    client.register().await.unwrap();
 
     Ok(())
 }

@@ -9,6 +9,7 @@ members = [
     "aries/misc/shared",
     "aries/misc/legacy/diddoc_legacy",
     "aries/agents/mediator",
+    "aries/agents/mediator-client",
     "aries/agents/mediator/client-tui",
     "aries/agents/aries-vcx-agent",
     "aries/agents/aath-backchannel",
