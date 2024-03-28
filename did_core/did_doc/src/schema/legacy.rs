@@ -10,6 +10,8 @@ use crate::schema::{
     verification_method::{VerificationMethod, VerificationMethodType},
 };
 
+use super::verification_method::PublicKeyFormat;
+
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, display_as_json::Display)]
 #[serde(deny_unknown_fields)]
 pub struct LegacyDidDoc {
@@ -162,8 +164,9 @@ fn construct_new_did_document(
                 id,
                 did.clone(),
                 VerificationMethodType::Ed25519VerificationKey2018,
+                PublicKeyFormat::Multibase(multibase::Base::Base58Btc),
             )
-            .add_public_key_multibase(fingerprint.clone())
+            .add_public_key(fingerprint.clone().as_bytes().to_vec())
             .build(),
         );
     }

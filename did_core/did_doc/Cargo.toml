@@ -10,7 +10,7 @@ did_parser_nom = { path = "../did_parser_nom" }
 public_key = { path = "../public_key" }
 hex = "0.4.3"
 multibase = "0.9.1"
-pem = "2.0.1"
+pem = { version = "2.0.1", features = ["serde"] }
 serde = { version = "1.0.159", default-features = false, features = ["derive"] }
 serde_json = "1.0.95"
 uniresid = { version = "0.1.4", default-features = false, features = ["serde"] }
