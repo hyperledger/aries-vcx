@@ -1,3 +1,4 @@
+use did_parser_nom::Did;
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
@@ -7,7 +8,7 @@ use super::InvitationContent;
 #[builder(build_method(into = InvitationContent))]
 pub struct PublicInvitationContent {
     pub label: String,
-    pub did: String,
+    pub did: Did,
 }
 
 #[cfg(test)]
