@@ -75,6 +75,33 @@ impl DidPeer4ConstructionDidDocument {
         for vm in &self.verification_method {
             did_doc.add_verification_method(vm.contextualize(did_peer_4));
         }
+        for vm in &self.key_agreement {
+            did_doc.add_key_agreement(vm.contextualize(did_peer_4))
+        }
+        for vm in &self.authentication {
+            did_doc.add_authentication(vm.contextualize(did_peer_4))
+        }
+        for vm in &self.assertion_method {
+            did_doc.add_assertion_method(vm.contextualize(did_peer_4))
+        }
+        for vm in &self.capability_delegation {
+            did_doc.add_capability_delegation(vm.contextualize(did_peer_4))
+        }
+        for vm in &self.capability_invocation {
+            did_doc.add_capability_invocation(vm.contextualize(did_peer_4))
+        }
+        // ** safety note (panic) **
+        // Formally every DID is URI. Assuming the parsers for both DID and URI correctly
+        // implement   respective specs, this will never panic.
+        let did_short_form = did_peer_4.short_form().to_string();
+        let did_as_uri = Uri::new(&did_short_form).unwrap_or_else(|_| {
+            panic!(
+                "DID or URI implementation is buggy, because DID {} failed to be parsed as URI. \
+                 This counters W3C DID-CORE spec which states that \"DIDs are URIs\" [RFC3986].",
+                did_short_form
+            )
+        });
+        did_doc.add_also_known_as(did_as_uri);
         did_doc
     }
 
@@ -211,7 +238,7 @@ impl DidPeer4VerificationMethod {
     pub(crate) fn contextualize(&self, did_peer_4: &PeerDid<Numalgo4>) -> VerificationMethod {
         VerificationMethod::builder()
             .id(self.id.clone())
-            .controller(did_peer_4.did().clone())
+            .controller(did_peer_4.short_form().clone())
             .verification_method_type(self.verification_method_type)
             .public_key(self.public_key.clone())
             .build()

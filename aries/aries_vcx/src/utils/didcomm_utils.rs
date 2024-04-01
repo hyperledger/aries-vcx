@@ -2,32 +2,9 @@ use did_doc::schema::{
     did_doc::DidDocument, service::service_key_kind::ServiceKeyKind, types::uri::Uri,
     verification_method::VerificationMethodType,
 };
-use did_peer::{
-    peer_did::{numalgos::numalgo2::Numalgo2, PeerDid},
-    resolver::{options::PublicKeyEncoding, PeerDidResolutionOptions, PeerDidResolver},
-};
-use did_resolver::{
-    error::GenericError,
-    traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
-};
 use public_key::Key;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-
-pub(crate) async fn resolve_didpeer2(
-    did_peer: &PeerDid<Numalgo2>,
-    encoding: PublicKeyEncoding,
-) -> Result<DidDocument, GenericError> {
-    let DidResolutionOutput { did_document, .. } = PeerDidResolver::new()
-        .resolve(
-            did_peer.did(),
-            &PeerDidResolutionOptions {
-                encoding: Some(encoding),
-            },
-        )
-        .await?;
-    Ok(did_document)
-}
 
 fn resolve_service_key_to_typed_key(
     key: &ServiceKeyKind,
