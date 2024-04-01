@@ -19,6 +19,8 @@ impl Numalgo for Numalgo4 {
 }
 
 impl PeerDid<Numalgo4> {
+    /// Implementation of did:peer:4 creation spec:
+    /// https://identity.foundation/peer-did-method-spec/#creating-a-did
     pub fn new(encoded_document: DidPeer4ConstructionDidDocument) -> Result<Self, DidPeerError> {
         let serialized = serde_json::to_string(&encoded_document)?;
         let mut prefixed_bytes = Vec::new();
@@ -26,11 +28,6 @@ impl PeerDid<Numalgo4> {
         prefixed_bytes.push(0x00u8);
         prefixed_bytes.extend_from_slice(serialized.as_bytes());
         let encoded_document = multibase::encode(multibase::Base::Base58Btc, prefixed_bytes);
-        // Take SHA2-256 digest of the encoded document (encode the bytes as utf-8)
-        // Prefix these bytes with the multihash prefix for SHA2-256 and the hash length (varint
-        // 0x12 for prefix, varint 0x20 for 32 bytes in length) Multibase encode the bytes
-        // as base58btc (base58 encode the value and prefix with a z) Consider this value
-        // the hash
         let hash_raw = sha256::digest(&encoded_document);
         let prefix = vec![0x12u8, 0x20u8];
         let hash = multibase::encode(
@@ -54,14 +51,24 @@ impl PeerDid<Numalgo4> {
     }
 
     pub fn short_form(&self) -> Did {
-        let short_id = self.did().id().split(':').collect::<Vec<&str>>()[0].to_string();
-        let parse_result = Did::parse(format!("did:peer:{}", short_id)).map_err(|e| {
+        let parts = self.did().id().split(':').collect::<Vec<&str>>();
+        let short_form_id = match parts.first() {
+            None => {
+                return self.did().clone(); // the DID was short form already
+            }
+            Some(hash_part) => hash_part,
+        };
+        let short_form_did = format!("did:peer:{}", short_form_id);
+        let parse_result = Did::parse(short_form_did).map_err(|e| {
             DidPeerError::GeneralError(format!("Failed to parse short form of PeerDid: {}", e))
         });
-        // Safety note:
-        // - This should never throw, because we are working with <self> DID which has already be
-        //   parsed and its ID portion is ought to be valid DID ID. If we then append this valid ID
-        //   to the "did:peer:" prefix, the resulting DID should be valid as well.
+        // ** safety note (panic) **
+        // This should only panic if the parser is inherently buggy. We rely on following
+        // assumptions:
+        //   - `did:peer:` is a valid DID prefix
+        //   - `short_form_did` is substring/prefix of `self.id()`, without colons, and therefore
+        //     valid DID ID
+        //   - every peer-did includes hash component followed prefix "did:peer:"
         parse_result.expect("Failed to parse short form of PeerDid")
     }
 
