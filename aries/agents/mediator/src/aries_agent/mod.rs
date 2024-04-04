@@ -5,13 +5,11 @@ use aries_vcx::{
     messages::msg_fields::protocols::out_of_band::invitation::OobService,
     utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx_core::{
-    errors::error::AriesVcxCoreError,
-    wallet::{
-        base_wallet::{BaseWallet, ManageWallet},
-        indy::indy_wallet_config::IndyWalletConfig,
-        structs_io::UnpackMessageOutput,
-    },
+use aries_vcx_core::errors::error::AriesVcxCoreError;
+use aries_vcx_wallet::wallet::{
+    base_wallet::{BaseWallet, ManageWallet},
+    indy::indy_wallet_config::IndyWalletConfig,
+    structs_io::UnpackMessageOutput,
 };
 use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
 use messages::{
@@ -239,7 +237,7 @@ mod test {
         protocols::oob::oob_invitation_to_legacy_did_doc,
         utils::encryption_envelope::EncryptionEnvelope,
     };
-    use aries_vcx_core::wallet::indy::IndySdkWallet;
+    use aries_vcx_wallet::wallet::indy::IndySdkWallet;
     use log::info;
     use serde_json::Value;
     use test_utils::mockdata::mock_ledger::MockLedger;

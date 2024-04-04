@@ -14,7 +14,7 @@ use aries_vcx::{
     },
     protocols::did_exchange::state_machine::helpers::create_peer_did_4,
 };
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use url::Url;
 
 use crate::{

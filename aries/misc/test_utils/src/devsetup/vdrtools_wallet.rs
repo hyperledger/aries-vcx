@@ -1,9 +1,7 @@
-use aries_vcx_core::{
-    global::settings::{DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
-    wallet::{
-        base_wallet::{did_wallet::DidWallet, ManageWallet},
-        indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
-    },
+use aries_vcx_core::global::settings::{DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
+use aries_vcx_wallet::wallet::{
+    base_wallet::{did_wallet::DidWallet, ManageWallet},
+    indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
 };
 use log::info;
 

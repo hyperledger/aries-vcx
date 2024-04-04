@@ -22,7 +22,7 @@ use std::{
 
 use actix_web::{middleware, web, App, HttpServer};
 use aries_vcx_agent::{
-    aries_vcx::{aries_vcx_core::wallet::indy::IndySdkWallet, messages::AriesMessage},
+    aries_vcx::{aries_vcx_wallet::wallet::indy::IndySdkWallet, messages::AriesMessage},
     Agent as AriesAgent,
 };
 use clap::Parser;

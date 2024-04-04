@@ -22,8 +22,8 @@ use aries_vcx::{
 use aries_vcx_core::{
     anoncreds::base_anoncreds::{BaseAnonCreds, CredentialDefinitionsMap, SchemasMap},
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
-    wallet::base_wallet::BaseWallet,
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_parser_nom::Did;
 use serde_json::json;
 use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};

@@ -35,8 +35,8 @@ use aries_vcx_core::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
         indy::pool::test_utils::get_temp_dir_path,
     },
-    wallet::base_wallet::BaseWallet,
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use log::info;
 use messages::{
     msg_fields::protocols::{

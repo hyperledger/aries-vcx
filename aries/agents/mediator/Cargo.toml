@@ -12,6 +12,9 @@ client = []
 [dependencies]
 anyhow = "1.0.75"
 aries_vcx = { path = "../../aries_vcx" }
+aries_vcx_wallet = { path = "../../aries_vcx_wallet", features = [
+    "vdrtools_wallet",
+] }
 aries_vcx_core = { path = "../../aries_vcx_core", features = [
     "vdrtools_wallet",
 ] }

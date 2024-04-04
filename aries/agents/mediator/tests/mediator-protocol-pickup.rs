@@ -1,7 +1,7 @@
 mod common;
 
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
-use aries_vcx_core::wallet::indy::IndySdkWallet;
+use aries_vcx_wallet::wallet::indy::IndySdkWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediator::aries_agent::client::transports::AriesTransport;
 use messages::{

@@ -9,6 +9,9 @@ edition = "2021"
 aries_vcx_core = { path = "../../../aries_vcx_core", features = [
     "vdrtools_wallet",
 ] }
+aries_vcx_wallet = { path = "../../../aries_vcx_wallet", features = [
+    "vdrtools_wallet",
+] }
 axum = "0.6.20"
 cursive = { version = "0.20.0", features = ["crossterm-backend"] }
 futures = "0.3.28"

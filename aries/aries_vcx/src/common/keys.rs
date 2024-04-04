@@ -1,7 +1,5 @@
-use aries_vcx_core::{
-    ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite},
-    wallet::base_wallet::BaseWallet,
-};
+use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_parser_nom::Did;
 use public_key::{Key, KeyType};
 use serde_json::Value;

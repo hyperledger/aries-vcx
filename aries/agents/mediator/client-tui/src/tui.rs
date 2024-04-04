@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use client_tui::handle_register;
 use cursive::{
     direction::Orientation,

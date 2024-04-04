@@ -122,7 +122,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        backend: ["credx,vdrtools_wallet", "vdr_proxy_ledger"]
+        backend: ["credx,vdrtools_wallet", "vdr_proxy_ledger,vdrtools_wallet"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
