@@ -15,7 +15,6 @@ impl From<VcxLedgerError> for AriesVcxError {
                 Self::from_msg(AriesVcxErrorKind::DuplicationSchema, value)
             }
             VcxLedgerError::InvalidJson(_) => Self::from_msg(AriesVcxErrorKind::InvalidJson, value),
-            VcxLedgerError::VdrError(inner) => inner.into(),
             VcxLedgerError::WalletError(_) => Self::from_msg(AriesVcxErrorKind::WalletError, value),
             VcxLedgerError::InvalidState(_) => {
                 Self::from_msg(AriesVcxErrorKind::InvalidState, value)
@@ -23,10 +22,22 @@ impl From<VcxLedgerError> for AriesVcxError {
             VcxLedgerError::InvalidOption(_) => {
                 Self::from_msg(AriesVcxErrorKind::InvalidOption, value)
             }
-            VcxLedgerError::IndyVdrValidation(inner) => inner.into(),
             VcxLedgerError::ParseError(_) => Self::from_msg(AriesVcxErrorKind::ParsingError, value),
             VcxLedgerError::UnimplementedFeature(_) => {
                 Self::from_msg(AriesVcxErrorKind::UnimplementedFeature, value)
+            }
+            VcxLedgerError::InvalidConfiguration(_) => {
+                Self::from_msg(AriesVcxErrorKind::InvalidConfiguration, value)
+            }
+            VcxLedgerError::PoolLedgerConnect(_) => {
+                Self::from_msg(AriesVcxErrorKind::PoolLedgerConnect, value)
+            }
+            VcxLedgerError::IOError(_) => Self::from_msg(AriesVcxErrorKind::IOError, value),
+            VcxLedgerError::InvalidInput(_) | VcxLedgerError::IndyVdrValidation(_) => {
+                Self::from_msg(AriesVcxErrorKind::InvalidInput, value)
+            }
+            VcxLedgerError::UnknownError(_) => {
+                Self::from_msg(AriesVcxErrorKind::UnknownError, value)
             }
         }
     }

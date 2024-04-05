@@ -3,7 +3,6 @@ use async_trait::async_trait;
 use super::{
     record::{AllRecords, Record},
     record_category::RecordCategory,
-    // search_filter::SearchFilter,
 };
 use crate::{errors::error::VcxWalletResult, wallet::record_tags::RecordTags};
 

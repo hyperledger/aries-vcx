@@ -7,6 +7,12 @@ pub type VcxLedgerResult<T> = Result<T, VcxLedgerError>;
 
 #[derive(Debug, ThisError)]
 pub enum VcxLedgerError {
+    #[error("Invalid configuration: {0}")]
+    InvalidConfiguration(#[source] VdrError),
+    #[error("Pool ledger connect: {0}")]
+    PoolLedgerConnect(#[source] VdrError),
+    #[error("IO error: {0}")]
+    IOError(#[source] VdrError),
     #[error("Ledger item not found")]
     LedgerItemNotFound,
     #[error("Invalid ledger response")]
@@ -15,16 +21,18 @@ pub enum VcxLedgerError {
     DuplicationSchema,
     #[error("Invalid JSON: {0}")]
     InvalidJson(#[from] serde_json::Error),
-    #[error("Vdr error: {0}")]
-    VdrError(#[from] VdrError),
     #[error("Wallet error: {0}")]
     WalletError(#[from] VcxWalletError),
     #[error("Invalid state: {0}")]
     InvalidState(String),
     #[error("Invalid option: {0}")]
     InvalidOption(String),
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+    #[error("Unknown error: {0}")]
+    UnknownError(String),
     #[error("Indy Vdr Validation error: {0}")]
-    IndyVdrValidation(#[from] indy_vdr::utils::ValidationError),
+    IndyVdrValidation(#[source] indy_vdr::utils::ValidationError),
     #[error("Parse error: {0}")]
     ParseError(#[from] ParseError),
     #[error("Unimplemented feature: {0}")]

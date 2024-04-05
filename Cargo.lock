@@ -504,7 +504,6 @@ dependencies = [
  "diddoc_legacy",
  "env_logger 0.10.0",
  "futures",
- "indy-vdr",
  "lazy_static",
  "log",
  "messages",
