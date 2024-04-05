@@ -15,9 +15,6 @@ impl From<VcxWalletError> for AriesVcxError {
             VcxWalletError::UnknownRecordCategory(_) => {
                 Self::from_msg(AriesVcxErrorKind::InvalidInput, value.to_string())
             }
-            VcxWalletError::FilterTypeNotsupported(_) => {
-                Self::from_msg(AriesVcxErrorKind::InvalidInput, value.to_string())
-            }
             VcxWalletError::IndyApiError(_) => {
                 Self::from_msg(AriesVcxErrorKind::InvalidLedgerResponse, value.to_string())
             }

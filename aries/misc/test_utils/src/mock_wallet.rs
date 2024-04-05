@@ -9,7 +9,6 @@ use aries_vcx_wallet::{
             record::{AllRecords, PartialRecord, Record},
             record_category::RecordCategory,
             record_wallet::RecordWallet,
-            search_filter::SearchFilter,
             BaseWallet,
         },
         record_tags::RecordTags,
@@ -107,7 +106,7 @@ impl RecordWallet for MockWallet {
     async fn search_record(
         &self,
         category: RecordCategory,
-        search_filter: Option<SearchFilter>,
+        search_filter: Option<String>,
     ) -> VcxWalletResult<Vec<Record>> {
         Err(VcxWalletError::Unimplemented(
             "search_record is not implemented for MockWallet".into(),

@@ -1,4 +1,4 @@
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
 use messages::msg_fields::protocols::cred_issuance::v1::propose_credential::ProposeCredentialV1;
 
 use crate::{errors::error::prelude::*, protocols::issuance::is_cred_def_revokable};

@@ -3,7 +3,7 @@ use std::error::Error;
 use aries_vcx::common::primitives::{
     credential_definition::generate_cred_def, revocation_registry::generate_rev_reg,
 };
-use aries_vcx_core::ledger::{
+use aries_vcx_ledger::ledger::{
     base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     indy::pool::test_utils::get_temp_dir_path,
 };

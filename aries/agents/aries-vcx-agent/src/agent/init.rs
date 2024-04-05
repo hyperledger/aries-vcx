@@ -12,7 +12,9 @@ use aries_vcx::{
 use aries_vcx_core::{
     self,
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
-    ledger::indy_vdr_ledger::{build_ledger_components, DefaultIndyLedgerRead, VcxPoolConfig},
+};
+use aries_vcx_ledger::ledger::indy_vdr_ledger::{
+    build_ledger_components, DefaultIndyLedgerRead, VcxPoolConfig,
 };
 use aries_vcx_wallet::wallet::{
     base_wallet::{issuer_config::IssuerConfig, BaseWallet, ManageWallet},

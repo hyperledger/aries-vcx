@@ -18,7 +18,6 @@ pub mod migrate;
 pub mod record;
 pub mod record_category;
 pub mod record_wallet;
-pub mod search_filter;
 
 #[async_trait]
 pub trait ImportWallet {

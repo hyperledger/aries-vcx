@@ -440,6 +440,7 @@ dependencies = [
  "anoncreds_types",
  "aries_vcx",
  "aries_vcx_core",
+ "aries_vcx_ledger",
  "aries_vcx_wallet",
  "async-trait",
  "derive_builder",
@@ -484,6 +485,7 @@ version = "0.63.0"
 dependencies = [
  "anoncreds_types",
  "aries_vcx_core",
+ "aries_vcx_ledger",
  "aries_vcx_wallet",
  "async-channel",
  "async-trait",
@@ -555,6 +557,27 @@ dependencies = [
  "tokio",
  "typed-builder 0.18.1",
  "uuid 1.5.0",
+]
+
+[[package]]
+name = "aries_vcx_ledger"
+version = "0.63.0"
+dependencies = [
+ "anoncreds_types",
+ "aries_vcx_wallet",
+ "async-trait",
+ "did_parser_nom",
+ "indy-ledger-response-parser",
+ "indy-vdr",
+ "indy-vdr-proxy-client",
+ "log",
+ "lru",
+ "public_key",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "time 0.3.20",
+ "tokio",
 ]
 
 [[package]]
@@ -1910,7 +1933,7 @@ name = "did_resolver_sov"
 version = "0.1.0"
 dependencies = [
  "aries_vcx",
- "aries_vcx_core",
+ "aries_vcx_ledger",
  "aries_vcx_wallet",
  "async-trait",
  "chrono",
@@ -5277,6 +5300,7 @@ version = "0.63.0"
 dependencies = [
  "anoncreds_types",
  "aries_vcx_core",
+ "aries_vcx_ledger",
  "aries_vcx_wallet",
  "async-trait",
  "chrono",
@@ -5683,6 +5707,7 @@ version = "0.63.0"
 dependencies = [
  "android_logger",
  "aries_vcx",
+ "aries_vcx_ledger",
  "async-trait",
  "did_parser_nom",
  "diddoc_legacy",

@@ -15,6 +15,7 @@ aries_vcx_core = { path = "../../aries_vcx_core", features = [
 aries_vcx_wallet = { path = "../../aries_vcx_wallet", features = [
     "vdrtools_wallet",
 ] }
+aries_vcx_ledger = { path = "../../aries_vcx_ledger"}
 anoncreds_types = { path = "../../misc/anoncreds_types" }
 shared = { path = "../../misc/shared" }
 did_resolver_registry = { path = "../../../did_core/did_resolver_registry" }

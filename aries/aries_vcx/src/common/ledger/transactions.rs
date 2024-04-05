@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use aries_vcx_core::ledger::{
+use aries_vcx_ledger::ledger::{
     base_ledger::{IndyLedgerRead, IndyLedgerWrite},
     indy_vdr_ledger::{LedgerRole, UpdateRole},
 };

@@ -61,14 +61,13 @@ use anoncreds_types::data_types::{
     },
 };
 use aries_vcx_wallet::wallet::{
-    base_wallet::{
-        record::Record, record_category::RecordCategory, search_filter::SearchFilter, BaseWallet,
-    },
+    base_wallet::{record::Record, record_category::RecordCategory, BaseWallet},
     record_tags::{RecordTag, RecordTags},
 };
 use async_trait::async_trait;
 use bitvec::bitvec;
 use did_parser_nom::Did;
+use log::warn;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};
 use time::OffsetDateTime;
@@ -207,10 +206,7 @@ impl Anoncreds {
         wql: &str,
     ) -> VcxCoreResult<Vec<(String, Credential)>> {
         let records = wallet
-            .search_record(
-                RecordCategory::Cred,
-                Some(SearchFilter::JsonFilter(wql.into())),
-            )
+            .search_record(RecordCategory::Cred, Some(wql.into()))
             .await?;
 
         let id_cred_tuple_list: VcxCoreResult<Vec<(String, Credential)>> = records

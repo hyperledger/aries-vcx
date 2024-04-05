@@ -1,7 +1,6 @@
 use anoncreds_types::data_types::messages::pres_request::PresentationRequest;
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
-};
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
 use messages::{
     msg_fields::protocols::{
         notification::Notification,

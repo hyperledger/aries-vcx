@@ -5,7 +5,7 @@ use indy_vdr::pool::PreparedRequest;
 use indy_vdr_proxy_client::VdrProxyClient;
 
 use super::RequestSubmitter;
-use crate::errors::error::VcxCoreResult;
+use crate::errors::error::VcxLedgerResult;
 
 #[derive(Clone)]
 pub struct VdrProxySubmitter {
@@ -20,7 +20,7 @@ impl VdrProxySubmitter {
 
 #[async_trait]
 impl RequestSubmitter for VdrProxySubmitter {
-    async fn submit(&self, request: PreparedRequest) -> VcxCoreResult<String> {
+    async fn submit(&self, request: PreparedRequest) -> VcxLedgerResult<String> {
         self.client.post(request).await.map_err(|e| e.into())
     }
 }

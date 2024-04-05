@@ -38,10 +38,10 @@ test-unit test_name="":
     RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --exclude mediator --exclude aries_vcx_core {{test_name}}
 
 test-integration-aries-vcx-core features:
-    cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F {{features}} --no-default-features
+    cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F credx,{{features}} --no-default-features
 
 test-compatibility-aries-vcx-core:
-    cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F vdrtools_wallet,askar_wallet wallet_compatibility_
+    cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F vdrtools_wallet,askar_wallet,credx wallet_compatibility_
 
 test-wallet-migrator:
     cargo test --manifest-path="aries/misc/wallet_migrator/Cargo.toml" -F vdrtools_wallet,askar_wallet

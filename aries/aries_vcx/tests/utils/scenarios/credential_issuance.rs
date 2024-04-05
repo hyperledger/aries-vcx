@@ -17,11 +17,9 @@ use aries_vcx::{
         mediated_connection::pairwise_info::PairwiseInfo,
     },
 };
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    ledger::base_ledger::{
-        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
-    },
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_ledger::ledger::base_ledger::{
+    AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
 };
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_parser_nom::Did;

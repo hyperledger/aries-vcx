@@ -2,7 +2,7 @@ use std::{num::NonZeroUsize, time::Duration};
 
 use serde::Deserialize;
 
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
+use crate::errors::error::VcxLedgerError;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct InMemoryResponseCacherConfig {
@@ -46,10 +46,9 @@ impl InMemoryResponseCacherConfigBuilderTtlSet {
     pub fn capacity(
         self,
         capacity: usize,
-    ) -> Result<InMemoryResponseCacherConfigBuilderReady, AriesVcxCoreError> {
-        let capacity = NonZeroUsize::new(capacity).ok_or(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidOption,
-            "Failed to parse cache capacity into NonZeroUsize",
+    ) -> Result<InMemoryResponseCacherConfigBuilderReady, VcxLedgerError> {
+        let capacity = NonZeroUsize::new(capacity).ok_or(VcxLedgerError::InvalidOption(
+            "Failed to parse cache capacity into NonZeroUsize".into(),
         ))?;
         Ok(InMemoryResponseCacherConfigBuilderReady {
             ttl: self.ttl,
