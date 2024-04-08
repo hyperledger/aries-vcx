@@ -17,7 +17,7 @@ use aries_vcx::{
         mediated_connection::pairwise_info::PairwiseInfo,
     },
 };
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_ledger::ledger::base_ledger::{
     AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
 };

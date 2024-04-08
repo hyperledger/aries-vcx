@@ -11,7 +11,7 @@ use aries_vcx::{
     },
     protocols::{proof_presentation::prover::state_machine::ProverState, SendClosure},
 };
-use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx_ledger::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use serde_json::Value;

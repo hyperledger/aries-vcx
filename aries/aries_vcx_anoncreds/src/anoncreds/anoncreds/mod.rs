@@ -79,7 +79,7 @@ use super::base_anoncreds::{
 };
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    errors::error::{VcxAnoncredsError, VcxAnoncredsResult},
 };
 
 fn from_revocation_registry_delta_to_revocation_status_list(
@@ -88,7 +88,7 @@ fn from_revocation_registry_delta_to_revocation_status_list(
     rev_reg_def_id: &RevocationRegistryDefinitionId,
     timestamp: Option<u64>,
     issuance_by_default: bool,
-) -> VcxCoreResult<RevocationStatusList> {
+) -> VcxAnoncredsResult<RevocationStatusList> {
     let default_state = if issuance_by_default { 0 } else { 1 };
     let mut revocation_list = bitvec![default_state; rev_reg_def.value.max_cred_num as usize];
 
@@ -115,7 +115,7 @@ fn from_revocation_registry_delta_to_revocation_status_list(
 fn from_revocation_status_list_to_revocation_registry_delta(
     rev_status_list: &RevocationStatusList,
     prev_accum: Option<Accumulator>,
-) -> VcxCoreResult<RevocationRegistryDelta> {
+) -> VcxAnoncredsResult<RevocationRegistryDelta> {
     let _issued = rev_status_list
         .state()
         .iter()
@@ -147,10 +147,10 @@ fn from_revocation_status_list_to_revocation_registry_delta(
 
     let registry = CryptoRevocationRegistry {
         accum: rev_status_list.accum().ok_or_else(|| {
-            AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidState,
+            VcxAnoncredsError::InvalidState(
                 "Revocation registry delta cannot be created from revocation status list without \
-                 accumulator",
+                 accumulator"
+                    .into(),
             )
         })?,
     };
@@ -181,7 +181,7 @@ impl Anoncreds {
         wallet: &impl BaseWallet,
         category: RecordCategory,
         id: &str,
-    ) -> VcxCoreResult<T>
+    ) -> VcxAnoncredsResult<T>
     where
         T: DeserializeOwned,
     {
@@ -193,7 +193,7 @@ impl Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         link_secret_id: &LinkSecretId,
-    ) -> VcxCoreResult<LinkSecret> {
+    ) -> VcxAnoncredsResult<LinkSecret> {
         let ms_decimal = wallet
             .get_record(RecordCategory::LinkSecret, link_secret_id)
             .await?;
@@ -204,12 +204,12 @@ impl Anoncreds {
     async fn _get_credentials(
         wallet: &impl BaseWallet,
         wql: &str,
-    ) -> VcxCoreResult<Vec<(String, Credential)>> {
+    ) -> VcxAnoncredsResult<Vec<(String, Credential)>> {
         let records = wallet
             .search_record(RecordCategory::Cred, Some(wql.into()))
             .await?;
 
-        let id_cred_tuple_list: VcxCoreResult<Vec<(String, Credential)>> = records
+        let id_cred_tuple_list: VcxAnoncredsResult<Vec<(String, Credential)>> = records
             .into_iter()
             .map(|record| {
                 let credential: Credential = serde_json::from_str(record.value())?;
@@ -226,7 +226,7 @@ impl Anoncreds {
         wallet: &impl BaseWallet,
         restrictions: Option<Value>,
         attr_names: Vec<String>,
-    ) -> VcxCoreResult<Vec<(String, Credential)>> {
+    ) -> VcxAnoncredsResult<Vec<(String, Credential)>> {
         let mut attrs = Vec::new();
 
         for name in attr_names {
@@ -255,9 +255,8 @@ impl Anoncreds {
                 Value::Null => {
                     json!({ "$and": attrs })
                 }
-                _ => Err(AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::InvalidInput,
-                    "Invalid attribute restrictions (must be array or an object)",
+                _ => Err(VcxAnoncredsError::InvalidInput(
+                    "Invalid attribute restrictions (must be array or an object)".into(),
                 ))?,
             }
         } else {
@@ -280,7 +279,7 @@ impl BaseAnonCreds for Anoncreds {
         credential_defs_json: CredentialDefinitionsMap,
         rev_reg_defs_json: Option<RevocationRegistryDefinitionsMap>,
         rev_regs_json: Option<RevocationRegistriesMap>,
-    ) -> VcxCoreResult<bool> {
+    ) -> VcxAnoncredsResult<bool> {
         let presentation: AnoncredsPresentation = proof_json.convert(())?;
         let pres_req: AnoncredsPresentationRequest = proof_request_json.convert(())?;
 
@@ -312,7 +311,7 @@ impl BaseAnonCreds for Anoncreds {
         tails_dir: &Path,
         max_creds: u32,
         tag: &str,
-    ) -> VcxCoreResult<(
+    ) -> VcxAnoncredsResult<(
         RevocationRegistryDefinitionId,
         RevocationRegistryDefinition,
         RevocationRegistry,
@@ -416,7 +415,7 @@ impl BaseAnonCreds for Anoncreds {
         schema_id: &SchemaId,
         schema_json: Schema,
         config_json: CredentialDefinitionConfig,
-    ) -> VcxCoreResult<CredentialDefinition> {
+    ) -> VcxAnoncredsResult<CredentialDefinition> {
         let CredentialDefinitionConfig {
             tag,
             signature_type,
@@ -510,7 +509,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         cred_def_id: &CredentialDefinitionId,
-    ) -> VcxCoreResult<CredentialOffer> {
+    ) -> VcxAnoncredsResult<CredentialOffer> {
         let correctness_proof = self
             .get_wallet_record_value(
                 wallet,
@@ -544,7 +543,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_values_json: CredentialValues,
         rev_reg_id: Option<&RevocationRegistryDefinitionId>,
         tails_dir: Option<&Path>,
-    ) -> VcxCoreResult<(Credential, Option<u32>)> {
+    ) -> VcxAnoncredsResult<(Credential, Option<u32>)> {
         let cred_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
         let cred_request: AnoncredsCredentialRequest = cred_req_json.convert(())?;
         let cred_values: AnoncredsCredentialValues = cred_values_json.convert(())?;
@@ -621,9 +620,8 @@ impl BaseAnonCreds for Anoncreds {
                 rev_reg_info.curr_id += 1;
 
                 if rev_reg_info.curr_id > rev_reg_def.value.max_cred_num {
-                    return Err(AriesVcxCoreError::from_msg(
-                        AriesVcxCoreErrorKind::ActionNotSupported,
-                        "The revocation registry is full",
+                    return Err(VcxAnoncredsError::ActionNotSupported(
+                        "The revocation registry is full".into(),
                     ));
                 }
 
@@ -689,7 +687,7 @@ impl BaseAnonCreds for Anoncreds {
         schemas_json: SchemasMap,
         credential_defs_json: CredentialDefinitionsMap,
         revoc_states_json: Option<RevocationStatesMap>,
-    ) -> VcxCoreResult<Presentation> {
+    ) -> VcxAnoncredsResult<Presentation> {
         let pres_req: AnoncredsPresentationRequest = proof_req_json.convert(())?;
 
         let requested_attributes = requested_credentials_json.requested_attributes;
@@ -818,7 +816,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         cred_id: &CredentialId,
-    ) -> VcxCoreResult<RetrievedCredentialInfo> {
+    ) -> VcxAnoncredsResult<RetrievedCredentialInfo> {
         let cred = self
             .get_wallet_record_value(wallet, RecordCategory::Cred, cred_id)
             .await?;
@@ -829,7 +827,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         filter_json: Option<&str>,
-    ) -> VcxCoreResult<Vec<RetrievedCredentialInfo>> {
+    ) -> VcxAnoncredsResult<Vec<RetrievedCredentialInfo>> {
         // filter_json should map to WQL query directly
         // TODO - future - may wish to validate the filter_json for more accurate error reporting
 
@@ -846,7 +844,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         proof_request_json: PresentationRequest,
-    ) -> VcxCoreResult<RetrievedCredentials> {
+    ) -> VcxAnoncredsResult<RetrievedCredentials> {
         let requested_attributes = &proof_request_json.value().requested_attributes;
         let requested_predicates = &proof_request_json.value().requested_predicates;
 
@@ -874,9 +872,8 @@ impl BaseAnonCreds for Anoncreds {
                             .map(String::as_str)
                             .map(_normalize_attr_name)
                             .collect::<Vec<_>>(),
-                        _ => Err(AriesVcxCoreError::from_msg(
-                            AriesVcxCoreErrorKind::InvalidInput,
-                            "exactly one of 'name' or 'names' must be present",
+                        _ => Err(VcxAnoncredsError::InvalidInput(
+                            "exactly one of 'name' or 'names' must be present".into(),
                         ))?,
                     };
                     (
@@ -891,9 +888,8 @@ impl BaseAnonCreds for Anoncreds {
                         requested_val.non_revoked.to_owned(),
                         requested_val.restrictions.to_owned(),
                     ),
-                    None => Err(AriesVcxCoreError::from_msg(
-                        AriesVcxCoreErrorKind::InvalidProofRequest,
-                        "Requested attribute or predicate not found in proof request",
+                    None => Err(VcxAnoncredsError::InvalidProofRequest(
+                        "Requested attribute or predicate not found in proof request".into(),
                     ))?,
                 },
             };
@@ -930,7 +926,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_offer_json: CredentialOffer,
         cred_def_json: CredentialDefinition,
         link_secret_id: &LinkSecretId,
-    ) -> VcxCoreResult<(CredentialRequest, CredentialRequestMetadata)> {
+    ) -> VcxAnoncredsResult<(CredentialRequest, CredentialRequestMetadata)> {
         let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;
         let credential_offer: AnoncredsCredentialOffer = cred_offer_json.convert(())?;
         let link_secret = self.get_link_secret(wallet, link_secret_id).await?;
@@ -954,15 +950,14 @@ impl BaseAnonCreds for Anoncreds {
         rev_reg_delta_json: RevocationRegistryDelta,
         timestamp: u64,
         cred_rev_id: u32,
-    ) -> VcxCoreResult<CredentialRevocationState> {
+    ) -> VcxAnoncredsResult<CredentialRevocationState> {
         let cred_def_id = rev_reg_def_json.cred_def_id.to_string();
         let max_cred_num = rev_reg_def_json.value.max_cred_num;
         let rev_reg_def_id = rev_reg_def_json.id.to_string();
         let (_cred_def_method, issuer_did, _signature_type, _schema_num, _tag) =
-            cred_def_parts(&cred_def_id).ok_or(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidSchema,
-                format!("Could not process cred_def_id {cred_def_id} as parts."),
-            ))?;
+            cred_def_parts(&cred_def_id).ok_or(VcxAnoncredsError::InvalidSchema(format!(
+                "Could not process cred_def_id {cred_def_id} as parts."
+            )))?;
 
         let revoc_reg_def: AnoncredsRevocationRegistryDefinition = rev_reg_def_json.convert(())?;
         let tails_file_hash = revoc_reg_def.value.tails_hash.as_str();
@@ -972,10 +967,7 @@ impl BaseAnonCreds for Anoncreds {
         tails_file_path.push(tails_file_hash);
 
         let tails_path = tails_file_path.to_str().ok_or_else(|| {
-            AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidOption,
-                "tails file is not an unicode string",
-            )
+            VcxAnoncredsError::InvalidOption("tails file is not an unicode string".into())
         })?;
 
         let RevocationRegistryDeltaValue { accum, revoked, .. } = rev_reg_delta_json.value;
@@ -1027,14 +1019,13 @@ impl BaseAnonCreds for Anoncreds {
         cred_json: Credential,
         cred_def_json: CredentialDefinition,
         rev_reg_def_json: Option<RevocationRegistryDefinition>,
-    ) -> VcxCoreResult<CredentialId> {
+    ) -> VcxAnoncredsResult<CredentialId> {
         let mut credential: AnoncredsCredential = cred_json.convert(())?;
 
         let cred_def_id = credential.cred_def_id.to_string();
         let (_cred_def_method, issuer_did, _signature_type, _schema_num, _tag) =
-            cred_def_parts(&cred_def_id).ok_or(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidSchema,
-                "Could not process credential.cred_def_id as parts.",
+            cred_def_parts(&cred_def_id).ok_or(VcxAnoncredsError::InvalidSchema(
+                "Could not process credential.cred_def_id as parts.".into(),
             ))?;
 
         let cred_request_metadata: AnoncredsCredentialRequestMetadata =
@@ -1060,10 +1051,9 @@ impl BaseAnonCreds for Anoncreds {
         let schema_id = &credential.schema_id;
 
         let (_schema_method, schema_issuer_did, schema_name, schema_version) =
-            schema_parts(schema_id.0.as_str()).ok_or(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidSchema,
-                format!("Could not process credential.schema_id {schema_id} as parts."),
-            ))?;
+            schema_parts(schema_id.0.as_str()).ok_or(VcxAnoncredsError::InvalidSchema(format!(
+                "Could not process credential.schema_id {schema_id} as parts."
+            )))?;
 
         let mut tags = RecordTags::new(vec![
             RecordTag::new("schema_id", &schema_id.0),
@@ -1109,7 +1099,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         cred_id: &CredentialId,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxAnoncredsResult<()> {
         Ok(wallet.delete_record(RecordCategory::Cred, cred_id).await?)
     }
 
@@ -1117,28 +1107,25 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         link_secret_id: &LinkSecretId,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxAnoncredsResult<()> {
         let existing_record = wallet
             .get_record(RecordCategory::LinkSecret, link_secret_id)
             .await
             .ok(); // ignore error, as we only care about whether it exists or not
 
         if existing_record.is_some() {
-            return Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::DuplicationMasterSecret,
-                format!(
-                    "Master secret id: {} already exists in wallet.",
-                    link_secret_id
-                ),
-            ));
+            return Err(VcxAnoncredsError::DuplicationMasterSecret(format!(
+                "Master secret id: {} already exists in wallet.",
+                link_secret_id
+            )));
         }
 
         let secret = anoncreds::prover::create_link_secret()?;
         let ms_decimal = TryInto::<String>::try_into(secret).map_err(|err| {
-            AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::UrsaError,
-                format!("Failed convert BigNumber to decimal string: {}", err),
-            )
+            VcxAnoncredsError::UrsaError(format!(
+                "Failed convert BigNumber to decimal string: {}",
+                err
+            ))
         })?;
 
         let record = Record::builder()
@@ -1156,7 +1143,7 @@ impl BaseAnonCreds for Anoncreds {
         name: &str,
         version: &str,
         attrs: AttributeNames,
-    ) -> VcxCoreResult<Schema> {
+    ) -> VcxAnoncredsResult<Schema> {
         let schema = anoncreds::issuer::create_schema(
             name,
             version,
@@ -1173,7 +1160,7 @@ impl BaseAnonCreds for Anoncreds {
         rev_reg_id: &RevocationRegistryDefinitionId,
         cred_rev_id: u32,
         ledger_rev_reg_delta_json: RevocationRegistryDelta,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxAnoncredsResult<()> {
         let rev_reg_def: RevocationRegistryDefinition = self
             .get_wallet_record_value(wallet, RecordCategory::RevRegDef, &rev_reg_id.to_string())
             .await?;
@@ -1252,7 +1239,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         rev_reg_id: &RevocationRegistryDefinitionId,
-    ) -> VcxCoreResult<Option<RevocationRegistryDelta>> {
+    ) -> VcxAnoncredsResult<Option<RevocationRegistryDelta>> {
         let res_rev_reg_delta = self
             .get_wallet_record_value::<RevocationRegistryDelta>(
                 wallet,
@@ -1276,7 +1263,7 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         wallet: &impl BaseWallet,
         rev_reg_id: &RevocationRegistryDefinitionId,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxAnoncredsResult<()> {
         if self.get_rev_reg_delta(wallet, rev_reg_id).await?.is_some() {
             wallet
                 .delete_record(RecordCategory::RevRegDelta, &rev_reg_id.to_string())
@@ -1286,7 +1273,7 @@ impl BaseAnonCreds for Anoncreds {
         Ok(())
     }
 
-    async fn generate_nonce(&self) -> VcxCoreResult<Nonce> {
+    async fn generate_nonce(&self) -> VcxAnoncredsResult<Nonce> {
         Ok(anoncreds::verifier::generate_nonce()?.convert(())?)
     }
 }
@@ -1296,30 +1283,24 @@ fn get_rev_state(
     credential: &Credential,
     timestamp: Option<u64>,
     rev_states: Option<&RevocationStatesMap>,
-) -> VcxCoreResult<(Option<u64>, Option<CredentialRevocationState>)> {
+) -> VcxAnoncredsResult<(Option<u64>, Option<CredentialRevocationState>)> {
     let cred_rev_reg_id = credential.rev_reg_id.as_ref().map(|id| id.0.to_string());
     let rev_state = if let (Some(timestamp), Some(cred_rev_reg_id)) = (timestamp, cred_rev_reg_id) {
         let rev_state = rev_states
             .as_ref()
             .and_then(|_rev_states| _rev_states.get(&cred_rev_reg_id));
-        let rev_state = rev_state.ok_or(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidJson,
-            format!(
-                "No revocation states provided for credential '{}' with rev_reg_id '{}'",
-                cred_id, cred_rev_reg_id
-            ),
-        ))?;
+        let rev_state = rev_state.ok_or(VcxAnoncredsError::InvalidJson(format!(
+            "No revocation states provided for credential '{}' with rev_reg_id '{}'",
+            cred_id, cred_rev_reg_id
+        )))?;
 
         let rev_state = rev_state
             .get(&timestamp)
-            .ok_or(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidJson,
-                format!(
-                    "No revocation states provided for credential '{}' with rev_reg_id '{}' at \
+            .ok_or(VcxAnoncredsError::InvalidJson(format!(
+                "No revocation states provided for credential '{}' with rev_reg_id '{}' at \
                      timestamp '{}'",
-                    cred_id, cred_rev_reg_id, timestamp
-                ),
-            ))?;
+                cred_id, cred_rev_reg_id, timestamp
+            )))?;
 
         Some(rev_state.clone())
     } else {
@@ -1337,7 +1318,7 @@ fn _normalize_attr_name(name: &str) -> String {
 fn _make_cred_info(
     credential_id: &str,
     cred: &Credential,
-) -> VcxCoreResult<RetrievedCredentialInfo> {
+) -> VcxAnoncredsResult<RetrievedCredentialInfo> {
     let cred_sig = serde_json::to_value(&cred.signature)?;
 
     let rev_info = cred_sig.get("r_credential");
@@ -1421,7 +1402,7 @@ fn make_revocation_registry_id(
     cred_def_id: &CredentialDefinitionId,
     tag: &str,
     rev_reg_type: RegistryType,
-) -> VcxCoreResult<RevocationRegistryDefinitionId> {
+) -> VcxAnoncredsResult<RevocationRegistryDefinitionId> {
     // Must use unchecked as anoncreds doesn't expose validation error
     Ok(RevocationRegistryDefinitionId::new(format!(
         "{}{}:4:{}:{}:{}",

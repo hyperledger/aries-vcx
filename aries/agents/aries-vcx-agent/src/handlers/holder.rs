@@ -12,7 +12,7 @@ use aries_vcx::{
     },
     protocols::{issuance::holder::state_machine::HolderState, SendClosure},
 };
-use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx_ledger::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 

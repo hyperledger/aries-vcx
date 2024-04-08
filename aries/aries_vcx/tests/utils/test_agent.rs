@@ -3,7 +3,7 @@
 use aries_vcx::{
     common::ledger::transactions::write_endorser_did, global::settings::DEFAULT_LINK_SECRET_ALIAS,
 };
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_ledger::ledger::base_ledger::{
     AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
 };

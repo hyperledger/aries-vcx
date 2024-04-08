@@ -1,12 +1,11 @@
-use aries_vcx::{
-    aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds,
-    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-};
+use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use aries_vcx_ledger::ledger::{
     base_ledger::TxnAuthrAgrmtOptions, indy_vdr_ledger::IndyVdrLedgerRead,
     request_submitter::vdr_ledger::IndyVdrSubmitter,
     response_cacher::in_memory::InMemoryResponseCacher,
 };
+
+use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 
 #[cfg(feature = "vdrtools_wallet")]
 pub mod indy;

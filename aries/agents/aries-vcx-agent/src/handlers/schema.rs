@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{common::primitives::credential_schema::Schema, did_parser_nom::Did};
-use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx_ledger::ledger::{
     base_ledger::AnoncredsLedgerRead,
     indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},

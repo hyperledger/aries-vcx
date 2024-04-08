@@ -439,7 +439,7 @@ version = "0.63.0"
 dependencies = [
  "anoncreds_types",
  "aries_vcx",
- "aries_vcx_core",
+ "aries_vcx_anoncreds",
  "aries_vcx_ledger",
  "aries_vcx_wallet",
  "async-trait",
@@ -484,7 +484,7 @@ name = "aries_vcx"
 version = "0.63.0"
 dependencies = [
  "anoncreds_types",
- "aries_vcx_core",
+ "aries_vcx_anoncreds",
  "aries_vcx_ledger",
  "aries_vcx_wallet",
  "async-channel",
@@ -529,8 +529,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "aries_vcx_core"
-version = "0.1.0"
+name = "aries_vcx_anoncreds"
+version = "0.63.0"
 dependencies = [
  "anoncreds",
  "anoncreds_types",
@@ -538,24 +538,12 @@ dependencies = [
  "async-trait",
  "bitvec",
  "did_parser_nom",
- "futures",
- "indy-api-types",
  "indy-credx",
- "indy-ledger-response-parser",
- "indy-vdr",
- "indy-vdr-proxy-client",
- "lazy_static",
- "libvdrtools",
  "log",
- "lru",
- "public_key",
- "rand 0.8.5",
  "serde",
  "serde_json",
  "thiserror",
  "time 0.3.20",
- "tokio",
- "typed-builder 0.18.1",
  "uuid 1.5.0",
 ]
 
@@ -1336,7 +1324,6 @@ dependencies = [
 name = "client-tui"
 version = "0.1.1"
 dependencies = [
- "aries_vcx_core",
  "aries_vcx_wallet",
  "axum",
  "cursive",
@@ -3427,7 +3414,6 @@ version = "0.1.1"
 dependencies = [
  "anyhow",
  "aries_vcx",
- "aries_vcx_core",
  "aries_vcx_wallet",
  "async-trait",
  "axum",
@@ -5299,7 +5285,7 @@ name = "test_utils"
 version = "0.63.0"
 dependencies = [
  "anoncreds_types",
- "aries_vcx_core",
+ "aries_vcx_anoncreds",
  "aries_vcx_ledger",
  "aries_vcx_wallet",
  "async-trait",
@@ -5311,6 +5297,7 @@ dependencies = [
  "public_key",
  "rand 0.8.5",
  "serde_json",
+ "thiserror",
  "uuid 1.5.0",
 ]
 
@@ -5707,10 +5694,12 @@ version = "0.63.0"
 dependencies = [
  "android_logger",
  "aries_vcx",
+ "aries_vcx_anoncreds",
  "aries_vcx_ledger",
  "async-trait",
  "did_parser_nom",
  "diddoc_legacy",
+ "indy-vdr",
  "log",
  "once_cell",
  "serde",

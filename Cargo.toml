@@ -13,7 +13,6 @@ members = [
     "aries/agents/aries-vcx-agent",
     "aries/agents/aath-backchannel",
     "aries/wrappers/uniffi-aries-vcx/core",
-    "aries/aries_vcx_core",
     "aries/aries_vcx_wallet",
     "aries/aries_vcx_ledger",
     "aries/misc/indy_ledger_response_parser",
@@ -29,7 +28,7 @@ members = [
     "did_core/did_methods/did_resolver_web",
     "did_core/public_key",
     "misc/simple_message_relay",
-    "misc/display_as_json",
+    "misc/display_as_json", "aries/aries_vcx_anoncreds",
 ]
 
 [workspace.package]

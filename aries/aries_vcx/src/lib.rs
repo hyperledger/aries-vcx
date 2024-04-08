@@ -19,12 +19,12 @@ extern crate serde_json;
 #[macro_use]
 extern crate derive_builder;
 
-pub extern crate aries_vcx_core;
 pub extern crate did_doc;
 pub extern crate did_parser_nom;
 pub extern crate did_peer;
 pub extern crate messages;
 
+pub use aries_vcx_anoncreds;
 pub use aries_vcx_wallet;
 
 #[macro_use]

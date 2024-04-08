@@ -4,10 +4,7 @@ use anoncreds_types::data_types::{
     identifiers::cred_def_id::CredentialDefinitionId,
     ledger::rev_reg_def::RevocationRegistryDefinition,
 };
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
-};
+use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_ledger::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_parser_nom::Did;
@@ -128,8 +125,8 @@ impl RevocationRegistry {
             )
             .await
             .map_err(|err| {
-                AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::InvalidState,
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     format!("Cannot publish revocation registry definition; {err}"),
                 )
             })?;
@@ -157,8 +154,8 @@ impl RevocationRegistry {
             )
             .await
             .map_err(|err| {
-                AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::InvalidRevocationEntry,
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidRevocationEntry,
                     format!("Cannot publish revocation entry; {err}"),
                 )
             })?;

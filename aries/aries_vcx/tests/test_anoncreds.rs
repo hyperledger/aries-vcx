@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use aries_vcx::common::credentials::get_cred_rev_id;
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
 use serde_json::json;
 use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};

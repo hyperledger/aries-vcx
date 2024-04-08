@@ -1,12 +1,14 @@
 use std::{env, io::Write, sync::Once};
 
-use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+// use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use chrono::{
     format::{DelayedFormat, StrftimeItems},
     Local,
 };
 use env_logger::{fmt::Formatter, Builder as EnvLoggerBuilder};
 use log::{LevelFilter, Record};
+
+use crate::errors::error::{TestUtilsError, TestUtilsResult};
 
 static TEST_LOGGING_INIT: Once = Once::new();
 
@@ -58,7 +60,7 @@ impl LibvcxDefaultLogger {
         }
     }
 
-    pub fn init(pattern: Option<String>) -> VcxCoreResult<()> {
+    pub fn init(pattern: Option<String>) -> TestUtilsResult<()> {
         let pattern = pattern.or(env::var("RUST_LOG").ok());
         let formatter = match env::var("RUST_LOG_FORMATTER") {
             Ok(val) => match val.as_str() {
@@ -73,10 +75,7 @@ impl LibvcxDefaultLogger {
             .parse_filters(pattern.as_deref().unwrap_or("warn"))
             .try_init()
             .map_err(|err| {
-                AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::LoggingError,
-                    format!("Cannot init logger: {:?}", err),
-                )
+                TestUtilsError::LoggingError(format!("Cannot init logger: {:?}", err))
             })?;
         Ok(())
     }

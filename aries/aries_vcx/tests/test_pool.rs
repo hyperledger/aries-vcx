@@ -21,7 +21,7 @@ use aries_vcx::{
     },
     errors::error::AriesVcxErrorKind,
 };
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_ledger::ledger::{
     base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     indy::pool::test_utils::get_temp_file_path,
