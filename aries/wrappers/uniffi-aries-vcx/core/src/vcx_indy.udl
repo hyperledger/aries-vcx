@@ -153,6 +153,7 @@ enum VcxUniFFIError {
     "AriesVcxError",
     "AriesVcxWalletError",
     "AriesVcxLedgerError",
+    "AriesVcxAnoncredsError",
     "SerializationError",
     "InternalError",
     "StringParseError"

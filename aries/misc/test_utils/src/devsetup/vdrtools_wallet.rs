@@ -1,9 +1,10 @@
-use aries_vcx_core::global::settings::{DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
 use aries_vcx_wallet::wallet::{
     base_wallet::{did_wallet::DidWallet, ManageWallet},
     indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
 };
 use log::info;
+
+use crate::settings::{DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
 
 pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, IndySdkWallet) {
     info!("dev_setup_wallet_indy >>");

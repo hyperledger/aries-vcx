@@ -19,7 +19,7 @@ use aries_vcx::{
     },
     errors::error::AriesVcxErrorKind,
 };
-use aries_vcx_core::anoncreds::base_anoncreds::{
+use aries_vcx_anoncreds::anoncreds::base_anoncreds::{
     BaseAnonCreds, CredentialDefinitionsMap, SchemasMap,
 };
 use aries_vcx_ledger::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
