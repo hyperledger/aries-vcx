@@ -8,7 +8,7 @@ on:
     branches:
       - "**"
     paths:
-      - 'aries/agents/rust/mediator/**'
+      - 'aries/agents/mediator/**'
 
 env:
   DOCKER_BUILDKIT: 1
