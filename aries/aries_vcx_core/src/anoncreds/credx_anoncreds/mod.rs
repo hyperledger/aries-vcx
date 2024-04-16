@@ -31,6 +31,18 @@ use anoncreds_types::data_types::{
         revocation_state::CredentialRevocationState,
     },
 };
+use aries_vcx_wallet::{
+    errors::error::VcxWalletResult,
+    wallet::{
+        base_wallet::{
+            record::{AllRecords, Record},
+            record_category::RecordCategory,
+            record_wallet::RecordWallet,
+            BaseWallet,
+        },
+        record_tags::{RecordTag, RecordTags},
+    },
+};
 use async_trait::async_trait;
 use credx::{
     anoncreds_clsignatures::{bn::BigNumber, LinkSecret as ClLinkSecret},
@@ -52,6 +64,7 @@ use credx::{
 };
 use did_parser_nom::Did;
 use indy_credx as credx;
+use log::warn;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};
 use type_conversion::Convert;
@@ -64,16 +77,6 @@ use super::base_anoncreds::{
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::{constants::ATTRS, json::AsTypeOrDeserializationError},
-    wallet::{
-        base_wallet::{
-            record::{AllRecords, Record},
-            record_category::RecordCategory,
-            record_wallet::RecordWallet,
-            search_filter::SearchFilter,
-            BaseWallet,
-        },
-        record_tags::{RecordTag, RecordTags},
-    },
 };
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -90,15 +93,15 @@ struct WalletAdapter(Arc<dyn BaseWallet>);
 
 #[async_trait]
 impl RecordWallet for WalletAdapter {
-    async fn all_records(&self) -> VcxCoreResult<Box<dyn AllRecords + Send>> {
+    async fn all_records(&self) -> VcxWalletResult<Box<dyn AllRecords + Send>> {
         self.0.all_records().await
     }
 
-    async fn add_record(&self, record: Record) -> VcxCoreResult<()> {
+    async fn add_record(&self, record: Record) -> VcxWalletResult<()> {
         self.0.add_record(record).await
     }
 
-    async fn get_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<Record> {
+    async fn get_record(&self, category: RecordCategory, name: &str) -> VcxWalletResult<Record> {
         self.0.get_record(category, name).await
     }
 
@@ -107,7 +110,7 @@ impl RecordWallet for WalletAdapter {
         category: RecordCategory,
         name: &str,
         new_tags: RecordTags,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxWalletResult<()> {
         self.0.update_record_tags(category, name, new_tags).await
     }
 
@@ -116,19 +119,19 @@ impl RecordWallet for WalletAdapter {
         category: RecordCategory,
         name: &str,
         new_value: &str,
-    ) -> VcxCoreResult<()> {
+    ) -> VcxWalletResult<()> {
         self.0.update_record_value(category, name, new_value).await
     }
 
-    async fn delete_record(&self, category: RecordCategory, name: &str) -> VcxCoreResult<()> {
+    async fn delete_record(&self, category: RecordCategory, name: &str) -> VcxWalletResult<()> {
         self.0.delete_record(category, name).await
     }
 
     async fn search_record(
         &self,
         category: RecordCategory,
-        search_filter: Option<SearchFilter>,
-    ) -> VcxCoreResult<Vec<Record>> {
+        search_filter: Option<String>,
+    ) -> VcxWalletResult<Vec<Record>> {
         self.0.search_record(category, search_filter).await
     }
 }
@@ -189,10 +192,7 @@ impl IndyCredxAnonCreds {
         wql: &str,
     ) -> VcxCoreResult<Vec<(String, CredxCredential)>> {
         let records = wallet
-            .search_record(
-                RecordCategory::Cred,
-                Some(SearchFilter::JsonFilter(wql.into())),
-            )
+            .search_record(RecordCategory::Cred, Some(wql.into()))
             .await?;
 
         let id_cred_tuple_list: VcxCoreResult<Vec<(String, CredxCredential)>> = records
@@ -1109,7 +1109,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         wallet: &impl BaseWallet,
         cred_id: &CredentialId,
     ) -> VcxCoreResult<()> {
-        wallet.delete_record(RecordCategory::Cred, cred_id).await
+        Ok(wallet.delete_record(RecordCategory::Cred, cred_id).await?)
     }
 
     async fn issuer_create_schema(

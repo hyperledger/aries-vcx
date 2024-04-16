@@ -1,9 +1,8 @@
 use std::error::Error;
 
 use aries_vcx::common::credentials::{get_cred_rev_id, is_cred_revoked};
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
-};
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
 use test_utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::build_setup_profile};
 
 use crate::utils::{

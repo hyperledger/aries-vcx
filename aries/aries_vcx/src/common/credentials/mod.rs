@@ -1,8 +1,6 @@
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::{BaseAnonCreds, CredentialId},
-    ledger::base_ledger::AnoncredsLedgerRead,
-    wallet::base_wallet::BaseWallet,
-};
+use aries_vcx_core::anoncreds::base_anoncreds::{BaseAnonCreds, CredentialId};
+use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use time::OffsetDateTime;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};

@@ -7,12 +7,13 @@ use anoncreds_types::data_types::{
     messages::cred_definition_config::CredentialDefinitionConfig,
 };
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    errors::error::AriesVcxCoreErrorKind,
-    global::settings::DEFAULT_SERIALIZE_VERSION,
-    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
-    wallet::base_wallet::BaseWallet,
+    anoncreds::base_anoncreds::BaseAnonCreds, global::settings::DEFAULT_SERIALIZE_VERSION,
 };
+use aries_vcx_ledger::{
+    errors::error::VcxLedgerError,
+    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+};
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_parser_nom::Did;
 
 use crate::{
@@ -77,14 +78,17 @@ async fn _try_get_cred_def_from_ledger(
 ) -> VcxResult<Option<String>> {
     match ledger.get_cred_def(cred_def_id, Some(issuer_did)).await {
         Ok(cred_def) => Ok(Some(serde_json::to_string(&cred_def)?)),
-        Err(err) if err.kind() == AriesVcxCoreErrorKind::LedgerItemNotFound => Ok(None),
-        Err(err) => Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidLedgerResponse,
-            format!(
-                "Failed to check presence of credential definition id {} on the ledger\nError: {}",
-                cred_def_id, err
-            ),
-        )),
+        Err(err) => match err {
+            VcxLedgerError::LedgerItemNotFound => Ok(None),
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidLedgerResponse,
+                format!(
+                    "Failed to check presence of credential definition id {} on the \
+                     ledger\nError: {}",
+                    cred_def_id, err
+                ),
+            )),
+        },
     }
 }
 

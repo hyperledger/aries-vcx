@@ -1,15 +1,13 @@
 use std::{env, sync::Arc};
 
-use aries_vcx_core::{
-    ledger::{
-        indy_vdr_ledger::{
-            IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite,
-            IndyVdrLedgerWriteConfig, ProtocolVersion,
-        },
-        request_submitter::vdr_proxy::VdrProxySubmitter,
-        response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
+use aries_vcx_core::{ResponseParser, VdrProxyClient};
+use aries_vcx_ledger::ledger::{
+    indy_vdr_ledger::{
+        IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig,
+        ProtocolVersion,
     },
-    ResponseParser, VdrProxyClient,
+    request_submitter::vdr_proxy::VdrProxySubmitter,
+    response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
 };
 use log::info;
 

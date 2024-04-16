@@ -77,24 +77,106 @@ impl DidDocument {
         self.verification_method.as_ref()
     }
 
+    pub fn verification_method_by_id(&self, id: &str) -> Option<&VerificationMethod> {
+        self.verification_method
+            .iter()
+            .find(|vm| match vm.id().fragment() {
+                Some(fragment) => fragment == id,
+                None => false,
+            })
+    }
+
     pub fn authentication(&self) -> &[VerificationMethodKind] {
         self.authentication.as_ref()
+    }
+
+    fn try_match_and_deref_verification_method<'a>(
+        &'a self,
+        vm: &'a VerificationMethodKind,
+        id: &str,
+    ) -> Option<&VerificationMethod> {
+        return match vm {
+            VerificationMethodKind::Resolved(vm) => {
+                if vm.id().fragment() == Some(id) {
+                    Some(vm)
+                } else {
+                    None
+                }
+            }
+            VerificationMethodKind::Resolvable(vm_ref) => {
+                if vm_ref.fragment() == Some(id) {
+                    self.dereference_key(vm_ref)
+                } else {
+                    None
+                }
+            }
+        };
+    }
+
+    pub fn authentication_by_id(&self, id: &str) -> Option<&VerificationMethod> {
+        for vm in self.authentication.iter() {
+            match self.try_match_and_deref_verification_method(vm, id) {
+                Some(vm) => return Some(vm),
+                None => continue,
+            }
+        }
+        None
     }
 
     pub fn assertion_method(&self) -> &[VerificationMethodKind] {
         self.assertion_method.as_ref()
     }
 
+    pub fn assertion_method_by_key(&self, id: &str) -> Option<&VerificationMethod> {
+        for vm in self.assertion_method.iter() {
+            match self.try_match_and_deref_verification_method(vm, id) {
+                Some(vm) => return Some(vm),
+                None => continue,
+            }
+        }
+        None
+    }
+
     pub fn key_agreement(&self) -> &[VerificationMethodKind] {
         self.key_agreement.as_ref()
+    }
+
+    pub fn key_agreement_by_id(&self, id: &str) -> Option<&VerificationMethod> {
+        for vm in self.key_agreement.iter() {
+            match self.try_match_and_deref_verification_method(vm, id) {
+                Some(vm) => return Some(vm),
+                None => continue,
+            }
+        }
+        None
     }
 
     pub fn capability_invocation(&self) -> &[VerificationMethodKind] {
         self.capability_invocation.as_ref()
     }
 
+    pub fn capability_invocation_by_id(&self, id: &str) -> Option<&VerificationMethod> {
+        for vm in self.capability_invocation.iter() {
+            match self.try_match_and_deref_verification_method(vm, id) {
+                Some(vm) => return Some(vm),
+                None => continue,
+            }
+        }
+        None
+    }
+
     pub fn capability_delegation(&self) -> &[VerificationMethodKind] {
         self.capability_delegation.as_ref()
+    }
+
+    pub fn capability_delegation_by_id(&self, id: &str) -> Option<&VerificationMethod> {
+        for vm in self.capability_delegation.iter() {
+            match self.try_match_and_deref_verification_method(vm, id) {
+                Some(vm) => return Some(vm),
+                None => continue,
+            }
+        }
+        None
     }
 
     pub fn service(&self) -> &[Service] {
@@ -131,7 +213,12 @@ impl DidDocument {
         self.verification_method.push(method);
     }
 
-    pub fn add_authentication(&mut self, method: VerificationMethod) {
+    // authentication
+    pub fn add_authentication(&mut self, method: VerificationMethodKind) {
+        self.authentication.push(method);
+    }
+
+    pub fn add_authentication_object(&mut self, method: VerificationMethod) {
         self.authentication
             .push(VerificationMethodKind::Resolved(method));
     }
@@ -141,7 +228,12 @@ impl DidDocument {
             .push(VerificationMethodKind::Resolvable(reference));
     }
 
-    pub fn add_assertion_method(&mut self, method: VerificationMethod) {
+    // assertion
+    pub fn add_assertion_method(&mut self, method: VerificationMethodKind) {
+        self.assertion_method.push(method);
+    }
+
+    pub fn add_assertion_method_object(&mut self, method: VerificationMethod) {
         self.assertion_method
             .push(VerificationMethodKind::Resolved(method));
     }
@@ -151,17 +243,27 @@ impl DidDocument {
             .push(VerificationMethodKind::Resolvable(reference));
     }
 
-    pub fn add_key_agreement(&mut self, method: VerificationMethod) {
+    // key agreement
+    pub fn add_key_agreement(&mut self, method: VerificationMethodKind) {
+        self.key_agreement.push(method);
+    }
+
+    pub fn add_key_agreement_object(&mut self, method: VerificationMethod) {
         self.key_agreement
             .push(VerificationMethodKind::Resolved(method));
     }
 
-    pub fn add_key_agreement_ref(&mut self, refernece: DidUrl) {
+    pub fn add_key_agreement_ref(&mut self, reference: DidUrl) {
         self.key_agreement
-            .push(VerificationMethodKind::Resolvable(refernece));
+            .push(VerificationMethodKind::Resolvable(reference));
     }
 
-    pub fn add_capability_invocation(&mut self, method: VerificationMethod) {
+    // capability invocation
+    pub fn add_capability_invocation(&mut self, method: VerificationMethodKind) {
+        self.capability_invocation.push(method);
+    }
+
+    pub fn add_capability_invocation_object(&mut self, method: VerificationMethod) {
         self.capability_invocation
             .push(VerificationMethodKind::Resolved(method));
     }
@@ -171,7 +273,12 @@ impl DidDocument {
             .push(VerificationMethodKind::Resolvable(reference));
     }
 
-    pub fn add_capability_delegation(&mut self, method: VerificationMethod) {
+    // capability delegation
+    pub fn add_capability_delegation(&mut self, method: VerificationMethodKind) {
+        self.capability_delegation.push(method);
+    }
+
+    pub fn add_capability_delegation_object(&mut self, method: VerificationMethod) {
         self.capability_delegation
             .push(VerificationMethodKind::Resolved(method));
     }
@@ -243,19 +350,19 @@ mod tests {
         did_doc.set_controller(OneOrList::One(controller.clone()));
         did_doc.add_verification_method(verification_method.clone());
 
-        did_doc.add_authentication(verification_method.clone());
+        did_doc.add_authentication_object(verification_method.clone());
         did_doc.add_authentication_ref(authentication_reference.clone());
 
-        did_doc.add_assertion_method(assertion_method.clone());
+        did_doc.add_assertion_method_object(assertion_method.clone());
         did_doc.add_assertion_method_ref(authentication_reference.clone());
 
-        did_doc.add_key_agreement(verification_method.clone());
+        did_doc.add_key_agreement_object(verification_method.clone());
         did_doc.add_key_agreement_ref(authentication_reference.clone());
 
-        did_doc.add_capability_invocation(verification_method.clone());
+        did_doc.add_capability_invocation_object(verification_method.clone());
         did_doc.add_capability_invocation_ref(authentication_reference.clone());
 
-        did_doc.add_capability_delegation(verification_method.clone());
+        did_doc.add_capability_delegation_object(verification_method.clone());
         did_doc.add_capability_delegation_ref(authentication_reference.clone());
 
         did_doc.set_service(vec![service.clone()])

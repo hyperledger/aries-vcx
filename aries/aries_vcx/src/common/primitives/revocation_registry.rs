@@ -7,9 +7,9 @@ use anoncreds_types::data_types::{
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
-    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
-    wallet::base_wallet::BaseWallet,
 };
+use aries_vcx_ledger::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_parser_nom::Did;
 
 use super::credential_definition::PublicEntityStateType;

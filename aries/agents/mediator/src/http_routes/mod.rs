@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use axum::{
     body::Bytes,
     extract::State,
@@ -9,6 +9,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{
@@ -22,11 +23,7 @@ pub async fn oob_invite_qr(
     State(agent): State<ArcAgent<impl BaseWallet, impl MediatorPersistence>>,
 ) -> Response {
     let Json(oob_json) = oob_invite_json(State(agent)).await;
-    let preferred_mimetype = headers
-        .get(ACCEPT)
-        .map(|s| s.to_str().unwrap_or_default())
-        .unwrap_or_default();
-    match preferred_mimetype {
+    match detect_mime_type(&headers) {
         "application/json" => Json(oob_json).into_response(),
         _ => {
             let oob_string = serde_json::to_string_pretty(&oob_json).unwrap();
@@ -47,6 +44,13 @@ pub async fn oob_invite_qr(
     }
 }
 
+fn detect_mime_type(headers: &HeaderMap) -> &str {
+    headers
+        .get(ACCEPT)
+        .map(|s| s.to_str().unwrap_or_default())
+        .unwrap_or_default()
+}
+
 pub async fn oob_invite_json(
     State(agent): State<ArcAgent<impl BaseWallet, impl MediatorPersistence>>,
 ) -> Json<Value> {
@@ -61,8 +65,23 @@ pub async fn handle_didcomm(
     didcomm_handlers::handle_aries(State(agent), didcomm_msg).await
 }
 
-pub async fn readme() -> Html<String> {
-    Html("<p>Please refer to the API section of <a>readme</a> for usage. Thanks. </p>".into())
+#[derive(Serialize, Deserialize)]
+pub struct ReadmeInfo {
+    message: String,
+}
+
+pub async fn readme(headers: HeaderMap) -> Response {
+    match detect_mime_type(&headers) {
+        "application/json" => Json(ReadmeInfo {
+            message: "Please refer to the API section of a readme for usage. Thanks.".into(),
+        })
+        .into_response(),
+        _ => Html(
+            "<p>Please refer to the API section of <a>readme</a> for usage. Thanks. </p>"
+                .to_string(),
+        )
+        .into_response(),
+    }
 }
 
 pub async fn build_router(

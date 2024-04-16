@@ -5,7 +5,7 @@ use aries_vcx::{
     },
     utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx_core::wallet::{base_wallet::BaseWallet, indy::IndySdkWallet};
+use aries_vcx_wallet::wallet::{base_wallet::BaseWallet, indy::IndySdkWallet};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediator::{
     aries_agent::{client::transports::AriesTransport, Agent},

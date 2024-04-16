@@ -7,13 +7,11 @@ use aries_vcx::{
     },
     transport::Transport,
 };
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    ledger::base_ledger::{
-        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
-    },
-    wallet::base_wallet::BaseWallet,
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_ledger::ledger::base_ledger::{
+    AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use async_trait::async_trait;
 use messages::{
     msg_fields::protocols::{

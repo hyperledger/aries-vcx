@@ -1,7 +1,5 @@
 use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
-use aries_vcx_core::{
-    errors::error::AriesVcxCoreErrorKind, ledger::base_ledger::AnoncredsLedgerRead,
-};
+use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
 use serde_json::{self, Value};
 
 use crate::{errors::error::prelude::*, utils::openssl::encode};
@@ -132,8 +130,8 @@ pub async fn build_schemas_json_verifier(
     for cred_info in credential_data.iter() {
         if schemas_json.get(&cred_info.schema_id.to_string()).is_none() {
             let schema_id = &cred_info.schema_id;
-            let schema_json = ledger.get_schema(schema_id, None).await.map_err(|err| {
-                err.map(AriesVcxCoreErrorKind::InvalidSchema, "Cannot get schema")
+            let schema_json = ledger.get_schema(schema_id, None).await.map_err(|_err| {
+                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidSchema, "Cannot get schema")
             })?;
             let schema_val = serde_json::to_value(&schema_json).map_err(|err| {
                 AriesVcxError::from_msg(

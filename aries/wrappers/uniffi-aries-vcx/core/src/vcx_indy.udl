@@ -151,6 +151,8 @@ enum HolderState {
 [Error]
 enum VcxUniFFIError {
     "AriesVcxError",
+    "AriesVcxWalletError",
+    "AriesVcxLedgerError",
     "SerializationError",
     "InternalError",
     "StringParseError"

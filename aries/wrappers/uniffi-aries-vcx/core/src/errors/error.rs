@@ -6,6 +6,10 @@ pub type VcxUniFFIResult<T> = Result<T, VcxUniFFIError>;
 pub enum VcxUniFFIError {
     #[error("An AriesVCX error occured. More Info: {}", error_msg)]
     AriesVcxError { error_msg: String },
+    #[error("An AriesVCXWallet error occured. More Info: {}", error_msg)]
+    AriesVcxWalletError { error_msg: String },
+    #[error("An AriesVCXLedger error occured. More Info: {}", error_msg)]
+    AriesVcxLedgerError { error_msg: String },
     #[error(
         "A serialization error occurred. Check your inputs. More Info: {}",
         error_msg

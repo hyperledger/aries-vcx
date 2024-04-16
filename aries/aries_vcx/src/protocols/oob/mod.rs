@@ -1,4 +1,4 @@
-use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
+use aries_vcx_ledger::ledger::base_ledger::IndyLedgerRead;
 use chrono::Utc;
 use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
 use messages::{

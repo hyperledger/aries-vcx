@@ -6,10 +6,9 @@ use anoncreds_types::data_types::messages::{
     cred_selection::SelectedCredentials, pres_request::PresentationRequest,
     presentation::Presentation,
 };
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
-    wallet::base_wallet::BaseWallet,
-};
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
 use crate::{
     common::proofs::prover::prover_internal::{

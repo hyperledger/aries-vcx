@@ -14,6 +14,8 @@ members = [
     "aries/agents/aath-backchannel",
     "aries/wrappers/uniffi-aries-vcx/core",
     "aries/aries_vcx_core",
+    "aries/aries_vcx_wallet",
+    "aries/aries_vcx_ledger",
     "aries/misc/indy_ledger_response_parser",
     "aries/misc/wallet_migrator",
     "aries/misc/test_utils",

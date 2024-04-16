@@ -29,14 +29,12 @@ use aries_vcx::{
         },
     },
 };
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    ledger::{
-        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
-        indy::pool::test_utils::get_temp_dir_path,
-    },
-    wallet::base_wallet::BaseWallet,
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_ledger::ledger::{
+    base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
+    indy::pool::test_utils::get_temp_dir_path,
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use log::info;
 use messages::{
     msg_fields::protocols::{

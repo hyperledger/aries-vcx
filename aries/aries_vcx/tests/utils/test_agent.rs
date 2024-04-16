@@ -3,13 +3,11 @@
 use aries_vcx::{
     common::ledger::transactions::write_endorser_did, global::settings::DEFAULT_LINK_SECRET_ALIAS,
 };
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    ledger::base_ledger::{
-        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
-    },
-    wallet::base_wallet::{did_wallet::DidWallet, BaseWallet},
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_ledger::ledger::base_ledger::{
+    AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
 };
+use aries_vcx_wallet::wallet::base_wallet::{did_wallet::DidWallet, BaseWallet};
 use did_parser_nom::Did;
 use test_utils::{
     constants::TRUSTEE_SEED,

@@ -440,6 +440,8 @@ dependencies = [
  "anoncreds_types",
  "aries_vcx",
  "aries_vcx_core",
+ "aries_vcx_ledger",
+ "aries_vcx_wallet",
  "async-trait",
  "derive_builder",
  "did_key",
@@ -483,6 +485,8 @@ version = "0.63.0"
 dependencies = [
  "anoncreds_types",
  "aries_vcx_core",
+ "aries_vcx_ledger",
+ "aries_vcx_wallet",
  "async-channel",
  "async-trait",
  "backtrace",
@@ -504,6 +508,7 @@ dependencies = [
  "log",
  "messages",
  "num-bigint",
+ "pretty_assertions",
  "public_key",
  "rand 0.8.5",
  "regex",
@@ -529,10 +534,9 @@ version = "0.1.0"
 dependencies = [
  "anoncreds",
  "anoncreds_types",
- "aries-askar",
+ "aries_vcx_wallet",
  "async-trait",
  "bitvec",
- "bs58 0.5.0",
  "did_parser_nom",
  "futures",
  "indy-api-types",
@@ -550,6 +554,49 @@ dependencies = [
  "serde_json",
  "thiserror",
  "time 0.3.20",
+ "tokio",
+ "typed-builder 0.18.1",
+ "uuid 1.5.0",
+]
+
+[[package]]
+name = "aries_vcx_ledger"
+version = "0.63.0"
+dependencies = [
+ "anoncreds_types",
+ "aries_vcx_wallet",
+ "async-trait",
+ "did_parser_nom",
+ "indy-ledger-response-parser",
+ "indy-vdr",
+ "indy-vdr-proxy-client",
+ "log",
+ "lru",
+ "public_key",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "time 0.3.20",
+ "tokio",
+]
+
+[[package]]
+name = "aries_vcx_wallet"
+version = "0.63.0"
+dependencies = [
+ "anyhow",
+ "aries-askar",
+ "async-trait",
+ "bs58 0.5.0",
+ "indy-api-types",
+ "indy-vdr",
+ "libvdrtools",
+ "log",
+ "public_key",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "thiserror",
  "tokio",
  "typed-builder 0.18.1",
  "uuid 1.5.0",
@@ -1290,6 +1337,7 @@ name = "client-tui"
 version = "0.1.1"
 dependencies = [
  "aries_vcx_core",
+ "aries_vcx_wallet",
  "axum",
  "cursive",
  "futures",
@@ -1885,7 +1933,8 @@ name = "did_resolver_sov"
 version = "0.1.0"
 dependencies = [
  "aries_vcx",
- "aries_vcx_core",
+ "aries_vcx_ledger",
+ "aries_vcx_wallet",
  "async-trait",
  "chrono",
  "did_resolver",
@@ -3379,6 +3428,7 @@ dependencies = [
  "anyhow",
  "aries_vcx",
  "aries_vcx_core",
+ "aries_vcx_wallet",
  "async-trait",
  "axum",
  "axum-macros",
@@ -4224,6 +4274,15 @@ name = "redox_syscall"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "567664f262709473930a4bf9e51bf2ebf3348f2e748ccc50dea20646858f8f29"
+dependencies = [
+ "bitflags 1.3.2",
+]
+
+[[package]]
+name = "redox_syscall"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4722d768eff46b75989dd134e5c353f0d6296e5aaa3132e776cbdb56be7731aa"
 dependencies = [
  "bitflags 1.3.2",
 ]
@@ -5250,6 +5309,8 @@ version = "0.63.0"
 dependencies = [
  "anoncreds_types",
  "aries_vcx_core",
+ "aries_vcx_ledger",
+ "aries_vcx_wallet",
  "async-trait",
  "chrono",
  "did_parser_nom",
@@ -5655,6 +5716,7 @@ version = "0.63.0"
 dependencies = [
  "android_logger",
  "aries_vcx",
+ "aries_vcx_ledger",
  "async-trait",
  "did_parser_nom",
  "diddoc_legacy",
@@ -5896,7 +5958,7 @@ checksum = "f3c4517f54858c779bbcbf228f4fca63d121bf85fbecb2dc578cdf4a39395690"
 name = "wallet_migrator"
 version = "0.1.0"
 dependencies = [
- "aries_vcx_core",
+ "aries_vcx_wallet",
  "indy-credx",
  "libvdrtools",
  "log",
@@ -5935,6 +5997,12 @@ name = "wasi"
 version = "0.11.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
+
+[[package]]
+name = "wasite"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8dad83b4f25e74f184f64c43b150b91efe7647395b42289f38e50566d82855b"
 
 [[package]]
 name = "wasm-bindgen"
@@ -6031,9 +6099,13 @@ dependencies = [
 
 [[package]]
 name = "whoami"
-version = "1.4.1"
+version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22fc3756b8a9133049b26c7f61ab35416c130e8c09b660f5b3958b446f52cc50"
+checksum = "a44ab49fad634e88f55bf8f9bb3abd2f27d7204172a112c7c9987e01c1c94ea9"
+dependencies = [
+ "redox_syscall 0.4.1",
+ "wasite",
+]
 
 [[package]]
 name = "winapi"

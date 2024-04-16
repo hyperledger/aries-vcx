@@ -60,9 +60,14 @@ use anoncreds_types::data_types::{
         revocation_state::CredentialRevocationState,
     },
 };
+use aries_vcx_wallet::wallet::{
+    base_wallet::{record::Record, record_category::RecordCategory, BaseWallet},
+    record_tags::{RecordTag, RecordTags},
+};
 use async_trait::async_trait;
 use bitvec::bitvec;
 use did_parser_nom::Did;
+use log::warn;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};
 use time::OffsetDateTime;
@@ -75,13 +80,6 @@ use super::base_anoncreds::{
 use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::{
-        base_wallet::{
-            record::Record, record_category::RecordCategory, search_filter::SearchFilter,
-            BaseWallet,
-        },
-        record_tags::{RecordTag, RecordTags},
-    },
 };
 
 fn from_revocation_registry_delta_to_revocation_status_list(
@@ -208,10 +206,7 @@ impl Anoncreds {
         wql: &str,
     ) -> VcxCoreResult<Vec<(String, Credential)>> {
         let records = wallet
-            .search_record(
-                RecordCategory::Cred,
-                Some(SearchFilter::JsonFilter(wql.into())),
-            )
+            .search_record(RecordCategory::Cred, Some(wql.into()))
             .await?;
 
         let id_cred_tuple_list: VcxCoreResult<Vec<(String, Credential)>> = records
@@ -1115,7 +1110,7 @@ impl BaseAnonCreds for Anoncreds {
         wallet: &impl BaseWallet,
         cred_id: &CredentialId,
     ) -> VcxCoreResult<()> {
-        wallet.delete_record(RecordCategory::Cred, cred_id).await
+        Ok(wallet.delete_record(RecordCategory::Cred, cred_id).await?)
     }
 
     async fn prover_create_link_secret(

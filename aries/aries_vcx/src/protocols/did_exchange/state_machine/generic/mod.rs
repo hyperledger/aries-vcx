@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_doc::schema::did_doc::DidDocument;
 use did_parser_nom::Did;
-use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
+use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use messages::msg_fields::protocols::did_exchange::{
     complete::Complete, problem_report::ProblemReport, request::Request, response::Response,
@@ -87,7 +87,7 @@ impl GenericDidExchange {
         resolver_registry: Arc<ResolverRegistry>,
         invitation_id: Option<String>,
         their_did: &Did,
-        our_peer_did: &PeerDid<Numalgo2>,
+        our_peer_did: &PeerDid<Numalgo4>,
     ) -> Result<(Self, Request), AriesVcxError> {
         let TransitionResult { state, output } =
             DidExchangeRequester::<RequestSent>::construct_request(
@@ -107,7 +107,7 @@ impl GenericDidExchange {
         wallet: &impl BaseWallet,
         resolver_registry: Arc<ResolverRegistry>,
         request: Request,
-        our_peer_did: &PeerDid<Numalgo2>,
+        our_peer_did: &PeerDid<Numalgo4>,
         invitation_key: Option<Key>,
     ) -> Result<(Self, Response), AriesVcxError> {
         let TransitionResult { state, output } =
@@ -128,11 +128,15 @@ impl GenericDidExchange {
     pub async fn handle_response(
         self,
         response: Response,
+        resolver_registry: Arc<ResolverRegistry>,
     ) -> Result<(Self, Complete), (Self, AriesVcxError)> {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(request_sent_state) => {
-                    match request_sent_state.receive_response(response).await {
+                    match request_sent_state
+                        .receive_response(response, resolver_registry)
+                        .await
+                    {
                         Ok(TransitionResult { state, output }) => Ok((
                             GenericDidExchange::Requester(RequesterState::Completed(state)),
                             output,

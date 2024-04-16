@@ -8,13 +8,10 @@ use anoncreds_types::data_types::{
         presentation::{RequestedAttribute, RequestedCredentials, RequestedPredicate},
     },
 };
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::{
-        BaseAnonCreds, CredentialDefinitionsMap, RevocationStatesMap, SchemasMap,
-    },
-    errors::error::AriesVcxCoreErrorKind,
-    ledger::base_ledger::AnoncredsLedgerRead,
+use aries_vcx_core::anoncreds::base_anoncreds::{
+    BaseAnonCreds, CredentialDefinitionsMap, RevocationStatesMap, SchemasMap,
 };
+use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
 
 use crate::errors::error::prelude::*;
 
@@ -76,9 +73,9 @@ pub async fn build_cred_defs_json_prover(
             let credential_def = ledger
                 .get_cred_def(&cred_info.cred_def_id, None)
                 .await
-                .map_err(|err| {
-                    err.map(
-                        AriesVcxCoreErrorKind::InvalidProofCredentialData,
+                .map_err(|_err| {
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidProofCredentialData,
                         "Cannot get credential definition",
                     )
                 })?;
@@ -270,7 +267,7 @@ pub fn build_requested_credentials_json(
 pub mod pool_tests {
     use std::error::Error;
 
-    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
+    use aries_vcx_ledger::ledger::indy::pool::test_utils::get_temp_dir_path;
     use test_utils::{
         constants::{cred_def_id, schema_id, CRED_REV_ID, LICENCE_CRED_ID},
         devsetup::build_setup_profile,
@@ -318,7 +315,7 @@ pub mod pool_tests {
 
 #[cfg(test)]
 pub mod unit_tests {
-    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
+    use aries_vcx_ledger::ledger::indy::pool::test_utils::get_temp_dir_path;
     use serde_json::Value;
     use test_utils::{
         constants::{

@@ -1,10 +1,9 @@
 use std::{fmt::Display, path::Path};
 
 use anoncreds_types::data_types::messages::credential::Credential;
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
-    wallet::base_wallet::BaseWallet,
-};
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
 use messages::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},

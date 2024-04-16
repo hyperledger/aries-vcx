@@ -15,14 +15,12 @@ use aries_vcx::{
     },
     global::settings,
 };
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    ledger::{
-        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
-        indy::pool::test_utils::get_temp_dir_path,
-    },
-    wallet::base_wallet::BaseWallet,
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_ledger::ledger::{
+    base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+    indy::pool::test_utils::get_temp_dir_path,
 };
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_parser_nom::Did;
 use test_utils::{
     constants::TEST_TAILS_URL,

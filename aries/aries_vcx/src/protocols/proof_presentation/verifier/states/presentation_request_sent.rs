@@ -1,6 +1,5 @@
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
-};
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
 use messages::msg_fields::protocols::{
     present_proof::v1::{present::PresentationV1, request::RequestPresentationV1},
     report_problem::ProblemReport,

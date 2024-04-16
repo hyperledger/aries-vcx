@@ -11,7 +11,7 @@ clippy-workspace wallet:
     cargo clippy --examples --tests --no-default-features -F credx,anoncreds,vdr_proxy_ledger,legacy_proof,{{wallet}}
 
 clippy-aries-vcx features:
-    cargo clippy -p aries_vcx --features legacy_proof --features {{features}} --no-default-features
+    cargo clippy -p aries_vcx -p aries_vcx_core --features legacy_proof --features {{features}} --no-default-features
 
 clippy-aries-vcx-core features:
     cargo clippy -p aries_vcx_core --features legacy_proof,vdrtools_wallet --features {{features}}
@@ -38,10 +38,10 @@ test-unit test_name="":
     RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --exclude mediator --exclude aries_vcx_core {{test_name}}
 
 test-integration-aries-vcx-core features:
-    cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F {{features}}
+    cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F credx,{{features}} --no-default-features
 
 test-compatibility-aries-vcx-core:
-    cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F vdrtools_wallet,askar_wallet wallet_compatibility_
+    cargo test --manifest-path="aries/aries_vcx_core/Cargo.toml" -F vdrtools_wallet,askar_wallet,credx wallet_compatibility_
 
 test-wallet-migrator:
     cargo test --manifest-path="aries/misc/wallet_migrator/Cargo.toml" -F vdrtools_wallet,askar_wallet

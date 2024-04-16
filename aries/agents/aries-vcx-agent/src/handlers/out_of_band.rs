@@ -12,10 +12,9 @@ use aries_vcx::{
         },
         AriesMessage,
     },
-    protocols::did_exchange::state_machine::create_our_did_document,
+    protocols::did_exchange::state_machine::helpers::create_peer_did_4,
 };
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use did_peer::peer_did::{numalgos::numalgo2::Numalgo2, PeerDid};
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use url::Url;
 
 use crate::{
@@ -39,10 +38,8 @@ impl<T: BaseWallet> ServiceOutOfBand<T> {
     }
 
     pub async fn create_invitation(&self) -> AgentResult<AriesMessage> {
-        let (our_did_document, _our_verkey) =
-            create_our_did_document(self.wallet.as_ref(), self.service_endpoint.clone(), vec![])
-                .await?;
-        let peer_did = PeerDid::<Numalgo2>::from_did_doc(our_did_document)?;
+        let (peer_did, _our_verkey) =
+            create_peer_did_4(self.wallet.as_ref(), self.service_endpoint.clone(), vec![]).await?;
 
         let sender = OutOfBandSender::create()
             .append_service(&OobService::Did(peer_did.to_string()))

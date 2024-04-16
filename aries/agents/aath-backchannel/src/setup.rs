@@ -1,8 +1,8 @@
 use std::{io::prelude::*, sync::Arc};
 
 use aries_vcx_agent::{
-    aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet, build_indy_wallet, Agent as AriesAgent,
-    WalletInitConfig,
+    aries_vcx::aries_vcx_wallet::wallet::indy::IndySdkWallet, build_indy_wallet,
+    Agent as AriesAgent, WalletInitConfig,
 };
 use rand::{thread_rng, Rng};
 use reqwest::Url;
@@ -65,6 +65,7 @@ async fn download_genesis_file() -> std::result::Result<String, String> {
                 let mut f = std::fs::OpenOptions::new()
                     .write(true)
                     .create(true)
+                    .truncate(true)
                     .open(path.clone())
                     .expect("Unable to open file");
                 f.write_all(body.as_bytes()).expect("Unable to write data");

@@ -1,4 +1,4 @@
-use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
+use aries_vcx_ledger::ledger::base_ledger::IndyLedgerRead;
 use async_trait::async_trait;
 use did_resolver::did_parser_nom::Did;
 
