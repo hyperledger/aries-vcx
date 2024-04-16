@@ -5,11 +5,13 @@ use aries_vcx::{
     messages::msg_fields::protocols::out_of_band::invitation::OobService,
     utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx_core::errors::error::AriesVcxCoreError;
-use aries_vcx_wallet::wallet::{
-    base_wallet::{BaseWallet, ManageWallet},
-    indy::indy_wallet_config::IndyWalletConfig,
-    structs_io::UnpackMessageOutput,
+use aries_vcx_wallet::{
+    errors::error::VcxWalletError,
+    wallet::{
+        base_wallet::{BaseWallet, ManageWallet},
+        indy::indy_wallet_config::IndyWalletConfig,
+        structs_io::UnpackMessageOutput,
+    },
 };
 use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
 use messages::{
@@ -46,7 +48,7 @@ pub struct AgentBuilder<T: BaseWallet> {
 impl<T: BaseWallet> AgentBuilder<T> {
     pub async fn new_from_wallet_config(
         config: impl ManageWallet,
-    ) -> Result<Agent<impl BaseWallet, sqlx::MySqlPool>, AriesVcxCoreError> {
+    ) -> Result<Agent<impl BaseWallet, sqlx::MySqlPool>, VcxWalletError> {
         let wallet = Arc::new(config.create_wallet().await?);
 
         info!("Connecting to persistence layer");
@@ -57,8 +59,8 @@ impl<T: BaseWallet> AgentBuilder<T> {
             service: None,
         })
     }
-    pub async fn new_demo_agent(
-    ) -> Result<Agent<impl BaseWallet, sqlx::MySqlPool>, AriesVcxCoreError> {
+    pub async fn new_demo_agent() -> Result<Agent<impl BaseWallet, sqlx::MySqlPool>, VcxWalletError>
+    {
         let config = IndyWalletConfig {
             wallet_name: uuid::Uuid::new_v4().to_string(),
             wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
@@ -88,7 +90,7 @@ impl<T: BaseWallet, P: MediatorPersistence> Agent<T, P> {
         &mut self,
         routing_keys: Vec<String>,
         service_endpoint: url::Url,
-    ) -> Result<(), AriesVcxCoreError> {
+    ) -> Result<(), VcxWalletError> {
         let did_data = self.wallet.create_and_store_my_did(None, None).await?;
         let service = AriesService {
             id: "#inline".to_owned(),
@@ -106,7 +108,7 @@ impl<T: BaseWallet, P: MediatorPersistence> Agent<T, P> {
         &mut self,
         routing_keys: Vec<String>,
         service_endpoint: url::Url,
-    ) -> Result<(), AriesVcxCoreError> {
+    ) -> Result<(), VcxWalletError> {
         self.reset_service(routing_keys, service_endpoint).await
     }
     pub fn get_oob_invite(&self) -> Result<OOBInvitation, String> {

@@ -9,7 +9,7 @@ use aries_vcx::{
     did_parser_nom::Did,
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
 };
-use aries_vcx_core::{
+use aries_vcx_anoncreds::{
     self,
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
 };

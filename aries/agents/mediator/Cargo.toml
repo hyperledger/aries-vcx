@@ -15,9 +15,6 @@ aries_vcx = { path = "../../aries_vcx" }
 aries_vcx_wallet = { path = "../../aries_vcx_wallet", features = [
     "vdrtools_wallet",
 ] }
-aries_vcx_core = { path = "../../aries_vcx_core", features = [
-    "vdrtools_wallet",
-] }
 async-trait = "0.1.73"
 axum = "0.6"
 axum-macros = "0.3.8"

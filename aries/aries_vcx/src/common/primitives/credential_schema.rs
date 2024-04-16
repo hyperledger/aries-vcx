@@ -1,8 +1,8 @@
 use anoncreds_types::data_types::{
     identifiers::schema_id::SchemaId, ledger::schema::Schema as LedgerSchema,
 };
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds, global::settings::DEFAULT_SERIALIZE_VERSION,
+use aries_vcx_anoncreds::{
+    anoncreds::base_anoncreds::BaseAnonCreds, constants::DEFAULT_SERIALIZE_VERSION,
 };
 use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerWrite;
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;

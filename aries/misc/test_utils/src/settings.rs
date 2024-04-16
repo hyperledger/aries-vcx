@@ -8,4 +8,3 @@ pub const WALLET_KDF_ARGON2I_INT: &str = "ARGON2I_INT";
 pub const WALLET_KDF_ARGON2I_MOD: &str = "ARGON2I_MOD";
 pub const WALLET_KDF_DEFAULT: &str = WALLET_KDF_ARGON2I_MOD;
 pub const VERKEY: &str = "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE";
-pub static DEFAULT_SERIALIZE_VERSION: &str = "1.0";

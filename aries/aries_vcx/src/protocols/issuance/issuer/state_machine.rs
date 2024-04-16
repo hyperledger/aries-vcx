@@ -1,7 +1,7 @@
 use std::{fmt::Display, path::Path};
 
 use anoncreds_types::data_types::messages::credential::Credential;
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use chrono::Utc;

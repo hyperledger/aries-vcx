@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    aries_vcx_core::{
-        anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
-        PoolConfig,
+    aries_vcx_anoncreds::anoncreds::{
+        base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds,
     },
     aries_vcx_wallet::wallet::{
         askar::{askar_wallet_config::AskarWalletConfig, AskarWallet},
@@ -15,6 +14,7 @@ use aries_vcx_ledger::ledger::{
     request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
     response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
 };
+use indy_vdr::config::PoolConfig;
 
 use crate::{
     core::logging::enable_logging, errors::error::VcxUniFFIResult, runtime::block_on, ProfileHolder,

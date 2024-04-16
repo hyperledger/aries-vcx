@@ -10,6 +10,8 @@ pub enum VcxUniFFIError {
     AriesVcxWalletError { error_msg: String },
     #[error("An AriesVCXLedger error occured. More Info: {}", error_msg)]
     AriesVcxLedgerError { error_msg: String },
+    #[error("An AriesVCXAnoncreds error occured. More Info: {}", error_msg)]
+    AriesVcxAnoncredsError { error_msg: String },
     #[error(
         "A serialization error occurred. Check your inputs. More Info: {}",
         error_msg

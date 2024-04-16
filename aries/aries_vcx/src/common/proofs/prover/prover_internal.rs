@@ -8,7 +8,7 @@ use anoncreds_types::data_types::{
         presentation::{RequestedAttribute, RequestedCredentials, RequestedPredicate},
     },
 };
-use aries_vcx_core::anoncreds::base_anoncreds::{
+use aries_vcx_anoncreds::anoncreds::base_anoncreds::{
     BaseAnonCreds, CredentialDefinitionsMap, RevocationStatesMap, SchemasMap,
 };
 use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;

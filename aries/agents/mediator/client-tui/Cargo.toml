@@ -6,9 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aries_vcx_core = { path = "../../../aries_vcx_core", features = [
-    "vdrtools_wallet",
-] }
 aries_vcx_wallet = { path = "../../../aries_vcx_wallet", features = [
     "vdrtools_wallet",
 ] }

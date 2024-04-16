@@ -5,7 +5,6 @@ use aries_vcx::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::state_machine::generic::GenericDidExchange,
 };
-use aries_vcx_core::errors::error::AriesVcxCoreError;
 use aries_vcx_ledger::errors::error::VcxLedgerError;
 use did_resolver_sov::did_resolver::did_doc::schema::utils::error::DidDocumentLookupError;
 
@@ -27,14 +26,6 @@ impl From<serde_json::Error> for AgentError {
     fn from(serde_err: serde_json::Error) -> AgentError {
         let kind = AgentErrorKind::SerializationError;
         let message = format!("(De)serialization failed; err: {:?}", serde_err.to_string());
-        AgentError { message, kind }
-    }
-}
-
-impl From<AriesVcxCoreError> for AgentError {
-    fn from(err: AriesVcxCoreError) -> Self {
-        let kind = AgentErrorKind::GenericAriesVcxError;
-        let message = format!("AriesVcxCore Error; err: {:?}", err.to_string());
         AgentError { message, kind }
     }
 }

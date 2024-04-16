@@ -1,6 +1,5 @@
 use std::{num::ParseIntError, sync::PoisonError};
 
-use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 use did_doc::schema::{types::uri::UriWrapperError, utils::error::DidDocumentLookupError};
 use shared::errors::http_error::HttpError;
 
@@ -91,103 +90,5 @@ impl From<UriWrapperError> for AriesVcxError {
 impl From<ParseIntError> for AriesVcxError {
     fn from(err: ParseIntError) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err.to_string())
-    }
-}
-
-// TODO
-impl From<AriesVcxCoreError> for AriesVcxError {
-    fn from(err: AriesVcxCoreError) -> Self {
-        let kind = match err.kind() {
-            AriesVcxCoreErrorKind::InvalidState => AriesVcxErrorKind::InvalidState,
-            AriesVcxCoreErrorKind::InvalidConfiguration => AriesVcxErrorKind::InvalidConfiguration,
-            AriesVcxCoreErrorKind::InvalidJson => AriesVcxErrorKind::InvalidJson,
-            AriesVcxCoreErrorKind::InvalidOption => AriesVcxErrorKind::InvalidOption,
-            AriesVcxCoreErrorKind::InvalidMessagePack => AriesVcxErrorKind::InvalidMessagePack,
-            AriesVcxCoreErrorKind::NotReady => AriesVcxErrorKind::NotReady,
-            AriesVcxCoreErrorKind::IOError => AriesVcxErrorKind::IOError,
-            AriesVcxCoreErrorKind::LibindyInvalidStructure => {
-                AriesVcxErrorKind::LibindyInvalidStructure
-            }
-            AriesVcxCoreErrorKind::InvalidLibindyParam => AriesVcxErrorKind::InvalidLibindyParam,
-            AriesVcxCoreErrorKind::ActionNotSupported => AriesVcxErrorKind::ActionNotSupported,
-            AriesVcxCoreErrorKind::InvalidInput => AriesVcxErrorKind::InvalidInput,
-            AriesVcxCoreErrorKind::UnimplementedFeature => AriesVcxErrorKind::UnimplementedFeature,
-            AriesVcxCoreErrorKind::CredDefAlreadyCreated => {
-                AriesVcxErrorKind::CredDefAlreadyCreated
-            }
-            AriesVcxCoreErrorKind::RevDeltaNotFound => AriesVcxErrorKind::RevDeltaNotFound,
-            AriesVcxCoreErrorKind::RevDeltaFailedToClear => {
-                AriesVcxErrorKind::RevDeltaFailedToClear
-            }
-            AriesVcxCoreErrorKind::CreateRevRegDef => AriesVcxErrorKind::CreateRevRegDef,
-            AriesVcxCoreErrorKind::InvalidRevocationDetails => {
-                AriesVcxErrorKind::InvalidRevocationDetails
-            }
-            AriesVcxCoreErrorKind::InvalidRevocationEntry => {
-                AriesVcxErrorKind::InvalidRevocationEntry
-            }
-            AriesVcxCoreErrorKind::InvalidRevocationTimestamp => {
-                AriesVcxErrorKind::InvalidRevocationTimestamp
-            }
-            AriesVcxCoreErrorKind::RevRegDefNotFound => AriesVcxErrorKind::RevRegDefNotFound,
-            AriesVcxCoreErrorKind::InvalidAttributesStructure => {
-                AriesVcxErrorKind::InvalidAttributesStructure
-            }
-            AriesVcxCoreErrorKind::InvalidProof => AriesVcxErrorKind::InvalidProof,
-            AriesVcxCoreErrorKind::InvalidSchema => AriesVcxErrorKind::InvalidSchema,
-            AriesVcxCoreErrorKind::InvalidProofCredentialData => {
-                AriesVcxErrorKind::InvalidProofCredentialData
-            }
-            AriesVcxCoreErrorKind::InvalidProofRequest => AriesVcxErrorKind::InvalidProofRequest,
-            AriesVcxCoreErrorKind::ProofRejected => AriesVcxErrorKind::ProofRejected,
-            AriesVcxCoreErrorKind::InvalidSchemaSeqNo => AriesVcxErrorKind::InvalidSchemaSeqNo,
-            AriesVcxCoreErrorKind::DuplicationSchema => AriesVcxErrorKind::DuplicationSchema,
-            AriesVcxCoreErrorKind::UnknownSchemaRejection => {
-                AriesVcxErrorKind::UnknownSchemaRejection
-            }
-            AriesVcxCoreErrorKind::InvalidGenesisTxnPath => {
-                AriesVcxErrorKind::InvalidGenesisTxnPath
-            }
-            AriesVcxCoreErrorKind::CreatePoolConfig => AriesVcxErrorKind::CreatePoolConfig,
-            AriesVcxCoreErrorKind::PoolLedgerConnect => AriesVcxErrorKind::PoolLedgerConnect,
-            AriesVcxCoreErrorKind::InvalidLedgerResponse => {
-                AriesVcxErrorKind::InvalidLedgerResponse
-            }
-            AriesVcxCoreErrorKind::LedgerItemNotFound => AriesVcxErrorKind::LedgerItemNotFound,
-            AriesVcxCoreErrorKind::NoPoolOpen => AriesVcxErrorKind::NoPoolOpen,
-            AriesVcxCoreErrorKind::PostMessageFailed => AriesVcxErrorKind::PostMessageFailed,
-            AriesVcxCoreErrorKind::WalletCreate => AriesVcxErrorKind::WalletCreate,
-            AriesVcxCoreErrorKind::WalletAccessFailed => AriesVcxErrorKind::WalletAccessFailed,
-            AriesVcxCoreErrorKind::InvalidWalletHandle => AriesVcxErrorKind::InvalidWalletHandle,
-            AriesVcxCoreErrorKind::DuplicationWallet => AriesVcxErrorKind::DuplicationWallet,
-            AriesVcxCoreErrorKind::WalletRecordNotFound => AriesVcxErrorKind::WalletRecordNotFound,
-            AriesVcxCoreErrorKind::DuplicationWalletRecord => {
-                AriesVcxErrorKind::DuplicationWalletRecord
-            }
-            AriesVcxCoreErrorKind::WalletNotFound => AriesVcxErrorKind::WalletNotFound,
-            AriesVcxCoreErrorKind::WalletAlreadyOpen => AriesVcxErrorKind::WalletAlreadyOpen,
-            AriesVcxCoreErrorKind::DuplicationMasterSecret => {
-                AriesVcxErrorKind::DuplicationMasterSecret
-            }
-            AriesVcxCoreErrorKind::DuplicationDid => AriesVcxErrorKind::DuplicationDid,
-            AriesVcxCoreErrorKind::WalletError => AriesVcxErrorKind::WalletError,
-            AriesVcxCoreErrorKind::LoggingError => AriesVcxErrorKind::LoggingError,
-            AriesVcxCoreErrorKind::EncodeError => AriesVcxErrorKind::EncodeError,
-            AriesVcxCoreErrorKind::UnknownError => AriesVcxErrorKind::UnknownError,
-            AriesVcxCoreErrorKind::InvalidDid => AriesVcxErrorKind::InvalidDid,
-            AriesVcxCoreErrorKind::InvalidVerkey => AriesVcxErrorKind::InvalidVerkey,
-            AriesVcxCoreErrorKind::InvalidNonce => AriesVcxErrorKind::InvalidNonce,
-            AriesVcxCoreErrorKind::InvalidUrl => AriesVcxErrorKind::InvalidUrl,
-            AriesVcxCoreErrorKind::SerializationError => AriesVcxErrorKind::SerializationError,
-            AriesVcxCoreErrorKind::NotBase58 => AriesVcxErrorKind::NotBase58,
-            AriesVcxCoreErrorKind::ParsingError => AriesVcxErrorKind::ParsingError,
-            AriesVcxCoreErrorKind::InvalidHttpResponse => AriesVcxErrorKind::InvalidHttpResponse,
-            AriesVcxCoreErrorKind::InvalidMessages => AriesVcxErrorKind::InvalidMessages,
-            AriesVcxCoreErrorKind::VdrToolsError(u32) => AriesVcxErrorKind::VdrToolsError(u32),
-            AriesVcxCoreErrorKind::UrsaError => AriesVcxErrorKind::UrsaError,
-            AriesVcxCoreErrorKind::NoAgentInformation => AriesVcxErrorKind::NoAgentInformation,
-            AriesVcxCoreErrorKind::InvalidMessageFormat => AriesVcxErrorKind::InvalidMessageFormat,
-        };
-        AriesVcxError::from_msg(kind, format!("AriesVcxCoreError: {}", err))
     }
 }

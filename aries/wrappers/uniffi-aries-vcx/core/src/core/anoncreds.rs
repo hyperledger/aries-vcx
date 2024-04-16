@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aries_vcx::aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 
 use super::profile::ProfileHolder;
 use crate::{errors::error::VcxUniFFIResult, runtime::block_on};

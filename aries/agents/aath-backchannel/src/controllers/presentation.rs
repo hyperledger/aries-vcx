@@ -5,7 +5,7 @@ use anoncreds_types::data_types::messages::pres_request::{
     AttributeInfo, NonRevokedInterval, PredicateInfo, PresentationRequestPayload,
 };
 use aries_vcx_agent::aries_vcx::{
-    aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds,
+    aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds,
     handlers::util::PresentationProposalData,
     messages::msg_fields::protocols::present_proof::v1::propose::{Predicate, PresentationAttr},
     protocols::proof_presentation::{

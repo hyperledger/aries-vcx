@@ -140,28 +140,6 @@ jobs:
       - name: "Verify clippy across the entire workspace with default features"
         run: just clippy-aries-vcx ${{ matrix.backend }}
 
-  aries_vcx_core_clippy:
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        backend: ["credx,vdrtools_wallet", "vdr_proxy_ledger,askar_wallet"]
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
-          components: clippy
-      - name: "Install dependencies"
-        shell: bash
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-          sudo snap install --edge --classic just
-      - name: "Verify clippy across the entire workspace with default features"
-        run: just clippy-aries-vcx-core ${{ matrix.backend }}
-
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
 
@@ -294,27 +272,7 @@ jobs:
       - name: "Run wallet migration tests"
         run: just test-wallet-migrator
 
-  test-intergation-aries-vcx-core:
-    needs: workflow-setup
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        wallet: ["vdrtools_wallet", "askar_wallet"]
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust testing environment"
-        uses: ./.github/actions/setup-testing-rust
-        with:
-          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
-          skip-docker-setup: true
-      - name: "Install just"
-        run: sudo snap install --edge --classic just
-      - name: "Run aries-vcx-core integration tests"
-        run: just test-integration-aries-vcx-core ${{ matrix.wallet }}
-
-  test-compatibility-aries-vcx-core:
+  test-compatibility-aries-vcx-wallet:
     needs: workflow-setup
     runs-on: ubuntu-20.04
     steps:
@@ -328,8 +286,8 @@ jobs:
           skip-docker-setup: true
       - name: "Install just"
         run: sudo snap install --edge --classic just
-      - name: "Run aries-vcx-core compatibility tests"
-        run: just test-compatibility-aries-vcx-core
+      - name: "Run aries-vcx-wallet compatibility tests"
+        run: just test-compatibility-aries-vcx-wallet
 
   test-integration-aries-vcx:
     needs: workflow-setup
