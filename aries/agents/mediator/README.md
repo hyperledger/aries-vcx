@@ -119,13 +119,10 @@ cargo build --package mediator --no-default-features --release
 Currently exposed endpoints.
 
 ```yaml
-`/register`:
-- **Description** : | 
+`/invitation`:
+- **Description** : |
+    Returns OOB invitation in json format.
     Shows an Aries Out Of Band (OOB) invitation which can be used to connect to the mediator using a conformant Aries Agent.
-    Use `Accept` header with value "application/json" to receive same in json format.
-
-`/register.json`:
-- **Description** : Returns OOB invitation in json format.
 ```
 
 ```yaml
