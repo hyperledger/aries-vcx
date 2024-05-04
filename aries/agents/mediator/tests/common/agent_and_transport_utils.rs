@@ -23,7 +23,6 @@ use messages::{
     },
     AriesMessage,
 };
-use reqwest::header::ACCEPT;
 use test_utils::mockdata::mock_ledger::MockLedger;
 
 use super::prelude::*;
@@ -36,17 +35,16 @@ pub async fn didcomm_connection(
 ) -> Result<InviteeConnection<Completed>> {
     let client = reqwest::Client::new();
     let base: Url = ENDPOINT_ROOT.parse().unwrap();
-    let endpoint_register = base.join("register").unwrap();
+    let endpoint_register = base.join("invitation").unwrap();
 
     let oobi: OOBInvitation = client
         .get(endpoint_register)
-        .header(ACCEPT, "application/json")
         .send()
         .await?
         .error_for_status()?
         .json()
         .await?;
-    info!("Got invitation from register endpoint {:?}", oobi);
+    info!("Got invitation {:?}", oobi);
 
     let state: InviteeConnection<Completed> =
         agent.establish_connection(oobi, aries_transport).await?;

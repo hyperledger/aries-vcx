@@ -4,10 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-};
+use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_ledger::{
     errors::error::VcxLedgerResult,
     ledger::{
@@ -27,7 +24,11 @@ use chrono::{DateTime, Duration, Utc};
 use did_parser_nom::Did;
 use log::{debug, info};
 
-use crate::constants::{POOL1_TXN, TRUSTEE_SEED};
+use crate::{
+    constants::{POOL1_TXN, TRUSTEE_SEED},
+    errors::error::{TestUtilsError, TestUtilsResult},
+    settings,
+};
 
 #[cfg(feature = "vdr_proxy_ledger")]
 pub mod vdr_proxy_ledger;
@@ -41,7 +42,7 @@ pub mod vdrtools_wallet;
 
 const DEFAULT_AML_LABEL: &str = "eula";
 
-pub fn write_file<P: AsRef<Path>>(file: P, content: &str) -> VcxCoreResult<()>
+pub fn write_file<P: AsRef<Path>>(file: P, content: &str) -> TestUtilsResult<()>
 where
     P: std::convert::AsRef<std::ffi::OsStr>,
 {
@@ -52,10 +53,7 @@ where
             .recursive(true)
             .create(parent_path)
             .map_err(|err| {
-                AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::UnknownError,
-                    format!("Can't create the file: {}", err),
-                )
+                TestUtilsError::UnknownError(format!("Can't create the file: {}", err))
             })?;
     }
 
@@ -64,32 +62,27 @@ where
         .truncate(true)
         .create(true)
         .open(path)
-        .map_err(|err| {
-            AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::UnknownError,
-                format!("Can't open the file: {}", err),
-            )
-        })?;
+        .map_err(|err| TestUtilsError::UnknownError(format!("Can't open the file: {}", err)))?;
 
     file.write_all(content.as_bytes()).map_err(|err| {
-        AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::UnknownError,
-            format!("Can't write content: \"{}\" to the file: {}", content, err),
-        )
+        TestUtilsError::UnknownError(format!(
+            "Can't write content: \"{}\" to the file: {}",
+            content, err
+        ))
     })?;
 
     file.flush().map_err(|err| {
-        AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::UnknownError,
-            format!("Can't write content: \"{}\" to the file: {}", content, err),
-        )
+        TestUtilsError::UnknownError(format!(
+            "Can't write content: \"{}\" to the file: {}",
+            content, err
+        ))
     })?;
 
     file.sync_data().map_err(|err| {
-        AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::UnknownError,
-            format!("Can't write content: \"{}\" to the file: {}", content, err),
-        )
+        TestUtilsError::UnknownError(format!(
+            "Can't write content: \"{}\" to the file: {}",
+            content, err
+        ))
     })
 }
 pub struct SetupMocks;
@@ -178,13 +171,13 @@ pub async fn dev_build_featured_indy_ledger(
 pub async fn dev_build_featured_anoncreds() -> impl BaseAnonCreds {
     #[cfg(feature = "credx")]
     {
-        use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+        use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
         return IndyCredxAnonCreds;
     }
 
     #[cfg(all(not(feature = "credx"), feature = "anoncreds"))]
     {
-        use aries_vcx_core::anoncreds::anoncreds::Anoncreds;
+        use aries_vcx_anoncreds::anoncreds::anoncreds::Anoncreds;
         return Anoncreds;
     }
 
@@ -230,10 +223,7 @@ pub async fn build_setup_profile() -> SetupProfile<
     let anoncreds = dev_build_featured_anoncreds().await;
 
     anoncreds
-        .prover_create_link_secret(
-            &wallet,
-            &aries_vcx_core::global::settings::DEFAULT_LINK_SECRET_ALIAS.to_string(),
-        )
+        .prover_create_link_secret(&wallet, &settings::DEFAULT_LINK_SECRET_ALIAS.to_string())
         .await
         .unwrap();
 

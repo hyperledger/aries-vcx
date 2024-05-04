@@ -10,17 +10,19 @@ edition.workspace = true
 
 [features]
 vdrtools_wallet = ["aries_vcx_wallet/vdrtools_wallet"]
-vdr_proxy_ledger = ["aries_vcx_ledger/vdr_proxy_ledger", "credx"]
-credx = ["aries_vcx_core/credx"]
-anoncreds = ["aries_vcx_core/anoncreds"]
+vdr_proxy_ledger = ["aries_vcx_ledger/vdr_proxy_ledger", "credx", "dep:indy-ledger-response-parser", "dep:indy-vdr-proxy-client"]
+credx = ["aries_vcx_anoncreds/credx"]
+anoncreds = ["aries_vcx_anoncreds/anoncreds"]
 
 [dependencies]
 anoncreds_types = { path = "../../misc/anoncreds_types" }
-aries_vcx_core = { path = "../../aries_vcx_core" }
+aries_vcx_anoncreds = { path = "../../aries_vcx_anoncreds" }
 did_parser_nom = { path = "../../../did_core/did_parser_nom" }
 aries_vcx_wallet = { path = "../../aries_vcx_wallet" }
 aries_vcx_ledger = { path = "../../aries_vcx_ledger" }
 public_key = { path = "../../../did_core/public_key" }
+indy-ledger-response-parser = { path = "../indy_ledger_response_parser", optional = true }
+indy-vdr-proxy-client = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", optional = true }
 lazy_static = "1"
 serde_json = "1"
 rand = "0.8"
@@ -29,3 +31,4 @@ async-trait = "0.1"
 chrono = "0.4"
 env_logger = "0.10"
 log = "0.4"
+thiserror = "1.0.40"

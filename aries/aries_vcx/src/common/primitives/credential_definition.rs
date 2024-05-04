@@ -6,8 +6,8 @@ use anoncreds_types::data_types::{
     },
     messages::cred_definition_config::CredentialDefinitionConfig,
 };
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds, global::settings::DEFAULT_SERIALIZE_VERSION,
+use aries_vcx_anoncreds::{
+    anoncreds::base_anoncreds::BaseAnonCreds, constants::DEFAULT_SERIALIZE_VERSION,
 };
 use aries_vcx_ledger::{
     errors::error::VcxLedgerError,

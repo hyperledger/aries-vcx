@@ -140,28 +140,6 @@ jobs:
       - name: "Verify clippy across the entire workspace with default features"
         run: just clippy-aries-vcx ${{ matrix.backend }}
 
-  aries_vcx_core_clippy:
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        backend: ["credx,vdrtools_wallet", "vdr_proxy_ledger,askar_wallet"]
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
-          components: clippy
-      - name: "Install dependencies"
-        shell: bash
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-          sudo snap install --edge --classic just
-      - name: "Verify clippy across the entire workspace with default features"
-        run: just clippy-aries-vcx-core ${{ matrix.backend }}
-
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
 
@@ -225,39 +203,6 @@ jobs:
           publish-version: ${{ env.PUBLISH_VERSION }}
           url-docker-registry: ${{ env.URL_DOCKER_REGISTRY }}
 
-#  ##########################################################################################
-#  ###############################    CODECOV    ###########################################
-
-  code-coverage-aries-vcx-integration-modular-libs:
-    needs: workflow-setup
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust codecov environment"
-        uses: ./.github/actions/setup-codecov-rust
-      - name: "Run workspace tests: modular libs profile"
-        run: |
-          RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries_vcx -F vdrtools_wallet credx -- --ignored;
-
-          mkdir -p /tmp/artifacts/coverage
-          grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
-      - name: "Upload coverage to Codecov"
-        uses: codecov/codecov-action@v2
-        with:
-          directory: /tmp/artifacts/coverage
-          flags: unittests-aries-vcx
-          name: codecov-unit-aries-vcx
-          fail_ci_if_error: true
-          path_to_write_report: /tmp/artifacts/coverage/codecov_report.gz
-      - uses: actions/upload-artifact@v3
-        with:
-          name: code-coverage-report-unit-aries-vcx
-          path: /tmp/artifacts/coverage
-
   ##########################################################################################
   ###############################    TESTING    ###########################################
 
@@ -294,27 +239,7 @@ jobs:
       - name: "Run wallet migration tests"
         run: just test-wallet-migrator
 
-  test-intergation-aries-vcx-core:
-    needs: workflow-setup
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        wallet: ["vdrtools_wallet", "askar_wallet"]
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust testing environment"
-        uses: ./.github/actions/setup-testing-rust
-        with:
-          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
-          skip-docker-setup: true
-      - name: "Install just"
-        run: sudo snap install --edge --classic just
-      - name: "Run aries-vcx-core integration tests"
-        run: just test-integration-aries-vcx-core ${{ matrix.wallet }}
-
-  test-compatibility-aries-vcx-core:
+  test-compatibility-aries-vcx-wallet:
     needs: workflow-setup
     runs-on: ubuntu-20.04
     steps:
@@ -328,8 +253,8 @@ jobs:
           skip-docker-setup: true
       - name: "Install just"
         run: sudo snap install --edge --classic just
-      - name: "Run aries-vcx-core compatibility tests"
-        run: just test-compatibility-aries-vcx-core
+      - name: "Run aries-vcx-wallet compatibility tests"
+        run: just test-compatibility-aries-vcx-wallet
 
   test-integration-aries-vcx:
     needs: workflow-setup

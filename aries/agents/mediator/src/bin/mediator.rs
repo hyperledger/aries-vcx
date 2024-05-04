@@ -1,4 +1,4 @@
-use aries_vcx_wallet::wallet::indy::IndySdkWallet;
+use aries_vcx_wallet::wallet::indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet};
 use log::info;
 use mediator::aries_agent::AgentBuilder;
 
@@ -8,8 +8,18 @@ async fn main() {
     setup_logging();
     info!("Starting up mediator! ⚙️⚙️");
     let endpoint_root = std::env::var("ENDPOINT_ROOT").unwrap_or("127.0.0.1:8005".into());
-    info!("Mediator endpoint root address {}", endpoint_root);
-    let mut agent = AgentBuilder::<IndySdkWallet>::new_demo_agent()
+    info!("Mediator endpoint root address: {}", endpoint_root);
+    let indy_wallet_config_json = std::env::var("INDY_WALLET_CONFIG").unwrap_or(
+        "{
+            \"wallet_name\": \"demo-wallet\",
+            \"wallet_key\" : \"8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY\",
+            \"wallet_key_derivation\": \"RAW\"
+        }"
+        .to_string(),
+    );
+    let wallet_config: IndyWalletConfig = serde_json::from_str(&indy_wallet_config_json).unwrap();
+    info!("Wallet Config: {:?}", wallet_config);
+    let mut agent = AgentBuilder::<IndySdkWallet>::new_from_wallet_config(wallet_config)
         .await
         .unwrap();
     agent

@@ -15,16 +15,12 @@ aries_vcx = { path = "../../aries_vcx" }
 aries_vcx_wallet = { path = "../../aries_vcx_wallet", features = [
     "vdrtools_wallet",
 ] }
-aries_vcx_core = { path = "../../aries_vcx_core", features = [
-    "vdrtools_wallet",
-] }
 async-trait = "0.1.73"
 axum = "0.6"
 axum-macros = "0.3.8"
 diddoc_legacy = { path = "../../misc/legacy/diddoc_legacy" }
 dotenvy = "0.15"
 env_logger = "0.10.0"
-fast_qr = { version = "0.10.2", features = ["svg"] }
 futures = "0.3.28"
 log = "0.4.20"
 messages = { path = "../../messages" }

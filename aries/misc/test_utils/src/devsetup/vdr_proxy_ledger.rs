@@ -1,6 +1,5 @@
 use std::{env, sync::Arc};
 
-use aries_vcx_core::{ResponseParser, VdrProxyClient};
 use aries_vcx_ledger::ledger::{
     indy_vdr_ledger::{
         IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig,
@@ -9,6 +8,8 @@ use aries_vcx_ledger::ledger::{
     request_submitter::vdr_proxy::VdrProxySubmitter,
     response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
 };
+use indy_ledger_response_parser::ResponseParser;
+use indy_vdr_proxy_client::VdrProxyClient;
 use log::info;
 
 use crate::devsetup::prepare_taa_options;

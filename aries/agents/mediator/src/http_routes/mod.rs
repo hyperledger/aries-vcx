@@ -18,32 +18,6 @@ use crate::{
     persistence::MediatorPersistence,
 };
 
-pub async fn oob_invite_qr(
-    headers: HeaderMap,
-    State(agent): State<ArcAgent<impl BaseWallet, impl MediatorPersistence>>,
-) -> Response {
-    let Json(oob_json) = oob_invite_json(State(agent)).await;
-    match detect_mime_type(&headers) {
-        "application/json" => Json(oob_json).into_response(),
-        _ => {
-            let oob_string = serde_json::to_string_pretty(&oob_json).unwrap();
-            let qr = fast_qr::QRBuilder::new(oob_string.clone()).build().unwrap();
-            let oob_qr_svg = fast_qr::convert::svg::SvgBuilder::default().to_str(&qr);
-            Html(format!(
-                "<style>
-                        svg {{
-                            width: 50%;
-                            height: 50%;
-                        }}
-                    </style>
-                    {oob_qr_svg} <br>
-                    <pre>{oob_string}</pre>"
-            ))
-            .into_response()
-        }
-    }
-}
-
 fn detect_mime_type(headers: &HeaderMap) -> &str {
     headers
         .get(ACCEPT)
@@ -89,8 +63,7 @@ pub async fn build_router(
 ) -> Router {
     Router::default()
         .route("/", get(readme))
-        .route("/register", get(oob_invite_qr))
-        .route("/register.json", get(oob_invite_json))
+        .route("/invitation", get(oob_invite_json))
         .route("/didcomm", get(handle_didcomm).post(handle_didcomm))
         .layer(tower_http::catch_panic::CatchPanicLayer::new())
         .with_state(Arc::new(agent))
