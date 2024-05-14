@@ -12,6 +12,7 @@ use aries_vcx::{
 use aries_vcx_anoncreds::{
     self,
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    errors::error::VcxAnoncredsError,
 };
 use aries_vcx_ledger::ledger::indy_vdr_ledger::{
     build_ledger_components, DefaultIndyLedgerRead, VcxPoolConfig,
@@ -64,10 +65,16 @@ pub async fn build_indy_wallet(
     let config_issuer = wallet.configure_issuer(&isser_seed).await.unwrap();
 
     let anoncreds = IndyCredxAnonCreds;
-    anoncreds
+
+    if let Err(err) = anoncreds
         .prover_create_link_secret(&wallet, &DEFAULT_LINK_SECRET_ALIAS.to_string())
         .await
-        .unwrap();
+    {
+        match err {
+            VcxAnoncredsError::DuplicationMasterSecret(_) => {} // ignore
+            _ => panic!("{}", err),
+        };
+    }
 
     (wallet, config_issuer)
 }
