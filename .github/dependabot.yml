@@ -1,0 +1,126 @@
+ # For details on how this file works refer to:
+ #   - https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+version: 2
+updates:
+  # Maintain dependencies for GitHub Actions
+  #  - Check for updates once a week
+  #  - Group all updates into a single PR
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      all-actions:
+        patterns: [ "*" ]
+
+  # Maintain dependencies for Cargo Packages
+  - package-ecosystem: "cargo"
+    directory: "/aries/misc/anoncreds_types"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Maintain dependencies for Cargo Packages
+  - package-ecosystem: "cargo"
+    directory: "/aries/misc/legacy/libvdrtools/indy-api-types"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Maintain dependencies for Cargo Packages
+  - package-ecosystem: "cargo"
+    directory: "/aries/misc/legacy/libvdrtools/indy-utils"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Maintain dependencies for Cargo Packages
+  - package-ecosystem: "cargo"
+    directory: "/aries/misc/legacy/libvdrtools/indy-wallet"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Maintain dependencies for Cargo Packages
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Maintain dependencies for Gradle
+  - package-ecosystem: "gradle"
+    directory: "/aries/agents/mobile_demo/app"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-patch"]
+
+  # Maintain dependencies for Gradle
+  - package-ecosystem: "gradle"
+    directory: "/aries/agents/mobile_demo"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-patch"]
+
+  # Maintain dependencies for docker
+  - package-ecosystem: "docker"
+    directory: "/.github/ci"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for docker
+  - package-ecosystem: "docker"
+    directory: "/aries/agents/aath-backchannel"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+
+  # Maintain dependencies for docker
+  - package-ecosystem: "docker"
+    directory: "/aries/agents/mediator"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Canada/Pacific"
+      
