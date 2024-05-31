@@ -3,6 +3,6 @@
 ### Active Maintainers
 | name            | Github                                         | Discord          |
 |-----------------|------------------------------------------------|------------------|
-| Patrik Stas     | [@Patrik-Stas](https://github.com/Patrik-Stas) | Patrik Stas#7722 |
-| Miroslav Kovar  | [@mirgee](https://github.com/mirgee)           | mirgee#3763      |
-| George Mulhearn | [@gmulhearn](https://github.com/gmulhearn)     | gmulhearn#0356   |
+| Patrik Stas     | [@Patrik-Stas](https://github.com/Patrik-Stas) | patrikstas       |
+| James Ebert     | [@JamesKEbert](https://github.com/JamesKEbert) | jamesebert       |
+| George Mulhearn | [@gmulhearn](https://github.com/gmulhearn)     | gmulhearn        |
