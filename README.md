@@ -31,7 +31,7 @@ Do you have a question ❓Are you considering using our components? 🚀 We'll b
 
 There's 2 best way to reach us:
 - Leave us message on `aries-vcx` [discord](https://discord.com/channels/905194001349627914/955480822675308604) channel.
-- Join our Zoom community calls. Biweekly Thursdays @ 09:00 am UTC via Zoom, find more details on [wiki](https://wiki.hyperledger.org/display/ARIES/Community+calls)
+- Join our Zoom community calls. Biweekly Tuesdays @ 11:00 pm UTC via Zoom, find more details on [wiki](https://wiki.hyperledger.org/display/ARIES/Community+calls)
 
 ## Versioning & releases
   - Crates are not yet published on crates.io. You can consume crates as github-type Cargo dependency.
