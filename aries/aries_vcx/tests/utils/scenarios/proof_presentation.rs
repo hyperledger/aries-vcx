@@ -115,7 +115,7 @@ pub async fn accept_proof_proposal(
         .nonce(Nonce::new().unwrap())
         .build();
     verifier
-        .set_presentation_request(presentation_request.into(), None)
+        .set_presentation_request(presentation_request.into_v1(), None)
         .unwrap();
     verifier.mark_presentation_request_sent().unwrap()
 }
@@ -159,7 +159,7 @@ pub async fn create_proof_request_data(
         .requested_predicates(requested_preds)
         .non_revoked(Some(revocation_interval))
         .build()
-        .into()
+        .into_v1()
 }
 
 pub async fn create_prover_from_request(presentation_request: RequestPresentationV1) -> Prover {
