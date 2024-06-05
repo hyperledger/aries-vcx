@@ -49,6 +49,7 @@ use anoncreds_types::data_types::{
             RevocationRegistryDefinition as OurRevocationRegistryDefinition,
             RevocationRegistryDefinitionValue as OurRevocationRegistryDefinitionValue,
         },
+        rev_status_list::RevocationStatusList as OurRevocationStatusList,
         schema::{AttributeNames as OurAttributeNames, Schema as OurSchema},
     },
     messages::{
@@ -503,15 +504,15 @@ impl Convert for HashMap<OurRevocationRegistryDefinitionId, HashMap<u64, OurRevo
                 let OurRevocationRegistry { value } = entry;
                 let registry = CryptoRevocationRegistry { accum: value.accum };
 
-                let rev_status_list = AnoncredsRevocationStatusList::new(
+                let rev_status_list = OurRevocationStatusList::new(
                     Some(&rev_reg_def_id.to_string()),
-                    issuer_id,
+                    issuer_id.convert(())?,
                     Default::default(),
                     Some(registry),
                     Some(timestamp),
                 )?;
 
-                lists.push(rev_status_list);
+                lists.push(rev_status_list.convert(())?);
             }
         }
         Ok(lists)
@@ -574,6 +575,30 @@ impl Convert for OurCredentialRevocationState {
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
+        serde_convert(self)
+    }
+}
+
+impl Convert for AnoncredsRevocationStatusList {
+    type Args = ();
+
+    type Target = OurRevocationStatusList;
+
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
+        serde_convert(self)
+    }
+}
+
+impl Convert for OurRevocationStatusList {
+    type Args = ();
+
+    type Target = AnoncredsRevocationStatusList;
+
+    type Error = Box<dyn std::error::Error>;
+
+    fn convert(self, _: Self::Args) -> Result<Self::Target, Self::Error> {
         serde_convert(self)
     }
 }

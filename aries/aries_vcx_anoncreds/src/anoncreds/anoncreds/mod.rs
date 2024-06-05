@@ -31,7 +31,6 @@ use anoncreds::{
         Presentation as AnoncredsPresentation, PresentationRequest as AnoncredsPresentationRequest,
         RegistryType, RevocationRegistry as AnoncredsRevocationRegistry,
         RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
-        RevocationStatusList,
     },
 };
 use anoncreds_types::data_types::{
@@ -44,6 +43,7 @@ use anoncreds_types::data_types::{
         rev_reg::RevocationRegistry,
         rev_reg_def::RevocationRegistryDefinition,
         rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
+        rev_status_list::RevocationStatusList,
         schema::{AttributeNames, Schema},
     },
     messages::{
@@ -104,7 +104,7 @@ fn from_revocation_registry_delta_to_revocation_status_list(
 
     RevocationStatusList::new(
         Some(&rev_reg_def_id.to_string()),
-        rev_reg_def.issuer_id.clone(),
+        rev_reg_def.issuer_id.clone().convert(())?,
         revocation_list,
         Some(accum),
         timestamp,
@@ -982,28 +982,17 @@ impl BaseAnonCreds for Anoncreds {
         });
         let registry = CryptoRevocationRegistry { accum };
 
-        // let rev_status_list = create_revocation_status_list(
-        //     &cred_def,
-        //     RevocationRegistryDefinitionId::new_unchecked(issuer_id),
-        //     &revoc_reg_def,
-        //     rev_reg_priv, // No way to construct this from revocation registry currently
-        //     true,
-        //     Some(timestamp),
-        // );
-
-        // TODO: Made public, should find a better way
         let rev_status_list = RevocationStatusList::new(
             Some(&rev_reg_def_id),
-            issuer_id,
+            issuer_id.convert(())?,
             revocation_list,
             Some(registry),
             Some(timestamp),
         )?;
-
         let rev_state = anoncreds::prover::create_or_update_revocation_state(
             tails_path,
             &revoc_reg_def,
-            &rev_status_list,
+            &rev_status_list.convert(())?,
             cred_rev_id,
             None,
             None,
@@ -1201,7 +1190,7 @@ impl BaseAnonCreds for Anoncreds {
             &cred_def,
             &rev_reg_def.convert(())?,
             &rev_reg_def_priv,
-            &rev_status_list,
+            &rev_status_list.convert(())?,
             None,
             Some(vec![cred_rev_id].into_iter().collect()),
             None,
@@ -1209,7 +1198,7 @@ impl BaseAnonCreds for Anoncreds {
 
         let updated_revocation_registry_delta =
             from_revocation_status_list_to_revocation_registry_delta(
-                &updated_rev_status_list,
+                &updated_rev_status_list.convert(())?,
                 Some(prev_accum),
             )?;
         let updated_revocation_registry_delta_str =
