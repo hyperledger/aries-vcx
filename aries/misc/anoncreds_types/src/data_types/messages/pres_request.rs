@@ -38,7 +38,6 @@ impl PresentationRequestPayload {
     pub fn into_v1(self) -> PresentationRequest {
         PresentationRequest::PresentationRequestV1(self)
     }
-
     pub fn into_v2(self) -> PresentationRequest {
         PresentationRequest::PresentationRequestV2(self)
     }
