@@ -989,7 +989,6 @@ impl BaseAnonCreds for Anoncreds {
             Some(registry),
             Some(timestamp),
         )?;
-
         let rev_state = anoncreds::prover::create_or_update_revocation_state(
             tails_path,
             &revoc_reg_def,
