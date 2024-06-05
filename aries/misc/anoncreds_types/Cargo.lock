@@ -19,9 +19,9 @@ checksum = "ee5cca1ddc8b9dceb55b7f1272a9d1e643d73006f350a20ab4926d24e33f0f0d"
 
 [[package]]
 name = "anoncreds-clsignatures"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b4e286c791bc96ee61e7e5a41951e7dfdf2fd6732d21cb703f9954a2e069de"
+checksum = "1bacd4cc4bf6b711dbb5dfc5b79e69b3d845b9569f26252f587e2c5bb0759ef5"
 dependencies = [
  "amcl",
  "glass_pumpkin",
@@ -48,7 +48,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "thiserror",
+ "typed-builder",
 ]
 
 [[package]]
@@ -453,19 +453,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
-name = "thiserror"
-version = "1.0.56"
+name = "typed-builder"
+version = "0.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d54378c645627613241d077a3a79db965db602882668f9136ac42af9ecb730ad"
+checksum = "77739c880e00693faef3d65ea3aad725f196da38b22fdc7ea6ded6e1ce4d3add"
 dependencies = [
- "thiserror-impl",
+ "typed-builder-macro",
 ]
 
 [[package]]
-name = "thiserror-impl"
-version = "1.0.56"
+name = "typed-builder-macro"
+version = "0.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa0faa943b50f3db30a20aa7e265dbc66076993efed8463e8de414e5d06d3471"
+checksum = "1f718dfaf347dcb5b983bfc87608144b0bad87970aebcbea5ce44d2a30c08e63"
 dependencies = [
  "proc-macro2",
  "quote",
