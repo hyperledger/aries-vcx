@@ -339,9 +339,9 @@ dependencies = [
 
 [[package]]
 name = "anoncreds-clsignatures"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f0a6071c39753711af4abaac08590f276980ae550d4e8f4b8c4a0b40a3dc39c"
+checksum = "e43b1e6346133a92d4af655cdc07d389a2cfece7971db48129e54fce38b79e1d"
 dependencies = [
  "amcl",
  "glass_pumpkin",
@@ -2958,7 +2958,7 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72a8c97ba7f3a0af57c6895f2b7836fc00aa7ed3a56ce28e2367ded9dea3d9be"
 dependencies = [
- "anoncreds-clsignatures 0.2.3",
+ "anoncreds-clsignatures 0.2.4",
  "bs58 0.5.0",
  "curve25519-dalek",
  "ed25519-dalek",
@@ -2979,7 +2979,7 @@ name = "indy-data-types"
 version = "0.7.0"
 source = "git+https://github.com/hyperledger/indy-shared-rs?tag=v1.1.0#0260b93f76573613cedb486bc8836c75c47d4cf4"
 dependencies = [
- "anoncreds-clsignatures 0.2.3",
+ "anoncreds-clsignatures 0.2.4",
  "bs58 0.5.0",
  "curve25519-dalek",
  "ed25519-dalek",
@@ -2999,7 +2999,7 @@ dependencies = [
 name = "indy-ledger-response-parser"
 version = "0.1.0"
 dependencies = [
- "anoncreds-clsignatures 0.2.3",
+ "anoncreds-clsignatures 0.3.2",
  "indy-vdr",
  "serde",
  "serde_json",
@@ -4409,16 +4409,14 @@ dependencies = [
 
 [[package]]
 name = "rsa"
-version = "0.9.2"
+version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ab43bb47d23c1a631b4b680199a45255dce26fa9ab2fa902581f624ff13e6a8"
+checksum = "5d0e5124fcb30e76a7e79bfee683a2746db83784b86289f6251b54b7950a0dfc"
 dependencies = [
- "byteorder",
  "const-oid",
  "digest",
  "num-bigint-dig",
  "num-integer",
- "num-iter",
  "num-traits",
  "pkcs1",
  "pkcs8",
@@ -4869,9 +4867,9 @@ dependencies = [
 
 [[package]]
 name = "spki"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d1e996ef02c474957d681f1b05213dfb0abab947b446a62d37770b23500184a"
+checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
 dependencies = [
  "base64ct",
  "der",
