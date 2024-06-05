@@ -315,13 +315,13 @@ dependencies = [
 
 [[package]]
 name = "anoncreds"
-version = "0.2.0-dev.7"
-source = "git+https://github.com/mirgee/anoncreds-rs.git?rev=a85d739#a85d739c10a90834dbd912508cbceba77b114b64"
+version = "0.2.0"
+source = "git+https://github.com/hyperledger/anoncreds-rs.git?tag=v0.2.0#394a1ce469ef4d6cacf404d882266d798e3e171c"
 dependencies = [
- "anoncreds-clsignatures 0.3.1",
+ "anoncreds-clsignatures 0.3.2",
  "base64",
  "bitvec",
- "bs58 0.4.0",
+ "bs58 0.5.0",
  "chrono",
  "env_logger 0.9.3",
  "ffi-support",
@@ -358,9 +358,9 @@ dependencies = [
 
 [[package]]
 name = "anoncreds-clsignatures"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b4e286c791bc96ee61e7e5a41951e7dfdf2fd6732d21cb703f9954a2e069de"
+checksum = "1bacd4cc4bf6b711dbb5dfc5b79e69b3d845b9569f26252f587e2c5bb0759ef5"
 dependencies = [
  "amcl",
  "glass_pumpkin",
@@ -379,7 +379,7 @@ dependencies = [
 name = "anoncreds_types"
 version = "0.1.0"
 dependencies = [
- "anoncreds-clsignatures 0.3.1",
+ "anoncreds-clsignatures 0.3.2",
  "bitvec",
  "log",
  "once_cell",
