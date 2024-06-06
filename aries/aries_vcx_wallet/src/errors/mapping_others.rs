@@ -1,6 +1,5 @@
 use std::string::FromUtf8Error;
 
-
 use super::error::VcxWalletError;
 
 impl From<bs58::decode::Error> for VcxWalletError {
