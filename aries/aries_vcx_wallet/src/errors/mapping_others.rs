@@ -1,7 +1,5 @@
 use std::string::FromUtf8Error;
 
-use indy_vdr::utils::ConversionError;
-
 use super::error::VcxWalletError;
 
 impl From<bs58::decode::Error> for VcxWalletError {
@@ -10,8 +8,8 @@ impl From<bs58::decode::Error> for VcxWalletError {
     }
 }
 
-impl From<ConversionError> for VcxWalletError {
-    fn from(value: ConversionError) -> Self {
+impl From<base64::DecodeError> for VcxWalletError {
+    fn from(value: base64::DecodeError) -> Self {
         Self::NotBase64(value)
     }
 }

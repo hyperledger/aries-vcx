@@ -8,17 +8,14 @@ edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-default =["credx", "vdrtools_wallet"]
 credx = ["dep:indy-credx"]
 anoncreds = ["dep:anoncreds"]
 legacy_proof = []
-vdrtools_wallet = ["aries_vcx_wallet/vdrtools_wallet"]
-askar_wallet = ["aries_vcx_wallet/askar_wallet"]
 
 [dependencies]
 indy-credx = { git = "https://github.com/hyperledger/indy-shared-rs", tag = "v1.1.0", optional = true }
-aries_vcx_wallet = { path = "../aries_vcx_wallet" }
 anoncreds = { git = "https://github.com/hyperledger/anoncreds-rs.git", tag = "v0.2.0", optional = true }
+aries_vcx_wallet = { path = "../aries_vcx_wallet" }
 anoncreds_types = { path = "../misc/anoncreds_types" }
 did_parser_nom = { path = "../../did_core/did_parser_nom" }
 async-trait = "0.1.68"

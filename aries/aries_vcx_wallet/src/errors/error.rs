@@ -3,7 +3,6 @@ use std::{
     string::FromUtf8Error,
 };
 
-use indy_vdr::utils::ConversionError;
 use thiserror::Error as ThisError;
 #[cfg(feature = "vdrtools_wallet")]
 use vdrtools::IndyError;
@@ -51,7 +50,7 @@ pub enum VcxWalletError {
     DuplicateRecord(String),
     NotUtf8(FromUtf8Error),
     NotBase58(bs58::decode::Error),
-    NotBase64(ConversionError),
+    NotBase64(base64::DecodeError),
     RecordNotFound(NotFoundInfo),
     UnknownRecordCategory(String),
     #[cfg(feature = "vdrtools_wallet")]
