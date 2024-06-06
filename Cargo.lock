@@ -30,7 +30,7 @@ dependencies = [
  "actix-service",
  "actix-utils",
  "ahash",
- "base64 0.21.7",
+ "base64",
  "bitflags 2.4.0",
  "brotli",
  "bytes",
@@ -319,7 +319,7 @@ version = "0.2.0"
 source = "git+https://github.com/hyperledger/anoncreds-rs.git?tag=v0.2.0#394a1ce469ef4d6cacf404d882266d798e3e171c"
 dependencies = [
  "anoncreds-clsignatures 0.3.2",
- "base64 0.21.7",
+ "base64",
  "bitvec",
  "bs58 0.5.0",
  "chrono",
@@ -490,7 +490,7 @@ dependencies = [
  "async-channel",
  "async-trait",
  "backtrace",
- "base64 0.22.1",
+ "base64",
  "bs58 0.5.0",
  "chrono",
  "derive_builder",
@@ -575,7 +575,7 @@ dependencies = [
  "anyhow",
  "aries-askar",
  "async-trait",
- "base64 0.22.1",
+ "base64",
  "bs58 0.5.0",
  "indy-api-types",
  "libvdrtools",
@@ -645,7 +645,7 @@ dependencies = [
  "aes",
  "aes-gcm",
  "argon2",
- "base64 0.21.7",
+ "base64",
  "blake2",
  "block-modes",
  "bls12_381",
@@ -998,18 +998,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 
 [[package]]
-name = "base64"
-version = "0.22.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
-
-[[package]]
 name = "base64-url"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c5b0a88aa36e9f095ee2e2b13fb8c5e4313e022783aedacc123328c0084916d"
 dependencies = [
- "base64 0.21.7",
+ "base64",
 ]
 
 [[package]]
@@ -1826,7 +1820,7 @@ dependencies = [
 name = "did_doc"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
+ "base64",
  "bs58 0.5.0",
  "did_key",
  "did_parser_nom",
@@ -1873,7 +1867,7 @@ name = "did_peer"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "base64 0.22.1",
+ "base64",
  "bs58 0.5.0",
  "derive_builder",
  "did_doc",
@@ -3017,7 +3011,7 @@ dependencies = [
 name = "indy-utils"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
+ "base64",
  "dirs",
  "failure",
  "indy-api-types",
@@ -3039,7 +3033,7 @@ name = "indy-vdr"
 version = "0.4.0"
 source = "git+https://github.com/hyperledger/indy-vdr.git?rev=c143268#c143268c2c86b300f8b8a33b57a4cff06de35626"
 dependencies = [
- "base64 0.21.7",
+ "base64",
  "bs58 0.5.0",
  "env_logger 0.10.0",
  "etcommon-rlp",
@@ -3900,7 +3894,7 @@ version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b13fe415cdf3c8e44518e18a7c95a13431d9bdf6d15367d82b23c377fdd441a"
 dependencies = [
- "base64 0.21.7",
+ "base64",
  "serde",
 ]
 
@@ -4150,7 +4144,7 @@ dependencies = [
 name = "public_key"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
+ "base64",
  "bs58 0.5.0",
  "multibase",
  "serde",
@@ -4318,7 +4312,7 @@ version = "0.11.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "046cd98826c46c2ac8ddecae268eb5c2e58628688a5fc7a2643704a73faba95b"
 dependencies = [
- "base64 0.21.7",
+ "base64",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -4494,7 +4488,7 @@ version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d3987094b1d07b653b7dfdc3f70ce9a1da9c51ac18c1b06b662e4f9a0e9f4b2"
 dependencies = [
- "base64 0.21.7",
+ "base64",
 ]
 
 [[package]]
@@ -4998,7 +4992,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e37195395df71fd068f6e2082247891bc11e3289624bbc776a0cdfa1ca7f1ea4"
 dependencies = [
  "atoi",
- "base64 0.21.7",
+ "base64",
  "bitflags 2.4.0",
  "byteorder",
  "bytes",
@@ -5041,7 +5035,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6ac0ac3b7ccd10cc96c7ab29791a7dd236bd94021f31eec7ba3d46a74aa1c24"
 dependencies = [
  "atoi",
- "base64 0.21.7",
+ "base64",
  "bitflags 2.4.0",
  "byteorder",
  "chrono",
