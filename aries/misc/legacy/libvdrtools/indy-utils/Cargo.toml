@@ -19,7 +19,7 @@ hash_openssl = []
 randombytes_sodium = []
 
 [dependencies]
-base64 = {version = "0.21"}
+base64 = {version = "0.22.1"}
 dirs = "5"
 failure = "0.1"
 indy-api-types = { path = "../indy-api-types" }

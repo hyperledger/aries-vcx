@@ -15,6 +15,7 @@ impl From<VcxWalletError> for AriesVcxError {
             VcxWalletError::UnknownRecordCategory(_) => {
                 Self::from_msg(AriesVcxErrorKind::InvalidInput, value.to_string())
             }
+            #[cfg(feature = "vdrtools_wallet")]
             VcxWalletError::IndyApiError(_) => {
                 Self::from_msg(AriesVcxErrorKind::InvalidLedgerResponse, value.to_string())
             }

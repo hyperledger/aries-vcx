@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-base64 = "0.21.2"
+base64 = "0.22.1"
 bs58 = "0.5.0"
 did_parser_nom = { path = "../did_parser_nom" }
 public_key = { path = "../public_key" }
