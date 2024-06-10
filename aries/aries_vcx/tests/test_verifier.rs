@@ -361,7 +361,7 @@ async fn test_pool_proof_self_attested_proof_validation() -> Result<(), Box<dyn 
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            proof_req_json.into(),
+            proof_req_json.into_v1(),
             RequestedCredentials {
                 self_attested_attributes: vec![
                     (
@@ -451,7 +451,7 @@ async fn test_pool_proof_restrictions() -> Result<(), Box<dyn Error>> {
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            proof_req_json.into(),
+            proof_req_json.into_v1(),
             RequestedCredentials {
                 self_attested_attributes: vec![(
                     "attribute_2".to_string(),
@@ -563,7 +563,7 @@ async fn test_pool_proof_validate_attribute() -> Result<(), Box<dyn Error>> {
     let prover_proof_json = anoncreds
         .prover_create_proof(
             &setup.wallet,
-            proof_req_json.into(),
+            proof_req_json.into_v1(),
             RequestedCredentials {
                 self_attested_attributes: vec![(
                     "attribute_2".to_string(),

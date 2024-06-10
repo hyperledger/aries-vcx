@@ -106,7 +106,7 @@ impl HarnessAgent {
         let id = self
             .aries_agent
             .verifier()
-            .send_proof_request(&presentation_request.connection_id, request.into(), None)
+            .send_proof_request(&presentation_request.connection_id, request.into_v1(), None)
             .await?;
         let state = self.aries_agent.verifier().get_state(&id)?;
         Ok(json!({ "state": to_backchannel_state_verifier(state), "thread_id": id }).to_string())

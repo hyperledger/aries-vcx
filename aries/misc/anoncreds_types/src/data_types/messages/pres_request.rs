@@ -21,8 +21,8 @@ use crate::{
 pub struct PresentationRequestPayload {
     pub nonce: Nonce,
     pub name: String,
-    #[builder(default)]
-    pub version: PresentationRequestVersion,
+    #[builder(default = String::from("1.0"))]
+    pub version: String,
     #[serde(default)]
     #[builder(default)]
     pub requested_attributes: HashMap<String, AttributeInfo>,
@@ -34,12 +34,12 @@ pub struct PresentationRequestPayload {
     pub non_revoked: Option<NonRevokedInterval>,
 }
 
-impl From<PresentationRequestPayload> for PresentationRequest {
-    fn from(value: PresentationRequestPayload) -> Self {
-        match value.version {
-            PresentationRequestVersion::V1 => Self::PresentationRequestV1(value),
-            PresentationRequestVersion::V2 => Self::PresentationRequestV2(value),
-        }
+impl PresentationRequestPayload {
+    pub fn into_v1(self) -> PresentationRequest {
+        PresentationRequest::PresentationRequestV1(self)
+    }
+    pub fn into_v2(self) -> PresentationRequest {
+        PresentationRequest::PresentationRequestV2(self)
     }
 }
 
