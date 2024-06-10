@@ -435,7 +435,7 @@ dependencies = [
 
 [[package]]
 name = "aries-vcx-agent"
-version = "0.63.0"
+version = "0.64.0"
 dependencies = [
  "anoncreds_types",
  "aries_vcx",
@@ -481,7 +481,7 @@ dependencies = [
 
 [[package]]
 name = "aries_vcx"
-version = "0.63.0"
+version = "0.64.0"
 dependencies = [
  "anoncreds_types",
  "aries_vcx_anoncreds",
@@ -530,7 +530,7 @@ dependencies = [
 
 [[package]]
 name = "aries_vcx_anoncreds"
-version = "0.63.0"
+version = "0.64.0"
 dependencies = [
  "anoncreds",
  "anoncreds_types",
@@ -549,7 +549,7 @@ dependencies = [
 
 [[package]]
 name = "aries_vcx_ledger"
-version = "0.63.0"
+version = "0.64.0"
 dependencies = [
  "anoncreds_types",
  "aries_vcx_wallet",
@@ -570,7 +570,7 @@ dependencies = [
 
 [[package]]
 name = "aries_vcx_wallet"
-version = "0.63.0"
+version = "0.64.0"
 dependencies = [
  "anyhow",
  "aries-askar",
@@ -1952,7 +1952,7 @@ dependencies = [
 
 [[package]]
 name = "diddoc_legacy"
-version = "0.63.0"
+version = "0.64.0"
 dependencies = [
  "display_as_json",
  "serde",
@@ -3440,7 +3440,7 @@ checksum = "f665ee40bc4a3c5590afb1e9677db74a508659dfd71e126420da8274909a0167"
 
 [[package]]
 name = "messages"
-version = "0.63.0"
+version = "0.64.0"
 dependencies = [
  "chrono",
  "derive_more",
@@ -4739,7 +4739,7 @@ dependencies = [
 
 [[package]]
 name = "shared"
-version = "0.63.0"
+version = "0.64.0"
 dependencies = [
  "bs58 0.4.0",
  "lazy_static",
@@ -5297,7 +5297,7 @@ dependencies = [
 
 [[package]]
 name = "test_utils"
-version = "0.63.0"
+version = "0.64.0"
 dependencies = [
  "anoncreds_types",
  "aries_vcx_anoncreds",
@@ -5707,7 +5707,7 @@ dependencies = [
 
 [[package]]
 name = "uniffi_aries_vcx"
-version = "0.63.0"
+version = "0.64.0"
 dependencies = [
  "android_logger",
  "aries_vcx",
