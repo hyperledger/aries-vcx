@@ -246,7 +246,6 @@ jobs:
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
       BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
       IS_FORK: ${{ needs.workflow-setup.outputs.IS_FORK }}
-      URL_DOCKER_REGISTRY: ${{ env.URL_DOCKER_REGISTRY }}
     steps:
       - name: "Git checkout"
         if: ${{ env.IS_FORK == 'false' }}
