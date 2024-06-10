@@ -16,6 +16,7 @@ env:
   DOCKER_IMAGE_POOL: ghcr.io/hyperledger/aries-vcx/indy_pool_localhost:1.15.0
 
   DOCKER_REPO_LOCAL_VDRPROXY: vdrproxy
+  DOCKER_REPO_LOCAL_AATH: aath-backchannel
 
   RUST_TOOLCHAIN_VERSION: 1.76.0
   NODE_VERSION: 18.x
@@ -49,6 +50,7 @@ jobs:
       SKIP_CI: ${{ steps.skip-info.outputs.skip-ci }}
 
       DOCKER_IMG_CACHED_VDRPROXY: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
+      DOCKER_IMG_CACHED_AATH: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_AATH }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v1
@@ -69,6 +71,7 @@ jobs:
 
           HASH_DOCKERFILE_LIBVCX=${{ hashFiles('.github/ci/libvcx.dockerfile') }}
           HASH_DOCKERFILE_VDRPROXY=${{ hashFiles('.github/ci/vdrproxy.dockerfile') }}
+          HASH_DOCKERFILE_AATH=${{ hashFiles('aries/agents/aath-backchannel/Dockerfile.aries-vcx') }}
           HASH_SRC_LIBVDRTOOLS=${{ hashFiles('libvdrtools') }}
           HASH_SRC_LIBVCX=${{ hashFiles('libvcx') }}
           HASH_SRC_ARIESVCX=${{ hashFiles('aries_vcx') }}
@@ -80,6 +83,7 @@ jobs:
           SEED_HASH_ARIESVCX=${HASH_SRC_LIBVDRTOOLS:0:11}-${HASH_SRC_ARIESVCX_CORE:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_DIDDOC:0:11}-${HASH_SRC_MESSAGES:0:11}}
           HASH_ARIESVCX=$(echo -n "$SEED_HASH_ARIESVCX" | sha256sum | awk '{print $1}')
           echo "DOCKER_IMG_CACHED_VDRPROXY=$DOCKER_REPO_LOCAL_VDRPROXY:$HASH_DOCKERFILE_VDRPROXY" >> $GITHUB_OUTPUT
+          echo "DOCKER_IMG_CACHED_AATH=$DOCKER_REPO_LOCAL_AATH:$HASH_DOCKERFILE_AATH" >> $GITHUB_OUTPUT
 
   workflow-setup-check:
     runs-on: ubuntu-20.04
@@ -95,6 +99,7 @@ jobs:
           echo "SKIP_NAPI_M1 ${{ needs.workflow-setup.outputs.SKIP_NAPI_M1 }}"
           echo "SKIP_CI ${{ needs.workflow-setup.outputs.SKIP_CI }}"
           echo "DOCKER_IMG_CACHED_VDRPROXY ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}"
+          echo "DOCKER_IMG_CACHED_AATH ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}"
 
   workspace_clippy:
     runs-on: ubuntu-20.04
@@ -173,6 +178,35 @@ jobs:
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_VDRPROXY }}
           url-docker-registry: ${{ env.URL_DOCKER_REGISTRY }}
 
+  build-docker-aath-backchannel:
+    needs: [ workflow-setup ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    runs-on: ubuntu-20.04
+    env:
+      DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
+    outputs:
+      image-name: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Build and cache image"
+        uses: ./.github/actions/build-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          dockerfile-path: "aries/agents/aath-backchannel/Dockerfile.aries-vcx"
+          build-arg: "ALPINE_CORE_IMAGE=$DOCKER_IMG_CACHED_ALPINE_CORE"
+          branch-name: ${{ env.BRANCH_NAME }}
+          branch-main: ${{ env.MAIN_BRANCH }}
+          docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_AATH }}
+          url-docker-registry: ${{ env.URL_DOCKER_REGISTRY }}
+
   ##########################################################################################
   ##############################   DOCKER PUBLISH   ########################################
 
@@ -185,6 +219,34 @@ jobs:
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
       BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
       IS_FORK: ${{ needs.workflow-setup.outputs.IS_FORK }}
+    steps:
+      - name: "Git checkout"
+        if: ${{ env.IS_FORK == 'false' }}
+        uses: actions/checkout@v3
+      - name: "Docker Login"
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: $GITHUB_ACTOR
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Publish versioned image"
+        if: ${{ env.IS_FORK == 'false' }}
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          publish-version: ${{ env.PUBLISH_VERSION }}
+          url-docker-registry: ${{ env.URL_DOCKER_REGISTRY }}
+
+  publish-docker-aath-backchannel:
+    runs-on: ubuntu-20.04
+    needs: [ workflow-setup, build-docker-aath-backchannel ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    env:
+      DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}
+      PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
+      IS_FORK: ${{ needs.workflow-setup.outputs.IS_FORK }}
+      URL_DOCKER_REGISTRY: ${{ env.URL_DOCKER_REGISTRY }}
     steps:
       - name: "Git checkout"
         if: ${{ env.IS_FORK == 'false' }}
