@@ -92,13 +92,8 @@ impl<W: BaseWallet> Agent<W> {
             genesis_file_path: genesis_path,
         };
         let (_, ledger_write) = build_ledger_components(vcx_pool_config.clone()).unwrap();
-        let (public_did, _verkey) = add_new_did(
-            wallet.as_ref(),
-            &ledger_write,
-            &submiter_did,
-            Some("ENDORSER"),
-        )
-        .await?;
+        let (public_did, _verkey) =
+            add_new_did(wallet.as_ref(), &ledger_write, &submiter_did, None).await?;
         let endpoint = EndpointDidSov::create()
             .set_service_endpoint(service_endpoint.clone())
             .set_types(Some(vec![ServiceType::DIDCommV1.to_string()]));
