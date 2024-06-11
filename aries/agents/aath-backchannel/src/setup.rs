@@ -17,6 +17,9 @@ struct WriterSeed {
     pub is_trustee: bool,
 }
 
+/// If a ledger URL is available, then use it to register a new endorser, then return this
+/// endorser's DID seed.
+/// If not available, then default to using the local ledger Trustee seed.
 async fn get_writer_seed() -> WriterSeed {
     if let Ok(ledger_url) = std::env::var("LEDGER_URL") {
         let url = format!("{}/register", ledger_url);
