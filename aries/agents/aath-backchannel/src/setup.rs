@@ -12,7 +12,12 @@ struct SeedResponse {
     seed: String,
 }
 
-async fn get_trustee_seed() -> String {
+struct WriterSeed {
+    pub seed: String,
+    pub is_trustee: bool,
+}
+
+async fn get_writer_seed() -> WriterSeed {
     if let Ok(ledger_url) = std::env::var("LEDGER_URL") {
         let url = format!("{}/register", ledger_url);
         let mut rng = thread_rng();
@@ -22,7 +27,7 @@ async fn get_trustee_seed() -> String {
             "seed": format!("my_seed_000000000000000000{}", rng.gen_range(100000..1000000))
         })
         .to_string();
-        client
+        let seed = client
             .post(&url)
             .body(body)
             .send()
@@ -31,9 +36,16 @@ async fn get_trustee_seed() -> String {
             .json::<SeedResponse>()
             .await
             .expect("Failed to deserialize response")
-            .seed
+            .seed;
+        WriterSeed {
+            seed,
+            is_trustee: false,
+        }
     } else {
-        "000000000000000000000000Trustee1".to_string()
+        WriterSeed {
+            seed: "000000000000000000000000Trustee1".to_string(),
+            is_trustee: true,
+        }
     }
 }
 
@@ -86,7 +98,7 @@ async fn download_genesis_file() -> std::result::Result<String, String> {
 }
 
 pub async fn initialize(port: u32) -> AriesAgent<IndySdkWallet> {
-    let trustee_submitter_seed = get_trustee_seed().await;
+    let register_nym_res = get_writer_seed().await;
     let genesis_path = download_genesis_file()
         .await
         .expect("Failed to download the genesis file");
@@ -98,14 +110,15 @@ pub async fn initialize(port: u32) -> AriesAgent<IndySdkWallet> {
         wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".to_string(),
         wallet_kdf: "RAW".to_string(),
     };
-    let (wallet, trustee_config) = build_indy_wallet(wallet_config, trustee_submitter_seed).await;
+    let (wallet, issuer_config) = build_indy_wallet(wallet_config, register_nym_res.seed).await;
     let wallet = Arc::new(wallet);
 
     let issuer_did = AriesAgent::setup_ledger(
         genesis_path.clone(),
         wallet.clone(),
         service_endpoint.clone(),
-        trustee_config.institution_did.parse().unwrap(),
+        issuer_config.institution_did.parse().unwrap(),
+        register_nym_res.is_trustee,
     )
     .await
     .unwrap();

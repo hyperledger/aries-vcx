@@ -49,7 +49,7 @@ pub struct WalletInitConfig {
 
 pub async fn build_indy_wallet(
     wallet_config: WalletInitConfig,
-    isser_seed: String,
+    issuer_seed: String,
 ) -> (IndySdkWallet, IssuerConfig) {
     let config_wallet = IndyWalletConfig {
         wallet_name: wallet_config.wallet_name,
@@ -62,7 +62,7 @@ pub async fn build_indy_wallet(
         rekey_derivation_method: None,
     };
     let wallet = config_wallet.create_wallet().await.unwrap();
-    let config_issuer = wallet.configure_issuer(&isser_seed).await.unwrap();
+    let config_issuer = wallet.configure_issuer(&issuer_seed).await.unwrap();
 
     let anoncreds = IndyCredxAnonCreds;
 
@@ -84,7 +84,8 @@ impl<W: BaseWallet> Agent<W> {
         genesis_path: String,
         wallet: Arc<W>,
         service_endpoint: Url,
-        submiter_did: Did,
+        submitter_did: Did,
+        create_new_issuer: bool,
     ) -> AgentResult<Did> {
         let vcx_pool_config = VcxPoolConfig {
             indy_vdr_config: None,
@@ -92,8 +93,14 @@ impl<W: BaseWallet> Agent<W> {
             genesis_file_path: genesis_path,
         };
         let (_, ledger_write) = build_ledger_components(vcx_pool_config.clone()).unwrap();
-        let (public_did, _verkey) =
-            add_new_did(wallet.as_ref(), &ledger_write, &submiter_did, None).await?;
+        let public_did = match create_new_issuer {
+            true => {
+                add_new_did(wallet.as_ref(), &ledger_write, &submitter_did, None)
+                    .await?
+                    .0
+            }
+            false => submitter_did,
+        };
         let endpoint = EndpointDidSov::create()
             .set_service_endpoint(service_endpoint.clone())
             .set_types(Some(vec![ServiceType::DIDCommV1.to_string()]));
