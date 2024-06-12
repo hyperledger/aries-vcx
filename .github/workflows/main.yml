@@ -172,9 +172,10 @@ jobs:
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_VDRPROXY }}
           url-docker-registry: ${{ env.URL_DOCKER_REGISTRY }}
 
+  # builds and publishes main branch AATH backchannels
   build-docker-aath-backchannel:
     needs: [ workflow-setup ]
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    if: ${{ env.BRANCH_NAME == env.MAIN_BRANCH }}
     runs-on: ubuntu-20.04
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}
@@ -231,10 +232,11 @@ jobs:
           publish-version: ${{ env.PUBLISH_VERSION }}
           url-docker-registry: ${{ env.URL_DOCKER_REGISTRY }}
 
+  # additional publish of the AATH backchannel image with tagged versions for tags
   publish-docker-aath-backchannel:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-aath-backchannel ]
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
