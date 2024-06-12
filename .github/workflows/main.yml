@@ -44,7 +44,7 @@ jobs:
       RELEASE: ${{ steps.run-info.outputs.release }}
       PRERELEASE: ${{ steps.run-info.outputs.pre-release }}
       BRANCH_NAME: ${{ steps.run-info.outputs.branch-name }}
-      MAIN_BRANCH: ${{ env.MAIN_BRANCH }}
+      IS_MAIN_BRANCH: ${{ steps.run-info.outputs.branch-name == env.MAIN_BRANCH }}
       IS_FORK: ${{ steps.run-info.outputs.is-fork }}
 
       SKIP_NAPI_M1: ${{ steps.skip-info.outputs.skip-napi-m1 }}
@@ -90,6 +90,7 @@ jobs:
           echo "RELEASE ${{ needs.workflow-setup.outputs.RELEASE }}"
           echo "PRERELEASE ${{ needs.workflow-setup.outputs.PRERELEASE }}"
           echo "BRANCH_NAME ${{ needs.workflow-setup.outputs.BRANCH_NAME }}"
+          echo "IS_MAIN_BRANCH ${{ needs.workflow-setup.outputs.IS_MAIN_BRANCH }}"
           echo "IS_FORK ${{ needs.workflow-setup.outputs.IS_FORK }}"
           echo "SKIP_NAPI_M1 ${{ needs.workflow-setup.outputs.SKIP_NAPI_M1 }}"
           echo "SKIP_CI ${{ needs.workflow-setup.outputs.SKIP_CI }}"
@@ -176,7 +177,7 @@ jobs:
   # builds and publishes main branch AATH backchannels
   build-docker-aath-backchannel:
     needs: [ workflow-setup ]
-    if: ${{ needs.workflow-setup.outputs.BRANCH_NAME == needs.workflow-setup.outputs.MAIN_BRANCH }}
+    if: ${{ needs.workflow-setup.outputs.IS_MAIN_BRANCH == 'true' }}
     runs-on: ubuntu-20.04
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}
