@@ -22,5 +22,5 @@ pub fn convert_to_hashmap<T: Serialize>(
 // 0x20 - length of 32 bytes (256 bits)
 pub(crate) const MULTIHASH_SHA2_256: [u8; 2] = [0x12u8, 0x20u8];
 // https://github.com/multiformats/multicodec/blob/master/table.csv
-// multicodec JSON (0x0200) as a varint 
+// multicodec JSON (0x0200) as a varint
 pub(crate) const MULTICODEC_JSON_VARINT: [u8; 2] = [0x80u8, 0x04u8];

@@ -3,10 +3,13 @@ use encoding::{append_encoded_key_segments, append_encoded_service_segment};
 use sha2::{Digest, Sha256};
 
 use crate::{
-    error::DidPeerError, helpers::MULTIHASH_SHA2_256, peer_did::{
+    error::DidPeerError,
+    helpers::MULTIHASH_SHA2_256,
+    peer_did::{
         numalgos::{numalgo2::helpers::diddoc_from_peerdid2_elements, numalgo3::Numalgo3, Numalgo},
         FromDidDoc, PeerDid,
-    }, resolver::options::PublicKeyEncoding
+    },
+    resolver::options::PublicKeyEncoding,
 };
 
 mod encoding;
