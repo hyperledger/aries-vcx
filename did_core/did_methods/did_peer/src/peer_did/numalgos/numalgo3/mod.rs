@@ -30,15 +30,12 @@ mod tests {
 
     #[test]
     fn test_generate_numalgo3() {
-        let peer_did_2 = PeerDid::<Numalgo2>::parse("did:peer:2\
-            .Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
-            .Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V\
-            .Vz6MkgoLTnTypo3tDRwCkZXSccTPHRLhF4ZnjhueYAFpEX6vg\
-            .SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0".to_string()).unwrap();
+        // from spec: https://identity.foundation/peer-did-method-spec/#method-3-did-shortening-with-sha-256-hash
+        let full_did2_str = "did:peer:2.Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V.Vz6MkgoLTnTypo3tDRwCkZXSccTPHRLhF4ZnjhueYAFpEX6vg.SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0";
+        let peer_did_2 = PeerDid::<Numalgo2>::parse(full_did2_str).unwrap();
         assert_eq!(
             PeerDid::<Numalgo3>::parse(
-                "did:peer:3.dc2ccfb083931f616e8967dd60017899bcf626134ee2e51a45ebf8d4f245f330"
-                    .to_string()
+                "did:peer:3zQmS19jtYDvGtKVrJhQnRFpBQAx3pJ9omx2HpNrcXFuRCz9".to_string()
             )
             .unwrap(),
             peer_did_2.to_numalgo3().unwrap()
