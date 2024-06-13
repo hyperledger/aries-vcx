@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use chrono::Utc;
 use did_doc::schema::{
     did_doc::DidDocument,
@@ -39,6 +38,7 @@ use crate::{
         did_exchange::transition::transition_error::TransitionError,
         mediated_connection::pairwise_info::PairwiseInfo,
     },
+    utils::base64::URL_SAFE_LENIENT,
 };
 
 pub(crate) fn construct_response(
@@ -115,7 +115,7 @@ pub async fn create_peer_did_4(
 pub(crate) fn ddo_to_attach(ddo: DidDocument) -> Result<Attachment, AriesVcxError> {
     // Interop note: acapy accepts unsigned when using peer dids?
     let content_b64 =
-        base64::engine::Engine::encode(&URL_SAFE_NO_PAD, serde_json::to_string(&ddo)?);
+        base64::engine::Engine::encode(&URL_SAFE_LENIENT, serde_json::to_string(&ddo)?);
     Ok(Attachment::builder()
         .data(
             AttachmentData::builder()
@@ -134,7 +134,7 @@ pub(crate) async fn jws_sign_attach(
 ) -> Result<Attachment, AriesVcxError> {
     if let AttachmentType::Base64(attach_base64) = &attach.data.content {
         let did_key: DidKey = verkey.clone().try_into()?;
-        let verkey_b64 = base64::engine::Engine::encode(&URL_SAFE_NO_PAD, verkey.key());
+        let verkey_b64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, verkey.key());
 
         let protected_header = json!({
             "alg": "EdDSA",
@@ -150,10 +150,10 @@ pub(crate) async fn jws_sign_attach(
             "kid": did_key.to_string(),
         });
         let b64_protected =
-            base64::engine::Engine::encode(&URL_SAFE_NO_PAD, protected_header.to_string());
+            base64::engine::Engine::encode(&URL_SAFE_LENIENT, protected_header.to_string());
         let sign_input = format!("{}.{}", b64_protected, attach_base64).into_bytes();
         let signed = wallet.sign(&verkey, &sign_input).await?;
-        let signature_base64 = base64::engine::Engine::encode(&URL_SAFE_NO_PAD, signed);
+        let signature_base64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, signed);
 
         let jws = {
             let mut jws = HashMap::new();
@@ -176,7 +176,7 @@ pub(crate) fn attachment_to_diddoc(attachment: Attachment) -> Result<DidDocument
     match attachment.data.content {
         AttachmentType::Json(value) => serde_json::from_value(value).map_err(Into::into),
         AttachmentType::Base64(ref value) => {
-            let bytes = base64::Engine::decode(&URL_SAFE_NO_PAD, value).map_err(|err| {
+            let bytes = base64::Engine::decode(&URL_SAFE_LENIENT, value).map_err(|err| {
                 AriesVcxError::from_msg(
                     AriesVcxErrorKind::SerializationError,
                     format!(
