@@ -124,7 +124,7 @@ mod tests {
        .SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0";
 
     const VALID_PEER_DID_NUMALGO3: &str =
-        "did:peer:3.71ae6ec6f44acf6bc5dcd7ad1f3364a3a328f6f9c06da2be15786dcabbb18c2a";
+        "did:peer:3zQmfUHk2UkVZwkMwXLRCJrTmEkxpNdfare68fLo3YUwWryp";
 
     fn peer_did_numalgo2() -> PeerDid<Numalgo2> {
         PeerDid {

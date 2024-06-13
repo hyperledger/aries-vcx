@@ -3,12 +3,12 @@ pub static PEER_DID_NUMALGO_2_NO_SERVICES: &str =
      Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V";
 
 pub static PEER_DID_NUMALGO_3_NO_SERVICES: &str =
-    "did:peer:3.f26593d514fd0c62ea812b1be625294d9bd6d1195041b812c8912e3072425f10";
+    "did:peer:3zQmdysQimott3jS93beGPVX8sTRSRFJWt1FsihPcSy9kZfB";
 
 pub static DID_DOC_NO_SERVICES: &str = r##"
     {
         "id": "did:peer:2.Ez6LSpSrLxbAhg2SHwKk7kwpsH7DM7QjFS5iK6qP87eViohud.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V",
-        "alsoKnownAs": ["did:peer:3.f26593d514fd0c62ea812b1be625294d9bd6d1195041b812c8912e3072425f10"],
+        "alsoKnownAs": ["did:peer:3zQmdysQimott3jS93beGPVX8sTRSRFJWt1FsihPcSy9kZfB"],
         "verificationMethod": [
             {
                 "id": "#6MkqRYqQ",
