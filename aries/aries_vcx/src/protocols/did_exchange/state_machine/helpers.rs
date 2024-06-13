@@ -76,11 +76,13 @@ pub async fn create_peer_did_4(
 ) -> Result<(PeerDid<Numalgo4>, Key), AriesVcxError> {
     let key_enc = generate_keypair(wallet, KeyType::Ed25519).await?;
 
+    let vm_ka_id = DidUrl::from_fragment("key1".to_string())?;
+
     let service: Service = ServiceDidCommV1::new(
         Uri::new("#0")?,
         service_endpoint,
         0,
-        vec![],
+        vec![ServiceKeyKind::Reference(vm_ka_id.clone())],
         routing_keys
             .into_iter()
             .map(ServiceKeyKind::Value)
@@ -90,7 +92,7 @@ pub async fn create_peer_did_4(
 
     info!("Prepared service for peer:did:4 generation: {} ", service);
     let vm_ka = DidPeer4VerificationMethod::builder()
-        .id(DidUrl::from_fragment("key1".to_string())?)
+        .id(vm_ka_id)
         .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
         .public_key(PublicKeyField::Base58 {
             public_key_base58: key_enc.base58(),
