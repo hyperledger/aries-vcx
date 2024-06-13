@@ -94,8 +94,8 @@ pub async fn create_peer_did_4(
     let vm_ka = DidPeer4VerificationMethod::builder()
         .id(vm_ka_id)
         .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
-        .public_key(PublicKeyField::Base58 {
-            public_key_base58: key_enc.base58(),
+        .public_key(PublicKeyField::Multibase {
+            public_key_multibase: key_enc.fingerprint(),
         })
         .build();
     let mut construction_did_doc = DidPeer4ConstructionDidDocument::new();
