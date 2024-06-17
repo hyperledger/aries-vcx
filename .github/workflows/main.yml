@@ -177,8 +177,7 @@ jobs:
   # builds and publishes main branch AATH backchannels
   build-docker-aath-backchannel:
     needs: [ workflow-setup ]
-    # TODO - RE-ENABLE BEFORE MERGE
-    # if: ${{ needs.workflow-setup.outputs.IS_MAIN_BRANCH == 'true' }}
+    if: ${{ needs.workflow-setup.outputs.IS_MAIN_BRANCH == 'true' }}
     runs-on: ubuntu-20.04
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}

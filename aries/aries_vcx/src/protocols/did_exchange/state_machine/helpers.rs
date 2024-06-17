@@ -172,6 +172,10 @@ pub(crate) async fn jws_sign_attach(
     }
 }
 
+// TODO - ideally this should be resilient to the case where the attachment is a legacy aries DIDDoc structure
+// (i.e. [diddoc_legacy::aries::diddoc::AriesDidDoc]). It should be converted to a spec-compliant [DidDocument].
+// ACA-py handles this case here: https://github.com/hyperledger/aries-cloudagent-python/blob/5ad52c15d2f4f62db1678b22a7470776d78b36f5/aries_cloudagent/resolver/default/legacy_peer.py#L27
+// https://github.com/hyperledger/aries-vcx/issues/1227
 pub(crate) fn attachment_to_diddoc(attachment: Attachment) -> Result<DidDocument, AriesVcxError> {
     match attachment.data.content {
         AttachmentType::Json(value) => serde_json::from_value(value).map_err(Into::into),
