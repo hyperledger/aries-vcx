@@ -5,7 +5,7 @@ use aries_vcx::{
     did_parser_nom::Did,
     messages::{
         msg_fields::protocols::{
-            did_exchange::{
+            did_exchange::v1_0::{
                 complete::Complete, problem_report::ProblemReport, request::Request,
                 response::Response,
             },

@@ -49,7 +49,7 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_fields::protocols::did_exchange::request::{Request, RequestDecorators},
+        msg_fields::protocols::did_exchange::v1_0::request::{Request, RequestDecorators},
         msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
     };
 

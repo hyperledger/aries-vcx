@@ -17,13 +17,17 @@ use display_as_json::Display;
 use misc::utils;
 use msg_fields::protocols::{
     cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
-    did_exchange::DidExchange,
+    did_exchange::{v1_0::DidExchangeV1_0, DidExchange},
     pickup::Pickup,
     present_proof::{v2::PresentProofV2, PresentProof},
 };
 use msg_types::{
-    cred_issuance::CredentialIssuanceType, present_proof::PresentProofType,
-    report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType,
+    cred_issuance::CredentialIssuanceType,
+    present_proof::PresentProofType,
+    protocols::did_exchange::{DidExchangeType, DidExchangeTypeV1},
+    report_problem::ReportProblemTypeV1_0,
+    routing::RoutingTypeV1_0,
+    MsgWithType,
 };
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -188,8 +192,14 @@ impl DelayedSerde for AriesMessage {
                 CoordinateMediation::delayed_deserialize((msg_type, kind_str), deserializer)
                     .map(From::from)
             }
-            Protocol::DidExchangeType(msg_type) => {
-                DidExchange::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
+            Protocol::DidExchangeType(DidExchangeType::V1(DidExchangeTypeV1::V1_0(msg_type))) => {
+                DidExchangeV1_0::delayed_deserialize((msg_type, kind_str), deserializer)
+                    .map(|x| AriesMessage::from(DidExchange::V1_0(x)))
+            }
+            Protocol::DidExchangeType(DidExchangeType::V1(DidExchangeTypeV1::V1_1(_msg_type))) => {
+                unimplemented!()
+                // DidExchange::delayed_deserialize((msg_type, kind_str),
+                // deserializer).map(From::from)
             }
         }
     }
@@ -214,7 +224,7 @@ impl DelayedSerde for AriesMessage {
             Self::Notification(v) => v.delayed_serialize(serializer),
             Self::Pickup(v) => v.delayed_serialize(serializer),
             Self::CoordinateMediation(v) => v.delayed_serialize(serializer),
-            Self::DidExchange(v) => v.delayed_serialize(serializer),
+            Self::DidExchange(DidExchange::V1_0(v)) => v.delayed_serialize(serializer),
         }
     }
 }

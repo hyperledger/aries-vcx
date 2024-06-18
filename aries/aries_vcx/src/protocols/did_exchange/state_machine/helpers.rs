@@ -24,7 +24,7 @@ use messages::{
         thread::Thread,
         timing::Timing,
     },
-    msg_fields::protocols::did_exchange::response::{
+    msg_fields::protocols::did_exchange::v1_0::response::{
         Response, ResponseContent, ResponseDecorators,
     },
 };

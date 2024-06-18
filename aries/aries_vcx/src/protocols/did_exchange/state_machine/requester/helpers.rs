@@ -6,7 +6,7 @@ use messages::{
         timing::Timing,
     },
     msg_fields::protocols::{
-        did_exchange::{
+        did_exchange::v1_0::{
             complete::{Complete, CompleteDecorators},
             request::{Request, RequestContent, RequestDecorators},
         },

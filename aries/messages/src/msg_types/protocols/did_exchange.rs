@@ -18,11 +18,22 @@ pub enum DidExchangeType {
 pub enum DidExchangeTypeV1 {
     #[msg_type(minor = 0, roles = "Role::Requester, Role::Responder")]
     V1_0(MsgKindType<DidExchangeTypeV1_0>),
+    #[msg_type(minor = 1, roles = "Role::Requester, Role::Responder")]
+    V1_1(MsgKindType<DidExchangeTypeV1_1>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "snake_case")]
 pub enum DidExchangeTypeV1_0 {
+    Request,
+    Response,
+    ProblemReport,
+    Complete,
+}
+
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
+#[strum(serialize_all = "snake_case")]
+pub enum DidExchangeTypeV1_1 {
     Request,
     Response,
     ProblemReport,

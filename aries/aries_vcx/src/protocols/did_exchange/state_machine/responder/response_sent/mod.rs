@@ -4,7 +4,7 @@ use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_doc::schema::did_doc::DidDocument;
 use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver_registry::ResolverRegistry;
-use messages::msg_fields::protocols::did_exchange::{
+use messages::msg_fields::protocols::did_exchange::v1_0::{
     complete::Complete, request::Request, response::Response,
 };
 use public_key::Key;

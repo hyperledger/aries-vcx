@@ -4,7 +4,10 @@ use actix_web::{get, post, web, Responder};
 use aries_vcx_agent::aries_vcx::{
     did_parser_nom::Did,
     messages::{
-        msg_fields::protocols::did_exchange::{request::Request, DidExchange},
+        msg_fields::protocols::did_exchange::{
+            v1_0::{request::Request, DidExchangeV1_0},
+            DidExchange,
+        },
         AriesMessage,
     },
     protocols::did_exchange::state_machine::requester::helpers::invitation_get_first_did_service,
@@ -98,7 +101,9 @@ impl HarnessAgent {
                 })?
                 .clone()
         };
-        if let AriesMessage::DidExchange(DidExchange::Request(ref request)) = request {
+        if let AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(ref request))) =
+            request
+        {
             let thid = request.decorators.thread.clone().unwrap().thid;
             Ok(json!({ "connection_id": thid }).to_string())
         } else {
@@ -139,7 +144,9 @@ impl HarnessAgent {
                 )
             })?
         };
-        if let AriesMessage::DidExchange(DidExchange::Request(request)) = request {
+        if let AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(request))) =
+            request
+        {
             let opt_invitation = match request.decorators.thread.clone().unwrap().pthid {
                 None => None,
                 Some(pthid) => {

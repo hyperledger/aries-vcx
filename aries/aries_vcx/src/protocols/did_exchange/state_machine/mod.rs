@@ -10,7 +10,7 @@ use chrono::Utc;
 use did_doc::schema::did_doc::DidDocument;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
-    msg_fields::protocols::did_exchange::problem_report::{
+    msg_fields::protocols::did_exchange::v1_0::problem_report::{
         ProblemCode, ProblemReport, ProblemReportContent, ProblemReportDecorators,
     },
 };
