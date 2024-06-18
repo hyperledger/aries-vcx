@@ -10,12 +10,18 @@ use serde::{de::Error, Deserialize, Serialize};
 use shared::misc::serde_ignored::SerdeIgnored as NoContent;
 
 use self::{
-    complete::{Complete, CompleteDecorators},
-    problem_report::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
-    request::{Request, RequestContent, RequestDecorators},
-    response::{Response, ResponseContent, ResponseDecorators},
+    complete::{Complete, CompleteDecoratorsV1_1},
+    problem_report::{ProblemReport, ProblemReportContentV1_1},
+    request::{Request, RequestContentV1_1},
+    response::{Response, ResponseContent},
 };
-use super::DidExchange;
+use super::{
+    v1_x::{
+        problem_report::ProblemReportDecorators, request::RequestDecorators,
+        response::ResponseDecorators,
+    },
+    DidExchange,
+};
 use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
@@ -66,11 +72,10 @@ impl DelayedSerde for DidExchangeV1_1 {
     }
 }
 
-// TODO: Seems to be required only for tests?
-transit_to_aries_msg!(RequestContent: RequestDecorators, DidExchangeV1_1, DidExchange);
+transit_to_aries_msg!(RequestContentV1_1: RequestDecorators, DidExchangeV1_1, DidExchange);
 transit_to_aries_msg!(ResponseContent: ResponseDecorators, DidExchangeV1_1, DidExchange);
-transit_to_aries_msg!(ProblemReportContent: ProblemReportDecorators, DidExchangeV1_1, DidExchange);
-transit_to_aries_msg!(NoContent: CompleteDecorators, DidExchangeV1_1, DidExchange);
+transit_to_aries_msg!(ProblemReportContentV1_1: ProblemReportDecorators, DidExchangeV1_1, DidExchange);
+transit_to_aries_msg!(NoContent: CompleteDecoratorsV1_1, DidExchangeV1_1, DidExchange);
 
 into_msg_with_type!(Request, DidExchangeTypeV1_1, Request);
 into_msg_with_type!(Response, DidExchangeTypeV1_1, Response);

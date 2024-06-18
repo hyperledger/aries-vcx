@@ -1,29 +1,20 @@
-use serde::{Deserialize, Serialize};
 use shared::misc::serde_ignored::SerdeIgnored as NoContent;
-use typed_builder::TypedBuilder;
 
 use crate::{
-    decorators::{thread::Thread, timing::Timing},
+    msg_fields::protocols::did_exchange::v1_x::complete::CompleteDecorators,
     msg_parts::MsgParts,
+    msg_types::{protocols::did_exchange::DidExchangeTypeV1_1, MsgKindType},
 };
 
-pub type Complete = MsgParts<NoContent, CompleteDecorators>;
-
-// TODO: Pthid is mandatory in this case!
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct CompleteDecorators {
-    #[serde(rename = "~thread")]
-    pub thread: Thread,
-    #[builder(default, setter(strip_option))]
-    #[serde(rename = "~timing")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timing: Option<Timing>,
-}
+pub type CompleteDecoratorsV1_1 = CompleteDecorators<MsgKindType<DidExchangeTypeV1_1>>;
+pub type Complete = MsgParts<NoContent, CompleteDecoratorsV1_1>;
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
+    use std::marker::PhantomData;
+
     use serde_json::json;
 
     use super::*;
@@ -46,10 +37,7 @@ mod tests {
             }
         });
 
-        let decorators = CompleteDecorators {
-            thread,
-            timing: None,
-        };
+        let decorators = CompleteDecoratorsV1_1::builder().thread(thread).build();
 
         test_utils::test_msg(
             NoContent,
@@ -61,9 +49,10 @@ mod tests {
 
     #[test]
     fn test_extended_complete_message() {
-        let decorators = CompleteDecorators {
+        let decorators = CompleteDecoratorsV1_1 {
             thread: make_extended_thread(),
             timing: Some(make_extended_timing()),
+            _marker: PhantomData,
         };
 
         let expected = json!({

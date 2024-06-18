@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
 use crate::{
-    decorators::{attachment::Attachment, thread::Thread, timing::Timing},
-    msg_parts::MsgParts,
+    decorators::attachment::Attachment,
+    msg_fields::protocols::did_exchange::v1_x::response::ResponseDecorators, msg_parts::MsgParts,
 };
 
 pub type Response = MsgParts<ResponseContent, ResponseDecorators>;
@@ -13,16 +13,6 @@ pub struct ResponseContent {
     pub did: String, // TODO: Use Did
     #[serde(rename = "did_doc~attach")]
     pub did_doc: Option<Attachment>,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, TypedBuilder)]
-pub struct ResponseDecorators {
-    #[serde(rename = "~thread")]
-    pub thread: Thread,
-    #[builder(default, setter(strip_option))]
-    #[serde(rename = "~timing")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timing: Option<Timing>,
 }
 
 #[cfg(test)]

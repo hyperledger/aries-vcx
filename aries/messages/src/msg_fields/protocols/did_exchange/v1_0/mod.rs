@@ -6,16 +6,23 @@ pub mod request;
 pub mod response;
 
 use derive_more::From;
+use problem_report::ProblemReportContentV1_0;
 use serde::{de::Error, Deserialize, Serialize};
 use shared::misc::serde_ignored::SerdeIgnored as NoContent;
 
 use self::{
-    complete::{Complete, CompleteDecorators},
-    problem_report::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
-    request::{Request, RequestContent, RequestDecorators},
-    response::{Response, ResponseContent, ResponseDecorators},
+    complete::{Complete, CompleteDecoratorsV1_0},
+    problem_report::ProblemReport,
+    request::{Request, RequestContentV1_0},
+    response::{Response, ResponseContent},
 };
-use super::DidExchange;
+use super::{
+    v1_x::{
+        problem_report::ProblemReportDecorators, request::RequestDecorators,
+        response::ResponseDecorators,
+    },
+    DidExchange,
+};
 use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
@@ -66,10 +73,10 @@ impl DelayedSerde for DidExchangeV1_0 {
     }
 }
 
-transit_to_aries_msg!(RequestContent: RequestDecorators, DidExchangeV1_0, DidExchange);
+transit_to_aries_msg!(RequestContentV1_0: RequestDecorators, DidExchangeV1_0, DidExchange);
 transit_to_aries_msg!(ResponseContent: ResponseDecorators, DidExchangeV1_0, DidExchange);
-transit_to_aries_msg!(ProblemReportContent: ProblemReportDecorators, DidExchangeV1_0, DidExchange);
-transit_to_aries_msg!(NoContent: CompleteDecorators, DidExchangeV1_0, DidExchange);
+transit_to_aries_msg!(ProblemReportContentV1_0: ProblemReportDecorators, DidExchangeV1_0, DidExchange);
+transit_to_aries_msg!(NoContent: CompleteDecoratorsV1_0, DidExchangeV1_0, DidExchange);
 
 into_msg_with_type!(Request, DidExchangeTypeV1_0, Request);
 into_msg_with_type!(Response, DidExchangeTypeV1_0, Response);

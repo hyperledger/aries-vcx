@@ -1,38 +1,11 @@
-use serde::{Deserialize, Serialize};
-use shared::maybe_known::MaybeKnown;
-use typed_builder::TypedBuilder;
-
 use crate::{
-    decorators::{
-        attachment::Attachment,
-        thread::{Thread, ThreadGoalCode},
-        timing::Timing,
-    },
+    msg_fields::protocols::did_exchange::v1_x::request::{RequestContent, RequestDecorators},
     msg_parts::MsgParts,
+    msg_types::{protocols::did_exchange::DidExchangeTypeV1_1, MsgKindType},
 };
 
-pub type Request = MsgParts<RequestContent, RequestDecorators>;
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct RequestContent {
-    pub label: String,
-    pub goal_code: Option<MaybeKnown<ThreadGoalCode>>,
-    pub goal: Option<String>,
-    pub did: String, // TODO: Use Did
-    #[serde(rename = "did_doc~attach")]
-    pub did_doc: Option<Attachment>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
-pub struct RequestDecorators {
-    #[serde(rename = "~thread")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub thread: Option<Thread>,
-    #[builder(default, setter(strip_option))]
-    #[serde(rename = "~timing")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timing: Option<Timing>,
-}
+pub type RequestContentV1_1 = RequestContent<MsgKindType<DidExchangeTypeV1_1>>;
+pub type Request = MsgParts<RequestContentV1_1, RequestDecorators>;
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
@@ -40,12 +13,13 @@ pub struct RequestDecorators {
 mod tests {
     use diddoc_legacy::aries::diddoc::AriesDidDoc;
     use serde_json::json;
+    use shared::maybe_known::MaybeKnown;
 
     use super::*;
     use crate::{
         decorators::{
-            attachment::{AttachmentData, AttachmentType},
-            thread::tests::make_extended_thread,
+            attachment::{Attachment, AttachmentData, AttachmentType},
+            thread::{tests::make_extended_thread, ThreadGoalCode},
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
@@ -53,7 +27,7 @@ mod tests {
         msg_types::protocols::did_exchange::DidExchangeTypeV1_1,
     };
 
-    pub fn request_content() -> RequestContent {
+    pub fn request_content() -> RequestContentV1_1 {
         let did_doc = AriesDidDoc::default();
         RequestContent {
             label: "test_request_label".to_owned(),
@@ -71,6 +45,7 @@ mod tests {
                     )
                     .build(),
             ),
+            _marker: std::marker::PhantomData,
         }
     }
 

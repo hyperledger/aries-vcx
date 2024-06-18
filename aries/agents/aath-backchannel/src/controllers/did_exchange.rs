@@ -5,8 +5,7 @@ use aries_vcx_agent::aries_vcx::{
     did_parser_nom::Did,
     messages::{
         msg_fields::protocols::did_exchange::{
-            v1_0::{request::Request, DidExchangeV1_0},
-            DidExchange,
+            v1_0::DidExchangeV1_0, v1_1::DidExchangeV1_1, v1_x::request::AnyRequest, DidExchange,
         },
         AriesMessage,
     },
@@ -52,8 +51,8 @@ impl HarnessAgent {
         Ok(json!({ "connection_id" : connection_id }).to_string())
     }
 
-    pub fn queue_didexchange_request(&self, request: Request) -> HarnessResult<()> {
-        info!("queue_didexchange_request >> request: {}", request);
+    pub fn queue_didexchange_request(&self, request: AnyRequest) -> HarnessResult<()> {
+        info!("queue_didexchange_request >> request: {:?}", request);
         let mut msg_buffer = self.didx_msg_buffer.write().map_err(|_| {
             HarnessError::from_msg(
                 HarnessErrorType::InvalidState,
@@ -145,39 +144,50 @@ impl HarnessAgent {
                 )
             })?
         };
-        if let AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(request))) =
-            request
-        {
-            let opt_invitation = match request.decorators.thread.clone().unwrap().pthid {
-                None => None,
-                Some(pthid) => {
-                    let invitation = self.aries_agent.out_of_band().get_invitation(&pthid)?;
-                    Some(invitation)
-                }
-            };
-            let (thid, pthid) = self
-                .aries_agent
-                .did_exchange()
-                .handle_msg_request(request.clone(), opt_invitation)
-                .await?;
-
-            if let Some(pthid) = pthid {
-                self.store_mapping_pthid_thid(pthid, thid.clone());
-            } else {
-                warn!("No storing pthid->this mapping; no pthid available");
+        let request: AnyRequest = match request {
+            AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(request))) => {
+                request.into()
             }
+            AriesMessage::DidExchange(DidExchange::V1_1(DidExchangeV1_1::Request(request))) => {
+                request.into()
+            }
+            _ => {
+                return Err(HarnessError::from_msg(
+                    HarnessErrorType::InvalidState,
+                    "Message is not a request",
+                ))
+            }
+        };
 
-            self.aries_agent
-                .did_exchange()
-                .send_response(thid.clone())
-                .await?;
-            Ok(json!({ "connection_id": thid }).to_string())
+        let request_thread = match request {
+            AnyRequest::V1_0(ref inner) => &inner.decorators.thread,
+            AnyRequest::V1_1(ref inner) => &inner.decorators.thread,
+        };
+
+        let opt_invitation = match request_thread.clone().and_then(|th| th.pthid) {
+            Some(pthid) => {
+                let invitation = self.aries_agent.out_of_band().get_invitation(&pthid)?;
+                Some(invitation)
+            }
+            None => None,
+        };
+        let (thid, pthid) = self
+            .aries_agent
+            .did_exchange()
+            .handle_msg_request(request.clone(), opt_invitation)
+            .await?;
+
+        if let Some(pthid) = pthid {
+            self.store_mapping_pthid_thid(pthid, thid.clone());
         } else {
-            Err(HarnessError::from_msg(
-                HarnessErrorType::InvalidState,
-                "Message is not a request",
-            ))
+            warn!("No storing pthid->this mapping; no pthid available");
         }
+
+        self.aries_agent
+            .did_exchange()
+            .send_response(thid.clone())
+            .await?;
+        Ok(json!({ "connection_id": thid }).to_string())
     }
 
     pub async fn didx_get_state(&self, connection_id: &str) -> HarnessResult<String> {

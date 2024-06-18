@@ -147,7 +147,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     } = DidExchangeResponder::<ResponseSent>::receive_request(
         &agent_inviter.wallet,
         resolver_registry.clone(),
-        request,
+        request.into(),
         &responders_peer_did,
         Some(invitation_key),
     )
@@ -162,7 +162,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         .await
         .unwrap();
 
-    let responder = responder.receive_complete(complete).unwrap();
+    let responder = responder.receive_complete(complete.into_v1_1()).unwrap();
 
     info!("Asserting did document of requester");
     assert_key_agreement(

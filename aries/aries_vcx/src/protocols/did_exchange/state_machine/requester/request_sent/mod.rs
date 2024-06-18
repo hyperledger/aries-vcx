@@ -4,8 +4,12 @@ use did_parser_nom::Did;
 use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 use did_resolver_registry::ResolverRegistry;
-use messages::msg_fields::protocols::did_exchange::v1_0::{
-    complete::Complete as CompleteMessage, request::Request, response::Response,
+use messages::{
+    msg_fields::protocols::did_exchange::{
+        v1_1::request::Request,
+        v1_x::{complete::AnyComplete, response::AnyResponse},
+    },
+    msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
 
 use super::DidExchangeRequester;
@@ -28,7 +32,7 @@ impl DidExchangeRequester<RequestSent> {
         their_did: &Did,
         our_peer_did: &PeerDid<Numalgo4>,
     ) -> Result<TransitionResult<Self, Request>, AriesVcxError> {
-        info!(
+        debug!(
             "DidExchangeRequester<RequestSent>::construct_request >> their_did: {}, our_peer_did: \
              {}",
             their_did, our_peer_did
@@ -40,7 +44,7 @@ impl DidExchangeRequester<RequestSent> {
         let our_did_document = our_peer_did.resolve_did_doc()?;
         let request = construct_request(invitation_id.clone(), our_peer_did.to_string());
 
-        info!(
+        debug!(
             "DidExchangeRequester<RequestSent>::construct_request << prepared request: {}",
             request
         );
@@ -58,16 +62,17 @@ impl DidExchangeRequester<RequestSent> {
 
     pub async fn receive_response(
         self,
-        response: Response,
+        response: AnyResponse,
         resolver_registry: Arc<ResolverRegistry>,
-    ) -> Result<
-        TransitionResult<DidExchangeRequester<Completed>, CompleteMessage>,
-        TransitionError<Self>,
-    > {
-        info!(
+    ) -> Result<TransitionResult<DidExchangeRequester<Completed>, AnyComplete>, TransitionError<Self>>
+    {
+        debug!(
             "DidExchangeRequester<RequestSent>::receive_response >> response: {:?}",
             response
         );
+        let version = response.get_version_marker();
+        let response = response.into_v1_1();
+
         if response.decorators.thread.thid != self.state.request_id {
             return Err(TransitionError {
                 error: AriesVcxError::from_msg(
@@ -77,14 +82,15 @@ impl DidExchangeRequester<RequestSent> {
                 state: self,
             });
         }
+        // TODO - process differently depending on version
         let did_document = if let Some(ddo) = response.content.did_doc {
-            info!(
+            debug!(
                 "DidExchangeRequester<RequestSent>::receive_response >> the Response message \
                  contained attached ddo"
             );
             attachment_to_diddoc(ddo).map_err(to_transition_error(self.clone()))?
         } else {
-            info!(
+            debug!(
                 "DidExchangeRequester<RequestSent>::receive_response >> the Response message \
                  contains pairwise DID, resolving to DID Document"
             );
@@ -97,9 +103,16 @@ impl DidExchangeRequester<RequestSent> {
             did_document
         };
 
-        let complete_message = construct_didexchange_complete(self.state.request_id.clone());
-        info!(
-            "DidExchangeRequester<RequestSent>::receive_response << complete_message: {}",
+        let complete_message = match version {
+            DidExchangeTypeV1::V1_1(_) => AnyComplete::V1_1(construct_didexchange_complete(
+                self.state.request_id.clone(),
+            )),
+            DidExchangeTypeV1::V1_0(_) => AnyComplete::V1_0(construct_didexchange_complete(
+                self.state.request_id.clone(),
+            )),
+        };
+        debug!(
+            "DidExchangeRequester<RequestSent>::receive_response << complete_message: {:?}",
             complete_message
         );
 

@@ -24,8 +24,10 @@ use messages::{
         thread::Thread,
         timing::Timing,
     },
-    msg_fields::protocols::did_exchange::v1_0::response::{
-        Response, ResponseContent, ResponseDecorators,
+    msg_fields::protocols::did_exchange::{
+        v1_0::response::{Response as ResponseV1_0, ResponseContent as ResponseV1_0Content},
+        v1_1::response::{Response as ResponseV1_1, ResponseContent as ResponseV1_1Content},
+        v1_x::response::ResponseDecorators,
     },
 };
 use public_key::{Key, KeyType};
@@ -41,20 +43,40 @@ use crate::{
     },
 };
 
-pub(crate) fn construct_response(
+pub(crate) fn construct_response_v1_0(
     request_id: String,
     our_did_document: &DidDocument,
-    signed_attach: Attachment,
-) -> Response {
-    let content = ResponseContent::builder()
+    signed_diddoc_attach: Attachment,
+) -> ResponseV1_0 {
+    let content = ResponseV1_0Content::builder()
         .did(our_did_document.id().to_string())
-        .did_doc(Some(signed_attach))
+        .did_doc(Some(signed_diddoc_attach))
         .build();
     let decorators = ResponseDecorators::builder()
         .thread(Thread::builder().thid(request_id).build())
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
-    Response::builder()
+    ResponseV1_0::builder()
+        .id(Uuid::new_v4().to_string())
+        .content(content)
+        .decorators(decorators)
+        .build()
+}
+
+pub(crate) fn construct_response_v1_1(
+    request_id: String,
+    our_did_document: &DidDocument,
+    signed_didrotate_attach: Attachment,
+) -> ResponseV1_1 {
+    let content = ResponseV1_1Content::builder()
+        .did(our_did_document.id().to_string())
+        .did_rotate(signed_didrotate_attach)
+        .build();
+    let decorators = ResponseDecorators::builder()
+        .thread(Thread::builder().thid(request_id).build())
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
+    ResponseV1_1::builder()
         .id(Uuid::new_v4().to_string())
         .content(content)
         .decorators(decorators)

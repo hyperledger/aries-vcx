@@ -6,7 +6,7 @@ use messages::{
         timing::Timing,
     },
     msg_fields::protocols::{
-        did_exchange::v1_0::{
+        did_exchange::v1_x::{
             complete::{Complete, CompleteDecorators},
             request::{Request, RequestContent, RequestDecorators},
         },
@@ -18,7 +18,10 @@ use uuid::Uuid;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
-pub fn construct_request(invitation_id: Option<String>, our_did: String) -> Request {
+pub fn construct_request<MinorVer>(
+    invitation_id: Option<String>,
+    our_did: String,
+) -> Request<MinorVer> {
     let msg_id = Uuid::new_v4().to_string();
     let thid = msg_id.clone();
     let thread = match invitation_id {
@@ -43,7 +46,7 @@ pub fn construct_request(invitation_id: Option<String>, our_did: String) -> Requ
         .build()
 }
 
-pub fn construct_didexchange_complete(request_id: String) -> Complete {
+pub fn construct_didexchange_complete<MinorVer>(request_id: String) -> Complete<MinorVer> {
     // assuming we'd want to support RFC 100% and include pthread in complete message, we can add
     // new function argument: `invitation_id: Option<String>`
     // We choose not to do this, as it's rather historic artifact and doesn't have justification in
