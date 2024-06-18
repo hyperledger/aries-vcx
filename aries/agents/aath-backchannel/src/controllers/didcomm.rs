@@ -6,7 +6,7 @@ use aries_vcx_agent::aries_vcx::{
         msg_fields::protocols::{
             connection::Connection,
             cred_issuance::{v1::CredentialIssuanceV1, CredentialIssuance},
-            did_exchange::{v1_0::DidExchangeV1_0, DidExchange},
+            did_exchange::DidExchange,
             notification::Notification,
             present_proof::{v1::PresentProofV1, PresentProof},
         },
@@ -195,33 +195,34 @@ impl HarnessAgent {
         Ok(())
     }
 
-    async fn handle_did_exchange_msg(&self, msg: DidExchange) -> HarnessResult<()> {
-        match msg {
-            DidExchange::V1_0(DidExchangeV1_0::Request(request)) => {
-                self.queue_didexchange_request(request)?;
-            }
-            DidExchange::V1_0(DidExchangeV1_0::Response(response)) => {
-                let res = self
-                    .aries_agent
-                    .did_exchange()
-                    .handle_msg_response(response)
-                    .await;
-                if let Err(err) = res {
-                    error!("Error sending complete: {:?}", err);
-                };
-            }
-            DidExchange::V1_0(DidExchangeV1_0::Complete(complete)) => {
-                self.aries_agent
-                    .did_exchange()
-                    .handle_msg_complete(complete)?;
-            }
-            DidExchange::V1_0(DidExchangeV1_0::ProblemReport(problem_report)) => {
-                self.aries_agent
-                    .did_exchange()
-                    .receive_problem_report(problem_report)?;
-            }
-        };
-        Ok(())
+    async fn handle_did_exchange_msg(&self, _msg: DidExchange) -> HarnessResult<()> {
+        todo!()
+        // match msg {
+        //     DidExchange::V1_0(DidExchangeV1_0::Request(request)) => {
+        //         self.queue_didexchange_request(request)?;
+        //     }
+        //     DidExchange::V1_0(DidExchangeV1_0::Response(response)) => {
+        //         let res = self
+        //             .aries_agent
+        //             .did_exchange()
+        //             .handle_msg_response(response)
+        //             .await;
+        //         if let Err(err) = res {
+        //             error!("Error sending complete: {:?}", err);
+        //         };
+        //     }
+        //     DidExchange::V1_0(DidExchangeV1_0::Complete(complete)) => {
+        //         self.aries_agent
+        //             .did_exchange()
+        //             .handle_msg_complete(complete)?;
+        //     }
+        //     DidExchange::V1_0(DidExchangeV1_0::ProblemReport(problem_report)) => {
+        //         self.aries_agent
+        //             .did_exchange()
+        //             .receive_problem_report(problem_report)?;
+        //     }
+        // };
+        // Ok(())
     }
 
     pub async fn receive_message(&self, payload: Vec<u8>) -> HarnessResult<HttpResponse> {

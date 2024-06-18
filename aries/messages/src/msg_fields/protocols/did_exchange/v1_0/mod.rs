@@ -66,7 +66,6 @@ impl DelayedSerde for DidExchangeV1_0 {
     }
 }
 
-// TODO: Seems to be required only for tests?
 transit_to_aries_msg!(RequestContent: RequestDecorators, DidExchangeV1_0, DidExchange);
 transit_to_aries_msg!(ResponseContent: ResponseDecorators, DidExchangeV1_0, DidExchange);
 transit_to_aries_msg!(ProblemReportContent: ProblemReportDecorators, DidExchangeV1_0, DidExchange);

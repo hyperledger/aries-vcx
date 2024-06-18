@@ -60,7 +60,8 @@ impl HarnessAgent {
                 "Failed to lock message buffer",
             )
         })?;
-        msg_buffer.push(request.into());
+        let m = AriesMessage::from(request);
+        msg_buffer.push(m);
         Ok(())
     }
 

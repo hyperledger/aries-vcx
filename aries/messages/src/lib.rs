@@ -17,7 +17,7 @@ use display_as_json::Display;
 use misc::utils;
 use msg_fields::protocols::{
     cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
-    did_exchange::{v1_0::DidExchangeV1_0, DidExchange},
+    did_exchange::{v1_0::DidExchangeV1_0, v1_1::DidExchangeV1_1, DidExchange},
     pickup::Pickup,
     present_proof::{v2::PresentProofV2, PresentProof},
 };
@@ -196,10 +196,9 @@ impl DelayedSerde for AriesMessage {
                 DidExchangeV1_0::delayed_deserialize((msg_type, kind_str), deserializer)
                     .map(|x| AriesMessage::from(DidExchange::V1_0(x)))
             }
-            Protocol::DidExchangeType(DidExchangeType::V1(DidExchangeTypeV1::V1_1(_msg_type))) => {
-                unimplemented!()
-                // DidExchange::delayed_deserialize((msg_type, kind_str),
-                // deserializer).map(From::from)
+            Protocol::DidExchangeType(DidExchangeType::V1(DidExchangeTypeV1::V1_1(msg_type))) => {
+                DidExchangeV1_1::delayed_deserialize((msg_type, kind_str), deserializer)
+                    .map(|x| AriesMessage::from(DidExchange::V1_1(x)))
             }
         }
     }
@@ -225,6 +224,7 @@ impl DelayedSerde for AriesMessage {
             Self::Pickup(v) => v.delayed_serialize(serializer),
             Self::CoordinateMediation(v) => v.delayed_serialize(serializer),
             Self::DidExchange(DidExchange::V1_0(v)) => v.delayed_serialize(serializer),
+            Self::DidExchange(DidExchange::V1_1(v)) => v.delayed_serialize(serializer),
         }
     }
 }

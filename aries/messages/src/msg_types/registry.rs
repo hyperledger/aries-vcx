@@ -97,6 +97,7 @@ lazy_static! {
         map_insert(&mut m, extract_parts!(PickupTypeV2::new_v2_0()));
         map_insert(&mut m, extract_parts!(CoordinateMediationTypeV1::new_v1_0()));
         map_insert(&mut m, extract_parts!(DidExchangeTypeV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(DidExchangeTypeV1::new_v1_1()));
         m
     };
 }
