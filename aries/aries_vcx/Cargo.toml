@@ -71,7 +71,7 @@ uuid = { version = "1.4.1", default-features = false, features = ["v4"] }
 strum = "0.25.0"
 strum_macros = "0.25.2"
 derive_builder = "0.12.0"
-tokio = { version = "1.20.4" }
+tokio = { version = "1.38.0" }
 thiserror = "1.0.37"
 url = { version = "2.3", features = ["serde"] }
 backtrace = { optional = true, version = "0.3" }
@@ -80,6 +80,6 @@ backtrace = { optional = true, version = "0.3" }
 test_utils = { path = "../misc/test_utils" }
 wallet_migrator = { path = "../misc/wallet_migrator" }
 async-channel = "1.7.1"
-tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }
+tokio = { version = "1.38", features = ["rt", "macros", "rt-multi-thread"] }
 pretty_assertions = "1.4.0"
 did_resolver_sov = { path = "../../did_core/did_methods/did_resolver_sov" }

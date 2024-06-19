@@ -19,7 +19,7 @@ log = "0.4.19"
 public_key = { path = "../../../did_core/public_key"}
 
 [dev-dependencies]
-tokio = { version = "1.28.2", features = ["macros", "rt"] }
+tokio = { version = "1.38.0", features = ["macros", "rt"] }
 uuid = { version = "1.3.0", default-features = false, features = ["v4"] }
 test-log = "0.2.14"
 
