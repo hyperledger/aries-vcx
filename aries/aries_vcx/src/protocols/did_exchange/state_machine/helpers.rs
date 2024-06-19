@@ -168,7 +168,7 @@ pub(crate) fn ddo_to_attach(ddo: DidDocument) -> Result<Attachment, AriesVcxErro
 }
 
 pub(crate) fn assemble_did_rotate_attachment(did: &Did) -> Attachment {
-    let content_b64 = base64::engine::Engine::encode(&URL_SAFE_NO_PAD, did.id());
+    let content_b64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, did.id());
     Attachment::builder()
         .data(
             AttachmentData::builder()
