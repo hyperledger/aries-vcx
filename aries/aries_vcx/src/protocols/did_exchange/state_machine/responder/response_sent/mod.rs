@@ -64,14 +64,19 @@ impl DidExchangeResponder<ResponseSent> {
             }
         };
 
+        let request_id = request.id.clone();
+        let request_pthid = request.decorators.thread.and_then(|thid| thid.pthid);
+
         let response = match version {
             DidExchangeTypeV1::V1_1(_) => AnyResponse::V1_1(construct_response_v1_1(
-                request.id.clone(),
+                request_pthid,
+                request_id,
                 our_peer_did.did(),
                 attachment,
             )),
             DidExchangeTypeV1::V1_0(_) => AnyResponse::V1_0(construct_response_v1_0(
-                request.id.clone(),
+                request_pthid,
+                request_id,
                 our_peer_did.did(),
                 attachment,
             )),

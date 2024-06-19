@@ -44,16 +44,26 @@ use crate::{
 };
 
 pub(crate) fn construct_response_v1_0(
+    // pthid inclusion is overkill in practice, but needed. see: https://github.com/hyperledger/aries-rfcs/issues/817
+    request_pthid: Option<String>,
     request_id: String,
     did: &Did,
     signed_diddoc_attach: Attachment,
 ) -> ResponseV1_0 {
+    let thread = match request_pthid {
+        Some(request_pthid) => Thread::builder()
+            .thid(request_id)
+            .pthid(request_pthid)
+            .build(),
+        None => Thread::builder().thid(request_id).build(),
+    };
+
     let content = ResponseV1_0Content::builder()
         .did(did.to_string())
         .did_doc(Some(signed_diddoc_attach))
         .build();
     let decorators = ResponseDecorators::builder()
-        .thread(Thread::builder().thid(request_id).build())
+        .thread(thread)
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
     ResponseV1_0::builder()
@@ -64,16 +74,26 @@ pub(crate) fn construct_response_v1_0(
 }
 
 pub(crate) fn construct_response_v1_1(
+    // pthid inclusion is overkill in practice, but needed. see: https://github.com/hyperledger/aries-rfcs/issues/817
+    request_pthid: Option<String>,
     request_id: String,
     did: &Did,
     signed_didrotate_attach: Attachment,
 ) -> ResponseV1_1 {
+    let thread = match request_pthid {
+        Some(request_pthid) => Thread::builder()
+            .thid(request_id)
+            .pthid(request_pthid)
+            .build(),
+        None => Thread::builder().thid(request_id).build(),
+    };
+
     let content = ResponseV1_1Content::builder()
         .did(did.to_string())
         .did_rotate(signed_didrotate_attach)
         .build();
     let decorators = ResponseDecorators::builder()
-        .thread(Thread::builder().thid(request_id).build())
+        .thread(thread)
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
     ResponseV1_1::builder()
