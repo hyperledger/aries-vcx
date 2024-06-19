@@ -11,6 +11,7 @@ use aries_vcx_agent::aries_vcx::{
     },
     protocols::did_exchange::state_machine::requester::helpers::invitation_get_first_did_service,
 };
+use serde_json::Value;
 
 use crate::{
     controllers::AathRequest,
@@ -35,7 +36,7 @@ impl HarnessAgent {
             .out_of_band()
             .get_invitation(&invitation_id)?;
         let did_inviter: Did = invitation_get_first_did_service(&invitation)?;
-        let (thid, pthid) = self
+        let (thid, pthid, my_did) = self
             .aries_agent
             .did_exchange()
             .handle_msg_invitation(did_inviter.to_string(), Some(invitation_id))
@@ -48,7 +49,11 @@ impl HarnessAgent {
             );
         }
         let connection_id = pthid.unwrap_or(thid);
-        Ok(json!({ "connection_id" : connection_id }).to_string())
+        Ok(json!({
+           "connection_id" : connection_id,
+           "my_did": my_did
+        })
+        .to_string())
     }
 
     pub fn queue_didexchange_request(&self, request: Request) -> HarnessResult<()> {
@@ -69,13 +74,17 @@ impl HarnessAgent {
         &self,
         req: &CreateResolvableDidRequest,
     ) -> HarnessResult<String> {
-        let (thid, pthid) = self
+        let (thid, pthid, my_did) = self
             .aries_agent
             .did_exchange()
             .handle_msg_invitation(req.their_public_did.clone(), None) // todo: separate the case with/without invitation on did_exchange handler
             .await?;
         let connection_id = pthid.unwrap_or(thid);
-        Ok(json!({ "connection_id": connection_id }).to_string())
+        Ok(json!({
+           "connection_id": connection_id,
+           "my_did": my_did
+        })
+        .to_string())
     }
 
     // Looks up an oldest unprocessed did-exchange request message
@@ -101,17 +110,21 @@ impl HarnessAgent {
                 })?
                 .clone()
         };
-        if let AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(ref request))) =
-            request
-        {
-            let thid = request.decorators.thread.clone().unwrap().thid;
-            Ok(json!({ "connection_id": thid }).to_string())
-        } else {
-            Err(HarnessError::from_msg(
-                HarnessErrorType::InvalidState,
-                "Message is not a request",
-            ))
-        }
+        let request = match request {
+            AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(request)))
+            | AriesMessage::DidExchange(DidExchange::V1_1(DidExchangeV1_1::Request(request))) => {
+                request
+            }
+            _ => {
+                return Err(HarnessError::from_msg(
+                    HarnessErrorType::InvalidState,
+                    "Message is not a request",
+                ))
+            }
+        };
+
+        let thid = request.decorators.thread.clone().unwrap().thid;
+        Ok(json!({ "connection_id": thid }).to_string())
     }
 
     // Note: AVF identifies protocols by thid, but AATH sometimes tracks identifies did-exchange
@@ -145,10 +158,8 @@ impl HarnessAgent {
             })?
         };
         let request = match request {
-            AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(request))) => {
-                request
-            }
-            AriesMessage::DidExchange(DidExchange::V1_1(DidExchangeV1_1::Request(request))) => {
+            AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(request)))
+            | AriesMessage::DidExchange(DidExchange::V1_1(DidExchangeV1_1::Request(request))) => {
                 request
             }
             _ => {
@@ -168,7 +179,7 @@ impl HarnessAgent {
             }
             None => None,
         };
-        let (thid, pthid) = self
+        let (thid, pthid, my_did, their_did) = self
             .aries_agent
             .did_exchange()
             .handle_msg_request(request, opt_invitation)
@@ -184,7 +195,12 @@ impl HarnessAgent {
             .did_exchange()
             .send_response(thid.clone())
             .await?;
-        Ok(json!({ "connection_id": thid }).to_string())
+        Ok(json!({
+           "connection_id": thid,
+           "my_did": my_did,
+           "their_did": their_did
+        })
+        .to_string())
     }
 
     pub async fn didx_get_state(&self, connection_id: &str) -> HarnessResult<String> {
@@ -215,7 +231,7 @@ impl HarnessAgent {
 
 #[post("/send-request")]
 async fn send_did_exchange_request(
-    req: web::Json<AathRequest<()>>,
+    req: web::Json<AathRequest<Value>>,
     agent: web::Data<RwLock<HarnessAgent>>,
 ) -> impl Responder {
     agent

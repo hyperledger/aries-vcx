@@ -63,10 +63,11 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
         &self,
         their_did: String,
         invitation_id: Option<String>,
-    ) -> AgentResult<(String, Option<String>)> {
+    ) -> AgentResult<(String, Option<String>, String)> {
         // todo: type the return type
         let (our_peer_did, _our_verkey) =
             create_peer_did_4(self.wallet.as_ref(), self.service_endpoint.clone(), vec![]).await?;
+        let our_did = our_peer_did.did().to_string();
 
         let their_did: Did = their_did.parse()?;
         let (requester, request) = GenericDidExchange::construct_request(
@@ -127,7 +128,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
         VcxHttpClient
             .send_message(encryption_envelope.0, service.service_endpoint())
             .await?;
-        Ok((thid, pthid))
+        Ok((thid, pthid, our_did))
     }
 
     // todo: whether invitation exists should handle the framework based on (p)thread matching
@@ -136,7 +137,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
         &self,
         request: Request,
         invitation: Option<OobInvitation>,
-    ) -> AgentResult<(String, Option<String>)> {
+    ) -> AgentResult<(String, Option<String>, String, String)> {
         // todo: type the return type
         // Todo: messages should expose fallible API to get thid (for any aries msg). It's common
         //       pattern
@@ -165,7 +166,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             }
         };
 
-        let (peer_did_4_invitee, _our_verkey) =
+        let (our_peer_did, _our_verkey) =
             create_peer_did_4(self.wallet.as_ref(), self.service_endpoint.clone(), vec![]).await?;
 
         let pthid = thread
@@ -182,14 +183,17 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             self.wallet.as_ref(),
             self.resolver_registry.clone(),
             request,
-            &peer_did_4_invitee,
+            &our_peer_did,
             invitation_key,
         )
         .await?;
         self.did_exchange
             .insert(&thid, (responder.clone(), Some(response.into())))?;
 
-        Ok((thid, pthid))
+        let our_did = responder.our_did_document().id().to_string();
+        let their_did = responder.their_did_doc().id().to_string();
+
+        Ok((thid, pthid, our_did, their_did))
     }
 
     // todo: perhaps injectable transports? Or just return the message let the caller send it?
