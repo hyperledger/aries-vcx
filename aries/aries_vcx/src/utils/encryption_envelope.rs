@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::{
     errors::error::prelude::*,
-    utils::didcomm_utils::{get_routing_keys, resolve_base58_key_agreement},
+    utils::didcomm_utils::{get_routing_keys, resolve_ed25519_base58_key_agreement},
 };
 
 #[derive(Debug)]
@@ -62,16 +62,17 @@ impl EncryptionEnvelope {
         their_did_doc: &DidDocument,
         their_service_id: &Uri,
     ) -> VcxResult<EncryptionEnvelope> {
-        let sender_vk = resolve_base58_key_agreement(our_did_doc)?;
-        let recipient_key = resolve_base58_key_agreement(their_did_doc)?;
+        let sender_vk = resolve_ed25519_base58_key_agreement(our_did_doc)?;
+        // CONSIDER - or should recipient keys be resolved from the service? similar to get_routing_keys.
+        let recipient_key = resolve_ed25519_base58_key_agreement(their_did_doc)?;
         let routing_keys = get_routing_keys(their_did_doc, their_service_id)?;
 
         EncryptionEnvelope::create_from_keys(
             wallet,
             data,
-            Some(&sender_vk.to_string()),
-            recipient_key.to_string(),
-            routing_keys.iter().map(|k| k.to_string()).collect(),
+            Some(&sender_vk),
+            recipient_key,
+            routing_keys,
         )
         .await
     }
@@ -80,6 +81,7 @@ impl EncryptionEnvelope {
         wallet: &impl BaseWallet,
         data: &[u8],
         sender_vk: Option<&str>,
+        // TODO - why not have encryption envelope take typed [Key]s, and enforce they are KeyType::Ed25519
         recipient_key: String,
         routing_keys: Vec<String>,
     ) -> VcxResult<EncryptionEnvelope> {

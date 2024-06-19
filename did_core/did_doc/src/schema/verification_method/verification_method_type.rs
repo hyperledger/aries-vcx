@@ -18,6 +18,8 @@ pub enum VerificationMethodType {
     X25519KeyAgreementKey2019,
     X25519KeyAgreementKey2020,
     EcdsaSecp256k1RecoveryMethod2020,
+    /// https://www.w3.org/TR/vc-data-integrity/#multikey
+    Multikey,
 }
 
 impl Display for VerificationMethodType {
@@ -45,6 +47,9 @@ impl Display for VerificationMethodType {
             }
             VerificationMethodType::EcdsaSecp256k1RecoveryMethod2020 => {
                 write!(f, "EcdsaSecp256k1RecoveryMethod2020")
+            }
+            VerificationMethodType::Multikey => {
+                write!(f, "Multikey")
             }
         }
     }
