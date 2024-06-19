@@ -1,9 +1,10 @@
 use did_doc::schema::did_doc::DidDocument;
 use encoding::{append_encoded_key_segments, append_encoded_service_segment};
-use sha256::digest;
+use sha2::{Digest, Sha256};
 
 use crate::{
     error::DidPeerError,
+    helpers::MULTIHASH_SHA2_256,
     peer_did::{
         numalgos::{numalgo2::helpers::diddoc_from_peerdid2_elements, numalgo3::Numalgo3, Numalgo},
         FromDidDoc, PeerDid,
@@ -28,9 +29,17 @@ impl FromDidDoc for Numalgo2 {
 
 impl PeerDid<Numalgo2> {
     pub fn to_numalgo3(&self) -> Result<PeerDid<Numalgo3>, DidPeerError> {
-        let numalgoless_id = self.did().id().chars().skip(2).collect::<String>();
-        let numalgoless_id_hashed = digest(numalgoless_id);
-        PeerDid::<Numalgo3>::parse(format!("did:peer:3.{}", numalgoless_id_hashed))
+        let numalgoless_id = self.did().id().chars().skip(1).collect::<String>();
+        let numalgoless_id_hashed = {
+            let mut hasher = Sha256::new();
+            hasher.update(numalgoless_id.as_bytes());
+            hasher.finalize()
+        };
+
+        let bytes = [MULTIHASH_SHA2_256.as_slice(), &numalgoless_id_hashed[..]].concat();
+
+        let multibase_hash = multibase::encode(multibase::Base::Base58Btc, bytes);
+        PeerDid::<Numalgo3>::parse(format!("did:peer:3{}", multibase_hash))
     }
 
     pub(crate) fn to_did_doc_builder(

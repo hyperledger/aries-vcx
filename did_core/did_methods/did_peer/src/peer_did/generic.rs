@@ -90,8 +90,9 @@ mod tests {
        .VzXwpBnMdCm1cLmKuzgESn29nqnonp1ioqrQMRHNsmjMyppzx8xB2pv7cw8q1PdDacSrdWE3dtB9f7Nxk886mdzNFoPtY\
        .SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0";
 
+    // https://identity.foundation/peer-did-method-spec/index.html#method-3-did-shortening-with-sha-256-hash
     const VALID_PEER_DID_NUMALGO3: &str =
-        "did:peer:3.d8da5079c166b183cf815ee27747f34e116977103d8b23c96dcba9a9d9429688";
+        "did:peer:3zQmS19jtYDvGtKVrJhQnRFpBQAx3pJ9omx2HpNrcXFuRCz9";
 
     fn generic_peer_did_numalgo2() -> AnyPeerDid {
         AnyPeerDid::Numalgo2(PeerDid {

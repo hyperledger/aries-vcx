@@ -8,18 +8,15 @@ description = "Backchannel for aries-vcx"
 [dependencies]
 actix-web = "4"
 derive_more = "0.99.14"
-clap = { version = "3.2.22", features = ["derive"] }
-reqwest = { version = "0.11.9", features = ["json", "multipart", "blocking"] }
+clap = { version = "4.5.6", features = ["derive"] }
+reqwest = { version = "0.12.4", features = ["json", "multipart", "blocking"] }
 rand = "0.8.5"
 serde = "1.0.97"
 serde_json = "1.0.40"
 serde_derive = "1.0.97"
 log = "^0.4.20"
-env_logger = "0.9.1"
-uuid = { version = "0.8.2", features = ["serde", "v4"] }
-#aries-vcx-agent = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "e79316e74e" }
-#anoncreds_types = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "e79316e74e" }
-#display_as_json = { git = "https://github.com/hyperledger/aries-vcx.git", rev = "e79316e74e" }
+env_logger = "0.11.3"
+uuid = { version = "1.8.0", features = ["serde", "v4"] }
 aries-vcx-agent = { path = "../../../aries/agents/aries-vcx-agent" }
 anoncreds_types = { path = "../../../aries/misc/anoncreds_types" }
 display_as_json = { path = "../../../misc/display_as_json" }
