@@ -1,10 +1,10 @@
 use crate::{
     msg_fields::protocols::did_exchange::v1_x::request::{RequestContent, RequestDecorators},
     msg_parts::MsgParts,
-    msg_types::{protocols::did_exchange::DidExchangeTypeV1_1, MsgKindType},
+    msg_types::protocols::did_exchange::DidExchangeTypeV1_1,
 };
 
-pub type RequestContentV1_1 = RequestContent<MsgKindType<DidExchangeTypeV1_1>>;
+pub type RequestContentV1_1 = RequestContent<DidExchangeTypeV1_1>;
 pub type Request = MsgParts<RequestContentV1_1, RequestDecorators>;
 
 #[cfg(test)]

@@ -3,10 +3,10 @@ use crate::{
         ProblemReportContent, ProblemReportDecorators,
     },
     msg_parts::MsgParts,
-    msg_types::{protocols::did_exchange::DidExchangeTypeV1_1, MsgKindType},
+    msg_types::protocols::did_exchange::DidExchangeTypeV1_1,
 };
 
-pub type ProblemReportContentV1_1 = ProblemReportContent<MsgKindType<DidExchangeTypeV1_1>>;
+pub type ProblemReportContentV1_1 = ProblemReportContent<DidExchangeTypeV1_1>;
 pub type ProblemReport = MsgParts<ProblemReportContentV1_1, ProblemReportDecorators>;
 
 #[cfg(test)]
@@ -30,7 +30,10 @@ mod tests {
 
     #[test]
     fn test_minimal_conn_problem_report() {
-        let content = ProblemReportContentV1_1::default();
+        let content = ProblemReportContentV1_1::builder()
+            .problem_code(None)
+            .explain(None)
+            .build();
 
         let decorators = ProblemReportDecorators::new(make_extended_thread());
 
@@ -48,9 +51,10 @@ mod tests {
 
     #[test]
     fn test_extended_conn_problem_report() {
-        let mut content = ProblemReportContentV1_1::default();
-        content.problem_code = Some(ProblemCode::RequestNotAccepted);
-        content.explain = Some("test_conn_problem_report_explain".to_owned());
+        let content = ProblemReportContentV1_1::builder()
+            .problem_code(Some(ProblemCode::RequestNotAccepted))
+            .explain(Some("test_conn_problem_report_explain".to_owned()))
+            .build();
 
         let mut decorators = ProblemReportDecorators::new(make_extended_thread());
         decorators.timing = Some(make_extended_timing());

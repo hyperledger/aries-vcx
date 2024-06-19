@@ -1,12 +1,11 @@
 use shared::misc::serde_ignored::SerdeIgnored as NoContent;
 
 use crate::{
-    msg_fields::protocols::did_exchange::v1_x::complete::CompleteDecorators,
-    msg_parts::MsgParts,
-    msg_types::{protocols::did_exchange::DidExchangeTypeV1_1, MsgKindType},
+    msg_fields::protocols::did_exchange::v1_x::complete::CompleteDecorators, msg_parts::MsgParts,
+    msg_types::protocols::did_exchange::DidExchangeTypeV1_1,
 };
 
-pub type CompleteDecoratorsV1_1 = CompleteDecorators<MsgKindType<DidExchangeTypeV1_1>>;
+pub type CompleteDecoratorsV1_1 = CompleteDecorators<DidExchangeTypeV1_1>;
 pub type Complete = MsgParts<NoContent, CompleteDecoratorsV1_1>;
 
 #[cfg(test)]

@@ -78,7 +78,7 @@ pub struct ProblemReportContent<MinorVer> {
     pub problem_code: Option<ProblemCode>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub explain: Option<String>,
-    #[builder(default)]
+    #[builder(default, setter(skip))]
     #[serde(skip)]
     pub(crate) _marker: PhantomData<MinorVer>,
 }

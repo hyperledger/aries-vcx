@@ -33,7 +33,7 @@ pub struct RequestContent<MinorVer> {
     pub did: String, // TODO: Use Did
     #[serde(rename = "did_doc~attach")]
     pub did_doc: Option<Attachment>,
-    #[builder(default)]
+    #[builder(default, setter(skip))]
     #[serde(skip)]
     pub(crate) _marker: PhantomData<MinorVer>,
 }
