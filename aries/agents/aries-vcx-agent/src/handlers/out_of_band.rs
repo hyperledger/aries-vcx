@@ -44,7 +44,7 @@ impl<T: BaseWallet> ServiceOutOfBand<T> {
         let sender = OutOfBandSender::create()
             .append_service(&OobService::Did(peer_did.to_string()))
             .append_handshake_protocol(Protocol::DidExchangeType(DidExchangeType::V1(
-                DidExchangeTypeV1::new_v1_0(),
+                DidExchangeTypeV1::new_v1_1(),
             )))?;
 
         self.out_of_band.insert(
