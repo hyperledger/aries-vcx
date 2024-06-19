@@ -57,6 +57,7 @@ impl DidExchangeRequester<RequestSent> {
             state: DidExchangeRequester::from_parts(
                 RequestSent {
                     request_id: request.id.clone(),
+                    invitation_id,
                 },
                 their_did_document,
                 our_did_document,
@@ -111,7 +112,7 @@ impl DidExchangeRequester<RequestSent> {
         };
 
         let complete_message =
-            construct_didexchange_complete(self.state.request_id.clone(), version);
+            construct_didexchange_complete(self.state.invitation_id, self.state.request_id.clone(), version);
         debug!(
             "DidExchangeRequester<RequestSent>::receive_response << complete_message: {:?}",
             complete_message

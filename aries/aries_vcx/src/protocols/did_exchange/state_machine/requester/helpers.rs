@@ -49,22 +49,19 @@ pub fn construct_request(
         .build()
 }
 
-pub fn construct_didexchange_complete(request_id: String, version: DidExchangeTypeV1) -> Complete {
-    // assuming we'd want to support RFC 100% and include pthread in complete message, we can add
-    // new function argument: `invitation_id: Option<String>`
-    // We choose not to do this, as it's rather historic artifact and doesn't have justification in
-    // practice see https://github.com/hyperledger/aries-rfcs/issues/817
-    // We can then build thread decorator conditionally:
-    // let thread = match invitation_id {
-    //     Some(invitation_id) => Thread::builder()
-    //         .thid(request_id)
-    //         .pthid(invitation_id)
-    //         .build(),
-    //     None => Thread::builder()
-    //         .thid(request_id)
-    //         .build()
-    // };
-    let thread = Thread::builder().thid(request_id).build();
+pub fn construct_didexchange_complete(
+    // pthid inclusion is overkill in practice, but needed. see: https://github.com/hyperledger/aries-rfcs/issues/817
+    invitation_id: Option<String>,
+    request_id: String,
+    version: DidExchangeTypeV1,
+) -> Complete {
+    let thread = match invitation_id {
+        Some(invitation_id) => Thread::builder()
+            .thid(request_id)
+            .pthid(invitation_id)
+            .build(),
+        None => Thread::builder().thid(request_id).build(),
+    };
     let decorators = CompleteDecorators::builder()
         .thread(thread)
         .timing(Timing::builder().out_time(Utc::now()).build())
