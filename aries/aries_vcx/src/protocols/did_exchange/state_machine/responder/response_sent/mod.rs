@@ -6,9 +6,7 @@ use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use messages::{
     msg_fields::protocols::did_exchange::v1_x::{
-        complete::Complete,
-        request::{AnyRequest, Request},
-        response::AnyResponse,
+        complete::Complete, request::Request, response::AnyResponse,
     },
     msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
@@ -31,7 +29,7 @@ impl DidExchangeResponder<ResponseSent> {
     pub async fn receive_request(
         wallet: &impl BaseWallet,
         resolver_registry: Arc<ResolverRegistry>,
-        request: AnyRequest,
+        request: Request,
         our_peer_did: &PeerDid<Numalgo4>,
         invitation_key: Option<Key>,
     ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, AnyResponse>, AriesVcxError>
@@ -41,8 +39,7 @@ impl DidExchangeResponder<ResponseSent> {
              {}, invitation_key: {:?}",
             request, our_peer_did, invitation_key
         );
-        let version = request.get_version_marker();
-        let request = request.into_v1_1();
+        let version = request.get_version();
 
         let their_ddo = resolve_ddo_from_request(&resolver_registry, &request).await?;
         let our_did_document = our_peer_did.resolve_did_doc()?;
@@ -94,9 +91,9 @@ impl DidExchangeResponder<ResponseSent> {
         })
     }
 
-    pub fn receive_complete<MinorVer>(
+    pub fn receive_complete(
         self,
-        complete: Complete<MinorVer>,
+        complete: Complete,
     ) -> Result<DidExchangeResponder<Completed>, TransitionError<Self>> {
         if complete.decorators.thread.thid != self.state.request_id {
             return Err(TransitionError {
@@ -117,9 +114,9 @@ impl DidExchangeResponder<ResponseSent> {
     }
 }
 
-async fn resolve_ddo_from_request<MinorVer>(
+async fn resolve_ddo_from_request(
     resolver_registry: &Arc<ResolverRegistry>,
-    request: &Request<MinorVer>,
+    request: &Request,
 ) -> Result<DidDocument, AriesVcxError> {
     Ok(request
         .content

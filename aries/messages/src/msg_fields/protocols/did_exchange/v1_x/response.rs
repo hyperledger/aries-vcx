@@ -23,7 +23,7 @@ pub enum AnyResponse {
 }
 
 impl AnyResponse {
-    pub fn get_version_marker(&self) -> DidExchangeTypeV1 {
+    pub fn get_version(&self) -> DidExchangeTypeV1 {
         match self {
             AnyResponse::V1_0(_) => DidExchangeTypeV1::new_v1_0(),
             AnyResponse::V1_1(_) => DidExchangeTypeV1::new_v1_1(),

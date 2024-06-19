@@ -11,7 +11,7 @@ pub type Response = MsgParts<ResponseContent, ResponseDecorators>;
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ResponseContent {
     pub did: String, // TODO: Use Did
-    #[serde(rename = "did_doc~attach")]
+    #[serde(rename = "did_doc~attach", skip_serializing_if = "Option::is_none")]
     pub did_doc: Option<Attachment>,
 }
 

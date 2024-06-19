@@ -5,7 +5,7 @@ use aries_vcx_agent::aries_vcx::{
     did_parser_nom::Did,
     messages::{
         msg_fields::protocols::did_exchange::{
-            v1_0::DidExchangeV1_0, v1_1::DidExchangeV1_1, v1_x::request::AnyRequest, DidExchange,
+            v1_0::DidExchangeV1_0, v1_1::DidExchangeV1_1, v1_x::request::Request, DidExchange,
         },
         AriesMessage,
     },
@@ -51,7 +51,7 @@ impl HarnessAgent {
         Ok(json!({ "connection_id" : connection_id }).to_string())
     }
 
-    pub fn queue_didexchange_request(&self, request: AnyRequest) -> HarnessResult<()> {
+    pub fn queue_didexchange_request(&self, request: Request) -> HarnessResult<()> {
         info!("queue_didexchange_request >> request: {:?}", request);
         let mut msg_buffer = self.didx_msg_buffer.write().map_err(|_| {
             HarnessError::from_msg(
@@ -144,12 +144,12 @@ impl HarnessAgent {
                 )
             })?
         };
-        let request: AnyRequest = match request {
+        let request = match request {
             AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(request))) => {
-                request.into()
+                request
             }
             AriesMessage::DidExchange(DidExchange::V1_1(DidExchangeV1_1::Request(request))) => {
-                request.into()
+                request
             }
             _ => {
                 return Err(HarnessError::from_msg(
@@ -159,14 +159,11 @@ impl HarnessAgent {
             }
         };
 
-        let request_thread = match request {
-            AnyRequest::V1_0(ref inner) => &inner.decorators.thread,
-            AnyRequest::V1_1(ref inner) => &inner.decorators.thread,
-        };
+        let request_thread = &request.decorators.thread;
 
-        let opt_invitation = match request_thread.clone().and_then(|th| th.pthid) {
+        let opt_invitation = match request_thread.as_ref().and_then(|th| th.pthid.as_ref()) {
             Some(pthid) => {
-                let invitation = self.aries_agent.out_of_band().get_invitation(&pthid)?;
+                let invitation = self.aries_agent.out_of_band().get_invitation(pthid)?;
                 Some(invitation)
             }
             None => None,
@@ -174,7 +171,7 @@ impl HarnessAgent {
         let (thid, pthid) = self
             .aries_agent
             .did_exchange()
-            .handle_msg_request(request.clone(), opt_invitation)
+            .handle_msg_request(request, opt_invitation)
             .await?;
 
         if let Some(pthid) = pthid {

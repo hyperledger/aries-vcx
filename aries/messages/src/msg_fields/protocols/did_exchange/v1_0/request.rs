@@ -1,11 +1,13 @@
 use crate::{
     msg_fields::protocols::did_exchange::v1_x::request::{RequestContent, RequestDecorators},
     msg_parts::MsgParts,
-    msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
 };
 
-pub type RequestContentV1_0 = RequestContent<DidExchangeTypeV1_0>;
-pub type Request = MsgParts<RequestContentV1_0, RequestDecorators>;
+/// Alias type for DIDExchange v1.0 Request message.
+/// Note that since this inherits from the V1.X message, the direct serialization
+/// of this Request is not recommended, as version metadata will be lost.
+/// Instead, this type should be converted to/from an AriesMessage
+pub type Request = MsgParts<RequestContent, RequestDecorators>;
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
@@ -24,10 +26,10 @@ mod tests {
         },
         misc::test_utils,
         msg_fields::protocols::did_exchange::v1_0::request::{Request, RequestDecorators},
-        msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
+        msg_types::protocols::did_exchange::{DidExchangeTypeV1, DidExchangeTypeV1_0},
     };
 
-    pub fn request_content() -> RequestContentV1_0 {
+    pub fn request_content() -> RequestContent {
         let did_doc = AriesDidDoc::default();
         RequestContent {
             label: "test_request_label".to_owned(),
@@ -45,7 +47,7 @@ mod tests {
                     )
                     .build(),
             ),
-            _marker: std::marker::PhantomData,
+            version: DidExchangeTypeV1::new_v1_0(),
         }
     }
 
@@ -57,7 +59,10 @@ mod tests {
             .decorators(RequestDecorators::default())
             .build();
         let printed_json = format!("{}", msg);
-        let parsed_request: Request = serde_json::from_str(&printed_json).unwrap();
+        let mut parsed_request: Request = serde_json::from_str(&printed_json).unwrap();
+        // the serialized format of [Request] directly will not retain the version metadata,
+        // that information is the responsibility of higher up layers.
+        parsed_request.content.version = DidExchangeTypeV1::new_v1_0();
         assert_eq!(msg, parsed_request);
     }
 

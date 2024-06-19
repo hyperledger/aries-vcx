@@ -7,12 +7,7 @@ use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use messages::msg_fields::protocols::did_exchange::{
     v1_1::request::Request,
-    v1_x::{
-        complete::{AnyComplete, Complete},
-        problem_report::ProblemReport,
-        request::AnyRequest,
-        response::AnyResponse,
-    },
+    v1_x::{complete::Complete, problem_report::ProblemReport, response::AnyResponse},
 };
 use public_key::Key;
 pub use thin_state::ThinState;
@@ -112,7 +107,7 @@ impl GenericDidExchange {
     pub async fn handle_request(
         wallet: &impl BaseWallet,
         resolver_registry: Arc<ResolverRegistry>,
-        request: AnyRequest,
+        request: Request,
         our_peer_did: &PeerDid<Numalgo4>,
         invitation_key: Option<Key>,
     ) -> Result<(Self, AnyResponse), AriesVcxError> {
@@ -135,7 +130,7 @@ impl GenericDidExchange {
         self,
         response: AnyResponse,
         resolver_registry: Arc<ResolverRegistry>,
-    ) -> Result<(Self, AnyComplete), (Self, AriesVcxError)> {
+    ) -> Result<(Self, Complete), (Self, AriesVcxError)> {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(request_sent_state) => {
@@ -178,10 +173,7 @@ impl GenericDidExchange {
         }
     }
 
-    pub fn handle_complete<MinorVer>(
-        self,
-        complete: Complete<MinorVer>,
-    ) -> Result<Self, (Self, AriesVcxError)> {
+    pub fn handle_complete(self, complete: Complete) -> Result<Self, (Self, AriesVcxError)> {
         match self {
             GenericDidExchange::Responder(responder_state) => match responder_state {
                 ResponderState::ResponseSent(response_sent_state) => {
@@ -220,9 +212,9 @@ impl GenericDidExchange {
         }
     }
 
-    pub fn handle_problem_report<MinorVer>(
+    pub fn handle_problem_report(
         self,
-        problem_report: ProblemReport<MinorVer>,
+        problem_report: ProblemReport,
     ) -> Result<Self, (Self, AriesVcxError)> {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {

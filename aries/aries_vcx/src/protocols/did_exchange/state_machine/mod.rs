@@ -16,6 +16,7 @@ use messages::{
             ProblemCode, ProblemReport, ProblemReportContent, ProblemReportDecorators,
         },
     },
+    msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
 use uuid::Uuid;
 
@@ -45,6 +46,7 @@ impl<I, S: ThreadId> DidExchange<I, S> {
         let content = ProblemReportContent::builder()
             .problem_code(problem_code)
             .explain(Some(reason.clone()))
+            .version(DidExchangeTypeV1::new_v1_1())
             .build();
         let decorators = ProblemReportDecorators::builder()
             .thread(
@@ -74,9 +76,9 @@ impl<I, S: ThreadId> DidExchange<I, S> {
         }
     }
 
-    pub fn receive_problem_report<MinorVer>(
+    pub fn receive_problem_report(
         self,
-        problem_report: ProblemReport<MinorVer>,
+        problem_report: ProblemReport,
     ) -> DidExchange<I, Abandoned> {
         DidExchange {
             state: Abandoned {

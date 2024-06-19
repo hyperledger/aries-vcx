@@ -162,7 +162,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         .await
         .unwrap();
 
-    let responder = responder.receive_complete(complete.into_v1_1()).unwrap();
+    let responder = responder.receive_complete(complete).unwrap();
 
     info!("Asserting did document of requester");
     assert_key_agreement(

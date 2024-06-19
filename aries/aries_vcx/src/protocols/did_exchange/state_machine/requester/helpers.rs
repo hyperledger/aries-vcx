@@ -12,16 +12,18 @@ use messages::{
         },
         out_of_band::invitation::{Invitation, OobService},
     },
+    msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
 use shared::maybe_known::MaybeKnown;
 use uuid::Uuid;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
-pub fn construct_request<MinorVer>(
+pub fn construct_request(
     invitation_id: Option<String>,
     our_did: String,
-) -> Request<MinorVer> {
+    version: DidExchangeTypeV1,
+) -> Request {
     let msg_id = Uuid::new_v4().to_string();
     let thid = msg_id.clone();
     let thread = match invitation_id {
@@ -38,6 +40,7 @@ pub fn construct_request<MinorVer>(
         .did_doc(None)
         .goal(Some("To establish a connection".into())) // Rejected if non-empty by acapy
         .goal_code(Some(MaybeKnown::Known(ThreadGoalCode::AriesRelBuild))) // Rejected if non-empty by acapy
+        .version(version)
         .build();
     Request::builder()
         .id(msg_id)
@@ -46,7 +49,7 @@ pub fn construct_request<MinorVer>(
         .build()
 }
 
-pub fn construct_didexchange_complete<MinorVer>(request_id: String) -> Complete<MinorVer> {
+pub fn construct_didexchange_complete(request_id: String, version: DidExchangeTypeV1) -> Complete {
     // assuming we'd want to support RFC 100% and include pthread in complete message, we can add
     // new function argument: `invitation_id: Option<String>`
     // We choose not to do this, as it's rather historic artifact and doesn't have justification in
@@ -65,6 +68,7 @@ pub fn construct_didexchange_complete<MinorVer>(request_id: String) -> Complete<
     let decorators = CompleteDecorators::builder()
         .thread(thread)
         .timing(Timing::builder().out_time(Utc::now()).build())
+        .version(version)
         .build();
     Complete::builder()
         .id(Uuid::new_v4().to_string())

@@ -1,31 +1,25 @@
-// TODO: Why are not msg fields and types grouped by protocol???
 pub mod complete;
-// TODO: Duplicates connection problem report, deduplicate
 pub mod problem_report;
 pub mod request;
 pub mod response;
 
 use derive_more::From;
 use serde::{de::Error, Deserialize, Serialize};
-use shared::misc::serde_ignored::SerdeIgnored as NoContent;
 
 use self::{
-    complete::{Complete, CompleteDecoratorsV1_1},
-    problem_report::{ProblemReport, ProblemReportContentV1_1},
-    request::{Request, RequestContentV1_1},
+    complete::Complete,
+    problem_report::ProblemReport,
+    request::Request,
     response::{Response, ResponseContent},
 };
-use super::{
-    v1_x::{
-        problem_report::ProblemReportDecorators, request::RequestDecorators,
-        response::ResponseDecorators,
-    },
-    DidExchange,
-};
+use super::{v1_x::response::ResponseDecorators, DidExchange};
 use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
-    msg_types::{protocols::did_exchange::DidExchangeTypeV1_1, MsgKindType, MsgWithType},
+    msg_types::{
+        protocols::did_exchange::{DidExchangeTypeV1, DidExchangeTypeV1_1},
+        MsgKindType, MsgWithType,
+    },
 };
 
 #[derive(Clone, Debug, From, PartialEq)]
@@ -50,12 +44,21 @@ impl DelayedSerde for DidExchangeV1_1 {
         let kind = protocol.kind_from_str(kind_str);
 
         match kind.map_err(D::Error::custom)? {
-            DidExchangeTypeV1_1::Request => Request::deserialize(deserializer).map(From::from),
+            DidExchangeTypeV1_1::Request => Request::deserialize(deserializer).map(|mut c| {
+                c.content.version = DidExchangeTypeV1::new_v1_1();
+                c.into()
+            }),
             DidExchangeTypeV1_1::Response => Response::deserialize(deserializer).map(From::from),
             DidExchangeTypeV1_1::ProblemReport => {
-                ProblemReport::deserialize(deserializer).map(From::from)
+                ProblemReport::deserialize(deserializer).map(|mut c| {
+                    c.content.version = DidExchangeTypeV1::new_v1_1();
+                    c.into()
+                })
             }
-            DidExchangeTypeV1_1::Complete => Complete::deserialize(deserializer).map(From::from),
+            DidExchangeTypeV1_1::Complete => Complete::deserialize(deserializer).map(|mut c| {
+                c.decorators.version = DidExchangeTypeV1::new_v1_1();
+                c.into()
+            }),
         }
     }
 
@@ -64,18 +67,21 @@ impl DelayedSerde for DidExchangeV1_1 {
         S: serde::Serializer,
     {
         match self {
-            Self::Request(v) => MsgWithType::from(v).serialize(serializer),
+            Self::Request(v) => {
+                MsgWithType::<_, DidExchangeTypeV1_1>::from(v).serialize(serializer)
+            }
             Self::Response(v) => MsgWithType::from(v).serialize(serializer),
-            Self::ProblemReport(v) => MsgWithType::from(v).serialize(serializer),
-            Self::Complete(v) => MsgWithType::from(v).serialize(serializer),
+            Self::ProblemReport(v) => {
+                MsgWithType::<_, DidExchangeTypeV1_1>::from(v).serialize(serializer)
+            }
+            Self::Complete(v) => {
+                MsgWithType::<_, DidExchangeTypeV1_1>::from(v).serialize(serializer)
+            }
         }
     }
 }
 
-transit_to_aries_msg!(RequestContentV1_1: RequestDecorators, DidExchangeV1_1, DidExchange);
 transit_to_aries_msg!(ResponseContent: ResponseDecorators, DidExchangeV1_1, DidExchange);
-transit_to_aries_msg!(ProblemReportContentV1_1: ProblemReportDecorators, DidExchangeV1_1, DidExchange);
-transit_to_aries_msg!(NoContent: CompleteDecoratorsV1_1, DidExchangeV1_1, DidExchange);
 
 into_msg_with_type!(Request, DidExchangeTypeV1_1, Request);
 into_msg_with_type!(Response, DidExchangeTypeV1_1, Response);

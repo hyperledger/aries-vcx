@@ -11,10 +11,10 @@ pub type Response = MsgParts<ResponseContent, ResponseDecorators>;
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ResponseContent {
     pub did: String, // TODO: Use Did
-    #[serde(rename = "did_doc~attach")]
+    #[serde(rename = "did_doc~attach", skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub did_doc: Option<Attachment>,
-    #[serde(rename = "did_rotate~attach")]
+    #[serde(rename = "did_rotate~attach", skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub did_rotate: Option<Attachment>,
 }
@@ -67,7 +67,9 @@ mod tests {
 
     #[test]
     fn test_minimal_conn_response() {
-        let content = response_content();
+        let mut content = response_content();
+        content.did_doc = None;
+        content.did_rotate = None;
 
         let decorators = ResponseDecorators {
             thread: make_extended_thread(),
@@ -76,7 +78,6 @@ mod tests {
 
         let expected = json!({
             "did": content.did,
-            "did_doc~attach": content.did_doc,
             "~thread": decorators.thread
         });
 

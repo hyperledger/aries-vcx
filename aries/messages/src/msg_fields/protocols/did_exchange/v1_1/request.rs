@@ -1,11 +1,13 @@
 use crate::{
     msg_fields::protocols::did_exchange::v1_x::request::{RequestContent, RequestDecorators},
     msg_parts::MsgParts,
-    msg_types::protocols::did_exchange::DidExchangeTypeV1_1,
 };
 
-pub type RequestContentV1_1 = RequestContent<DidExchangeTypeV1_1>;
-pub type Request = MsgParts<RequestContentV1_1, RequestDecorators>;
+/// Alias type for DIDExchange v1.1 request message.
+/// Note that since this inherits from the V1.X message, the direct serialization
+/// of this message type is not recommended, as version metadata will be lost.
+/// Instead, this type should be converted to/from an AriesMessage
+pub type Request = MsgParts<RequestContent, RequestDecorators>;
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
@@ -24,10 +26,10 @@ mod tests {
         },
         misc::test_utils,
         msg_fields::protocols::did_exchange::v1_1::request::{Request, RequestDecorators},
-        msg_types::protocols::did_exchange::DidExchangeTypeV1_1,
+        msg_types::protocols::did_exchange::{DidExchangeTypeV1, DidExchangeTypeV1_1},
     };
 
-    pub fn request_content() -> RequestContentV1_1 {
+    pub fn request_content() -> RequestContent {
         let did_doc = AriesDidDoc::default();
         RequestContent {
             label: "test_request_label".to_owned(),
@@ -45,7 +47,7 @@ mod tests {
                     )
                     .build(),
             ),
-            _marker: std::marker::PhantomData,
+            version: DidExchangeTypeV1::new_v1_1(),
         }
     }
 
