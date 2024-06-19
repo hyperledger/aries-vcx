@@ -27,7 +27,8 @@ pub async fn get_status(agent: web::Data<RwLock<HarnessAgent>>) -> impl Responde
 
 #[get("/version")]
 pub async fn get_version() -> impl Responder {
-    HttpResponse::Ok().body("1.0.0")
+    // Update this with aries-vcx
+    HttpResponse::Ok().body("0.64.0")
 }
 
 #[get("/did")]

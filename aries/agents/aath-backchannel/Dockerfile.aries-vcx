@@ -2,7 +2,7 @@ FROM alpine:3.15.4 AS builder
 
 ARG UID=1000
 ARG GID=1000
-RUN addgroup -g $GID indy && adduser -u $UID -D -G indy indy
+RUN addgroup -g $GID aries && adduser -u $UID -D -G aries aries
 
 RUN apk update && apk upgrade && \
     apk add --no-cache \
@@ -11,27 +11,26 @@ RUN apk update && apk upgrade && \
         openssl-dev \
         zeromq-dev
 
-USER indy
-WORKDIR /home/indy
+USER aries
+WORKDIR /home/aries
 
 ARG RUST_VER="1.76.0"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER --default-host x86_64-unknown-linux-musl
-ENV PATH="/home/indy/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static"
+ENV PATH="/home/aries/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static"
 
 USER root
-RUN chown -R indy:indy .
-USER indy
+RUN chown -R aries:aries .
+USER aries
 
-RUN cargo new --bin aries-vcx-backchannel
-WORKDIR ./aries-vcx-backchannel
-COPY --chown=indy:indy ./aries-vcx/Cargo.lock ./aries-vcx/Cargo.toml ./
-RUN cargo build
+COPY --chown=aries:aries . vcx
+WORKDIR /home/aries/vcx
+RUN cargo build --bin aries-vcx-backchannel
 
 FROM alpine:3.15.4
 
 ARG UID=1000
 ARG GID=1000
-RUN addgroup -g $GID indy && adduser -u $UID -D -G indy indy
+RUN addgroup -g $GID aries && adduser -u $UID -D -G aries aries
 
 RUN apk update && apk upgrade && \
     apk add --no-cache \
@@ -39,5 +38,5 @@ RUN apk update && apk upgrade && \
         zeromq-dev
 
 RUN mkdir /resource
-COPY --from=builder /home/indy/aries-vcx-backchannel/target/debug/aries-vcx-backchannel .
+COPY --from=builder /home/aries/vcx/target/debug/aries-vcx-backchannel .
 ENTRYPOINT ["./aries-vcx-backchannel"]

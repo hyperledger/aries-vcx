@@ -1,5 +1,5 @@
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
-use base64::{self, engine::general_purpose, Engine};
+use base64::{self, Engine};
 use messages::msg_fields::protocols::connection::{
     response::{ConnectionSignature, ResponseContent},
     ConnectionData,
@@ -43,8 +43,8 @@ pub async fn sign_connection_response(
     let con_data = json!(con_data).to_string();
     let (signature, sig_data) = get_signature_data(wallet, con_data, key).await?;
 
-    let sig_data = general_purpose::URL_SAFE.encode(sig_data);
-    let signature = general_purpose::URL_SAFE.encode(signature);
+    let sig_data = URL_SAFE_LENIENT.encode(sig_data);
+    let signature = URL_SAFE_LENIENT.encode(signature);
 
     let connection_sig = ConnectionSignature::new(signature, sig_data, key.to_string());
 
@@ -56,7 +56,7 @@ pub async fn decode_signed_connection_response(
     response: ResponseContent,
     their_vk: &str,
 ) -> VcxResult<ConnectionData> {
-    let signature = general_purpose::URL_SAFE
+    let signature = URL_SAFE_LENIENT
         .decode(response.connection_sig.signature.as_bytes())
         .map_err(|err| {
             AriesVcxError::from_msg(

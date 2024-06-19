@@ -5,12 +5,12 @@ pub static PEER_DID_NUMALGO_2_BASIC: &str = "did:peer:2\
 .SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0";
 
 pub static PEER_DID_NUMALGO_3_BASIC: &str =
-    "did:peer:3.dc2ccfb083931f616e8967dd60017899bcf626134ee2e51a45ebf8d4f245f330";
+    "did:peer:3zQmaTbkb2T8CbKPzXSCgsdWHxgX3qvjmpmTQwfATu3crFCv";
 
 pub static DID_DOC_BASIC: &str = r##"
     {
         "id": "did:peer:2.Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V.Vz6MkgoLTnTypo3tDRwCkZXSccTPHRLhF4ZnjhueYAFpEX6vg.SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0",
-        "alsoKnownAs": ["did:peer:3.dc2ccfb083931f616e8967dd60017899bcf626134ee2e51a45ebf8d4f245f330"],
+        "alsoKnownAs": ["did:peer:3zQmaTbkb2T8CbKPzXSCgsdWHxgX3qvjmpmTQwfATu3crFCv"],
         "verificationMethod": [
             {
                 "id": "#6MkqRYqQ",

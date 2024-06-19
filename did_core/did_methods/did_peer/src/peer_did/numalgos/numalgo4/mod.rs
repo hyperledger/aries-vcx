@@ -1,8 +1,10 @@
 use did_doc::schema::did_doc::DidDocument;
 use did_parser_nom::Did;
+use sha2::{Digest, Sha256};
 
 use crate::{
     error::DidPeerError,
+    helpers::{MULTICODEC_JSON_VARINT, MULTIHASH_SHA2_256},
     peer_did::{
         numalgos::{numalgo4::construction_did_doc::DidPeer4ConstructionDidDocument, Numalgo},
         PeerDid,
@@ -22,17 +24,20 @@ impl PeerDid<Numalgo4> {
     /// Implementation of did:peer:4 creation spec:
     /// https://identity.foundation/peer-did-method-spec/#creating-a-did
     pub fn new(encoded_document: DidPeer4ConstructionDidDocument) -> Result<Self, DidPeerError> {
-        let serialized = serde_json::to_string(&encoded_document)?;
-        let mut prefixed_bytes = Vec::new();
-        prefixed_bytes.push(0x02u8); // multi-codec prefix for json is 0x0200, see https://github.com/multiformats/multicodec/blob/master/table.csv
-        prefixed_bytes.push(0x00u8);
-        prefixed_bytes.extend_from_slice(serialized.as_bytes());
-        let encoded_document = multibase::encode(multibase::Base::Base58Btc, prefixed_bytes);
-        let hash_raw = sha256::digest(&encoded_document);
-        let prefix = vec![0x12u8, 0x20u8];
+        let serialized = serde_json::to_vec(&encoded_document)?;
+        let encoded_document = multibase::encode(
+            multibase::Base::Base58Btc,
+            [MULTICODEC_JSON_VARINT.as_slice(), &serialized].concat(),
+        );
+
+        let encoded_doc_digest = {
+            let mut hasher = Sha256::new();
+            hasher.update(encoded_document.as_bytes());
+            hasher.finalize()
+        };
         let hash = multibase::encode(
             multibase::Base::Base58Btc,
-            [prefix.as_slice(), hash_raw.as_bytes()].concat(),
+            [MULTIHASH_SHA2_256.as_slice(), &encoded_doc_digest].concat(),
         );
         let did = Did::parse(format!("did:peer:4{}:{}", hash, encoded_document))?;
         Ok(Self {
@@ -102,7 +107,9 @@ impl PeerDid<Numalgo4> {
         // without first 2 bytes
         let peer4_did_doc: &[u8] = &diddoc_with_multibase_prefix[2..];
         let encoded_document: DidPeer4ConstructionDidDocument =
-            serde_json::from_slice(peer4_did_doc).unwrap();
+            serde_json::from_slice(peer4_did_doc).map_err(|e| {
+                DidPeerError::GeneralError(format!("Failed to decode the encoded did doc: {}", e))
+            })?;
         Ok(encoded_document)
     }
 
@@ -166,7 +173,7 @@ mod tests {
         construction_did_doc.add_capability_invocation(vm_invoc);
 
         let did = PeerDid::<Numalgo4>::new(construction_did_doc).unwrap();
-        let did_expected = "did:peer:4z84UnqbnKs1uK42FKCz3QCr6JFMFYBZk2cPzkhHXETruZZpcdu6PtPyxzRdTYEdq7jWTWtqKykYxbtgmx34DUqyYEnT:zKj4qM7Uj9TKfiRp9DfxJMy1X7vBJEG9p7GnBbLLhA226Yh1SoYrcK942ZmBpAQXuXLLkohiPdJAYjbaatt2fFmhBvSR39zWMsWNqGBqmKW8vuy7uHwXKmuChtngE1WyMCM8r5DvwjubumVYq8uZWaurrdvzkdX57aM5y32kH5oFYjpBFDmugQAvzYP1VkTL8zF3G6wVHKvdAAzp8KracRWF7M6KnPHz3psRJ41Lktdk4NyNTfPZc1ztFV1v95ECazdRKwpFwmyZ9Gs5JhSCx1zYd9Ki4Zongb1VBCgFNVCjiADoUDfkNKoVu4QfzFGd1wCQEJFaYTcZ9N55r5cY215bAHq9fudyUvn2EeGd8FCfPyHPZxHZE5yFsKXmtauTLGJyFuWt31Kk31JN35zRui4nu3HRcnQNmkxADjVYnC7o4cb1D1DYKk2i3xL7mSwsDXUg2NN4mXfnM2JN6WFmGrDe2wKiKW4qc6w4RtmzGPN68LJVDh49dpwsaZM4hdkWc8s1D8mztRBbMDxKtJkDeZE23kpHCMfcfzQQCcPdpoXnpsNMoFaWh1q96cp72J1yNN4bQnSNxzNvMLjfdatmZrrqCkYd8ND4qU5eaE4HibjNsfx87dR2FN6mor8ktrXDirp1JezwU3NepeeHfs5EnY8V4aeMw3LAAEv4qrVTnr4jYmQHdfYVRJnP3qGkWwuHB2x9QhhMy8M4j5xHkNtVdV8Z9CFFuUGrnrPKvBMn2P5W5G3b4MxnWydmDdhdwirQAmHpJwRFoMDW9R55ckGhA6ZVo88BMwwCtKkeWibTHxjcHYdahYjYKzC6ZJGzU3DfHdmcprrN2oLRDcEPDxe6EejPSUu12iTHsCCV9r3txtuC2hvkRtmsgLChVD4Fh6VH22SzetPf513mToJvjfdVSdqaiftxj6";
+        let did_expected = "did:peer:4zQmcaWgiE7Q6ERzDovHKrQXEPC1bd7X4YAv9Hb9Pw1Qhjtm:zMeTVLzkiLyX6Wj4CLuZ7WoX3ZSxFQVFBYQy5vfZmgZUCuFcsVeuWMrvhznUxei6NqGDqoE4rYF88ptgdQxFmrCj7fcqxdvzBjncMDsyYXYLzucXydU2N1cXSZH8rN5srWEftBUg4SsVrF8upEMJ81Yts9fBTitgrCzQGdpPGnBtWKh6C21uVBM1wShxrG5FGcisduzRnGDKLCEGxKDZkBrSaTsWk7a2kTMi45nouL8VnXY9DkfcyJTYwvdNC67BXpdp44ksvvtveYH6WqmvCNhPi7RSEdYoD7ZZYDBboRvbuAQANQSMPqpmj9L8Zz62oDxYJffFqK8yjdhBfanyqtQMCnxm7w1rDhExZdUK6BSQL3utQ1LeeZmHLZmXdsQp3nkTLrW4AwWnoTVEGSgnSDsgRiZkma9YaZgnZVhnQeNj4fjes6aZKwEjqLChabXfrXU6d6EJ9v4tRrHxatxdEdM5wmgCMxEVFhpSjcLQu7bpULkj63GUQMVWyWcXyd8UsP56rMWgyutCRtfA4Mm7sVKgcp7324fzAB6VLXLoHy6dPdhrZ2eYcB4Qgke12PpF37xFViScqEdQovUDPWiH41Kz898T3chUvDyFCP6ugXmwJTXGgSTxLT5gpBEjvbshbrV6jAFy4wWnBeaQVvDAG7DgDa7jhGqj3Grg4NHzPLFne37GKrWW1dxtfL2D8XKyLb6tMsny6bAqdrtt5LhRazuaXgGmWCtksLZeaPrjdFKa4Gevj6BiJ67RC15HoecGsZYUtQdXzBPkVvyvWbzbh3UaEYppCP6yq8ZGYc7AeGX8YnatwmhoECdoV1GdZAdRAoqj4pQmn4mTjHUfZ3ZmPQxYqhiAxrdzG51MDVc182YLWhMBbShxxUXs11b1UT4JVXizwzoArZNzg7PQekbRcauHHaRLRcQ";
         assert_eq!(did.to_string(), did_expected);
 
         let resolved_did_doc = did.resolve_did_doc().unwrap();
