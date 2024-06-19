@@ -25,10 +25,12 @@ pub type Request = MsgParts<RequestContent, RequestDecorators>;
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct RequestContent {
     pub label: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub goal_code: Option<MaybeKnown<ThreadGoalCode>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub goal: Option<String>,
     pub did: String, // TODO: Use Did
-    #[serde(rename = "did_doc~attach")]
+    #[serde(rename = "did_doc~attach", skip_serializing_if = "Option::is_none")]
     pub did_doc: Option<Attachment>,
     #[serde(skip, default = "DidExchangeTypeV1::new_v1_1")]
     pub(crate) version: DidExchangeTypeV1,
