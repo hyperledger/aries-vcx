@@ -1,3 +1,4 @@
+use did_parser_nom::Did;
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
@@ -10,7 +11,7 @@ pub type Response = MsgParts<ResponseContent, ResponseDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ResponseContent {
-    pub did: String, // TODO: Use Did
+    pub did: Did,
     #[serde(rename = "did_doc~attach")]
     pub did_doc: Option<Attachment>,
 }

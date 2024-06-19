@@ -6,6 +6,7 @@ pub mod request;
 pub mod response;
 
 use derive_more::From;
+use did_parser_nom::Did;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -76,13 +77,13 @@ impl DelayedSerde for Connection {
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct ConnectionData {
     #[serde(rename = "DID")]
-    pub did: String,
+    pub did: Did,
     #[serde(rename = "DIDDoc")]
     pub did_doc: AriesDidDoc,
 }
 
 impl ConnectionData {
-    pub fn new(did: String, did_doc: AriesDidDoc) -> Self {
+    pub fn new(did: Did, did_doc: AriesDidDoc) -> Self {
         Self { did, did_doc }
     }
 }

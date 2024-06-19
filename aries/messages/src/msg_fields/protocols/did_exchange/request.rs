@@ -1,3 +1,4 @@
+use did_parser_nom::Did;
 use serde::{Deserialize, Serialize};
 use shared::maybe_known::MaybeKnown;
 use typed_builder::TypedBuilder;
@@ -18,7 +19,7 @@ pub struct RequestContent {
     pub label: String,
     pub goal_code: Option<MaybeKnown<ThreadGoalCode>>,
     pub goal: Option<String>,
-    pub did: String, // TODO: Use Did
+    pub did: Did,
     #[serde(rename = "did_doc~attach")]
     pub did_doc: Option<Attachment>,
 }
