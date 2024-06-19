@@ -80,7 +80,7 @@ dependencies {
     implementation 'com.google.zxing:core:3.5.2'
 
     // HTTP requests
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // JSON
     implementation "com.google.code.gson:gson:2.11.0"
