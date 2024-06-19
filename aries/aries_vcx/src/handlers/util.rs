@@ -75,7 +75,7 @@ macro_rules! make_attach_from_str {
             .data(attach_data)
             .build();
         attach.id = Some($id);
-        attach.mime_type = Some(messages::misc::MimeType::Json);
+        attach.mime_type = Some(shared::maybe_known::MaybeKnown::Known(messages::misc::MimeType::Json));
         attach
     }};
 }
