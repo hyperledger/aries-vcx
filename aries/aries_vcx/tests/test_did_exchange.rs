@@ -147,7 +147,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     } = DidExchangeResponder::<ResponseSent>::receive_request(
         &agent_inviter.wallet,
         resolver_registry.clone(),
-        request.into(),
+        request,
         &responders_peer_did,
         Some(invitation_key),
     )

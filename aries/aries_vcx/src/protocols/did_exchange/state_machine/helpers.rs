@@ -10,7 +10,7 @@ use did_doc::schema::{
     verification_method::{PublicKeyField, VerificationMethodType},
 };
 use did_key::DidKey;
-use did_parser_nom::DidUrl;
+use did_parser_nom::{Did, DidUrl};
 use did_peer::peer_did::{
     numalgos::numalgo4::{
         construction_did_doc::{DidPeer4ConstructionDidDocument, DidPeer4VerificationMethod},
@@ -45,11 +45,11 @@ use crate::{
 
 pub(crate) fn construct_response_v1_0(
     request_id: String,
-    our_did_document: &DidDocument,
+    did: &Did,
     signed_diddoc_attach: Attachment,
 ) -> ResponseV1_0 {
     let content = ResponseV1_0Content::builder()
-        .did(our_did_document.id().to_string())
+        .did(did.to_string())
         .did_doc(Some(signed_diddoc_attach))
         .build();
     let decorators = ResponseDecorators::builder()
@@ -65,11 +65,11 @@ pub(crate) fn construct_response_v1_0(
 
 pub(crate) fn construct_response_v1_1(
     request_id: String,
-    our_did_document: &DidDocument,
+    did: &Did,
     signed_didrotate_attach: Attachment,
 ) -> ResponseV1_1 {
     let content = ResponseV1_1Content::builder()
-        .did(our_did_document.id().to_string())
+        .did(did.to_string())
         .did_rotate(signed_didrotate_attach)
         .build();
     let decorators = ResponseDecorators::builder()
@@ -143,6 +143,17 @@ pub(crate) fn ddo_to_attach(ddo: DidDocument) -> Result<Attachment, AriesVcxErro
                 .build(),
         )
         .build())
+}
+
+pub(crate) fn assemble_did_rotate_attachment(did: &Did) -> Attachment {
+    let content_b64 = base64::engine::Engine::encode(&URL_SAFE_NO_PAD, did.id());
+    Attachment::builder()
+        .data(
+            AttachmentData::builder()
+                .content(AttachmentType::Base64(content_b64))
+                .build(),
+        )
+        .build()
 }
 
 // TODO: Obviously, extract attachment signing

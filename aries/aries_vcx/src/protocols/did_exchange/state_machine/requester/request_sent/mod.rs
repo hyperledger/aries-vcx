@@ -92,12 +92,14 @@ impl DidExchangeRequester<RequestSent> {
                 "DidExchangeRequester<RequestSent>::receive_response >> the Response message \
                  contained attached ddo"
             );
+            // verify JWS signature on attachment
             attachment_to_diddoc(ddo).map_err(to_transition_error(self.clone()))?
         } else {
             debug!(
                 "DidExchangeRequester<RequestSent>::receive_response >> the Response message \
                  contains pairwise DID, resolving to DID Document"
             );
+            // verify JWS signature on attachment IF version == 1.1
             let did =
                 &Did::parse(response.content.did).map_err(to_transition_error(self.clone()))?;
             let DidResolutionOutput { did_document, .. } = resolver_registry

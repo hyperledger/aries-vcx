@@ -17,8 +17,8 @@ use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::{
         state_machine::helpers::{
-            attachment_to_diddoc, construct_response_v1_0, construct_response_v1_1, ddo_to_attach,
-            jws_sign_attach,
+            assemble_did_rotate_attachment, attachment_to_diddoc, construct_response_v1_0,
+            construct_response_v1_1, ddo_to_attach, jws_sign_attach,
         },
         states::{completed::Completed, responder::response_sent::ResponseSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
@@ -44,34 +44,36 @@ impl DidExchangeResponder<ResponseSent> {
         let their_ddo = resolve_ddo_from_request(&resolver_registry, &request).await?;
         let our_did_document = our_peer_did.resolve_did_doc()?;
 
-        // TODO - use v1.1 rotate attach if possible
-        let ddo_attachment_unsigned = ddo_to_attach(our_did_document.clone())?;
-        let ddo_attachment = match invitation_key {
+        let unsigned_attachment = match version {
+            DidExchangeTypeV1::V1_1(_) => assemble_did_rotate_attachment(our_peer_did.did()),
+            DidExchangeTypeV1::V1_0(_) => ddo_to_attach(our_did_document.clone())?,
+        };
+        let attachment = match invitation_key {
+            Some(invitation_key) => {
+                // TODO: this must happen only if we rotate DID; We currently do that always
+                //       can skip signing if we don't rotate did document (unique p2p invitations
+                //       with peer DIDs)
+                jws_sign_attach(unsigned_attachment, invitation_key, wallet).await?
+            }
             None => {
                 // TODO: not signing if invitation_key is not provided, that would be case for
                 //       implicit invitations. However we should probably sign with
                 //       the key the request used as recipient_vk to anoncrypt the request
                 //       So argument "invitation_key" should be required
-                ddo_attachment_unsigned
-            }
-            Some(invitation_key) => {
-                // TODO: this must happen only if we rotate DID; We currently do that always
-                //       can skip signing if we don't rotate did document (unique p2p invitations
-                //       with peer DIDs)
-                jws_sign_attach(ddo_attachment_unsigned, invitation_key, wallet).await?
+                unsigned_attachment
             }
         };
 
         let response = match version {
             DidExchangeTypeV1::V1_1(_) => AnyResponse::V1_1(construct_response_v1_1(
                 request.id.clone(),
-                &our_did_document,
-                ddo_attachment,
+                our_peer_did.did(),
+                attachment,
             )),
             DidExchangeTypeV1::V1_0(_) => AnyResponse::V1_0(construct_response_v1_0(
                 request.id.clone(),
-                &our_did_document,
-                ddo_attachment,
+                our_peer_did.did(),
+                attachment,
             )),
         };
         debug!(
