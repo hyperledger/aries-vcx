@@ -134,14 +134,16 @@ pub async fn create_peer_did_4(
 
     info!("Prepared service for peer:did:4 generation: {} ", service);
     let vm_ka = DidPeer4VerificationMethod::builder()
-        .id(vm_ka_id)
+        .id(vm_ka_id.clone())
         .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
         .public_key(PublicKeyField::Multibase {
             public_key_multibase: key_enc.fingerprint(),
         })
         .build();
     let mut construction_did_doc = DidPeer4ConstructionDidDocument::new();
-    construction_did_doc.add_key_agreement(vm_ka);
+    construction_did_doc.add_verification_method(vm_ka);
+    construction_did_doc.add_key_agreement_ref(vm_ka_id);
+
     construction_did_doc.add_service(service);
 
     info!(

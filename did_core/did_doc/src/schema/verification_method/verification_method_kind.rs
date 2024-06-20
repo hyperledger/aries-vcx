@@ -12,3 +12,13 @@ pub enum VerificationMethodKind {
     Resolved(VerificationMethod),
     Resolvable(DidUrl),
 }
+
+impl VerificationMethodKind {
+    /// Convenience function to try get the resolved enum variant (if it is that variant)
+    pub fn resolved(&self) -> Option<&VerificationMethod> {
+        match &self {
+            VerificationMethodKind::Resolved(x) => Some(x),
+            VerificationMethodKind::Resolvable(_) => None,
+        }
+    }
+}

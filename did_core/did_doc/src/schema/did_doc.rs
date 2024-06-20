@@ -187,10 +187,31 @@ impl DidDocument {
         self.extra.get(key)
     }
 
+    /// Scan the DIDDocument for a [VerificationMethod] that matches the given reference.
     pub fn dereference_key(&self, reference: &DidUrl) -> Option<&VerificationMethod> {
-        self.verification_method
+        let vms = self.verification_method.iter();
+
+        // keys are typically in the VMs ^, but may be embedded in the other fields:
+        let assertions = self.assertion_method.iter().filter_map(|k| k.resolved());
+        let key_agreements = self.key_agreement.iter().filter_map(|k| k.resolved());
+        let authentications = self.authentication.iter().filter_map(|k| k.resolved());
+        let cap_invocations = self
+            .capability_invocation
             .iter()
-            .find(|vm| vm.id().fragment() == reference.fragment())
+            .filter_map(|k| k.resolved());
+        let cap_delegations = self
+            .capability_delegation
+            .iter()
+            .filter_map(|k| k.resolved());
+
+        let mut all_vms = vms
+            .chain(assertions)
+            .chain(key_agreements)
+            .chain(authentications)
+            .chain(cap_invocations)
+            .chain(cap_delegations);
+
+        all_vms.find(|vm| vm.id().fragment() == reference.fragment())
     }
 
     pub fn validate(&self) -> Result<(), DidDocumentBuilderError> {

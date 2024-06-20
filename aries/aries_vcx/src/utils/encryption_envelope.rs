@@ -8,9 +8,10 @@ use messages::{
 use public_key::{Key, KeyType};
 use uuid::Uuid;
 
+use super::didcomm_utils::get_ed25519_base58_recipient_keys;
 use crate::{
     errors::error::prelude::*,
-    utils::didcomm_utils::{get_routing_keys, resolve_ed25519_base58_key_agreement},
+    utils::didcomm_utils::{get_ed25519_base58_routing_keys, resolve_ed25519_base58_key_agreement},
 };
 
 #[derive(Debug)]
@@ -63,9 +64,16 @@ impl EncryptionEnvelope {
         their_service_id: &Uri,
     ) -> VcxResult<EncryptionEnvelope> {
         let sender_vk = resolve_ed25519_base58_key_agreement(our_did_doc)?;
-        // CONSIDER - or should recipient keys be resolved from the service? similar to get_routing_keys.
-        let recipient_key = resolve_ed25519_base58_key_agreement(their_did_doc)?;
-        let routing_keys = get_routing_keys(their_did_doc, their_service_id)?;
+
+        let recipient_key = {
+            let service_keys = get_ed25519_base58_recipient_keys(their_did_doc, their_service_id)?;
+            match service_keys.into_iter().next() {
+                Some(key) => key,
+                // as a backup, use the first key agreement key, or none
+                None => resolve_ed25519_base58_key_agreement(their_did_doc)?,
+            }
+        };
+        let routing_keys = get_ed25519_base58_routing_keys(their_did_doc, their_service_id)?;
 
         EncryptionEnvelope::create_from_keys(
             wallet,
@@ -81,7 +89,8 @@ impl EncryptionEnvelope {
         wallet: &impl BaseWallet,
         data: &[u8],
         sender_vk: Option<&str>,
-        // TODO - why not have encryption envelope take typed [Key]s, and enforce they are KeyType::Ed25519
+        // TODO - why not have encryption envelope take typed [Key]s, and enforce they are
+        // KeyType::Ed25519
         recipient_key: String,
         routing_keys: Vec<String>,
     ) -> VcxResult<EncryptionEnvelope> {

@@ -142,9 +142,9 @@ impl DidPeer4ConstructionDidDocument {
             .push(DidPeer4VerificationMethodKind::Resolved(method));
     }
 
-    pub fn add_key_agreement_ref(&mut self, refernece: DidUrl) {
+    pub fn add_key_agreement_ref(&mut self, reference: DidUrl) {
         self.key_agreement
-            .push(DidPeer4VerificationMethodKind::Resolvable(refernece));
+            .push(DidPeer4VerificationMethodKind::Resolvable(reference));
     }
 
     pub fn add_capability_invocation(&mut self, method: DidPeer4VerificationMethod) {
