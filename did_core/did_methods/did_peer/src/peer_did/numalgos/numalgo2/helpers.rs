@@ -19,6 +19,7 @@ pub fn diddoc_from_peerdid2_elements(
     public_key_encoding: PublicKeyEncoding,
 ) -> Result<DidDocument, DidPeerError> {
     let mut service_index: usize = 0;
+    let mut vm_index: usize = 1;
 
     // Skipping one here because the first element is empty string
     for element in did.id()[1..].split('.').skip(1) {
@@ -26,6 +27,7 @@ pub fn diddoc_from_peerdid2_elements(
             element,
             did_doc,
             &mut service_index,
+            &mut vm_index,
             did,
             public_key_encoding,
         )?;
@@ -38,6 +40,7 @@ fn add_attributes_from_element(
     element: &str,
     mut did_doc: DidDocument,
     service_index: &mut usize,
+    vm_index: &mut usize,
     did: &Did,
     public_key_encoding: PublicKeyEncoding,
 ) -> Result<DidDocument, DidPeerError> {
@@ -57,6 +60,7 @@ fn add_attributes_from_element(
         did_doc = add_key_from_element(
             purposeless_element,
             did_doc,
+            vm_index,
             did,
             public_key_encoding,
             purpose,
@@ -83,26 +87,30 @@ fn add_service_from_element(
 fn add_key_from_element(
     element: &str,
     mut did_doc: DidDocument,
+    vm_index: &mut usize,
     did: &Did,
     public_key_encoding: PublicKeyEncoding,
     purpose: ElementPurpose,
 ) -> Result<DidDocument, DidPeerError> {
     let key = Key::from_fingerprint(element)?;
-    let vms = get_verification_methods_by_key(&key, did, public_key_encoding)?;
+    let vms = get_verification_methods_by_key(&key, did, public_key_encoding, vm_index)?;
 
     for vm in vms.into_iter() {
+        let vm_reference = vm.id().to_owned();
+        did_doc.add_verification_method(vm);
+        // https://identity.foundation/peer-did-method-spec/#purpose-codes
         match purpose {
             ElementPurpose::Assertion => {
-                did_doc.add_assertion_method_object(vm);
+                did_doc.add_assertion_method_ref(vm_reference);
             }
             ElementPurpose::Encryption => {
-                did_doc.add_key_agreement_object(vm);
+                did_doc.add_key_agreement_ref(vm_reference);
             }
             ElementPurpose::Verification => {
-                did_doc.add_verification_method(vm);
+                did_doc.add_authentication_ref(vm_reference);
             }
-            ElementPurpose::CapabilityInvocation => did_doc.add_capability_invocation_object(vm),
-            ElementPurpose::CapabilityDelegation => did_doc.add_capability_delegation_object(vm),
+            ElementPurpose::CapabilityInvocation => did_doc.add_capability_invocation_ref(vm_reference),
+            ElementPurpose::CapabilityDelegation => did_doc.add_capability_delegation_ref(vm_reference),
             _ => return Err(DidPeerError::UnsupportedPurpose(purpose.into())),
         }
     }
@@ -204,6 +212,7 @@ mod tests {
         let did_doc = add_key_from_element(
             purposeless_key_element,
             ddo_builder,
+            &mut 0,
             &did,
             public_key_encoding,
             ElementPurpose::Verification,
@@ -212,7 +221,7 @@ mod tests {
 
         assert_eq!(did_doc.verification_method().len(), 1);
         let vm = did_doc.verification_method().first().unwrap();
-        assert_eq!(vm.id().to_string(), "#6MkqRYqQ");
+        assert_eq!(vm.id().to_string(), "#key-0");
         assert_eq!(vm.controller().to_string(), did.to_string());
     }
 
@@ -222,6 +231,7 @@ mod tests {
         assert!(add_key_from_element(
             "z6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V",
             DidDocument::new(did.clone()),
+            &mut 0,
             &did,
             PublicKeyEncoding::Multibase,
             ElementPurpose::Service

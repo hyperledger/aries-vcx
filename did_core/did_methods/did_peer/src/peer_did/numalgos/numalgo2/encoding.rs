@@ -26,14 +26,6 @@ pub(crate) fn append_encoded_key_segments(
     for ka in did_document.key_agreement() {
         did = append_encoded_key_segment(did, did_document, ka, ElementPurpose::Encryption)?;
     }
-    for vm in did_document.verification_method() {
-        did = append_encoded_key_segment(
-            did,
-            did_document,
-            &VerificationMethodKind::Resolved(vm.to_owned()),
-            ElementPurpose::Verification,
-        )?;
-    }
     for a in did_document.authentication() {
         did = append_encoded_key_segment(did, did_document, a, ElementPurpose::Verification)?;
     }

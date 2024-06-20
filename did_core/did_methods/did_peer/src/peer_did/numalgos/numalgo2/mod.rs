@@ -62,7 +62,11 @@ impl Numalgo for Numalgo2 {
 
 #[cfg(test)]
 mod test {
-    use did_doc::schema::did_doc::DidDocument;
+    use did_doc::schema::{
+        did_doc::DidDocument, service::service_key_kind::ServiceKeyKind,
+        verification_method::PublicKeyField,
+    };
+    use did_parser_nom::DidUrl;
     use pretty_assertions::assert_eq;
     use serde_json::{from_value, json};
 
@@ -73,24 +77,30 @@ mod test {
 
     #[test]
     fn test_peer_did_2_encode_decode() {
+        // NOTE 20/6/24: universal resolver resolves an additional "assertionMethod" key for the "V"
+        // key despite the spec not saying to do this.
         let expected_did_peer = "did:peer:2.Ez6MkkukgyKAdBN46UAHvia2nxmioo74F6YdvW1nBT1wfKKha.Vz6MkfoapUdLHHgSMq5PYhdHYCoqGuRku2i17cQ9zAoR5cLSm.SeyJpZCI6IiNmb29iYXIiLCJ0IjpbImRpZC1jb21tdW5pY2F0aW9uIl0sInMiOiJodHRwOi8vZHVtbXl1cmwub3JnLyIsInIiOlsiIzZNa2t1a2d5Il0sImEiOlsiZGlkY29tbS9haXAyO2Vudj1yZmMxOSJdfQ";
         let value = json!({
             "id": expected_did_peer,
             "verificationMethod": [
                 {
-                    "id": "#6MkfoapU",
+                    "id": "#key-1",
                     "controller": expected_did_peer,
                     "type": "Ed25519VerificationKey2020",
-                    "publicKeyBase58": "2MKmtP5qx8wtiaYr24KhMiHH5rV3cpkkvPF4LXT4h7fP"
+                    "publicKeyMultibase": "z6MkkukgyKAdBN46UAHvia2nxmioo74F6YdvW1nBT1wfKKha"
+                },
+                {
+                    "id": "#key-2",
+                    "controller": expected_did_peer,
+                    "type": "Ed25519VerificationKey2020",
+                    "publicKeyMultibase": "z6MkfoapUdLHHgSMq5PYhdHYCoqGuRku2i17cQ9zAoR5cLSm"
                 }
             ],
             "keyAgreement": [
-                {
-                    "id": "#6Mkkukgy",
-                    "controller": expected_did_peer,
-                    "type": "Ed25519VerificationKey2020",
-                    "publicKeyBase58": "7TVeP4vBqpZdMfTE314x7gAoyXnPgfPZozsFcjyeQ6vC"
-                }
+                "#key-1"
+            ],
+            "authentication": [
+                "#key-2"
             ],
             "service": [
                 {
@@ -111,8 +121,87 @@ mod test {
         assert_eq!(did_peer.to_string(), expected_did_peer);
 
         let ddo_decoded: DidDocument = did_peer
-            .to_did_doc_builder(PublicKeyEncoding::Base58)
+            .to_did_doc_builder(PublicKeyEncoding::Multibase)
             .unwrap();
+        dbg!(&ddo_decoded);
         assert_eq!(ddo_original, ddo_decoded);
+    }
+
+    #[test]
+    fn test_acapy_did_peer_2() {
+        // test vector from AATH testing with acapy 0.12.1
+        let did = "did:peer:2.Vz6MkqY3gWxHEp47gCXBmnc5k7sAQChwV76YpZAHZ8erDHatK.SeyJpZCI6IiNkaWRjb21tLTAiLCJ0IjoiZGlkLWNvbW11bmljYXRpb24iLCJwcmlvcml0eSI6MCwicmVjaXBpZW50S2V5cyI6WyIja2V5LTEiXSwiciI6W10sInMiOiJodHRwOi8vaG9zdC5kb2NrZXIuaW50ZXJuYWw6OTAzMSJ9";
+        let did = PeerDid::<Numalgo2>::parse(did).unwrap();
+
+        let doc = did
+            .to_did_doc_builder(PublicKeyEncoding::Multibase)
+            .unwrap();
+        assert_eq!(doc.verification_method().len(), 1);
+        let vm = doc.verification_method_by_id("key-1").unwrap();
+        assert_eq!(
+            vm.public_key().unwrap().fingerprint(),
+            "z6MkqY3gWxHEp47gCXBmnc5k7sAQChwV76YpZAHZ8erDHatK"
+        );
+        assert_eq!(
+            vm.public_key_field(),
+            &PublicKeyField::Multibase {
+                public_key_multibase: String::from(
+                    "z6MkqY3gWxHEp47gCXBmnc5k7sAQChwV76YpZAHZ8erDHatK"
+                )
+            }
+        );
+
+        assert_eq!(doc.service().len(), 1);
+        let service = doc
+            .get_service_by_id(&"#didcomm-0".parse().unwrap())
+            .unwrap();
+        assert_eq!(
+            service.service_endpoint().to_string(),
+            "http://host.docker.internal:9031/"
+        );
+        let recips = service.extra_field_recipient_keys().unwrap();
+        assert_eq!(recips.len(), 1);
+        assert_eq!(
+            recips[0],
+            ServiceKeyKind::Reference(DidUrl::parse("#key-1".to_string()).unwrap())
+        );
+    }
+
+    #[test]
+    fn test_resolving_spec_defined_example() {
+        // https://identity.foundation/peer-did-method-spec/#example-peer-did-2
+        // NOTE: excluding the services, as they use a different type of service to the typical
+        // service DIDDoc structure
+        let did = "did:peer:2.Vz6Mkj3PUd1WjvaDhNZhhhXQdz5UnZXmS7ehtx8bsPpD47kKc.\
+                   Ez6LSg8zQom395jKLrGiBNruB9MM6V8PWuf2FpEy4uRFiqQBR";
+        let did = PeerDid::<Numalgo2>::parse(did).unwrap();
+
+        let doc = did
+            .to_did_doc_builder(PublicKeyEncoding::Multibase)
+            .unwrap();
+        let expected_doc: DidDocument = serde_json::from_value(json!({
+            "id": "did:peer:2.Vz6Mkj3PUd1WjvaDhNZhhhXQdz5UnZXmS7ehtx8bsPpD47kKc.Ez6LSg8zQom395jKLrGiBNruB9MM6V8PWuf2FpEy4uRFiqQBR",
+            "verificationMethod": [
+              {
+                "id": "#key-1",
+                "controller": "did:peer:2.Vz6Mkj3PUd1WjvaDhNZhhhXQdz5UnZXmS7ehtx8bsPpD47kKc.Ez6LSg8zQom395jKLrGiBNruB9MM6V8PWuf2FpEy4uRFiqQBR",
+                "type": "Ed25519VerificationKey2020",
+                "publicKeyMultibase": "z6Mkj3PUd1WjvaDhNZhhhXQdz5UnZXmS7ehtx8bsPpD47kKc"
+              },
+              {
+                "id": "#key-2",
+                "controller": "did:peer:2.Vz6Mkj3PUd1WjvaDhNZhhhXQdz5UnZXmS7ehtx8bsPpD47kKc.Ez6LSg8zQom395jKLrGiBNruB9MM6V8PWuf2FpEy4uRFiqQBR",
+                "type": "X25519KeyAgreementKey2020",
+                "publicKeyMultibase": "z6LSg8zQom395jKLrGiBNruB9MM6V8PWuf2FpEy4uRFiqQBR"
+              }
+            ],
+            "authentication": [
+              "#key-1"
+            ],
+            "keyAgreement": [
+              "#key-2"
+            ]
+        })).unwrap();
+        assert_eq!(doc, expected_doc);
     }
 }

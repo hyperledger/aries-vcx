@@ -9,7 +9,7 @@ use did_doc::schema::{
     utils::OneOrList,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::from_value;
+use serde_json::{from_value, Value};
 use url::Url;
 
 use crate::error::DidPeerError;
@@ -32,6 +32,9 @@ pub struct ServiceAbbreviatedDidPeer2 {
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     accept: Vec<ServiceAcceptType>,
+    #[serde(flatten)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    extra: HashMap<String, Value>,
 }
 
 impl ServiceAbbreviatedDidPeer2 {
@@ -48,23 +51,8 @@ impl ServiceAbbreviatedDidPeer2 {
             service_endpoint,
             routing_keys,
             accept,
+            extra: Default::default(),
         }
-    }
-
-    pub fn service_type(&self) -> &OneOrList<String> {
-        &self.service_type
-    }
-
-    pub fn service_endpoint(&self) -> &Url {
-        &self.service_endpoint
-    }
-
-    pub fn routing_keys(&self) -> &[ServiceKeyKind] {
-        &self.routing_keys
-    }
-
-    pub fn accept(&self) -> &[ServiceAcceptType] {
-        &self.accept
     }
 }
 
@@ -139,7 +127,7 @@ pub(crate) fn deabbreviate_service(
     abbreviated: ServiceAbbreviatedDidPeer2,
     index: usize,
 ) -> Result<Service, DidPeerError> {
-    let service_type = match abbreviated.service_type().clone() {
+    let service_type = match abbreviated.service_type {
         OneOrList::One(service_type) => {
             let typed = match service_type.as_str() {
                 "dm" => ServiceType::DIDCommV2,
@@ -167,23 +155,25 @@ pub(crate) fn deabbreviate_service(
 
     let mut service = Service::new(
         id,
-        abbreviated.service_endpoint().clone(),
+        abbreviated.service_endpoint,
         service_type,
-        HashMap::default(),
+        abbreviated.extra,
     );
-    let routing_keys = abbreviated.routing_keys();
+    let routing_keys = abbreviated.routing_keys;
     if !routing_keys.is_empty() {
-        service.add_extra_field_routing_keys(routing_keys.to_vec())?;
+        service.add_extra_field_routing_keys(routing_keys)?;
     }
-    let accept = abbreviated.accept();
+    let accept = abbreviated.accept;
     if !accept.is_empty() {
-        service.add_extra_field_accept(accept.to_vec())?;
+        service.add_extra_field_accept(accept)?;
     }
     Ok(service)
 }
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use did_doc::schema::{
         service::{
             service_accept_type::ServiceAcceptType, service_key_kind::ServiceKeyKind,
@@ -207,6 +197,7 @@ mod tests {
             service_endpoint: Url::parse("https://example.org").unwrap(),
             routing_keys: vec![],
             accept: vec![],
+            extra: HashMap::new(),
         };
         let index = 0;
 
@@ -230,6 +221,7 @@ mod tests {
             service_endpoint: service_endpoint.clone(),
             routing_keys: routing_keys.clone(),
             accept: accept.clone(),
+            extra: HashMap::new(),
         };
         let index = 0;
 
