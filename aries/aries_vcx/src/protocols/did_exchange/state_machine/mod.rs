@@ -10,11 +10,8 @@ use chrono::Utc;
 use did_doc::schema::did_doc::DidDocument;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
-    msg_fields::protocols::did_exchange::{
-        v1_1::problem_report::ProblemReport as ProblemReportV1_1,
-        v1_x::problem_report::{
-            ProblemCode, ProblemReport, ProblemReportContent, ProblemReportDecorators,
-        },
+    msg_fields::protocols::did_exchange::v1_x::problem_report::{
+        ProblemCode, ProblemReport, ProblemReportContent, ProblemReportDecorators,
     },
     msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
@@ -42,7 +39,7 @@ impl<I, S: ThreadId> DidExchange<I, S> {
         self,
         reason: String,
         problem_code: Option<ProblemCode>,
-    ) -> TransitionResult<DidExchange<I, Abandoned>, ProblemReportV1_1> {
+    ) -> TransitionResult<DidExchange<I, Abandoned>, ProblemReport> {
         let content = ProblemReportContent::builder()
             .problem_code(problem_code)
             .explain(Some(reason.clone()))

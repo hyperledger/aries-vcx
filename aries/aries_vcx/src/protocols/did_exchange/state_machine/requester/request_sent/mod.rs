@@ -29,9 +29,9 @@ impl DidExchangeRequester<RequestSent> {
     pub async fn construct_request(
         resolver_registry: Arc<ResolverRegistry>,
         invitation_id: Option<String>,
-        // TODO - label pass thru
         their_did: &Did,
         our_peer_did: &PeerDid<Numalgo4>,
+        our_label: String,
     ) -> Result<TransitionResult<Self, Request>, AriesVcxError> {
         debug!(
             "DidExchangeRequester<RequestSent>::construct_request >> their_did: {}, our_peer_did: \
@@ -46,6 +46,7 @@ impl DidExchangeRequester<RequestSent> {
         let request = construct_request(
             invitation_id.clone(),
             our_peer_did.to_string(),
+            our_label,
             DidExchangeTypeV1::new_v1_1(),
         );
 

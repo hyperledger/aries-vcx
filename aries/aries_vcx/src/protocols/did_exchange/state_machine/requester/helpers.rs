@@ -22,6 +22,7 @@ use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 pub fn construct_request(
     invitation_id: Option<String>,
     our_did: String,
+    our_label: String,
     version: DidExchangeTypeV1,
 ) -> Request {
     let msg_id = Uuid::new_v4().to_string();
@@ -35,7 +36,7 @@ pub fn construct_request(
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
     let content = RequestContent::builder()
-        .label("".into())
+        .label(our_label)
         .did(our_did)
         .did_doc(None)
         .goal(Some("To establish a connection".into())) // Rejected if non-empty by acapy

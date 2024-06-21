@@ -128,6 +128,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         Some(invitation.id),
         &did_inviter,
         &requesters_peer_did,
+        "some-label".to_owned(),
     )
     .await
     .unwrap();

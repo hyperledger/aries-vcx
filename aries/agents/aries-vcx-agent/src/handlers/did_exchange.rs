@@ -75,6 +75,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             invitation_id,
             &their_did,
             &our_peer_did,
+            "".to_owned(),
         )
         .await?;
 

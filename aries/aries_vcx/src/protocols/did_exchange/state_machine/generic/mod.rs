@@ -89,6 +89,7 @@ impl GenericDidExchange {
         invitation_id: Option<String>,
         their_did: &Did,
         our_peer_did: &PeerDid<Numalgo4>,
+        our_label: String,
     ) -> Result<(Self, Request), AriesVcxError> {
         let TransitionResult { state, output } =
             DidExchangeRequester::<RequestSent>::construct_request(
@@ -96,6 +97,7 @@ impl GenericDidExchange {
                 invitation_id,
                 their_did,
                 our_peer_did,
+                our_label,
             )
             .await?;
         Ok((

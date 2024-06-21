@@ -40,6 +40,8 @@ pub fn resolve_ed25519_base58_key_agreement(did_document: &DidDocument) -> VcxRe
     let vm_types = [
         VerificationMethodType::Ed25519VerificationKey2018,
         VerificationMethodType::Ed25519VerificationKey2020,
+        VerificationMethodType::X25519KeyAgreementKey2019,
+        VerificationMethodType::X25519KeyAgreementKey2020,
         VerificationMethodType::Multikey,
         // would be nice to search for X25519 VM types which could be derived into ed25519 keys
         // for the encryption envelope to use.
