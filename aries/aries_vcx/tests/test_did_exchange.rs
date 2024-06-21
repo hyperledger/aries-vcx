@@ -14,7 +14,10 @@ use aries_vcx::{
         states::{requester::request_sent::RequestSent, responder::response_sent::ResponseSent},
         transition::transition_result::TransitionResult,
     },
-    utils::{didcomm_utils::resolve_ed25519_base58_key_agreement, encryption_envelope::EncryptionEnvelope},
+    utils::{
+        didcomm_utils::resolve_ed25519_base58_key_agreement,
+        encryption_envelope::EncryptionEnvelope,
+    },
 };
 use aries_vcx_ledger::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
 use did_doc::schema::{

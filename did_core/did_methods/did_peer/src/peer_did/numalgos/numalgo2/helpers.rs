@@ -109,8 +109,12 @@ fn add_key_from_element(
             ElementPurpose::Verification => {
                 did_doc.add_authentication_ref(vm_reference);
             }
-            ElementPurpose::CapabilityInvocation => did_doc.add_capability_invocation_ref(vm_reference),
-            ElementPurpose::CapabilityDelegation => did_doc.add_capability_delegation_ref(vm_reference),
+            ElementPurpose::CapabilityInvocation => {
+                did_doc.add_capability_invocation_ref(vm_reference)
+            }
+            ElementPurpose::CapabilityDelegation => {
+                did_doc.add_capability_delegation_ref(vm_reference)
+            }
             _ => return Err(DidPeerError::UnsupportedPurpose(purpose.into())),
         }
     }

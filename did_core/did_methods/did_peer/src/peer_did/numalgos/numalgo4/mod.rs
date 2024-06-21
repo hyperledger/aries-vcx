@@ -278,10 +278,11 @@ mod tests {
             service.service_endpoint().to_string(),
             "http://host.docker.internal:9031/"
         );
-        let service_recip = service
-            .extra_field_recipient_keys()
-            .unwrap();
-        assert_eq!(service_recip, vec![ServiceKeyKind::Reference("#key-0".parse().unwrap())]);
+        let service_recip = service.extra_field_recipient_keys().unwrap();
+        assert_eq!(
+            service_recip,
+            vec![ServiceKeyKind::Reference("#key-0".parse().unwrap())]
+        );
         log::info!(
             "resolved document: {}",
             serde_json::to_string_pretty(&resolved_did_doc).unwrap()

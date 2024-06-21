@@ -111,8 +111,11 @@ impl DidExchangeRequester<RequestSent> {
             did_document
         };
 
-        let complete_message =
-            construct_didexchange_complete(self.state.invitation_id, self.state.request_id.clone(), version);
+        let complete_message = construct_didexchange_complete(
+            self.state.invitation_id,
+            self.state.request_id.clone(),
+            version,
+        );
         debug!(
             "DidExchangeRequester<RequestSent>::receive_response << complete_message: {:?}",
             complete_message

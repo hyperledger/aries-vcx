@@ -52,7 +52,7 @@ impl VerificationMethod {
                 self.public_key.key_decoded()?,
                 self.verification_method_type.try_into()?,
             )?,
-        }; 
+        };
 
         Ok(key)
     }
