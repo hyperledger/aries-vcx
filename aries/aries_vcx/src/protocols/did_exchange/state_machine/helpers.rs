@@ -236,7 +236,6 @@ pub(crate) async fn jws_sign_attach(
 
 /// Verifies that the given has a JWS signature attached, which is a valid signature given
 /// the expected signer key.
-/// 
 // NOTE: Does not handle attachments with multiple signatures.
 // NOTE: this is the specific use case where the signer is known by the function caller. Therefore
 // we do not need to attempt to decode key within the protected nor unprotected header.
