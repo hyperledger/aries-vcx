@@ -5,9 +5,12 @@ use did_doc::schema::did_doc::DidDocument;
 use did_parser_nom::Did;
 use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver_registry::ResolverRegistry;
-use messages::msg_fields::protocols::did_exchange::{
-    v1_1::request::Request,
-    v1_x::{complete::Complete, problem_report::ProblemReport, response::AnyResponse},
+use messages::{
+    msg_fields::protocols::did_exchange::{
+        v1_1::request::Request,
+        v1_x::{complete::Complete, problem_report::ProblemReport, response::AnyResponse},
+    },
+    msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
 use public_key::Key;
 pub use thin_state::ThinState;
@@ -90,6 +93,7 @@ impl GenericDidExchange {
         their_did: &Did,
         our_peer_did: &PeerDid<Numalgo4>,
         our_label: String,
+        version: DidExchangeTypeV1,
     ) -> Result<(Self, Request), AriesVcxError> {
         let TransitionResult { state, output } =
             DidExchangeRequester::<RequestSent>::construct_request(
@@ -98,6 +102,7 @@ impl GenericDidExchange {
                 their_did,
                 our_peer_did,
                 our_label,
+                version,
             )
             .await?;
         Ok((

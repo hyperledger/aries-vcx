@@ -12,7 +12,10 @@ use messages::{
         },
         out_of_band::invitation::{Invitation, OobService},
     },
-    msg_types::protocols::did_exchange::DidExchangeTypeV1,
+    msg_types::{
+        protocols::did_exchange::{DidExchangeType, DidExchangeTypeV1},
+        Protocol,
+    },
 };
 use shared::maybe_known::MaybeKnown;
 use uuid::Uuid;
@@ -93,4 +96,40 @@ pub fn invitation_get_first_did_service(invitation: &Invitation) -> VcxResult<Di
         AriesVcxErrorKind::InvalidState,
         "Invitation does not contain did service",
     ))
+}
+
+/// Finds the best suitable DIDExchange V1.X version specified in an invitation, or an error if
+/// none.
+pub fn invitation_get_acceptable_did_exchange_version(
+    invitation: &Invitation,
+) -> VcxResult<DidExchangeTypeV1> {
+    // determine acceptable protocol
+    let mut did_exch_v1_1_accepted = false;
+    let mut did_exch_v1_0_accepted = false;
+    for proto in invitation.content.handshake_protocols.iter().flatten() {
+        let MaybeKnown::Known(Protocol::DidExchangeType(DidExchangeType::V1(exch_proto))) = proto
+        else {
+            continue;
+        };
+        if matches!(exch_proto, DidExchangeTypeV1::V1_1(_)) {
+            did_exch_v1_1_accepted = true;
+            continue;
+        }
+        if matches!(exch_proto, DidExchangeTypeV1::V1_0(_)) {
+            did_exch_v1_0_accepted = true;
+        }
+    }
+
+    let version = match (did_exch_v1_1_accepted, did_exch_v1_0_accepted) {
+        (true, _) => DidExchangeTypeV1::new_v1_1(),
+        (false, true) => DidExchangeTypeV1::new_v1_0(),
+        _ => {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidInput,
+                "OOB invitation does not have a suitable handshake protocol for DIDExchange",
+            ))
+        }
+    };
+
+    Ok(version)
 }

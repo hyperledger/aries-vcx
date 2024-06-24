@@ -36,8 +36,9 @@ use did_peer::resolver::PeerDidResolver;
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::resolution::DidSovResolver;
 use log::info;
-use messages::msg_fields::protocols::out_of_band::invitation::{
-    Invitation, InvitationContent, OobService,
+use messages::{
+    msg_fields::protocols::out_of_band::invitation::{Invitation, InvitationContent, OobService},
+    msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
 use pretty_assertions::assert_eq;
 use test_utils::devsetup::{dev_build_profile_vdr_ledger, SetupPoolDirectory};
@@ -109,6 +110,7 @@ async fn did_exchange_test(
         &did_inviter,
         &requesters_peer_did,
         "some-label".to_owned(),
+        DidExchangeTypeV1::new_v1_1(),
     )
     .await
     .unwrap();
