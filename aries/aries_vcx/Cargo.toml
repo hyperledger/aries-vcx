@@ -67,7 +67,7 @@ base64 = "0.21.4"
 sha2 = "0.10.7"
 num-bigint = "0.4.5"
 futures = { version = "0.3", default-features = false }
-uuid = { version = "1.4.1", default-features = false, features = ["v4"] }
+uuid = { version = "1.9.0", default-features = false, features = ["v4"] }
 strum = "0.25.0"
 strum_macros = "0.25.2"
 derive_builder = "0.12.0"
