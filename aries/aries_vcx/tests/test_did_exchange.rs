@@ -153,7 +153,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         resolver_registry.clone(),
         request,
         &responders_peer_did,
-        Some(invitation_key),
+        Some(invitation_key.clone()),
     )
     .await
     .unwrap();
@@ -162,7 +162,12 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         state: requester,
         output: complete,
     } = requester
-        .receive_response(response, resolver_registry)
+        .receive_response(
+            &agent_invitee.wallet,
+            &invitation_key,
+            response,
+            &resolver_registry,
+        )
         .await
         .unwrap();
 

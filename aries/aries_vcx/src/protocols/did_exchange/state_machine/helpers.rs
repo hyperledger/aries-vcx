@@ -180,51 +180,108 @@ pub(crate) fn assemble_did_rotate_attachment(did: &Did) -> Attachment {
         .build()
 }
 
-// TODO: Obviously, extract attachment signing
-// TODO: JWS verification
+// TODO: if this becomes a common method, move to a shared location.
+/// Creates a JWS signature of the attachment with the provided verkey. The created JWS
+/// signature is appended to the attachment, in alignment with Aries RFC 0017:
+/// https://hyperledger.github.io/aries-rfcs/latest/concepts/0017-attachments/#signing-attachments.
 pub(crate) async fn jws_sign_attach(
     mut attach: Attachment,
     verkey: Key,
     wallet: &impl BaseWallet,
 ) -> Result<Attachment, AriesVcxError> {
-    if let AttachmentType::Base64(attach_base64) = &attach.data.content {
-        let did_key: DidKey = verkey.clone().try_into()?;
-        let verkey_b64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, verkey.key());
-
-        let protected_header = json!({
-            "alg": "EdDSA",
-            "jwk": {
-                "kty": "OKP",
-                "kid": did_key.to_string(),
-                "crv": "Ed25519",
-                "x": verkey_b64
-            }
-        });
-        let unprotected_header = json!({
-            // TODO: Needs to be both protected and unprotected, does it make sense?
-            "kid": did_key.to_string(),
-        });
-        let b64_protected =
-            base64::engine::Engine::encode(&URL_SAFE_LENIENT, protected_header.to_string());
-        let sign_input = format!("{}.{}", b64_protected, attach_base64).into_bytes();
-        let signed = wallet.sign(&verkey, &sign_input).await?;
-        let signature_base64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, signed);
-
-        let jws = {
-            let mut jws = HashMap::new();
-            jws.insert("header".to_string(), unprotected_header);
-            jws.insert("protected".to_string(), Value::String(b64_protected));
-            jws.insert("signature".to_string(), Value::String(signature_base64));
-            jws
-        };
-        attach.data.jws = Some(jws);
-        Ok(attach)
-    } else {
-        Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidState,
+    let AttachmentType::Base64(attach_base64) = &attach.data.content else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidInput,
             "Cannot sign non-base64-encoded attachment",
-        ))
+        ));
+    };
+    if verkey.key_type() != &KeyType::Ed25519 {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidVerkey,
+            "Only JWS signatures with Ed25519 based keys are currently supported.",
+        ));
     }
+
+    let did_key: DidKey = verkey.clone().try_into()?;
+    let verkey_b64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, verkey.key());
+
+    let protected_header = json!({
+        "alg": "EdDSA",
+        "jwk": {
+            "kty": "OKP",
+            "kid": did_key.to_string(),
+            "crv": "Ed25519",
+            "x": verkey_b64
+        }
+    });
+    let unprotected_header = json!({
+        "kid": did_key.to_string(),
+    });
+    let b64_protected =
+        base64::engine::Engine::encode(&URL_SAFE_LENIENT, protected_header.to_string());
+    let sign_input = format!("{}.{}", b64_protected, attach_base64).into_bytes();
+    let signed: Vec<u8> = wallet.sign(&verkey, &sign_input).await?;
+    let signature_base64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, signed);
+
+    let jws = {
+        let mut jws = HashMap::new();
+        jws.insert("header".to_string(), unprotected_header);
+        jws.insert("protected".to_string(), Value::String(b64_protected));
+        jws.insert("signature".to_string(), Value::String(signature_base64));
+        jws
+    };
+    attach.data.jws = Some(jws);
+    Ok(attach)
+}
+
+/// Verifies that the given has a JWS signature attached, which is a valid signature given
+/// the expected signer key.
+/// 
+// NOTE: Does not handle attachments with multiple signatures.
+// NOTE: this is the specific use case where the signer is known by the function caller. Therefore
+// we do not need to attempt to decode key within the protected nor unprotected header.
+pub(crate) async fn jws_verify_attachment(
+    attach: &Attachment,
+    expected_signer: &Key,
+    wallet: &impl BaseWallet,
+) -> Result<bool, AriesVcxError> {
+    let AttachmentType::Base64(attach_base64) = &attach.data.content else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidInput,
+            "Cannot verify JWS of a non-base64-encoded attachment",
+        ));
+    };
+    let Some(ref jws) = attach.data.jws else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidInput,
+            "Attachment has no JWS signature attached. Cannot verify.",
+        ));
+    };
+
+    let (Some(b64_protected), Some(b64_signature)) = (
+        jws.get("protected").and_then(|s| s.as_str()),
+        jws.get("signature").and_then(|s| s.as_str()),
+    ) else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidInput,
+            "Attachment has an invalid JWS with missing fields. Cannot verify.",
+        ));
+    };
+
+    let sign_input = format!("{}.{}", b64_protected, attach_base64).into_bytes();
+    let signature =
+        base64::engine::Engine::decode(&URL_SAFE_LENIENT, b64_signature).map_err(|_| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::EncodeError,
+                "Attachment JWS signature was not correctly base64Url encoded.",
+            )
+        })?;
+
+    let res = wallet
+        .verify(expected_signer, &sign_input, &signature)
+        .await?;
+
+    Ok(res)
 }
 
 // TODO - ideally this should be resilient to the case where the attachment is a legacy aries DIDDoc
