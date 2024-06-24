@@ -11,6 +11,7 @@ use aries_vcx::{
             },
             out_of_band::invitation::Invitation as OobInvitation,
         },
+        msg_types::protocols::did_exchange::DidExchangeTypeV1,
         AriesMessage,
     },
     protocols::did_exchange::{
@@ -63,6 +64,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
         &self,
         their_did: String,
         invitation_id: Option<String>,
+        version: DidExchangeTypeV1,
     ) -> AgentResult<(String, Option<String>, String)> {
         // todo: type the return type
         let (our_peer_did, _our_verkey) =
@@ -76,6 +78,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             &their_did,
             &our_peer_did,
             "".to_owned(),
+            version,
         )
         .await?;
 

@@ -9,7 +9,9 @@ use aries_vcx_agent::aries_vcx::{
         },
         AriesMessage,
     },
-    protocols::did_exchange::state_machine::requester::helpers::invitation_get_first_did_service,
+    protocols::did_exchange::state_machine::requester::helpers::{
+        invitation_get_acceptable_did_exchange_version, invitation_get_first_did_service,
+    },
 };
 use serde_json::Value;
 
@@ -35,11 +37,13 @@ impl HarnessAgent {
             .aries_agent
             .out_of_band()
             .get_invitation(&invitation_id)?;
+
+        let version = invitation_get_acceptable_did_exchange_version(&invitation)?;
         let did_inviter: Did = invitation_get_first_did_service(&invitation)?;
         let (thid, pthid, my_did) = self
             .aries_agent
             .did_exchange()
-            .handle_msg_invitation(did_inviter.to_string(), Some(invitation_id))
+            .handle_msg_invitation(did_inviter.to_string(), Some(invitation_id), version)
             .await?;
         if let Some(ref pthid) = pthid {
             self.store_mapping_pthid_thid(pthid.clone(), thid.clone());
@@ -77,7 +81,7 @@ impl HarnessAgent {
         let (thid, pthid, my_did) = self
             .aries_agent
             .did_exchange()
-            .handle_msg_invitation(req.their_public_did.clone(), None) // todo: separate the case with/without invitation on did_exchange handler
+            .handle_msg_invitation(req.their_public_did.clone(), None, Default::default()) // todo: separate the case with/without invitation on did_exchange handler
             .await?;
         let connection_id = pthid.unwrap_or(thid);
         Ok(json!({

@@ -32,6 +32,7 @@ impl DidExchangeRequester<RequestSent> {
         their_did: &Did,
         our_peer_did: &PeerDid<Numalgo4>,
         our_label: String,
+        version: DidExchangeTypeV1,
     ) -> Result<TransitionResult<Self, Request>, AriesVcxError> {
         debug!(
             "DidExchangeRequester<RequestSent>::construct_request >> their_did: {}, our_peer_did: \
@@ -47,7 +48,7 @@ impl DidExchangeRequester<RequestSent> {
             invitation_id.clone(),
             our_peer_did.to_string(),
             our_label,
-            DidExchangeTypeV1::new_v1_1(),
+            version,
         );
 
         debug!(

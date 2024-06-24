@@ -40,6 +40,12 @@ pub enum DidExchangeTypeV1_1 {
     Complete,
 }
 
+impl Default for DidExchangeTypeV1 {
+    fn default() -> Self {
+        Self::new_v1_1()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::json;
