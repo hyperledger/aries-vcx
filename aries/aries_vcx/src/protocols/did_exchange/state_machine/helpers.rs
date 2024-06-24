@@ -250,6 +250,10 @@ pub(crate) async fn jws_verify_attachment(
             "Cannot verify JWS of a non-base64-encoded attachment",
         ));
     };
+    // aries attachments do not REQUIRE that the attachment has no padding,
+    // but JWS does, so remove it; just incase.
+    let attach_base64 = attach_base64.replace("=", "");
+
     let Some(ref jws) = attach.data.jws else {
         return Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidInput,

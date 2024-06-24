@@ -139,6 +139,10 @@ async fn extract_and_verify_responder_did_doc(
     let their_did = response.content.did;
 
     if let Some(did_doc_attach) = response.content.did_doc {
+        debug!(
+            "Verifying signature of DIDDoc attached to response: {did_doc_attach:?} against \
+             expected key {invitation_key:?}"
+        );
         let verified_signature =
             jws_verify_attachment(&did_doc_attach, invitation_key, wallet).await?;
         if !verified_signature {
@@ -160,6 +164,10 @@ async fn extract_and_verify_responder_did_doc(
     }
 
     if let Some(did_rotate_attach) = response.content.did_rotate {
+        debug!(
+            "Verifying signature of DID Rotate attached to response: {did_rotate_attach:?} \
+             against expected key {invitation_key:?}"
+        );
         let verified_signature =
             jws_verify_attachment(&did_rotate_attach, invitation_key, wallet).await?;
         if !verified_signature {
