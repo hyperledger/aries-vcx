@@ -24,8 +24,10 @@ mod tests {
             thread::tests::make_extended_thread, timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_fields::protocols::did_exchange::v1_x::problem_report::ProblemCode,
-        msg_types::protocols::did_exchange::{DidExchangeTypeV1, DidExchangeTypeV1_0},
+        msg_fields::protocols::did_exchange::v1_x::problem_report::{
+            AnyProblemReport, ProblemCode,
+        },
+        msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
     };
 
     #[test]
@@ -33,7 +35,6 @@ mod tests {
         let content = ProblemReportContent::builder()
             .problem_code(None)
             .explain(None)
-            .version(DidExchangeTypeV1::new_v1_0())
             .build();
 
         let decorators = ProblemReportDecorators::new(make_extended_thread());
@@ -42,12 +43,15 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(
-            content,
-            decorators,
-            DidExchangeTypeV1_0::ProblemReport,
-            expected,
+        let msg = AnyProblemReport::V1_0(
+            ProblemReport::builder()
+                .id("test".to_owned())
+                .content(content)
+                .decorators(decorators)
+                .build(),
         );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_0::ProblemReport, expected);
     }
 
     #[test]
@@ -55,7 +59,6 @@ mod tests {
         let content = ProblemReportContent::builder()
             .problem_code(Some(ProblemCode::RequestNotAccepted))
             .explain(Some("test_conn_problem_report_explain".to_owned()))
-            .version(DidExchangeTypeV1::new_v1_0())
             .build();
 
         let mut decorators = ProblemReportDecorators::new(make_extended_thread());
@@ -70,11 +73,14 @@ mod tests {
             "~l10n": decorators.localization
         });
 
-        test_utils::test_msg(
-            content,
-            decorators,
-            DidExchangeTypeV1_0::ProblemReport,
-            expected,
+        let msg = AnyProblemReport::V1_0(
+            ProblemReport::builder()
+                .id("test".to_owned())
+                .content(content)
+                .decorators(decorators)
+                .build(),
         );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_0::ProblemReport, expected);
     }
 }

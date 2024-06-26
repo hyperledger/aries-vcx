@@ -6,7 +6,10 @@ use aries_vcx_agent::aries_vcx::{
         msg_fields::protocols::{
             connection::Connection,
             cred_issuance::{v1::CredentialIssuanceV1, CredentialIssuance},
-            did_exchange::{v1_0::DidExchangeV1_0, v1_1::DidExchangeV1_1, DidExchange},
+            did_exchange::{
+                v1_0::DidExchangeV1_0, v1_1::DidExchangeV1_1, v1_x::request::AnyRequest,
+                DidExchange,
+            },
             notification::Notification,
             present_proof::{v1::PresentProofV1, PresentProof},
         },
@@ -197,9 +200,11 @@ impl HarnessAgent {
 
     async fn handle_did_exchange_msg(&self, msg: DidExchange) -> HarnessResult<()> {
         match msg {
-            DidExchange::V1_0(DidExchangeV1_0::Request(request))
-            | DidExchange::V1_1(DidExchangeV1_1::Request(request)) => {
-                self.queue_didexchange_request(request)?;
+            DidExchange::V1_0(DidExchangeV1_0::Request(request)) => {
+                self.queue_didexchange_request(AnyRequest::V1_0(request))?;
+            }
+            DidExchange::V1_1(DidExchangeV1_1::Request(request)) => {
+                self.queue_didexchange_request(AnyRequest::V1_1(request))?;
             }
             DidExchange::V1_0(DidExchangeV1_0::Response(response)) => {
                 let res = self

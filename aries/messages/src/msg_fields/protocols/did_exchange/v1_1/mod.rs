@@ -16,10 +16,7 @@ use super::{v1_x::response::ResponseDecorators, DidExchange};
 use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
-    msg_types::{
-        protocols::did_exchange::{DidExchangeTypeV1, DidExchangeTypeV1_1},
-        MsgKindType, MsgWithType,
-    },
+    msg_types::{protocols::did_exchange::DidExchangeTypeV1_1, MsgKindType, MsgWithType},
 };
 
 #[derive(Clone, Debug, From, PartialEq)]
@@ -44,21 +41,12 @@ impl DelayedSerde for DidExchangeV1_1 {
         let kind = protocol.kind_from_str(kind_str);
 
         match kind.map_err(D::Error::custom)? {
-            DidExchangeTypeV1_1::Request => Request::deserialize(deserializer).map(|mut c| {
-                c.content.version = DidExchangeTypeV1::new_v1_1();
-                c.into()
-            }),
+            DidExchangeTypeV1_1::Request => Request::deserialize(deserializer).map(From::from),
             DidExchangeTypeV1_1::Response => Response::deserialize(deserializer).map(From::from),
             DidExchangeTypeV1_1::ProblemReport => {
-                ProblemReport::deserialize(deserializer).map(|mut c| {
-                    c.content.version = DidExchangeTypeV1::new_v1_1();
-                    c.into()
-                })
+                ProblemReport::deserialize(deserializer).map(From::from)
             }
-            DidExchangeTypeV1_1::Complete => Complete::deserialize(deserializer).map(|mut c| {
-                c.decorators.version = DidExchangeTypeV1::new_v1_1();
-                c.into()
-            }),
+            DidExchangeTypeV1_1::Complete => Complete::deserialize(deserializer).map(From::from),
         }
     }
 

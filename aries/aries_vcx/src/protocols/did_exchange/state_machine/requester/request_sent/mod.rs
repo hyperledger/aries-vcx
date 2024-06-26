@@ -5,9 +5,8 @@ use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 use did_resolver_registry::ResolverRegistry;
 use messages::{
-    msg_fields::protocols::did_exchange::{
-        v1_1::request::Request,
-        v1_x::{complete::Complete, response::AnyResponse},
+    msg_fields::protocols::did_exchange::v1_x::{
+        complete::AnyComplete, request::AnyRequest, response::AnyResponse,
     },
     msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
@@ -33,7 +32,7 @@ impl DidExchangeRequester<RequestSent> {
         our_peer_did: &PeerDid<Numalgo4>,
         our_label: String,
         version: DidExchangeTypeV1,
-    ) -> Result<TransitionResult<Self, Request>, AriesVcxError> {
+    ) -> Result<TransitionResult<Self, AnyRequest>, AriesVcxError> {
         debug!(
             "DidExchangeRequester<RequestSent>::construct_request >> their_did: {}, our_peer_did: \
              {}",
@@ -52,13 +51,13 @@ impl DidExchangeRequester<RequestSent> {
         );
 
         debug!(
-            "DidExchangeRequester<RequestSent>::construct_request << prepared request: {}",
+            "DidExchangeRequester<RequestSent>::construct_request << prepared request: {:?}",
             request
         );
         Ok(TransitionResult {
             state: DidExchangeRequester::from_parts(
                 RequestSent {
-                    request_id: request.id.clone(),
+                    request_id: request.inner().id.clone(),
                     invitation_id,
                 },
                 their_did_document,
@@ -72,7 +71,7 @@ impl DidExchangeRequester<RequestSent> {
         self,
         response: AnyResponse,
         resolver_registry: Arc<ResolverRegistry>,
-    ) -> Result<TransitionResult<DidExchangeRequester<Completed>, Complete>, TransitionError<Self>>
+    ) -> Result<TransitionResult<DidExchangeRequester<Completed>, AnyComplete>, TransitionError<Self>>
     {
         debug!(
             "DidExchangeRequester<RequestSent>::receive_response >> response: {:?}",

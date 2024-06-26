@@ -5,7 +5,7 @@ use crate::{
 
 /// Alias type for DIDExchange v1.1 request message.
 /// Note that since this inherits from the V1.X message, the direct serialization
-/// of this message type is not recommended, as version metadata will be lost.
+/// of this message type is not recommended, as it will be indistinguisable from Request V1.0.
 /// Instead, this type should be converted to/from an AriesMessage
 pub type Request = MsgParts<RequestContent, RequestDecorators>;
 
@@ -25,8 +25,11 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_fields::protocols::did_exchange::v1_1::request::{Request, RequestDecorators},
-        msg_types::protocols::did_exchange::{DidExchangeTypeV1, DidExchangeTypeV1_1},
+        msg_fields::protocols::did_exchange::{
+            v1_1::request::{Request, RequestDecorators},
+            v1_x::request::AnyRequest,
+        },
+        msg_types::protocols::did_exchange::DidExchangeTypeV1_1,
     };
 
     pub fn request_content() -> RequestContent {
@@ -47,7 +50,6 @@ mod tests {
                     )
                     .build(),
             ),
-            version: DidExchangeTypeV1::new_v1_1(),
         }
     }
 
@@ -73,12 +75,16 @@ mod tests {
             "did": content.did,
             "did_doc~attach": content.did_doc,
         });
-        test_utils::test_msg(
-            content,
-            RequestDecorators::default(),
-            DidExchangeTypeV1_1::Request,
-            expected,
+
+        let msg = AnyRequest::V1_1(
+            Request::builder()
+                .id("test".to_owned())
+                .content(content)
+                .decorators(RequestDecorators::default())
+                .build(),
         );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_1::Request, expected);
     }
 
     #[test]
@@ -99,6 +105,14 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, DidExchangeTypeV1_1::Request, expected);
+        let msg = AnyRequest::V1_1(
+            Request::builder()
+                .id("test".to_owned())
+                .content(content)
+                .decorators(decorators)
+                .build(),
+        );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_1::Request, expected);
     }
 }

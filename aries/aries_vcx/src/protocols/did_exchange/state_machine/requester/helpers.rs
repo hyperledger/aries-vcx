@@ -7,8 +7,8 @@ use messages::{
     },
     msg_fields::protocols::{
         did_exchange::v1_x::{
-            complete::{Complete, CompleteDecorators},
-            request::{Request, RequestContent, RequestDecorators},
+            complete::{AnyComplete, Complete, CompleteDecorators},
+            request::{AnyRequest, Request, RequestContent, RequestDecorators},
         },
         out_of_band::invitation::{Invitation, OobService},
     },
@@ -27,7 +27,7 @@ pub fn construct_request(
     our_did: String,
     our_label: String,
     version: DidExchangeTypeV1,
-) -> Request {
+) -> AnyRequest {
     let msg_id = Uuid::new_v4().to_string();
     let thid = msg_id.clone();
     let thread = match invitation_id {
@@ -44,13 +44,17 @@ pub fn construct_request(
         .did_doc(None)
         .goal(Some("To establish a connection".into())) // Rejected if non-empty by acapy
         .goal_code(Some(MaybeKnown::Known(ThreadGoalCode::AriesRelBuild))) // Rejected if non-empty by acapy
-        .version(version)
         .build();
-    Request::builder()
+    let req = Request::builder()
         .id(msg_id)
         .content(content)
         .decorators(decorators)
-        .build()
+        .build();
+
+    match version {
+        DidExchangeTypeV1::V1_1(_) => AnyRequest::V1_1(req),
+        DidExchangeTypeV1::V1_0(_) => AnyRequest::V1_0(req),
+    }
 }
 
 pub fn construct_didexchange_complete(
@@ -58,7 +62,7 @@ pub fn construct_didexchange_complete(
     invitation_id: Option<String>,
     request_id: String,
     version: DidExchangeTypeV1,
-) -> Complete {
+) -> AnyComplete {
     let thread = match invitation_id {
         Some(invitation_id) => Thread::builder()
             .thid(request_id)
@@ -69,12 +73,16 @@ pub fn construct_didexchange_complete(
     let decorators = CompleteDecorators::builder()
         .thread(thread)
         .timing(Timing::builder().out_time(Utc::now()).build())
-        .version(version)
         .build();
-    Complete::builder()
+    let msg = Complete::builder()
         .id(Uuid::new_v4().to_string())
         .decorators(decorators)
-        .build()
+        .build();
+
+    match version {
+        DidExchangeTypeV1::V1_1(_) => AnyComplete::V1_1(msg),
+        DidExchangeTypeV1::V1_0(_) => AnyComplete::V1_0(msg),
+    }
 }
 
 /// We are going to support only DID service values in did-exchange protocol unless there's explicit

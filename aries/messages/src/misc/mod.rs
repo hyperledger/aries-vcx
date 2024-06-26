@@ -70,9 +70,26 @@ pub mod test_utils {
         assert_eq!(Protocol::from(protocol_type), deserialized)
     }
 
-    pub fn test_msg<T, U, V>(content: T, decorators: U, msg_kind: V, mut expected: Value)
+    pub fn test_msg<T, U, V>(content: T, decorators: U, msg_kind: V, expected: Value)
     where
         AriesMessage: From<MsgParts<T, U>>,
+        V: MessageKind,
+        Protocol: From<V::Parent>,
+    {
+        let id = "test".to_owned();
+
+        let msg = MsgParts::<T, U>::builder()
+            .id(id)
+            .content(content)
+            .decorators(decorators)
+            .build();
+
+        test_constructed_msg(msg, msg_kind, expected);
+    }
+
+    pub fn test_constructed_msg<M, V>(complete: M, msg_kind: V, mut expected: Value)
+    where
+        AriesMessage: From<M>,
         V: MessageKind,
         Protocol: From<V::Parent>,
     {
@@ -83,12 +100,7 @@ pub mod test_utils {
         obj.insert("@id".to_owned(), json!(id));
         obj.insert("@type".to_owned(), json!(msg_type));
 
-        let msg = MsgParts::<T, U>::builder()
-            .id(id)
-            .content(content)
-            .decorators(decorators)
-            .build();
-        let msg = AriesMessage::from(msg);
+        let msg = AriesMessage::from(complete);
 
         test_serde(msg, expected);
     }
