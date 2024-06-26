@@ -6,11 +6,15 @@ use messages::{
         timing::Timing,
     },
     msg_fields::protocols::{
-        did_exchange::{
-            complete::{Complete, CompleteDecorators},
-            request::{Request, RequestContent, RequestDecorators},
+        did_exchange::v1_x::{
+            complete::{AnyComplete, Complete, CompleteDecorators},
+            request::{AnyRequest, Request, RequestContent, RequestDecorators},
         },
         out_of_band::invitation::{Invitation, OobService},
+    },
+    msg_types::{
+        protocols::did_exchange::{DidExchangeType, DidExchangeTypeV1},
+        Protocol,
     },
 };
 use shared::maybe_known::MaybeKnown;
@@ -18,7 +22,12 @@ use uuid::Uuid;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
-pub fn construct_request(invitation_id: Option<String>, our_did: String) -> Request {
+pub fn construct_request(
+    invitation_id: Option<String>,
+    our_did: String,
+    our_label: String,
+    version: DidExchangeTypeV1,
+) -> AnyRequest {
     let msg_id = Uuid::new_v4().to_string();
     let thid = msg_id.clone();
     let thread = match invitation_id {
@@ -30,43 +39,50 @@ pub fn construct_request(invitation_id: Option<String>, our_did: String) -> Requ
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
     let content = RequestContent::builder()
-        .label("".into())
+        .label(our_label)
         .did(our_did)
         .did_doc(None)
         .goal(Some("To establish a connection".into())) // Rejected if non-empty by acapy
         .goal_code(Some(MaybeKnown::Known(ThreadGoalCode::AriesRelBuild))) // Rejected if non-empty by acapy
         .build();
-    Request::builder()
+    let req = Request::builder()
         .id(msg_id)
         .content(content)
         .decorators(decorators)
-        .build()
+        .build();
+
+    match version {
+        DidExchangeTypeV1::V1_1(_) => AnyRequest::V1_1(req),
+        DidExchangeTypeV1::V1_0(_) => AnyRequest::V1_0(req),
+    }
 }
 
-pub fn construct_didexchange_complete(request_id: String) -> Complete {
-    // assuming we'd want to support RFC 100% and include pthread in complete message, we can add
-    // new function argument: `invitation_id: Option<String>`
-    // We choose not to do this, as it's rather historic artifact and doesn't have justification in
-    // practice see https://github.com/hyperledger/aries-rfcs/issues/817
-    // We can then build thread decorator conditionally:
-    // let thread = match invitation_id {
-    //     Some(invitation_id) => Thread::builder()
-    //         .thid(request_id)
-    //         .pthid(invitation_id)
-    //         .build(),
-    //     None => Thread::builder()
-    //         .thid(request_id)
-    //         .build()
-    // };
-    let thread = Thread::builder().thid(request_id).build();
+pub fn construct_didexchange_complete(
+    // pthid inclusion is overkill in practice, but needed. see: https://github.com/hyperledger/aries-rfcs/issues/817
+    invitation_id: Option<String>,
+    request_id: String,
+    version: DidExchangeTypeV1,
+) -> AnyComplete {
+    let thread = match invitation_id {
+        Some(invitation_id) => Thread::builder()
+            .thid(request_id)
+            .pthid(invitation_id)
+            .build(),
+        None => Thread::builder().thid(request_id).build(),
+    };
     let decorators = CompleteDecorators::builder()
         .thread(thread)
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
-    Complete::builder()
+    let msg = Complete::builder()
         .id(Uuid::new_v4().to_string())
         .decorators(decorators)
-        .build()
+        .build();
+
+    match version {
+        DidExchangeTypeV1::V1_1(_) => AnyComplete::V1_1(msg),
+        DidExchangeTypeV1::V1_0(_) => AnyComplete::V1_0(msg),
+    }
 }
 
 /// We are going to support only DID service values in did-exchange protocol unless there's explicit
@@ -88,4 +104,40 @@ pub fn invitation_get_first_did_service(invitation: &Invitation) -> VcxResult<Di
         AriesVcxErrorKind::InvalidState,
         "Invitation does not contain did service",
     ))
+}
+
+/// Finds the best suitable DIDExchange V1.X version specified in an invitation, or an error if
+/// none.
+pub fn invitation_get_acceptable_did_exchange_version(
+    invitation: &Invitation,
+) -> VcxResult<DidExchangeTypeV1> {
+    // determine acceptable protocol
+    let mut did_exch_v1_1_accepted = false;
+    let mut did_exch_v1_0_accepted = false;
+    for proto in invitation.content.handshake_protocols.iter().flatten() {
+        let MaybeKnown::Known(Protocol::DidExchangeType(DidExchangeType::V1(exch_proto))) = proto
+        else {
+            continue;
+        };
+        if matches!(exch_proto, DidExchangeTypeV1::V1_1(_)) {
+            did_exch_v1_1_accepted = true;
+            continue;
+        }
+        if matches!(exch_proto, DidExchangeTypeV1::V1_0(_)) {
+            did_exch_v1_0_accepted = true;
+        }
+    }
+
+    let version = match (did_exch_v1_1_accepted, did_exch_v1_0_accepted) {
+        (true, _) => DidExchangeTypeV1::new_v1_1(),
+        (false, true) => DidExchangeTypeV1::new_v1_0(),
+        _ => {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidInput,
+                "OOB invitation does not have a suitable handshake protocol for DIDExchange",
+            ))
+        }
+    };
+
+    Ok(version)
 }

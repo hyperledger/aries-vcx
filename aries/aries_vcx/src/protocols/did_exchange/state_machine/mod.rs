@@ -10,8 +10,8 @@ use chrono::Utc;
 use did_doc::schema::did_doc::DidDocument;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
-    msg_fields::protocols::did_exchange::problem_report::{
-        ProblemCode, ProblemReport, ProblemReportContent, ProblemReportDecorators,
+    msg_fields::protocols::did_exchange::v1_x::problem_report::{
+        AnyProblemReport, ProblemCode, ProblemReport, ProblemReportContent, ProblemReportDecorators,
     },
 };
 use uuid::Uuid;
@@ -38,7 +38,7 @@ impl<I, S: ThreadId> DidExchange<I, S> {
         self,
         reason: String,
         problem_code: Option<ProblemCode>,
-    ) -> TransitionResult<DidExchange<I, Abandoned>, ProblemReport> {
+    ) -> TransitionResult<DidExchange<I, Abandoned>, AnyProblemReport> {
         let content = ProblemReportContent::builder()
             .problem_code(problem_code)
             .explain(Some(reason.clone()))
@@ -67,7 +67,7 @@ impl<I, S: ThreadId> DidExchange<I, S> {
                 our_did_document: self.our_did_document,
                 their_did_document: self.their_did_document,
             },
-            output: problem_report,
+            output: AnyProblemReport::V1_1(problem_report),
         }
     }
 

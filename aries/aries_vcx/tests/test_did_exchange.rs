@@ -14,7 +14,10 @@ use aries_vcx::{
         states::{requester::request_sent::RequestSent, responder::response_sent::ResponseSent},
         transition::transition_result::TransitionResult,
     },
-    utils::{didcomm_utils::resolve_base58_key_agreement, encryption_envelope::EncryptionEnvelope},
+    utils::{
+        didcomm_utils::resolve_ed25519_base58_key_agreement,
+        encryption_envelope::EncryptionEnvelope,
+    },
 };
 use aries_vcx_ledger::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
 use did_doc::schema::{
@@ -27,8 +30,9 @@ use did_peer::resolver::PeerDidResolver;
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::resolution::DidSovResolver;
 use log::info;
-use messages::msg_fields::protocols::out_of_band::invitation::{
-    Invitation, InvitationContent, OobService,
+use messages::{
+    msg_fields::protocols::out_of_band::invitation::{Invitation, InvitationContent, OobService},
+    msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
 use pretty_assertions::assert_eq;
 use test_utils::devsetup::{dev_build_profile_vdr_ledger, SetupPoolDirectory};
@@ -42,8 +46,8 @@ pub mod utils;
 
 fn assert_key_agreement(a: DidDocument, b: DidDocument) {
     log::warn!("comparing did doc a: {}, b: {}", a, b);
-    let a_key = resolve_base58_key_agreement(&a).unwrap();
-    let b_key = resolve_base58_key_agreement(&b).unwrap();
+    let a_key = resolve_ed25519_base58_key_agreement(&a).unwrap();
+    let b_key = resolve_ed25519_base58_key_agreement(&b).unwrap();
     assert_eq!(a_key, b_key);
 }
 
@@ -125,11 +129,13 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         Some(invitation.id),
         &did_inviter,
         &requesters_peer_did,
+        "some-label".to_owned(),
+        DidExchangeTypeV1::new_v1_1(),
     )
     .await
     .unwrap();
     info!(
-        "Invitee processes invitation, builds up request {}",
+        "Invitee processes invitation, builds up request {:?}",
         &request
     );
 
@@ -162,7 +168,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
         .await
         .unwrap();
 
-    let responder = responder.receive_complete(complete).unwrap();
+    let responder = responder.receive_complete(complete.into_inner()).unwrap();
 
     info!("Asserting did document of requester");
     assert_key_agreement(
@@ -200,7 +206,7 @@ async fn did_exchange_test() -> Result<(), Box<dyn Error>> {
     info!("Encrypted message: {:?}", m);
 
     let requesters_peer_did = requesters_peer_did.resolve_did_doc()?;
-    let expected_sender_vk = resolve_base58_key_agreement(&requesters_peer_did)?;
+    let expected_sender_vk = resolve_ed25519_base58_key_agreement(&requesters_peer_did)?;
     let unpacked =
         EncryptionEnvelope::auth_unpack(&agent_invitee.wallet, m.0, &expected_sender_vk).await?;
 

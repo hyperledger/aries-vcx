@@ -10,8 +10,8 @@ pub fn get_verification_methods_by_key(
     key: &Key,
     did: &Did,
     public_key_encoding: PublicKeyEncoding,
+    vm_index: &mut usize,
 ) -> Result<Vec<VerificationMethod>, DidPeerError> {
-    let id = to_did_url_reference(key)?;
     let vm_type = match key.key_type() {
         KeyType::Ed25519 => VerificationMethodType::Ed25519VerificationKey2020,
         KeyType::Bls12381g1 => VerificationMethodType::Bls12381G1Key2020,
@@ -26,16 +26,18 @@ pub fn get_verification_methods_by_key(
                 &Key::new(key.key()[48..].to_vec(), KeyType::Bls12381g2)?,
                 did.to_owned(),
                 public_key_encoding,
+                vm_index,
             ));
         }
     };
-    Ok(build_verification_methods_from_type_and_key(
+
+    build_verification_methods_from_type_and_key(
         vm_type,
         key,
-        id,
         did.to_owned(),
         public_key_encoding,
-    ))
+        vm_index,
+    )
 }
 
 pub fn get_key_by_verification_method(vm: &VerificationMethod) -> Result<Key, DidPeerError> {
@@ -58,17 +60,20 @@ pub fn get_key_by_verification_method(vm: &VerificationMethod) -> Result<Key, Di
 fn build_verification_methods_from_type_and_key(
     vm_type: VerificationMethodType,
     key: &Key,
-    id: DidUrl,
     did: Did,
     public_key_encoding: PublicKeyEncoding,
-) -> Vec<VerificationMethod> {
+    vm_index: &mut usize,
+) -> Result<Vec<VerificationMethod>, DidPeerError> {
+    let id = nth_key_did_url_reference(*vm_index)?;
+    *vm_index += 1;
+
     let vm = VerificationMethod::builder()
         .id(id)
-        .controller(did.to_owned())
+        .controller(did)
         .verification_method_type(vm_type)
         .public_key(key_to_key_field(key, public_key_encoding))
         .build();
-    vec![vm]
+    Ok(vec![vm])
 }
 
 fn build_verification_methods_from_bls_multikey(
@@ -76,9 +81,12 @@ fn build_verification_methods_from_bls_multikey(
     g2_key: &Key,
     did: Did,
     public_key_encoding: PublicKeyEncoding,
+    vm_index: &mut usize,
 ) -> Vec<VerificationMethod> {
-    let id1 = to_did_url_reference(g1_key).unwrap();
-    let id2 = to_did_url_reference(g2_key).unwrap();
+    let id1 = nth_key_did_url_reference(*vm_index).unwrap();
+    *vm_index += 1;
+    let id2 = nth_key_did_url_reference(*vm_index).unwrap();
+    *vm_index += 1;
     let vm1 = VerificationMethod::builder()
         .id(id1)
         .controller(did.to_owned())
@@ -105,14 +113,8 @@ fn key_to_key_field(key: &Key, public_key_encoding: PublicKeyEncoding) -> Public
     }
 }
 
-fn to_did_url_reference(key: &Key) -> Result<DidUrl, DidPeerError> {
-    DidUrl::from_fragment(
-        key.prefixless_fingerprint()
-            .chars()
-            .take(8)
-            .collect::<String>(),
-    )
-    .map_err(Into::into)
+fn nth_key_did_url_reference(n: usize) -> Result<DidUrl, DidPeerError> {
+    DidUrl::from_fragment(format!("key-{n}")).map_err(Into::into)
 }
 
 #[cfg(test)]
@@ -188,6 +190,7 @@ mod tests {
                 key,
                 &did(),
                 PublicKeyEncoding::Multibase,
+                &mut 0,
             )
             .unwrap();
             assert_eq!(vms.len(), 1);
@@ -204,6 +207,7 @@ mod tests {
                 key,
                 &did(),
                 PublicKeyEncoding::Base58,
+                &mut 0,
             )
             .unwrap();
             assert_eq!(vms.len(), 1);

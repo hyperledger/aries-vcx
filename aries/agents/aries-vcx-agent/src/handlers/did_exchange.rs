@@ -5,12 +5,13 @@ use aries_vcx::{
     did_parser_nom::Did,
     messages::{
         msg_fields::protocols::{
-            did_exchange::{
-                complete::Complete, problem_report::ProblemReport, request::Request,
-                response::Response,
+            did_exchange::v1_x::{
+                complete::Complete, problem_report::ProblemReport, request::AnyRequest,
+                response::AnyResponse,
             },
             out_of_band::invitation::Invitation as OobInvitation,
         },
+        msg_types::protocols::did_exchange::DidExchangeTypeV1,
         AriesMessage,
     },
     protocols::did_exchange::{
@@ -63,10 +64,12 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
         &self,
         their_did: String,
         invitation_id: Option<String>,
-    ) -> AgentResult<(String, Option<String>)> {
+        version: DidExchangeTypeV1,
+    ) -> AgentResult<(String, Option<String>, String)> {
         // todo: type the return type
         let (our_peer_did, _our_verkey) =
             create_peer_did_4(self.wallet.as_ref(), self.service_endpoint.clone(), vec![]).await?;
+        let our_did = our_peer_did.did().to_string();
 
         let their_did: Did = their_did.parse()?;
         let (requester, request) = GenericDidExchange::construct_request(
@@ -74,6 +77,8 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             invitation_id,
             &their_did,
             &our_peer_did,
+            "".to_owned(),
+            version,
         )
         .await?;
 
@@ -82,31 +87,16 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
         // /agent/command/did-exchange/{id} where {id} is actually {pthid}.
         // We should have internal strategy to manage threads ourselves, and build necessary
         // extensions/mappings/accommodations in AATH backchannel
-        warn!("send_request >>> request: {}", request);
-        let pthid = request
-            .clone()
-            .decorators
-            .thread
-            .ok_or_else(|| {
-                AgentError::from_msg(
-                    AgentErrorKind::InvalidState,
-                    "Request did not contain a thread",
-                )
-            })?
-            .pthid;
-
+        warn!("send_request >>> request: {:?}", request);
+        let req_thread = request.inner().decorators.thread.as_ref().ok_or_else(|| {
+            AgentError::from_msg(
+                AgentErrorKind::InvalidState,
+                "Request did not contain a thread",
+            )
+        })?;
+        let pthid = req_thread.pthid.clone();
         // todo: messages must provide easier way to access this without all the shenanigans
-        let thid = request
-            .clone()
-            .decorators
-            .thread
-            .ok_or_else(|| {
-                AgentError::from_msg(
-                    AgentErrorKind::InvalidState,
-                    "Request did not contain a thread id",
-                )
-            })?
-            .thid;
+        let thid = req_thread.thid.clone();
 
         let ddo_their = requester.their_did_doc();
         let ddo_our = requester.our_did_document();
@@ -127,30 +117,30 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
         VcxHttpClient
             .send_message(encryption_envelope.0, service.service_endpoint())
             .await?;
-        Ok((thid, pthid))
+        Ok((thid, pthid, our_did))
     }
 
     // todo: whether invitation exists should handle the framework based on (p)thread matching
     //       rather than being supplied by upper layers
     pub async fn handle_msg_request(
         &self,
-        request: Request,
+        request: AnyRequest,
         invitation: Option<OobInvitation>,
-    ) -> AgentResult<(String, Option<String>)> {
+    ) -> AgentResult<(String, Option<String>, String, String)> {
         // todo: type the return type
         // Todo: messages should expose fallible API to get thid (for any aries msg). It's common
         //       pattern
-        let thid = request
-            .clone()
-            .decorators
-            .thread
+        let thread = request.inner().decorators.thread.as_ref();
+
+        let thid = thread
             .ok_or_else(|| {
                 AgentError::from_msg(
                     AgentErrorKind::InvalidState,
                     "Request did not contain a thread id",
                 )
             })?
-            .thid;
+            .thid
+            .clone();
 
         // Todo: "invitation_key" should not be None; see the todo inside this scope
         let invitation_key = match invitation {
@@ -165,34 +155,34 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             }
         };
 
-        let (peer_did_4_invitee, _our_verkey) =
+        let (our_peer_did, _our_verkey) =
             create_peer_did_4(self.wallet.as_ref(), self.service_endpoint.clone(), vec![]).await?;
 
-        let pthid = request
-            .clone()
-            .decorators
-            .thread
-            .clone()
+        let pthid = thread
             .ok_or_else(|| {
                 AgentError::from_msg(
                     AgentErrorKind::InvalidState,
                     "Request did not contain a thread",
                 )
             })?
-            .pthid;
+            .pthid
+            .clone();
 
         let (responder, response) = GenericDidExchange::handle_request(
             self.wallet.as_ref(),
             self.resolver_registry.clone(),
             request,
-            &peer_did_4_invitee,
+            &our_peer_did,
             invitation_key,
         )
         .await?;
         self.did_exchange
             .insert(&thid, (responder.clone(), Some(response.into())))?;
 
-        Ok((thid, pthid))
+        let our_did = responder.our_did_document().id().to_string();
+        let their_did = responder.their_did_doc().id().to_string();
+
+        Ok((thid, pthid, our_did, their_did))
     }
 
     // todo: perhaps injectable transports? Or just return the message let the caller send it?
@@ -225,8 +215,12 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
     }
 
     // todo: break down into "process_response" and "send_complete"
-    pub async fn handle_msg_response(&self, response: Response) -> AgentResult<String> {
-        let thid = response.decorators.thread.thid.clone();
+    pub async fn handle_msg_response(&self, response: AnyResponse) -> AgentResult<String> {
+        let thread = match response {
+            AnyResponse::V1_0(ref inner) => &inner.decorators.thread,
+            AnyResponse::V1_1(ref inner) => &inner.decorators.thread,
+        };
+        let thid = thread.thid.clone();
 
         let (requester, _) = self.did_exchange.get(&thid)?;
 

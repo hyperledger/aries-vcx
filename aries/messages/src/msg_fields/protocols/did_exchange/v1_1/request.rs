@@ -1,38 +1,13 @@
-use serde::{Deserialize, Serialize};
-use shared::maybe_known::MaybeKnown;
-use typed_builder::TypedBuilder;
-
 use crate::{
-    decorators::{
-        attachment::Attachment,
-        thread::{Thread, ThreadGoalCode},
-        timing::Timing,
-    },
+    msg_fields::protocols::did_exchange::v1_x::request::{RequestContent, RequestDecorators},
     msg_parts::MsgParts,
 };
 
+/// Alias type for DIDExchange v1.1 request message.
+/// Note that since this inherits from the V1.X message, the direct serialization
+/// of this message type is not recommended, as it will be indistinguisable from Request V1.0.
+/// Instead, this type should be converted to/from an AriesMessage
 pub type Request = MsgParts<RequestContent, RequestDecorators>;
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct RequestContent {
-    pub label: String,
-    pub goal_code: Option<MaybeKnown<ThreadGoalCode>>,
-    pub goal: Option<String>,
-    pub did: String, // TODO: Use Did
-    #[serde(rename = "did_doc~attach")]
-    pub did_doc: Option<Attachment>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
-pub struct RequestDecorators {
-    #[serde(rename = "~thread")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub thread: Option<Thread>,
-    #[builder(default, setter(strip_option))]
-    #[serde(rename = "~timing")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timing: Option<Timing>,
-}
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
@@ -40,17 +15,21 @@ pub struct RequestDecorators {
 mod tests {
     use diddoc_legacy::aries::diddoc::AriesDidDoc;
     use serde_json::json;
+    use shared::maybe_known::MaybeKnown;
 
     use super::*;
     use crate::{
         decorators::{
-            attachment::{AttachmentData, AttachmentType},
-            thread::tests::make_extended_thread,
+            attachment::{Attachment, AttachmentData, AttachmentType},
+            thread::{tests::make_extended_thread, ThreadGoalCode},
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_fields::protocols::did_exchange::request::{Request, RequestDecorators},
-        msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
+        msg_fields::protocols::did_exchange::{
+            v1_1::request::{Request, RequestDecorators},
+            v1_x::request::AnyRequest,
+        },
+        msg_types::protocols::did_exchange::DidExchangeTypeV1_1,
     };
 
     pub fn request_content() -> RequestContent {
@@ -96,12 +75,16 @@ mod tests {
             "did": content.did,
             "did_doc~attach": content.did_doc,
         });
-        test_utils::test_msg(
-            content,
-            RequestDecorators::default(),
-            DidExchangeTypeV1_0::Request,
-            expected,
+
+        let msg = AnyRequest::V1_1(
+            Request::builder()
+                .id("test".to_owned())
+                .content(content)
+                .decorators(RequestDecorators::default())
+                .build(),
         );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_1::Request, expected);
     }
 
     #[test]
@@ -122,6 +105,14 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, DidExchangeTypeV1_0::Request, expected);
+        let msg = AnyRequest::V1_1(
+            Request::builder()
+                .id("test".to_owned())
+                .content(content)
+                .decorators(decorators)
+                .build(),
+        );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_1::Request, expected);
     }
 }

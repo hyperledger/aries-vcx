@@ -4,7 +4,7 @@ use messages::{
         connection::{invitation::Invitation, Connection},
         coordinate_mediation::CoordinateMediation,
         cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
-        did_exchange::DidExchange,
+        did_exchange::{v1_0::DidExchangeV1_0, v1_1::DidExchangeV1_1, DidExchange},
         discover_features::DiscoverFeatures,
         notification::Notification,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
@@ -75,7 +75,9 @@ macro_rules! make_attach_from_str {
             .data(attach_data)
             .build();
         attach.id = Some($id);
-        attach.mime_type = Some(messages::misc::MimeType::Json);
+        attach.mime_type = Some(shared::maybe_known::MaybeKnown::Known(
+            messages::misc::MimeType::Json,
+        ));
         attach
     }};
 }
@@ -241,12 +243,22 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
         AriesMessage::CoordinateMediation(CoordinateMediation::Keylist(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
         }
-        AriesMessage::DidExchange(DidExchange::Request(msg)) => {
+        AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(msg)))
+        | AriesMessage::DidExchange(DidExchange::V1_1(DidExchangeV1_1::Request(msg))) => {
             matches_opt_thread_id!(msg, thread_id)
         }
-        AriesMessage::DidExchange(DidExchange::Response(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::DidExchange(DidExchange::Complete(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::DidExchange(DidExchange::ProblemReport(msg)) => {
+        AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Response(msg))) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Complete(msg)))
+        | AriesMessage::DidExchange(DidExchange::V1_1(DidExchangeV1_1::Complete(msg))) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::ProblemReport(msg)))
+        | AriesMessage::DidExchange(DidExchange::V1_1(DidExchangeV1_1::ProblemReport(msg))) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::DidExchange(DidExchange::V1_1(DidExchangeV1_1::Response(msg))) => {
             matches_thread_id!(msg, thread_id)
         }
     };

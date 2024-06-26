@@ -16,6 +16,8 @@ pub enum DidExchangeType {
 #[transitive(into(DidExchangeType, Protocol))]
 #[msg_type(major = 1)]
 pub enum DidExchangeTypeV1 {
+    #[msg_type(minor = 1, roles = "Role::Requester, Role::Responder")]
+    V1_1(MsgKindType<DidExchangeTypeV1_1>),
     #[msg_type(minor = 0, roles = "Role::Requester, Role::Responder")]
     V1_0(MsgKindType<DidExchangeTypeV1_0>),
 }
@@ -29,6 +31,21 @@ pub enum DidExchangeTypeV1_0 {
     Complete,
 }
 
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
+#[strum(serialize_all = "snake_case")]
+pub enum DidExchangeTypeV1_1 {
+    Request,
+    Response,
+    ProblemReport,
+    Complete,
+}
+
+impl Default for DidExchangeTypeV1 {
+    fn default() -> Self {
+        Self::new_v1_1()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -37,7 +54,7 @@ mod tests {
     use crate::misc::test_utils;
 
     #[test]
-    fn test_protocol_didexchange() {
+    fn test_protocol_didexchange_v1_0() {
         test_utils::test_serde(
             Protocol::from(DidExchangeTypeV1::new_v1_0()),
             json!("https://didcomm.org/didexchange/1.0"),
@@ -45,10 +62,20 @@ mod tests {
     }
 
     #[test]
+    fn test_protocol_didexchange_v1_1() {
+        let x = Protocol::from(DidExchangeTypeV1::new_v1_1());
+        dbg!(x);
+        test_utils::test_serde(
+            Protocol::from(DidExchangeTypeV1::new_v1_1()),
+            json!("https://didcomm.org/didexchange/1.1"),
+        )
+    }
+
+    #[test]
     fn test_version_resolution_didexchange() {
         test_utils::test_msg_type_resolution(
             "https://didcomm.org/didexchange/1.255",
-            DidExchangeTypeV1::new_v1_0(),
+            DidExchangeTypeV1::new_v1_1(),
         )
     }
 
@@ -62,7 +89,7 @@ mod tests {
     }
 
     #[test]
-    fn test_msg_type_request() {
+    fn test_msg_type_request_v1_0() {
         test_utils::test_msg_type(
             "https://didcomm.org/didexchange/1.0",
             "request",
@@ -71,7 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn test_msg_type_response() {
+    fn test_msg_type_response_v1_0() {
         test_utils::test_msg_type(
             "https://didcomm.org/didexchange/1.0",
             "response",
@@ -80,7 +107,7 @@ mod tests {
     }
 
     #[test]
-    fn test_msg_type_complete() {
+    fn test_msg_type_complete_v1_0() {
         test_utils::test_msg_type(
             "https://didcomm.org/didexchange/1.0",
             "complete",
@@ -89,11 +116,47 @@ mod tests {
     }
 
     #[test]
-    fn test_msg_type_problem() {
+    fn test_msg_type_problem_v1_0() {
         test_utils::test_msg_type(
             "https://didcomm.org/didexchange/1.0",
             "problem_report",
             DidExchangeTypeV1::new_v1_0(),
+        )
+    }
+
+    #[test]
+    fn test_msg_type_request_v1_1() {
+        test_utils::test_msg_type(
+            "https://didcomm.org/didexchange/1.1",
+            "request",
+            DidExchangeTypeV1::new_v1_1(),
+        )
+    }
+
+    #[test]
+    fn test_msg_type_response_v1_1() {
+        test_utils::test_msg_type(
+            "https://didcomm.org/didexchange/1.1",
+            "response",
+            DidExchangeTypeV1::new_v1_1(),
+        )
+    }
+
+    #[test]
+    fn test_msg_type_complete_v1_1() {
+        test_utils::test_msg_type(
+            "https://didcomm.org/didexchange/1.1",
+            "complete",
+            DidExchangeTypeV1::new_v1_1(),
+        )
+    }
+
+    #[test]
+    fn test_msg_type_problem_v1_1() {
+        test_utils::test_msg_type(
+            "https://didcomm.org/didexchange/1.1",
+            "problem_report",
+            DidExchangeTypeV1::new_v1_1(),
         )
     }
 }

@@ -5,8 +5,14 @@ use did_doc::schema::did_doc::DidDocument;
 use did_parser_nom::Did;
 use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver_registry::ResolverRegistry;
-use messages::msg_fields::protocols::did_exchange::{
-    complete::Complete, problem_report::ProblemReport, request::Request, response::Response,
+use messages::{
+    msg_fields::protocols::did_exchange::v1_x::{
+        complete::{AnyComplete, Complete},
+        problem_report::ProblemReport,
+        request::AnyRequest,
+        response::AnyResponse,
+    },
+    msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
 use public_key::Key;
 pub use thin_state::ThinState;
@@ -88,13 +94,17 @@ impl GenericDidExchange {
         invitation_id: Option<String>,
         their_did: &Did,
         our_peer_did: &PeerDid<Numalgo4>,
-    ) -> Result<(Self, Request), AriesVcxError> {
+        our_label: String,
+        version: DidExchangeTypeV1,
+    ) -> Result<(Self, AnyRequest), AriesVcxError> {
         let TransitionResult { state, output } =
             DidExchangeRequester::<RequestSent>::construct_request(
                 resolver_registry,
                 invitation_id,
                 their_did,
                 our_peer_did,
+                our_label,
+                version,
             )
             .await?;
         Ok((
@@ -106,10 +116,10 @@ impl GenericDidExchange {
     pub async fn handle_request(
         wallet: &impl BaseWallet,
         resolver_registry: Arc<ResolverRegistry>,
-        request: Request,
+        request: AnyRequest,
         our_peer_did: &PeerDid<Numalgo4>,
         invitation_key: Option<Key>,
-    ) -> Result<(Self, Response), AriesVcxError> {
+    ) -> Result<(Self, AnyResponse), AriesVcxError> {
         let TransitionResult { state, output } =
             DidExchangeResponder::<ResponseSent>::receive_request(
                 wallet,
@@ -127,9 +137,9 @@ impl GenericDidExchange {
 
     pub async fn handle_response(
         self,
-        response: Response,
+        response: AnyResponse,
         resolver_registry: Arc<ResolverRegistry>,
-    ) -> Result<(Self, Complete), (Self, AriesVcxError)> {
+    ) -> Result<(Self, AnyComplete), (Self, AriesVcxError)> {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(request_sent_state) => {

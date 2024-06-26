@@ -9,7 +9,7 @@ use did_doc::schema::{
     verification_method::{PublicKeyField, VerificationMethodType},
 };
 use did_key::DidKey;
-use did_parser_nom::DidUrl;
+use did_parser_nom::{Did, DidUrl};
 use did_peer::peer_did::{
     numalgos::numalgo4::{
         construction_did_doc::{DidPeer4ConstructionDidDocument, DidPeer4VerificationMethod},
@@ -23,8 +23,10 @@ use messages::{
         thread::Thread,
         timing::Timing,
     },
-    msg_fields::protocols::did_exchange::response::{
-        Response, ResponseContent, ResponseDecorators,
+    msg_fields::protocols::did_exchange::{
+        v1_0::response::{Response as ResponseV1_0, ResponseContent as ResponseV1_0Content},
+        v1_1::response::{Response as ResponseV1_1, ResponseContent as ResponseV1_1Content},
+        v1_x::response::ResponseDecorators,
     },
 };
 use public_key::{Key, KeyType};
@@ -41,20 +43,60 @@ use crate::{
     utils::base64::URL_SAFE_LENIENT,
 };
 
-pub(crate) fn construct_response(
+pub(crate) fn construct_response_v1_0(
+    // pthid inclusion is overkill in practice, but needed. see: https://github.com/hyperledger/aries-rfcs/issues/817
+    request_pthid: Option<String>,
     request_id: String,
-    our_did_document: &DidDocument,
-    signed_attach: Attachment,
-) -> Response {
-    let content = ResponseContent::builder()
-        .did(our_did_document.id().to_string())
-        .did_doc(Some(signed_attach))
+    did: &Did,
+    signed_diddoc_attach: Attachment,
+) -> ResponseV1_0 {
+    let thread = match request_pthid {
+        Some(request_pthid) => Thread::builder()
+            .thid(request_id)
+            .pthid(request_pthid)
+            .build(),
+        None => Thread::builder().thid(request_id).build(),
+    };
+
+    let content = ResponseV1_0Content::builder()
+        .did(did.to_string())
+        .did_doc(Some(signed_diddoc_attach))
         .build();
     let decorators = ResponseDecorators::builder()
-        .thread(Thread::builder().thid(request_id).build())
+        .thread(thread)
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
-    Response::builder()
+    ResponseV1_0::builder()
+        .id(Uuid::new_v4().to_string())
+        .content(content)
+        .decorators(decorators)
+        .build()
+}
+
+pub(crate) fn construct_response_v1_1(
+    // pthid inclusion is overkill in practice, but needed. see: https://github.com/hyperledger/aries-rfcs/issues/817
+    request_pthid: Option<String>,
+    request_id: String,
+    did: &Did,
+    signed_didrotate_attach: Attachment,
+) -> ResponseV1_1 {
+    let thread = match request_pthid {
+        Some(request_pthid) => Thread::builder()
+            .thid(request_id)
+            .pthid(request_pthid)
+            .build(),
+        None => Thread::builder().thid(request_id).build(),
+    };
+
+    let content = ResponseV1_1Content::builder()
+        .did(did.to_string())
+        .did_rotate(signed_didrotate_attach)
+        .build();
+    let decorators = ResponseDecorators::builder()
+        .thread(thread)
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
+    ResponseV1_1::builder()
         .id(Uuid::new_v4().to_string())
         .content(content)
         .decorators(decorators)
@@ -92,14 +134,16 @@ pub async fn create_peer_did_4(
 
     info!("Prepared service for peer:did:4 generation: {} ", service);
     let vm_ka = DidPeer4VerificationMethod::builder()
-        .id(vm_ka_id)
+        .id(vm_ka_id.clone())
         .verification_method_type(VerificationMethodType::Ed25519VerificationKey2020)
         .public_key(PublicKeyField::Multibase {
             public_key_multibase: key_enc.fingerprint(),
         })
         .build();
     let mut construction_did_doc = DidPeer4ConstructionDidDocument::new();
-    construction_did_doc.add_key_agreement(vm_ka);
+    construction_did_doc.add_verification_method(vm_ka);
+    construction_did_doc.add_key_agreement_ref(vm_ka_id);
+
     construction_did_doc.add_service(service);
 
     info!(
@@ -123,6 +167,17 @@ pub(crate) fn ddo_to_attach(ddo: DidDocument) -> Result<Attachment, AriesVcxErro
                 .build(),
         )
         .build())
+}
+
+pub(crate) fn assemble_did_rotate_attachment(did: &Did) -> Attachment {
+    let content_b64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, did.did());
+    Attachment::builder()
+        .data(
+            AttachmentData::builder()
+                .content(AttachmentType::Base64(content_b64))
+                .build(),
+        )
+        .build()
 }
 
 // TODO: Obviously, extract attachment signing

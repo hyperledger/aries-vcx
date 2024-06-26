@@ -42,10 +42,19 @@ impl VerificationMethod {
     }
 
     pub fn public_key(&self) -> Result<Key, DidDocumentBuilderError> {
-        Ok(Key::new(
-            self.public_key.key_decoded()?,
-            self.verification_method_type.try_into()?,
-        )?)
+        let key = match &self.public_key {
+            PublicKeyField::Multibase {
+                public_key_multibase,
+            } => Key::from_fingerprint(public_key_multibase)?,
+            // TODO - FUTURE - other key types could do with some special handling, i.e.
+            // those where the key_type is encoded within the key field (multibase, jwk, etc)
+            _ => Key::new(
+                self.public_key.key_decoded()?,
+                self.verification_method_type.try_into()?,
+            )?,
+        };
+
+        Ok(key)
     }
 }
 

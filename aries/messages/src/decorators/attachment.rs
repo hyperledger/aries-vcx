@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use shared::maybe_known::MaybeKnown;
 use typed_builder::TypedBuilder;
 use url::Url;
 
@@ -13,8 +14,7 @@ use crate::misc::MimeType;
 #[serde(rename_all = "snake_case")]
 pub struct Attachment {
     #[builder(default, setter(strip_option))]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "@id")]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "@id")]
     pub id: Option<String>,
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -22,10 +22,12 @@ pub struct Attachment {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
-    #[builder(default, setter(strip_option))]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "mime-type")]
-    pub mime_type: Option<MimeType>,
+    // mimetype wrapped in MaybeKnown to handle any deserialization from any string.
+    // other agents may be using mimetypes that this crate is not immediately aware of, but
+    // we should not fail to deserialize as a result.
+    #[builder(default, setter(transform = |x: MimeType| Some(MaybeKnown::Known(x))))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "mime-type")]
+    pub mime_type: Option<MaybeKnown<MimeType, String>>,
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lastmod_time: Option<DateTime<Utc>>,
@@ -188,6 +190,24 @@ pub mod tests {
             "description": attachment.description,
             "filename": attachment.filename,
             "mime-type": attachment.mime_type,
+            "lastmod_time": attachment.lastmod_time,
+            "byte_count": attachment.byte_count,
+            "data": attachment.data
+        });
+
+        test_utils::test_serde(attachment, expected);
+    }
+
+    #[test]
+    fn test_extended_attachment_with_unknown_mime() {
+        let mut attachment = make_extended_attachment();
+        attachment.mime_type = Some(MaybeKnown::Unknown(String::from("unknown/vcx")));
+
+        let expected = json!({
+            "@id": attachment.id,
+            "description": attachment.description,
+            "filename": attachment.filename,
+            "mime-type": "unknown/vcx",
             "lastmod_time": attachment.lastmod_time,
             "byte_count": attachment.byte_count,
             "data": attachment.data

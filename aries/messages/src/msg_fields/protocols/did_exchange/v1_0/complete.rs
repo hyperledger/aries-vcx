@@ -1,24 +1,14 @@
-use serde::{Deserialize, Serialize};
 use shared::misc::serde_ignored::SerdeIgnored as NoContent;
-use typed_builder::TypedBuilder;
 
 use crate::{
-    decorators::{thread::Thread, timing::Timing},
-    msg_parts::MsgParts,
+    msg_fields::protocols::did_exchange::v1_x::complete::CompleteDecorators, msg_parts::MsgParts,
 };
 
+/// Alias type for DIDExchange v1.0 Complete message.
+/// Note that since this inherits from the V1.X message, the direct serialization
+/// of this message type is not recommended, as it will be indistinguisable from V1.1.
+/// Instead, this type should be converted to/from an AriesMessage
 pub type Complete = MsgParts<NoContent, CompleteDecorators>;
-
-// TODO: Pthid is mandatory in this case!
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct CompleteDecorators {
-    #[serde(rename = "~thread")]
-    pub thread: Thread,
-    #[builder(default, setter(strip_option))]
-    #[serde(rename = "~timing")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timing: Option<Timing>,
-}
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
@@ -33,6 +23,7 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
+        msg_fields::protocols::did_exchange::v1_x::complete::AnyComplete,
         msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
     };
 
@@ -46,17 +37,17 @@ mod tests {
             }
         });
 
-        let decorators = CompleteDecorators {
-            thread,
-            timing: None,
-        };
+        let decorators = CompleteDecorators::builder().thread(thread).build();
 
-        test_utils::test_msg(
-            NoContent,
-            decorators,
-            DidExchangeTypeV1_0::Complete,
-            expected,
+        let msg = AnyComplete::V1_0(
+            Complete::builder()
+                .id("test".to_owned())
+                .content(NoContent)
+                .decorators(decorators)
+                .build(),
         );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_0::Complete, expected);
     }
 
     #[test]
@@ -71,11 +62,14 @@ mod tests {
             "~timing": serde_json::to_value(make_extended_timing()).unwrap()
         });
 
-        test_utils::test_msg(
-            NoContent,
-            decorators,
-            DidExchangeTypeV1_0::Complete,
-            expected,
+        let msg = AnyComplete::V1_0(
+            Complete::builder()
+                .id("test".to_owned())
+                .content(NoContent)
+                .decorators(decorators)
+                .build(),
         );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_0::Complete, expected);
     }
 }

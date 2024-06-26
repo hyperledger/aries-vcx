@@ -142,3 +142,9 @@ where
         kind_str.parse()
     }
 }
+
+impl<T: MessageKind> Default for MsgKindType<T> {
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}

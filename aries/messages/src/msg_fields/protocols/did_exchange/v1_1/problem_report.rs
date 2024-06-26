@@ -1,0 +1,86 @@
+use crate::{
+    msg_fields::protocols::did_exchange::v1_x::problem_report::{
+        ProblemReportContent, ProblemReportDecorators,
+    },
+    msg_parts::MsgParts,
+};
+
+/// Alias type for DIDExchange v1.1 problem report message.
+/// Note that since this inherits from the V1.X message, the direct serialization
+/// of this message type is not recommended, as version metadata will be lost.
+/// Instead, this type should be converted to/from an AriesMessage
+pub type ProblemReport = MsgParts<ProblemReportContent, ProblemReportDecorators>;
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{
+        decorators::{
+            localization::tests::make_extended_msg_localization,
+            thread::tests::make_extended_thread, timing::tests::make_extended_timing,
+        },
+        misc::test_utils,
+        msg_fields::protocols::did_exchange::v1_x::problem_report::{
+            AnyProblemReport, ProblemCode, ProblemReportDecorators,
+        },
+        msg_types::protocols::did_exchange::DidExchangeTypeV1_1,
+    };
+
+    #[test]
+    fn test_minimal_conn_problem_report() {
+        let content = ProblemReportContent::builder()
+            .problem_code(None)
+            .explain(None)
+            .build();
+
+        let decorators = ProblemReportDecorators::new(make_extended_thread());
+
+        let expected = json!({
+            "~thread": decorators.thread
+        });
+
+        let msg = AnyProblemReport::V1_1(
+            ProblemReport::builder()
+                .id("test".to_owned())
+                .content(content)
+                .decorators(decorators)
+                .build(),
+        );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_1::ProblemReport, expected);
+    }
+
+    #[test]
+    fn test_extended_conn_problem_report() {
+        let content = ProblemReportContent::builder()
+            .problem_code(Some(ProblemCode::RequestNotAccepted))
+            .explain(Some("test_conn_problem_report_explain".to_owned()))
+            .build();
+
+        let mut decorators = ProblemReportDecorators::new(make_extended_thread());
+        decorators.timing = Some(make_extended_timing());
+        decorators.localization = Some(make_extended_msg_localization());
+
+        let expected = json!({
+            "problem-code": content.problem_code,
+            "explain": content.explain,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing,
+            "~l10n": decorators.localization
+        });
+
+        let msg = AnyProblemReport::V1_1(
+            ProblemReport::builder()
+                .id("test".to_owned())
+                .content(content)
+                .decorators(decorators)
+                .build(),
+        );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_1::ProblemReport, expected);
+    }
+}

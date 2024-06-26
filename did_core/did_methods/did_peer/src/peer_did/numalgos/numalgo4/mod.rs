@@ -124,12 +124,13 @@ mod tests {
     use std::collections::HashMap;
 
     use did_doc::schema::{
-        service::{typed::ServiceType, Service},
+        service::{service_key_kind::ServiceKeyKind, typed::ServiceType, Service},
         types::uri::Uri,
         utils::OneOrList,
         verification_method::{PublicKeyField, VerificationMethodType},
     };
     use did_parser_nom::DidUrl;
+    use public_key::KeyType;
 
     use crate::peer_did::{
         numalgos::numalgo4::{
@@ -228,5 +229,63 @@ mod tests {
         let peer_did = "did:peer:4z84UjLJ6ugExV8TJ5gJUtZap5q67uD34LU26m1Ljo2u9PZ4xHa9XnknHLc3YMST5orPXh3LKi6qEYSHdNSgRMvassKP";
         let peer_did = PeerDid::<Numalgo4>::parse(peer_did).unwrap();
         peer_did.long_form().unwrap_err();
+    }
+
+    #[test]
+    fn test_resolve_acapy_test_vector1() {
+        let peer_did: &str = "did:peer:4zQmcQCH8nWEBBA6BpSEDxHyhPwHdi5CVGcvsZcjhb618zbA:z5CTtVoAxKjH1V1sKizLy5kLvV6AbmACYfcGmfVUDGn4A7BpnVQEESXEYYUG7W479kDHaqLnk7NJuu4w7ftTd9REipB2CQgW9fjzPvmsXyyHzot9o1tgYHNnqFDXgCXwFYJfjkzz3m6mex1WMN4XHWWNM4NB7exDA2maVGis7gJnVAiNrBExaihyeKJ4nBXrB3ArQ1TyuZ39F9qTeCSrBntTTa85wtUtHz5M1oE7Sj1CZeAEQzDnAMToP9idSrSXUo5z8q9Un325d8MtQgxyKGW2a9VYyW189C722GKQbGQSU3dRSwCanVHJwCh9q2G2eNVPeuydAHXmouCUCq3cVHeUkatv73DSoBV17LEJgq8dAYfvSAutG7LFyvrRW5wNjcQMT7WdFHRCqhtzz18zu6fSTQWM4PQPLMVEaKbs51EeYGiGurhu1ChQMjXqnpcRcpCP7RAEgyWSjMER6e3gdCVsBhQSoqGk1UN8NfVah8pxGg2i5Gd1754Ys6aBEhTashFa47Ke7oPoZ6LZiRMETYhUr1cQY65TQhMzyrR6RzLudeRVgcRdKiTTmP2fFi5H8nCHPSGb4wncUxgn3N5CbFaUC";
+        let peer_did = PeerDid::<Numalgo4>::parse(peer_did).unwrap();
+
+        let resolved_did_doc = peer_did.resolve_did_doc().unwrap();
+        assert_eq!(resolved_did_doc.id().to_string(), "did:peer:4zQmcQCH8nWEBBA6BpSEDxHyhPwHdi5CVGcvsZcjhb618zbA:z5CTtVoAxKjH1V1sKizLy5kLvV6AbmACYfcGmfVUDGn4A7BpnVQEESXEYYUG7W479kDHaqLnk7NJuu4w7ftTd9REipB2CQgW9fjzPvmsXyyHzot9o1tgYHNnqFDXgCXwFYJfjkzz3m6mex1WMN4XHWWNM4NB7exDA2maVGis7gJnVAiNrBExaihyeKJ4nBXrB3ArQ1TyuZ39F9qTeCSrBntTTa85wtUtHz5M1oE7Sj1CZeAEQzDnAMToP9idSrSXUo5z8q9Un325d8MtQgxyKGW2a9VYyW189C722GKQbGQSU3dRSwCanVHJwCh9q2G2eNVPeuydAHXmouCUCq3cVHeUkatv73DSoBV17LEJgq8dAYfvSAutG7LFyvrRW5wNjcQMT7WdFHRCqhtzz18zu6fSTQWM4PQPLMVEaKbs51EeYGiGurhu1ChQMjXqnpcRcpCP7RAEgyWSjMER6e3gdCVsBhQSoqGk1UN8NfVah8pxGg2i5Gd1754Ys6aBEhTashFa47Ke7oPoZ6LZiRMETYhUr1cQY65TQhMzyrR6RzLudeRVgcRdKiTTmP2fFi5H8nCHPSGb4wncUxgn3N5CbFaUC");
+        assert_eq!(
+            resolved_did_doc.also_known_as()[0].to_string(),
+            "did:peer:4zQmcQCH8nWEBBA6BpSEDxHyhPwHdi5CVGcvsZcjhb618zbA"
+        );
+
+        // vm/key
+        assert_eq!(resolved_did_doc.verification_method().len(), 1);
+        let vm = resolved_did_doc.verification_method_by_id("key-0").unwrap();
+        assert_eq!(
+            vm.verification_method_type(),
+            &VerificationMethodType::Multikey
+        );
+        assert_eq!(
+            vm.public_key_field(),
+            &PublicKeyField::Multibase {
+                public_key_multibase: String::from(
+                    "z6MkuNenWjqDeZ4DjkHoqX6WdDYTfUUqcR7ASezo846GHe74"
+                )
+            }
+        );
+        let key = vm.public_key().unwrap();
+        assert_eq!(
+            key.fingerprint(),
+            "z6MkuNenWjqDeZ4DjkHoqX6WdDYTfUUqcR7ASezo846GHe74"
+        );
+        assert_eq!(key.key_type(), &KeyType::Ed25519);
+
+        // servie
+        assert_eq!(resolved_did_doc.service().len(), 1);
+        let service = resolved_did_doc
+            .get_service_by_id(&"#didcomm-0".parse().unwrap())
+            .unwrap();
+        assert_eq!(
+            service.service_type(),
+            &OneOrList::One(ServiceType::DIDCommV1)
+        );
+        assert_eq!(
+            service.service_endpoint().to_string(),
+            "http://host.docker.internal:9031/"
+        );
+        let service_recip = service.extra_field_recipient_keys().unwrap();
+        assert_eq!(
+            service_recip,
+            vec![ServiceKeyKind::Reference("#key-0".parse().unwrap())]
+        );
+        log::info!(
+            "resolved document: {}",
+            serde_json::to_string_pretty(&resolved_did_doc).unwrap()
+        );
     }
 }

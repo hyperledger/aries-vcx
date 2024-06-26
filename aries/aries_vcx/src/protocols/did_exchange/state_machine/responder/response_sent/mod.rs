@@ -4,8 +4,13 @@ use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_doc::schema::did_doc::DidDocument;
 use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver_registry::ResolverRegistry;
-use messages::msg_fields::protocols::did_exchange::{
-    complete::Complete, request::Request, response::Response,
+use messages::{
+    msg_fields::protocols::did_exchange::v1_x::{
+        complete::Complete,
+        request::{AnyRequest, Request},
+        response::AnyResponse,
+    },
+    msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
 use public_key::Key;
 
@@ -14,7 +19,8 @@ use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::{
         state_machine::helpers::{
-            attachment_to_diddoc, construct_response, ddo_to_attach, jws_sign_attach,
+            assemble_did_rotate_attachment, attachment_to_diddoc, construct_response_v1_0,
+            construct_response_v1_1, ddo_to_attach, jws_sign_attach,
         },
         states::{completed::Completed, responder::response_sent::ResponseSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
@@ -25,38 +31,61 @@ impl DidExchangeResponder<ResponseSent> {
     pub async fn receive_request(
         wallet: &impl BaseWallet,
         resolver_registry: Arc<ResolverRegistry>,
-        request: Request,
+        request: AnyRequest,
         our_peer_did: &PeerDid<Numalgo4>,
         invitation_key: Option<Key>,
-    ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, Response>, AriesVcxError> {
-        info!(
-            "DidExchangeResponder<ResponseSent>::receive_request >> request: {}, our_peer_did: \
+    ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, AnyResponse>, AriesVcxError>
+    {
+        debug!(
+            "DidExchangeResponder<ResponseSent>::receive_request >> request: {:?}, our_peer_did: \
              {}, invitation_key: {:?}",
             request, our_peer_did, invitation_key
         );
+        let version = request.get_version();
+        let request = request.into_inner();
+
         let their_ddo = resolve_ddo_from_request(&resolver_registry, &request).await?;
         let our_did_document = our_peer_did.resolve_did_doc()?;
-        // TODO: Check amendment made to did-exchange protocol in terms of rotating keys.
-        //       When keys are rotated, there's a new decorator which conveys that
-        let ddo_attachment_unsigned = ddo_to_attach(our_did_document.clone())?;
-        let ddo_attachment = match invitation_key {
+
+        let unsigned_attachment = match version {
+            DidExchangeTypeV1::V1_1(_) => assemble_did_rotate_attachment(our_peer_did.did()),
+            DidExchangeTypeV1::V1_0(_) => ddo_to_attach(our_did_document.clone())?,
+        };
+        let attachment = match invitation_key {
+            Some(invitation_key) => {
+                // TODO: this must happen only if we rotate DID; We currently do that always
+                //       can skip signing if we don't rotate did document (unique p2p invitations
+                //       with peer DIDs)
+                jws_sign_attach(unsigned_attachment, invitation_key, wallet).await?
+            }
             None => {
                 // TODO: not signing if invitation_key is not provided, that would be case for
                 //       implicit invitations. However we should probably sign with
                 //       the key the request used as recipient_vk to anoncrypt the request
                 //       So argument "invitation_key" should be required
-                ddo_attachment_unsigned
-            }
-            Some(invitation_key) => {
-                // TODO: this must happen only if we rotate DID; We currently do that always
-                //       can skip signing if we don't rotate did document (unique p2p invitations
-                //       with peer DIDs)
-                jws_sign_attach(ddo_attachment_unsigned, invitation_key, wallet).await?
+                unsigned_attachment
             }
         };
-        let response = construct_response(request.id.clone(), &our_did_document, ddo_attachment);
-        info!(
-            "DidExchangeResponder<ResponseSent>::receive_request << prepared response: {}",
+
+        let request_id = request.id.clone();
+        let request_pthid = request.decorators.thread.and_then(|thid| thid.pthid);
+
+        let response = match version {
+            DidExchangeTypeV1::V1_1(_) => AnyResponse::V1_1(construct_response_v1_1(
+                request_pthid,
+                request_id,
+                our_peer_did.did(),
+                attachment,
+            )),
+            DidExchangeTypeV1::V1_0(_) => AnyResponse::V1_0(construct_response_v1_0(
+                request_pthid,
+                request_id,
+                our_peer_did.did(),
+                attachment,
+            )),
+        };
+        debug!(
+            "DidExchangeResponder<ResponseSent>::receive_request << prepared response: {:?}",
             response
         );
 
