@@ -30,7 +30,7 @@ use crate::{
 impl DidExchangeResponder<ResponseSent> {
     pub async fn receive_request(
         wallet: &impl BaseWallet,
-        resolver_registry: Arc<ResolverRegistry>,
+        resolver_registry: &Arc<ResolverRegistry>,
         request: AnyRequest,
         our_peer_did: &PeerDid<Numalgo4>,
         invitation_key: Option<Key>,
@@ -44,7 +44,7 @@ impl DidExchangeResponder<ResponseSent> {
         let version = request.get_version();
         let request = request.into_inner();
 
-        let their_ddo = resolve_ddo_from_request(&resolver_registry, &request).await?;
+        let their_ddo = resolve_ddo_from_request(resolver_registry, &request).await?;
         let our_did_document = our_peer_did.resolve_did_doc()?;
 
         let unsigned_attachment = match version {

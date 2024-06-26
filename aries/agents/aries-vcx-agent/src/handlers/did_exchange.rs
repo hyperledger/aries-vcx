@@ -73,7 +73,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
 
         let their_did: Did = their_did.parse()?;
         let (requester, request) = GenericDidExchange::construct_request(
-            self.resolver_registry.clone(),
+            &self.resolver_registry,
             invitation_id,
             &their_did,
             &our_peer_did,
@@ -170,7 +170,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
 
         let (responder, response) = GenericDidExchange::handle_request(
             self.wallet.as_ref(),
-            self.resolver_registry.clone(),
+            &self.resolver_registry,
             request,
             &our_peer_did,
             invitation_key,

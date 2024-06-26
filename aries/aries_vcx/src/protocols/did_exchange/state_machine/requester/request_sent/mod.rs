@@ -33,7 +33,7 @@ use crate::{
 
 impl DidExchangeRequester<RequestSent> {
     pub async fn construct_request(
-        resolver_registry: Arc<ResolverRegistry>,
+        resolver_registry: &Arc<ResolverRegistry>,
         invitation_id: Option<String>,
         their_did: &Did,
         our_peer_did: &PeerDid<Numalgo4>,

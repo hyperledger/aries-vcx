@@ -105,7 +105,7 @@ async fn did_exchange_test(
         state: requester,
         output: request,
     } = DidExchangeRequester::<RequestSent>::construct_request(
-        resolver_registry.clone(),
+        &resolver_registry,
         Some(invitation.id),
         &did_inviter,
         &requesters_peer_did,
@@ -132,7 +132,7 @@ async fn did_exchange_test(
         state: responder,
     } = DidExchangeResponder::<ResponseSent>::receive_request(
         &agent_inviter.wallet,
-        resolver_registry.clone(),
+        &resolver_registry,
         request,
         &responders_peer_did,
         Some(invitation_key.clone()),
@@ -315,7 +315,7 @@ async fn did_exchange_test_with_invalid_rotation_signature() -> Result<(), Box<d
         state: requester,
         output: request,
     } = DidExchangeRequester::<RequestSent>::construct_request(
-        resolver_registry.clone(),
+        &resolver_registry,
         Some(invitation.id),
         &did_inviter,
         &requesters_peer_did,
@@ -333,7 +333,7 @@ async fn did_exchange_test_with_invalid_rotation_signature() -> Result<(), Box<d
         state: _,
     } = DidExchangeResponder::<ResponseSent>::receive_request(
         &agent_inviter.wallet,
-        resolver_registry.clone(),
+        &resolver_registry,
         request,
         &responders_peer_did,
         // sign with NOT the invitation key

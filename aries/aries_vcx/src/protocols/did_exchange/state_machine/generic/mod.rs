@@ -90,7 +90,7 @@ impl GenericDidExchange {
     }
 
     pub async fn construct_request(
-        resolver_registry: Arc<ResolverRegistry>,
+        resolver_registry: &Arc<ResolverRegistry>,
         invitation_id: Option<String>,
         their_did: &Did,
         our_peer_did: &PeerDid<Numalgo4>,
@@ -115,7 +115,7 @@ impl GenericDidExchange {
 
     pub async fn handle_request(
         wallet: &impl BaseWallet,
-        resolver_registry: Arc<ResolverRegistry>,
+        resolver_registry: &Arc<ResolverRegistry>,
         request: AnyRequest,
         our_peer_did: &PeerDid<Numalgo4>,
         invitation_key: Option<Key>,
