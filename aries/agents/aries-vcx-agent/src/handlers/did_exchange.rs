@@ -6,7 +6,7 @@ use aries_vcx::{
     messages::{
         msg_fields::protocols::{
             did_exchange::v1_x::{
-                complete::Complete, problem_report::ProblemReport, request::Request,
+                complete::Complete, problem_report::ProblemReport, request::AnyRequest,
                 response::AnyResponse,
             },
             out_of_band::invitation::Invitation as OobInvitation,
@@ -87,31 +87,16 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
         // /agent/command/did-exchange/{id} where {id} is actually {pthid}.
         // We should have internal strategy to manage threads ourselves, and build necessary
         // extensions/mappings/accommodations in AATH backchannel
-        warn!("send_request >>> request: {}", request);
-        let pthid = request
-            .clone()
-            .decorators
-            .thread
-            .ok_or_else(|| {
-                AgentError::from_msg(
-                    AgentErrorKind::InvalidState,
-                    "Request did not contain a thread",
-                )
-            })?
-            .pthid;
-
+        warn!("send_request >>> request: {:?}", request);
+        let req_thread = request.inner().decorators.thread.as_ref().ok_or_else(|| {
+            AgentError::from_msg(
+                AgentErrorKind::InvalidState,
+                "Request did not contain a thread",
+            )
+        })?;
+        let pthid = req_thread.pthid.clone();
         // todo: messages must provide easier way to access this without all the shenanigans
-        let thid = request
-            .clone()
-            .decorators
-            .thread
-            .ok_or_else(|| {
-                AgentError::from_msg(
-                    AgentErrorKind::InvalidState,
-                    "Request did not contain a thread id",
-                )
-            })?
-            .thid;
+        let thid = req_thread.thid.clone();
 
         let ddo_their = requester.their_did_doc();
         let ddo_our = requester.our_did_document();
@@ -139,13 +124,13 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
     //       rather than being supplied by upper layers
     pub async fn handle_msg_request(
         &self,
-        request: Request,
+        request: AnyRequest,
         invitation: Option<OobInvitation>,
     ) -> AgentResult<(String, Option<String>, String, String)> {
         // todo: type the return type
         // Todo: messages should expose fallible API to get thid (for any aries msg). It's common
         //       pattern
-        let thread = request.decorators.thread.as_ref();
+        let thread = request.inner().decorators.thread.as_ref();
 
         let thid = thread
             .ok_or_else(|| {

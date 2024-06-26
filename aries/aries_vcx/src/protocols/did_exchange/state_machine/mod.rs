@@ -11,9 +11,8 @@ use did_doc::schema::did_doc::DidDocument;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::did_exchange::v1_x::problem_report::{
-        ProblemCode, ProblemReport, ProblemReportContent, ProblemReportDecorators,
+        AnyProblemReport, ProblemCode, ProblemReport, ProblemReportContent, ProblemReportDecorators,
     },
-    msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
 use uuid::Uuid;
 
@@ -39,11 +38,10 @@ impl<I, S: ThreadId> DidExchange<I, S> {
         self,
         reason: String,
         problem_code: Option<ProblemCode>,
-    ) -> TransitionResult<DidExchange<I, Abandoned>, ProblemReport> {
+    ) -> TransitionResult<DidExchange<I, Abandoned>, AnyProblemReport> {
         let content = ProblemReportContent::builder()
             .problem_code(problem_code)
             .explain(Some(reason.clone()))
-            .version(DidExchangeTypeV1::new_v1_1())
             .build();
         let decorators = ProblemReportDecorators::builder()
             .thread(
@@ -69,7 +67,7 @@ impl<I, S: ThreadId> DidExchange<I, S> {
                 our_did_document: self.our_did_document,
                 their_did_document: self.their_did_document,
             },
-            output: problem_report,
+            output: AnyProblemReport::V1_1(problem_report),
         }
     }
 

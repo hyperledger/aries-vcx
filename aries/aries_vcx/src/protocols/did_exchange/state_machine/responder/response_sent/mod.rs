@@ -6,7 +6,9 @@ use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use messages::{
     msg_fields::protocols::did_exchange::v1_x::{
-        complete::Complete, request::Request, response::AnyResponse,
+        complete::Complete,
+        request::{AnyRequest, Request},
+        response::AnyResponse,
     },
     msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
@@ -29,7 +31,7 @@ impl DidExchangeResponder<ResponseSent> {
     pub async fn receive_request(
         wallet: &impl BaseWallet,
         resolver_registry: Arc<ResolverRegistry>,
-        request: Request,
+        request: AnyRequest,
         our_peer_did: &PeerDid<Numalgo4>,
         invitation_key: Option<Key>,
     ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, AnyResponse>, AriesVcxError>
@@ -40,6 +42,7 @@ impl DidExchangeResponder<ResponseSent> {
             request, our_peer_did, invitation_key
         );
         let version = request.get_version();
+        let request = request.into_inner();
 
         let their_ddo = resolve_ddo_from_request(&resolver_registry, &request).await?;
         let our_did_document = our_peer_did.resolve_did_doc()?;

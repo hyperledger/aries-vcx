@@ -24,8 +24,6 @@ pub struct ProblemReportContent {
     pub problem_code: Option<ProblemCode>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub explain: Option<String>,
-    #[serde(skip, default = "DidExchangeTypeV1::new_v1_1")]
-    pub(crate) version: DidExchangeTypeV1,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -61,20 +59,44 @@ impl ProblemReportDecorators {
     }
 }
 
-impl ProblemReport {
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[serde(untagged)]
+pub enum AnyProblemReport {
+    V1_0(ProblemReport),
+    V1_1(ProblemReport),
+}
+
+impl AnyProblemReport {
     pub fn get_version(&self) -> DidExchangeTypeV1 {
-        self.content.version
+        match self {
+            AnyProblemReport::V1_0(_) => DidExchangeTypeV1::new_v1_0(),
+            AnyProblemReport::V1_1(_) => DidExchangeTypeV1::new_v1_1(),
+        }
     }
 }
 
-impl From<ProblemReport> for AriesMessage {
-    fn from(value: ProblemReport) -> Self {
-        match value.get_version() {
-            DidExchangeTypeV1::V1_0(_) => {
-                DidExchange::V1_0(DidExchangeV1_0::ProblemReport(value)).into()
+impl AnyProblemReport {
+    pub fn into_inner(self) -> ProblemReport {
+        match self {
+            AnyProblemReport::V1_0(r) | AnyProblemReport::V1_1(r) => r,
+        }
+    }
+
+    pub fn inner(&self) -> &ProblemReport {
+        match self {
+            AnyProblemReport::V1_0(r) | AnyProblemReport::V1_1(r) => r,
+        }
+    }
+}
+
+impl From<AnyProblemReport> for AriesMessage {
+    fn from(value: AnyProblemReport) -> Self {
+        match value {
+            AnyProblemReport::V1_0(inner) => {
+                DidExchange::V1_0(DidExchangeV1_0::ProblemReport(inner)).into()
             }
-            DidExchangeTypeV1::V1_1(_) => {
-                DidExchange::V1_1(DidExchangeV1_1::ProblemReport(value)).into()
+            AnyProblemReport::V1_1(inner) => {
+                DidExchange::V1_1(DidExchangeV1_1::ProblemReport(inner)).into()
             }
         }
     }

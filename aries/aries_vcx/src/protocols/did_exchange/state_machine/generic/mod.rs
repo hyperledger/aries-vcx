@@ -6,9 +6,11 @@ use did_parser_nom::Did;
 use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use messages::{
-    msg_fields::protocols::did_exchange::{
-        v1_1::request::Request,
-        v1_x::{complete::Complete, problem_report::ProblemReport, response::AnyResponse},
+    msg_fields::protocols::did_exchange::v1_x::{
+        complete::{AnyComplete, Complete},
+        problem_report::ProblemReport,
+        request::AnyRequest,
+        response::AnyResponse,
     },
     msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
@@ -94,7 +96,7 @@ impl GenericDidExchange {
         our_peer_did: &PeerDid<Numalgo4>,
         our_label: String,
         version: DidExchangeTypeV1,
-    ) -> Result<(Self, Request), AriesVcxError> {
+    ) -> Result<(Self, AnyRequest), AriesVcxError> {
         let TransitionResult { state, output } =
             DidExchangeRequester::<RequestSent>::construct_request(
                 resolver_registry,
@@ -114,7 +116,7 @@ impl GenericDidExchange {
     pub async fn handle_request(
         wallet: &impl BaseWallet,
         resolver_registry: Arc<ResolverRegistry>,
-        request: Request,
+        request: AnyRequest,
         our_peer_did: &PeerDid<Numalgo4>,
         invitation_key: Option<Key>,
     ) -> Result<(Self, AnyResponse), AriesVcxError> {
@@ -139,7 +141,7 @@ impl GenericDidExchange {
         invitation_key: &Key,
         response: AnyResponse,
         resolver_registry: &Arc<ResolverRegistry>,
-    ) -> Result<(Self, Complete), (Self, AriesVcxError)> {
+    ) -> Result<(Self, AnyComplete), (Self, AriesVcxError)> {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(request_sent_state) => {

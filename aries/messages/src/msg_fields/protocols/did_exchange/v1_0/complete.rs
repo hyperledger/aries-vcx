@@ -6,7 +6,7 @@ use crate::{
 
 /// Alias type for DIDExchange v1.0 Complete message.
 /// Note that since this inherits from the V1.X message, the direct serialization
-/// of this message type is not recommended, as version metadata will be lost.
+/// of this message type is not recommended, as it will be indistinguisable from V1.1.
 /// Instead, this type should be converted to/from an AriesMessage
 pub type Complete = MsgParts<NoContent, CompleteDecorators>;
 
@@ -23,7 +23,8 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_types::protocols::did_exchange::{DidExchangeTypeV1, DidExchangeTypeV1_0},
+        msg_fields::protocols::did_exchange::v1_x::complete::AnyComplete,
+        msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
     };
 
     #[test]
@@ -36,17 +37,17 @@ mod tests {
             }
         });
 
-        let decorators = CompleteDecorators::builder()
-            .thread(thread)
-            .version(DidExchangeTypeV1::new_v1_0())
-            .build();
+        let decorators = CompleteDecorators::builder().thread(thread).build();
 
-        test_utils::test_msg(
-            NoContent,
-            decorators,
-            DidExchangeTypeV1_0::Complete,
-            expected,
+        let msg = AnyComplete::V1_0(
+            Complete::builder()
+                .id("test".to_owned())
+                .content(NoContent)
+                .decorators(decorators)
+                .build(),
         );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_0::Complete, expected);
     }
 
     #[test]
@@ -54,7 +55,6 @@ mod tests {
         let decorators = CompleteDecorators {
             thread: make_extended_thread(),
             timing: Some(make_extended_timing()),
-            version: DidExchangeTypeV1::new_v1_0(),
         };
 
         let expected = json!({
@@ -62,11 +62,14 @@ mod tests {
             "~timing": serde_json::to_value(make_extended_timing()).unwrap()
         });
 
-        test_utils::test_msg(
-            NoContent,
-            decorators,
-            DidExchangeTypeV1_0::Complete,
-            expected,
+        let msg = AnyComplete::V1_0(
+            Complete::builder()
+                .id("test".to_owned())
+                .content(NoContent)
+                .decorators(decorators)
+                .build(),
         );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_0::Complete, expected);
     }
 }

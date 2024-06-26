@@ -5,7 +5,7 @@ use crate::{
 
 /// Alias type for DIDExchange v1.0 Request message.
 /// Note that since this inherits from the V1.X message, the direct serialization
-/// of this Request is not recommended, as version metadata will be lost.
+/// of this Request is not recommended, as it will be indistinguisable from Request V1.1.
 /// Instead, this type should be converted to/from an AriesMessage
 pub type Request = MsgParts<RequestContent, RequestDecorators>;
 
@@ -25,8 +25,11 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_fields::protocols::did_exchange::v1_0::request::{Request, RequestDecorators},
-        msg_types::protocols::did_exchange::{DidExchangeTypeV1, DidExchangeTypeV1_0},
+        msg_fields::protocols::did_exchange::{
+            v1_0::request::{Request, RequestDecorators},
+            v1_x::request::AnyRequest,
+        },
+        msg_types::protocols::did_exchange::DidExchangeTypeV1_0,
     };
 
     pub fn request_content() -> RequestContent {
@@ -47,7 +50,6 @@ mod tests {
                     )
                     .build(),
             ),
-            version: DidExchangeTypeV1::new_v1_0(),
         }
     }
 
@@ -59,10 +61,7 @@ mod tests {
             .decorators(RequestDecorators::default())
             .build();
         let printed_json = format!("{}", msg);
-        let mut parsed_request: Request = serde_json::from_str(&printed_json).unwrap();
-        // the serialized format of [Request] directly will not retain the version metadata,
-        // that information is the responsibility of higher up layers.
-        parsed_request.content.version = DidExchangeTypeV1::new_v1_0();
+        let parsed_request: Request = serde_json::from_str(&printed_json).unwrap();
         assert_eq!(msg, parsed_request);
     }
 
@@ -76,12 +75,16 @@ mod tests {
             "did": content.did,
             "did_doc~attach": content.did_doc,
         });
-        test_utils::test_msg(
-            content,
-            RequestDecorators::default(),
-            DidExchangeTypeV1_0::Request,
-            expected,
+
+        let msg = AnyRequest::V1_0(
+            Request::builder()
+                .id("test".to_owned())
+                .content(content)
+                .decorators(RequestDecorators::default())
+                .build(),
         );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_0::Request, expected);
     }
 
     #[test]
@@ -102,6 +105,14 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, DidExchangeTypeV1_0::Request, expected);
+        let msg = AnyRequest::V1_0(
+            Request::builder()
+                .id("test".to_owned())
+                .content(content)
+                .decorators(decorators)
+                .build(),
+        );
+
+        test_utils::test_constructed_msg(msg, DidExchangeTypeV1_0::Request, expected);
     }
 }

@@ -115,7 +115,7 @@ async fn did_exchange_test(
     .await
     .unwrap();
     info!(
-        "Invitee processes invitation, builds up request {}",
+        "Invitee processes invitation, builds up request {:?}",
         &request
     );
 
@@ -153,7 +153,7 @@ async fn did_exchange_test(
         .await
         .unwrap();
 
-    let responder = responder.receive_complete(complete).unwrap();
+    let responder = responder.receive_complete(complete.into_inner()).unwrap();
 
     info!("Asserting did document of requester");
     assert_key_agreement(

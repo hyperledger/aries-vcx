@@ -5,7 +5,7 @@ use aries_vcx_agent::aries_vcx::{
     did_parser_nom::Did,
     messages::{
         msg_fields::protocols::did_exchange::{
-            v1_0::DidExchangeV1_0, v1_1::DidExchangeV1_1, v1_x::request::Request, DidExchange,
+            v1_0::DidExchangeV1_0, v1_1::DidExchangeV1_1, v1_x::request::AnyRequest, DidExchange,
         },
         AriesMessage,
     },
@@ -60,7 +60,7 @@ impl HarnessAgent {
         .to_string())
     }
 
-    pub fn queue_didexchange_request(&self, request: Request) -> HarnessResult<()> {
+    pub fn queue_didexchange_request(&self, request: AnyRequest) -> HarnessResult<()> {
         info!("queue_didexchange_request >> request: {:?}", request);
         let mut msg_buffer = self.didx_msg_buffer.write().map_err(|_| {
             HarnessError::from_msg(
@@ -162,9 +162,11 @@ impl HarnessAgent {
             })?
         };
         let request = match request {
-            AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(request)))
-            | AriesMessage::DidExchange(DidExchange::V1_1(DidExchangeV1_1::Request(request))) => {
-                request
+            AriesMessage::DidExchange(DidExchange::V1_0(DidExchangeV1_0::Request(r))) => {
+                AnyRequest::V1_0(r)
+            }
+            AriesMessage::DidExchange(DidExchange::V1_1(DidExchangeV1_1::Request(r))) => {
+                AnyRequest::V1_1(r)
             }
             _ => {
                 return Err(HarnessError::from_msg(
@@ -174,7 +176,7 @@ impl HarnessAgent {
             }
         };
 
-        let request_thread = &request.decorators.thread;
+        let request_thread = &request.inner().decorators.thread;
 
         let opt_invitation = match request_thread.as_ref().and_then(|th| th.pthid.as_ref()) {
             Some(pthid) => {
