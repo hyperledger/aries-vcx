@@ -90,7 +90,7 @@ impl GenericDidExchange {
     }
 
     pub async fn construct_request(
-        resolver_registry: Arc<ResolverRegistry>,
+        resolver_registry: &Arc<ResolverRegistry>,
         invitation_id: Option<String>,
         their_did: &Did,
         our_peer_did: &PeerDid<Numalgo4>,
@@ -115,7 +115,7 @@ impl GenericDidExchange {
 
     pub async fn handle_request(
         wallet: &impl BaseWallet,
-        resolver_registry: Arc<ResolverRegistry>,
+        resolver_registry: &Arc<ResolverRegistry>,
         request: AnyRequest,
         our_peer_did: &PeerDid<Numalgo4>,
         invitation_key: Option<Key>,
@@ -137,14 +137,16 @@ impl GenericDidExchange {
 
     pub async fn handle_response(
         self,
+        wallet: &impl BaseWallet,
+        invitation_key: &Key,
         response: AnyResponse,
-        resolver_registry: Arc<ResolverRegistry>,
+        resolver_registry: &Arc<ResolverRegistry>,
     ) -> Result<(Self, AnyComplete), (Self, AriesVcxError)> {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(request_sent_state) => {
                     match request_sent_state
-                        .receive_response(response, resolver_registry)
+                        .receive_response(wallet, invitation_key, response, resolver_registry)
                         .await
                     {
                         Ok(TransitionResult { state, output }) => Ok((

@@ -6,7 +6,7 @@ use public_key::{Key, KeyType};
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
-fn resolve_service_key_to_typed_key(
+pub(crate) fn resolve_service_key_to_typed_key(
     key: &ServiceKeyKind,
     did_document: &DidDocument,
 ) -> VcxResult<Key> {
