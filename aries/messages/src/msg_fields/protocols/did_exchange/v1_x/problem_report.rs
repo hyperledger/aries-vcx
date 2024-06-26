@@ -92,8 +92,12 @@ impl AnyProblemReport {
 impl From<AnyProblemReport> for AriesMessage {
     fn from(value: AnyProblemReport) -> Self {
         match value {
-            AnyProblemReport::V1_0(inner) => DidExchange::V1_0(DidExchangeV1_0::ProblemReport(inner)).into(),
-            AnyProblemReport::V1_1(inner) => DidExchange::V1_1(DidExchangeV1_1::ProblemReport(inner)).into(),
+            AnyProblemReport::V1_0(inner) => {
+                DidExchange::V1_0(DidExchangeV1_0::ProblemReport(inner)).into()
+            }
+            AnyProblemReport::V1_1(inner) => {
+                DidExchange::V1_1(DidExchangeV1_1::ProblemReport(inner)).into()
+            }
         }
     }
 }
