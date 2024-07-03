@@ -29,7 +29,7 @@ pub struct CompleteDecorators {
     pub timing: Option<Timing>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum AnyComplete {
     V1_0(Complete),

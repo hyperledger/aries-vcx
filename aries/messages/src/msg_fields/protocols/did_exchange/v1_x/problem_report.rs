@@ -59,7 +59,7 @@ impl ProblemReportDecorators {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum AnyProblemReport {
     V1_0(ProblemReport),

@@ -15,7 +15,7 @@ use crate::{
     AriesMessage,
 };
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, derive_more::From)]
+#[derive(Debug, Clone, Serialize, PartialEq, derive_more::From)]
 #[serde(untagged)]
 pub enum AnyResponse {
     V1_0(ResponseV1_0),

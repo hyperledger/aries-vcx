@@ -45,7 +45,7 @@ pub struct RequestDecorators {
     pub timing: Option<Timing>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum AnyRequest {
     V1_0(Request),
