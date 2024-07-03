@@ -2,18 +2,14 @@ use serde::{Deserialize, Serialize};
 use shared::maybe_known::MaybeKnown;
 use typed_builder::TypedBuilder;
 
+use super::DidExchangeV1MessageVariant;
 use crate::{
     decorators::{
         attachment::Attachment,
         thread::{Thread, ThreadGoalCode},
         timing::Timing,
     },
-    msg_fields::protocols::did_exchange::{
-        v1_0::DidExchangeV1_0, v1_1::DidExchangeV1_1, DidExchange,
-    },
     msg_parts::MsgParts,
-    msg_types::protocols::did_exchange::DidExchangeTypeV1,
-    AriesMessage,
 };
 
 /// Alias type for the shared DIDExchange v1.X request message type.
@@ -45,41 +41,4 @@ pub struct RequestDecorators {
     pub timing: Option<Timing>,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(untagged)]
-pub enum AnyRequest {
-    V1_0(Request),
-    V1_1(Request),
-}
-
-impl AnyRequest {
-    pub fn get_version(&self) -> DidExchangeTypeV1 {
-        match self {
-            AnyRequest::V1_0(_) => DidExchangeTypeV1::new_v1_0(),
-            AnyRequest::V1_1(_) => DidExchangeTypeV1::new_v1_1(),
-        }
-    }
-}
-
-impl AnyRequest {
-    pub fn into_inner(self) -> Request {
-        match self {
-            AnyRequest::V1_0(r) | AnyRequest::V1_1(r) => r,
-        }
-    }
-
-    pub fn inner(&self) -> &Request {
-        match self {
-            AnyRequest::V1_0(r) | AnyRequest::V1_1(r) => r,
-        }
-    }
-}
-
-impl From<AnyRequest> for AriesMessage {
-    fn from(value: AnyRequest) -> Self {
-        match value {
-            AnyRequest::V1_0(inner) => DidExchange::V1_0(DidExchangeV1_0::Request(inner)).into(),
-            AnyRequest::V1_1(inner) => DidExchange::V1_1(DidExchangeV1_1::Request(inner)).into(),
-        }
-    }
-}
+pub type AnyRequest = DidExchangeV1MessageVariant<Request, Request>;
