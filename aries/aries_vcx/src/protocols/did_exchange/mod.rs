@@ -115,6 +115,11 @@ pub async fn resolve_enc_key_from_invitation(
     }
 }
 
+/// Attempts to resolve a [Key] in the [DidDocument] that can be used for sending encrypted
+/// messages. The approach is:
+/// * check the service for a recipient key,
+/// * if there is none, use the first key agreement key in the DIDDoc,
+/// * else fail
 pub fn resolve_enc_key_from_did_doc(did_doc: &DidDocument) -> Result<Key, AriesVcxError> {
     // prefer first service key if available
     if let Some(service_recipient_key) = did_doc
