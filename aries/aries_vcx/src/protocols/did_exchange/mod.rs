@@ -11,7 +11,10 @@ use messages::msg_fields::protocols::out_of_band::invitation::{
 };
 use public_key::Key;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    utils::didcomm_utils::resolve_service_key_to_typed_key,
+};
 
 pub mod state_machine;
 pub mod states;
@@ -103,11 +106,30 @@ pub async fn resolve_enc_key_from_invitation(
                 "resolve_enc_key_from_invitation >> Resolved did document {}",
                 output.did_document
             );
-            let key = resolve_first_key_agreement(&output.did_document)?;
-            Ok(key.public_key()?)
+            let did_doc = output.did_document;
+            resolve_enc_key_from_did_doc(&did_doc)
         }
         OobService::AriesService(_service) => {
             unimplemented!("Embedded Aries Service not yet supported by did-exchange")
         }
     }
+}
+
+/// Attempts to resolve a [Key] in the [DidDocument] that can be used for sending encrypted
+/// messages. The approach is:
+/// * check the service for a recipient key,
+/// * if there is none, use the first key agreement key in the DIDDoc,
+/// * else fail
+pub fn resolve_enc_key_from_did_doc(did_doc: &DidDocument) -> Result<Key, AriesVcxError> {
+    // prefer first service key if available
+    if let Some(service_recipient_key) = did_doc
+        .service()
+        .first()
+        .and_then(|s| s.extra_field_recipient_keys().into_iter().flatten().next())
+    {
+        return resolve_service_key_to_typed_key(&service_recipient_key, did_doc);
+    }
+
+    let key = resolve_first_key_agreement(did_doc)?;
+    Ok(key.public_key()?)
 }

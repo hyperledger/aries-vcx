@@ -180,51 +180,111 @@ pub(crate) fn assemble_did_rotate_attachment(did: &Did) -> Attachment {
         .build()
 }
 
-// TODO: Obviously, extract attachment signing
-// TODO: JWS verification
+// TODO: if this becomes a common method, move to a shared location.
+/// Creates a JWS signature of the attachment with the provided verkey. The created JWS
+/// signature is appended to the attachment, in alignment with Aries RFC 0017:
+/// https://hyperledger.github.io/aries-rfcs/latest/concepts/0017-attachments/#signing-attachments.
 pub(crate) async fn jws_sign_attach(
     mut attach: Attachment,
     verkey: Key,
     wallet: &impl BaseWallet,
 ) -> Result<Attachment, AriesVcxError> {
-    if let AttachmentType::Base64(attach_base64) = &attach.data.content {
-        let did_key: DidKey = verkey.clone().try_into()?;
-        let verkey_b64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, verkey.key());
-
-        let protected_header = json!({
-            "alg": "EdDSA",
-            "jwk": {
-                "kty": "OKP",
-                "kid": did_key.to_string(),
-                "crv": "Ed25519",
-                "x": verkey_b64
-            }
-        });
-        let unprotected_header = json!({
-            // TODO: Needs to be both protected and unprotected, does it make sense?
-            "kid": did_key.to_string(),
-        });
-        let b64_protected =
-            base64::engine::Engine::encode(&URL_SAFE_LENIENT, protected_header.to_string());
-        let sign_input = format!("{}.{}", b64_protected, attach_base64).into_bytes();
-        let signed = wallet.sign(&verkey, &sign_input).await?;
-        let signature_base64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, signed);
-
-        let jws = {
-            let mut jws = HashMap::new();
-            jws.insert("header".to_string(), unprotected_header);
-            jws.insert("protected".to_string(), Value::String(b64_protected));
-            jws.insert("signature".to_string(), Value::String(signature_base64));
-            jws
-        };
-        attach.data.jws = Some(jws);
-        Ok(attach)
-    } else {
-        Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidState,
+    let AttachmentType::Base64(attach_base64) = &attach.data.content else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidInput,
             "Cannot sign non-base64-encoded attachment",
-        ))
+        ));
+    };
+    if verkey.key_type() != &KeyType::Ed25519 {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidVerkey,
+            "Only JWS signatures with Ed25519 based keys are currently supported.",
+        ));
     }
+
+    let did_key: DidKey = verkey.clone().try_into()?;
+    let verkey_b64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, verkey.key());
+
+    let protected_header = json!({
+        "alg": "EdDSA",
+        "jwk": {
+            "kty": "OKP",
+            "kid": did_key.to_string(),
+            "crv": "Ed25519",
+            "x": verkey_b64
+        }
+    });
+    let unprotected_header = json!({
+        "kid": did_key.to_string(),
+    });
+    let b64_protected =
+        base64::engine::Engine::encode(&URL_SAFE_LENIENT, protected_header.to_string());
+    let sign_input = format!("{}.{}", b64_protected, attach_base64).into_bytes();
+    let signed: Vec<u8> = wallet.sign(&verkey, &sign_input).await?;
+    let signature_base64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, signed);
+
+    let jws = {
+        let mut jws = HashMap::new();
+        jws.insert("header".to_string(), unprotected_header);
+        jws.insert("protected".to_string(), Value::String(b64_protected));
+        jws.insert("signature".to_string(), Value::String(signature_base64));
+        jws
+    };
+    attach.data.jws = Some(jws);
+    Ok(attach)
+}
+
+/// Verifies that the given has a JWS signature attached, which is a valid signature given
+/// the expected signer key.
+// NOTE: Does not handle attachments with multiple signatures.
+// NOTE: this is the specific use case where the signer is known by the function caller. Therefore
+// we do not need to attempt to decode key within the protected nor unprotected header.
+pub(crate) async fn jws_verify_attachment(
+    attach: &Attachment,
+    expected_signer: &Key,
+    wallet: &impl BaseWallet,
+) -> Result<bool, AriesVcxError> {
+    let AttachmentType::Base64(attach_base64) = &attach.data.content else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidInput,
+            "Cannot verify JWS of a non-base64-encoded attachment",
+        ));
+    };
+    // aries attachments do not REQUIRE that the attachment has no padding,
+    // but JWS does, so remove it; just incase.
+    let attach_base64 = attach_base64.replace('=', "");
+
+    let Some(ref jws) = attach.data.jws else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidInput,
+            "Attachment has no JWS signature attached. Cannot verify.",
+        ));
+    };
+
+    let (Some(b64_protected), Some(b64_signature)) = (
+        jws.get("protected").and_then(|s| s.as_str()),
+        jws.get("signature").and_then(|s| s.as_str()),
+    ) else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidInput,
+            "Attachment has an invalid JWS with missing fields. Cannot verify.",
+        ));
+    };
+
+    let sign_input = format!("{}.{}", b64_protected, attach_base64).into_bytes();
+    let signature =
+        base64::engine::Engine::decode(&URL_SAFE_LENIENT, b64_signature).map_err(|_| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::EncodeError,
+                "Attachment JWS signature was not correctly base64Url encoded.",
+            )
+        })?;
+
+    let res = wallet
+        .verify(expected_signer, &sign_input, &signature)
+        .await?;
+
+    Ok(res)
 }
 
 // TODO - ideally this should be resilient to the case where the attachment is a legacy aries DIDDoc
@@ -259,5 +319,92 @@ where
     move |error| TransitionError {
         error: error.into(),
         state,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::error::Error;
+
+    use aries_vcx_wallet::wallet::base_wallet::did_wallet::DidWallet;
+    use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
+    use public_key::Key;
+    use test_utils::devsetup::build_setup_profile;
+
+    use crate::{
+        protocols::did_exchange::state_machine::helpers::{jws_sign_attach, jws_verify_attachment},
+        utils::base64::URL_SAFE_LENIENT,
+    };
+
+    // assert self fulfilling
+    #[tokio::test]
+    async fn test_jws_sign_and_verify_attachment() -> Result<(), Box<dyn Error>> {
+        let setup = build_setup_profile().await;
+        let wallet = &setup.wallet;
+        let signer_did = wallet.create_and_store_my_did(None, None).await?;
+        let signer = signer_did.verkey();
+
+        let content_b64 = base64::engine::Engine::encode(&URL_SAFE_LENIENT, "hello world");
+        let attach = Attachment::builder()
+            .data(
+                AttachmentData::builder()
+                    .content(AttachmentType::Base64(content_b64))
+                    .build(),
+            )
+            .build();
+
+        let signed_attach = jws_sign_attach(attach, signer.clone(), wallet).await?;
+
+        // should contain signed JWS
+        assert_eq!(signed_attach.data.jws.as_ref().unwrap().len(), 3);
+
+        // verify
+        assert!(jws_verify_attachment(&signed_attach, signer, wallet).await?);
+
+        // verify with wrong key should be false
+        let wrong_did = wallet.create_and_store_my_did(None, None).await?;
+        let wrong_signer = wrong_did.verkey();
+        assert!(!jws_verify_attachment(&signed_attach, wrong_signer, wallet).await?);
+
+        Ok(())
+    }
+
+    // test vector taken from an ACApy 0.12.1 DIDExchange response
+    #[tokio::test]
+    async fn test_jws_verify_attachment_with_acapy_test_vector() -> Result<(), Box<dyn Error>> {
+        let setup = build_setup_profile().await;
+        let wallet = &setup.wallet;
+
+        let json = json!({
+          "@id": "18bec73c-c621-4ef2-b3d8-085c59ac9e2b",
+          "mime-type": "text/string",
+          "data": {
+            "jws": {
+              "signature": "QxC2oLxAYav-fPOvjkn4OpMLng9qOo2fjsy0MoQotDgyVM_PRjYlatsrw6_rADpRpWR_GMpBVlBskuKxpsJIBQ",
+              "header": {
+                "kid": "did:key:z6MkpNusbzt7HSBwrBiRpZmbyLiBEsNGs2fotoYhykU8Muaz"
+              },
+              "protected": "eyJhbGciOiAiRWREU0EiLCAiandrIjogeyJrdHkiOiAiT0tQIiwgImNydiI6ICJFZDI1NTE5IiwgIngiOiAiazNlOHZRTHpSZlFhZFhzVDBMUkMxMWhpX09LUlR6VFphd29ocmxhaW1ETSIsICJraWQiOiAiZGlkOmtleTp6Nk1rcE51c2J6dDdIU0J3ckJpUnBabWJ5TGlCRXNOR3MyZm90b1loeWtVOE11YXoifX0"
+            },
+            // NOTE: includes b64 padding, but not recommended
+            "base64": "ZGlkOnBlZXI6NHpRbVhza2o1Sjc3NXRyWUpkaVVFZVlaUU5mYXZZQUREb25YMzJUOHF4VHJiU05oOno2MmY5VlFROER0N1VWRXJXcmp6YTd4MUVKOG50NWVxOWlaZk1BUGoyYnpyeGJycGY4VXdUTEpXVUJTV2U4dHNoRFl4ZDhlcmVSclRhOHRqVlhKNmNEOTV0Qml5dVdRVll6QzNtZWtUckJ4MzNjeXFCb2g0c3JGamdXZm1lcE5yOEZpRFI5aEoySExxMlM3VGZNWXIxNVN4UG52OExRR2lIV24zODhzVlF3ODRURVJFaTg4OXlUejZzeVVmRXhEaXdxWHZOTk05akt1eHc4NERvbmtVUDRHYkh0Q3B4R2hKYVBKWnlUWmJVaFF2SHBENGc2YzYyWTN5ZGQ0V1BQdXBYQVFISzJScFZod2hQWlVnQWQzN1lrcW1jb3FiWGFZTWFnekZZY3kxTEJ6NkdYekV5NjRrOGQ4WGhlem5vUkpIV3F4RTV1am5LYkpOM0pRR241UzREaEtRaXJTbUZINUJOYUNvRTZqaFlWc3gzWlpEM1ZWZVVxUW9ZMmVHMkNRVVRRak1zY0ozOEdqeDFiaVVlRkhZVVRrejRRVDJFWXpXRlVEbW1URHExVmVoZExtelJDWnNQUjJKR1VpVExUVkNzdUNzZ21jd1FqWHY4WmN6ejRaZUo0ODc4S3hBRm5mam1ibk1EejV5NVJOMnZtRGtkaE42dFFMZjJEWVJuSm1vSjJ5VTNheXczU2NjV0VMVzNpWEN6UFROV1F3WmFEb2d5UFVXZFBobkw0OEVpMjI2cnRBcWoySGQxcTRua1Fwb0ZWQ1B3aXJGUmtub05Zc2NGV1dxN1JEVGVMcmlKcENrUVVFblh4WVBpU1F5S0RxbVpFN0FRVjI="
+          }
+        });
+        let mut attach: Attachment = serde_json::from_value(json)?;
+        let signer = Key::from_fingerprint("z6MkpNusbzt7HSBwrBiRpZmbyLiBEsNGs2fotoYhykU8Muaz")?;
+
+        // should verify with correct signer
+        assert!(jws_verify_attachment(&attach, &signer, wallet).await?);
+
+        // should not verify with wrong signer
+        let wrong_signer =
+            Key::from_fingerprint("z6Mkva1JM9mM3SMuLCtVDAXzAQTwkdtfzHXSYMKtfXK2cPye")?;
+        assert!(!jws_verify_attachment(&attach, &wrong_signer, wallet).await?);
+
+        // should not verify if wrong signature
+        attach.data.content = AttachmentType::Base64(String::from("d3JvbmcgZGF0YQ=="));
+        assert!(!jws_verify_attachment(&attach, &signer, wallet).await?);
+
+        Ok(())
     }
 }
