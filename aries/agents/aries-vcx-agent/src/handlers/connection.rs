@@ -186,7 +186,7 @@ impl<T: BaseWallet> ServiceConnections<T> {
 
     /// Process a trust ping and send a pong. Also bump the connection state (ack) if needed.
     pub async fn process_trust_ping(&self, ping: Ping, connection_id: &str) -> AgentResult<()> {
-        let generic_inviter = self.connections.get(&connection_id)?;
+        let generic_inviter = self.connections.get(connection_id)?;
 
         let inviter: Connection<_, Completed> = match generic_inviter.state() {
             ThinState::Inviter(State::Requested) => {
@@ -215,7 +215,7 @@ impl<T: BaseWallet> ServiceConnections<T> {
         }
 
         // update state
-        self.connections.insert(&connection_id, inviter.into())?;
+        self.connections.insert(connection_id, inviter.into())?;
 
         Ok(())
     }
