@@ -47,7 +47,7 @@ More documentation can be found [here](https://rust-lang.github.io/rustup/cross-
 5. Run the helper build script.
 
 ```bash
-sh uniffi_aries_vcx/scripts/android.build.cargo.ndk.sh
+sh aries/wrappers/uniffi-aries-vcx/scripts/android.build.cargo.ndk.sh
 ```
 
 NB: Before running the demo application you need to generate the language bindings.
