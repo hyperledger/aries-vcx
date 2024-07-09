@@ -7,29 +7,15 @@ use serde_json::{Map, Value};
 
 use crate::errors::error::{VcxAnoncredsError, VcxAnoncredsResult};
 
-pub(crate) trait TryGetIndex {
-    type Val;
-    fn try_get(&self, index: &str) -> VcxAnoncredsResult<Self::Val>;
-}
-
-impl<'a> TryGetIndex for &'a Value {
-    type Val = &'a Value;
-    fn try_get(&self, index: &str) -> VcxAnoncredsResult<&'a Value> {
-        self.get(index).ok_or_else(|| {
-            VcxAnoncredsError::InvalidJson(format!(
-                "Could not index '{index}' in Value payload: {self:?}"
-            ))
-        })
-    }
-}
-
 pub(crate) trait AsTypeOrDeserializationError {
     fn try_as_str(&self) -> VcxAnoncredsResult<&str>;
 
     fn try_as_object(&self) -> VcxAnoncredsResult<&Map<String, Value>>;
-
+    
+    #[allow(dead_code)]
     fn try_as_bool(&self) -> VcxAnoncredsResult<bool>;
-
+    
+    #[allow(dead_code)]
     fn try_as_array(&self) -> VcxAnoncredsResult<&Vec<Value>>;
 }
 

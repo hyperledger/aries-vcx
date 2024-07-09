@@ -92,6 +92,7 @@ pub struct RevocationRegistryInfo {
 struct WalletAdapter(Arc<dyn BaseWallet>);
 
 #[async_trait]
+#[allow(dead_code)]
 impl RecordWallet for WalletAdapter {
     async fn all_records(&self) -> VcxWalletResult<Box<dyn AllRecords + Send>> {
         self.0.all_records().await
