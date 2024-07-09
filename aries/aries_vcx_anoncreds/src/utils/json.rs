@@ -11,10 +11,8 @@ pub(crate) trait AsTypeOrDeserializationError {
     fn try_as_str(&self) -> VcxAnoncredsResult<&str>;
 
     fn try_as_object(&self) -> VcxAnoncredsResult<&Map<String, Value>>;
-    
     #[allow(dead_code)]
     fn try_as_bool(&self) -> VcxAnoncredsResult<bool>;
-    
     #[allow(dead_code)]
     fn try_as_array(&self) -> VcxAnoncredsResult<&Vec<Value>>;
 }
