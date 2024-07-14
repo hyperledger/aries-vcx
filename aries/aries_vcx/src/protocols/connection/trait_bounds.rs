@@ -31,4 +31,5 @@ pub trait CompletedState {
 /// Marker trait used for implementing
 /// [`messages::protocols::connection::problem_report::ProblemReport`] handling on certain
 /// [`super::Connection`] types.
+#[allow(dead_code)]
 pub trait HandleProblem {}
