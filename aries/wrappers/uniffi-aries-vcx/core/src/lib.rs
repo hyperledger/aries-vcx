@@ -2,7 +2,7 @@
 uniffi::include_scaffolding!("vcx_indy");
 
 #[cfg(feature = "askar_wallet")]
-uniffi::include_scaffolding!("vcx_askar");
+uniffi::include_scaffolding!("vcx");
 
 pub mod core;
 pub mod errors;

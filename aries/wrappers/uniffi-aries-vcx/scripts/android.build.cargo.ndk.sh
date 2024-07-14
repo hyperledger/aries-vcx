@@ -13,12 +13,12 @@ ABI="arm64-v8a"
 
 generate_bindings() {
     export UNIFFI_ROOT="${ARIES_VCX_ROOT}/aries/wrappers/uniffi-aries-vcx"
-    export ANDROID_DEMO_DIR="${ARIES_VCX_ROOT}/aries/agents/rust/mobile_demo"
+    export ANDROID_DEMO_DIR="${ARIES_VCX_ROOT}/aries/agents/mobile_demo"
 
     pushd "${UNIFFI_ROOT}/core"
-        cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/vcx.udl --language ${LANGUAGE}
+                cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/vcx.udl --language ${LANGUAGE}
     popd
-
+    
     cp -R ${UNIFFI_ROOT}/core/src/org/hyperledger/ariesvcx/vcx.kt ${ANDROID_DEMO_DIR}/app/src/main/java/org/hyperledger/ariesvcx
     rm -R ${UNIFFI_ROOT}/core/src/org
 }
