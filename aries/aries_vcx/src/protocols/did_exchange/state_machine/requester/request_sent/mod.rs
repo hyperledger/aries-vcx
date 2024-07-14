@@ -1,32 +1,39 @@
 use std::sync::Arc;
 
+use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
+use base64::Engine;
+use did_doc::schema::did_doc::DidDocument;
 use did_parser_nom::Did;
 use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 use did_resolver_registry::ResolverRegistry;
 use messages::{
-    msg_fields::protocols::did_exchange::v1_x::{
-        complete::AnyComplete, request::AnyRequest, response::AnyResponse,
+    decorators::attachment::AttachmentType,
+    msg_fields::protocols::did_exchange::{
+        v1_1::response::Response,
+        v1_x::{complete::AnyComplete, request::AnyRequest, response::AnyResponse},
     },
     msg_types::protocols::did_exchange::DidExchangeTypeV1,
 };
+use public_key::Key;
 
 use super::DidExchangeRequester;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::{
         state_machine::{
-            helpers::{attachment_to_diddoc, to_transition_error},
+            helpers::{attachment_to_diddoc, jws_verify_attachment, to_transition_error},
             requester::helpers::{construct_didexchange_complete, construct_request},
         },
         states::{completed::Completed, requester::request_sent::RequestSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
     },
+    utils::base64::URL_SAFE_LENIENT,
 };
 
 impl DidExchangeRequester<RequestSent> {
     pub async fn construct_request(
-        resolver_registry: Arc<ResolverRegistry>,
+        resolver_registry: &Arc<ResolverRegistry>,
         invitation_id: Option<String>,
         their_did: &Did,
         our_peer_did: &PeerDid<Numalgo4>,
@@ -69,8 +76,10 @@ impl DidExchangeRequester<RequestSent> {
 
     pub async fn receive_response(
         self,
+        wallet: &impl BaseWallet,
+        invitation_key: &Key,
         response: AnyResponse,
-        resolver_registry: Arc<ResolverRegistry>,
+        resolver_registry: &Arc<ResolverRegistry>,
     ) -> Result<TransitionResult<DidExchangeRequester<Completed>, AnyComplete>, TransitionError<Self>>
     {
         debug!(
@@ -89,28 +98,15 @@ impl DidExchangeRequester<RequestSent> {
                 state: self,
             });
         }
-        // TODO - process differently depending on version
-        let did_document = if let Some(ddo) = response.content.did_doc {
-            debug!(
-                "DidExchangeRequester<RequestSent>::receive_response >> the Response message \
-                 contained attached ddo"
-            );
-            // verify JWS signature on attachment
-            attachment_to_diddoc(ddo).map_err(to_transition_error(self.clone()))?
-        } else {
-            debug!(
-                "DidExchangeRequester<RequestSent>::receive_response >> the Response message \
-                 contains pairwise DID, resolving to DID Document"
-            );
-            // verify JWS signature on attachment IF version == 1.1
-            let did =
-                &Did::parse(response.content.did).map_err(to_transition_error(self.clone()))?;
-            let DidResolutionOutput { did_document, .. } = resolver_registry
-                .resolve(did, &Default::default())
-                .await
-                .map_err(to_transition_error(self.clone()))?;
-            did_document
-        };
+
+        let did_document = extract_and_verify_responder_did_doc(
+            wallet,
+            invitation_key,
+            response,
+            resolver_registry,
+        )
+        .await
+        .map_err(to_transition_error(self.clone()))?;
 
         let complete_message = construct_didexchange_complete(
             self.state.invitation_id,
@@ -133,4 +129,97 @@ impl DidExchangeRequester<RequestSent> {
             output: complete_message,
         })
     }
+}
+
+async fn extract_and_verify_responder_did_doc(
+    wallet: &impl BaseWallet,
+    invitation_key: &Key,
+    response: Response,
+    resolver_registry: &Arc<ResolverRegistry>,
+) -> Result<DidDocument, AriesVcxError> {
+    let their_did = response.content.did;
+
+    if let Some(did_doc_attach) = response.content.did_doc {
+        debug!(
+            "Verifying signature of DIDDoc attached to response: {did_doc_attach:?} against \
+             expected key {invitation_key:?}"
+        );
+        let verified_signature =
+            jws_verify_attachment(&did_doc_attach, invitation_key, wallet).await?;
+        if !verified_signature {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidInput,
+                "DIDExchange response did not have a valid DIDDoc signature from the expected \
+                 inviter",
+            ));
+        }
+
+        let did_doc = attachment_to_diddoc(did_doc_attach)?;
+        if did_doc.id().to_string() != their_did {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidInput,
+                "DIDExchange response had a DIDDoc which did not match the response DID",
+            ));
+        }
+        return Ok(did_doc);
+    }
+
+    if let Some(did_rotate_attach) = response.content.did_rotate {
+        debug!(
+            "Verifying signature of DID Rotate attached to response: {did_rotate_attach:?} \
+             against expected key {invitation_key:?}"
+        );
+        let verified_signature =
+            jws_verify_attachment(&did_rotate_attach, invitation_key, wallet).await?;
+        if !verified_signature {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidInput,
+                "DIDExchange response did not have a valid DID rotate signature from the expected \
+                 inviter",
+            ));
+        }
+
+        let AttachmentType::Base64(signed_did_b64) = did_rotate_attach.data.content else {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::EncodeError,
+                "DIDExchange response did not have a valid DID rotate attachment",
+            ));
+        };
+
+        let did_bytes = URL_SAFE_LENIENT.decode(signed_did_b64).map_err(|_| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::EncodeError,
+                "DIDExchange response did not have a valid base64 did rotate attachment",
+            )
+        })?;
+        let signed_did = String::from_utf8(did_bytes).map_err(|_| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::EncodeError,
+                "DIDExchange response did not have a valid UTF8 did rotate attachment",
+            )
+        })?;
+
+        if signed_did != their_did {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidInput,
+                format!(
+                    "DIDExchange response had a DID rotate which did not match the response DID. \
+                     Wanted {their_did}, found {signed_did}"
+                ),
+            ));
+        }
+
+        let did = &Did::parse(their_did)?;
+        let DidResolutionOutput {
+            did_document: did_doc,
+            ..
+        } = resolver_registry.resolve(did, &Default::default()).await?;
+        return Ok(did_doc);
+    }
+
+    // default to error
+    Err(AriesVcxError::from_msg(
+        AriesVcxErrorKind::InvalidInput,
+        "DIDExchange response could not be verified. No DIDDoc nor DIDRotate was attached.",
+    ))
 }

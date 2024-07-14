@@ -15,7 +15,7 @@ use aries_vcx::{
         AriesMessage,
     },
     protocols::did_exchange::{
-        resolve_enc_key_from_invitation,
+        resolve_enc_key_from_did_doc, resolve_enc_key_from_invitation,
         state_machine::{
             generic::{GenericDidExchange, ThinState},
             helpers::create_peer_did_4,
@@ -73,7 +73,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
 
         let their_did: Did = their_did.parse()?;
         let (requester, request) = GenericDidExchange::construct_request(
-            self.resolver_registry.clone(),
+            &self.resolver_registry,
             invitation_id,
             &their_did,
             &our_peer_did,
@@ -170,7 +170,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
 
         let (responder, response) = GenericDidExchange::handle_request(
             self.wallet.as_ref(),
-            self.resolver_registry.clone(),
+            &self.resolver_registry,
             request,
             &our_peer_did,
             invitation_key,
@@ -224,8 +224,16 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
 
         let (requester, _) = self.did_exchange.get(&thid)?;
 
+        let inviter_ddo = requester.their_did_doc();
+        let inviter_key = resolve_enc_key_from_did_doc(inviter_ddo)?;
+
         let (requester, complete) = requester
-            .handle_response(response, self.resolver_registry.clone())
+            .handle_response(
+                self.wallet.as_ref(),
+                &inviter_key,
+                response,
+                &self.resolver_registry,
+            )
             .await?;
         let ddo_their = requester.their_did_doc();
         let ddo_our = requester.our_did_document();

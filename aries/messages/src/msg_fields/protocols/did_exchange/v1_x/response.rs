@@ -1,35 +1,18 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
+use super::DidExchangeV1MessageVariant;
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::did_exchange::{
-        v1_0::{response::Response as ResponseV1_0, DidExchangeV1_0},
-        v1_1::{
-            response::{Response as ResponseV1_1, ResponseContent as ResponseV1_1Content},
-            DidExchangeV1_1,
-        },
-        DidExchange,
+        v1_0::response::Response as ResponseV1_0,
+        v1_1::response::{Response as ResponseV1_1, ResponseContent as ResponseV1_1Content},
     },
-    msg_types::protocols::did_exchange::DidExchangeTypeV1,
-    AriesMessage,
 };
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, derive_more::From)]
-#[serde(untagged)]
-pub enum AnyResponse {
-    V1_0(ResponseV1_0),
-    V1_1(ResponseV1_1),
-}
+pub type AnyResponse = DidExchangeV1MessageVariant<ResponseV1_0, ResponseV1_1>;
 
 impl AnyResponse {
-    pub fn get_version(&self) -> DidExchangeTypeV1 {
-        match self {
-            AnyResponse::V1_0(_) => DidExchangeTypeV1::new_v1_0(),
-            AnyResponse::V1_1(_) => DidExchangeTypeV1::new_v1_1(),
-        }
-    }
-
     pub fn into_v1_1(self) -> ResponseV1_1 {
         match self {
             AnyResponse::V1_0(r) => r.into_v1_1(),
@@ -52,12 +35,15 @@ impl ResponseV1_0 {
     }
 }
 
-impl From<AnyResponse> for AriesMessage {
-    fn from(value: AnyResponse) -> Self {
-        match value {
-            AnyResponse::V1_0(inner) => DidExchange::V1_0(DidExchangeV1_0::Response(inner)).into(),
-            AnyResponse::V1_1(inner) => DidExchange::V1_1(DidExchangeV1_1::Response(inner)).into(),
-        }
+impl From<ResponseV1_0> for AnyResponse {
+    fn from(value: ResponseV1_0) -> Self {
+        Self::V1_0(value)
+    }
+}
+
+impl From<ResponseV1_1> for AnyResponse {
+    fn from(value: ResponseV1_1) -> Self {
+        Self::V1_1(value)
     }
 }
 
