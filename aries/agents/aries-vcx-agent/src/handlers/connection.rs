@@ -6,11 +6,16 @@ use aries_vcx::{
         msg_fields::protocols::{
             connection::{request::Request, response::Response},
             notification::ack::Ack,
+            trust_ping::ping::Ping,
         },
         AriesMessage,
     },
-    protocols::connection::{
-        pairwise_info::PairwiseInfo, Connection, GenericConnection, State, ThinState,
+    protocols::{
+        connection::{
+            inviter::states::completed::Completed, pairwise_info::PairwiseInfo, Connection,
+            GenericConnection, State, ThinState,
+        },
+        trustping::build_ping_response,
     },
 };
 use aries_vcx_ledger::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
@@ -179,6 +184,42 @@ impl<T: BaseWallet> ServiceConnections<T> {
         Ok(())
     }
 
+    /// Process a trust ping and send a pong. Also bump the connection state (ack) if needed.
+    pub async fn process_trust_ping(&self, ping: Ping, connection_id: &str) -> AgentResult<()> {
+        let generic_inviter = self.connections.get(connection_id)?;
+
+        let inviter: Connection<_, Completed> = match generic_inviter.state() {
+            ThinState::Inviter(State::Requested) => {
+                // bump state. requested -> complete
+                let inviter: Connection<_, _> = generic_inviter.try_into()?;
+                inviter.acknowledge_connection(&ping.clone().into())?
+            }
+            ThinState::Inviter(State::Completed) => generic_inviter.try_into()?,
+            s => {
+                return Err(AgentError::from_msg(
+                    AgentErrorKind::GenericAriesVcxError,
+                    &format!(
+                        "Connection with handle {} cannot process a trust ping; State: {:?}",
+                        connection_id, s
+                    ),
+                ))
+            }
+        };
+
+        // send pong if desired
+        if ping.content.response_requested {
+            let response = build_ping_response(&ping);
+            inviter
+                .send_message(self.wallet.as_ref(), &response.into(), &VcxHttpClient)
+                .await?;
+        }
+
+        // update state
+        self.connections.insert(connection_id, inviter.into())?;
+
+        Ok(())
+    }
+
     pub fn get_state(&self, thread_id: &str) -> AgentResult<ThinState> {
         Ok(self.connections.get(thread_id)?.state())
     }
@@ -187,16 +228,29 @@ impl<T: BaseWallet> ServiceConnections<T> {
         self.connections.get(thread_id)
     }
 
-    pub fn get_by_their_vk(&self, their_vk: &str) -> AgentResult<Vec<String>> {
-        let their_vk = their_vk.to_string();
+    pub fn get_by_sender_vk(&self, sender_vk: String) -> AgentResult<String> {
         let f = |(id, m): (&String, &Mutex<GenericConnection>)| -> Option<String> {
             let connection = m.lock().unwrap();
             match connection.remote_vk() {
-                Ok(remote_vk) if remote_vk == their_vk => Some(id.to_string()),
+                Ok(remote_vk) if remote_vk == sender_vk => Some(id.to_string()),
                 _ => None,
             }
         };
-        self.connections.find_by(f)
+        let conns = self.connections.find_by(f)?;
+
+        if conns.len() > 1 {
+            return Err(AgentError::from_msg(
+                AgentErrorKind::InvalidState,
+                &format!(
+                    "Found multiple connections by sender's verkey {}",
+                    sender_vk
+                ),
+            ));
+        }
+        conns.into_iter().next().ok_or(AgentError::from_msg(
+            AgentErrorKind::InvalidState,
+            &format!("Found no connections by sender's verkey {}", sender_vk),
+        ))
     }
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {

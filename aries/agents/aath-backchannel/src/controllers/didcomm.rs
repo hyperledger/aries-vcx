@@ -12,6 +12,7 @@ use aries_vcx_agent::aries_vcx::{
             },
             notification::Notification,
             present_proof::{v1::PresentProofV1, PresentProof},
+            trust_ping::TrustPing,
         },
         AriesMessage,
     },
@@ -75,14 +76,10 @@ impl HarnessAgent {
     async fn handle_issuance_msg(
         &self,
         msg: CredentialIssuance,
-        connection_ids: Vec<String>,
-        sender_vk: &str,
+        connection_id: &str,
     ) -> HarnessResult<()> {
         match msg {
-            CredentialIssuance::V1(msg) => {
-                self.handle_issuance_msg_v1(msg, connection_ids, sender_vk)
-                    .await
-            }
+            CredentialIssuance::V1(msg) => self.handle_issuance_msg_v1(msg, connection_id).await,
             CredentialIssuance::V2(_) => {
                 unimplemented!("V2 issuance is not implemented for aries-vcx aath")
             }
@@ -92,35 +89,19 @@ impl HarnessAgent {
     async fn handle_issuance_msg_v1(
         &self,
         msg: CredentialIssuanceV1,
-        connection_ids: Vec<String>,
-        sender_vk: &str,
+        connection_id: &str,
     ) -> HarnessResult<()> {
-        let connection_id = connection_ids.last();
         match msg {
             CredentialIssuanceV1::OfferCredential(offer) => {
-                if connection_ids.len() == 1 {
-                    self.aries_agent
-                        .holder()
-                        .create_from_offer(connection_id.unwrap(), offer.clone())?;
-                } else {
-                    return Err(HarnessError::from_msg(
-                        HarnessErrorType::InvalidState,
-                        &format!("Found multiple or no connections by verkey {}", sender_vk),
-                    ));
-                }
+                self.aries_agent
+                    .holder()
+                    .create_from_offer(connection_id, offer.clone())?;
             }
             CredentialIssuanceV1::ProposeCredential(proposal) => {
-                if connection_ids.len() == 1 {
-                    self.aries_agent
-                        .issuer()
-                        .accept_proposal(connection_id.unwrap(), &proposal)
-                        .await?;
-                } else {
-                    return Err(HarnessError::from_msg(
-                        HarnessErrorType::InvalidState,
-                        &format!("Found multiple or no connections by verkey {}", sender_vk),
-                    ));
-                }
+                self.aries_agent
+                    .issuer()
+                    .accept_proposal(connection_id, &proposal)
+                    .await?;
             }
             CredentialIssuanceV1::RequestCredential(request) => {
                 let thread_id = request
@@ -149,14 +130,10 @@ impl HarnessAgent {
     async fn handle_presentation_msg(
         &self,
         msg: PresentProof,
-        connection_ids: Vec<String>,
-        sender_vk: &str,
+        connection_id: &str,
     ) -> HarnessResult<()> {
         match msg {
-            PresentProof::V1(msg) => {
-                self.handle_presentation_msg_v1(msg, connection_ids, sender_vk)
-                    .await
-            }
+            PresentProof::V1(msg) => self.handle_presentation_msg_v1(msg, connection_id).await,
             PresentProof::V2(_) => {
                 unimplemented!("V2 issuance is not implemented for aries-vcx aath")
             }
@@ -166,22 +143,13 @@ impl HarnessAgent {
     async fn handle_presentation_msg_v1(
         &self,
         msg: PresentProofV1,
-        connection_ids: Vec<String>,
-        sender_vk: &str,
+        connection_id: &str,
     ) -> HarnessResult<()> {
-        let connection_id = connection_ids.last();
         match msg {
             PresentProofV1::RequestPresentation(request) => {
-                if connection_ids.len() == 1 {
-                    self.aries_agent
-                        .prover()
-                        .create_from_request(connection_id.unwrap(), request)?;
-                } else {
-                    return Err(HarnessError::from_msg(
-                        HarnessErrorType::InvalidState,
-                        &format!("Found multiple or no connections by verkey {}", sender_vk),
-                    ));
-                }
+                self.aries_agent
+                    .prover()
+                    .create_from_request(connection_id, request)?;
             }
             PresentProofV1::Presentation(presentation) => {
                 let thread_id = presentation.decorators.thread.thid.clone();
@@ -255,7 +223,6 @@ impl HarnessAgent {
             )
         })?;
         info!("Received message: {}", message);
-        let connection_ids = self.aries_agent.connections().get_by_their_vk(&sender_vk)?;
         match message {
             AriesMessage::Notification(msg) => {
                 match msg {
@@ -272,15 +239,22 @@ impl HarnessAgent {
                     }
                 }
             }
+            AriesMessage::TrustPing(TrustPing::Ping(msg)) => {
+                let connection_id = self.aries_agent.connections().get_by_sender_vk(sender_vk)?;
+                self.aries_agent
+                    .connections()
+                    .process_trust_ping(msg, &connection_id)
+                    .await?
+            }
             AriesMessage::Connection(msg) => self.handle_connection_msg(msg).await?,
             AriesMessage::CredentialIssuance(msg) => {
-                self.handle_issuance_msg(msg, connection_ids, &sender_vk)
-                    .await?
+                let connection_id = self.aries_agent.connections().get_by_sender_vk(sender_vk)?;
+                self.handle_issuance_msg(msg, &connection_id).await?
             }
             AriesMessage::DidExchange(msg) => self.handle_did_exchange_msg(msg).await?,
             AriesMessage::PresentProof(msg) => {
-                self.handle_presentation_msg(msg, connection_ids, &sender_vk)
-                    .await?
+                let connection_id = self.aries_agent.connections().get_by_sender_vk(sender_vk)?;
+                self.handle_presentation_msg(msg, &connection_id).await?
             }
             m => {
                 warn!("Received message of unexpected type: {}", m);

@@ -24,7 +24,6 @@ use crate::{
     common::signing::sign_connection_response,
     errors::error::VcxResult,
     handlers::util::{verify_thread_id, AnyInvitation},
-    protocols::connection::trait_bounds::ThreadId,
 };
 
 pub type InviterConnection<S> = Connection<Inviter, S>;
@@ -235,16 +234,10 @@ impl InviterConnection<Requested> {
 
     /// Acknowledges an invitee's connection by processing their first message
     /// and transitions to [`InviterConnection<Completed>`].
-    ///
-    /// # Errors
-    ///
-    /// Will error out if the message's thread ID does not match
-    /// the ID of the thread context used in this connection.
     pub fn acknowledge_connection(
         self,
-        msg: &AriesMessage,
+        _msg: &AriesMessage,
     ) -> VcxResult<InviterConnection<Completed>> {
-        verify_thread_id(self.state.thread_id(), msg)?;
         let state = Completed::new(
             self.state.did_doc,
             self.state.signed_response.decorators.thread.thid,

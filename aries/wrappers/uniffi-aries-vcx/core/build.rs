@@ -6,5 +6,5 @@ fn main() {
     uniffi::generate_scaffolding("./src/vcx_indy.udl").unwrap();
 
     #[cfg(feature = "askar_wallet")]
-    uniffi::generate_scaffolding("./src/vcx_askar.udl").unwrap();
+    uniffi::generate_scaffolding("./src/vcx.udl").unwrap();
 }
