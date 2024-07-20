@@ -66,7 +66,7 @@ setup_linked_dependencies() {
 
 build_uniffi_for_demo() {
     export UNIFFI_ROOT="${ARIES_VCX_ROOT}/aries/wrappers/uniffi-aries-vcx"
-    export ANDROID_DEMO_DIR="${ARIES_VCX_ROOT}/aries/agents/rust/mobile_demo"
+    export ANDROID_DEMO_DIR="${ARIES_VCX_ROOT}/aries/agents/mobile_demo"
     export ABI_PATH=${ANDROID_DEMO_DIR}/app/src/main/jniLibs/${ABI}
     mkdir -p ${ABI_PATH}
 
