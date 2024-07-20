@@ -13,7 +13,7 @@ ABI="arm64-v8a"
 
 generate_bindings() {
     export UNIFFI_ROOT="${ARIES_VCX_ROOT}/aries/wrappers/uniffi-aries-vcx"
-    export ANDROID_DEMO_DIR="${ARIES_VCX_ROOT}/aries/agents/mobile_demo"
+    export ANDROID_DEMO_DIR="${ARIES_VCX_ROOT}/aries/agents/android"
 
     pushd "${UNIFFI_ROOT}/core"
                 cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/vcx.udl --language ${LANGUAGE}
@@ -66,7 +66,7 @@ setup_linked_dependencies() {
 
 build_uniffi_for_demo() {
     export UNIFFI_ROOT="${ARIES_VCX_ROOT}/aries/wrappers/uniffi-aries-vcx"
-    export ANDROID_DEMO_DIR="${ARIES_VCX_ROOT}/aries/agents/mobile_demo"
+    export ANDROID_DEMO_DIR="${ARIES_VCX_ROOT}/aries/agents/android"
     export ABI_PATH=${ANDROID_DEMO_DIR}/app/src/main/jniLibs/${ABI}
     mkdir -p ${ABI_PATH}
 
