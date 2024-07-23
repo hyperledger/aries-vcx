@@ -114,6 +114,7 @@ jobs:
           branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: mediator
       - name: "Publish versioned docker image"
+        if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
         uses: ./.github/actions/publish-image
         with:
           docker-img: ${{ env.DOCKER_IMAGE }}
