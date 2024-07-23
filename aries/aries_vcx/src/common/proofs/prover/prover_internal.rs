@@ -41,7 +41,7 @@ pub async fn build_schemas_json_prover(
     let mut rtn: SchemasMap = HashMap::new();
 
     for cred_info in credentials_identifiers {
-        if rtn.get(&cred_info.schema_id).is_none() {
+        if !rtn.contains_key(&cred_info.schema_id) {
             let schema_json = ledger
                 .get_schema(&cred_info.schema_id, None)
                 .await
@@ -157,7 +157,7 @@ pub async fn build_rev_states_json(
             &cred_info.cred_rev_id,
             &cred_info.tails_dir,
         ) {
-            if rtn.get(rev_reg_id).is_none() {
+            if !rtn.contains_key(rev_reg_id) {
                 // Does this make sense in case cred_info's for same rev_reg_ids have different
                 // revocation intervals
                 let (from, to) = if let Some(ref interval) = cred_info.revocation_interval {
@@ -226,8 +226,7 @@ pub fn build_requested_credentials_json(
         if proof_req
             .value()
             .requested_attributes
-            .get(&cred_info.referent)
-            .is_some()
+            .contains_key(&cred_info.referent)
         {
             rtn.requested_attributes.insert(
                 cred_info.referent.to_owned(),
@@ -244,8 +243,7 @@ pub fn build_requested_credentials_json(
         if proof_req
             .value()
             .requested_predicates
-            .get(&cred_info.referent)
-            .is_some()
+            .contains_key(&cred_info.referent)
         {
             rtn.requested_predicates.insert(
                 cred_info.referent.to_owned(),

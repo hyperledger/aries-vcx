@@ -40,6 +40,7 @@ pub struct GetCredDefResultV0 {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GetCredDefResultDataV1 {
+    #[allow(unused)] // unused, but part of entity
     pub ver: String,
     pub id: CredentialDefinitionId,
     #[serde(rename = "type")]

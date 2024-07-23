@@ -147,7 +147,7 @@ impl EncryptionEnvelope {
             data =
                 EncryptionEnvelope::wrap_into_forward(wallet, data, &forward_to_key, routing_key)
                     .await?;
-            forward_to_key = routing_key.clone();
+            forward_to_key.clone_from(routing_key);
         }
         Ok(data)
     }

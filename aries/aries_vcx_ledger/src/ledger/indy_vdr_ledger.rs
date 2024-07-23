@@ -693,10 +693,7 @@ pub struct VcxPoolConfig {
 pub fn build_ledger_components(
     pool_config: VcxPoolConfig,
 ) -> VcxLedgerResult<(DefaultIndyLedgerRead, DefaultIndyLedgerWrite)> {
-    let indy_vdr_config = match pool_config.indy_vdr_config {
-        None => PoolConfig::default(),
-        Some(cfg) => cfg,
-    };
+    let indy_vdr_config = pool_config.indy_vdr_config.unwrap_or_default();
     let cache_config = match pool_config.response_cache_config {
         None => InMemoryResponseCacherConfig::builder()
             .ttl(std::time::Duration::from_secs(60))

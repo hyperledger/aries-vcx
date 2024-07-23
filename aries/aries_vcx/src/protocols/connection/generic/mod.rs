@@ -427,7 +427,7 @@ mod connection_serde_tests {
         let wallet = MockWallet;
         let con = make_invitee_requested().await;
         let mut con_data = ConnectionData::new(PW_KEY.to_owned(), AriesDidDoc::default());
-        con_data.did_doc.id = PW_KEY.to_owned();
+        PW_KEY.clone_into(&mut con_data.did_doc.id);
         con_data.did_doc.set_recipient_keys(vec![PW_KEY.to_owned()]);
         con_data.did_doc.set_routing_keys(Vec::new());
 
@@ -476,7 +476,7 @@ mod connection_serde_tests {
         let new_routing_keys = vec![];
 
         let mut con_data = ConnectionData::new(PW_KEY.to_owned(), AriesDidDoc::default());
-        con_data.did_doc.id = PW_KEY.to_owned();
+        PW_KEY.clone_into(&mut con_data.did_doc.id);
         con_data.did_doc.set_recipient_keys(vec![PW_KEY.to_owned()]);
         con_data.did_doc.set_routing_keys(Vec::new());
 

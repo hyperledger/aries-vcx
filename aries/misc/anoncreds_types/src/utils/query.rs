@@ -284,6 +284,7 @@ where
     }
 }
 
+#[allow(clippy::to_string_trait_impl)] // mimicks upstream anoncreds-rs, allow this to avoid divergence
 impl string::ToString for Query {
     fn to_string(&self) -> String {
         self.to_value().to_string()

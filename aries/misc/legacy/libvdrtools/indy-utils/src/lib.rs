@@ -1,4 +1,5 @@
-#![allow(clippy::not_unsafe_ptr_arg_deref)]
+// allow all clippy warnings, given this is legacy to be removed soon
+#![allow(clippy::all)]
 #[macro_use]
 extern crate serde_json;
 

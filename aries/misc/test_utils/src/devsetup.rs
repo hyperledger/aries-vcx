@@ -42,10 +42,10 @@ pub mod vdrtools_wallet;
 
 const DEFAULT_AML_LABEL: &str = "eula";
 
-pub fn write_file<P: AsRef<Path>>(file: P, content: &str) -> TestUtilsResult<()>
-where
-    P: std::convert::AsRef<std::ffi::OsStr>,
-{
+pub fn write_file<P: AsRef<Path> + AsRef<std::ffi::OsStr>>(
+    file: P,
+    content: &str,
+) -> TestUtilsResult<()> {
     let path = PathBuf::from(&file);
 
     if let Some(parent_path) = path.parent() {

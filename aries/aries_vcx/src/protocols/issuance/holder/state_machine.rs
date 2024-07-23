@@ -168,12 +168,12 @@ impl HolderSM {
         let state = match self.state {
             HolderFullState::Initial(_) => {
                 let mut proposal = proposal;
-                proposal.id = self.thread_id.clone();
+                proposal.id.clone_from(&self.thread_id);
                 HolderFullState::ProposalSet(ProposalSetState::new(proposal))
             }
             HolderFullState::OfferReceived(_) => {
                 let mut proposal = proposal;
-                proposal.id = self.thread_id.clone();
+                proposal.id.clone_from(&self.thread_id);
                 HolderFullState::ProposalSet(ProposalSetState::new(proposal))
             }
             s => {
