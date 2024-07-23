@@ -23,7 +23,7 @@ Add the Peer DID library as a dependency in your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-peer_did = { tag = "0.64.0", git = "https://github.com/hyperledger/aries-vcx" }
+peer_did = { tag = "0.65.0", git = "https://github.com/hyperledger/aries-vcx" }
 ```
 
 ## Demo

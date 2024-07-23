@@ -17,5 +17,5 @@ Add the did_parser library as a dependency in your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-did_parser_nom = { tag = "0.64.0", git = "https://github.com/hyperledger/aries-vcx" }
+did_parser_nom = { tag = "0.65.0", git = "https://github.com/hyperledger/aries-vcx" }
 ```
