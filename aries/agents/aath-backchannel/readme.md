@@ -15,7 +15,7 @@ For sake of better DX, the following steps can be used as a starting point for p
 A general rule of thumb, is to make sure the AATH backchannel works against itself before testing against other agents (e.g. acapy).
 
 Use the following to run 2 VCX AATH instances and test them with specific test suites in the AATH:
-1. clone the [AATH repo](https://github.com/anonyome/aries-agent-test-harness/tree/main)
+1. clone the [AATH repo](https://github.com/hyperledger/aries-agent-test-harness/tree/main)
 2. in the root of the AATH repo, start the standard AATH services (ledger, DID resolver, tails server): `./manage start`
 3. from within this directory (aries/agent/aath-backchannel), run the server twice, on port 9020 and 9030, with config to use the AATH components (in two different terminals, leave them running):
    1. `LEDGER_URL=http://localhost:9000 GENESIS_FILE=resource/indypool.txn cargo run -- -p 9020`,
@@ -28,7 +28,7 @@ Use the following to run 2 VCX AATH instances and test them with specific test s
 
 ## VCX AATH to ACAPy AATH Testing
 To test the a VCX AATH instance against another agent, such as ACApy, the following modified steps can be followed:
-1. clone the [AATH repo](https://github.com/anonyome/aries-agent-test-harness/tree/main)
+1. clone the [AATH repo](https://github.com/hyperledger/aries-agent-test-harness/tree/main)
 2. in the root of the AATH repo, start the standard AATH services (ledger, DID resolver, tails server) AND an ACApy agent on port 9030 (Bob agent): `AGENT_PUBLIC_ENDPOINT=http://localhost:9032 ./manage start -b acapy-main`
 3. from within this directory (aries/agent/aath-backchannel), run the server on port 9020, with config to use the AATH components:
    1. `DOCKERHOST=host.docker.internal LEDGER_URL=http://localhost:9000 GENESIS_FILE=resource/indypool.txn cargo run -- -p 9020`
