@@ -38,7 +38,7 @@ did_parser_nom = { path = "../../../../did_core/did_parser_nom" }
 diddoc_legacy = { path = "../../../misc/legacy/diddoc_legacy" }
 shared = { path = "../../../misc/shared" }
 url = "2.3.1"
-android_logger = "0.13.3"
+android_logger = "0.14.1"
 log = "0.4.16"
 
 [build-dependencies]

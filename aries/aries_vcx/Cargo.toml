@@ -53,7 +53,7 @@ did_peer = { path = "../../did_core/did_methods/did_peer" }
 did_resolver_registry = { path = "../../did_core/did_resolver_registry" }
 bs58 = "0.5.0"
 async-trait = "0.1.53"
-env_logger = "0.10.0"
+env_logger = "0.11.3"
 log = "0.4.16"
 chrono = "0.4.23"
 time = "0.3.20"
@@ -63,14 +63,14 @@ serde = "1.0.97"
 serde_json = "1.0.40"
 serde_derive = "1.0.97"
 regex = "1.1.0"
-base64 = "0.21.4"
+base64 = "0.22.1"
 sha2 = "0.10.7"
 num-bigint = "0.4.5"
 futures = { version = "0.3", default-features = false }
 uuid = { version = "1.4.1", default-features = false, features = ["v4"] }
-strum = "0.25.0"
-strum_macros = "0.25.2"
-derive_builder = "0.12.0"
+strum = "0.26.3"
+strum_macros = "0.26.4"
+derive_builder = "0.20.0"
 tokio = { version = "1.38.0" }
 thiserror = "1.0.37"
 url = { version = "2.3", features = ["serde"] }
@@ -79,7 +79,7 @@ backtrace = { optional = true, version = "0.3" }
 [dev-dependencies]
 test_utils = { path = "../misc/test_utils" }
 wallet_migrator = { path = "../misc/wallet_migrator" }
-async-channel = "1.7.1"
+async-channel = "2.3.1"
 tokio = { version = "1.38", features = ["rt", "macros", "rt-multi-thread"] }
 pretty_assertions = "1.4.0"
 did_resolver_sov = { path = "../../did_core/did_methods/did_resolver_sov" }

@@ -10,21 +10,22 @@ static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
 
 const ENDPOINT_ROOT: &str = "http://localhost:8005";
 
-#[test]
-fn endpoint_invitation_returns_oob() -> Result<()> {
+#[tokio::test]
+async fn endpoint_invitation_returns_oob() -> Result<()> {
     LOGGING_INIT.call_once(setup_env_logging);
 
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::Client::new();
     let base: Url = ENDPOINT_ROOT.parse().unwrap();
     let endpoint_register_json = base.join("/invitation").unwrap();
 
     let res = client
         .get(endpoint_register_json)
-        .send()?
+        .send()
+        .await?
         .error_for_status()?;
     info!("{:?}", res);
 
-    let _oob: OOBInvitation = res.json()?;
+    let _oob: OOBInvitation = res.json().await?;
 
     Ok(())
 }

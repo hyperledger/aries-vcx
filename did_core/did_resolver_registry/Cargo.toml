@@ -11,5 +11,5 @@ async-trait = "0.1.72"
 
 [dev-dependencies]
 tokio = { version = "1.38.0", default-features = false, features = ["macros", "rt"] }
-mockall = "0.11.4"
+mockall = "0.13.0"
 async-trait = "0.1.68"
