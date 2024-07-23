@@ -31,14 +31,10 @@ async fn main() {
         .unwrap();
     let app_router = mediator::http_routes::build_router(agent).await;
     info!("Starting server");
-    axum::Server::bind(
-        &endpoint_root
-            .parse()
-            .expect("Pass an address to listen on like IP:PORT"),
-    )
-    .serve(app_router.into_make_service())
-    .await
-    .unwrap();
+    let listener = tokio::net::TcpListener::bind(&endpoint_root).await.unwrap();
+    axum::serve(listener, app_router.into_make_service())
+        .await
+        .unwrap();
 }
 
 fn setup_logging() {

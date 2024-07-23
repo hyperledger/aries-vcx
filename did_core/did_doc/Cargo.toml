@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-base64 = "0.21.2"
+base64 = "0.22.1"
 bs58 = "0.5.0"
 did_parser_nom = { path = "../did_parser_nom" }
 public_key = { path = "../public_key" }
 hex = "0.4.3"
 multibase = "0.9.1"
-pem = "2.0.1"
+pem = "3.0.4"
 serde = { version = "1.0.159", default-features = false, features = ["derive"] }
 serde_json = "1.0.95"
 uniresid = { version = "0.1.4", default-features = false, features = ["serde"] }
@@ -18,10 +18,10 @@ url = { version = "2.3.1", features = ["serde"] }
 display_as_json = { path = "../../misc/display_as_json" }
 did_key = { path = "../did_methods/did_key" }
 thiserror = "1.0.40"
-typed-builder = "0.18.1"
+typed-builder = "0.19.1"
 log = "0.4"
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"
-env_logger = "0.10"
+env_logger = "0.11.3"
 

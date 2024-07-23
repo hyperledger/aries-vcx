@@ -24,7 +24,7 @@ fn _get_timestamp<'a>() -> DelayedFormat<StrftimeItems<'a>> {
 }
 
 fn text_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
-    let level = buf.default_styled_level(record.level());
+    let level = buf.default_level_style(record.level());
     writeln!(
         buf,
         "{}|{:>5}|{:<30}|{:>35}:{:<4}| {}",

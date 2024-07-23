@@ -1,4 +1,3 @@
-extern crate derive_builder;
 extern crate serde;
 extern crate serde_json;
 #[macro_use]
