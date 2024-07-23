@@ -39,3 +39,4 @@ There's 2 best way to reach us:
     - We bump minor version on releases containing new features, significant refactors or breaking changes. 
     - We bump patch version if release only contains fixes or smaller refactoring.
   - See [releases](https://github.com/hyperledger/aries-vcx/releases) page.
+  - Crates are known to be stable with atleast Rust version 1.79

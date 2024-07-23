@@ -1,18 +1,15 @@
 use aries_vcx::{
-    errors::error::VcxResult,
     handlers::{out_of_band::sender::OutOfBandSender, util::AnyInvitation},
     protocols::{
         connection::{invitee::any_invitation_into_did_doc, Connection, GenericConnection},
         mediated_connection::pairwise_info::PairwiseInfo,
     },
-    transport::Transport,
 };
 use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_ledger::ledger::base_ledger::{
     AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
 };
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
-use async_trait::async_trait;
 use messages::{
     msg_fields::protocols::{
         connection::invitation::{Invitation, InvitationContent},
@@ -23,7 +20,6 @@ use messages::{
         Protocol,
     },
 };
-use url::Url;
 use uuid::Uuid;
 
 use crate::utils::test_agent::TestAgent;
@@ -44,16 +40,6 @@ async fn establish_connection_from_invite(
     invitation: AnyInvitation,
     inviter_pairwise_info: PairwiseInfo,
 ) -> (GenericConnection, GenericConnection) {
-    // TODO: Temporary, delete
-    struct DummyHttpClient;
-
-    #[async_trait]
-    impl Transport for DummyHttpClient {
-        async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: &Url) -> VcxResult<()> {
-            Ok(())
-        }
-    }
-
     let invitee_pairwise_info = PairwiseInfo::create(&alice.wallet).await.unwrap();
     let invitee = Connection::new_invitee("".to_owned(), invitee_pairwise_info)
         .accept_invitation(&alice.ledger_read, invitation.clone())

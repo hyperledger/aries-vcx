@@ -3,6 +3,7 @@ use crate::error::LedgerResponseParserError;
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Response {
+    #[allow(unused)] // unused, but part of entity
     pub req_id: u64,
     pub reason: String,
 }

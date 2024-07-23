@@ -2,6 +2,8 @@ use indy_vdr::utils::did::ShortDidValue;
 
 use super::response::GetReplyResultV1;
 
+#[allow(unused)]
+// unused for now, but domain defined: https://github.com/hyperledger/indy-node/blob/main/docs/source/transactions.md#attrib
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum GetAttrReplyResult {

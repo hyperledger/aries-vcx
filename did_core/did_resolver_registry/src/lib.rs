@@ -113,6 +113,7 @@ mod tests {
 
     use super::*;
 
+    #[allow(unused)] // false positive. used for automock
     struct DummyDidResolver;
 
     #[async_trait]
