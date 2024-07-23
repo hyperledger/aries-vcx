@@ -48,16 +48,11 @@ class AppDemoController : ViewModel() {
         return profile!!
     }
 
-    private val walletConfig = WalletConfig(
-        walletName = "test_create_wallet_add_uuid_here",
-        walletKey = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY",
-        walletKeyDerivation = "RAW",
-        walletType = null,
-        storageConfig = null,
-        storageCredentials = null,
-        rekey = null,
-        rekeyDerivationMethod = null
-    )
+    private val walletConfig = AskarWalletConfig(
+        dbUrl = "sqlite://:memory:",
+        keyMethod = KeyMethod.DeriveKey(AskarKdfMethod.Argon2i(ArgonLevel.INTERACTIVE)),
+        passKey = "test",
+        profile = "profile")
 
     suspend fun setupProfile(genesisFilePath: String) {
         withContext(Dispatchers.IO) {
@@ -102,8 +97,10 @@ class AppDemoController : ViewModel() {
             delay(500)
             val relayResponse = httpClient.newCall(pollRelayRequest).await()
             if (relayResponse.code == 200) {
+                Log.d("RELAY RESPONSE", "RELAY RESPONDED WITH 200")
                 val message = relayResponse.body!!.string()
                 Log.d("MESSAGE", "awaitConnectionCompletion: $message")
+                Log.d("PROFILE", "profile: ${profile.toString()}")
                 val unpackedMessage = unpackMessage(
                     profile!!,
                     message
