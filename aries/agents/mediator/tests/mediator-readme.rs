@@ -12,21 +12,22 @@ static LOGGING_INIT: std::sync::Once = std::sync::Once::new();
 
 const ENDPOINT_ROOT: &str = "http://localhost:8005";
 
-#[test]
-fn base_path_returns_readme() -> Result<()> {
+#[tokio::test]
+async fn base_path_returns_readme() -> Result<()> {
     LOGGING_INIT.call_once(setup_env_logging);
 
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::Client::new();
     let endpoint: Url = ENDPOINT_ROOT.parse().unwrap();
 
     let res = client
         .get(endpoint)
         .header(ACCEPT, "application/json")
-        .send()?
+        .send()
+        .await?
         .error_for_status()?;
     info!("{:?}", res);
 
-    let _: ReadmeInfo = res.json()?;
+    let _: ReadmeInfo = res.json().await?;
 
     Ok(())
 }
