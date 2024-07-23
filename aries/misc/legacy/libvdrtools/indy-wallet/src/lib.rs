@@ -1,3 +1,5 @@
+// allow all clippy warnings, given this is legacy to be removed soon
+#![allow(clippy::all)]
 use std::{
     collections::{HashMap, HashSet},
     fmt, fs,
