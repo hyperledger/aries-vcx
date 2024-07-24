@@ -115,7 +115,7 @@ pub(super) async fn ledger_response_to_ddo(
         Default::default(),
     );
 
-    let expanded_verkey = expand_abbreviated_verkey(did, &verkey);
+    let expanded_verkey = expand_abbreviated_verkey(did, &verkey)?;
 
     // TODO: Use multibase instead of base58
     let verification_method = VerificationMethod::builder()
@@ -134,11 +134,8 @@ pub(super) async fn ledger_response_to_ddo(
 
     let ddo_metadata = {
         let mut metadata_builder = DidDocumentMetadata::builder().deactivated(false);
-        if let Ok(txn_time) = txn_time {
-            let datetime = unix_to_datetime(txn_time);
-            if let Some(datetime) = datetime {
-                metadata_builder = metadata_builder.updated(datetime);
-            };
+        if let Some(datetime) = datetime {
+            metadata_builder = metadata_builder.updated(datetime);
         }
         metadata_builder.build()
     };
