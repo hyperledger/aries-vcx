@@ -2,6 +2,7 @@ use std::{thread, time::Duration};
 
 use aries_vcx::common::ledger::{service_didsov::EndpointDidSov, transactions::write_endpoint};
 use aries_vcx_ledger::ledger::base_ledger::IndyLedgerWrite;
+use aries_vcx_wallet::wallet::base_wallet::did_wallet::DidWallet;
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_resolver::{
     did_doc::schema::service::typed::ServiceType,
@@ -62,10 +63,24 @@ async fn test_error_handling_during_resolution() {
 #[tokio::test]
 async fn write_new_nym_and_get_did_doc() {
     let profile = build_setup_profile().await;
-    let (new_nym, verkey) = profile
+
+    write_test_endpoint(
+        &profile.wallet,
+        &profile.ledger_write,
+        &profile.institution_did,
+    )
+    .await;
+
+    let did_data: aries_vcx_wallet::wallet::base_wallet::did_data::DidData = profile
         .wallet
         .create_and_store_my_did(None, None)
         .await
+        .unwrap();
+
+    let parsed_did = Did::parse(did_data.did().to_string())
+        .map_err(|e| {
+            eprintln!("Failed to parse DID: {}", e);
+        })
         .unwrap();
 
     profile
@@ -73,30 +88,27 @@ async fn write_new_nym_and_get_did_doc() {
         .publish_nym(
             &profile.wallet,
             &profile.institution_did,
-            &new_nym,
-            Some(&verkey),
+            &parsed_did,
+            Some(&did_data.verkey()),
             None,
             None,
         )
         .await
         .unwrap();
-
-    // NEED TO WRITE ENDPOINT FOR IT TO RESOLVE
-    // write_test_endpoint(&profile.wallet, &profile.ledger_write, &new_nym).await;
 
     let resolver = DidSovResolver::new(profile.ledger_read);
-    let did = format!("did:sov:{}", new_nym);
+    let did = format!("did:sov:{}", did_data.did());
 
-    let did_doc = resolver
-        .resolve(
-            &Did::parse(did.clone()).unwrap(),
-            &DidResolutionOptions::default(),
-        )
+    let parsed_did_for_resolver = Did::parse(did.clone())
+        .map_err(|e| {
+            eprintln!("Failed to parse DID for resolver: {}", e);
+        })
+        .unwrap();
+
+    let DidResolutionOutput { did_document, .. } = resolver
+        .resolve(&parsed_did_for_resolver, &())
         .await
         .unwrap();
 
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&did_doc.did_document()).unwrap()
-    );
+    println!("{}", serde_json::to_string_pretty(&did_document).unwrap());
 }
