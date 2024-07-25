@@ -145,7 +145,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
 
         // Todo: "invitation_key" should not be None; see the todo inside this scope
         let invitation_key = match invitation {
-            None => resolve_enc_key_from_did(&request_did, &self.resolver_registry).await?,
+            None => resolve_enc_key_from_did(request_did, &self.resolver_registry).await?,
             Some(invitation) => {
                 resolve_enc_key_from_invitation(&invitation, &self.resolver_registry).await?
             }
