@@ -75,6 +75,7 @@ pub struct HarnessAgent {
     // todo: extra didx specific AATH service
     didx_msg_buffer: RwLock<Vec<AriesMessage>>,
     didx_pthid_to_thid: Mutex<HashMap<String, String>>,
+    inviter_keys: RwLock<HashMap<String, String>>,
 }
 
 #[macro_export]
@@ -121,6 +122,7 @@ async fn main() -> std::io::Result<()> {
                 status: Status::Active,
                 didx_msg_buffer: Default::default(),
                 didx_pthid_to_thid: Mutex::new(Default::default()),
+                inviter_keys: RwLock::new(HashMap::new()),
             })))
             .app_data(web::Data::new(RwLock::new(Vec::<AriesMessage>::new())))
             .service(

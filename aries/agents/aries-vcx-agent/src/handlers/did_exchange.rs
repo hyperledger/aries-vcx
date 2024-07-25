@@ -15,7 +15,7 @@ use aries_vcx::{
         AriesMessage,
     },
     protocols::did_exchange::{
-        resolve_enc_key_from_did_doc, resolve_enc_key_from_invitation,
+        resolve_enc_key_from_did, resolve_enc_key_from_did_doc, resolve_enc_key_from_invitation,
         state_machine::{
             generic::{GenericDidExchange, ThinState},
             helpers::create_peer_did_4,
@@ -125,6 +125,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
     pub async fn handle_msg_request(
         &self,
         request: AnyRequest,
+        request_did: &String,
         invitation: Option<OobInvitation>,
     ) -> AgentResult<(String, Option<String>, String, String)> {
         // todo: type the return type
@@ -144,14 +145,9 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
 
         // Todo: "invitation_key" should not be None; see the todo inside this scope
         let invitation_key = match invitation {
-            None => {
-                // TODO: Case for "implicit invitations", where request is sent on basis of
-                // knowledge of public DID       However in that cases we should
-                // probably use the Recipient Verkey which was used to anoncrypt the Request msg
-                None
-            }
+            None => resolve_enc_key_from_did(&request_did, &self.resolver_registry).await?,
             Some(invitation) => {
-                Some(resolve_enc_key_from_invitation(&invitation, &self.resolver_registry).await?)
+                resolve_enc_key_from_invitation(&invitation, &self.resolver_registry).await?
             }
         };
 
