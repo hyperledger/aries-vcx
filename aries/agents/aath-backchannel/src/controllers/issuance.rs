@@ -95,7 +95,6 @@ async fn download_tails_file(
     let url = match tails_base_url.to_string().matches('/').count() {
         0 => format!("{}/{}", tails_base_url, rev_reg_id),
         1.. => tails_base_url.to_string(),
-        _ => todo!(),
     };
     let client = reqwest::Client::new();
     let tails_folder_path = std::env::current_dir()
