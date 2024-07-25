@@ -125,7 +125,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
     pub async fn handle_msg_request(
         &self,
         request: AnyRequest,
-        request_did: &String,
+        request_did: &str,
         invitation: Option<OobInvitation>,
     ) -> AgentResult<(String, Option<String>, String, String)> {
         // todo: type the return type

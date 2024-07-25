@@ -135,7 +135,7 @@ async fn did_exchange_test(
         &resolver_registry,
         request,
         &responders_peer_did,
-        Some(invitation_key.clone()),
+        invitation_key.clone(),
     )
     .await
     .unwrap();
@@ -337,7 +337,7 @@ async fn did_exchange_test_with_invalid_rotation_signature() -> Result<(), Box<d
         request,
         &responders_peer_did,
         // sign with NOT the invitation key
-        Some(incorrect_invitation_key),
+        incorrect_invitation_key,
     )
     .await?;
 

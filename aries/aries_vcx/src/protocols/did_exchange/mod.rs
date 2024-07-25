@@ -116,11 +116,11 @@ pub async fn resolve_enc_key_from_invitation(
 }
 
 pub async fn resolve_enc_key_from_did(
-    did: &String,
+    did: &str,
     resolver_registry: &Arc<ResolverRegistry>,
 ) -> Result<Key, AriesVcxError> {
     let output = resolver_registry
-        .resolve(&did.clone().try_into()?, &Default::default())
+        .resolve(&did.try_into()?, &Default::default())
         .await
         .map_err(|err| {
             AriesVcxError::from_msg(

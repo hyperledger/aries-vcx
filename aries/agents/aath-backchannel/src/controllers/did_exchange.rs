@@ -202,7 +202,7 @@ impl HarnessAgent {
         let (thid, pthid, my_did, their_did) = self
             .aries_agent
             .did_exchange()
-            .handle_msg_request(request, &inviter_key, opt_invitation)
+            .handle_msg_request(request, &inviter_key.clone(), opt_invitation)
             .await?;
 
         if let Some(pthid) = pthid {
