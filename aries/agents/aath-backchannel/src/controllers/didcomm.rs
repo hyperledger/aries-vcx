@@ -1,5 +1,9 @@
 use std::sync::RwLock;
 
+use crate::{
+    error::{HarnessError, HarnessErrorType, HarnessResult},
+    HarnessAgent,
+};
 use actix_web::{web, HttpResponse, Responder};
 use aries_vcx_agent::aries_vcx::{
     messages::{
@@ -17,11 +21,6 @@ use aries_vcx_agent::aries_vcx::{
         AriesMessage,
     },
     utils::encryption_envelope::EncryptionEnvelope,
-};
-
-use crate::{
-    error::{HarnessError, HarnessErrorType, HarnessResult},
-    HarnessAgent,
 };
 
 impl HarnessAgent {
@@ -211,7 +210,7 @@ impl HarnessAgent {
     }
 
     pub async fn receive_message(&self, payload: Vec<u8>) -> HarnessResult<HttpResponse> {
-        let (message, sender_vk) = EncryptionEnvelope::anon_unpack_aries_msg(
+        let (message, sender_vk, recipient_vk) = EncryptionEnvelope::anon_unpack_aries_msg(
             self.aries_agent.wallet().as_ref(),
             payload.clone(),
         )
@@ -222,6 +221,16 @@ impl HarnessAgent {
                 "Received anoncrypted message",
             )
         })?;
+
+        let connection_id = self
+            .aries_agent
+            .connections()
+            .get_by_sender_vk(sender_vk.clone())?;
+        self.inviter_keys
+            .write()
+            .unwrap()
+            .insert(connection_id.clone(), recipient_vk);
+
         info!("Received message: {}", message);
         match message {
             AriesMessage::Notification(msg) => {
