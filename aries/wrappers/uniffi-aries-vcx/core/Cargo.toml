@@ -6,7 +6,7 @@ license.workspace = true
 edition.workspace = true
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "staticlib"]
 name = "uniffi_vcx"
 
 [[bin]]
@@ -18,7 +18,6 @@ path = "uniffi-bindgen.rs"
 [features]
 default = ["askar_wallet"]
 askar_wallet = ["aries_vcx/askar_wallet"]
-vdrtools_wallet = ["aries_vcx/vdrtools_wallet"]
 
 [dependencies]
 uniffi = { version = "0.23.0", features = ["cli"] }
