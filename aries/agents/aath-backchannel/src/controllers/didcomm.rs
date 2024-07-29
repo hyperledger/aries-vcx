@@ -1,9 +1,5 @@
 use std::sync::RwLock;
 
-use crate::{
-    error::{HarnessError, HarnessErrorType, HarnessResult},
-    HarnessAgent,
-};
 use actix_web::{web, HttpResponse, Responder};
 use aries_vcx_agent::aries_vcx::{
     messages::{
@@ -21,6 +17,11 @@ use aries_vcx_agent::aries_vcx::{
         AriesMessage,
     },
     utils::encryption_envelope::EncryptionEnvelope,
+};
+
+use crate::{
+    error::{HarnessError, HarnessErrorType, HarnessResult},
+    HarnessAgent,
 };
 
 impl HarnessAgent {
