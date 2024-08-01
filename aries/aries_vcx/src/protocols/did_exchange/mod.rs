@@ -115,6 +115,27 @@ pub async fn resolve_enc_key_from_invitation(
     }
 }
 
+pub async fn resolve_enc_key_from_did(
+    did: &str,
+    resolver_registry: &Arc<ResolverRegistry>,
+) -> Result<Key, AriesVcxError> {
+    let output = resolver_registry
+        .resolve(&did.try_into()?, &Default::default())
+        .await
+        .map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidDid,
+                format!("DID resolution failed: {err}"),
+            )
+        })?;
+    info!(
+        "resolve_enc_key_from_did >> Resolved did document {}",
+        output.did_document
+    );
+    let did_doc = output.did_document;
+    resolve_enc_key_from_did_doc(&did_doc)
+}
+
 /// Attempts to resolve a [Key] in the [DidDocument] that can be used for sending encrypted
 /// messages. The approach is:
 /// * check the service for a recipient key,

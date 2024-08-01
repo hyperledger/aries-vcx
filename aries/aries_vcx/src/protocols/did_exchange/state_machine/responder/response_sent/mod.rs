@@ -33,7 +33,7 @@ impl DidExchangeResponder<ResponseSent> {
         resolver_registry: &Arc<ResolverRegistry>,
         request: AnyRequest,
         our_peer_did: &PeerDid<Numalgo4>,
-        invitation_key: Option<Key>,
+        invitation_key: Key,
     ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, AnyResponse>, AriesVcxError>
     {
         debug!(
@@ -51,21 +51,7 @@ impl DidExchangeResponder<ResponseSent> {
             DidExchangeTypeV1::V1_1(_) => assemble_did_rotate_attachment(our_peer_did.did()),
             DidExchangeTypeV1::V1_0(_) => ddo_to_attach(our_did_document.clone())?,
         };
-        let attachment = match invitation_key {
-            Some(invitation_key) => {
-                // TODO: this must happen only if we rotate DID; We currently do that always
-                //       can skip signing if we don't rotate did document (unique p2p invitations
-                //       with peer DIDs)
-                jws_sign_attach(unsigned_attachment, invitation_key, wallet).await?
-            }
-            None => {
-                // TODO: not signing if invitation_key is not provided, that would be case for
-                //       implicit invitations. However we should probably sign with
-                //       the key the request used as recipient_vk to anoncrypt the request
-                //       So argument "invitation_key" should be required
-                unsigned_attachment
-            }
-        };
+        let attachment = jws_sign_attach(unsigned_attachment, invitation_key, wallet).await?;
 
         let request_id = request.id.clone();
         let request_pthid = request.decorators.thread.and_then(|thid| thid.pthid);

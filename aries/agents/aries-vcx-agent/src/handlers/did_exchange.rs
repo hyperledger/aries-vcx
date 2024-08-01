@@ -27,6 +27,7 @@ use aries_vcx::{
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use did_resolver_registry::ResolverRegistry;
 use did_resolver_sov::did_resolver::did_doc::schema::did_doc::DidDocument;
+use public_key::{Key, KeyType};
 use url::Url;
 
 use crate::{
@@ -125,6 +126,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
     pub async fn handle_msg_request(
         &self,
         request: AnyRequest,
+        inviter_key: String,
         invitation: Option<OobInvitation>,
     ) -> AgentResult<(String, Option<String>, String, String)> {
         // todo: type the return type
@@ -142,16 +144,12 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             .thid
             .clone();
 
-        // Todo: "invitation_key" should not be None; see the todo inside this scope
+        let inviter_key = Key::from_base58(&inviter_key, KeyType::Ed25519)?;
+
         let invitation_key = match invitation {
-            None => {
-                // TODO: Case for "implicit invitations", where request is sent on basis of
-                // knowledge of public DID       However in that cases we should
-                // probably use the Recipient Verkey which was used to anoncrypt the Request msg
-                None
-            }
+            None => inviter_key,
             Some(invitation) => {
-                Some(resolve_enc_key_from_invitation(&invitation, &self.resolver_registry).await?)
+                resolve_enc_key_from_invitation(&invitation, &self.resolver_registry).await?
             }
         };
 

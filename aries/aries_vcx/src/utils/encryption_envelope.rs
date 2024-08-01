@@ -184,33 +184,37 @@ impl EncryptionEnvelope {
     async fn _unpack_a2a_message(
         wallet: &impl BaseWallet,
         encrypted_data: Vec<u8>,
-    ) -> VcxResult<(String, Option<String>)> {
+    ) -> VcxResult<(String, Option<String>, String)> {
         trace!(
             "EncryptionEnvelope::_unpack_a2a_message >>> processing payload of {} bytes",
             encrypted_data.len()
         );
         let unpacked_msg = wallet.unpack_message(&encrypted_data).await?;
-        Ok((unpacked_msg.message, unpacked_msg.sender_verkey))
+        Ok((
+            unpacked_msg.message,
+            unpacked_msg.sender_verkey,
+            unpacked_msg.recipient_verkey,
+        ))
     }
 
     pub async fn anon_unpack_aries_msg(
         wallet: &impl BaseWallet,
         encrypted_data: Vec<u8>,
-    ) -> VcxResult<(AriesMessage, Option<String>)> {
-        let (message, sender_vk) = Self::anon_unpack(wallet, encrypted_data).await?;
+    ) -> VcxResult<(AriesMessage, Option<String>, String)> {
+        let (message, sender_vk, recipient_vk) = Self::anon_unpack(wallet, encrypted_data).await?;
         let a2a_message = serde_json::from_str(&message).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize A2A message: {}", err),
             )
         })?;
-        Ok((a2a_message, sender_vk))
+        Ok((a2a_message, sender_vk, recipient_vk))
     }
 
     pub async fn anon_unpack(
         wallet: &impl BaseWallet,
         encrypted_data: Vec<u8>,
-    ) -> VcxResult<(String, Option<String>)> {
+    ) -> VcxResult<(String, Option<String>, String)> {
         trace!(
             "EncryptionEnvelope::anon_unpack >>> processing payload of {} bytes",
             encrypted_data.len()
@@ -244,7 +248,7 @@ impl EncryptionEnvelope {
             expected_vk
         );
 
-        let (a2a_message, sender_vk) = Self::_unpack_a2a_message(wallet, encrypted_data).await?;
+        let (a2a_message, sender_vk, _) = Self::_unpack_a2a_message(wallet, encrypted_data).await?;
         trace!(
             "anon_unpack >> a2a_msg: {:?}, sender_vk: {:?}",
             a2a_message,
@@ -309,7 +313,7 @@ pub mod unit_tests {
         .await
         .unwrap();
 
-        let (data_unpacked, sender_verkey) =
+        let (data_unpacked, sender_verkey, _) =
             EncryptionEnvelope::anon_unpack(&setup.wallet, envelope.0)
                 .await
                 .unwrap();
@@ -386,7 +390,7 @@ pub mod unit_tests {
         .await
         .unwrap();
 
-        let (fwd_msg, _) = EncryptionEnvelope::anon_unpack(&setup.wallet, envelope.0)
+        let (fwd_msg, _, _) = EncryptionEnvelope::anon_unpack(&setup.wallet, envelope.0)
             .await
             .unwrap();
         let fwd_payload = serde_json::from_str::<Value>(&fwd_msg)
@@ -394,9 +398,10 @@ pub mod unit_tests {
             .get("msg")
             .unwrap()
             .to_string();
-        let (core_payload, _) = EncryptionEnvelope::anon_unpack(&setup.wallet, fwd_payload.into())
-            .await
-            .unwrap();
+        let (core_payload, _, _) =
+            EncryptionEnvelope::anon_unpack(&setup.wallet, fwd_payload.into())
+                .await
+                .unwrap();
 
         assert_eq!(data_original, core_payload);
     }

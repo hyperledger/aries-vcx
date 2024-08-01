@@ -118,7 +118,7 @@ impl GenericDidExchange {
         resolver_registry: &Arc<ResolverRegistry>,
         request: AnyRequest,
         our_peer_did: &PeerDid<Numalgo4>,
-        invitation_key: Option<Key>,
+        invitation_key: Key,
     ) -> Result<(Self, AnyResponse), AriesVcxError> {
         let TransitionResult { state, output } =
             DidExchangeResponder::<ResponseSent>::receive_request(

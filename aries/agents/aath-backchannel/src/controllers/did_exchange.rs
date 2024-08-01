@@ -178,6 +178,13 @@ impl HarnessAgent {
 
         let request_thread = &request.inner().decorators.thread;
 
+        let inviter_key = request_thread
+            .as_ref()
+            .and_then(|th| self.inviter_keys.read().unwrap().get(&th.thid).cloned())
+            .ok_or_else(|| {
+                HarnessError::from_msg(HarnessErrorType::InvalidState, "Inviter key not found")
+            })?;
+
         let opt_invitation = match request_thread.as_ref().and_then(|th| th.pthid.as_ref()) {
             Some(pthid) => {
                 let invitation = self.aries_agent.out_of_band().get_invitation(pthid)?;
@@ -188,7 +195,7 @@ impl HarnessAgent {
         let (thid, pthid, my_did, their_did) = self
             .aries_agent
             .did_exchange()
-            .handle_msg_request(request, opt_invitation)
+            .handle_msg_request(request, inviter_key, opt_invitation)
             .await?;
 
         if let Some(pthid) = pthid {
