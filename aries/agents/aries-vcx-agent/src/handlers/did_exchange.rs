@@ -146,7 +146,6 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
 
         let inviter_key = Key::from_base58(&inviter_key, KeyType::Ed25519)?;
 
-        // Todo: "invitation_key" should not be None; see the todo inside this scope
         let invitation_key = match invitation {
             None => inviter_key,
             Some(invitation) => {
