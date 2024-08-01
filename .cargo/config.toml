@@ -1,2 +1,3 @@
 [build]
-rustflags = ["-D", "warnings"]
+# TODO - Remove this file once initial aries framework vcx dev work is completed on Aries Framework VCX (in order to have dead code warnings). Or more ideally replace with better CI system that doesn't cause issues during development. 
+# rustflags = ["-D", "warnings"]

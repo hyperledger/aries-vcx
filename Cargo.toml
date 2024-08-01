@@ -12,6 +12,7 @@ members = [
     "aries/agents/mediator/client-tui",
     "aries/agents/aries-vcx-agent",
     "aries/agents/aath-backchannel",
+    "aries/agents/sample_framework_agent",
     "aries/wrappers/uniffi-aries-vcx/core",
     "aries/aries_vcx_anoncreds",
     "aries/aries_vcx_wallet",
@@ -30,6 +31,7 @@ members = [
     "did_core/public_key",
     "misc/simple_message_relay",
     "misc/display_as_json",
+    "aries_framework_vcx",
 ]
 
 [workspace.package]

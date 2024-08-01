@@ -1,0 +1,12 @@
+[package]
+name = "sample_framework_agent"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+env_logger = "0.11.3"
+log = "0.4.22"
+aries_framework_vcx = { path = "../../../aries_framework_vcx" }
+tokio = { version = "1.38.0", features = ["full"] }

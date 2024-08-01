@@ -530,6 +530,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "aries_framework_vcx"
+version = "0.1.0"
+dependencies = [
+ "aries_vcx",
+ "async-trait",
+ "did_peer",
+ "did_resolver_registry",
+ "env_logger 0.11.3",
+ "log",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "aries_vcx"
 version = "0.65.0"
 dependencies = [
@@ -4802,6 +4816,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sample_framework_agent"
+version = "0.1.0"
+dependencies = [
+ "aries_framework_vcx",
+ "env_logger 0.11.3",
+ "log",
+ "tokio",
+]
+
+[[package]]
 name = "schannel"
 version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6213,6 +6237,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81dfa00651efa65069b0b6b651f4aaa31ba9e3c3ce0137aaad053604ee7e0314"
 dependencies = [
  "getrandom 0.2.15",
+ "rand 0.8.5",
  "serde",
 ]
 
