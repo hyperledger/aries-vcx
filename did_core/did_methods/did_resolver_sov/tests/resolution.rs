@@ -96,16 +96,10 @@ async fn write_new_nym_and_get_did_doc() {
         .unwrap();
 
     let resolver = DidSovResolver::new(profile.ledger_read);
-    let did = format!("did:sov:{}", did_data.did());
-
-    let parsed_did_for_resolver = Did::parse(did.clone())
-        .map_err(|e| {
-            eprintln!("Failed to parse DID for resolver: {}", e);
-        })
-        .unwrap();
+    let did = format!("did:sov:{}", profile.institution_did);
 
     let DidResolutionOutput { did_document, .. } = resolver
-        .resolve(&parsed_did_for_resolver, &())
+        .resolve(&Did::parse(did.clone()).unwrap(), &())
         .await
         .unwrap();
 

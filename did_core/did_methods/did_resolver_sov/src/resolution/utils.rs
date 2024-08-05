@@ -115,7 +115,7 @@ pub(super) async fn ledger_response_to_ddo(
         Default::default(),
     );
 
-    let expanded_verkey = expand_abbreviated_verkey(did, &verkey)?;
+    let expanded_verkey = expand_abbreviated_verkey(ddo_id.id(), &verkey)?;
 
     // TODO: Use multibase instead of base58
     let verification_method = VerificationMethod::builder()
