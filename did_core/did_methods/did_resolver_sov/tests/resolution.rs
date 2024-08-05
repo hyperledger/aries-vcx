@@ -88,7 +88,7 @@ async fn write_new_nym_and_get_did_doc() {
             &profile.wallet,
             &profile.institution_did,
             &parsed_did,
-            Some(&did_data.verkey()),
+            Some(did_data.verkey()),
             None,
             None,
         )
