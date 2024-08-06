@@ -88,6 +88,5 @@ async fn write_new_nym_and_get_did_doc() {
         .resolve(&Did::parse(did.clone()).unwrap(), &())
         .await
         .unwrap();
-
-    println!("{}", serde_json::to_string_pretty(&did_document).unwrap());
+    assert_eq!(did_document.id().to_string(), did);
 }
