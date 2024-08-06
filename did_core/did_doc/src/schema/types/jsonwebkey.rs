@@ -48,13 +48,6 @@ impl JsonWebKey {
             source: Box::new(err),
         })
     }
-
-    pub fn to_vec(&self) -> Result<Vec<u8>, JsonWebKeyError> {
-        serde_json::to_vec(self).map_err(|err| JsonWebKeyError {
-            reason: "Serializing JWK to vector failed",
-            source: Box::new(err),
-        })
-    }
 }
 
 impl FromStr for JsonWebKey {

@@ -90,3 +90,12 @@ impl From<JsonWebKeyError> for KeyDecodingError {
         }
     }
 }
+
+impl From<public_key::PublicKeyError> for KeyDecodingError {
+    fn from(error: public_key::PublicKeyError) -> Self {
+        KeyDecodingError {
+            reason: "Failed to decode multibase public key",
+            source: Some(Box::new(error)),
+        }
+    }
+}
