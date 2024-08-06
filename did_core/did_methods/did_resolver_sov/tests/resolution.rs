@@ -62,24 +62,10 @@ async fn test_error_handling_during_resolution() {
 #[tokio::test]
 async fn write_new_nym_and_get_did_doc() {
     let profile = build_setup_profile().await;
-
-    write_test_endpoint(
-        &profile.wallet,
-        &profile.ledger_write,
-        &profile.institution_did,
-    )
-    .await;
-
-    let did_data: aries_vcx_wallet::wallet::base_wallet::did_data::DidData = profile
+    let did_data = profile
         .wallet
         .create_and_store_my_did(None, None)
         .await
-        .unwrap();
-
-    let parsed_did = Did::parse(did_data.did().to_string())
-        .map_err(|e| {
-            eprintln!("Failed to parse DID: {}", e);
-        })
         .unwrap();
 
     profile
@@ -87,7 +73,7 @@ async fn write_new_nym_and_get_did_doc() {
         .publish_nym(
             &profile.wallet,
             &profile.institution_did,
-            &parsed_did,
+            &did_data.did().parse().unwrap(),
             Some(did_data.verkey()),
             None,
             None,
@@ -96,7 +82,7 @@ async fn write_new_nym_and_get_did_doc() {
         .unwrap();
 
     let resolver = DidSovResolver::new(profile.ledger_read);
-    let did = format!("did:sov:{}", profile.institution_did);
+    let did = format!("did:sov:{}", did_data.did());
 
     let DidResolutionOutput { did_document, .. } = resolver
         .resolve(&Did::parse(did.clone()).unwrap(), &())

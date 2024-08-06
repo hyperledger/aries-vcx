@@ -91,29 +91,47 @@ pub(super) async fn ledger_response_to_ddo(
     log::info!("ledger_response_to_ddo >> did: {did}, verkey: {verkey}, resp: {resp}");
     let (service_id, ddo_id) = prepare_ids(did)?;
 
-    let service_data = get_data_from_response(resp)?;
-    log::info!("ledger_response_to_ddo >> service_data: {service_data:?}");
-    let endpoint: EndpointDidSov = serde_json::from_value(service_data["endpoint"].clone())?;
+    let service_data = match get_data_from_response(resp) {
+        Ok(data) => data,
+        Err(_) => serde_json::Value::Null,
+    };
 
-    let txn_time = get_txn_time_from_response(resp)?;
-    let datetime = unix_to_datetime(txn_time);
+    let mut ddo = DidDocument::new(ddo_id.clone());
 
-    let service_types: Vec<ServiceType> = endpoint
-        .types
-        .into_iter()
-        .map(|t| match t {
-            DidSovServiceType::Endpoint => ServiceType::AIP1,
-            DidSovServiceType::DidCommunication => ServiceType::DIDCommV1,
-            DidSovServiceType::DIDComm => ServiceType::DIDCommV2,
-            DidSovServiceType::Unknown => ServiceType::Other("Unknown".to_string()),
-        })
-        .collect();
-    let service = Service::new(
-        service_id,
-        endpoint.endpoint,
-        OneOrList::List(service_types),
-        Default::default(),
-    );
+    let mut services = Vec::new();
+
+    if !service_data.is_null() {
+        let endpoint: EndpointDidSov = serde_json::from_value(service_data["endpoint"].clone())?;
+
+        let service_types: Vec<ServiceType> = endpoint
+            .types
+            .into_iter()
+            .map(|t| match t {
+                DidSovServiceType::Endpoint => ServiceType::AIP1,
+                DidSovServiceType::DidCommunication => ServiceType::DIDCommV1,
+                DidSovServiceType::DIDComm => ServiceType::DIDCommV2,
+                DidSovServiceType::Unknown => ServiceType::Other("Unknown".to_string()),
+            })
+            .collect();
+        let service = Service::new(
+            service_id,
+            endpoint.endpoint,
+            OneOrList::List(service_types),
+            Default::default(),
+        );
+        services.push(service);
+    }
+
+    ddo.set_service(services);
+
+    let txn_time_result = get_txn_time_from_response(resp);
+    let datetime = match txn_time_result {
+        Ok(txn_time) => unix_to_datetime(txn_time),
+        Err(e) => {
+            log::warn!("Failed to parse txnTime: {}", e);
+            None
+        }
+    };
 
     let expanded_verkey = expand_abbreviated_verkey(ddo_id.id(), &verkey)?;
 
@@ -127,8 +145,6 @@ pub(super) async fn ledger_response_to_ddo(
         })
         .build();
 
-    let mut ddo = DidDocument::new(ddo_id);
-    ddo.add_service(service);
     ddo.add_verification_method(verification_method);
     ddo.add_key_agreement_ref(DidUrl::parse("#1".to_string())?);
 
