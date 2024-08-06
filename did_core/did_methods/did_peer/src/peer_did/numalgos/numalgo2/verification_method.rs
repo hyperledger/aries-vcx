@@ -194,11 +194,12 @@ mod tests {
             )
             .unwrap();
             assert_eq!(vms.len(), 1);
-            assert_eq!(
-                vms[0].public_key_field().key_decoded().unwrap(),
-                key.multicodec_prefixed_key()
-            );
-            assert_ne!(vms[0].public_key_field().key_decoded().unwrap(), key.key());
+            let vm = &vms[0];
+            assert!(matches!(
+                vm.public_key_field(),
+                PublicKeyField::Multibase { .. }
+            ));
+            assert_eq!(vm.public_key_field().key_decoded().unwrap(), key.key());
         }
 
         // ... and base58 encoded keys are not
@@ -211,11 +212,12 @@ mod tests {
             )
             .unwrap();
             assert_eq!(vms.len(), 1);
-            assert_ne!(
-                vms[0].public_key_field().key_decoded().unwrap(),
-                key.multicodec_prefixed_key()
-            );
-            assert_eq!(vms[0].public_key_field().key_decoded().unwrap(), key.key());
+            let vm = &vms[0];
+            assert!(matches!(
+                vm.public_key_field(),
+                PublicKeyField::Base58 { .. }
+            ));
+            assert_eq!(vm.public_key_field().key_decoded().unwrap(), key.key());
         }
 
         #[test]
