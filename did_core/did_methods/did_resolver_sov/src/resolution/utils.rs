@@ -93,7 +93,10 @@ pub(super) async fn ledger_response_to_ddo(
 
     let service_data = match get_data_from_response(resp) {
         Ok(data) => data,
-        Err(_) => serde_json::Value::Null,
+        Err(e) => {
+            log::warn!("Failed to get service data: {}", e);
+            serde_json::Value::Null
+        }
     };
 
     let mut ddo = DidDocument::new(ddo_id.clone());
