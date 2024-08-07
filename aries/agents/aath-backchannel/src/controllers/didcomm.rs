@@ -166,13 +166,17 @@ impl HarnessAgent {
         Ok(())
     }
 
-    async fn handle_did_exchange_msg(&self, msg: DidExchange) -> HarnessResult<()> {
+    async fn handle_did_exchange_msg(
+        &self,
+        msg: DidExchange,
+        recipient_verkey: String,
+    ) -> HarnessResult<()> {
         match msg {
             DidExchange::V1_0(DidExchangeV1_0::Request(request)) => {
-                self.queue_didexchange_request(AnyRequest::V1_0(request))?;
+                self.queue_didexchange_request(AnyRequest::V1_0(request), recipient_verkey)?;
             }
             DidExchange::V1_1(DidExchangeV1_1::Request(request)) => {
-                self.queue_didexchange_request(AnyRequest::V1_1(request))?;
+                self.queue_didexchange_request(AnyRequest::V1_1(request), recipient_verkey)?;
             }
             DidExchange::V1_0(DidExchangeV1_0::Response(response)) => {
                 let res = self
@@ -223,15 +227,6 @@ impl HarnessAgent {
             )
         })?;
 
-        let connection_id = self
-            .aries_agent
-            .connections()
-            .get_by_sender_vk(sender_vk.clone())?;
-        self.inviter_keys
-            .write()
-            .unwrap()
-            .insert(connection_id.clone(), recipient_vk);
-
         info!("Received message: {}", message);
         match message {
             AriesMessage::Notification(msg) => {
@@ -261,7 +256,9 @@ impl HarnessAgent {
                 let connection_id = self.aries_agent.connections().get_by_sender_vk(sender_vk)?;
                 self.handle_issuance_msg(msg, &connection_id).await?
             }
-            AriesMessage::DidExchange(msg) => self.handle_did_exchange_msg(msg).await?,
+            AriesMessage::DidExchange(msg) => {
+                self.handle_did_exchange_msg(msg, recipient_vk).await?
+            }
             AriesMessage::PresentProof(msg) => {
                 let connection_id = self.aries_agent.connections().get_by_sender_vk(sender_vk)?;
                 self.handle_presentation_msg(msg, &connection_id).await?

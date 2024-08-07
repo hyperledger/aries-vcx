@@ -75,7 +75,8 @@ pub struct HarnessAgent {
     // todo: extra didx specific AATH service
     didx_msg_buffer: RwLock<Vec<AriesMessage>>,
     didx_pthid_to_thid: Mutex<HashMap<String, String>>,
-    inviter_keys: RwLock<HashMap<String, String>>,
+    // A map of DIDExchange thread IDs to the intended recipient
+    didx_thid_to_request_recipient_verkey: Mutex<HashMap<String, String>>,
 }
 
 #[macro_export]
@@ -121,8 +122,8 @@ async fn main() -> std::io::Result<()> {
                 aries_agent: aries_agent.clone(),
                 status: Status::Active,
                 didx_msg_buffer: Default::default(),
-                didx_pthid_to_thid: Mutex::new(Default::default()),
-                inviter_keys: RwLock::new(HashMap::new()),
+                didx_pthid_to_thid: Default::default(),
+                didx_thid_to_request_recipient_verkey: Default::default(),
             })))
             .app_data(web::Data::new(RwLock::new(Vec::<AriesMessage>::new())))
             .service(
