@@ -2,7 +2,7 @@ use std::{thread, time::Duration};
 
 use aries_vcx::common::ledger::{service_didsov::EndpointDidSov, transactions::write_endpoint};
 use aries_vcx_ledger::ledger::base_ledger::IndyLedgerWrite;
-use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
+use aries_vcx_wallet::wallet::base_wallet::{did_wallet::DidWallet, BaseWallet};
 use did_resolver::{
     did_doc::schema::service::typed::ServiceType,
     did_parser_nom::Did,
@@ -57,4 +57,36 @@ async fn test_error_handling_during_resolution() {
         .await;
 
     assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn write_new_nym_and_get_did_doc() {
+    let profile = build_setup_profile().await;
+    let did_data = profile
+        .wallet
+        .create_and_store_my_did(None, None)
+        .await
+        .unwrap();
+
+    profile
+        .ledger_write
+        .publish_nym(
+            &profile.wallet,
+            &profile.institution_did,
+            &did_data.did().parse().unwrap(),
+            Some(did_data.verkey()),
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+
+    let resolver = DidSovResolver::new(profile.ledger_read);
+    let did = format!("did:sov:{}", did_data.did());
+
+    let DidResolutionOutput { did_document, .. } = resolver
+        .resolve(&Did::parse(did.clone()).unwrap(), &())
+        .await
+        .unwrap();
+    assert_eq!(did_document.id().to_string(), did);
 }

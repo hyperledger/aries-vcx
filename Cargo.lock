@@ -2000,6 +2000,7 @@ dependencies = [
  "aries_vcx_ledger",
  "aries_vcx_wallet",
  "async-trait",
+ "bs58",
  "chrono",
  "did_resolver",
  "log",
