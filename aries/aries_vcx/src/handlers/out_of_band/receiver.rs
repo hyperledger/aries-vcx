@@ -12,8 +12,11 @@ use messages::{
 };
 use serde::Deserialize;
 use serde_json::Value;
+use url::Url;
 
-use crate::{errors::error::prelude::*, handlers::util::AttachmentId};
+use crate::{
+    errors::error::prelude::*, handlers::util::AttachmentId, utils::base64::URL_SAFE_LENIENT,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {
@@ -36,6 +39,25 @@ impl OutOfBandReceiver {
                 ),
             )),
         }
+    }
+
+    pub fn from_json_string(oob_json: &str) -> VcxResult<Self> {
+        Ok(Self {
+            oob: from_json_string(oob_json)?,
+        })
+    }
+
+    pub fn from_base64_url(base64_url_encoded_oob: &str) -> VcxResult<Self> {
+        Ok(Self {
+            oob: from_json_string(&from_base64_url(base64_url_encoded_oob)?)?,
+        })
+    }
+
+    pub fn from_url(oob_url_string: &str) -> VcxResult<Self> {
+        // TODO - URL Shortening
+        Ok(Self {
+            oob: from_json_string(&from_base64_url(&from_url(oob_url_string)?)?)?,
+        })
     }
 
     pub fn get_id(&self) -> String {
@@ -61,12 +83,31 @@ impl OutOfBandReceiver {
     pub fn to_aries_message(&self) -> AriesMessage {
         self.oob.clone().into()
     }
+}
 
-    pub fn from_string(oob_data: &str) -> VcxResult<Self> {
-        Ok(Self {
-            oob: serde_json::from_str(oob_data)?,
-        })
-    }
+fn from_json_string(oob_json: &str) -> VcxResult<Invitation> {
+    Ok(serde_json::from_str(oob_json)?)
+}
+
+fn from_base64_url(base64_url_encoded_oob: &str) -> VcxResult<String> {
+    Ok(String::from_utf8(
+        URL_SAFE_LENIENT.decode(base64_url_encoded_oob)?,
+    )?)
+}
+
+fn from_url(oob_url_string: &str) -> VcxResult<String> {
+    let oob_url = Url::parse(oob_url_string)?;
+    let (_oob_query, base64_url_encoded_oob) = oob_url
+        .query_pairs()
+        .find(|(name, _value)| name == &"oob")
+        .ok_or_else(|| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidInput,
+                "OutOfBand Invitation URL is missing 'oob' query parameter",
+            )
+        })?;
+
+    Ok(base64_url_encoded_oob.into_owned())
 }
 
 impl Display for OutOfBandReceiver {
