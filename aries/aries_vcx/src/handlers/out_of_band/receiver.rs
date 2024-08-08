@@ -83,6 +83,21 @@ impl OutOfBandReceiver {
     pub fn to_aries_message(&self) -> AriesMessage {
         self.oob.clone().into()
     }
+
+    pub fn to_json_string(&self) -> VcxResult<String> {
+        Ok(serde_json::to_string(&self.oob)?)
+    }
+
+    pub fn to_base64_url(&self) -> String {
+        URL_SAFE_LENIENT.encode(self.oob.to_string())
+    }
+
+    pub fn to_url(&self, domain_path: &str) -> VcxResult<Url> {
+        let mut oob_url = Url::parse(&(domain_path.to_owned() + &self.oob.to_string()))?;
+        let oob_query = "oob=".to_owned() + &self.to_base64_url();
+        oob_url.set_query(Some(&oob_query));
+        Ok(oob_url)
+    }
 }
 
 fn from_json_string(oob_json: &str) -> VcxResult<Invitation> {
