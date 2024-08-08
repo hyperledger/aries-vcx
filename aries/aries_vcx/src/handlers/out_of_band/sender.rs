@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use base64::{prelude::BASE64_URL_SAFE, Engine};
 use messages::{
     msg_fields::protocols::{
         cred_issuance::{v1::CredentialIssuanceV1, CredentialIssuance},
@@ -13,6 +14,7 @@ use messages::{
     AriesMessage,
 };
 use shared::maybe_known::MaybeKnown;
+use url::Url;
 use uuid::Uuid;
 
 use crate::{
@@ -38,6 +40,10 @@ impl OutOfBandSender {
                 .decorators(decorators)
                 .build(),
         }
+    }
+
+    pub fn create_from_invitation(invitation: Invitation) -> Self {
+        Self { oob: invitation }
     }
 
     pub fn set_label(mut self, label: &str) -> Self {
@@ -128,16 +134,108 @@ impl OutOfBandSender {
         self.oob.clone().into()
     }
 
-    pub fn from_string(oob_data: &str) -> VcxResult<Self> {
-        Ok(Self {
-            oob: serde_json::from_str(oob_data)?,
-        })
+    pub fn to_json_string(&self) -> String {
+        self.to_aries_message().to_string()
+    }
+
+    pub fn to_base64_url(&self) -> String {
+        BASE64_URL_SAFE.encode(self.to_json_string())
+    }
+
+    pub fn to_url(&self, domain_path: &str) -> VcxResult<Url> {
+        let mut oob_url = Url::parse(&domain_path.to_owned())?;
+        let oob_query = "oob=".to_owned() + &self.to_base64_url();
+        oob_url.set_query(Some(&oob_query));
+        Ok(oob_url)
     }
 }
 
 impl Display for OutOfBandSender {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", json!(AriesMessage::from(self.oob.clone())))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use messages::{
+        msg_fields::protocols::out_of_band::{
+            invitation::{Invitation, InvitationContent, InvitationDecorators, OobService},
+            OobGoalCode,
+        },
+        msg_types::{
+            connection::{ConnectionType, ConnectionTypeV1},
+            protocols::did_exchange::{DidExchangeType, DidExchangeTypeV1},
+            Protocol,
+        },
+    };
+    use shared::maybe_known::MaybeKnown;
+
+    // Example invite formats referenced (with change to use OOB 1.1) from example invite in RFC 0434 - https://github.com/hyperledger/aries-rfcs/tree/main/features/0434-outofband
+    const JSON_OOB_INVITE_NO_WHITESPACE: &str = r#"{"@type":"https://didcomm.org/out-of-band/1.1/invitation","@id":"69212a3a-d068-4f9d-a2dd-4741bca89af3","label":"Faber College","goal_code":"issue-vc","goal":"To issue a Faber College Graduate credential","handshake_protocols":["https://didcomm.org/didexchange/1.0","https://didcomm.org/connections/1.0"],"services":["did:sov:LjgpST2rjsoxYegQDRm7EL"]}"#;
+    const OOB_BASE64_URL_ENCODED: &str = "eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI2OTIxMmEzYS1kMDY4LTRmOWQtYTJkZC00NzQxYmNhODlhZjMiLCJsYWJlbCI6IkZhYmVyIENvbGxlZ2UiLCJnb2FsX2NvZGUiOiJpc3N1ZS12YyIsImdvYWwiOiJUbyBpc3N1ZSBhIEZhYmVyIENvbGxlZ2UgR3JhZHVhdGUgY3JlZGVudGlhbCIsImhhbmRzaGFrZV9wcm90b2NvbHMiOlsiaHR0cHM6Ly9kaWRjb21tLm9yZy9kaWRleGNoYW5nZS8xLjAiLCJodHRwczovL2RpZGNvbW0ub3JnL2Nvbm5lY3Rpb25zLzEuMCJdLCJzZXJ2aWNlcyI6WyJkaWQ6c292OkxqZ3BTVDJyanNveFllZ1FEUm03RUwiXX0=";
+    const OOB_URL: &str = "http://example.com/ssi?oob=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI2OTIxMmEzYS1kMDY4LTRmOWQtYTJkZC00NzQxYmNhODlhZjMiLCJsYWJlbCI6IkZhYmVyIENvbGxlZ2UiLCJnb2FsX2NvZGUiOiJpc3N1ZS12YyIsImdvYWwiOiJUbyBpc3N1ZSBhIEZhYmVyIENvbGxlZ2UgR3JhZHVhdGUgY3JlZGVudGlhbCIsImhhbmRzaGFrZV9wcm90b2NvbHMiOlsiaHR0cHM6Ly9kaWRjb21tLm9yZy9kaWRleGNoYW5nZS8xLjAiLCJodHRwczovL2RpZGNvbW0ub3JnL2Nvbm5lY3Rpb25zLzEuMCJdLCJzZXJ2aWNlcyI6WyJkaWQ6c292OkxqZ3BTVDJyanNveFllZ1FEUm03RUwiXX0=";
+
+    // Params mimic example invitation in RFC 0434 - https://github.com/hyperledger/aries-rfcs/tree/main/features/0434-outofband
+    fn _create_invitation() -> Invitation {
+        let id = "69212a3a-d068-4f9d-a2dd-4741bca89af3";
+        let did = "did:sov:LjgpST2rjsoxYegQDRm7EL";
+        let service = OobService::Did(did.to_string());
+        let handshake_protocols = vec![
+            MaybeKnown::Known(Protocol::DidExchangeType(DidExchangeType::V1(
+                DidExchangeTypeV1::new_v1_0(),
+            ))),
+            MaybeKnown::Known(Protocol::ConnectionType(ConnectionType::V1(
+                ConnectionTypeV1::new_v1_0(),
+            ))),
+        ];
+        let content = InvitationContent::builder()
+            .services(vec![service])
+            .goal("To issue a Faber College Graduate credential".to_string())
+            .goal_code(MaybeKnown::Known(OobGoalCode::IssueVC))
+            .label("Faber College".to_string())
+            .handshake_protocols(handshake_protocols)
+            .build();
+        let decorators = InvitationDecorators::default();
+
+        let invitation: Invitation = Invitation::builder()
+            .id(id.to_string())
+            .content(content)
+            .decorators(decorators)
+            .build();
+
+        invitation
+    }
+
+    #[test]
+    fn invitation_to_json() {
+        let out_of_band_sender = OutOfBandSender::create_from_invitation(_create_invitation());
+
+        let json_invite = out_of_band_sender.to_json_string();
+
+        assert_eq!(JSON_OOB_INVITE_NO_WHITESPACE, json_invite);
+    }
+
+    #[test]
+    fn invitation_to_base64_url() {
+        let out_of_band_sender = OutOfBandSender::create_from_invitation(_create_invitation());
+
+        let base64_url_invite = out_of_band_sender.to_base64_url();
+
+        assert_eq!(OOB_BASE64_URL_ENCODED, base64_url_invite);
+    }
+
+    #[test]
+    fn invitation_to_url() {
+        let out_of_band_sender = OutOfBandSender::create_from_invitation(_create_invitation());
+
+        let oob_url = out_of_band_sender
+            .to_url("http://example.com/ssi")
+            .unwrap()
+            .to_string();
+
+        assert_eq!(OOB_URL, oob_url);
     }
 }
 
