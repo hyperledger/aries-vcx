@@ -143,7 +143,7 @@ impl OutOfBandSender {
     }
 
     pub fn to_url(&self, domain_path: &str) -> VcxResult<Url> {
-        let mut oob_url = Url::parse(&domain_path)?;
+        let mut oob_url = Url::parse(domain_path)?;
         let oob_query = "oob=".to_owned() + &self.to_base64_url();
         oob_url.set_query(Some(&oob_query));
         Ok(oob_url)
