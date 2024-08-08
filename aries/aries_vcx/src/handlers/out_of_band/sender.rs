@@ -143,7 +143,7 @@ impl OutOfBandSender {
     }
 
     pub fn to_url(&self, domain_path: &str) -> VcxResult<Url> {
-        let mut oob_url = Url::parse(&domain_path.to_owned())?;
+        let mut oob_url = Url::parse(&domain_path)?;
         let oob_query = "oob=".to_owned() + &self.to_base64_url();
         oob_url.set_query(Some(&oob_query));
         Ok(oob_url)
@@ -158,7 +158,6 @@ impl Display for OutOfBandSender {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use messages::{
         msg_fields::protocols::out_of_band::{
             invitation::{Invitation, InvitationContent, InvitationDecorators, OobService},
@@ -171,6 +170,8 @@ mod tests {
         },
     };
     use shared::maybe_known::MaybeKnown;
+
+    use super::*;
 
     // Example invite formats referenced (with change to use OOB 1.1) from example invite in RFC 0434 - https://github.com/hyperledger/aries-rfcs/tree/main/features/0434-outofband
     const JSON_OOB_INVITE_NO_WHITESPACE: &str = r#"{"@type":"https://didcomm.org/out-of-band/1.1/invitation","@id":"69212a3a-d068-4f9d-a2dd-4741bca89af3","label":"Faber College","goal_code":"issue-vc","goal":"To issue a Faber College Graduate credential","handshake_protocols":["https://didcomm.org/didexchange/1.0","https://didcomm.org/connections/1.0"],"services":["did:sov:LjgpST2rjsoxYegQDRm7EL"]}"#;

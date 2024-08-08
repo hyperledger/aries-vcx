@@ -93,7 +93,7 @@ impl OutOfBandReceiver {
     }
 
     pub fn to_url(&self, domain_path: &str) -> VcxResult<Url> {
-        let mut oob_url = Url::parse(&domain_path.to_owned())?;
+        let mut oob_url = Url::parse(&domain_path)?;
         let oob_query = "oob=".to_owned() + &self.to_base64_url();
         oob_url.set_query(Some(&oob_query));
         Ok(oob_url)
@@ -114,7 +114,7 @@ fn from_url(oob_url_string: &str) -> VcxResult<String> {
     let oob_url = Url::parse(oob_url_string)?;
     let (_oob_query, base64_url_encoded_oob) = oob_url
         .query_pairs()
-        .find(|(name, _value)| name == &"oob")
+        .find(|(name, _value)| name == "oob")
         .ok_or_else(|| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidInput,
@@ -195,7 +195,6 @@ fn attachment_to_aries_message(attach: &Attachment) -> VcxResult<Option<AriesMes
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use messages::{
         msg_fields::protocols::out_of_band::{
             invitation::{Invitation, InvitationContent, InvitationDecorators, OobService},
@@ -208,6 +207,8 @@ mod tests {
         },
     };
     use shared::maybe_known::MaybeKnown;
+
+    use super::*;
 
     // Example invite formats referenced (with change to use OOB 1.1) from example invite in RFC 0434 - https://github.com/hyperledger/aries-rfcs/tree/main/features/0434-outofband
     const JSON_OOB_INVITE: &str = r#"{
