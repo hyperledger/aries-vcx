@@ -1,7 +1,9 @@
-use std::{num::ParseIntError, sync::PoisonError};
+use std::{num::ParseIntError, string::FromUtf8Error, sync::PoisonError};
 
+use base64::DecodeError;
 use did_doc::schema::{types::uri::UriWrapperError, utils::error::DidDocumentLookupError};
 use shared::errors::http_error::HttpError;
+use url::ParseError;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
@@ -89,6 +91,24 @@ impl From<UriWrapperError> for AriesVcxError {
 
 impl From<ParseIntError> for AriesVcxError {
     fn from(err: ParseIntError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err.to_string())
+    }
+}
+
+impl From<DecodeError> for AriesVcxError {
+    fn from(err: DecodeError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err.to_string())
+    }
+}
+
+impl From<FromUtf8Error> for AriesVcxError {
+    fn from(err: FromUtf8Error) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err.to_string())
+    }
+}
+
+impl From<ParseError> for AriesVcxError {
+    fn from(err: ParseError) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err.to_string())
     }
 }
