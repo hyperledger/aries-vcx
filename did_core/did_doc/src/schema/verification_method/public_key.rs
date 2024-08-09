@@ -1,12 +1,8 @@
-use std::str::FromStr;
-
 use base64::{engine::general_purpose, Engine};
+use public_key::Key;
 use serde::{Deserialize, Serialize};
 
-use crate::schema::{
-    types::{jsonwebkey::JsonWebKey, multibase::Multibase},
-    verification_method::error::KeyDecodingError,
-};
+use crate::schema::{types::jsonwebkey::JsonWebKey, verification_method::error::KeyDecodingError};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
@@ -34,10 +30,9 @@ impl PublicKeyField {
             PublicKeyField::Multibase {
                 public_key_multibase,
             } => {
-                let multibase = Multibase::from_str(public_key_multibase)?;
-                Ok(multibase.as_ref().to_vec())
+                let key = Key::from_fingerprint(public_key_multibase)?;
+                Ok(key.key().to_vec())
             }
-            PublicKeyField::Jwk { public_key_jwk } => Ok(public_key_jwk.to_vec()?),
             PublicKeyField::Base58 { public_key_base58 } => {
                 Ok(bs58::decode(public_key_base58).into_vec()?)
             }
@@ -48,6 +43,9 @@ impl PublicKeyField {
             PublicKeyField::Pem { public_key_pem } => {
                 Ok(pem::parse(public_key_pem.as_bytes())?.contents().to_vec())
             }
+            PublicKeyField::Jwk { public_key_jwk: _ } => Err(KeyDecodingError::new(
+                "JWK public key decoding not supported",
+            )),
             PublicKeyField::Pgp { public_key_pgp: _ } => Err(KeyDecodingError::new(
                 "PGP public key decoding not supported",
             )),
@@ -67,13 +65,13 @@ mod tests {
     use super::*;
 
     static PUBLIC_KEY_MULTIBASE: &str = "z6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc";
-    static PUBLIC_KEY_BASE58: &str = "6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc";
-    static PUBLIC_KEY_BASE64: &str = "7AEEiIVxASfd1+8HamOWE5BCi6vqNfL13mzYUoQk1M4mKQ";
+    static PUBLIC_KEY_BASE58: &str = "JhNWeSVLMYccCk7iopQW4guaSJTojqpMEELgSLhKwRr";
+    static PUBLIC_KEY_BASE64: &str = "BIiFcQEn3dfvB2pjlhOQQour6jXy9d5s2FKEJNTOJik";
     static PUBLIC_KEY_HEX: &str =
-        "ec01048885710127ddd7ef076a63961390428babea35f2f5de6cd8528424d4ce2629";
-    static PUBLIC_KEY_BYTES: [u8; 34] = [
-        236, 1, 4, 136, 133, 113, 1, 39, 221, 215, 239, 7, 106, 99, 150, 19, 144, 66, 139, 171,
-        234, 53, 242, 245, 222, 108, 216, 82, 132, 36, 212, 206, 38, 41,
+        "048885710127ddd7ef076a63961390428babea35f2f5de6cd8528424d4ce2629";
+    static PUBLIC_KEY_BYTES: [u8; 32] = [
+        4, 136, 133, 113, 1, 39, 221, 215, 239, 7, 106, 99, 150, 19, 144, 66, 139, 171, 234, 53,
+        242, 245, 222, 108, 216, 82, 132, 36, 212, 206, 38, 41,
     ];
 
     #[test]
