@@ -47,6 +47,8 @@ impl OutOfBandReceiver {
         })
     }
 
+    // This is here to help facilitate testing
+    #[allow(dead_code)]
     fn create_from_base64_url_encoded_oob(base64_url_encoded_oob: &str) -> VcxResult<Self> {
         Ok(Self {
             oob: extract_encoded_invitation_from_json_string(
