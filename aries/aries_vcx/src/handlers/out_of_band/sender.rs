@@ -130,21 +130,21 @@ impl OutOfBandSender {
         Ok(self)
     }
 
-    pub fn to_aries_message(&self) -> AriesMessage {
+    pub fn invitation_to_aries_message(&self) -> AriesMessage {
         self.oob.clone().into()
     }
 
-    pub fn to_json_string(&self) -> String {
-        self.to_aries_message().to_string()
+    pub fn invitation_to_json_string(&self) -> String {
+        self.invitation_to_aries_message().to_string()
     }
 
-    pub fn to_base64_url(&self) -> String {
-        BASE64_URL_SAFE.encode(self.to_json_string())
+    fn invitation_to_base64_url(&self) -> String {
+        BASE64_URL_SAFE.encode(self.invitation_to_json_string())
     }
 
-    pub fn to_url(&self, domain_path: &str) -> VcxResult<Url> {
+    pub fn invitation_to_url(&self, domain_path: &str) -> VcxResult<Url> {
         let mut oob_url = Url::parse(domain_path)?;
-        let oob_query = "oob=".to_owned() + &self.to_base64_url();
+        let oob_query = "oob=".to_owned() + &self.invitation_to_base64_url();
         oob_url.set_query(Some(&oob_query));
         Ok(oob_url)
     }
@@ -213,7 +213,7 @@ mod tests {
     fn invitation_to_json() {
         let out_of_band_sender = OutOfBandSender::create_from_invitation(_create_invitation());
 
-        let json_invite = out_of_band_sender.to_json_string();
+        let json_invite = out_of_band_sender.invitation_to_json_string();
 
         assert_eq!(JSON_OOB_INVITE_NO_WHITESPACE, json_invite);
     }
@@ -222,7 +222,7 @@ mod tests {
     fn invitation_to_base64_url() {
         let out_of_band_sender = OutOfBandSender::create_from_invitation(_create_invitation());
 
-        let base64_url_invite = out_of_band_sender.to_base64_url();
+        let base64_url_invite = out_of_band_sender.invitation_to_base64_url();
 
         assert_eq!(OOB_BASE64_URL_ENCODED, base64_url_invite);
     }
@@ -232,7 +232,7 @@ mod tests {
         let out_of_band_sender = OutOfBandSender::create_from_invitation(_create_invitation());
 
         let oob_url = out_of_band_sender
-            .to_url("http://example.com/ssi")
+            .invitation_to_url("http://example.com/ssi")
             .unwrap()
             .to_string();
 
