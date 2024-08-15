@@ -8,10 +8,6 @@ on:
     branches:
       - "**"
 
-permissions:
-  contents: read
-  packages: write
-
 env:
   DOCKER_BUILDKIT: 1
   MAIN_BRANCH: main
@@ -188,7 +184,7 @@ jobs:
       contents: read
       packages: write
     needs: [ workflow-setup ]
-    # if: ${{ needs.workflow-setup.outputs.IS_MAIN_BRANCH == 'true' }}
+    if: ${{ needs.workflow-setup.outputs.IS_MAIN_BRANCH == 'true' }}
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}
       BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
