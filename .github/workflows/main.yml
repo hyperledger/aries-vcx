@@ -148,7 +148,7 @@ jobs:
   build-docker-vdrproxy:
     runs-on: ubuntu-20.04
     permissions:
-      content: read
+      contents: read
       packages: write
     needs: [ workflow-setup ]
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
@@ -181,7 +181,7 @@ jobs:
   build-docker-aath-backchannel:
     runs-on: ubuntu-20.04
     permissions:
-      content: read
+      contents: read
       packages: write
     needs: [ workflow-setup ]
     # if: ${{ needs.workflow-setup.outputs.IS_MAIN_BRANCH == 'true' }}
@@ -216,7 +216,7 @@ jobs:
   publish-docker-vdrproxy:
     runs-on: ubuntu-20.04
     permissions:
-      content: read
+      contents: read
       packages: write
     needs: [ workflow-setup, build-docker-vdrproxy ]
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
@@ -247,7 +247,7 @@ jobs:
   publish-docker-aath-backchannel:
     runs-on: ubuntu-20.04
     permissions:
-      content: read
+      contents: read
       packages: write
     needs: [ workflow-setup, build-docker-aath-backchannel ]
     if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
