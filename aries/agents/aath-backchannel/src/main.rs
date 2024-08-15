@@ -141,7 +141,7 @@ async fn main() -> std::io::Result<()> {
             .service(web::scope("/didcomm").route("", web::post().to(didcomm::receive_message)))
     })
     .keep_alive(std::time::Duration::from_secs(30))
-    .client_request_timeout(std::time::Duration::from_secs(32))
+    .client_request_timeout(std::time::Duration::from_secs(31))
     .workers(1)
     .bind(format!("{}:{}", host, opts.port))?
     .run()

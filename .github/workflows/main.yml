@@ -8,6 +8,10 @@ on:
     branches:
       - "**"
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   DOCKER_BUILDKIT: 1
   MAIN_BRANCH: main
