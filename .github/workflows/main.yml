@@ -146,9 +146,12 @@ jobs:
 
   # todo: move to indy-vdr repo
   build-docker-vdrproxy:
+    runs-on: ubuntu-20.04
+    permissions:
+      content: read
+      packages: write
     needs: [ workflow-setup ]
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
       BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
@@ -176,9 +179,12 @@ jobs:
 
   # builds and publishes main branch AATH backchannels
   build-docker-aath-backchannel:
-    needs: [ workflow-setup ]
-    if: ${{ needs.workflow-setup.outputs.IS_MAIN_BRANCH == 'true' }}
     runs-on: ubuntu-20.04
+    permissions:
+      content: read
+      packages: write
+    needs: [ workflow-setup ]
+    # if: ${{ needs.workflow-setup.outputs.IS_MAIN_BRANCH == 'true' }}
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}
       BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
@@ -209,6 +215,9 @@ jobs:
 
   publish-docker-vdrproxy:
     runs-on: ubuntu-20.04
+    permissions:
+      content: read
+      packages: write
     needs: [ workflow-setup, build-docker-vdrproxy ]
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     env:
@@ -237,6 +246,9 @@ jobs:
   # additional publish of the AATH backchannel image with tagged versions for tags
   publish-docker-aath-backchannel:
     runs-on: ubuntu-20.04
+    permissions:
+      content: read
+      packages: write
     needs: [ workflow-setup, build-docker-aath-backchannel ]
     if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
     env:
