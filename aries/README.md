@@ -11,4 +11,5 @@
 ## Aries mobile 📱 components
 
 - [`uniffi-aries-vcx`](wrappers/uniffi-aries-vcx) - UniFFI wrapper for `aries_vcx`.
-- [`mobile-demo`](agents/mobile_demo/) - Sample Android App using UniFFI wrapper.
+- [`android`](agents/android/) - Sample Android App using UniFFI wrapper.
+- [`ios`](agents/ios/) - Sample Android App using UniFFI wrapper.

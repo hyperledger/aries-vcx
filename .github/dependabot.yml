@@ -75,7 +75,7 @@ updates:
 
   # Maintain dependencies for Gradle
   - package-ecosystem: "gradle"
-    directory: "/aries/agents/mobile_demo/app"
+    directory: "/aries/agents/android/app"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -87,7 +87,7 @@ updates:
 
   # Maintain dependencies for Gradle
   - package-ecosystem: "gradle"
-    directory: "/aries/agents/mobile_demo"
+    directory: "/aries/agents/android"
     schedule:
       interval: "weekly"
       day: "monday"
