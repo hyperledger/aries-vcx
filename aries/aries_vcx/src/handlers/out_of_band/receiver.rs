@@ -1,6 +1,6 @@
 use std::{clone::Clone, fmt::Display, str::FromStr};
 
-use base64::{engine::general_purpose, prelude::BASE64_URL_SAFE, Engine};
+use base64::{engine::general_purpose, Engine};
 use messages::{
     decorators::attachment::{Attachment, AttachmentType},
     msg_fields::protocols::{
@@ -47,16 +47,6 @@ impl OutOfBandReceiver {
         })
     }
 
-    // This is here to help facilitate testing
-    #[allow(dead_code)]
-    fn create_from_base64_url_encoded_oob(base64_url_encoded_oob: &str) -> VcxResult<Self> {
-        Ok(Self {
-            oob: extract_encoded_invitation_from_json_string(
-                &extract_encoded_invitation_from_base64_url(base64_url_encoded_oob)?,
-            )?,
-        })
-    }
-
     pub fn create_from_url_encoded_oob(oob_url_string: &str) -> VcxResult<Self> {
         // TODO - URL Shortening
         Ok(Self {
@@ -97,7 +87,7 @@ impl OutOfBandReceiver {
     }
 
     fn invitation_to_base64_url(&self) -> String {
-        BASE64_URL_SAFE.encode(self.invitation_to_json_string())
+        URL_SAFE_LENIENT.encode(self.invitation_to_json_string())
     }
 
     pub fn invitation_to_url(&self, domain_path: &str) -> VcxResult<Url> {
@@ -231,10 +221,10 @@ mod tests {
         "services": ["did:sov:LjgpST2rjsoxYegQDRm7EL"]
       }"#;
     const JSON_OOB_INVITE_NO_WHITESPACE: &str = r#"{"@type":"https://didcomm.org/out-of-band/1.1/invitation","@id":"69212a3a-d068-4f9d-a2dd-4741bca89af3","label":"Faber College","goal_code":"issue-vc","goal":"To issue a Faber College Graduate credential","handshake_protocols":["https://didcomm.org/didexchange/1.0","https://didcomm.org/connections/1.0"],"services":["did:sov:LjgpST2rjsoxYegQDRm7EL"]}"#;
-    const OOB_BASE64_URL_ENCODED: &str = "eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI2OTIxMmEzYS1kMDY4LTRmOWQtYTJkZC00NzQxYmNhODlhZjMiLCJsYWJlbCI6IkZhYmVyIENvbGxlZ2UiLCJnb2FsX2NvZGUiOiJpc3N1ZS12YyIsImdvYWwiOiJUbyBpc3N1ZSBhIEZhYmVyIENvbGxlZ2UgR3JhZHVhdGUgY3JlZGVudGlhbCIsImhhbmRzaGFrZV9wcm90b2NvbHMiOlsiaHR0cHM6Ly9kaWRjb21tLm9yZy9kaWRleGNoYW5nZS8xLjAiLCJodHRwczovL2RpZGNvbW0ub3JnL2Nvbm5lY3Rpb25zLzEuMCJdLCJzZXJ2aWNlcyI6WyJkaWQ6c292OkxqZ3BTVDJyanNveFllZ1FEUm03RUwiXX0=";
-    const OOB_BASE64_URL_ENCODED_NO_PADDING: &str = "eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI2OTIxMmEzYS1kMDY4LTRmOWQtYTJkZC00NzQxYmNhODlhZjMiLCJsYWJlbCI6IkZhYmVyIENvbGxlZ2UiLCJnb2FsX2NvZGUiOiJpc3N1ZS12YyIsImdvYWwiOiJUbyBpc3N1ZSBhIEZhYmVyIENvbGxlZ2UgR3JhZHVhdGUgY3JlZGVudGlhbCIsImhhbmRzaGFrZV9wcm90b2NvbHMiOlsiaHR0cHM6Ly9kaWRjb21tLm9yZy9kaWRleGNoYW5nZS8xLjAiLCJodHRwczovL2RpZGNvbW0ub3JnL2Nvbm5lY3Rpb25zLzEuMCJdLCJzZXJ2aWNlcyI6WyJkaWQ6c292OkxqZ3BTVDJyanNveFllZ1FEUm03RUwiXX0";
-    const OOB_URL: &str = "http://example.com/ssi?oob=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI2OTIxMmEzYS1kMDY4LTRmOWQtYTJkZC00NzQxYmNhODlhZjMiLCJsYWJlbCI6IkZhYmVyIENvbGxlZ2UiLCJnb2FsX2NvZGUiOiJpc3N1ZS12YyIsImdvYWwiOiJUbyBpc3N1ZSBhIEZhYmVyIENvbGxlZ2UgR3JhZHVhdGUgY3JlZGVudGlhbCIsImhhbmRzaGFrZV9wcm90b2NvbHMiOlsiaHR0cHM6Ly9kaWRjb21tLm9yZy9kaWRleGNoYW5nZS8xLjAiLCJodHRwczovL2RpZGNvbW0ub3JnL2Nvbm5lY3Rpb25zLzEuMCJdLCJzZXJ2aWNlcyI6WyJkaWQ6c292OkxqZ3BTVDJyanNveFllZ1FEUm03RUwiXX0%3D";
-    const OOB_URL_NOT_PERCENT_ENCODED: &str = "http://example.com/ssi?oob=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI2OTIxMmEzYS1kMDY4LTRmOWQtYTJkZC00NzQxYmNhODlhZjMiLCJsYWJlbCI6IkZhYmVyIENvbGxlZ2UiLCJnb2FsX2NvZGUiOiJpc3N1ZS12YyIsImdvYWwiOiJUbyBpc3N1ZSBhIEZhYmVyIENvbGxlZ2UgR3JhZHVhdGUgY3JlZGVudGlhbCIsImhhbmRzaGFrZV9wcm90b2NvbHMiOlsiaHR0cHM6Ly9kaWRjb21tLm9yZy9kaWRleGNoYW5nZS8xLjAiLCJodHRwczovL2RpZGNvbW0ub3JnL2Nvbm5lY3Rpb25zLzEuMCJdLCJzZXJ2aWNlcyI6WyJkaWQ6c292OkxqZ3BTVDJyanNveFllZ1FEUm03RUwiXX0=";
+    const OOB_BASE64_URL_ENCODED: &str = "eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI2OTIxMmEzYS1kMDY4LTRmOWQtYTJkZC00NzQxYmNhODlhZjMiLCJsYWJlbCI6IkZhYmVyIENvbGxlZ2UiLCJnb2FsX2NvZGUiOiJpc3N1ZS12YyIsImdvYWwiOiJUbyBpc3N1ZSBhIEZhYmVyIENvbGxlZ2UgR3JhZHVhdGUgY3JlZGVudGlhbCIsImhhbmRzaGFrZV9wcm90b2NvbHMiOlsiaHR0cHM6Ly9kaWRjb21tLm9yZy9kaWRleGNoYW5nZS8xLjAiLCJodHRwczovL2RpZGNvbW0ub3JnL2Nvbm5lY3Rpb25zLzEuMCJdLCJzZXJ2aWNlcyI6WyJkaWQ6c292OkxqZ3BTVDJyanNveFllZ1FEUm03RUwiXX0";
+    const OOB_URL: &str = "http://example.com/ssi?oob=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI2OTIxMmEzYS1kMDY4LTRmOWQtYTJkZC00NzQxYmNhODlhZjMiLCJsYWJlbCI6IkZhYmVyIENvbGxlZ2UiLCJnb2FsX2NvZGUiOiJpc3N1ZS12YyIsImdvYWwiOiJUbyBpc3N1ZSBhIEZhYmVyIENvbGxlZ2UgR3JhZHVhdGUgY3JlZGVudGlhbCIsImhhbmRzaGFrZV9wcm90b2NvbHMiOlsiaHR0cHM6Ly9kaWRjb21tLm9yZy9kaWRleGNoYW5nZS8xLjAiLCJodHRwczovL2RpZGNvbW0ub3JnL2Nvbm5lY3Rpb25zLzEuMCJdLCJzZXJ2aWNlcyI6WyJkaWQ6c292OkxqZ3BTVDJyanNveFllZ1FEUm03RUwiXX0";
+    const OOB_URL_WITH_PADDING: &str = "http://example.com/ssi?oob=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI2OTIxMmEzYS1kMDY4LTRmOWQtYTJkZC00NzQxYmNhODlhZjMiLCJsYWJlbCI6IkZhYmVyIENvbGxlZ2UiLCJnb2FsX2NvZGUiOiJpc3N1ZS12YyIsImdvYWwiOiJUbyBpc3N1ZSBhIEZhYmVyIENvbGxlZ2UgR3JhZHVhdGUgY3JlZGVudGlhbCIsImhhbmRzaGFrZV9wcm90b2NvbHMiOlsiaHR0cHM6Ly9kaWRjb21tLm9yZy9kaWRleGNoYW5nZS8xLjAiLCJodHRwczovL2RpZGNvbW0ub3JnL2Nvbm5lY3Rpb25zLzEuMCJdLCJzZXJ2aWNlcyI6WyJkaWQ6c292OkxqZ3BTVDJyanNveFllZ1FEUm03RUwiXX0%3D";
+    const OOB_URL_WITH_PADDING_NOT_PERCENT_ENCODED: &str = "http://example.com/ssi?oob=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI2OTIxMmEzYS1kMDY4LTRmOWQtYTJkZC00NzQxYmNhODlhZjMiLCJsYWJlbCI6IkZhYmVyIENvbGxlZ2UiLCJnb2FsX2NvZGUiOiJpc3N1ZS12YyIsImdvYWwiOiJUbyBpc3N1ZSBhIEZhYmVyIENvbGxlZ2UgR3JhZHVhdGUgY3JlZGVudGlhbCIsImhhbmRzaGFrZV9wcm90b2NvbHMiOlsiaHR0cHM6Ly9kaWRjb21tLm9yZy9kaWRleGNoYW5nZS8xLjAiLCJodHRwczovL2RpZGNvbW0ub3JnL2Nvbm5lY3Rpb25zLzEuMCJdLCJzZXJ2aWNlcyI6WyJkaWQ6c292OkxqZ3BTVDJyanNveFllZ1FEUm03RUwiXX0=";
 
     // Params mimic example invitation in RFC 0434 - https://github.com/hyperledger/aries-rfcs/tree/main/features/0434-outofband
     fn _create_invitation() -> Invitation {
@@ -287,27 +277,6 @@ mod tests {
     }
 
     #[test]
-    fn receive_invitation_by_base64_url() {
-        let base_invite = _create_invitation();
-        let parsed_invite =
-            OutOfBandReceiver::create_from_base64_url_encoded_oob(OOB_BASE64_URL_ENCODED)
-                .unwrap()
-                .oob;
-        assert_eq!(base_invite, parsed_invite);
-    }
-
-    #[test]
-    fn receive_invitation_by_base64_url_no_padding() {
-        let base_invite = _create_invitation();
-        let parsed_invite = OutOfBandReceiver::create_from_base64_url_encoded_oob(
-            OOB_BASE64_URL_ENCODED_NO_PADDING,
-        )
-        .unwrap()
-        .oob;
-        assert_eq!(base_invite, parsed_invite);
-    }
-
-    #[test]
     fn receive_invitation_by_url() {
         let base_invite = _create_invitation();
         let parsed_invite = OutOfBandReceiver::create_from_url_encoded_oob(OOB_URL)
@@ -317,12 +286,22 @@ mod tests {
     }
 
     #[test]
-    fn receive_invitation_by_url_no_percent_encoding() {
+    fn receive_invitation_by_url_with_padding() {
         let base_invite = _create_invitation();
-        let parsed_invite =
-            OutOfBandReceiver::create_from_url_encoded_oob(OOB_URL_NOT_PERCENT_ENCODED)
-                .unwrap()
-                .oob;
+        let parsed_invite = OutOfBandReceiver::create_from_url_encoded_oob(OOB_URL_WITH_PADDING)
+            .unwrap()
+            .oob;
+        assert_eq!(base_invite, parsed_invite);
+    }
+
+    #[test]
+    fn receive_invitation_by_url_with_padding_no_percent_encoding() {
+        let base_invite = _create_invitation();
+        let parsed_invite = OutOfBandReceiver::create_from_url_encoded_oob(
+            OOB_URL_WITH_PADDING_NOT_PERCENT_ENCODED,
+        )
+        .unwrap()
+        .oob;
         assert_eq!(base_invite, parsed_invite);
     }
 
