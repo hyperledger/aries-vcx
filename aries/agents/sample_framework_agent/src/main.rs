@@ -9,12 +9,12 @@ use aries_framework_vcx::{
         AriesFrameworkVCX, EventEmitter, FrameworkConfig, DEFAULT_ASKAR_KEY_METHOD,
         DEFAULT_WALLET_PROFILE, IN_MEMORY_DB_URL,
     },
-    AskarWalletConfig, Url,
+    AskarWalletConfig, Url, VCXFrameworkError,
 };
 use log::{debug, info};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), VCXFrameworkError> {
     env_logger::init();
     info!("Sample Agent Init");
 

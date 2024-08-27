@@ -1,9 +1,12 @@
 use std::{convert::From, error::Error, num::ParseIntError};
 
 use aries_vcx::{
-    did_doc::error::DidDocumentBuilderError, errors::error::AriesVcxError,
+    aries_vcx_wallet::errors::error::VcxWalletError,
+    did_doc::{error::DidDocumentBuilderError, schema::utils::error::DidDocumentLookupError},
+    errors::error::AriesVcxError,
     protocols::did_exchange::state_machine::generic::GenericDidExchange,
 };
+use url::ParseError;
 
 use crate::error::*;
 
@@ -15,6 +18,14 @@ impl From<AriesVcxError> for VCXFrameworkError {
         };
         error!("AriesVCX Error: {}", err.to_string());
         let message = format!("AriesVCX Error: {}", err);
+        VCXFrameworkError { message, kind }
+    }
+}
+
+impl From<VcxWalletError> for VCXFrameworkError {
+    fn from(serde_err: VcxWalletError) -> VCXFrameworkError {
+        let kind = VCXFrameworkErrorKind::SerializationError;
+        let message = format!("VcxWallet Error; err: {:?}", serde_err.to_string());
         VCXFrameworkError { message, kind }
     }
 }
@@ -31,6 +42,14 @@ impl From<DidDocumentBuilderError> for VCXFrameworkError {
     fn from(err: DidDocumentBuilderError) -> Self {
         let kind = VCXFrameworkErrorKind::GenericVCXFrameworkError;
         let message = format!("DidDocumentBuilderError; err: {:?}", err.to_string());
+        VCXFrameworkError { message, kind }
+    }
+}
+
+impl From<DidDocumentLookupError> for VCXFrameworkError {
+    fn from(err: DidDocumentLookupError) -> Self {
+        let kind = VCXFrameworkErrorKind::GenericVCXFrameworkError;
+        let message = format!("DidDocumentLookupError; err: {:?}", err.to_string());
         VCXFrameworkError { message, kind }
     }
 }
@@ -71,6 +90,22 @@ impl From<Box<dyn Error + Send + Sync + 'static>> for VCXFrameworkError {
     fn from(err: Box<dyn Error + Send + Sync + 'static>) -> Self {
         let kind = VCXFrameworkErrorKind::GenericVCXFrameworkError;
         let message = format!("Generic VCXFramework Error; err: {:?}", err.to_string());
+        VCXFrameworkError { message, kind }
+    }
+}
+
+impl From<uuid::Error> for VCXFrameworkError {
+    fn from(err: uuid::Error) -> Self {
+        let kind = VCXFrameworkErrorKind::GenericVCXFrameworkError;
+        let message = format!("Uuid Error; err: {:?}", err.to_string());
+        VCXFrameworkError { message, kind }
+    }
+}
+
+impl From<ParseError> for VCXFrameworkError {
+    fn from(err: ParseError) -> Self {
+        let kind = VCXFrameworkErrorKind::GenericVCXFrameworkError;
+        let message = format!("Error parsing URL; err: {:?}", err.to_string());
         VCXFrameworkError { message, kind }
     }
 }

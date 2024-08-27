@@ -8,12 +8,8 @@ pub use aries_vcx::aries_vcx_wallet::wallet::askar::askar_wallet_config::AskarWa
 pub use url::Url;
 
 mod error;
-pub use error::*;
 pub mod framework {
-    use std::{
-        error::Error,
-        sync::{mpsc::Receiver, Arc, Mutex},
-    };
+    use std::sync::{mpsc::Receiver, Arc, Mutex};
 
     use aries_vcx::aries_vcx_wallet::wallet::{
         askar::{
@@ -31,6 +27,7 @@ pub mod framework {
         connection_service::{ConnectionService, ConnectionServiceConfig},
         invitation_service::InvitationService,
         messaging_service::MessagingService,
+        VCXFrameworkResult,
     };
 
     pub static IN_MEMORY_DB_URL: &str = "sqlite://:memory:";
@@ -63,7 +60,7 @@ pub mod framework {
     }
 
     impl AriesFrameworkVCX {
-        pub async fn initialize(framework_config: FrameworkConfig) -> Result<Self, Box<dyn Error>> {
+        pub async fn initialize(framework_config: FrameworkConfig) -> VCXFrameworkResult<Self> {
             info!("Initializing Aries Framework VCX");
 
             // Warn if the wallet pass key being used is the sample key from the documentation
@@ -84,6 +81,7 @@ pub mod framework {
             // Service Initializations
             let messaging_service = Arc::new(Mutex::new(MessagingService::new(
                 framework_config.clone(),
+                wallet.clone(),
                 did_resolver_registry.clone(),
             )));
             let invitation_service = Arc::new(Mutex::new(InvitationService::new(
@@ -118,18 +116,14 @@ pub mod framework {
 }
 
 pub mod connection_service {
-    use std::{
-        error::Error,
-        sync::{
-            mpsc::{self, Receiver, Sender},
-            Arc, Mutex,
-        },
+    use std::sync::{
+        mpsc::{self, Receiver, Sender},
+        Arc, Mutex,
     };
 
     use aries_vcx::{
         aries_vcx_wallet::wallet::askar::AskarWallet,
         handlers::out_of_band::receiver::OutOfBandReceiver,
-        messages::msg_fields::protocols::out_of_band::invitation::Invitation,
         protocols::did_exchange::state_machine::{
             generic::GenericDidExchange,
             helpers::create_peer_did_4,
@@ -145,6 +139,7 @@ pub mod connection_service {
         framework::{EventEmitter, FrameworkConfig},
         invitation_service::InvitationService,
         messaging_service::{MessagingService, Transports},
+        VCXFrameworkResult,
     };
 
     #[derive(Clone)]
@@ -212,7 +207,7 @@ pub mod connection_service {
         pub async fn handle_request_and_await(
             &mut self,
             invitation_id: &str,
-        ) -> Result<(), Box<dyn Error>> {
+        ) -> VCXFrameworkResult<()> {
             // testing I was doing here, ignore please
             // let invitation = self
             //     .invitation_service
@@ -232,7 +227,7 @@ pub mod connection_service {
         pub async fn request_connection(
             &mut self,
             invitation: OutOfBandReceiver,
-        ) -> Result<(), Box<dyn Error>> {
+        ) -> VCXFrameworkResult<()> {
             debug!(
                 "Requesting Connection via DID Exchange with invitation {}",
                 invitation
@@ -278,7 +273,7 @@ pub mod connection_service {
                     inviter_did,
                     Some(vec![Transports::HTTP]),
                 )
-                .await;
+                .await?;
 
             // Store Updated State
             let record = ConnectionRecord {
@@ -342,12 +337,9 @@ pub mod connection_service {
 }
 
 pub mod invitation_service {
-    use std::{
-        error::Error,
-        sync::{
-            mpsc::{self, Receiver, Sender},
-            Arc,
-        },
+    use std::sync::{
+        mpsc::{self, Receiver, Sender},
+        Arc,
     };
 
     use aries_vcx::{
@@ -363,7 +355,10 @@ pub mod invitation_service {
         protocols::did_exchange::state_machine::helpers::create_peer_did_4,
     };
 
-    use crate::framework::{EventEmitter, FrameworkConfig};
+    use crate::{
+        framework::{EventEmitter, FrameworkConfig},
+        VCXFrameworkResult,
+    };
 
     pub struct InvitationService {
         framework_config: FrameworkConfig,
@@ -408,7 +403,7 @@ pub mod invitation_service {
         }
 
         /// Creates an Out of Band Invitation
-        pub async fn create_invitation(&mut self) -> Result<OutOfBandSender, Box<dyn Error>> {
+        pub async fn create_invitation(&mut self) -> VCXFrameworkResult<OutOfBandSender> {
             debug!("Creating Out Of Band Invitation");
             // TODO - invitation should be able to be mediated (routing keys should be provided or generated)
             // TODO - create_peer_did_4() should move into peer did 4 implementation
@@ -451,15 +446,16 @@ pub mod invitation_service {
 }
 
 mod messaging_service {
-    use std::{
-        error::Error,
-        sync::{
-            mpsc::{self, Receiver, Sender},
-            Arc,
-        },
+    use std::sync::{
+        mpsc::{self, Receiver, Sender},
+        Arc,
     };
 
-    use aries_vcx::{did_parser_nom::Did, messages::AriesMessage};
+    use aries_vcx::{
+        aries_vcx_wallet::wallet::askar::AskarWallet, did_doc::schema::service::typed::ServiceType,
+        did_parser_nom::Did, messages::AriesMessage,
+        utils::encryption_envelope::EncryptionEnvelope,
+    };
     use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
     use did_resolver_registry::ResolverRegistry;
 
@@ -470,6 +466,7 @@ mod messaging_service {
 
     pub struct MessagingService {
         framework_config: FrameworkConfig,
+        wallet: Arc<AskarWallet>,
         did_resolver_registry: Arc<ResolverRegistry>,
         event_senders: Vec<Sender<MessagingEvents>>,
     }
@@ -519,10 +516,12 @@ mod messaging_service {
     impl MessagingService {
         pub fn new(
             framework_config: FrameworkConfig,
+            wallet: Arc<AskarWallet>,
             did_resolver_registry: Arc<ResolverRegistry>,
         ) -> Self {
             Self {
                 framework_config,
+                wallet,
                 did_resolver_registry,
                 event_senders: vec![],
             }
@@ -535,11 +534,13 @@ mod messaging_service {
             receiver_did: Did,
             preferred_transports: Option<Vec<Transports>>,
         ) -> VCXFrameworkResult<()> {
-            debug!(
+            trace!(
                 "Sending Aries Message to Receiver DID {}
                 from Sender DID {}
                 message: {}",
-                &receiver_did, &sender_did, &message
+                &receiver_did,
+                &sender_did,
+                &message
             );
 
             self.emit_event(MessagingEvents::OutboundMessage(OutboundMessage {
@@ -555,6 +556,18 @@ mod messaging_service {
                 .did_document;
             let sender_did_document = sender_did.resolve_did_doc()?;
 
+            let receiver_service =
+                receiver_did_document.get_service_of_type(&ServiceType::DIDCommV1)?;
+
+            let encrypted_data = EncryptionEnvelope::create(
+                self.wallet.as_ref(),
+                serde_json::json!(message).to_string().as_bytes(),
+                &sender_did_document,
+                &receiver_did_document,
+                receiver_service.id(),
+            )
+            .await?;
+
             Ok(())
         }
     }
@@ -565,3 +578,5 @@ mod messaging_service {
         WS,
     }
 }
+
+pub use error::*;
