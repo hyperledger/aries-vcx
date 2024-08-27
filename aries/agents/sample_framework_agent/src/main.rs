@@ -3,6 +3,7 @@
 use std::{error::Error, thread};
 
 use aries_framework_vcx::{
+    aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver,
     connection_service::ConnectionServiceConfig,
     framework::{
         AriesFrameworkVCX, EventEmitter, FrameworkConfig, DEFAULT_ASKAR_KEY_METHOD,
@@ -51,14 +52,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .expect("an unpoisoned mutex")
         .create_invitation()
         .await?;
-    debug!("Created Out Of Band Invitation: {:?}", oob_invitation);
+    debug!(
+        "Created Out Of Band Invitation: {:?}",
+        oob_invitation.invitation_to_url("http://localhost:8010")
+    );
+
+    let invitation_receiver = OutOfBandReceiver::create_from_url_encoded_oob(
+        &oob_invitation
+            .invitation_to_url("http://localhost:8010")?
+            .to_string(),
+    )?;
 
     let connection_record = framework
         .connection_service
         .lock()
         .expect("unpoisoned mutex")
-        .handle_request_and_await("1234567890")
-        .await;
+        .request_connection(invitation_receiver)
+        .await?;
 
     Ok(())
 }

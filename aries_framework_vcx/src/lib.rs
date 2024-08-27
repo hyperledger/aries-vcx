@@ -1,8 +1,14 @@
 #![deny(clippy::unwrap_used)]
 
+#[macro_use]
+extern crate log;
+
 pub use aries_vcx;
 pub use aries_vcx::aries_vcx_wallet::wallet::askar::askar_wallet_config::AskarWalletConfig;
 pub use url::Url;
+
+mod error;
+pub use error::*;
 pub mod framework {
     use std::{
         error::Error,
@@ -19,12 +25,12 @@ pub mod framework {
     };
     use did_peer::resolver::PeerDidResolver;
     use did_resolver_registry::ResolverRegistry;
-    use log::{info, warn};
     use url::Url;
 
     use crate::{
         connection_service::{ConnectionService, ConnectionServiceConfig},
         invitation_service::InvitationService,
+        messaging_service::MessagingService,
     };
 
     pub static IN_MEMORY_DB_URL: &str = "sqlite://:memory:";
@@ -47,6 +53,7 @@ pub mod framework {
         pub framework_config: FrameworkConfig,
         pub wallet: Arc<AskarWallet>,
         pub did_resolver_registry: Arc<ResolverRegistry>,
+        pub messaging_service: Arc<Mutex<MessagingService>>,
         pub invitation_service: Arc<Mutex<InvitationService>>,
 
         /// A service for the management of any and all things related to connections, including the usage of invitations (Out Of Band Invitations), the DID Exchange protocol, and mediation protocols.
@@ -67,7 +74,7 @@ pub mod framework {
             // Wallet Initialization
             let wallet = Arc::new(framework_config.wallet_config.create_wallet().await?);
 
-            // DID Resolver
+            // DID Resolver Registry
             // TODO - DID Sov Resolver
             let did_peer_resolver = PeerDidResolver::new();
             let did_resolver_registry = Arc::new(
@@ -75,6 +82,10 @@ pub mod framework {
             );
 
             // Service Initializations
+            let messaging_service = Arc::new(Mutex::new(MessagingService::new(
+                framework_config.clone(),
+                did_resolver_registry.clone(),
+            )));
             let invitation_service = Arc::new(Mutex::new(InvitationService::new(
                 framework_config.clone(),
                 wallet.clone(),
@@ -83,6 +94,7 @@ pub mod framework {
                 framework_config.clone(),
                 wallet.clone(),
                 did_resolver_registry.clone(),
+                messaging_service.clone(),
                 invitation_service.clone(),
             )));
 
@@ -90,6 +102,7 @@ pub mod framework {
                 framework_config,
                 wallet,
                 did_resolver_registry,
+                messaging_service,
                 invitation_service,
                 connection_service,
             })
@@ -115,6 +128,7 @@ pub mod connection_service {
 
     use aries_vcx::{
         aries_vcx_wallet::wallet::askar::AskarWallet,
+        handlers::out_of_band::receiver::OutOfBandReceiver,
         messages::msg_fields::protocols::out_of_band::invitation::Invitation,
         protocols::did_exchange::state_machine::{
             generic::GenericDidExchange,
@@ -125,12 +139,12 @@ pub mod connection_service {
         },
     };
     use did_resolver_registry::ResolverRegistry;
-    use log::{debug, info, trace};
     use uuid::Uuid;
 
     use crate::{
         framework::{EventEmitter, FrameworkConfig},
         invitation_service::InvitationService,
+        messaging_service::{MessagingService, Transports},
     };
 
     #[derive(Clone)]
@@ -155,6 +169,7 @@ pub mod connection_service {
         event_senders: Vec<Sender<ConnectionEvent>>,
         wallet: Arc<AskarWallet>,
         did_resolver_registry: Arc<ResolverRegistry>,
+        messaging_service: Arc<Mutex<MessagingService>>,
         invitation_service: Arc<Mutex<InvitationService>>,
     }
 
@@ -163,6 +178,7 @@ pub mod connection_service {
             framework_config: FrameworkConfig,
             wallet: Arc<AskarWallet>,
             did_resolver_registry: Arc<ResolverRegistry>,
+            messaging_service: Arc<Mutex<MessagingService>>,
             invitation_service: Arc<Mutex<InvitationService>>,
         ) -> Self {
             invitation_service
@@ -173,6 +189,7 @@ pub mod connection_service {
                 framework_config,
                 event_senders: vec![],
                 wallet,
+                messaging_service,
                 did_resolver_registry,
                 invitation_service,
             }
@@ -211,9 +228,10 @@ pub mod connection_service {
 
     // Provides internal framework functions for transitioning between protocol states
     impl ConnectionService {
-        async fn request_connection(
+        // TODO - invitation should be accessing invitation service via an id for the OutOfBandReceiver, rather than requiring the consuming developer to generate the OutOfBandReceiver
+        pub async fn request_connection(
             &mut self,
-            invitation: Invitation,
+            invitation: OutOfBandReceiver,
         ) -> Result<(), Box<dyn Error>> {
             debug!(
                 "Requesting Connection via DID Exchange with invitation {}",
@@ -231,16 +249,16 @@ pub mod connection_service {
             .await?;
 
             // Get Inviter/Responder DID from invitation
-            let inviter_did = invitation_get_first_did_service(&invitation)?;
+            let inviter_did = invitation_get_first_did_service(&invitation.oob)?;
 
             // Get DID Exchange version to use based off of invitation handshake protocols
-            let version = invitation_get_acceptable_did_exchange_version(&invitation)?;
+            let version = invitation_get_acceptable_did_exchange_version(&invitation.oob)?;
 
             // TODO - Fix DID Exchange Goal Code definition - Should not be "To establish a connection" - rather should be a goal code or not specified (IIRC)
             // Create DID Exchange Request Message, generate did_exchange_requester for future
             let (state_machine, request) = GenericDidExchange::construct_request(
                 &self.did_resolver_registry,
-                Some(invitation.id.clone()),
+                Some(invitation.oob.id.clone()),
                 &inviter_did,
                 &peer_did,
                 self.framework_config.agent_label.to_owned(),
@@ -251,12 +269,21 @@ pub mod connection_service {
             trace!("Created DID Exchange State Machine and request message, going to send message");
 
             // Send Request
-            // TODO - Send Request Message
+            self.messaging_service
+                .lock()
+                .expect("unpoisoned mutex")
+                .send_message(
+                    request.clone().into(),
+                    peer_did,
+                    inviter_did,
+                    Some(vec![Transports::HTTP]),
+                )
+                .await;
 
             // Store Updated State
             let record = ConnectionRecord {
                 id: Uuid::parse_str(&request.inner().id)?,
-                invitation_id: Uuid::parse_str(&invitation.id)?,
+                invitation_id: Uuid::parse_str(&invitation.oob.id)?,
                 state_machine,
             };
             // TODO - Store Record
@@ -325,7 +352,7 @@ pub mod invitation_service {
 
     use aries_vcx::{
         aries_vcx_wallet::wallet::askar::AskarWallet,
-        handlers::out_of_band::sender::OutOfBandSender,
+        handlers::out_of_band::{receiver::OutOfBandReceiver, sender::OutOfBandSender},
         messages::{
             msg_fields::protocols::out_of_band::invitation::{Invitation, OobService},
             msg_types::{
@@ -335,7 +362,6 @@ pub mod invitation_service {
         },
         protocols::did_exchange::state_machine::helpers::create_peer_did_4,
     };
-    use log::{debug, info};
 
     use crate::framework::{EventEmitter, FrameworkConfig};
 
@@ -382,7 +408,7 @@ pub mod invitation_service {
         }
 
         /// Creates an Out of Band Invitation
-        pub async fn create_invitation(&mut self) -> Result<Invitation, Box<dyn Error>> {
+        pub async fn create_invitation(&mut self) -> Result<OutOfBandSender, Box<dyn Error>> {
             debug!("Creating Out Of Band Invitation");
             // TODO - invitation should be able to be mediated (routing keys should be provided or generated)
             // TODO - create_peer_did_4() should move into peer did 4 implementation
@@ -395,22 +421,147 @@ pub mod invitation_service {
 
             let service = OobService::Did(peer_did.to_string());
 
-            let sender = OutOfBandSender::create()
+            let oob_sender = OutOfBandSender::create()
                 .append_service(&service)
                 .append_handshake_protocol(Protocol::DidExchangeType(DidExchangeType::V1(
                     DidExchangeTypeV1::new_v1_1(),
                 )))?;
 
-            let invitation = sender.oob;
-            info!("Created Out of Band Invitation {:?}", invitation);
+            info!(
+                "Created Out of Band Invitation {}",
+                oob_sender.invitation_to_json_string()
+            );
 
             // TODO - persist
             self.emit_event(InvitationEvent {
                 state: "created".to_owned(),
             });
-            Ok(invitation)
+            Ok(oob_sender)
         }
 
+        // pub async fn receive_invitation(
+        //     &mut self,
+        //     invitation: OutOfBandReceiver,
+        // ) -> Result<OutOfBandReceiver, Box<dyn Error>> {
+        //     debug!("Receiving Invitation");
+        // }
+
         pub async fn get_invitation(&self) {}
+    }
+}
+
+mod messaging_service {
+    use std::{
+        error::Error,
+        sync::{
+            mpsc::{self, Receiver, Sender},
+            Arc,
+        },
+    };
+
+    use aries_vcx::{did_parser_nom::Did, messages::AriesMessage};
+    use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
+    use did_resolver_registry::ResolverRegistry;
+
+    use crate::{
+        framework::{EventEmitter, FrameworkConfig},
+        VCXFrameworkResult,
+    };
+
+    pub struct MessagingService {
+        framework_config: FrameworkConfig,
+        did_resolver_registry: Arc<ResolverRegistry>,
+        event_senders: Vec<Sender<MessagingEvents>>,
+    }
+
+    #[derive(Debug, Clone)]
+    pub enum MessagingEvents {
+        InboundMessage(InboundMessage),
+        OutboundMessage(OutboundMessage),
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct InboundMessage {
+        pub receiver_did: PeerDid<Numalgo4>,
+        pub sender_did: Did,
+        pub message: AriesMessage,
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct OutboundMessage {
+        pub sender_did: PeerDid<Numalgo4>,
+        pub receiver_did: Did,
+        pub message: AriesMessage,
+    }
+
+    impl EventEmitter for MessagingService {
+        type Event = MessagingEvents;
+        fn emit_event(&mut self, event: MessagingEvents) {
+            self.event_senders
+                .retain(|tx| match tx.send(event.clone()) {
+                    Ok(_) => true,
+                    Err(_) => {
+                        debug!("Removing deallocated event listener from event listeners list");
+                        false
+                    }
+                })
+        }
+
+        /// Register event receivers to monitor inbound and outbound messages. Not intended to be used to handle inbound messages, use TODO for that purpose
+        fn register_event_receiver(&mut self) -> Receiver<Self::Event> {
+            let (tx, rx): (Sender<MessagingEvents>, Receiver<MessagingEvents>) = mpsc::channel();
+
+            self.event_senders.push(tx);
+            rx
+        }
+    }
+
+    impl MessagingService {
+        pub fn new(
+            framework_config: FrameworkConfig,
+            did_resolver_registry: Arc<ResolverRegistry>,
+        ) -> Self {
+            Self {
+                framework_config,
+                did_resolver_registry,
+                event_senders: vec![],
+            }
+        }
+
+        pub async fn send_message(
+            &mut self,
+            message: AriesMessage,
+            sender_did: PeerDid<Numalgo4>,
+            receiver_did: Did,
+            preferred_transports: Option<Vec<Transports>>,
+        ) -> VCXFrameworkResult<()> {
+            debug!(
+                "Sending Aries Message to Receiver DID {}
+                from Sender DID {}
+                message: {}",
+                &receiver_did, &sender_did, &message
+            );
+
+            self.emit_event(MessagingEvents::OutboundMessage(OutboundMessage {
+                message: message.clone(),
+                sender_did: sender_did.clone(),
+                receiver_did: receiver_did.clone(),
+            }));
+
+            let receiver_did_document = self
+                .did_resolver_registry
+                .resolve(&receiver_did, &Default::default())
+                .await?
+                .did_document;
+            let sender_did_document = sender_did.resolve_did_doc()?;
+
+            Ok(())
+        }
+    }
+
+    #[derive(Debug)]
+    pub enum Transports {
+        HTTP,
+        WS,
     }
 }

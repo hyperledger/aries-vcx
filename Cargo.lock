@@ -539,6 +539,9 @@ dependencies = [
  "did_resolver_registry",
  "env_logger 0.11.3",
  "log",
+ "serde",
+ "serde_json",
+ "thiserror",
  "url",
  "uuid",
 ]
