@@ -26,7 +26,9 @@ pub mod framework {
     use crate::{
         connection_service::{ConnectionService, ConnectionServiceConfig},
         invitation_service::InvitationService,
-        messaging_service::MessagingService,
+        messaging_service::{
+            HTTPTransport, MessagingService, TransportProtocols, TransportRegistry,
+        },
         VCXFrameworkResult,
     };
 
@@ -78,11 +80,16 @@ pub mod framework {
                 ResolverRegistry::new().register_resolver("peer".into(), did_peer_resolver),
             );
 
+            // Transport Resolver Registry
+            let transport_resolver = TransportRegistry::new()
+                .register_transport(TransportProtocols::HTTP, HTTPTransport {});
+
             // Service Initializations
             let messaging_service = Arc::new(Mutex::new(MessagingService::new(
                 framework_config.clone(),
                 wallet.clone(),
                 did_resolver_registry.clone(),
+                transport_resolver,
             )));
             let invitation_service = Arc::new(Mutex::new(InvitationService::new(
                 framework_config.clone(),
@@ -138,7 +145,7 @@ pub mod connection_service {
     use crate::{
         framework::{EventEmitter, FrameworkConfig},
         invitation_service::InvitationService,
-        messaging_service::{MessagingService, Transports},
+        messaging_service::{MessagingService, TransportProtocols},
         VCXFrameworkResult,
     };
 
@@ -271,7 +278,7 @@ pub mod connection_service {
                     request.clone().into(),
                     peer_did,
                     inviter_did,
-                    Some(vec![Transports::HTTP]),
+                    Some(vec![TransportProtocols::HTTP]),
                 )
                 .await?;
 
@@ -446,9 +453,12 @@ pub mod invitation_service {
 }
 
 mod messaging_service {
-    use std::sync::{
-        mpsc::{self, Receiver, Sender},
-        Arc,
+    use std::{
+        collections::HashMap,
+        sync::{
+            mpsc::{self, Receiver, Sender},
+            Arc,
+        },
     };
 
     use aries_vcx::{
@@ -469,6 +479,7 @@ mod messaging_service {
         wallet: Arc<AskarWallet>,
         did_resolver_registry: Arc<ResolverRegistry>,
         event_senders: Vec<Sender<MessagingEvents>>,
+        transport_registry: TransportRegistry,
     }
 
     #[derive(Debug, Clone)]
@@ -489,6 +500,7 @@ mod messaging_service {
         pub sender_did: PeerDid<Numalgo4>,
         pub receiver_did: Did,
         pub message: AriesMessage,
+        pub encrypted_message: EncryptionEnvelope,
     }
 
     impl EventEmitter for MessagingService {
@@ -518,12 +530,14 @@ mod messaging_service {
             framework_config: FrameworkConfig,
             wallet: Arc<AskarWallet>,
             did_resolver_registry: Arc<ResolverRegistry>,
+            transport_registry: TransportRegistry,
         ) -> Self {
             Self {
                 framework_config,
                 wallet,
                 did_resolver_registry,
                 event_senders: vec![],
+                transport_registry,
             }
         }
 
@@ -532,7 +546,7 @@ mod messaging_service {
             message: AriesMessage,
             sender_did: PeerDid<Numalgo4>,
             receiver_did: Did,
-            preferred_transports: Option<Vec<Transports>>,
+            preferred_transports: Option<Vec<TransportProtocols>>,
         ) -> VCXFrameworkResult<()> {
             trace!(
                 "Sending Aries Message to Receiver DID {}
@@ -542,12 +556,6 @@ mod messaging_service {
                 &sender_did,
                 &message
             );
-
-            self.emit_event(MessagingEvents::OutboundMessage(OutboundMessage {
-                message: message.clone(),
-                sender_did: sender_did.clone(),
-                receiver_did: receiver_did.clone(),
-            }));
 
             let receiver_did_document = self
                 .did_resolver_registry
@@ -559,7 +567,7 @@ mod messaging_service {
             let receiver_service =
                 receiver_did_document.get_service_of_type(&ServiceType::DIDCommV1)?;
 
-            let encrypted_data = EncryptionEnvelope::create(
+            let encrypted_message = EncryptionEnvelope::create(
                 self.wallet.as_ref(),
                 serde_json::json!(message).to_string().as_bytes(),
                 &sender_did_document,
@@ -568,14 +576,67 @@ mod messaging_service {
             )
             .await?;
 
+            self.emit_event(MessagingEvents::OutboundMessage(OutboundMessage {
+                message: message.clone(),
+                encrypted_message: encrypted_message.clone(),
+                sender_did: sender_did.clone(),
+                receiver_did: receiver_did.clone(),
+            }));
+
+            // TODO - Send to Transports
+            let transport = self
+                .transport_registry
+                .transports
+                .get(&TransportProtocols::HTTP)
+                .expect("To be valid transport")
+                .send_message("Hello");
             Ok(())
         }
     }
 
-    #[derive(Debug)]
-    pub enum Transports {
+    #[derive(Debug, Eq, PartialEq, Hash)]
+    pub enum TransportProtocols {
         HTTP,
         WS,
+    }
+
+    pub type GenericTransport = dyn Transport;
+
+    pub trait Transport {
+        fn send_message(&self, message: &str);
+    }
+
+    #[derive(Default)]
+    pub struct TransportRegistry {
+        transports: HashMap<TransportProtocols, Box<GenericTransport>>,
+    }
+
+    impl TransportRegistry {
+        pub fn new() -> Self {
+            Self::default()
+        }
+
+        pub fn register_transport<T>(
+            mut self,
+            transport_protocol: TransportProtocols,
+            transport: T,
+        ) -> Self
+        where
+            T: Transport + 'static,
+        {
+            self.transports
+                .insert(transport_protocol, Box::new(transport));
+            self
+        }
+    }
+
+    #[derive(Debug, Default)]
+    pub struct HTTPTransport {}
+
+    impl Transport for HTTPTransport {
+        fn send_message(&self, message: &str) {
+            debug!("Message to send via HTTP: {}", message)
+        }
     }
 }
 

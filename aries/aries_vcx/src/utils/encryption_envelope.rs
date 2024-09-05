@@ -14,7 +14,7 @@ use crate::{
     utils::didcomm_utils::{get_ed25519_base58_routing_keys, resolve_ed25519_base58_key_agreement},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
 
 impl EncryptionEnvelope {
