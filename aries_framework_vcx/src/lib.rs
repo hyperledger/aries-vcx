@@ -27,14 +27,14 @@ pub mod framework {
         connection_service::{ConnectionService, ConnectionServiceConfig},
         invitation_service::InvitationService,
         messaging_service::{
-            HTTPTransport, MessagingService, TransportProtocols, TransportRegistry,
+            HTTPTransport, MessagingService, TransportProtocol, TransportRegistry,
         },
         VCXFrameworkResult,
     };
 
-    pub static IN_MEMORY_DB_URL: &str = "sqlite://:memory:";
-    pub static DEFAULT_WALLET_PROFILE: &str = "aries_framework_vcx_default";
-    pub static DEFAULT_ASKAR_KEY_METHOD: KeyMethod = KeyMethod::DeriveKey {
+    pub const IN_MEMORY_DB_URL: &str = "sqlite://:memory:";
+    pub const DEFAULT_WALLET_PROFILE: &str = "aries_framework_vcx_default";
+    pub const DEFAULT_ASKAR_KEY_METHOD: KeyMethod = KeyMethod::DeriveKey {
         inner: AskarKdfMethod::Argon2i {
             inner: (ArgonLevel::Interactive),
         },
@@ -82,7 +82,7 @@ pub mod framework {
 
             // Transport Resolver Registry
             let transport_resolver = TransportRegistry::new()
-                .register_transport(TransportProtocols::HTTP, HTTPTransport {});
+                .register_transport(TransportProtocol::HTTP, HTTPTransport {});
 
             // Service Initializations
             let messaging_service = Arc::new(Mutex::new(MessagingService::new(
@@ -145,7 +145,7 @@ pub mod connection_service {
     use crate::{
         framework::{EventEmitter, FrameworkConfig},
         invitation_service::InvitationService,
-        messaging_service::{MessagingService, TransportProtocols},
+        messaging_service::{MessagingService, TransportProtocol},
         VCXFrameworkResult,
     };
 
@@ -278,7 +278,7 @@ pub mod connection_service {
                     request.clone().into(),
                     peer_did,
                     inviter_did,
-                    Some(vec![TransportProtocols::HTTP]),
+                    Some(vec![TransportProtocol::HTTP, TransportProtocol::WS]),
                 )
                 .await?;
 
@@ -546,15 +546,13 @@ mod messaging_service {
             message: AriesMessage,
             sender_did: PeerDid<Numalgo4>,
             receiver_did: Did,
-            preferred_transports: Option<Vec<TransportProtocols>>,
+            preferred_transports: Option<Vec<TransportProtocol>>,
         ) -> VCXFrameworkResult<()> {
-            trace!(
-                "Sending Aries Message to Receiver DID {}
-                from Sender DID {}
-                message: {}",
-                &receiver_did,
-                &sender_did,
-                &message
+            info!(
+                "Sending Aries Message {} 
+                to Receiver DID {}
+                from Sender DID {}",
+                &message, &receiver_did, &sender_did
             );
 
             let receiver_did_document = self
@@ -583,32 +581,48 @@ mod messaging_service {
                 receiver_did: receiver_did.clone(),
             }));
 
-            // TODO - Send to Transports
-            let transport = self
-                .transport_registry
-                .transports
-                .get(&TransportProtocols::HTTP)
-                .expect("To be valid transport")
-                .send_message("Hello");
+            // Allow override of default preferred transport protocol order (as protocols may dictate or prefer specific protocols)
+            let protocols_to_try =
+                preferred_transports.unwrap_or(PREFERRED_PROTOCOL_ORDER.to_vec());
+            for protocol in protocols_to_try {
+                let transport = self.transport_registry.transports.get(&protocol);
+                match transport {
+                    Some(transport) => {
+                        debug!(
+                            "Sending message via transport with protocol '{:?}'",
+                            protocol
+                        );
+                        transport.send_message(encrypted_message);
+                        break;
+                    }
+                    None => {
+                        trace!("Unable to get transport with protocol '{:?}'", protocol);
+                        continue;
+                    }
+                }
+            }
             Ok(())
         }
     }
 
-    #[derive(Debug, Eq, PartialEq, Hash)]
-    pub enum TransportProtocols {
+    #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+    pub enum TransportProtocol {
         HTTP,
         WS,
     }
 
+    const PREFERRED_PROTOCOL_ORDER: [TransportProtocol; 2] =
+        [TransportProtocol::WS, TransportProtocol::HTTP];
+
     pub type GenericTransport = dyn Transport;
 
     pub trait Transport {
-        fn send_message(&self, message: &str);
+        fn send_message(&self, message: EncryptionEnvelope);
     }
 
     #[derive(Default)]
     pub struct TransportRegistry {
-        transports: HashMap<TransportProtocols, Box<GenericTransport>>,
+        transports: HashMap<TransportProtocol, Box<GenericTransport>>,
     }
 
     impl TransportRegistry {
@@ -618,7 +632,7 @@ mod messaging_service {
 
         pub fn register_transport<T>(
             mut self,
-            transport_protocol: TransportProtocols,
+            transport_protocol: TransportProtocol,
             transport: T,
         ) -> Self
         where
@@ -634,8 +648,8 @@ mod messaging_service {
     pub struct HTTPTransport {}
 
     impl Transport for HTTPTransport {
-        fn send_message(&self, message: &str) {
-            debug!("Message to send via HTTP: {}", message)
+        fn send_message(&self, message: EncryptionEnvelope) {
+            debug!("Message to send via HTTP: {:?}", message)
         }
     }
 }
