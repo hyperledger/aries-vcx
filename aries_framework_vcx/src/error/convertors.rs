@@ -1,4 +1,4 @@
-use std::{convert::From, error::Error, num::ParseIntError};
+use std::{convert::From, error::Error, num::ParseIntError, str::Utf8Error};
 
 use aries_vcx::{
     aries_vcx_wallet::errors::error::VcxWalletError,
@@ -106,6 +106,14 @@ impl From<ParseError> for VCXFrameworkError {
     fn from(err: ParseError) -> Self {
         let kind = VCXFrameworkErrorKind::GenericVCXFrameworkError;
         let message = format!("Error parsing URL; err: {:?}", err.to_string());
+        VCXFrameworkError { message, kind }
+    }
+}
+
+impl From<Utf8Error> for VCXFrameworkError {
+    fn from(err: Utf8Error) -> Self {
+        let kind = VCXFrameworkErrorKind::GenericVCXFrameworkError;
+        let message = format!("Utf8 Error; err: {:?}", err.to_string());
         VCXFrameworkError { message, kind }
     }
 }

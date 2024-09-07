@@ -453,6 +453,7 @@ pub mod invitation_service {
 }
 
 mod messaging_service {
+    use core::str;
     use std::{
         collections::HashMap,
         sync::{
@@ -573,6 +574,12 @@ mod messaging_service {
                 receiver_service.id(),
             )
             .await?;
+
+            self.emit_event(MessagingEvents::OutboundMessage(OutboundMessage {
+            trace!(
+                "EncryptedMessage to send: {}",
+                str::from_utf8(&encrypted_message.0)?
+            );
 
             self.emit_event(MessagingEvents::OutboundMessage(OutboundMessage {
                 message: message.clone(),
