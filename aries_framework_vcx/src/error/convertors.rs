@@ -117,3 +117,11 @@ impl From<Utf8Error> for VCXFrameworkError {
         VCXFrameworkError { message, kind }
     }
 }
+
+impl From<reqwest::Error> for VCXFrameworkError {
+    fn from(err: reqwest::Error) -> Self {
+        let kind = VCXFrameworkErrorKind::GenericVCXFrameworkError;
+        let message = format!("reqwest error; err: {:?}", err.to_string());
+        VCXFrameworkError { message, kind }
+    }
+}

@@ -470,6 +470,8 @@ mod messaging_service {
     use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
     use did_resolver_registry::ResolverRegistry;
 
+    use async_trait::async_trait;
+
     use crate::{
         framework::{EventEmitter, FrameworkConfig},
         VCXFrameworkResult,
@@ -575,7 +577,6 @@ mod messaging_service {
             )
             .await?;
 
-            self.emit_event(MessagingEvents::OutboundMessage(OutboundMessage {
             trace!(
                 "EncryptedMessage to send: {}",
                 str::from_utf8(&encrypted_message.0)?
@@ -599,7 +600,11 @@ mod messaging_service {
                             "Sending message via transport with protocol '{:?}'",
                             protocol
                         );
-                        transport.send_message(encrypted_message);
+                        let possible_returned_message =
+                            transport.send_message(encrypted_message).await?;
+                        if possible_returned_message.is_some() {
+                            // TODO - Send Returned Message to Inbound message processing
+                        }
                         break;
                     }
                     None => {
@@ -609,6 +614,18 @@ mod messaging_service {
                 }
             }
             Ok(())
+        }
+
+        pub fn receive_message() {
+            // Note that the function name here references anon_unpack,
+            // however the implementation itself will perform either anon or auth unpacking based off of the indicated "alg" in the message.
+            // May be worthwhile considering adjusting the underlining function API in the future to be more clear.
+
+            // let (message, sender_vk, recipient_vk) = EncryptionEnvelope::anon_unpack_aries_msg(
+            //     self.aries_agent.wallet().as_ref(),
+            //     payload.clone(),
+            // )
+            // .await?;
         }
     }
 
@@ -623,10 +640,13 @@ mod messaging_service {
 
     pub type GenericTransport = dyn Transport;
 
+    #[async_trait]
     pub trait Transport {
-        fn send_message(&self, message: EncryptionEnvelope);
+        async fn send_message(
+            &self,
+            message: EncryptionEnvelope,
+        ) -> VCXFrameworkResult<Option<EncryptionEnvelope>>;
     }
-
     #[derive(Default)]
     pub struct TransportRegistry {
         transports: HashMap<TransportProtocol, Box<GenericTransport>>,
@@ -654,9 +674,26 @@ mod messaging_service {
     #[derive(Debug, Default)]
     pub struct HTTPTransport {}
 
+    #[async_trait]
     impl Transport for HTTPTransport {
-        fn send_message(&self, message: EncryptionEnvelope) {
-            debug!("Message to send via HTTP: {:?}", message)
+        async fn send_message(
+            &self,
+            message: EncryptionEnvelope,
+        ) -> VCXFrameworkResult<Option<EncryptionEnvelope>> {
+            debug!("Sending Message via HTTP");
+
+            let mut map = HashMap::new();
+            map.insert("lang", "rust");
+            map.insert("body", "json");
+
+            let client = reqwest::Client::new();
+            let res = client
+                .post("http://httpbin.org/post")
+                .json(&map)
+                .send()
+                .await?;
+
+            Ok(None)
         }
     }
 }
