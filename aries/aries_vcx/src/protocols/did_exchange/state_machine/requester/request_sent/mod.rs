@@ -8,7 +8,7 @@ use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
 use did_resolver_registry::ResolverRegistry;
 use messages::{
-    decorators::attachment::AttachmentType,
+    decorators::{attachment::AttachmentType, transport::Transport},
     msg_fields::protocols::did_exchange::{
         v1_1::response::Response,
         v1_x::{complete::AnyComplete, request::AnyRequest, response::AnyResponse},
@@ -39,6 +39,7 @@ impl DidExchangeRequester<RequestSent> {
         our_peer_did: &PeerDid<Numalgo4>,
         our_label: String,
         version: DidExchangeTypeV1,
+        transport_decorator: Option<Transport>,
     ) -> Result<TransitionResult<Self, AnyRequest>, AriesVcxError> {
         debug!(
             "DidExchangeRequester<RequestSent>::construct_request >> their_did: {}, our_peer_did: \
@@ -55,6 +56,7 @@ impl DidExchangeRequester<RequestSent> {
             our_peer_did.to_string(),
             our_label,
             version,
+            transport_decorator,
         );
 
         debug!(

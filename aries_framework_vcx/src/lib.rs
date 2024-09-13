@@ -131,6 +131,7 @@ pub mod connection_service {
     use aries_vcx::{
         aries_vcx_wallet::wallet::askar::AskarWallet,
         handlers::out_of_band::receiver::OutOfBandReceiver,
+        messages::decorators::transport::{ReturnRoute, Transport},
         protocols::did_exchange::state_machine::{
             generic::GenericDidExchange,
             helpers::create_peer_did_4,
@@ -265,6 +266,7 @@ pub mod connection_service {
                 &peer_did,
                 self.framework_config.agent_label.to_owned(),
                 version,
+                Some(Transport::builder().return_route(ReturnRoute::All).build()),
             )
             .await?;
 

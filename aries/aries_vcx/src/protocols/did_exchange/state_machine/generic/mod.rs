@@ -6,6 +6,7 @@ use did_parser_nom::Did;
 use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
 use did_resolver_registry::ResolverRegistry;
 use messages::{
+    decorators::transport::Transport,
     msg_fields::protocols::did_exchange::v1_x::{
         complete::{AnyComplete, Complete},
         problem_report::ProblemReport,
@@ -96,6 +97,7 @@ impl GenericDidExchange {
         our_peer_did: &PeerDid<Numalgo4>,
         our_label: String,
         version: DidExchangeTypeV1,
+        transport_decorator: Option<Transport>,
     ) -> Result<(Self, AnyRequest), AriesVcxError> {
         let TransitionResult { state, output } =
             DidExchangeRequester::<RequestSent>::construct_request(
@@ -105,6 +107,7 @@ impl GenericDidExchange {
                 our_peer_did,
                 our_label,
                 version,
+                transport_decorator,
             )
             .await?;
         Ok((

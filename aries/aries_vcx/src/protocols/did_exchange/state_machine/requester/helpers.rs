@@ -4,6 +4,7 @@ use messages::{
     decorators::{
         thread::{Thread, ThreadGoalCode},
         timing::Timing,
+        transport::Transport,
     },
     msg_fields::protocols::{
         did_exchange::v1_x::{
@@ -27,6 +28,7 @@ pub fn construct_request(
     our_did: String,
     our_label: String,
     version: DidExchangeTypeV1,
+    transport_decorator: Option<Transport>,
 ) -> AnyRequest {
     let msg_id = Uuid::new_v4().to_string();
     let thid = msg_id.clone();
@@ -37,6 +39,7 @@ pub fn construct_request(
     let decorators = RequestDecorators::builder()
         .thread(Some(thread))
         .timing(Timing::builder().out_time(Utc::now()).build())
+        .transport(transport_decorator)
         .build();
     let content = RequestContent::builder()
         .label(our_label)

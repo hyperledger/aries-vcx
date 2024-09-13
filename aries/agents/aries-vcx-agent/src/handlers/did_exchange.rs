@@ -80,6 +80,7 @@ impl<T: BaseWallet> DidcommHandlerDidExchange<T> {
             &our_peer_did,
             "".to_owned(),
             version,
+            None,
         )
         .await?;
 

@@ -8,6 +8,7 @@ use crate::{
         attachment::Attachment,
         thread::{Thread, ThreadGoalCode},
         timing::Timing,
+        transport::Transport,
     },
     msg_parts::MsgParts,
 };
@@ -39,6 +40,9 @@ pub struct RequestDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+    #[serde(rename = "~transport")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transport: Option<Transport>,
 }
 
 pub type AnyRequest = DidExchangeV1MessageVariant<Request, Request>;
