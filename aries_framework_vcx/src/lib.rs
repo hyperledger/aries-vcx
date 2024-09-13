@@ -471,6 +471,8 @@ mod messaging_service {
     use did_resolver_registry::ResolverRegistry;
 
     use async_trait::async_trait;
+    use reqwest::header::{CONTENT_TYPE, USER_AGENT};
+    use url::Url;
 
     use crate::{
         framework::{EventEmitter, FrameworkConfig},
@@ -570,7 +572,7 @@ mod messaging_service {
 
             let encrypted_message = EncryptionEnvelope::create(
                 self.wallet.as_ref(),
-                serde_json::json!(message).to_string().as_bytes(),
+                message.to_string().as_bytes(),
                 &sender_did_document,
                 &receiver_did_document,
                 receiver_service.id(),
@@ -600,8 +602,12 @@ mod messaging_service {
                             "Sending message via transport with protocol '{:?}'",
                             protocol
                         );
-                        let possible_returned_message =
-                            transport.send_message(encrypted_message).await?;
+                        let possible_returned_message = transport
+                            .send_message(
+                                receiver_service.service_endpoint().to_owned(),
+                                encrypted_message,
+                            )
+                            .await?;
                         if possible_returned_message.is_some() {
                             // TODO - Send Returned Message to Inbound message processing
                         }
@@ -644,6 +650,7 @@ mod messaging_service {
     pub trait Transport {
         async fn send_message(
             &self,
+            endpoint: Url,
             message: EncryptionEnvelope,
         ) -> VCXFrameworkResult<Option<EncryptionEnvelope>>;
     }
@@ -678,20 +685,25 @@ mod messaging_service {
     impl Transport for HTTPTransport {
         async fn send_message(
             &self,
+            endpoint: Url,
             message: EncryptionEnvelope,
         ) -> VCXFrameworkResult<Option<EncryptionEnvelope>> {
-            debug!("Sending Message via HTTP");
-
-            let mut map = HashMap::new();
-            map.insert("lang", "rust");
-            map.insert("body", "json");
+            debug!(
+                "Sending DIDComm Message via HTTP to URL Endpoint '{}'",
+                endpoint
+            );
 
             let client = reqwest::Client::new();
             let res = client
-                .post("http://httpbin.org/post")
-                .json(&map)
+                .post(endpoint)
+                .body(message.0)
+                .header(CONTENT_TYPE, "application/didcomm-envelope-enc")
+                .header(USER_AGENT, "reqwest")
                 .send()
                 .await?;
+
+            debug!("Received Response with Status '{}'", res.status());
+            // let res_body = res.json::<Jwe>().await;
 
             Ok(None)
         }
