@@ -28,7 +28,7 @@ mod entry;
 mod entry_tags;
 pub mod key_method;
 mod pack;
-mod packing_types;
+pub mod packing_types;
 mod partial_record;
 mod rng_method;
 mod sig_type;

@@ -232,9 +232,14 @@ pub mod connection_service {
     // Provides internal framework functions for transitioning between protocol states
     impl ConnectionService {
         // TODO - invitation should be accessing invitation service via an id for the OutOfBandReceiver, rather than requiring the consuming developer to generate the OutOfBandReceiver
+        /// TODO - add description
+        ///
+        /// `specific_mediator_id` will override the usage of the configured default mediator if `mediated` is set to true.
         pub async fn request_connection(
             &mut self,
             invitation: OutOfBandReceiver,
+            mediated: bool,
+            specific_mediator_id: Option<Uuid>,
         ) -> VCXFrameworkResult<()> {
             debug!(
                 "Requesting Connection via DID Exchange with invitation {}",
@@ -257,6 +262,10 @@ pub mod connection_service {
             // Get DID Exchange version to use based off of invitation handshake protocols
             let version = invitation_get_acceptable_did_exchange_version(&invitation.oob)?;
 
+            // If not mediated, we will specify the transport decorator with return route all to allow for the DID Exchange response message to be returned immediately. Most useful in mobile contexts for establishing connections with mediators
+            let transport_decorator =
+                (!mediated).then_some(Transport::builder().return_route(ReturnRoute::All).build());
+
             // TODO - Fix DID Exchange Goal Code definition - Should not be "To establish a connection" - rather should be a goal code or not specified (IIRC)
             // Create DID Exchange Request Message, generate did_exchange_requester for future
             let (state_machine, request) = GenericDidExchange::construct_request(
@@ -266,7 +275,7 @@ pub mod connection_service {
                 &peer_did,
                 self.framework_config.agent_label.to_owned(),
                 version,
-                Some(Transport::builder().return_route(ReturnRoute::All).build()),
+                transport_decorator,
             )
             .await?;
 
@@ -465,8 +474,10 @@ mod messaging_service {
     };
 
     use aries_vcx::{
-        aries_vcx_wallet::wallet::askar::AskarWallet, did_doc::schema::service::typed::ServiceType,
-        did_parser_nom::Did, messages::AriesMessage,
+        aries_vcx_wallet::wallet::askar::{packing_types::Jwe, AskarWallet},
+        did_doc::schema::service::typed::ServiceType,
+        did_parser_nom::Did,
+        messages::AriesMessage,
         utils::encryption_envelope::EncryptionEnvelope,
     };
     use did_peer::peer_did::{numalgos::numalgo4::Numalgo4, PeerDid};
@@ -611,7 +622,11 @@ mod messaging_service {
                             )
                             .await?;
                         if possible_returned_message.is_some() {
-                            // TODO - Send Returned Message to Inbound message processing
+                            debug!("Response contained returned DIDComm Message, sending for inbound processing");
+                            self.receive_message(
+                                possible_returned_message.expect("To be returned DIDComm message"),
+                            )
+                            .await?;
                         }
                         break;
                     }
@@ -624,16 +639,32 @@ mod messaging_service {
             Ok(())
         }
 
-        pub fn receive_message() {
+        async fn receive_message(&mut self, encrypted_message: Jwe) -> VCXFrameworkResult<()> {
+            trace!("Received encrypted message: {:?}", encrypted_message);
             // Note that the function name here references anon_unpack,
             // however the implementation itself will perform either anon or auth unpacking based off of the indicated "alg" in the message.
             // May be worthwhile considering adjusting the underlining function API in the future to be more clear.
+            let (message, sender_vk, recipient_vk) = EncryptionEnvelope::anon_unpack_aries_msg(
+                self.wallet.as_ref(),
+                serde_json::json!(encrypted_message)
+                    .to_string()
+                    .as_bytes()
+                    .to_vec(),
+            )
+            .await?;
+            debug!(
+                "Received inbound message from sender key: {:?}
+                for recipient key: {:?}
+                message: {}",
+                sender_vk, recipient_vk, message
+            );
+            Ok(())
+        }
 
-            // let (message, sender_vk, recipient_vk) = EncryptionEnvelope::anon_unpack_aries_msg(
-            //     self.aries_agent.wallet().as_ref(),
-            //     payload.clone(),
-            // )
-            // .await?;
+        pub fn receive_inbound_message(&mut self, message: Jwe) {
+            // TODO -- very big todo -- allow for a message to be delivered back as a response to an inbound message if the original message had a transport decorator with return route all. This likely will be done with a session management strategy
+
+            // TODO - close inbound transport session if appropriate for the transport (WS is not) and if no transport decorator with return route all for inbound message
         }
     }
 
@@ -650,11 +681,12 @@ mod messaging_service {
 
     #[async_trait]
     pub trait Transport {
+        /// Sends an encrypted DIDComm V1 message to the specified endpoint. Returns an option of `EncryptionEnvelope` for cases when a message is directly returned due to the outbound message using a transport decorator with return_route all.
         async fn send_message(
             &self,
             endpoint: Url,
             message: EncryptionEnvelope,
-        ) -> VCXFrameworkResult<Option<EncryptionEnvelope>>;
+        ) -> VCXFrameworkResult<Option<Jwe>>;
     }
     #[derive(Default)]
     pub struct TransportRegistry {
@@ -689,7 +721,7 @@ mod messaging_service {
             &self,
             endpoint: Url,
             message: EncryptionEnvelope,
-        ) -> VCXFrameworkResult<Option<EncryptionEnvelope>> {
+        ) -> VCXFrameworkResult<Option<Jwe>> {
             debug!(
                 "Sending DIDComm Message via HTTP to URL Endpoint '{}'",
                 endpoint
@@ -705,9 +737,9 @@ mod messaging_service {
                 .await?;
 
             debug!("Received Response with Status '{}'", res.status());
-            // let res_body = res.json::<Jwe>().await;
 
-            Ok(None)
+            // Check if response contains an inbound message (possible with the transport decorator w/return_route: all)
+            Ok(res.json::<Jwe>().await.ok())
         }
     }
 }

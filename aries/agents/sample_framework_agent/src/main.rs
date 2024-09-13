@@ -67,7 +67,7 @@ async fn main() -> Result<(), VCXFrameworkError> {
         .connection_service
         .lock()
         .expect("unpoisoned mutex")
-        .request_connection(invitation_receiver)
+        .request_connection(invitation_receiver, false, None)
         .await?;
 
     Ok(())
