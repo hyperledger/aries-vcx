@@ -1,4 +1,4 @@
-FROM alpine:3.17.1 AS builder
+FROM alpine:3.20.3 AS builder
 
 ARG UID=1000
 ARG GID=1000
@@ -35,7 +35,7 @@ WORKDIR /home/indy/indy-vdr/indy-vdr-proxy
 RUN git checkout c143268
 RUN cargo build --release
 
-FROM alpine:3.18
+FROM alpine:3.20
 RUN apk update && apk upgrade && \
     apk add --no-cache \
         libstdc++ \
