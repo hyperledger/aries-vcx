@@ -1,4 +1,4 @@
-FROM alpine:3.20.1 AS builder
+FROM alpine:3.20.3 AS builder
 
 ARG UID=1000
 ARG GID=1000
@@ -26,7 +26,7 @@ COPY --chown=aries:aries . vcx
 WORKDIR /home/aries/vcx
 RUN cargo build --bin aries-vcx-backchannel
 
-FROM alpine:3.20.1
+FROM alpine:3.20.3
 
 ARG UID=1000
 ARG GID=1000
