@@ -23,7 +23,7 @@ check-aries-vcx-credx:
     cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F vdrtools_wallet,credx --tests
 
 test-unit test_name="":
-    RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --exclude mediator {{test_name}}
+    RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --exclude mediator {{test_name}} -F did_doc/jwk -F public_key/jwk
 
 test-compatibility-aries-vcx-wallet:
     cargo test --manifest-path="aries/aries_vcx_wallet/Cargo.toml" -F vdrtools_wallet,askar_wallet wallet_compatibility_
