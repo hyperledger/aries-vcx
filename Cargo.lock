@@ -606,7 +606,7 @@ dependencies = [
  "async-trait",
  "did_parser_nom",
  "indy-ledger-response-parser",
- "indy-vdr 0.4.3",
+ "indy-vdr",
  "indy-vdr-proxy-client",
  "log",
  "lru",
@@ -3224,7 +3224,7 @@ name = "indy-ledger-response-parser"
 version = "0.1.0"
 dependencies = [
  "anoncreds-clsignatures 0.3.2",
- "indy-vdr 0.4.3",
+ "indy-vdr",
  "serde",
  "serde_json",
  "thiserror",
@@ -3254,45 +3254,14 @@ dependencies = [
 
 [[package]]
 name = "indy-vdr"
-version = "0.4.0"
-source = "git+https://github.com/hyperledger/indy-vdr.git?rev=c143268#c143268c2c86b300f8b8a33b57a4cff06de35626"
+version = "0.4.3"
+source = "git+https://github.com/hyperledger/indy-vdr.git?tag=v0.4.3#16b467de2e8d0b6398e1592aff9299b816912ced"
 dependencies = [
  "base64 0.21.7",
  "bs58",
  "env_logger 0.10.2",
  "etcommon-rlp",
  "ffi-support",
- "futures-channel",
- "futures-executor",
- "futures-util",
- "hex",
- "indy-blssignatures",
- "indy-data-types 0.7.1",
- "log",
- "once_cell",
- "percent-encoding",
- "pin-utils",
- "rand 0.8.5",
- "regex",
- "rmp-serde",
- "serde",
- "serde_json",
- "sha2",
- "sha3",
- "thiserror",
- "time 0.3.20",
- "url",
- "zmq",
-]
-
-[[package]]
-name = "indy-vdr"
-version = "0.4.3"
-source = "git+https://github.com/hyperledger/indy-vdr.git?tag=v0.4.3#16b467de2e8d0b6398e1592aff9299b816912ced"
-dependencies = [
- "base64 0.21.7",
- "bs58",
- "etcommon-rlp",
  "futures-channel",
  "futures-executor",
  "futures-util",
@@ -3320,9 +3289,9 @@ dependencies = [
 [[package]]
 name = "indy-vdr-proxy-client"
 version = "0.1.0"
-source = "git+https://github.com/hyperledger/indy-vdr.git?rev=c143268#c143268c2c86b300f8b8a33b57a4cff06de35626"
+source = "git+https://github.com/hyperledger/indy-vdr.git?tag=v0.4.3#16b467de2e8d0b6398e1592aff9299b816912ced"
 dependencies = [
- "indy-vdr 0.4.0",
+ "indy-vdr",
  "reqwest 0.11.27",
  "serde_json",
  "url",
@@ -6118,7 +6087,7 @@ dependencies = [
  "async-trait",
  "did_parser_nom",
  "diddoc_legacy",
- "indy-vdr 0.4.3",
+ "indy-vdr",
  "log",
  "once_cell",
  "serde",
