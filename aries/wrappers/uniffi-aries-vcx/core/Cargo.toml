@@ -27,7 +27,7 @@ aries_vcx = { path = "../../../aries_vcx", features = [
 ] }
 aries_vcx_ledger = { path = "../../../aries_vcx_ledger" }
 aries_vcx_anoncreds = { path = "../../../aries_vcx_anoncreds" }
-indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", default-features = false, features = ["log"] }
+indy-vdr.workspace = true
 tokio = { version = "1.38.0", features = ["rt-multi-thread"] }
 once_cell = "1.17.0"
 thiserror = "1.0.38"

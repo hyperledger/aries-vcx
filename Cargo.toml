@@ -73,3 +73,8 @@ unused_import_braces = "warn"
 unused_lifetimes = "warn"
 unused_qualifications = "warn"
 let_underscore_drop = "allow"
+
+[workspace.dependencies]
+indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", tag = "v0.4.3", default-features = false, features = [
+    "log",
+] }
