@@ -46,6 +46,8 @@ impl VerificationMethod {
             PublicKeyField::Multibase {
                 public_key_multibase,
             } => Key::from_fingerprint(public_key_multibase)?,
+            #[cfg(feature = "jwk")]
+            PublicKeyField::Jwk { public_key_jwk } => Key::from_jwk(&public_key_jwk.to_string())?,
             // TODO - FUTURE - other key types could do with some special handling, i.e.
             // those where the key_type is encoded within the key field (multibase, jwk, etc)
             _ => Key::new(
@@ -150,5 +152,55 @@ mod tests {
                 .as_str(),
         );
         assert!(vm.is_err());
+    }
+}
+
+#[cfg(feature = "jwk")]
+#[cfg(test)]
+mod jwk_tests {
+    use ::public_key::KeyType;
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn test_public_key_from_ed25519_jwk_vm() {
+        let vm: VerificationMethod = serde_json::from_value(json!({
+            "id": "did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH#z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH",
+            "type": "Ed25519VerificationKey2018",
+            "controller": "did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH",
+            "publicKeyJwk": {
+              "kty": "OKP",
+              "crv": "Ed25519",
+              "x": "lJZrfAjkBXdfjebMHEUI9usidAPhAlssitLXR3OYxbI"
+            }
+          })).unwrap();
+        let pk = vm.public_key().unwrap();
+        assert!(matches!(pk.key_type(), KeyType::Ed25519));
+        assert_eq!(
+            pk.fingerprint(),
+            "z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH"
+        )
+    }
+
+    #[test]
+    fn test_public_key_from_p256_jwk_vm() {
+        let vm: VerificationMethod = serde_json::from_value(json!({
+            "id": "did:key:zDnaerDaTF5BXEavCrfRZEk316dpbLsfPDZ3WJ5hRTPFU2169#zDnaerDaTF5BXEavCrfRZEk316dpbLsfPDZ3WJ5hRTPFU2169",
+            "type": "JsonWebKey2020",
+            "controller": "did:key:zDnaerDaTF5BXEavCrfRZEk316dpbLsfPDZ3WJ5hRTPFU2169",
+            "publicKeyJwk": {
+              "kty": "EC",
+              "crv": "P-256",
+              "x": "fyNYMN0976ci7xqiSdag3buk-ZCwgXU4kz9XNkBlNUI",
+              "y": "hW2ojTNfH7Jbi8--CJUo3OCbH3y5n91g-IMA9MLMbTU"
+            }
+          })).unwrap();
+        let pk = vm.public_key().unwrap();
+        assert!(matches!(pk.key_type(), KeyType::P256));
+        assert_eq!(
+            pk.fingerprint(),
+            "zDnaerDaTF5BXEavCrfRZEk316dpbLsfPDZ3WJ5hRTPFU2169"
+        )
     }
 }
