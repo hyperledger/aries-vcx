@@ -81,3 +81,5 @@ indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", tag = "v0.4.3"
 indy-vdr-proxy-client = { git = "https://github.com/hyperledger/indy-vdr.git", tag = "v0.4.3"  }
 indy-credx = { git = "https://github.com/hyperledger/indy-shared-rs", tag = "v1.1.0" }
 anoncreds = { git = "https://github.com/hyperledger/anoncreds-rs.git", tag = "v0.2.0" }
+aries-askar = { version = "0.3.1" }
+askar-crypto = { version = "0.3.1" }
