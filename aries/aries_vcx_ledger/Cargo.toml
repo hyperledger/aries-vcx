@@ -15,8 +15,8 @@ aries_vcx_wallet = { path = "../aries_vcx_wallet" }
 anoncreds_types = { path = "../misc/anoncreds_types" }
 did_parser_nom = { path = "../../did_core/did_parser_nom" }
 thiserror = "1.0.40"
-indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", default-features = false, features = ["log"] }
-indy-vdr-proxy-client = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", optional = true }
+indy-vdr.workspace = true
+indy-vdr-proxy-client = { workspace = true, optional = true }
 serde_json = "1.0.95"
 public_key = { path = "../../did_core/public_key"}
 async-trait = "0.1.68"

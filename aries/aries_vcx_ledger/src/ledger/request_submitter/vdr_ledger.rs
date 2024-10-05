@@ -1,5 +1,5 @@
 use std::{
-    collections::{hash_map::RandomState, HashMap},
+    collections::HashMap,
     fmt::{Debug, Formatter},
     sync::Arc,
 };
@@ -8,7 +8,10 @@ use async_trait::async_trait;
 use indy_vdr::{
     common::error::VdrError,
     config::PoolConfig,
-    pool::{PoolBuilder, PoolRunner, PoolTransactions, PreparedRequest, RequestResult},
+    pool::{
+        PoolBuilder, PoolRunner, PoolTransactions, PreparedRequest, RequestResult,
+        RequestResultMeta,
+    },
 };
 use log::info;
 use tokio::sync::oneshot;
@@ -45,13 +48,9 @@ impl IndyVdrLedgerPool {
              {indy_vdr_config:?}"
         );
         let txns = PoolTransactions::from_json_file(genesis_file_path)?;
-        let runner = PoolBuilder::new(
-            indy_vdr_config,
-            None,
-            Some(Self::generate_exclusion_weights(exclude_nodes)),
-        )
-        .transactions(txns)?
-        .into_runner()?;
+        let runner = PoolBuilder::new(indy_vdr_config, txns)
+            .node_weights(Some(Self::generate_exclusion_weights(exclude_nodes)))
+            .into_runner(None)?;
 
         Ok(IndyVdrLedgerPool {
             runner: Arc::new(runner),
@@ -83,13 +82,7 @@ impl RequestSubmitter for IndyVdrSubmitter {
     async fn submit(&self, request: PreparedRequest) -> VcxLedgerResult<String> {
         // indyvdr send_request is Async via a callback.
         // Use oneshot channel to send result from callback, converting the fn to future.
-        type VdrSendRequestResult = Result<
-            (
-                RequestResult<String>,
-                Option<HashMap<String, f32, RandomState>>,
-            ),
-            VdrError,
-        >;
+        type VdrSendRequestResult = Result<(RequestResult<String>, RequestResultMeta), VdrError>;
         let (sender, recv) = oneshot::channel::<VdrSendRequestResult>();
         self.pool.runner.send_request(
             request,
