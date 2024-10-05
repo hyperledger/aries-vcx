@@ -29,7 +29,7 @@ jobs:
       SKIP_CI: ${{ steps.skip-info.outputs.skip-ci }}
     steps:
       - name: "Git checkout"
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
       - name: "Construct CI run-info"
         id: run-info
         uses: ./.github/actions/construct-run-info
@@ -68,7 +68,7 @@ jobs:
       MYSQL_URL: mysql://admin:github.ci.password.no.prod@localhost:3326/mediator-persistence.mysql
     steps:
       - name: "Git checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
         with:
@@ -98,9 +98,9 @@ jobs:
       image-name: ${{ steps.meta.outputs.tags }}
     steps:
       - name: "Git checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
