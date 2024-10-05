@@ -1,4 +1,6 @@
 mod error;
+#[cfg(feature = "jwk")]
+mod jwk;
 mod key;
 mod key_type;
 

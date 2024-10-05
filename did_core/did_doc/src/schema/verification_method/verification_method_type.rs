@@ -66,6 +66,8 @@ impl TryFrom<VerificationMethodType> for KeyType {
             VerificationMethodType::Bls12381G2Key2020 => Ok(KeyType::Bls12381g2),
             VerificationMethodType::X25519KeyAgreementKey2019
             | VerificationMethodType::X25519KeyAgreementKey2020 => Ok(KeyType::X25519),
+            // The verification method type does not map directly to a key type.
+            // This may occur when the VM type is a multikey (JsonWebKey, Multikey, etc)
             _ => Err(DidDocumentBuilderError::UnsupportedVerificationMethodType(
                 value,
             )),

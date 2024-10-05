@@ -4331,6 +4331,7 @@ dependencies = [
 name = "public_key"
 version = "0.1.0"
 dependencies = [
+ "askar-crypto",
  "base64 0.22.1",
  "bs58",
  "multibase",
