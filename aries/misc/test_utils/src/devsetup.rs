@@ -37,8 +37,8 @@ pub mod vdr_proxy_ledger;
 use crate::devsetup::vdr_proxy_ledger::dev_build_profile_vdr_proxy_ledger;
 use crate::logger::init_logger;
 
-#[cfg(feature = "vdrtools_wallet")]
-pub mod vdrtools_wallet;
+#[cfg(feature = "askar_wallet")]
+pub mod askar_wallet;
 
 const DEFAULT_AML_LABEL: &str = "eula";
 
@@ -190,15 +190,15 @@ pub async fn dev_build_featured_anoncreds() -> impl BaseAnonCreds {
 
 #[allow(unused_variables)]
 pub async fn dev_build_featured_wallet(key_seed: &str) -> (String, impl BaseWallet) {
-    #[cfg(feature = "vdrtools_wallet")]
+    #[cfg(feature = "askar_wallet")]
     return {
         info!("SetupProfile >> using indy wallet");
 
-        use crate::devsetup::vdrtools_wallet::dev_setup_wallet_indy;
-        dev_setup_wallet_indy(key_seed).await
+        use crate::devsetup::askar_wallet::dev_setup_wallet_askar;
+        dev_setup_wallet_askar(key_seed).await
     };
 
-    #[cfg(not(feature = "vdrtools_wallet"))]
+    #[cfg(not(feature = "askar_wallet"))]
     {
         use crate::{constants::INSTITUTION_DID, mock_wallet::MockWallet};
 

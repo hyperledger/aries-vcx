@@ -8,9 +8,7 @@ use aries_vcx::{
 use aries_vcx_wallet::{
     errors::error::VcxWalletError,
     wallet::{
-        base_wallet::{BaseWallet, ManageWallet},
-        indy::indy_wallet_config::IndyWalletConfig,
-        structs_io::UnpackMessageOutput,
+        askar::{askar_wallet_config::AskarWalletConfig, key_method::KeyMethod}, base_wallet::{BaseWallet, ManageWallet}, structs_io::UnpackMessageOutput
     },
 };
 use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
@@ -22,6 +20,7 @@ use messages::{
     AriesMessage,
 };
 use serde_json::json;
+use uuid::Uuid;
 
 use crate::{
     persistence::{get_persistence, AccountDetails, MediatorPersistence},
@@ -61,16 +60,12 @@ impl<T: BaseWallet> AgentBuilder<T> {
     }
     pub async fn new_demo_agent() -> Result<Agent<impl BaseWallet, sqlx::MySqlPool>, VcxWalletError>
     {
-        let config = IndyWalletConfig {
-            wallet_name: uuid::Uuid::new_v4().to_string(),
-            wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
-            wallet_key_derivation: "RAW".into(),
-            wallet_type: None,
-            storage_config: None,
-            storage_credentials: None,
-            rekey: None,
-            rekey_derivation_method: None,
-        };
+        let config = AskarWalletConfig::new(
+            "sqlite://:memory:",
+            KeyMethod::Unprotected,
+            "",
+            &Uuid::new_v4().to_string(),
+        );
         Self::new_from_wallet_config(config).await
     }
 }
@@ -239,7 +234,7 @@ mod test {
         protocols::oob::oob_invitation_to_legacy_did_doc,
         utils::encryption_envelope::EncryptionEnvelope,
     };
-    use aries_vcx_wallet::wallet::indy::IndySdkWallet;
+    use aries_vcx_wallet::wallet::askar::AskarWallet;
     use log::info;
     use serde_json::Value;
     use test_utils::mockdata::mock_ledger::MockLedger;
@@ -250,7 +245,7 @@ mod test {
     pub async fn test_pack_unpack() {
         let message: Value = serde_json::from_str("{}").unwrap();
         let message_bytes = serde_json::to_vec(&message).unwrap();
-        let mut agent = AgentBuilder::<IndySdkWallet>::new_demo_agent()
+        let mut agent = AgentBuilder::<AskarWallet>::new_demo_agent()
             .await
             .unwrap();
         agent
