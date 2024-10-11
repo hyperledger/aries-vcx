@@ -159,8 +159,6 @@ pub enum AriesVcxErrorKind {
     #[error("Error Retrieving messages from API")]
     InvalidMessages,
 
-    #[error("Libndy error {}", 0)]
-    VdrToolsError(u32),
     #[error("Ursa error")]
     UrsaError,
     #[error("No Agent pairwise information")]

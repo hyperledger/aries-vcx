@@ -627,8 +627,6 @@ dependencies = [
  "async-trait",
  "base64 0.22.1",
  "bs58",
- "indy-api-types",
- "libvdrtools",
  "log",
  "public_key",
  "rand 0.8.5",

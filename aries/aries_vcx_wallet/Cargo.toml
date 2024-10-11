@@ -8,7 +8,6 @@ edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-vdrtools_wallet = ["dep:libvdrtools", "dep:indy-api-types"] # TODO - remove
 askar_wallet = ["dep:aries-askar"]
 
 [dependencies]
@@ -17,9 +16,7 @@ aries-askar = { workspace = true, optional = true }
 async-trait = "0.1.68"
 bs58 = { version = "0.5" }
 base64 = "0.22.1"
-libvdrtools = { path = "../misc/legacy/libvdrtools", optional = true }
 log = "0.4.17"
-indy-api-types = { path = "../misc/legacy/libvdrtools/indy-api-types", optional = true }
 serde = { version = "1.0.159", features = ["derive"] }
 serde_json = "1.0.95"
 public_key = { path = "../../did_core/public_key" }

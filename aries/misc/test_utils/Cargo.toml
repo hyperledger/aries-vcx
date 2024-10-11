@@ -9,7 +9,7 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-vdrtools_wallet = ["aries_vcx_wallet/vdrtools_wallet"]
+askar_wallet = ["aries_vcx_wallet/askar_wallet"]
 vdr_proxy_ledger = [
     "aries_vcx_ledger/vdr_proxy_ledger",
     "credx",
