@@ -17,7 +17,6 @@ members = [
     "aries/aries_vcx_wallet",
     "aries/aries_vcx_ledger",
     "aries/misc/indy_ledger_response_parser",
-    "aries/misc/wallet_migrator",
     "aries/misc/test_utils",
     "did_core/did_doc",
     "did_core/did_methods/did_peer",
