@@ -1,7 +1,5 @@
 use std::str::FromStr;
 
-#[cfg(feature = "vdrtools_wallet")]
-use indy_api_types::errors::IndyErrorKind;
 use log::{error, info, trace, warn};
 
 use super::{
@@ -170,13 +168,6 @@ async fn add_record(
         Err(err) => match err {
             VcxWalletError::DuplicateRecord(_) => {
                 trace!("Record type: {record:?} already exists in destination wallet, skipping");
-                migration_stats.duplicated += 1;
-            }
-            #[cfg(feature = "vdrtools_wallet")]
-            VcxWalletError::IndyApiError(indy_err)
-                if indy_err.kind() == IndyErrorKind::CredDefAlreadyExists =>
-            {
-                trace!("Cred def: {record:?} already exists in destination wallet, skipping");
                 migration_stats.duplicated += 1;
             }
             _ => {
