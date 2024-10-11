@@ -12,11 +12,10 @@ edition.workspace = true
 askar_wallet = ["aries_vcx_wallet/askar_wallet"]
 vdr_proxy_ledger = [
     "aries_vcx_ledger/vdr_proxy_ledger",
-    "credx",
+    "anoncreds",
     "dep:indy-ledger-response-parser",
     "dep:indy-vdr-proxy-client",
 ]
-credx = ["aries_vcx_anoncreds/credx"]
 anoncreds = ["aries_vcx_anoncreds/anoncreds"]
 
 [dependencies]

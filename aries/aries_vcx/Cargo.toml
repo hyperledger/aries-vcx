@@ -11,16 +11,10 @@ path = "src/lib.rs"
 doctest = false
 
 [features]
-credx = [
-    "aries_vcx_anoncreds/credx",
-    "test_utils/askar_wallet",
-    "test_utils/credx"
-]
 anoncreds = ["aries_vcx_anoncreds/anoncreds", "test_utils/anoncreds", "test_utils/askar_wallet"]
 vdr_proxy_ledger = [
     "aries_vcx_wallet/askar_wallet",
     "test_utils/vdr_proxy_ledger",
-    "credx",
 ]
 backtrace_errors = ["backtrace"]
 

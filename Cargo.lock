@@ -588,7 +588,6 @@ dependencies = [
  "async-trait",
  "bitvec",
  "did_parser_nom",
- "indy-credx",
  "log",
  "serde",
  "serde_json",
@@ -2870,45 +2869,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indy-credx"
-version = "1.1.0"
-source = "git+https://github.com/hyperledger/indy-shared-rs?tag=v1.1.0#0260b93f76573613cedb486bc8836c75c47d4cf4"
-dependencies = [
- "env_logger 0.10.2",
- "ffi-support",
- "indy-data-types 0.7.0",
- "log",
- "once_cell",
- "rand",
- "regex",
- "serde",
- "serde_json",
- "sha2",
- "zeroize",
-]
-
-[[package]]
-name = "indy-data-types"
-version = "0.7.0"
-source = "git+https://github.com/hyperledger/indy-shared-rs?tag=v1.1.0#0260b93f76573613cedb486bc8836c75c47d4cf4"
-dependencies = [
- "anoncreds-clsignatures 0.2.4",
- "bs58",
- "curve25519-dalek",
- "ed25519-dalek",
- "hex",
- "once_cell",
- "rand",
- "regex",
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
- "x25519-dalek",
- "zeroize",
-]
-
-[[package]]
 name = "indy-data-types"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2957,7 +2917,7 @@ dependencies = [
  "futures-util",
  "hex",
  "indy-blssignatures",
- "indy-data-types 0.7.1",
+ "indy-data-types",
  "log",
  "once_cell",
  "percent-encoding",

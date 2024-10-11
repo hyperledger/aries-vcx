@@ -169,19 +169,13 @@ pub async fn dev_build_featured_indy_ledger(
 
 #[allow(clippy::needless_return)]
 pub async fn dev_build_featured_anoncreds() -> impl BaseAnonCreds {
-    #[cfg(feature = "credx")]
-    {
-        use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
-        return IndyCredxAnonCreds;
-    }
-
-    #[cfg(all(not(feature = "credx"), feature = "anoncreds"))]
+    #[cfg(feature = "anoncreds")]
     {
         use aries_vcx_anoncreds::anoncreds::anoncreds::Anoncreds;
         return Anoncreds;
     }
 
-    #[cfg(all(not(feature = "credx"), not(feature = "anoncreds")))]
+    #[cfg(not(feature = "anoncreds"))]
     {
         use crate::mockdata::mock_anoncreds::MockAnoncreds;
         return MockAnoncreds;

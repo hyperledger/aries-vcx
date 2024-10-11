@@ -427,9 +427,6 @@ async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation(
     )
     .await;
 
-    #[cfg(feature = "credx")]
-    assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidState);
-    #[cfg(not(feature = "credx"))]
     assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidInput);
     Ok(())
 }

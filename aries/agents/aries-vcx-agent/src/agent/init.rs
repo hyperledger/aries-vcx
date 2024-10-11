@@ -11,7 +11,7 @@ use aries_vcx::{
 };
 use aries_vcx_anoncreds::{
     self,
-    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    anoncreds::{anoncreds::Anoncreds, base_anoncreds::BaseAnonCreds},
     errors::error::VcxAnoncredsError,
 };
 use aries_vcx_ledger::ledger::indy_vdr_ledger::{
@@ -62,7 +62,7 @@ pub async fn build_askar_wallet(
     let wallet = config_wallet.create_wallet().await.unwrap();
     let config_issuer = wallet.configure_issuer(&issuer_seed).await.unwrap();
 
-    let anoncreds = IndyCredxAnonCreds;
+    let anoncreds = Anoncreds;
 
     if let Err(err) = anoncreds
         .prover_create_link_secret(&wallet, &DEFAULT_LINK_SECRET_ALIAS.to_string())
@@ -123,7 +123,7 @@ impl<W: BaseWallet> Agent<W> {
             genesis_file_path: genesis_path,
         };
 
-        let anoncreds = IndyCredxAnonCreds;
+        let anoncreds = Anoncreds;
         let (ledger_read, ledger_write) = build_ledger_components(vcx_pool_config.clone()).unwrap();
 
         let ledger_read = Arc::new(ledger_read);

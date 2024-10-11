@@ -18,7 +18,8 @@ path = "uniffi-bindgen.rs"
 [dependencies]
 uniffi = { version = "0.23.0", features = ["cli"] }
 aries_vcx = { path = "../../../aries_vcx", features = [
-    "credx",
+    "anoncreds",
+    "askar_wallet"
 ] }
 aries_vcx_ledger = { path = "../../../aries_vcx_ledger" }
 aries_vcx_anoncreds = { path = "../../../aries_vcx_anoncreds" }

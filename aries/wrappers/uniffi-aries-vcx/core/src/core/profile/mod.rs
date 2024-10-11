@@ -1,5 +1,5 @@
 use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+use aries_vcx_anoncreds::anoncreds::anoncreds::Anoncreds;
 use aries_vcx_ledger::ledger::{
     base_ledger::TxnAuthrAgrmtOptions, indy_vdr_ledger::IndyVdrLedgerRead,
     request_submitter::vdr_ledger::IndyVdrSubmitter,
@@ -17,7 +17,7 @@ impl UniffiProfile {
         &self.ledger_read
     }
 
-    pub fn anoncreds(&self) -> &IndyCredxAnonCreds {
+    pub fn anoncreds(&self) -> &Anoncreds {
         &self.anoncreds
     }
 
