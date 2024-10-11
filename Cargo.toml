@@ -3,7 +3,6 @@ resolver = "2"
 
 members = [
     "aries/aries_vcx",
-    "aries/misc/legacy/libvdrtools",
     "aries/messages_macros",
     "aries/messages",
     "aries/misc/shared",
