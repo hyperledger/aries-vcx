@@ -52,7 +52,8 @@ pub async fn build_askar_wallet(
     _wallet_config: WalletInitConfig,
     issuer_seed: String,
 ) -> (AskarWallet, IssuerConfig) {
-    // TODO - actually impl this
+    // TODO - use actual config with storage path etc
+    // simple in-memory wallet
     let config_wallet = AskarWalletConfig::new(
         "sqlite://:memory:",
         KeyMethod::Unprotected,
