@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 aries_vcx_wallet = { path = "../../../aries_vcx_wallet", features = [
-    "vdrtools_wallet",
+    "askar_wallet",
 ] }
 axum = "0.7.5"
 cursive = { version = "0.20.0", features = ["crossterm-backend"] }

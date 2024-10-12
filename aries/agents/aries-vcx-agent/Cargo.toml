@@ -9,9 +9,9 @@ edition.workspace = true
 serde = "1.0.145"
 aries_vcx = { path = "../../aries_vcx" }
 aries_vcx_wallet = { path = "../../aries_vcx_wallet", features = [
-    "vdrtools_wallet",
+    "askar_wallet",
 ] }
-aries_vcx_anoncreds = { path = "../../aries_vcx_anoncreds", features = ["credx"] }
+aries_vcx_anoncreds = { path = "../../aries_vcx_anoncreds", features = ["anoncreds"] }
 aries_vcx_ledger = { path = "../../aries_vcx_ledger"}
 anoncreds_types = { path = "../../misc/anoncreds_types" }
 shared = { path = "../../misc/shared" }

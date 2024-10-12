@@ -94,13 +94,42 @@ pub async fn get_verkey_from_ledger(
             ),
         )
     })?;
-    Ok(nym_data["verkey"]
+    let unparsed_verkey = nym_data["verkey"]
         .as_str()
         .ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::SerializationError,
             format!("Cannot deserialize {:?} into String", nym_data["verkey"]),
         ))?
-        .to_string())
+        .to_string();
+
+    expand_abbreviated_verkey(did.id(), &unparsed_verkey)
+}
+
+/// Indy ledgers may return abbreviated verkeys, where the abbreviation only makes sense
+/// with the context of the NYM, this function expands them to full verkeys
+fn expand_abbreviated_verkey(nym: &str, verkey: &str) -> VcxResult<String> {
+    let Some(stripped_verkey) = verkey.strip_prefix('~') else {
+        // expansion not needed
+        return Ok(verkey.to_string());
+    };
+    let mut decoded_nym = bs58::decode(nym).into_vec().map_err(|e| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidLedgerResponse,
+            format!("Failed to decode did from base58: {} (error: {})", nym, e),
+        )
+    })?;
+    let decoded_stripped_verkey = bs58::decode(stripped_verkey).into_vec().map_err(|e| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidLedgerResponse,
+            format!(
+                "Failed to decode verkey from base58: {} (error: {})",
+                stripped_verkey, e
+            ),
+        )
+    })?;
+    decoded_nym.extend(&decoded_stripped_verkey);
+
+    Ok(bs58::encode(decoded_nym).into_string())
 }
 
 // todo: was originally written for vdrtool ledger implementation, ideally we should moc out
@@ -111,7 +140,7 @@ pub async fn get_verkey_from_ledger(
 //
 //     #[tokio::test]
 //     #[ignore]
-//     #[cfg(all(not(feature = "vdr_proxy_ledger"), not(feature = "credx"),))]
+//     #[cfg(all(not(feature = "vdr_proxy_ledger")))]
 //     async fn test_pool_rotate_verkey_fails() {
 //         use super::*;
 //

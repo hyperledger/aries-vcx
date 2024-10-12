@@ -1,6 +1,6 @@
 mod common;
 
-use aries_vcx_wallet::wallet::indy::IndySdkWallet;
+use aries_vcx_wallet::wallet::askar::AskarWallet;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 
 use crate::common::{prelude::*, test_setup::setup_env_logging};
@@ -27,7 +27,7 @@ async fn didcomm_connection_succeeds() -> Result<()> {
         "Got invitation {}",
         serde_json::to_string_pretty(&oobi.clone()).unwrap()
     );
-    let agent = mediator::aries_agent::AgentBuilder::<IndySdkWallet>::new_demo_agent().await?;
+    let agent = mediator::aries_agent::AgentBuilder::<AskarWallet>::new_demo_agent().await?;
     let mut aries_transport = reqwest::Client::new();
     let _state = agent
         .establish_connection(oobi, &mut aries_transport)

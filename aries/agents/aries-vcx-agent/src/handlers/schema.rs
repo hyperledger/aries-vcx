@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{common::primitives::credential_schema::Schema, did_parser_nom::Did};
-use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+use aries_vcx_anoncreds::anoncreds::anoncreds::Anoncreds;
 use aries_vcx_ledger::ledger::{
     base_ledger::AnoncredsLedgerRead,
     indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite},
@@ -16,7 +16,7 @@ use crate::{
 pub struct ServiceSchemas<T> {
     ledger_read: Arc<DefaultIndyLedgerRead>,
     ledger_write: Arc<DefaultIndyLedgerWrite>,
-    anoncreds: IndyCredxAnonCreds,
+    anoncreds: Anoncreds,
     wallet: Arc<T>,
     issuer_did: Did,
     schemas: AgentStorageInMem<Schema>,
@@ -26,7 +26,7 @@ impl<T: BaseWallet> ServiceSchemas<T> {
     pub fn new(
         ledger_read: Arc<DefaultIndyLedgerRead>,
         ledger_write: Arc<DefaultIndyLedgerWrite>,
-        anoncreds: IndyCredxAnonCreds,
+        anoncreds: Anoncreds,
         wallet: Arc<T>,
         issuer_did: String,
     ) -> Self {

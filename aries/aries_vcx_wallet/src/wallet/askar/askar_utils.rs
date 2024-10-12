@@ -1,12 +1,13 @@
 use aries_askar::{
+    crypto::alg::{BlsCurves, EcCurves, KeyAlg},
     entry::Entry,
-    kms::{KeyAlg, LocalKey},
+    kms::LocalKey,
 };
 use public_key::{Key, KeyType};
 use serde::Deserialize;
 
 use crate::{
-    errors::error::VcxWalletResult,
+    errors::error::{VcxWalletError, VcxWalletResult},
     wallet::{base_wallet::base58_string::Base58String, utils::random_seed},
 };
 
@@ -23,6 +24,29 @@ pub fn local_key_to_public_key(local_key: &LocalKey) -> VcxWalletResult<Key> {
         local_key.to_public_bytes()?.to_vec(),
         KeyType::Ed25519,
     )?)
+}
+
+pub fn public_key_to_local_key(key: &Key) -> VcxWalletResult<LocalKey> {
+    let alg = public_key_type_to_askar_key_alg(key.key_type())?;
+    Ok(LocalKey::from_public_bytes(alg, key.key())?)
+}
+
+pub fn public_key_type_to_askar_key_alg(value: &KeyType) -> VcxWalletResult<KeyAlg> {
+    let alg = match value {
+        KeyType::Ed25519 => KeyAlg::Ed25519,
+        KeyType::X25519 => KeyAlg::X25519,
+        KeyType::Bls12381g1g2 => KeyAlg::Bls12_381(BlsCurves::G1G2),
+        KeyType::Bls12381g1 => KeyAlg::Bls12_381(BlsCurves::G1),
+        KeyType::Bls12381g2 => KeyAlg::Bls12_381(BlsCurves::G2),
+        KeyType::P256 => KeyAlg::EcCurve(EcCurves::Secp256r1),
+        KeyType::P384 => KeyAlg::EcCurve(EcCurves::Secp384r1),
+        _ => {
+            return Err(VcxWalletError::Unimplemented(format!(
+                "Unsupported key type: {value:?}"
+            )))
+        }
+    };
+    Ok(alg)
 }
 
 pub fn ed25519_to_x25519(local_key: &LocalKey) -> VcxWalletResult<LocalKey> {

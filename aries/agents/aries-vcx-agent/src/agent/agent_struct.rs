@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+use aries_vcx_anoncreds::anoncreds::anoncreds::Anoncreds;
 use aries_vcx_ledger::ledger::indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite};
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
@@ -16,7 +16,7 @@ pub struct Agent<W> {
     pub(super) issuer_did: String,
     pub(super) ledger_read: Arc<DefaultIndyLedgerRead>,
     pub(super) ledger_write: Arc<DefaultIndyLedgerWrite>,
-    pub(super) anoncreds: IndyCredxAnonCreds,
+    pub(super) anoncreds: Anoncreds,
     pub(super) wallet: Arc<W>,
     pub(super) connections: Arc<ServiceConnections<W>>,
     pub(super) schemas: Arc<ServiceSchemas<W>>,
@@ -64,7 +64,7 @@ impl<T: BaseWallet> Agent<T> {
         &self.ledger_write
     }
 
-    pub fn anoncreds(&self) -> &IndyCredxAnonCreds {
+    pub fn anoncreds(&self) -> &Anoncreds {
         &self.anoncreds
     }
 

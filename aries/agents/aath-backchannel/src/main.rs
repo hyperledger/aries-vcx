@@ -22,7 +22,7 @@ use std::{
 
 use actix_web::{middleware, web, App, HttpServer};
 use aries_vcx_agent::{
-    aries_vcx::{aries_vcx_wallet::wallet::indy::IndySdkWallet, messages::AriesMessage},
+    aries_vcx::{aries_vcx_wallet::wallet::askar::AskarWallet, messages::AriesMessage},
     Agent as AriesAgent,
 };
 use clap::Parser;
@@ -69,7 +69,7 @@ enum Status {
 }
 
 pub struct HarnessAgent {
-    aries_agent: AriesAgent<IndySdkWallet>,
+    aries_agent: AriesAgent<AskarWallet>,
     status: Status,
     // did-exchange specific
     // todo: extra didx specific AATH service

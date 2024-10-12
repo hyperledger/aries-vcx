@@ -6,10 +6,7 @@ use aries_askar::{
 use async_trait::async_trait;
 use public_key::Key;
 
-use self::{
-    askar_utils::local_key_to_bs58_public_key, askar_wallet_config::AskarWalletConfig,
-    rng_method::RngMethod,
-};
+use self::{askar_utils::local_key_to_bs58_public_key, askar_wallet_config::AskarWalletConfig};
 use super::{
     base_wallet::{
         did_value::DidValue, key_value::KeyValue, record_category::RecordCategory, BaseWallet,
@@ -144,9 +141,8 @@ impl AskarWallet {
         session: &mut Session,
         alg: KeyAlg,
         seed: &[u8],
-        rng_method: RngMethod,
     ) -> VcxWalletResult<(String, LocalKey)> {
-        let key = LocalKey::from_seed(alg, seed, rng_method.into())?;
+        let key = LocalKey::from_secret_bytes(alg, seed)?;
         let key_name = local_key_to_bs58_public_key(&key)?.into_inner();
         session
             .insert_key(&key_name, &key, None, None, None)

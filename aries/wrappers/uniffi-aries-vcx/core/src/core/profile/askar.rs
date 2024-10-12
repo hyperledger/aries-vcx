@@ -1,14 +1,13 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    aries_vcx_anoncreds::anoncreds::{
-        base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds,
-    },
+    aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds,
     aries_vcx_wallet::wallet::{
         askar::{askar_wallet_config::AskarWalletConfig, AskarWallet},
         base_wallet::ManageWallet,
     },
 };
+use aries_vcx_anoncreds::anoncreds::anoncreds::Anoncreds;
 use aries_vcx_ledger::ledger::{
     indy_vdr_ledger::{indyvdr_build_ledger_read, IndyVdrLedgerRead},
     request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
@@ -23,7 +22,7 @@ use crate::{
 #[derive(Debug)]
 pub struct UniffiProfile {
     pub wallet: AskarWallet,
-    pub anoncreds: IndyCredxAnonCreds,
+    pub anoncreds: Anoncreds,
     pub ledger_read: IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>,
 }
 
@@ -37,7 +36,7 @@ pub fn new_indy_profile(
     block_on(async {
         let wallet = wallet_config.create_wallet().await?;
 
-        let anoncreds = IndyCredxAnonCreds;
+        let anoncreds = Anoncreds;
 
         anoncreds
             .prover_create_link_secret(&wallet, &"main".to_string())
@@ -53,7 +52,7 @@ pub fn new_indy_profile(
         let request_submitter = IndyVdrSubmitter::new(ledger_pool);
         let ledger_read = indyvdr_build_ledger_read(request_submitter, cache_config)?;
         let profile = UniffiProfile {
-            anoncreds: IndyCredxAnonCreds,
+            anoncreds: Anoncreds,
             wallet,
             ledger_read,
         };

@@ -11,15 +11,15 @@ use aries_vcx::{
 };
 use aries_vcx_anoncreds::{
     self,
-    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    anoncreds::{anoncreds::Anoncreds, base_anoncreds::BaseAnonCreds},
     errors::error::VcxAnoncredsError,
 };
 use aries_vcx_ledger::ledger::indy_vdr_ledger::{
     build_ledger_components, DefaultIndyLedgerRead, VcxPoolConfig,
 };
 use aries_vcx_wallet::wallet::{
+    askar::{askar_wallet_config::AskarWalletConfig, key_method::KeyMethod, AskarWallet},
     base_wallet::{issuer_config::IssuerConfig, BaseWallet, ManageWallet},
-    indy::{indy_wallet_config::IndyWalletConfig, IndySdkWallet},
 };
 use did_peer::resolver::PeerDidResolver;
 use did_resolver_registry::ResolverRegistry;
@@ -27,6 +27,7 @@ use did_resolver_sov::resolution::DidSovResolver;
 use display_as_json::Display;
 use serde::Serialize;
 use url::Url;
+use uuid::Uuid;
 
 use crate::{
     agent::agent_struct::Agent,
@@ -47,24 +48,22 @@ pub struct WalletInitConfig {
     pub wallet_kdf: String,
 }
 
-pub async fn build_indy_wallet(
-    wallet_config: WalletInitConfig,
+pub async fn build_askar_wallet(
+    _wallet_config: WalletInitConfig,
     issuer_seed: String,
-) -> (IndySdkWallet, IssuerConfig) {
-    let config_wallet = IndyWalletConfig {
-        wallet_name: wallet_config.wallet_name,
-        wallet_key: wallet_config.wallet_key,
-        wallet_key_derivation: wallet_config.wallet_kdf,
-        wallet_type: None,
-        storage_config: None,
-        storage_credentials: None,
-        rekey: None,
-        rekey_derivation_method: None,
-    };
+) -> (AskarWallet, IssuerConfig) {
+    // TODO - use actual config with storage path etc
+    // simple in-memory wallet
+    let config_wallet = AskarWalletConfig::new(
+        "sqlite://:memory:",
+        KeyMethod::Unprotected,
+        "",
+        &Uuid::new_v4().to_string(),
+    );
     let wallet = config_wallet.create_wallet().await.unwrap();
     let config_issuer = wallet.configure_issuer(&issuer_seed).await.unwrap();
 
-    let anoncreds = IndyCredxAnonCreds;
+    let anoncreds = Anoncreds;
 
     if let Err(err) = anoncreds
         .prover_create_link_secret(&wallet, &DEFAULT_LINK_SECRET_ALIAS.to_string())
@@ -125,7 +124,7 @@ impl<W: BaseWallet> Agent<W> {
             genesis_file_path: genesis_path,
         };
 
-        let anoncreds = IndyCredxAnonCreds;
+        let anoncreds = Anoncreds;
         let (ledger_read, ledger_write) = build_ledger_components(vcx_pool_config.clone()).unwrap();
 
         let ledger_read = Arc::new(ledger_read);

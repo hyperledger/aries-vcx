@@ -16,7 +16,7 @@ use aries_vcx::{
         SendClosure,
     },
 };
-use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+use aries_vcx_anoncreds::anoncreds::anoncreds::Anoncreds;
 use aries_vcx_ledger::ledger::indy_vdr_ledger::DefaultIndyLedgerRead;
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
@@ -44,7 +44,7 @@ impl VerifierWrapper {
 
 pub struct ServiceVerifier<T> {
     ledger_read: Arc<DefaultIndyLedgerRead>,
-    anoncreds: IndyCredxAnonCreds,
+    anoncreds: Anoncreds,
     wallet: Arc<T>,
     verifiers: AgentStorageInMem<VerifierWrapper>,
     service_connections: Arc<ServiceConnections<T>>,
@@ -53,7 +53,7 @@ pub struct ServiceVerifier<T> {
 impl<T: BaseWallet> ServiceVerifier<T> {
     pub fn new(
         ledger_read: Arc<DefaultIndyLedgerRead>,
-        anoncreds: IndyCredxAnonCreds,
+        anoncreds: Anoncreds,
         wallet: Arc<T>,
         service_connections: Arc<ServiceConnections<T>>,
     ) -> Self {
