@@ -16,7 +16,6 @@ clippy-aries-vcx features:
 check-workspace:
     cargo check --tests --all-features
 
-# TODO - this is failing
 check-aries-vcx-anoncreds:
     cargo test --manifest-path="aries/aries_vcx/Cargo.toml" -F askar_wallet,anoncreds --tests
 

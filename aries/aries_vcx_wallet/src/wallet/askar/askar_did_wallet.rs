@@ -162,7 +162,7 @@ impl DidWallet for AskarWallet {
     }
 
     async fn verify(&self, key: &Key, msg: &[u8], signature: &[u8]) -> VcxWalletResult<bool> {
-        let local_key = public_key_to_local_key(&key)?;
+        let local_key = public_key_to_local_key(key)?;
 
         let sig_alg = SigType::try_from_key_alg(local_key.algorithm())?;
         Ok(local_key.verify_signature(msg, signature, Some(sig_alg.into()))?)
