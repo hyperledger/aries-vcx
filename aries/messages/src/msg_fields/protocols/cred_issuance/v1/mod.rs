@@ -63,16 +63,15 @@ impl DelayedSerde for CredentialIssuanceV1 {
         D: Deserializer<'de>,
     {
         let (protocol, kind_str) = msg_type;
-        let kind = match protocol {
-            CredentialIssuanceKind::V1(CredentialIssuanceTypeV1::V1_0(kind)) => {
-                kind.kind_from_str(kind_str)
-            }
-            CredentialIssuanceKind::V2(_) => {
-                return Err(D::Error::custom(
+        let kind =
+            match protocol {
+                CredentialIssuanceKind::V1(CredentialIssuanceTypeV1::V1_0(kind)) => {
+                    kind.kind_from_str(kind_str)
+                }
+                CredentialIssuanceKind::V2(_) => return Err(D::Error::custom(
                     "Cannot deserialize issue-credential-v2 message type into issue-credential-v1",
-                ))
-            }
-        };
+                )),
+            };
 
         match kind.map_err(D::Error::custom)? {
             CredentialIssuanceTypeV1_0::OfferCredential => {

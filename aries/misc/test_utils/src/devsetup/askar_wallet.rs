@@ -5,7 +5,6 @@ use aries_vcx_wallet::wallet::{
 use log::info;
 use uuid::Uuid;
 
-
 pub async fn dev_setup_wallet_askar(key_seed: &str) -> (String, AskarWallet) {
     info!("dev_setup_wallet_askar >>");
     // TODO - actually impl this

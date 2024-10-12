@@ -8,7 +8,9 @@ use aries_vcx::{
 use aries_vcx_wallet::{
     errors::error::VcxWalletError,
     wallet::{
-        askar::{askar_wallet_config::AskarWalletConfig, key_method::KeyMethod}, base_wallet::{BaseWallet, ManageWallet}, structs_io::UnpackMessageOutput
+        askar::{askar_wallet_config::AskarWalletConfig, key_method::KeyMethod},
+        base_wallet::{BaseWallet, ManageWallet},
+        structs_io::UnpackMessageOutput,
     },
 };
 use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
@@ -245,9 +247,7 @@ mod test {
     pub async fn test_pack_unpack() {
         let message: Value = serde_json::from_str("{}").unwrap();
         let message_bytes = serde_json::to_vec(&message).unwrap();
-        let mut agent = AgentBuilder::<AskarWallet>::new_demo_agent()
-            .await
-            .unwrap();
+        let mut agent = AgentBuilder::<AskarWallet>::new_demo_agent().await.unwrap();
         agent
             .init_service(
                 vec![],
