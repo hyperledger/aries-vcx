@@ -367,7 +367,6 @@ jobs:
       - workflow-setup
       - test-unit-workspace
       - test-integration-aries-vcx
-      - test-integration-aries-vcx-mysql
     if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
     outputs:
       RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
