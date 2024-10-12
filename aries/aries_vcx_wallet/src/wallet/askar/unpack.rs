@@ -43,6 +43,7 @@ pub async fn unpack(jwe: Jwe, session: &mut Session) -> VcxWalletResult<UnpackMe
     local_key.unpack(recipient, jwe)
 }
 
+/// Returns the shared encryption key, and the sender key (if any)
 fn unpack_recipient(
     recipient: &Recipient,
     local_key: &LocalKey,
@@ -72,28 +73,32 @@ fn unpack_msg(jwe: &Jwe, enc_key: LocalKey) -> VcxWalletResult<String> {
     )
 }
 
+/// Returns the shared encryption key, and the sender key
 fn unpack_authcrypt(
     local_key: &LocalKey,
     recipient: &AuthcryptRecipient,
 ) -> VcxWalletResult<(LocalKey, Option<Key>)> {
-    let recipient_key = ed25519_to_x25519(local_key)?;
-    let sender_vk = crypto_box_seal_open(&recipient_key, &recipient.header.sender.decode()?)?;
-    let sender_key = ed25519_to_x25519(&LocalKey::from_public_bytes(
-        Ed25519,
-        &bs58_to_bytes(&sender_vk.clone())?,
+    let recipient_x25519_key = ed25519_to_x25519(local_key)?;
+
+    // "sender" : base64URLencode(libsodium.crypto_box_seal(their_vk, base58encode(sender_vk)),
+    let encrypted_sender_vk = recipient.header.sender.decode()?;
+    let sender_vk = bs58_to_bytes(&crypto_box_seal_open(
+        &recipient_x25519_key,
+        &encrypted_sender_vk,
     )?)?;
+    let sender_x25519_key = ed25519_to_x25519(&LocalKey::from_public_bytes(Ed25519, &sender_vk)?)?;
 
     let secret = crypto_box_open(
-        &recipient_key,
-        &sender_key,
+        &recipient_x25519_key,
+        &sender_x25519_key,
         &recipient.encrypted_key.decode()?,
         &recipient.header.iv.decode()?,
     )?;
 
-    Ok((
-        LocalKey::from_secret_bytes(KeyAlg::Chacha20(Chacha20Types::C20P), &secret)?,
-        Some(Key::new(sender_vk.to_vec(), KeyType::Ed25519)?),
-    ))
+    let shared_enc_key =
+        LocalKey::from_secret_bytes(KeyAlg::Chacha20(Chacha20Types::C20P), &secret)?;
+    let sender_ed25519_pk = Key::new(sender_vk, KeyType::Ed25519)?;
+    Ok((shared_enc_key, Some(sender_ed25519_pk)))
 }
 
 fn unpack_anoncrypt(
@@ -103,10 +108,8 @@ fn unpack_anoncrypt(
     let recipient_key = ed25519_to_x25519(local_key)?;
     let key = crypto_box_seal_open(&recipient_key, &recipient.encrypted_key.decode()?)?;
 
-    Ok((
-        LocalKey::from_secret_bytes(KeyAlg::Chacha20(Chacha20Types::C20P), &key)?,
-        None,
-    ))
+    let shared_enc_key = LocalKey::from_secret_bytes(KeyAlg::Chacha20(Chacha20Types::C20P), &key)?;
+    Ok((shared_enc_key, None))
 }
 
 async fn find_recipient_key<'a>(

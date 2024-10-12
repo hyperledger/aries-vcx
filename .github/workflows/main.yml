@@ -101,7 +101,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        wallet: ["vdrtools_wallet", "askar_wallet"]
+        wallet: ["askar_wallet"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -123,7 +123,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        backend: ["credx,vdrtools_wallet", "vdr_proxy_ledger,vdrtools_wallet"]
+        backend: ["anoncreds,askar_wallet", "vdr_proxy_ledger,askar_wallet"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -332,7 +332,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        wallet: ["vdrtools_wallet,credx", "askar_wallet,credx"]
+        wallet: ["askar_wallet,anoncreds"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3

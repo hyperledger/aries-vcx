@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use public_key::Key;
 
 use super::{
-    askar_utils::{local_key_to_public_key, seed_from_opt},
+    askar_utils::{local_key_to_public_key, public_key_to_local_key, seed_from_opt},
     pack::Pack,
     rng_method::RngMethod,
     sig_type::SigType,
@@ -38,7 +38,7 @@ impl DidWallet for AskarWallet {
         _did_method_name: Option<&str>,
     ) -> VcxWalletResult<DidData> {
         let mut tx = self.transaction().await?;
-        let (did, local_key) = self
+        let (_vk, local_key) = self
             .insert_key(
                 &mut tx,
                 KeyAlg::Ed25519,
@@ -48,16 +48,29 @@ impl DidWallet for AskarWallet {
             .await?;
 
         let verkey = local_key_to_public_key(&local_key)?;
+
+        // construct NYM from first half of verkey as expected output from this method
+        let nym = {
+            let pk = verkey.key();
+            if pk.len() != 32 {
+                return Err(VcxWalletError::InvalidInput(format!(
+                    "Invalid key length: {}",
+                    pk.len()
+                )));
+            }
+            bs58::encode(&pk[0..16]).into_string()
+        };
+
         self.insert_did(
             &mut tx,
-            &did,
+            &nym,
             &RecordCategory::Did.to_string(),
             &verkey,
             None,
         )
         .await?;
         tx.commit().await?;
-        Ok(DidData::new(&did, &verkey))
+        Ok(DidData::new(&nym, &verkey))
     }
 
     async fn key_for_did(&self, did: &str) -> VcxWalletResult<Key> {
@@ -131,36 +144,28 @@ impl DidWallet for AskarWallet {
     }
 
     async fn sign(&self, key: &Key, msg: &[u8]) -> VcxWalletResult<Vec<u8>> {
-        if let Some(key) = self
+        let Some(key) = self
             .session()
             .await?
             .fetch_key(&key.base58(), false)
             .await?
-        {
-            let local_key = key.load_local_key()?;
-            let key_alg = SigType::try_from_key_alg(local_key.algorithm())?;
-            Ok(local_key.sign_message(msg, Some(key_alg.into()))?)
-        } else {
-            Err(VcxWalletError::record_not_found_from_details(
+        else {
+            return Err(VcxWalletError::record_not_found_from_details(
                 RecordCategory::Key,
                 &key.base58(),
-            ))
-        }
+            ));
+        };
+
+        let local_key = key.load_local_key()?;
+        let key_alg = SigType::try_from_key_alg(local_key.algorithm())?;
+        Ok(local_key.sign_message(msg, Some(key_alg.into()))?)
     }
 
     async fn verify(&self, key: &Key, msg: &[u8], signature: &[u8]) -> VcxWalletResult<bool> {
-        if let Some(key) = self
-            .session()
-            .await?
-            .fetch_key(&key.base58(), false)
-            .await?
-        {
-            let local_key = key.load_local_key()?;
-            let key_alg = SigType::try_from_key_alg(local_key.algorithm())?;
-            Ok(local_key.verify_signature(msg, signature, Some(key_alg.into()))?)
-        } else {
-            Ok(false)
-        }
+        let local_key = public_key_to_local_key(&key)?;
+
+        let sig_alg = SigType::try_from_key_alg(local_key.algorithm())?;
+        Ok(local_key.verify_signature(msg, signature, Some(sig_alg.into()))?)
     }
 
     async fn pack_message(

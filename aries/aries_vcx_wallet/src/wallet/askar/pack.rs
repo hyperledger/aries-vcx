@@ -72,9 +72,10 @@ fn pack_authcrypt_recipients(
             &nonce,
         )?;
 
+        let sender_ed25519_pk = sender_local_key.to_public_bytes()?;
         let enc_sender = crypto_box_seal(
             &recipient_converted_key,
-            bytes_to_bs58(&sender_local_key.to_public_bytes()?).as_bytes(),
+            bytes_to_bs58(&sender_ed25519_pk).as_bytes(),
         )?;
 
         encrypted_recipients.push(Recipient::new_authcrypt(
