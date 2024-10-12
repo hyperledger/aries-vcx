@@ -8,7 +8,6 @@ use public_key::Key;
 use super::{
     askar_utils::{local_key_to_public_key, public_key_to_local_key, seed_from_opt},
     pack::Pack,
-    rng_method::RngMethod,
     sig_type::SigType,
     unpack::unpack,
     AskarWallet,
@@ -39,12 +38,7 @@ impl DidWallet for AskarWallet {
     ) -> VcxWalletResult<DidData> {
         let mut tx = self.transaction().await?;
         let (_vk, local_key) = self
-            .insert_key(
-                &mut tx,
-                KeyAlg::Ed25519,
-                seed_from_opt(seed).as_bytes(),
-                RngMethod::RandomDet,
-            )
+            .insert_key(&mut tx, KeyAlg::Ed25519, seed_from_opt(seed).as_bytes())
             .await?;
 
         let verkey = local_key_to_public_key(&local_key)?;
@@ -92,12 +86,7 @@ impl DidWallet for AskarWallet {
         let mut tx = self.transaction().await?;
         if self.find_current_did(&mut tx, did).await?.is_some() {
             let (_, local_key) = self
-                .insert_key(
-                    &mut tx,
-                    KeyAlg::Ed25519,
-                    seed_from_opt(seed).as_bytes(),
-                    RngMethod::RandomDet,
-                )
+                .insert_key(&mut tx, KeyAlg::Ed25519, seed_from_opt(seed).as_bytes())
                 .await?;
 
             let verkey = local_key_to_public_key(&local_key)?;
