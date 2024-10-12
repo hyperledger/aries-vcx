@@ -16,8 +16,12 @@ use super::{
 use crate::{
     errors::error::{VcxWalletError, VcxWalletResult},
     wallet::{
-        base_wallet::{did_data::DidData, did_wallet::DidWallet, record_category::RecordCategory},
+        base_wallet::{
+            base58_string::Base58String, did_data::DidData, did_wallet::DidWallet,
+            record_category::RecordCategory,
+        },
         structs_io::UnpackMessageOutput,
+        utils::bytes_to_string,
     },
 };
 
@@ -32,22 +36,23 @@ impl DidWallet for AskarWallet {
             .len())
     }
 
+    // Creates an Indy DID from a 'seed', which is the non-expanded ed25519 secret key.
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,
         _did_method_name: Option<&str>,
     ) -> VcxWalletResult<DidData> {
-        let mut tx = self.transaction().await?;
-        let (did, local_key) = self
-            .insert_key(
-                &mut tx,
-                KeyAlg::Ed25519,
-                seed_from_opt(seed).as_bytes(),
-                RngMethod::RandomDet,
-            )
-            .await?;
+        let mut tx = self.session().await?;
 
+        let base58_seed = Base58String::from_bytes(&seed_from_opt(seed).as_bytes());
+        let secret_bytes = &base58_seed.decode()?[0..32];
+        let local_key = LocalKey::from_secret_bytes(KeyAlg::Ed25519, &secret_bytes)?;
         let verkey = local_key_to_public_key(&local_key)?;
+
+        let base58_did = Base58String::from_bytes(&local_key.to_public_bytes()?[0..16]);
+        let did = bytes_to_string(base58_did.as_bytes())?;
+
+        self.insert_key(&mut tx, &did, &local_key).await?;
         self.insert_did(
             &mut tx,
             &did,
@@ -78,14 +83,12 @@ impl DidWallet for AskarWallet {
     async fn replace_did_key_start(&self, did: &str, seed: Option<&str>) -> VcxWalletResult<Key> {
         let mut tx = self.transaction().await?;
         if self.find_current_did(&mut tx, did).await?.is_some() {
-            let (_, local_key) = self
-                .insert_key(
-                    &mut tx,
-                    KeyAlg::Ed25519,
-                    seed_from_opt(seed).as_bytes(),
-                    RngMethod::RandomDet,
-                )
-                .await?;
+            let local_key = LocalKey::from_seed(
+                KeyAlg::Ed25519,
+                seed_from_opt(seed).as_bytes(),
+                RngMethod::RandomDet.into(),
+            )?;
+            self.insert_key(&mut tx, &did, &local_key).await?;
 
             let verkey = local_key_to_public_key(&local_key)?;
             self.insert_did(
