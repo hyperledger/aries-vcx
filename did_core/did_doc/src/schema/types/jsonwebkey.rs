@@ -31,13 +31,13 @@ impl Display for JsonWebKeyError {
 // Unfortunately only supports curves from the original RFC
 // pub struct JsonWebKey(jsonwebkey::JsonWebKey);
 pub struct JsonWebKey {
-    kty: String,
-    crv: String,
-    x: String,
+    pub kty: String,
+    pub crv: String,
+    pub x: String,
     #[serde(flatten)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     #[serde(default)]
-    extra: HashMap<String, Value>,
+    pub extra: HashMap<String, Value>,
 }
 
 impl JsonWebKey {
