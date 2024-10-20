@@ -47,6 +47,11 @@ impl DidJwk {
         Self::try_from(did)
     }
 
+    pub fn try_from_serialized_jwk(jwk: &str) -> Result<DidJwk, DidJwkError> {
+        let jwk: JsonWebKey = serde_json::from_str(jwk)?;
+        Self::try_from(jwk)
+    }
+
     pub fn jwk(&self) -> &JsonWebKey {
         &self.jwk
     }
@@ -74,6 +79,17 @@ impl TryFrom<Did> for DidJwk {
     }
 }
 
+impl TryFrom<JsonWebKey> for DidJwk {
+    type Error = DidJwkError;
+
+    fn try_from(jwk: JsonWebKey) -> Result<Self, Self::Error> {
+        let encoded_jwk = encode_jwk(&jwk)?;
+        let did = Did::parse(format!("did:jwk:{encoded_jwk}",))?;
+
+        Ok(Self { jwk, did })
+    }
+}
+
 impl TryFrom<Key> for DidJwk {
     type Error = DidJwkError;
 
@@ -96,9 +112,7 @@ impl TryFrom<Key> for DidJwk {
             }
         }
 
-        let encoded_jwk = encode_jwk(&jwk)?;
-        let did = Did::parse(format!("did:jwk:{encoded_jwk}",))?;
-        Ok(Self { jwk, did })
+        Self::try_from(jwk)
     }
 }
 
@@ -150,14 +164,18 @@ mod tests {
         Key::from_fingerprint(&valid_key_base58_fingerprint()).unwrap()
     }
 
-    fn valid_jwk() -> JsonWebKey {
-        serde_json::from_value(json!({
+    fn valid_serialized_jwk() -> String {
+        r#"{
             "kty": "OKP",
             "crv": "Ed25519",
             "x": "ANRjH_zxcKBxsjRPUtzRbp7FSVLKJXQ9APX9MP1j7k4",
-            "use": "sig",
-        }))
-        .unwrap()
+            "use": "sig"
+        }"#
+        .to_string()
+    }
+
+    fn valid_jwk() -> JsonWebKey {
+        serde_json::from_str(&valid_serialized_jwk()).unwrap()
     }
 
     fn valid_encoded_jwk() -> String {
@@ -216,6 +234,19 @@ mod tests {
     #[test]
     fn test_to_key() {
         assert_eq!(valid_did_jwk().key().unwrap(), valid_key());
+    }
+
+    #[test]
+    fn test_try_from_serialized_jwk() {
+        assert_eq!(
+            valid_did_jwk(),
+            DidJwk::try_from_serialized_jwk(&valid_serialized_jwk()).unwrap(),
+        );
+    }
+
+    #[test]
+    fn test_try_from_jwk() {
+        assert_eq!(valid_did_jwk(), DidJwk::try_from(valid_jwk()).unwrap(),);
     }
 
     #[test]
