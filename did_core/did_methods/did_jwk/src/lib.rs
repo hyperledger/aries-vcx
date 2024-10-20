@@ -186,7 +186,11 @@ mod tests {
         format!("did:jwk:{}", valid_encoded_jwk())
     }
 
-    fn invalid_did_jwk_string() -> String {
+    fn invalid_did_jwk_string_wrong_method() -> String {
+        format!("did:sov:{}", valid_encoded_jwk())
+    }
+
+    fn invalid_did_jwk_string_invalid_id() -> String {
         "did:jwk:somenonsense".to_string()
     }
 
@@ -214,8 +218,13 @@ mod tests {
     }
 
     #[test]
-    fn test_deserialize_error() {
-        assert!(serde_json::from_str::<DidJwk>(&invalid_did_jwk_string()).is_err());
+    fn test_deserialize_error_wrong_method() {
+        assert!(serde_json::from_str::<DidJwk>(&invalid_did_jwk_string_wrong_method()).is_err());
+    }
+
+    #[test]
+    fn test_deserialize_error_invalid_id() {
+        assert!(serde_json::from_str::<DidJwk>(&invalid_did_jwk_string_invalid_id()).is_err());
     }
 
     #[test]
@@ -227,8 +236,13 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_error() {
-        assert!(DidJwk::parse(invalid_did_jwk_string()).is_err());
+    fn test_parse_error_wrong_method() {
+        assert!(DidJwk::parse(invalid_did_jwk_string_wrong_method()).is_err());
+    }
+
+    #[test]
+    fn test_parse_error_invalid_id() {
+        assert!(DidJwk::parse(invalid_did_jwk_string_invalid_id()).is_err());
     }
 
     #[test]

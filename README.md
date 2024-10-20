@@ -25,6 +25,7 @@ The repository contains Rust crates to build
   - [`did_sov`](did_core/did_methods/did_resolver_sov) - https://sovrin-foundation.github.io/sovrin/spec/did-method-spec-template.html
   - [`did_web`](did_core/did_methods/did_resolver_web) - https://w3c-ccg.github.io/did-method-web/
   - [`did_key`](did_core/did_methods/did_key) - https://w3c-ccg.github.io/did-method-key/
+  - [`did_jwk`](did_core/did_methods/did_jwk) - https://github.com/quartzjer/did-jwk/blob/main/spec.md
 
 # Contact
 Do you have a question ❓Are you considering using our components? 🚀 We'll be excited to hear from you. 👋
