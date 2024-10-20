@@ -1911,6 +1911,7 @@ dependencies = [
  "public_key",
  "serde",
  "serde_json",
+ "thiserror",
  "tokio",
 ]
 

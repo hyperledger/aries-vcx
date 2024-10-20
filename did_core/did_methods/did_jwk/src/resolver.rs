@@ -1,12 +1,6 @@
 use async_trait::async_trait;
-use base64::{
-    alphabet,
-    engine::{DecodePaddingMode, GeneralPurpose, GeneralPurposeConfig},
-    Engine,
-};
 use did_doc::schema::{
     did_doc::DidDocument,
-    types::jsonwebkey::JsonWebKey,
     verification_method::{PublicKeyField, VerificationMethod, VerificationMethodType},
 };
 use did_parser_nom::{Did, DidUrl};
@@ -16,15 +10,7 @@ use did_resolver::{
 };
 use serde_json::Value;
 
-/// A default [GeneralPurposeConfig] configuration with a [decode_padding_mode] of
-/// [DecodePaddingMode::Indifferent]
-const LENIENT_PAD: GeneralPurposeConfig = GeneralPurposeConfig::new()
-    .with_encode_padding(false)
-    .with_decode_padding_mode(DecodePaddingMode::Indifferent);
-
-/// A [GeneralPurpose] engine using the [alphabet::URL_SAFE] base64 alphabet and
-/// [DecodePaddingMode::Indifferent] config to decode both padded and unpadded.
-const URL_SAFE_LENIENT: GeneralPurpose = GeneralPurpose::new(&alphabet::URL_SAFE, LENIENT_PAD);
+use crate::DidJwk;
 
 #[derive(Default)]
 pub struct DidJwkResolver;
@@ -44,15 +30,8 @@ impl DidResolvable for DidJwkResolver {
         did: &Did,
         _options: &Self::DidResolutionOptions,
     ) -> Result<DidResolutionOutput, GenericError> {
-        let did = did.to_owned();
-        // TODO - all unwraps
-        let Some("jwk") = did.method() else {
-            todo!();
-        };
-        let jwk_base64 = did.id();
-        let jwk_bytes = URL_SAFE_LENIENT.decode(jwk_base64)?;
-
-        let jwk: JsonWebKey = serde_json::from_slice(&jwk_bytes)?;
+        let did_jwk = DidJwk::try_from(did.to_owned())?;
+        let jwk = did_jwk.jwk();
 
         let jwk_use = jwk.extra.get("use").and_then(Value::as_str);
 
