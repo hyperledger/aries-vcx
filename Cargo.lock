@@ -1895,6 +1895,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "did_cheqd"
+version = "0.1.0"
+dependencies = [
+ "aries_vcx_ledger",
+ "async-trait",
+ "did_resolver",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "did_doc"
 version = "0.1.0"
 dependencies = [

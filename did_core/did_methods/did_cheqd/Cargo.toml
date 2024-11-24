@@ -1,0 +1,15 @@
+[package]
+name = "did_cheqd"
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+did_resolver = { path = "../../did_resolver" }
+aries_vcx_ledger = { path = "../../../aries/aries_vcx_ledger" }
+async-trait = "0.1.68"
+serde_json = "1.0.96"
+serde = { version = "1.0.160", features = ["derive"] }
+thiserror = "1.0.40"
