@@ -6,6 +6,10 @@ license.workspace = true
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "did_cheqd"
+path = "src/lib.rs"
+
 [dependencies]
 did_resolver = { path = "../../did_resolver" }
 tonic = { version = "0.12.3", default-features = false, features = [
@@ -27,6 +31,3 @@ tokio = { version = "1.38.0", default-features = false, features = [
     "macros",
     "rt",
 ] }
-
-[build-dependencies]
-tonic-build = "0.12.3"

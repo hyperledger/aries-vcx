@@ -1329,6 +1329,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "cheqd_proto_gen"
+version = "0.1.0"
+dependencies = [
+ "tonic-build",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1917,7 +1924,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "tonic",
- "tonic-build",
 ]
 
 [[package]]

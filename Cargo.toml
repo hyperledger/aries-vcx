@@ -31,6 +31,7 @@ members = [
     "misc/simple_message_relay",
     "misc/display_as_json",
     "did_core/did_methods/did_cheqd",
+    "did_core/did_methods/did_cheqd/cheqd_proto_gen",
 ]
 
 [workspace.package]
