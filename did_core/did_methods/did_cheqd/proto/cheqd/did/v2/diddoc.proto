@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package cheqd.did.v2;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/cheqd/cheqd-node/x/did/types";
+
+// DidDoc defines a DID Document, as defined in the DID Core specification.
+// Documentation: https://www.w3.org/TR/did-core/
+message DidDoc {
+  // context is a list of URIs used to identify the context of the DID document.
+  // Default: https://www.w3.org/ns/did/v1
+  repeated string context = 1;
+
+  // id is the DID of the DID document.
+  // Format: did:cheqd:<namespace>:<unique-identifier>
+  string id = 2;
+
+  // controller is a list of DIDs that are allowed to control the DID document.
+  repeated string controller = 3;
+
+  // verificationMethod is a list of verification methods that can be used to
+  // verify a digital signature or cryptographic proof.
+  repeated VerificationMethod verification_method = 4;
+
+  // authentication is a list of verification methods that can be used to
+  // authenticate as the DID subject.
+  repeated string authentication = 5;
+
+  // assertionMethod is a list of verification methods that can be used to
+  // assert statements as the DID subject.
+  repeated string assertion_method = 6;
+
+  // capabilityInvocation is a list of verification methods that can be used to
+  // invoke capabilities as the DID subject.
+  repeated string capability_invocation = 7;
+
+  // capabilityDelegation is a list of verification methods that can be used to
+  // delegate capabilities as the DID subject.
+  repeated string capability_delegation = 8;
+
+  // keyAgreement is a list of verification methods that can be used to perform
+  // key agreement as the DID subject.
+  repeated string key_agreement = 9;
+
+  // service is a list of services that can be used to interact with the DID subject.
+  repeated Service service = 10;
+
+  // alsoKnownAs is a list of DIDs that are known to refer to the same DID subject.
+  repeated string also_known_as = 11;
+}
+
+// VerificationMethod defines a verification method, as defined in the DID Core specification.
+// Documentation: https://www.w3.org/TR/did-core/#verification-methods
+message VerificationMethod {
+  // id is the unique identifier of the verification method.
+  // Format: did:cheqd:<namespace>:<unique-identifier>#<key-id>
+  string id = 1;
+
+  // type is the type of the verification method.
+  // Example: Ed25519VerificationKey2020
+  string verification_method_type = 2 [(gogoproto.jsontag) = "type,omitempty"];
+
+  // controller is the DID of the controller of the verification method.
+  // Format: did:cheqd:<namespace>:<unique-identifier>
+  string controller = 3;
+
+  // verification_material is the public key of the verification method.
+  // Commonly used verification material types: publicJwk, publicKeyBase58, publicKeyMultibase
+  string verification_material = 4;
+}
+
+// Service defines a service, as defined in the DID Core specification.
+// Documentation: https://www.w3.org/TR/did-core/#services
+message Service {
+  // id is the unique identifier of the service.
+  // Format: did:cheqd:<namespace>:<unique-identifier>#<service-id>
+  string id = 1;
+
+  // type is the type of the service.
+  // Example: LinkedResource
+  string service_type = 2 [(gogoproto.jsontag) = "type,omitempty"];
+
+  // serviceEndpoint is the endpoint of the service.
+  // Example: https://example.com/endpoint
+  repeated string service_endpoint = 3;
+}
+
+// DidDocWithMetadata defines a DID Document with metadata, as defined in the DID Core specification.
+// Contains the DID Document, as well as DID Document metadata.
+message DidDocWithMetadata {
+  // didDocument is the DID Document.
+  DidDoc did_doc = 1 [(gogoproto.jsontag) = "didDocument"];
+
+  // didDocumentMetadata is the DID Document metadata.
+  Metadata metadata = 2 [(gogoproto.jsontag) = "didDocumentMetadata"];
+}
+
+// Metadata defines DID Document metadata, as defined in the DID Core specification.
+// Documentation: https://www.w3.org/TR/did-core/#did-document-metadata-properties
+message Metadata {
+  // created is the timestamp of the creation of the DID Document.
+  // Format: RFC3339
+  // Example: 2021-03-10T15:16:17Z
+  google.protobuf.Timestamp created = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdtime) = true
+  ];
+
+  // updated is the timestamp of the last update of the DID Document.
+  // Format: RFC3339
+  // Example: 2021-03-10T15:16:17Z
+  google.protobuf.Timestamp updated = 2 [
+    (gogoproto.nullable) = true,
+    (gogoproto.stdtime) = true
+  ];
+
+  // deactivated is a flag that indicates whether the DID Document is deactivated.
+  // Default: false
+  bool deactivated = 3;
+
+  // version_id is the version identifier of the DID Document.
+  // Format: UUID
+  // Example: 123e4567-e89b-12d3-a456-426655440000
+  string version_id = 4;
+
+  // next_version_id is the version identifier of the next version of the DID Document.
+  // Format: UUID
+  // Example: 123e4567-e89b-12d3-a456-426655440000
+  string next_version_id = 5 [(gogoproto.nullable) = true];
+
+  // previous_version_id is the version identifier of the previous version of the DID Document.
+  // Format: UUID
+  // Example: 123e4567-e89b-12d3-a456-426655440000
+  string previous_version_id = 6 [(gogoproto.nullable) = true];
+}

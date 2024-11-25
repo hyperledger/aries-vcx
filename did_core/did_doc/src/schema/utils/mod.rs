@@ -19,6 +19,15 @@ pub enum OneOrList<T> {
     List(Vec<T>),
 }
 
+impl<T> From<Vec<T>> for OneOrList<T> {
+    fn from(mut value: Vec<T>) -> Self {
+        match value.len() {
+            1 => OneOrList::One(value.remove(0)),
+            _ => OneOrList::List(value),
+        }
+    }
+}
+
 impl OneOrList<String> {
     pub fn first(&self) -> Option<String> {
         match self {
