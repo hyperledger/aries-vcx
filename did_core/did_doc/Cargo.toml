@@ -3,6 +3,9 @@ name = "did_doc"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+jwk = ["public_key/jwk"]
+
 [dependencies]
 base64 = "0.22.1"
 bs58 = "0.5.0"

@@ -7,6 +7,6 @@ edition = "2021"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 time = "0.3.20"
-indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "c143268", default-features = false, features = ["log"] }
+indy-vdr.workspace = true
 thiserror = "1.0.44"
 anoncreds-clsignatures = "0.3.2"

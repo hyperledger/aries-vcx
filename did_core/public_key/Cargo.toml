@@ -3,6 +3,9 @@ name = "public_key"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+jwk = ["dep:askar-crypto"]
+
 [dependencies]
 thiserror = "1.0.40"
 serde = { version = "1.0.164", features = ["derive"] }
@@ -11,3 +14,10 @@ base64 = "0.22.1"
 bs58 = "0.5.0"
 multibase = "0.9.1"
 unsigned-varint = "0.8.0"
+# askar-crypto used for jwk conversion. maintain minimal feature set
+askar-crypto = { workspace = true, features = [
+    "std",
+    "any_key",
+    "ec_curves",
+    "ed25519",
+], optional = true }

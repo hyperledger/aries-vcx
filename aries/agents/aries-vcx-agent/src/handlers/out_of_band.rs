@@ -52,7 +52,7 @@ impl<T: BaseWallet> ServiceOutOfBand<T> {
             GenericOutOfBand::Sender(sender.to_owned()),
         )?;
 
-        Ok(sender.to_aries_message())
+        Ok(sender.invitation_to_aries_message())
     }
 
     pub fn receive_invitation(&self, invitation: AriesMessage) -> AgentResult<String> {
