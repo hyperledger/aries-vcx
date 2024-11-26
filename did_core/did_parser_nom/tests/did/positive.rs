@@ -81,4 +81,14 @@ test_cases_positive! {
         Some("peer"),
         None,
         "4z84UjLJ6ugExV8TJ5gJUtZap5q67uD34LU26m1Ljo2u9PZ4xHa9XnknHLc3YMST5orPXh3LKi6qEYSHdNSgRMvassKP:z27uFkiqJVwvvn2ke5M19UCvByS79r5NppqwjiGAJzkj1EM4sf2JmiUySkANKy4YNu8M7yKjSmvPJTqbcyhPrJs9TASzDs2fWE1vFegmaRJxHRF5M9wGTPwGR1NbPkLGsvcnXum7aN2f8kX3BnhWWWp"
+    test_did_cheqd:
+        "did:cheqd:mainnet:de9786cd-ec53-458c-857c-9342cf264f80",
+        Some("cheqd"),
+        Some("mainnet"),
+        "de9786cd-ec53-458c-857c-9342cf264f80"
+    test_did_cheqd_indy_style:
+        "did:cheqd:testnet:TAwT8WVt3dz2DBAifwuSkn",
+        Some("cheqd"),
+        Some("testnet"),
+        "TAwT8WVt3dz2DBAifwuSkn"
 }
