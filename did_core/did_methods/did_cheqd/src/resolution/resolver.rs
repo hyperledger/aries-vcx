@@ -21,7 +21,7 @@ use crate::{
 const MAINNET_NAMESPACE: &str = "mainnet";
 const MAINNET_DEFAULT_GRPC: &str = "https://grpc.cheqd.net:443";
 const TESTNET_NAMESPACE: &str = "testnet";
-const TESTNET_DEFAULT_GRPC: &str = "https://rpc.cheqd.network:443";
+const TESTNET_DEFAULT_GRPC: &str = "https://grpc.cheqd.network:443";
 
 pub struct DidCheqdResolverConfiguration {
     networks: Vec<NetworkConfiguration>,

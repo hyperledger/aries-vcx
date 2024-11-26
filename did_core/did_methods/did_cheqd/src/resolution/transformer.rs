@@ -3,6 +3,7 @@ use std::str::FromStr;
 use did_resolver::{
     did_doc::schema::{
         did_doc::DidDocument,
+        service::Service,
         types::uri::Uri,
         utils::OneOrList,
         verification_method::{PublicKeyField, VerificationMethod, VerificationMethodType},
@@ -13,7 +14,10 @@ use serde_json::json;
 
 use crate::{
     error::DidCheqdError,
-    proto::cheqd::did::v2::{DidDoc as CheqdDidDoc, VerificationMethod as CheqdVerificationMethod},
+    proto::cheqd::did::v2::{
+        DidDoc as CheqdDidDoc, Service as CheqdService,
+        VerificationMethod as CheqdVerificationMethod,
+    },
 };
 
 impl TryFrom<CheqdDidDoc> for DidDocument {
@@ -28,7 +32,9 @@ impl TryFrom<CheqdDidDoc> for DidDocument {
             .into_iter()
             .map(Did::parse)
             .collect::<Result<_, _>>()?;
-        doc.set_controller(OneOrList::from(controller));
+        if controller.len() > 0 {
+            doc.set_controller(OneOrList::from(controller));
+        }
 
         for vm in value.verification_method {
             let vm = VerificationMethod::try_from(vm)?;
@@ -52,6 +58,11 @@ impl TryFrom<CheqdDidDoc> for DidDocument {
             doc.add_key_agreement_ref(vm_id.parse()?);
         }
 
+        for svc in value.service {
+            let svc = Service::try_from(svc)?;
+            doc.add_service(svc);
+        }
+
         let aka: Vec<_> = value
             .also_known_as
             .iter()
@@ -72,6 +83,7 @@ impl TryFrom<CheqdVerificationMethod> for VerificationMethod {
 
         let vm_key_encoded = value.verification_material;
 
+        // TODO - lots of todo!()s
         let pk = match vm_type {
             VerificationMethodType::Ed25519VerificationKey2020 => PublicKeyField::Multibase {
                 public_key_multibase: vm_key_encoded,
@@ -120,5 +132,23 @@ impl TryFrom<CheqdVerificationMethod> for VerificationMethod {
             .build();
 
         Ok(vm)
+    }
+}
+
+impl TryFrom<CheqdService> for Service {
+    type Error = DidCheqdError;
+
+    fn try_from(value: CheqdService) -> Result<Self, Self::Error> {
+        // TODO #1301 - fix mapping: https://github.com/hyperledger/aries-vcx/issues/1301
+        let endpoint = value.service_endpoint.into_iter().next().unwrap(); // TODO
+
+        let svc = Service::new(
+            Uri::from_str(&value.id)?,
+            endpoint.parse().unwrap(), // TODO
+            serde_json::from_value(json!(value.service_type))?,
+            Default::default(),
+        );
+
+        Ok(svc)
     }
 }
