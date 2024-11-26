@@ -11,21 +11,10 @@ path = "src/lib.rs"
 doctest = false
 
 [features]
-# Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
-credx = [
-    "aries_vcx_anoncreds/credx",
-    "test_utils/vdrtools_wallet",
-    "test_utils/credx"
-]
-anoncreds = ["aries_vcx_anoncreds/anoncreds", "test_utils/anoncreds", "test_utils/vdrtools_wallet"]
+anoncreds = ["aries_vcx_anoncreds/anoncreds", "test_utils/anoncreds", "test_utils/askar_wallet"]
 vdr_proxy_ledger = [
-    "aries_vcx_wallet/vdrtools_wallet",
+    "aries_vcx_wallet/askar_wallet",
     "test_utils/vdr_proxy_ledger",
-    "credx",
-]
-vdrtools_wallet = [
-    "aries_vcx_wallet/vdrtools_wallet",
-    "test_utils/vdrtools_wallet",
 ]
 backtrace_errors = ["backtrace"]
 
@@ -78,7 +67,6 @@ backtrace = { optional = true, version = "0.3" }
 
 [dev-dependencies]
 test_utils = { path = "../misc/test_utils" }
-wallet_migrator = { path = "../misc/wallet_migrator" }
 async-channel = "2.3.1"
 tokio = { version = "1.38", features = ["rt", "macros", "rt-multi-thread"] }
 pretty_assertions = "1.4.0"

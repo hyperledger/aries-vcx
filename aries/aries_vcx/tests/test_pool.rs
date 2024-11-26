@@ -23,7 +23,7 @@ use aries_vcx::{
 };
 use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_ledger::ledger::{
-    base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+    base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerWrite},
     indy::pool::test_utils::get_temp_file_path,
 };
 use aries_vcx_wallet::wallet::base_wallet::{did_wallet::DidWallet, BaseWallet};
@@ -296,6 +296,12 @@ async fn test_pool_multiple_service_formats() -> Result<(), Box<dyn Error>> {
     let setup = build_setup_profile().await;
     let did = setup.institution_did.clone();
 
+    // clear all
+    let c = json!({ "service": serde_json::Value::Null }).to_string();
+    setup.ledger_write.add_attr(&setup.wallet, &did, &c).await?;
+    let c = json!({ "endpoint": serde_json::Value::Null }).to_string();
+    setup.ledger_write.add_attr(&setup.wallet, &did, &c).await?;
+
     // Write legacy service format
     let service_1 = AriesService::create()
         .set_service_endpoint("https://example1.org".parse()?)
@@ -427,10 +433,7 @@ async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation(
     )
     .await;
 
-    #[cfg(feature = "credx")]
     assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidState);
-    #[cfg(not(feature = "credx"))]
-    assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidInput);
     Ok(())
 }
 

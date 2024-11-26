@@ -101,7 +101,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        wallet: ["vdrtools_wallet", "askar_wallet"]
+        wallet: ["askar_wallet"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -123,7 +123,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        backend: ["credx,vdrtools_wallet", "vdr_proxy_ledger,vdrtools_wallet"]
+        backend: ["anoncreds,askar_wallet", "vdr_proxy_ledger,askar_wallet"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -293,46 +293,12 @@ jobs:
       - name: "Run workspace unit tests"
         run: just test-unit
 
-  test-wallet-migrator:
-    needs: workflow-setup
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust testing environment"
-        uses: ./.github/actions/setup-testing-rust
-        with:
-          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
-          skip-docker-setup: true
-      - name: "Install just"
-        run: sudo snap install --edge --classic just
-      - name: "Run wallet migration tests"
-        run: just test-wallet-migrator
-
-  test-compatibility-aries-vcx-wallet:
-    needs: workflow-setup
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust testing environment"
-        uses: ./.github/actions/setup-testing-rust
-        with:
-          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
-          skip-docker-setup: true
-      - name: "Install just"
-        run: sudo snap install --edge --classic just
-      - name: "Run aries-vcx-wallet compatibility tests"
-        run: just test-compatibility-aries-vcx-wallet
-
   test-integration-aries-vcx:
     needs: workflow-setup
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        wallet: ["vdrtools_wallet,credx", "askar_wallet,credx"]
+        wallet: ["askar_wallet,anoncreds"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -344,36 +310,6 @@ jobs:
         run: sudo snap install --edge --classic just
       - name: "Run aries-vcx integration tests"
         run: just test-integration-aries-vcx ${{ matrix.wallet }}
-
-  test-integration-aries-vcx-anoncreds-rs:
-    needs: workflow-setup
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust testing environment"
-        uses: ./.github/actions/setup-testing-rust
-        with:
-          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-      - name: "Install just"
-        run: sudo snap install --edge --classic just
-      - name: "Run anoncreds-rs integration tests"
-        run: just test-integration-aries-vcx-anoncreds-rs
-
-  test-integration-aries-vcx-mysql:
-    needs: workflow-setup
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust testing environment"
-        uses: ./.github/actions/setup-testing-rust
-        with:
-          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSION }}
-      - name: "Install just"
-        run: sudo snap install --edge --classic just
-      - name: "Run aries_vcx tests: mysql_test"
-        run: just test-integration-aries-vcx-mysql
 
   test-integration-aries-vcx-vdrproxy:
     needs: [workflow-setup, build-docker-vdrproxy]
@@ -431,7 +367,6 @@ jobs:
       - workflow-setup
       - test-unit-workspace
       - test-integration-aries-vcx
-      - test-integration-aries-vcx-mysql
     if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
     outputs:
       RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
