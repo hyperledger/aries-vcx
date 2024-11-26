@@ -6,10 +6,12 @@ async fn test_resolve_known_mainnet_vector() {
     // sample from https://dev.uniresolver.io/
     let did = "did:cheqd:mainnet:Ps1ysXP2Ae6GBfxNhNQNKN".parse().unwrap();
     // NOTE: modifications from uni-resolver:
-    // *remove contexts,
     // make serviceEndpoints into single item (not array)
     let expected_doc = json!({
-      "@context": [],
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/ed25519-2020/v1"
+      ],
       "id": "did:cheqd:mainnet:Ps1ysXP2Ae6GBfxNhNQNKN",
       "verificationMethod": [
         {
@@ -59,10 +61,12 @@ async fn test_resolve_known_testnet_vector() {
         .parse()
         .unwrap();
     // NOTE: modifications from uni-resolver:
-    // * remove contexts,
     // * made controller a single item
     let expected_doc = json!({
-      "@context": [],
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/ed25519-2020/v1"
+      ],
       "id": "did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47",
       "controller": "did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47",
       "verificationMethod": [

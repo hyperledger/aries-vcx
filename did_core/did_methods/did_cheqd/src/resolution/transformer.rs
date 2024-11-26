@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use did_resolver::{
     did_doc::schema::{
+        contexts,
         did_doc::DidDocument,
         service::Service,
         types::uri::Uri,
@@ -25,7 +26,12 @@ impl TryFrom<CheqdDidDoc> for DidDocument {
 
     fn try_from(value: CheqdDidDoc) -> Result<Self, Self::Error> {
         let mut doc = DidDocument::new(value.id.parse()?);
-        doc.set_extra_field(String::from("@context"), json!(value.context));
+        let mut context = value.context;
+
+        // insert default context
+        if !context.iter().any(|ctx| ctx == contexts::W3C_DID_V1) {
+            context.push(contexts::W3C_DID_V1.to_owned());
+        }
 
         let controller: Vec<_> = value
             .controller
@@ -38,8 +44,12 @@ impl TryFrom<CheqdDidDoc> for DidDocument {
 
         for vm in value.verification_method {
             let vm = VerificationMethod::try_from(vm)?;
+            let vm_ctx = vm.verification_method_type().context_for_type();
+            if !context.iter().any(|ctx| ctx == vm_ctx) {
+                context.push(vm_ctx.to_owned());
+            }
+
             doc.add_verification_method(vm);
-            // TODO - would be nice to append relevant contexts too
         }
 
         for vm_id in value.authentication {
@@ -69,6 +79,9 @@ impl TryFrom<CheqdDidDoc> for DidDocument {
             .map(|aka| Uri::from_str(aka))
             .collect::<Result<_, _>>()?;
         doc.set_also_known_as(aka);
+
+        // add in all contexts
+        doc.set_extra_field(String::from("@context"), json!(context));
 
         Ok(doc)
     }
@@ -114,12 +127,12 @@ impl TryFrom<CheqdVerificationMethod> for VerificationMethod {
             VerificationMethodType::Multikey => PublicKeyField::Multibase {
                 public_key_multibase: vm_key_encoded,
             },
+            // https://w3id.org/pgp/v1
+            VerificationMethodType::PgpVerificationKey2021 => PublicKeyField::Pgp {
+                public_key_pgp: vm_key_encoded,
+            },
             // cannot infer encoding type from vm type, as multiple are supported: https://ns.did.ai/suites/secp256k1-2019/v1/
             VerificationMethodType::EcdsaSecp256k1VerificationKey2019 => todo!(),
-            // not supported
-            VerificationMethodType::PgpVerificationKey2021 => todo!(),
-            // not supported
-            VerificationMethodType::RsaVerificationKey2018 => todo!(),
             // cannot infer encoding type from vm type: https://identity.foundation/EcdsaSecp256k1RecoverySignature2020/lds-ecdsa-secp256k1-recovery2020-0.0.jsonld
             VerificationMethodType::EcdsaSecp256k1RecoveryMethod2020 => todo!(),
         };
