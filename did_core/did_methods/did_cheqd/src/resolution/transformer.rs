@@ -32,7 +32,7 @@ impl TryFrom<CheqdDidDoc> for DidDocument {
             .into_iter()
             .map(Did::parse)
             .collect::<Result<_, _>>()?;
-        if controller.len() > 0 {
+        if !controller.is_empty() {
             doc.set_controller(OneOrList::from(controller));
         }
 
