@@ -8,12 +8,10 @@ edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-credx = ["dep:indy-credx"]
 anoncreds = ["dep:anoncreds"]
 legacy_proof = []
 
 [dependencies]
-indy-credx = { workspace = true, optional = true }
 anoncreds = { workspace = true, optional = true }
 aries_vcx_wallet = { path = "../aries_vcx_wallet" }
 anoncreds_types = { path = "../misc/anoncreds_types" }

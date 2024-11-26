@@ -165,7 +165,7 @@ fn from_revocation_status_list_to_revocation_registry_delta(
     })
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Anoncreds;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

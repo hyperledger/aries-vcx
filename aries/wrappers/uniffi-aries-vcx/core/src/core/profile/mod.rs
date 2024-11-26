@@ -1,23 +1,13 @@
 use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+use aries_vcx_anoncreds::anoncreds::anoncreds::Anoncreds;
 use aries_vcx_ledger::ledger::{
     base_ledger::TxnAuthrAgrmtOptions, indy_vdr_ledger::IndyVdrLedgerRead,
     request_submitter::vdr_ledger::IndyVdrSubmitter,
     response_cacher::in_memory::InMemoryResponseCacher,
 };
 
-#[cfg(feature = "vdrtools_wallet")]
-pub mod indy;
-#[cfg(feature = "vdrtools_wallet")]
-use aries_vcx::aries_vcx_wallet::wallet::indy::IndySdkWallet;
-#[cfg(feature = "vdrtools_wallet")]
-pub use indy as profile;
-
-#[cfg(feature = "askar_wallet")]
 pub mod askar;
-#[cfg(feature = "askar_wallet")]
 use aries_vcx::aries_vcx_wallet::wallet::askar::AskarWallet;
-#[cfg(feature = "askar_wallet")]
 pub use askar as profile;
 
 use crate::profile::UniffiProfile;
@@ -27,16 +17,10 @@ impl UniffiProfile {
         &self.ledger_read
     }
 
-    pub fn anoncreds(&self) -> &IndyCredxAnonCreds {
+    pub fn anoncreds(&self) -> &Anoncreds {
         &self.anoncreds
     }
 
-    #[cfg(feature = "vdrtools_wallet")]
-    pub fn wallet(&self) -> &IndySdkWallet {
-        &self.wallet
-    }
-
-    #[cfg(feature = "askar_wallet")]
     pub fn wallet(&self) -> &AskarWallet {
         &self.wallet
     }

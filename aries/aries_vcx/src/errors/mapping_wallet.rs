@@ -45,17 +45,6 @@ impl From<VcxWalletError> for AriesVcxError {
             VcxWalletError::NotBase64(_) => {
                 Self::from_msg(AriesVcxErrorKind::ParsingError, value.to_string())
             }
-            // imperfect solution:
-            // ideally we want this to be conditionally compiled if the
-            // aries_vcx_wallet/vdrtools_wallet feature is enabled, rather than the
-            // aries_vcx/vdrtools_wallet feature. however that is not possible currently
-            // with cargo. as such, if we have a case where
-            // aries_vcx_wallet/vdrtool_wallet is enabled, but aries_vcx/vdrtools_wallet
-            // is not, then the error will fall thru to the catch all case `_ =>`
-            #[cfg(feature = "vdrtools_wallet")]
-            VcxWalletError::IndyApiError(_) => {
-                Self::from_msg(AriesVcxErrorKind::InvalidLedgerResponse, value.to_string())
-            }
             // can be
             #[allow(unreachable_patterns)]
             _ => Self::from_msg(AriesVcxErrorKind::UnknownError, value.to_string()),

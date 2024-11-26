@@ -13,7 +13,7 @@ client = []
 anyhow = "1.0.75"
 aries_vcx = { path = "../../aries_vcx" }
 aries_vcx_wallet = { path = "../../aries_vcx_wallet", features = [
-    "vdrtools_wallet",
+    "askar_wallet",
 ] }
 async-trait = "0.1.73"
 axum = "0.7.5"
@@ -27,7 +27,7 @@ messages = { path = "../../messages" }
 reqwest = { version = "0.12.5", features = ["json"] }
 serde = "1.0.188"
 serde_json = "1.0.106"
-sqlx = "0.7"
+sqlx = { version = "0.7", features = ["mysql"] }
 thiserror = "1.0.49"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tower-http = { version = "0.5.2", features = ["catch-panic"] }

@@ -336,25 +336,24 @@ pub mod unit_tests {
             .await
             .unwrap();
 
+        let sender_vk = sender_data.verkey().base58();
+        let recipient_vk = recipient_data.verkey().base58();
+
         let data_original = "foobar";
 
         let envelope = EncryptionEnvelope::create_from_keys(
             &setup.wallet,
             data_original.as_bytes(),
-            Some(&sender_data.verkey().base58()),
-            recipient_data.verkey().base58(),
+            Some(&sender_vk),
+            recipient_vk.clone(),
             [].to_vec(),
         )
         .await
         .unwrap();
 
-        let data_unpacked = EncryptionEnvelope::auth_unpack(
-            &setup.wallet,
-            envelope.0,
-            &sender_data.verkey().base58(),
-        )
-        .await
-        .unwrap();
+        let data_unpacked = EncryptionEnvelope::auth_unpack(&setup.wallet, envelope.0, &sender_vk)
+            .await
+            .unwrap();
 
         assert_eq!(data_original, data_unpacked);
     }
