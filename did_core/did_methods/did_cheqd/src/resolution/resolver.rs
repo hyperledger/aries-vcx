@@ -5,13 +5,14 @@ use did_resolver::{
     did_doc::schema::did_doc::DidDocument,
     did_parser_nom::Did,
     error::GenericError,
+    shared_types::did_document_metadata::DidDocumentMetadata,
     traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };
 use tokio::sync::Mutex;
 use tonic::transport::{Channel, Endpoint};
 
 use crate::{
-    error::DidCheqdResult,
+    error::{DidCheqdError, DidCheqdResult},
     proto::cheqd::{
         did::v2::{query_client::QueryClient as DidQueryClient, QueryDidDocRequest},
         resource::v2::query_client::QueryClient as ResourceQueryClient,
@@ -79,8 +80,7 @@ impl DidResolvable for DidCheqdResolver {
         did: &Did,
         _: &Self::DidResolutionOptions,
     ) -> Result<DidResolutionOutput, GenericError> {
-        let doc = self.resolve_did(did).await?;
-        Ok(DidResolutionOutput::builder(doc).build())
+        Ok(self.resolve_did(did).await?)
     }
 }
 
@@ -103,14 +103,13 @@ impl DidCheqdResolver {
             .networks
             .iter()
             .find(|n| n.namespace == network)
-            .unwrap(); // TODO
+            .ok_or(DidCheqdError::NetworkNotSupported(network.to_owned()))?;
 
         // initialize new
         let conn = Endpoint::new(network_config.grpc_url.clone())
-            .unwrap() // TODO
+            .map_err(|e| DidCheqdError::BadConfiguration(e.to_string()))?
             .connect()
-            .await
-            .unwrap(); // TODO
+            .await?;
 
         let did_client = DidQueryClient::new(conn.clone());
         let resource_client = ResourceQueryClient::new(conn);
@@ -125,21 +124,31 @@ impl DidCheqdResolver {
         Ok(client)
     }
 
-    pub async fn resolve_did(&self, did: &Did) -> DidCheqdResult<DidDocument> {
+    pub async fn resolve_did(&self, did: &Did) -> DidCheqdResult<DidResolutionOutput> {
         let network = did.namespace().unwrap_or(MAINNET_NAMESPACE);
-        let mut client = self.client_for_network(network).await.unwrap();
-        // TODO - mainnet vs testnet
-        // TODO - return doc metadata
-        // TODO - doc versions
+        let mut client = self.client_for_network(network).await?;
         let did = did.did().to_owned();
 
         let request = tonic::Request::new(QueryDidDocRequest { id: did });
-        let response = client.did.did_doc(request).await.unwrap();
+        let response = client.did.did_doc(request).await?;
 
         let query_response = response.into_inner();
-        let query_doc_res = query_response.value.unwrap(); // TODO
-        let query_doc = query_doc_res.did_doc.unwrap(); // TODO
+        let query_doc_res = query_response.value.ok_or(DidCheqdError::InvalidResponse(
+            "DIDDoc query did not return a value".into(),
+        ))?;
+        dbg!(&query_doc_res);
+        let query_doc = query_doc_res.did_doc.ok_or(DidCheqdError::InvalidResponse(
+            "DIDDoc query did not return a DIDDoc".into(),
+        ))?;
 
-        DidDocument::try_from(query_doc)
+        let mut output_builder = DidResolutionOutput::builder(DidDocument::try_from(query_doc)?);
+
+        if let Some(query_metadata) = query_doc_res.metadata {
+            // FUTURE - append linked resources to metadata
+            output_builder = output_builder
+                .did_document_metadata(DidDocumentMetadata::try_from(query_metadata)?);
+        }
+
+        Ok(output_builder.build())
     }
 }

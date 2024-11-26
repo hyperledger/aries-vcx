@@ -1,4 +1,5 @@
 use did_cheqd::resolution::resolver::{DidCheqdResolver, DidCheqdResolverConfiguration};
+use did_resolver::traits::resolvable::DidResolvable;
 use serde_json::json;
 
 #[tokio::test]
@@ -49,7 +50,8 @@ async fn test_resolve_known_mainnet_vector() {
     });
 
     let resolver = DidCheqdResolver::new(DidCheqdResolverConfiguration::default());
-    let doc = resolver.resolve_did(&did).await.unwrap();
+    let output = resolver.resolve(&did, &()).await.unwrap();
+    let doc = output.did_document;
     assert_eq!(serde_json::to_value(doc.clone()).unwrap(), expected_doc);
     assert_eq!(doc, serde_json::from_value(expected_doc).unwrap());
 }
@@ -83,7 +85,8 @@ async fn test_resolve_known_testnet_vector() {
     });
 
     let resolver = DidCheqdResolver::new(DidCheqdResolverConfiguration::default());
-    let doc = resolver.resolve_did(&did).await.unwrap();
+    let output = resolver.resolve(&did, &()).await.unwrap();
+    let doc = output.did_document;
     assert_eq!(serde_json::to_value(doc.clone()).unwrap(), expected_doc);
     assert_eq!(doc, serde_json::from_value(expected_doc).unwrap());
 }

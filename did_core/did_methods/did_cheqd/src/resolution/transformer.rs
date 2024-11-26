@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use chrono::{DateTime, Utc};
 use did_resolver::{
     did_doc::schema::{
         contexts,
@@ -10,13 +11,14 @@ use did_resolver::{
         verification_method::{PublicKeyField, VerificationMethod, VerificationMethodType},
     },
     did_parser_nom::Did,
+    shared_types::did_document_metadata::DidDocumentMetadata,
 };
 use serde_json::json;
 
 use crate::{
-    error::DidCheqdError,
+    error::{DidCheqdError, DidCheqdResult},
     proto::cheqd::did::v2::{
-        DidDoc as CheqdDidDoc, Service as CheqdService,
+        DidDoc as CheqdDidDoc, Metadata as CheqdDidDocMetadata, Service as CheqdService,
         VerificationMethod as CheqdVerificationMethod,
     },
 };
@@ -96,7 +98,6 @@ impl TryFrom<CheqdVerificationMethod> for VerificationMethod {
 
         let vm_key_encoded = value.verification_material;
 
-        // TODO - lots of todo!()s
         let pk = match vm_type {
             VerificationMethodType::Ed25519VerificationKey2020 => PublicKeyField::Multibase {
                 public_key_multibase: vm_key_encoded,
@@ -132,9 +133,19 @@ impl TryFrom<CheqdVerificationMethod> for VerificationMethod {
                 public_key_pgp: vm_key_encoded,
             },
             // cannot infer encoding type from vm type, as multiple are supported: https://ns.did.ai/suites/secp256k1-2019/v1/
-            VerificationMethodType::EcdsaSecp256k1VerificationKey2019 => todo!(),
+            VerificationMethodType::EcdsaSecp256k1VerificationKey2019 => {
+                return Err(DidCheqdError::InvalidDidDocument(
+                    "DidDocument uses VM type of EcdsaSecp256k1VerificationKey2019, cannot process"
+                        .into(),
+                ))
+            }
             // cannot infer encoding type from vm type: https://identity.foundation/EcdsaSecp256k1RecoverySignature2020/lds-ecdsa-secp256k1-recovery2020-0.0.jsonld
-            VerificationMethodType::EcdsaSecp256k1RecoveryMethod2020 => todo!(),
+            VerificationMethodType::EcdsaSecp256k1RecoveryMethod2020 => {
+                return Err(DidCheqdError::InvalidDidDocument(
+                    "DidDocument uses VM type of EcdsaSecp256k1RecoveryMethod2020, cannot process"
+                        .into(),
+                ))
+            }
         };
 
         let vm = VerificationMethod::builder()
@@ -153,15 +164,49 @@ impl TryFrom<CheqdService> for Service {
 
     fn try_from(value: CheqdService) -> Result<Self, Self::Error> {
         // TODO #1301 - fix mapping: https://github.com/hyperledger/aries-vcx/issues/1301
-        let endpoint = value.service_endpoint.into_iter().next().unwrap(); // TODO
+        let endpoint =
+            value
+                .service_endpoint
+                .into_iter()
+                .next()
+                .ok_or(DidCheqdError::InvalidDidDocument(
+                    "DID Document Service is missing an endpoint".into(),
+                ))?;
 
         let svc = Service::new(
             Uri::from_str(&value.id)?,
-            endpoint.parse().unwrap(), // TODO
+            endpoint.parse()?,
             serde_json::from_value(json!(value.service_type))?,
             Default::default(),
         );
 
         Ok(svc)
     }
+}
+
+impl TryFrom<CheqdDidDocMetadata> for DidDocumentMetadata {
+    type Error = DidCheqdError;
+
+    fn try_from(value: CheqdDidDocMetadata) -> Result<Self, Self::Error> {
+        let mut builder = DidDocumentMetadata::builder();
+        if let Some(timestamp) = value.created {
+            builder = builder.created(prost_timestamp_to_dt(timestamp)?);
+        }
+        if let Some(timestamp) = value.updated {
+            builder = builder.updated(prost_timestamp_to_dt(timestamp)?);
+        }
+        builder = builder
+            .deactivated(value.deactivated)
+            .version_id(value.version_id)
+            .next_version_id(value.next_version_id);
+
+        Ok(builder.build())
+    }
+}
+
+fn prost_timestamp_to_dt(mut timestamp: prost_types::Timestamp) -> DidCheqdResult<DateTime<Utc>> {
+    timestamp.normalize();
+    DateTime::from_timestamp(timestamp.seconds, timestamp.nanos.try_into()?).ok_or(
+        DidCheqdError::Other(format!("Unknown error, bad timestamp: {timestamp:?}").into()),
+    )
 }
