@@ -4,8 +4,6 @@ use std::{
 };
 
 use thiserror::Error as ThisError;
-#[cfg(feature = "vdrtools_wallet")]
-use vdrtools::IndyError;
 
 use crate::wallet::base_wallet::record_category::RecordCategory;
 
@@ -53,8 +51,6 @@ pub enum VcxWalletError {
     NotBase64(base64::DecodeError),
     RecordNotFound(NotFoundInfo),
     UnknownRecordCategory(String),
-    #[cfg(feature = "vdrtools_wallet")]
-    IndyApiError(IndyError),
     InvalidInput(String),
     NoRecipientKeyFound,
     InvalidJson(serde_json::Error),
@@ -84,8 +80,6 @@ impl Display for VcxWalletError {
             VcxWalletError::UnknownRecordCategory(inner) => {
                 write!(f, "Unknown RecordCategory: {}", inner)
             }
-            #[cfg(feature = "vdrtools_wallet")]
-            VcxWalletError::IndyApiError(inner) => write!(f, "Indy API error: {}", inner),
             VcxWalletError::InvalidInput(inner) => write!(f, "Invalid input: {}", inner),
             VcxWalletError::NoRecipientKeyFound => write!(f, "No recipient key found"),
             VcxWalletError::InvalidJson(inner) => write!(f, "Invalid JSON: {}", inner),
@@ -106,8 +100,6 @@ impl std::error::Error for VcxWalletError {
             VcxWalletError::NotBase64(inner) => Some(inner),
             VcxWalletError::RecordNotFound(_) => None,
             VcxWalletError::UnknownRecordCategory(_) => None,
-            #[cfg(feature = "vdrtools_wallet")]
-            VcxWalletError::IndyApiError(inner) => Some(inner),
             VcxWalletError::InvalidInput(_) => None,
             VcxWalletError::NoRecipientKeyFound => None,
             VcxWalletError::InvalidJson(inner) => Some(inner),

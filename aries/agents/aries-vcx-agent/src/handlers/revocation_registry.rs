@@ -5,7 +5,7 @@ use std::{
 
 use anoncreds_types::data_types::identifiers::cred_def_id::CredentialDefinitionId;
 use aries_vcx::{common::primitives::revocation_registry::RevocationRegistry, did_parser_nom::Did};
-use aries_vcx_anoncreds::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+use aries_vcx_anoncreds::anoncreds::anoncreds::Anoncreds;
 use aries_vcx_ledger::ledger::indy_vdr_ledger::{DefaultIndyLedgerRead, DefaultIndyLedgerWrite};
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 
@@ -17,7 +17,7 @@ use crate::{
 pub struct ServiceRevocationRegistries<T> {
     ledger_write: Arc<DefaultIndyLedgerWrite>,
     ledger_read: Arc<DefaultIndyLedgerRead>,
-    anoncreds: IndyCredxAnonCreds,
+    anoncreds: Anoncreds,
     wallet: Arc<T>,
     issuer_did: Did,
     rev_regs: AgentStorageInMem<RevocationRegistry>,
@@ -27,7 +27,7 @@ impl<T: BaseWallet> ServiceRevocationRegistries<T> {
     pub fn new(
         ledger_write: Arc<DefaultIndyLedgerWrite>,
         ledger_read: Arc<DefaultIndyLedgerRead>,
-        anoncreds: IndyCredxAnonCreds,
+        anoncreds: Anoncreds,
         wallet: Arc<T>,
         issuer_did: String,
     ) -> Self {
