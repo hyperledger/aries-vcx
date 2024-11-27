@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, error::Error};
 
 use async_trait::async_trait;
 use did_resolver::{
@@ -107,7 +107,7 @@ impl DidCheqdResolver {
 
         // initialize new
         let conn = Endpoint::new(network_config.grpc_url.clone())
-            .map_err(|e| DidCheqdError::BadConfiguration(e.to_string()))?
+            .map_err(|e| DidCheqdError::BadConfiguration(format!("{e} {:?}", e.source())))?
             .connect()
             .await?;
 
