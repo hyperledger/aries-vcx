@@ -23,6 +23,7 @@ The repository contains Rust crates to build
   - [`did_parser`](did_core/did_parser_nom) - Building and parsing  [DIDs](https://w3c.github.io/did-core/)
   - [`did_peer`](did_core/did_methods/did_peer) - https://identity.foundation/peer-did-method-spec/
   - [`did_sov`](did_core/did_methods/did_resolver_sov) - https://sovrin-foundation.github.io/sovrin/spec/did-method-spec-template.html
+  - [`did_cheqd`](did_core/did_methods/did_cheqd) - https://docs.cheqd.io/product/architecture/adr-list/adr-001-cheqd-did-method
   - [`did_web`](did_core/did_methods/did_resolver_web) - https://w3c-ccg.github.io/did-method-web/
   - [`did_key`](did_core/did_methods/did_key) - https://w3c-ccg.github.io/did-method-key/
 
