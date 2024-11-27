@@ -136,7 +136,6 @@ impl DidCheqdResolver {
         let query_doc_res = query_response.value.ok_or(DidCheqdError::InvalidResponse(
             "DIDDoc query did not return a value".into(),
         ))?;
-        dbg!(&query_doc_res);
         let query_doc = query_doc_res.did_doc.ok_or(DidCheqdError::InvalidResponse(
             "DIDDoc query did not return a DIDDoc".into(),
         ))?;
