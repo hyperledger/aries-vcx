@@ -1,4 +1,4 @@
-use std::{convert::Infallible, net::SocketAddr};
+use std::convert::Infallible;
 
 use did_resolver::{
     did_doc::schema::did_doc::DidDocument,
@@ -6,10 +6,17 @@ use did_resolver::{
     traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };
 use did_resolver_web::resolution::resolver::DidWebResolver;
+use http_body_util::{combinators::BoxBody, BodyExt, Full};
 use hyper::{
-    service::{make_service_fn, service_fn},
-    Body, Request, Response, Server,
+    body::{Bytes, Incoming},
+    service::service_fn,
+    Request, Response,
 };
+use hyper_util::{
+    rt::{TokioExecutor, TokioIo},
+    server::conn::auto::Builder,
+};
+use tokio::{net::TcpListener, task::JoinSet};
 use tokio_test::assert_ok;
 
 const DID_DOCUMENT: &str = r#"
@@ -66,12 +73,16 @@ const DID_DOCUMENT: &str = r#"
   ]
 }"#;
 
-async fn mock_server_handler(req: Request<Body>) -> Result<Response<Body>, Infallible> {
+async fn mock_server_handler(
+    req: Request<Incoming>,
+) -> Result<Response<BoxBody<Bytes, Infallible>>, Infallible> {
     let response = match req.uri().path() {
-        "/.well-known/did.json" | "/user/alice/did.json" => Response::new(Body::from(DID_DOCUMENT)),
+        "/.well-known/did.json" | "/user/alice/did.json" => {
+            Response::new(Full::new(Bytes::from(DID_DOCUMENT)).boxed())
+        }
         _ => Response::builder()
             .status(404)
-            .body(Body::from("Not Found"))
+            .body(Full::new(Bytes::from("Not Found")).boxed())
             .unwrap(),
     };
 
@@ -79,14 +90,36 @@ async fn mock_server_handler(req: Request<Body>) -> Result<Response<Body>, Infal
 }
 
 async fn create_mock_server(port: u16) -> String {
-    let make_svc =
-        make_service_fn(|_conn| async { Ok::<_, Infallible>(service_fn(mock_server_handler)) });
-
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
-    let server = Server::bind(&addr).serve(make_svc);
+    let listen_addr = format!("127.0.0.1:{port}");
+    let tcp_listener = TcpListener::bind(listen_addr).await.unwrap();
 
     tokio::spawn(async move {
-        server.await.unwrap();
+        let mut join_set = JoinSet::new();
+        loop {
+            let (stream, addr) = match tcp_listener.accept().await {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("failed to accept connection: {e}");
+                    continue;
+                }
+            };
+
+            let serve_connection = async move {
+                println!("handling a request from {addr}");
+
+                let result = Builder::new(TokioExecutor::new())
+                    .serve_connection(TokioIo::new(stream), service_fn(mock_server_handler))
+                    .await;
+
+                if let Err(e) = result {
+                    eprintln!("error serving {addr}: {e}");
+                }
+
+                println!("handled a request from {addr}");
+            };
+
+            join_set.spawn(serve_connection);
+        }
     });
 
     "localhost".to_string()
