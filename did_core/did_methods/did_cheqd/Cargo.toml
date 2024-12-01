@@ -16,10 +16,13 @@ tonic = { version = "0.12.3", default-features = false, features = [
     "codegen",
     "prost",
     "channel",
-    "tls-native-roots",
 ] }
 prost = { version = "0.13.3", default-features = false }
 prost-types = "0.13.3"
+native-tls = { version = "0.2.12", features = ["alpn"] }
+hyper-tls = "0.6.0"
+hyper-util = { version = "0.1.10", features = ["client-legacy", "http2"] }
+http-body-util = "0.1.2"
 async-trait = "0.1.68"
 serde_json = "1.0.96"
 serde = { version = "1.0.160", features = ["derive"] }
@@ -27,6 +30,7 @@ thiserror = "1.0.40"
 tokio = { version = "1.38.0" }
 chrono = { version = "0.4.24", default-features = false }
 url = { version = "2.3.1", default-features = false }
+bytes = "1.8.0"
 
 [dev-dependencies]
 tokio = { version = "1.38.0", default-features = false, features = [

@@ -1,6 +1,7 @@
-use std::{collections::HashMap, error::Error};
+use std::{collections::HashMap, str::FromStr};
 
 use async_trait::async_trait;
+use bytes::Bytes;
 use did_resolver::{
     did_doc::schema::did_doc::DidDocument,
     did_parser_nom::Did,
@@ -8,8 +9,14 @@ use did_resolver::{
     shared_types::did_document_metadata::DidDocumentMetadata,
     traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };
+use http_body_util::combinators::UnsyncBoxBody;
+use hyper_tls::HttpsConnector;
+use hyper_util::{
+    client::legacy::{connect::HttpConnector, Client},
+    rt::TokioExecutor,
+};
 use tokio::sync::Mutex;
-use tonic::transport::{Channel, Endpoint};
+use tonic::{transport::Uri, Status};
 
 use crate::{
     error::{DidCheqdError, DidCheqdResult},
@@ -60,10 +67,12 @@ impl NetworkConfiguration {
     }
 }
 
+type HyperClient = Client<HttpsConnector<HttpConnector>, UnsyncBoxBody<Bytes, Status>>;
+
 #[derive(Clone)]
 struct CheqdGrpcClient {
-    did: DidQueryClient<Channel>,
-    _resources: ResourceQueryClient<Channel>,
+    did: DidQueryClient<HyperClient>,
+    _resources: ResourceQueryClient<HyperClient>,
 }
 
 pub struct DidCheqdResolver {
@@ -105,14 +114,16 @@ impl DidCheqdResolver {
             .find(|n| n.namespace == network)
             .ok_or(DidCheqdError::NetworkNotSupported(network.to_owned()))?;
 
-        // initialize new
-        let conn = Endpoint::new(network_config.grpc_url.clone())
-            .map_err(|e| DidCheqdError::BadConfiguration(format!("{e} {:?}", e.source())))?
-            .connect()
-            .await?;
+        let client = native_tls_hyper_client()?;
+        let origin = Uri::from_str(&network_config.grpc_url).map_err(|e| {
+            DidCheqdError::BadConfiguration(format!(
+                "GRPC URL is not a URI: {} {e}",
+                network_config.grpc_url
+            ))
+        })?;
 
-        let did_client = DidQueryClient::new(conn.clone());
-        let resource_client = ResourceQueryClient::new(conn);
+        let did_client = DidQueryClient::with_origin(client.clone(), origin.clone());
+        let resource_client = ResourceQueryClient::with_origin(client, origin);
 
         let client = CheqdGrpcClient {
             did: did_client,
@@ -124,7 +135,13 @@ impl DidCheqdResolver {
         Ok(client)
     }
 
+    /// Resolve a cheqd DID.
     pub async fn resolve_did(&self, did: &Did) -> DidCheqdResult<DidResolutionOutput> {
+        let method = did.method();
+        if method != Some("cheqd") {
+            return Err(DidCheqdError::MethodNotSupported(format!("{method:?}")));
+        }
+
         let network = did.namespace().unwrap_or(MAINNET_NAMESPACE);
         let mut client = self.client_for_network(network).await?;
         let did = did.did().to_owned();
@@ -150,4 +167,23 @@ impl DidCheqdResolver {
 
         Ok(output_builder.build())
     }
+}
+
+/// Assembles a hyper client which:
+/// * uses native TLS
+/// * supports HTTP2 only (gRPC)
+fn native_tls_hyper_client() -> DidCheqdResult<HyperClient> {
+    let tls = native_tls::TlsConnector::builder()
+        .request_alpns(&["h2"])
+        .build()
+        .map_err(|e| {
+            DidCheqdError::BadConfiguration(format!("Failed to build TlsConnector: {e}"))
+        })?;
+    let mut http = HttpConnector::new();
+    http.enforce_http(false);
+    let connector = HttpsConnector::from((http, tls.into()));
+
+    Ok(Client::builder(TokioExecutor::new())
+        .http2_only(true)
+        .build(connector))
 }
