@@ -1,4 +1,4 @@
-use std::{collections::HashMap, str::FromStr};
+use std::collections::HashMap;
 
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -26,13 +26,19 @@ use crate::{
     },
 };
 
-const MAINNET_NAMESPACE: &str = "mainnet";
-const MAINNET_DEFAULT_GRPC: &str = "https://grpc.cheqd.net:443";
-const TESTNET_NAMESPACE: &str = "testnet";
-const TESTNET_DEFAULT_GRPC: &str = "https://grpc.cheqd.network:443";
+/// default namespace for the cheqd "mainnet". as it would appear in a DID.
+pub const MAINNET_NAMESPACE: &str = "mainnet";
+/// default gRPC URL for the cheqd "mainnet".
+pub const MAINNET_DEFAULT_GRPC: &str = "https://grpc.cheqd.net:443";
+/// default namespace for the cheqd "testnet". as it would appear in a DID.
+pub const TESTNET_NAMESPACE: &str = "testnet";
+/// default gRPC URL for the cheqd "testnet".
+pub const TESTNET_DEFAULT_GRPC: &str = "https://grpc.cheqd.network:443";
 
+/// Configuration for the [DidCheqdResolver] resolver
 pub struct DidCheqdResolverConfiguration {
-    networks: Vec<NetworkConfiguration>,
+    /// Configuration for which networks are resolvable
+    pub networks: Vec<NetworkConfiguration>,
 }
 
 impl Default for DidCheqdResolverConfiguration {
@@ -46,12 +52,16 @@ impl Default for DidCheqdResolverConfiguration {
     }
 }
 
+/// Configuration for a cheqd network. Defining details such as where to resolve DIDs from.
 pub struct NetworkConfiguration {
-    grpc_url: String,
-    namespace: String,
+    /// the cheqd nodes gRPC URL
+    pub grpc_url: String,
+    /// the namespace of the network - as it would appear in a DID (did:cheqd:namespace:123)
+    pub namespace: String,
 }
 
 impl NetworkConfiguration {
+    /// default configuration for cheqd mainnet
     pub fn mainnet() -> Self {
         Self {
             grpc_url: String::from(MAINNET_DEFAULT_GRPC),
@@ -59,6 +69,7 @@ impl NetworkConfiguration {
         }
     }
 
+    /// default configuration for cheqd testnet
     pub fn testnet() -> Self {
         Self {
             grpc_url: String::from(TESTNET_DEFAULT_GRPC),
@@ -72,6 +83,7 @@ type HyperClient = Client<HttpsConnector<HttpConnector>, UnsyncBoxBody<Bytes, St
 #[derive(Clone)]
 struct CheqdGrpcClient {
     did: DidQueryClient<HyperClient>,
+    // FUTURE - not used yet
     _resources: ResourceQueryClient<HyperClient>,
 }
 
@@ -94,6 +106,10 @@ impl DidResolvable for DidCheqdResolver {
 }
 
 impl DidCheqdResolver {
+    /// Assemble a new resolver with the given config.
+    ///
+    /// [DidCheqdResolverConfiguration::default] can be used if default mainnet & testnet
+    /// configurations are suitable.
     pub fn new(configuration: DidCheqdResolverConfiguration) -> Self {
         Self {
             networks: configuration.networks,
@@ -115,7 +131,7 @@ impl DidCheqdResolver {
             .ok_or(DidCheqdError::NetworkNotSupported(network.to_owned()))?;
 
         let client = native_tls_hyper_client()?;
-        let origin = Uri::from_str(&network_config.grpc_url).map_err(|e| {
+        let origin: Uri = network_config.grpc_url.parse().map_err(|e| {
             DidCheqdError::BadConfiguration(format!(
                 "GRPC URL is not a URI: {} {e}",
                 network_config.grpc_url
@@ -186,4 +202,40 @@ fn native_tls_hyper_client() -> DidCheqdResult<HyperClient> {
     Ok(Client::builder(TokioExecutor::new())
         .http2_only(true)
         .build(connector))
+}
+
+#[cfg(test)]
+mod unit_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_resolve_fails_if_wrong_method() {
+        let did = "did:notcheqd:abc".parse().unwrap();
+        let resolver = DidCheqdResolver::new(Default::default());
+        let e = resolver.resolve_did(&did).await.unwrap_err();
+        assert!(matches!(e, DidCheqdError::MethodNotSupported(_)));
+    }
+
+    #[tokio::test]
+    async fn test_resolve_fails_if_no_network_config() {
+        let did = "did:cheqd:devnet:Ps1ysXP2Ae6GBfxNhNQNKN".parse().unwrap();
+        let resolver = DidCheqdResolver::new(Default::default());
+        let e = resolver.resolve_did(&did).await.unwrap_err();
+        assert!(matches!(e, DidCheqdError::NetworkNotSupported(_)));
+    }
+
+    #[tokio::test]
+    async fn test_resolve_fails_if_bad_network_uri() {
+        let did = "did:cheqd:devnet:Ps1ysXP2Ae6GBfxNhNQNKN".parse().unwrap();
+        let config = DidCheqdResolverConfiguration {
+            networks: vec![NetworkConfiguration {
+                grpc_url: "@baduri://.".into(),
+                namespace: "devnet".into(),
+            }],
+        };
+
+        let resolver = DidCheqdResolver::new(config);
+        let e = resolver.resolve_did(&did).await.unwrap_err();
+        assert!(matches!(e, DidCheqdError::BadConfiguration(_)));
+    }
 }
