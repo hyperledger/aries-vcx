@@ -1,9 +1,11 @@
+mod did_cheqd;
 mod did_core;
 mod did_key;
 mod did_peer_4;
 mod did_sov;
 mod did_web;
 
+use did_cheqd::parse_did_cheqd;
 use nom::{
     branch::alt,
     combinator::{all_consuming, map},
@@ -22,6 +24,7 @@ type DidPart<'a> = (&'a str, &'a str, Option<&'a str>, &'a str);
 pub type DidRanges = (Option<DidRange>, Option<DidRange>, Option<DidRange>);
 
 static BASE58CHARS: &str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+static HEX_DIGIT_CHARS: &str = "0123456789abcdefABCDEF";
 
 fn to_id_range(id: &str) -> DidRanges {
     (None, None, Some(0..id.len()))
@@ -66,6 +69,7 @@ pub fn parse_did_ranges(input: &str) -> IResult<&str, DidRanges> {
         map(parse_did_peer_4, to_did_ranges),
         map(parse_did_web, to_did_ranges),
         map(parse_did_key, to_did_ranges),
+        map(parse_did_cheqd, to_did_ranges),
         map(parse_qualified_sovrin_did, to_did_ranges),
         map(parse_qualified_did, to_did_ranges),
         map(parse_unqualified_sovrin_did, to_id_range),

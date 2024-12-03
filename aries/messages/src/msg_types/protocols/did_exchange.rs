@@ -63,8 +63,6 @@ mod tests {
 
     #[test]
     fn test_protocol_didexchange_v1_1() {
-        let x = Protocol::from(DidExchangeTypeV1::new_v1_1());
-        dbg!(x);
         test_utils::test_serde(
             Protocol::from(DidExchangeTypeV1::new_v1_1()),
             json!("https://didcomm.org/didexchange/1.1"),
