@@ -28,6 +28,7 @@ members = [
     "did_core/public_key",
     "misc/simple_message_relay",
     "misc/display_as_json",
+    "did_core/did_methods/did_jwk",
 ]
 
 [workspace.package]
