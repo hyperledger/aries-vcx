@@ -23,7 +23,7 @@ To use `aries_vcx` in your project, you need to add GitHub dependency to your `C
 define a version through a `tag`:
 
 ```toml
-aries-vcx = { tag = "0.65.0", git = "https://github.com/hyperledger/aries-vcx" }
+aries-vcx = { tag = "0.66.0", git = "https://github.com/hyperledger/aries-vcx" }
 ```
 
 It's also advisable to follow these [instructions](TUTORIAL.md) to check your environment is properly configured.
