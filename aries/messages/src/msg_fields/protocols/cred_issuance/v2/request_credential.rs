@@ -40,6 +40,8 @@ pub enum RequestCredentialAttachmentFormatType {
     DifCredentialManifest1_0,
     #[serde(rename = "hlindy/cred-req@v2.0")]
     HyperledgerIndyCredentialRequest2_0,
+    #[serde(rename = "anoncreds/cred-req@v2.0")]
+    AnoncredsCredentialRequest2_0,
     #[serde(rename = "aries/ld-proof-vc-detail@v1.0")]
     AriesLdProofVcDetail1_0,
 }

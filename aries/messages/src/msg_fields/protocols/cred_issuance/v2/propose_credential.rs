@@ -44,6 +44,8 @@ pub enum ProposeCredentialAttachmentFormatType {
     DifCredentialManifest1_0,
     #[serde(rename = "aries/ld-proof-vc-detail@v1.0")]
     AriesLdProofVcDetail1_0,
+    #[serde(rename = "anoncreds/cred-filter@v2.0")]
+    AnoncredCredentialFilter2_0,
     #[serde(rename = "hlindy/cred-filter@v2.0")]
     HyperledgerIndyCredentialFilter2_0,
 }

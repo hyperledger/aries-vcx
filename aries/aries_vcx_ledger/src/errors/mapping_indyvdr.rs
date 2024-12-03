@@ -19,7 +19,7 @@ impl From<VdrError> for VcxLedgerError {
             | VdrErrorKind::PoolNoConsensus
             | VdrErrorKind::Resolver
             | VdrErrorKind::PoolTimeout => Self::UnknownError(err.to_string()),
-            VdrErrorKind::PoolRequestFailed(_) => Self::InvalidLedgerResponse,
+            VdrErrorKind::PoolRequestFailed(_) => Self::InvalidLedgerResponse(err.to_string()),
         }
     }
 }

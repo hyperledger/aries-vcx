@@ -603,6 +603,8 @@ dependencies = [
  "anoncreds_types",
  "aries_vcx_wallet",
  "async-trait",
+ "chrono",
+ "did_cheqd",
  "did_parser_nom",
  "indy-ledger-response-parser",
  "indy-vdr",

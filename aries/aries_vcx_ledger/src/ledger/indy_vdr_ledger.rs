@@ -596,7 +596,7 @@ where
             .sign_and_submit_request(wallet, submitter_did, request)
             .await;
 
-        if let Err(VcxLedgerError::InvalidLedgerResponse) = &sign_result {
+        if matches!(sign_result, Err(VcxLedgerError::InvalidLedgerResponse(_))) {
             return Err(VcxLedgerError::DuplicationSchema);
         }
         sign_result.map(|_| ())

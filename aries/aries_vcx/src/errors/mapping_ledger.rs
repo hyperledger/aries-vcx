@@ -8,7 +8,7 @@ impl From<VcxLedgerError> for AriesVcxError {
             VcxLedgerError::LedgerItemNotFound => {
                 Self::from_msg(AriesVcxErrorKind::LedgerItemNotFound, value)
             }
-            VcxLedgerError::InvalidLedgerResponse => {
+            VcxLedgerError::InvalidLedgerResponse(_) => {
                 Self::from_msg(AriesVcxErrorKind::InvalidLedgerResponse, value)
             }
             VcxLedgerError::DuplicationSchema => {

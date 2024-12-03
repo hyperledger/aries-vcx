@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use did_resolver::{
     did_doc::schema::did_doc::DidDocument,
-    did_parser_nom::Did,
+    did_parser_nom::{Did, DidUrl},
     error::GenericError,
     shared_types::did_document_metadata::DidDocumentMetadata,
     traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
@@ -22,7 +22,7 @@ use crate::{
     error::{DidCheqdError, DidCheqdResult},
     proto::cheqd::{
         did::v2::{query_client::QueryClient as DidQueryClient, QueryDidDocRequest},
-        resource::v2::query_client::QueryClient as ResourceQueryClient,
+        resource::v2::{query_client::QueryClient as ResourceQueryClient, QueryResourceRequest},
     },
 };
 
@@ -83,8 +83,7 @@ type HyperClient = Client<HttpsConnector<HttpConnector>, UnsyncBoxBody<Bytes, St
 #[derive(Clone)]
 struct CheqdGrpcClient {
     did: DidQueryClient<HyperClient>,
-    // FUTURE - not used yet
-    _resources: ResourceQueryClient<HyperClient>,
+    resources: ResourceQueryClient<HyperClient>,
 }
 
 pub struct DidCheqdResolver {
@@ -143,7 +142,7 @@ impl DidCheqdResolver {
 
         let client = CheqdGrpcClient {
             did: did_client,
-            _resources: resource_client,
+            resources: resource_client,
         };
 
         lock.insert(network.to_owned(), client.clone());
@@ -182,6 +181,67 @@ impl DidCheqdResolver {
         }
 
         Ok(output_builder.build())
+    }
+
+    // TODO - better return structure
+    pub async fn resolve_resource(&self, url: &DidUrl) -> DidCheqdResult<Vec<u8>> {
+        let method = url.method();
+        if method != Some("cheqd") {
+            return Err(DidCheqdError::MethodNotSupported(format!("{method:?}")));
+        }
+
+        let network = url.namespace().unwrap_or(MAINNET_NAMESPACE);
+
+        // 1. resolve by exact reference: /reference/asdf
+        if let Some(path) = url.path() {
+            let Some(resource_id) = path.strip_prefix("/resources/") else {
+                // TODO
+                todo!()
+            };
+            let did_id = url
+                .id()
+                .ok_or(DidCheqdError::InvalidDidUrl(format!("missing ID {url}")))?;
+
+            return self
+                .resolve_resource_by_id(did_id, resource_id, network)
+                .await;
+        }
+
+        // 2. resolve by name & type
+        // 2.a. resolve by name & type & `version`
+        // 2.b. resolve by name & type & closest to `resourceVersion`
+        // 2.c. resolve by name & type & closest to `now`
+        todo!()
+    }
+
+    async fn resolve_resource_by_id(
+        &self,
+        did_id: &str,
+        resource_id: &str,
+        network: &str,
+    ) -> DidCheqdResult<Vec<u8>> {
+        let mut client = self.client_for_network(network).await?;
+
+        let request = QueryResourceRequest {
+            collection_id: did_id.to_owned(),
+            id: resource_id.to_owned(),
+        };
+        let response = client.resources.resource(request).await?;
+
+        let query_response = response.into_inner();
+        let query_response = query_response
+            .resource
+            .ok_or(DidCheqdError::InvalidResponse(
+                "Resource query did not return a value".into(),
+            ))?;
+        let query_resource = query_response
+            .resource
+            .ok_or(DidCheqdError::InvalidResponse(
+                "Resource query did not return a resource".into(),
+            ))?;
+        // TODO - metadata
+
+        Ok(query_resource.data)
     }
 }
 
