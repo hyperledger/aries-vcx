@@ -603,6 +603,7 @@ dependencies = [
  "anoncreds_types",
  "aries_vcx_wallet",
  "async-trait",
+ "bitvec",
  "chrono",
  "did_cheqd",
  "did_parser_nom",

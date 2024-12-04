@@ -15,12 +15,12 @@ use anoncreds_types::data_types::{
     },
 };
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
 use did_cheqd::resolution::resolver::DidCheqdResolver;
 use did_parser_nom::{Did, DidUrl};
 use models::{
     CheqdAnoncredsCredentialDefinition, CheqdAnoncredsRevocationRegistryDefinition,
-    CheqdAnoncredsSchema,
+    CheqdAnoncredsRevocationStatusList, CheqdAnoncredsSchema,
 };
 
 use super::base_ledger::AnoncredsLedgerRead;
@@ -98,23 +98,41 @@ impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
 
     async fn get_rev_reg_delta_json(
         &self,
-        rev_reg_id: &RevocationRegistryDefinitionId,
-        // TODO - explain why we ignore `from`
+        _rev_reg_id: &RevocationRegistryDefinitionId,
         _from: Option<u64>,
-        to: Option<u64>,
+        _to: Option<u64>,
     ) -> VcxLedgerResult<(RevocationRegistryDelta, u64)> {
-        let url = DidUrl::parse(rev_reg_id.to_string())?;
-        let data = self.resolver.resolve_resource(&url).await?;
-        let rev_reg_def: RevocationRegistryDefinition = serde_json::from_slice(&data)?;
-        let name = rev_reg_def.tag; // TODO - credo-ts uses the metadata.name or fails (https://docs.cheqd.io/product/advanced/anoncreds/revocation-status-list#same-resource-name-different-resource-type)
+        // unsupported, to be removed: https://github.com/hyperledger/aries-vcx/issues/1309
+        Err(VcxLedgerError::UnimplementedFeature(
+            "get_rev_reg_delta_json not supported for cheqd".into(),
+        ))
+    }
 
-        let did = url.did().ok_or(VcxLedgerError::InvalidInput(format!(
-            "DID URL missing DID {url}"
-        )))?;
+    async fn get_rev_status_list(
+        &self,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+        timestamp: u64,
+        pre_fetched_rev_reg_def: Option<&RevocationRegistryDefinition>,
+    ) -> VcxLedgerResult<(RevocationStatusList, u64)> {
+        let rev_reg_def_url = DidUrl::parse(rev_reg_id.to_string())?;
 
-        let resource_dt = to
-            .and_then(|epoch| DateTime::from_timestamp(epoch as i64, 0))
-            .unwrap_or(Utc::now());
+        let rev_reg_def = match pre_fetched_rev_reg_def {
+            Some(v) => v,
+            None => &self.get_rev_reg_def_json(rev_reg_id).await?,
+        };
+
+        let name = &rev_reg_def.tag; // TODO - credo-ts uses the metadata.name or fails (https://docs.cheqd.io/product/advanced/anoncreds/revocation-status-list#same-resource-name-different-resource-type)
+
+        let did = rev_reg_def_url
+            .did()
+            .ok_or(VcxLedgerError::InvalidInput(format!(
+                "DID URL missing DID {rev_reg_def_url}"
+            )))?;
+
+        let resource_dt =
+            DateTime::from_timestamp(timestamp as i64, 0).ok_or(VcxLedgerError::InvalidInput(
+                format!("input status list timestamp is not valid {timestamp}"),
+            ))?;
         let xml_dt = resource_dt.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
         let query = format!(
             "{did}?resourceType={STATUS_LIST_RESOURCE_TYPE}&resourceName={name}&\
@@ -122,31 +140,41 @@ impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
         );
         let query_url = DidUrl::parse(query)?;
 
-        let data = self.resolver.resolve_resource(&query_url).await?;
-        // TODO - data may be missing issuerId
-        let _status_list: RevocationStatusList = serde_json::from_slice(&data)?;
+        let resource = self.resolver.resolve_resource(&query_url).await?;
+        let data: CheqdAnoncredsRevocationStatusList = serde_json::from_slice(&resource)?;
+        let timestamp = 0; // TODO - from metadata
 
-        // TODO - statuslist to delta since 0
-        // TODO - return `.1` based on the reported metadata timestamp
-        todo!()
-    }
+        let status_list = RevocationStatusList {
+            rev_reg_def_id: Some(rev_reg_id.to_owned()),
+            issuer_id: extract_issuer_id(&rev_reg_def_url)?,
+            revocation_list: data.revocation_list,
+            accum: data.accum,
+            timestamp: Some(timestamp),
+        };
 
-    async fn get_rev_status_list(
-        &self,
-        _rev_reg_id: &RevocationRegistryDefinitionId,
-        _timestamp: u64,
-        _: Option<&RevocationRegistryDefinition>,
-    ) -> VcxLedgerResult<(RevocationStatusList, u64)> {
-        todo!()
+        Ok((status_list, timestamp))
     }
 
     async fn get_rev_reg(
         &self,
-        _rev_reg_id: &RevocationRegistryDefinitionId,
-        _timestamp: u64,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+        timestamp: u64,
     ) -> VcxLedgerResult<(RevocationRegistry, u64)> {
-        //
-        todo!()
+        let (list, last_updated) = self
+            .get_rev_status_list(rev_reg_id, timestamp, None)
+            .await?;
+
+        let accum = list
+            .accum
+            .ok_or(VcxLedgerError::InvalidLedgerResponse(format!(
+                "response status list is missing an accumulator: {list:?}"
+            )))?;
+
+        let reg = RevocationRegistry {
+            value: accum.into(),
+        };
+
+        Ok((reg, last_updated))
     }
 }
 

@@ -4,7 +4,7 @@ use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
     ledger::{
         cred_def::{CredentialDefinitionData, SignatureType},
-        rev_reg_def::{RegistryType, RevocationRegistryDefinitionValue},
+        rev_reg_def::{RegistryType, RevocationRegistryDefinitionValue}, rev_status_list::serde_revocation_list,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -34,4 +34,17 @@ pub struct CheqdAnoncredsRevocationRegistryDefinition {
     pub cred_def_id: CredentialDefinitionId,
     pub tag: String,
     pub value: RevocationRegistryDefinitionValue,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CheqdAnoncredsRevocationStatusList {
+    #[serde(with = "serde_revocation_list")]
+    pub revocation_list: bitvec::vec::BitVec,
+    #[serde(
+        rename = "currentAccumulator",
+        alias = "accum",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub accum: Option<anoncreds_types::cl::Accumulator>,
 }
