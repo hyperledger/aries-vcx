@@ -483,32 +483,26 @@ impl Convert for HashMap<OurRevocationRegistryDefinitionId, OurRevocationRegistr
     }
 }
 
-impl Convert for HashMap<OurRevocationRegistryDefinitionId, HashMap<u64, OurRevocationRegistry>> {
+impl Convert
+    for HashMap<
+        OurRevocationRegistryDefinitionId,
+        (HashMap<u64, OurRevocationRegistry>, OurIssuerId),
+    >
+{
     type Args = ();
     type Target = Vec<AnoncredsRevocationStatusList>;
     type Error = Box<dyn std::error::Error>;
 
     fn convert(self, _args: Self::Args) -> Result<Self::Target, Self::Error> {
         let mut lists = Vec::new();
-        for (rev_reg_def_id, timestamp_map) in self.into_iter() {
+        for (rev_reg_def_id, (timestamp_map, issuer_id)) in self.into_iter() {
             for (timestamp, entry) in timestamp_map {
-                // TODO - bad splitting
-                let issuer_id = AnoncredsIssuerId::new(
-                    rev_reg_def_id
-                        .to_string()
-                        .split(':')
-                        .next()
-                        .unwrap()
-                        .to_string(),
-                )
-                .unwrap();
                 let OurRevocationRegistry { value } = entry;
                 let registry = CryptoRevocationRegistry { accum: value.accum };
 
                 let rev_status_list = OurRevocationStatusList::new(
                     Some(&rev_reg_def_id.to_string()),
-                    issuer_id.convert(())?,
-                    // TODO - this seems incorrect.
+                    issuer_id.clone(),
                     Default::default(),
                     Some(registry),
                     Some(timestamp),

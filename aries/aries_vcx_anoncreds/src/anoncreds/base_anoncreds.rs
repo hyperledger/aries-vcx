@@ -10,6 +10,7 @@ use anoncreds_types::data_types::{
         rev_reg::RevocationRegistry,
         rev_reg_def::RevocationRegistryDefinition,
         rev_reg_delta::RevocationRegistryDelta,
+        rev_status_list::RevocationStatusList,
         schema::{AttributeNames, Schema},
     },
     messages::{
@@ -138,8 +139,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         tails_dir: &Path,
         rev_reg_def_json: RevocationRegistryDefinition,
-        rev_reg_delta_json: RevocationRegistryDelta,
-        timestamp: u64,
+        rev_status_list: RevocationStatusList,
         cred_rev_id: u32,
     ) -> VcxAnoncredsResult<CredentialRevocationState>;
 
@@ -174,6 +174,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
 
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not
     // PURE Anoncreds)
+    // TODO - review functionality below and convert to using statuslists
     // ^ YES
     async fn revoke_credential_local(
         &self,

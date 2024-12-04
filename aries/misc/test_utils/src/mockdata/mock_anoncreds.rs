@@ -10,6 +10,7 @@ use anoncreds_types::data_types::{
         rev_reg::RevocationRegistry,
         rev_reg_def::RevocationRegistryDefinition,
         rev_reg_delta::RevocationRegistryDelta,
+        rev_status_list::RevocationStatusList,
         schema::{AttributeNames, Schema},
     },
     messages::{
@@ -178,8 +179,7 @@ impl BaseAnonCreds for MockAnoncreds {
         &self,
         _tails_dir: &Path,
         _rev_reg_def_json: RevocationRegistryDefinition,
-        _rev_reg_delta_json: RevocationRegistryDelta,
-        _timestamp: u64,
+        _rev_status_list: RevocationStatusList,
         _cred_rev_id: u32,
     ) -> VcxAnoncredsResult<CredentialRevocationState> {
         Ok(serde_json::from_str(REV_STATE_JSON)?)

@@ -131,6 +131,15 @@ impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
         todo!()
     }
 
+    async fn get_rev_status_list(
+        &self,
+        _rev_reg_id: &RevocationRegistryDefinitionId,
+        _timestamp: u64,
+        _: Option<&RevocationRegistryDefinition>,
+    ) -> VcxLedgerResult<(RevocationStatusList, u64)> {
+        todo!()
+    }
+
     async fn get_rev_reg(
         &self,
         _rev_reg_id: &RevocationRegistryDefinitionId,

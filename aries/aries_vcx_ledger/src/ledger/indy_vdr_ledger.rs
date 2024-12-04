@@ -4,16 +4,19 @@ use std::{
     sync::RwLock,
 };
 
-use anoncreds_types::data_types::{
-    identifiers::{
-        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
-        schema_id::SchemaId,
+use anoncreds_types::{
+    data_types::{
+        identifiers::{
+            cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+            schema_id::SchemaId,
+        },
+        ledger::{
+            cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+            rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+            rev_status_list::RevocationStatusList, schema::Schema,
+        },
     },
-    ledger::{
-        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
-        schema::Schema,
-    },
+    utils::conversions::from_revocation_registry_delta_to_revocation_status_list,
 };
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use async_trait::async_trait;
@@ -539,6 +542,35 @@ where
             .response_parser
             .parse_get_revoc_reg_delta_response(&response)?;
         Ok((revoc_reg_delta.convert(())?, timestamp))
+    }
+
+    async fn get_rev_status_list(
+        &self,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+        timestamp: u64,
+        pre_fetched_rev_reg_def: Option<&RevocationRegistryDefinition>,
+    ) -> VcxLedgerResult<(RevocationStatusList, u64)> {
+        let (delta, entry_time) = self
+            .get_rev_reg_delta_json(rev_reg_id, Some(0), Some(timestamp))
+            .await?;
+
+        let rev_reg_def = match pre_fetched_rev_reg_def {
+            Some(x) => x,
+            None => &self.get_rev_reg_def_json(rev_reg_id).await?,
+        };
+
+        let status_list = from_revocation_registry_delta_to_revocation_status_list(
+            &delta.value,
+            &rev_reg_def,
+            Some(entry_time),
+        )
+        .map_err(|e| {
+            VcxLedgerError::InvalidLedgerResponse(format!(
+                "received rev status delta could not be translated to status list: {e} {delta:?}"
+            ))
+        })?;
+
+        Ok((status_list, entry_time))
     }
 
     async fn get_rev_reg(
