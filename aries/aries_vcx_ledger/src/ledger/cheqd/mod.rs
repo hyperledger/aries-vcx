@@ -92,6 +92,7 @@ impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
             tag: data.tag,
             cred_def_id: data.cred_def_id,
             value: data.value,
+            issuer_id: extract_issuer_id(&url)?,
         })
     }
 
