@@ -18,6 +18,7 @@ use async_trait::async_trait;
 use chrono::DateTime;
 use did_cheqd::resolution::resolver::DidCheqdResolver;
 use did_parser_nom::{Did, DidUrl};
+use did_resolver::shared_types::did_resource::{DidResource, DidResourceMetadata};
 use models::{
     CheqdAnoncredsCredentialDefinition, CheqdAnoncredsRevocationRegistryDefinition,
     CheqdAnoncredsRevocationStatusList, CheqdAnoncredsSchema,
@@ -28,6 +29,9 @@ use crate::errors::error::{VcxLedgerError, VcxLedgerResult};
 
 mod models;
 
+const SCHEMA_RESOURCE_TYPE: &str = "anonCredsSchema";
+const CRED_DEF_RESOURCE_TYPE: &str = "anonCredsCredDef";
+const REV_REG_DEF_RESOURCE_TYPE: &str = "anonCredsRevocRegDef";
 const STATUS_LIST_RESOURCE_TYPE: &str = "anonCredsStatusList";
 
 pub struct CheqdAnoncredsLedgerRead {
@@ -38,19 +42,49 @@ impl CheqdAnoncredsLedgerRead {
     pub fn new(resolver: Arc<DidCheqdResolver>) -> Self {
         Self { resolver }
     }
-}
 
-// TODO - issue with our anoncreds-types conversions - we are missing `issuerId`, so we make
-// issuerId from the resource ID - which assumes it is a legacy sovrin identifier for the resource.
-// i.e. split(":")[0]. FIX! we could fix the indyvdr type conversions to include the `issuerId`, and
-// make `issuerId` required in our anoncreds-types UPDATE - actually ^, check what credo is doing
+    fn check_resource_type(&self, resource: &DidResource, expected: &str) -> VcxLedgerResult<()> {
+        let rtyp = &resource.metadata.resource_type;
+        if rtyp != expected {
+            return Err(VcxLedgerError::InvalidLedgerResponse(format!(
+                "Returned resource is not expected type. Got {rtyp}, expected: {expected}"
+            )));
+        }
+        Ok(())
+    }
+
+    async fn get_rev_reg_def_with_metadata(
+        &self,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+    ) -> VcxLedgerResult<(RevocationRegistryDefinition, DidResourceMetadata)> {
+        let url = DidUrl::parse(rev_reg_id.to_string())?;
+        let resource = self.resolver.resolve_resource(&url).await?;
+        self.check_resource_type(&resource, REV_REG_DEF_RESOURCE_TYPE)?;
+
+        let data: CheqdAnoncredsRevocationRegistryDefinition =
+            serde_json::from_slice(&resource.content)?;
+        Ok((
+            RevocationRegistryDefinition {
+                id: rev_reg_id.to_owned(),
+                revoc_def_type: data.revoc_def_type,
+                tag: data.tag,
+                cred_def_id: data.cred_def_id,
+                value: data.value,
+                issuer_id: extract_issuer_id(&url)?,
+            },
+            resource.metadata,
+        ))
+    }
+}
 
 #[async_trait]
 impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
     async fn get_schema(&self, schema_id: &SchemaId, _: Option<&Did>) -> VcxLedgerResult<Schema> {
         let url = DidUrl::parse(schema_id.to_string())?;
         let resource = self.resolver.resolve_resource(&url).await?;
-        let data: CheqdAnoncredsSchema = serde_json::from_slice(&resource)?;
+        self.check_resource_type(&resource, SCHEMA_RESOURCE_TYPE)?;
+
+        let data: CheqdAnoncredsSchema = serde_json::from_slice(&resource.content)?;
         Ok(Schema {
             id: schema_id.to_owned(),
             seq_no: None,
@@ -68,7 +102,9 @@ impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
     ) -> VcxLedgerResult<CredentialDefinition> {
         let url = DidUrl::parse(cred_def_id.to_string())?;
         let resource = self.resolver.resolve_resource(&url).await?;
-        let data: CheqdAnoncredsCredentialDefinition = serde_json::from_slice(&resource)?;
+        self.check_resource_type(&resource, CRED_DEF_RESOURCE_TYPE)?;
+
+        let data: CheqdAnoncredsCredentialDefinition = serde_json::from_slice(&resource.content)?;
         Ok(CredentialDefinition {
             id: cred_def_id.to_owned(),
             schema_id: data.schema_id,
@@ -83,17 +119,9 @@ impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
     ) -> VcxLedgerResult<RevocationRegistryDefinition> {
-        let url = DidUrl::parse(rev_reg_id.to_string())?;
-        let resource = self.resolver.resolve_resource(&url).await?;
-        let data: CheqdAnoncredsRevocationRegistryDefinition = serde_json::from_slice(&resource)?;
-        Ok(RevocationRegistryDefinition {
-            id: rev_reg_id.to_owned(),
-            revoc_def_type: data.revoc_def_type,
-            tag: data.tag,
-            cred_def_id: data.cred_def_id,
-            value: data.value,
-            issuer_id: extract_issuer_id(&url)?,
-        })
+        self.get_rev_reg_def_with_metadata(rev_reg_id)
+            .await
+            .map(|v| v.0)
     }
 
     async fn get_rev_reg_delta_json(
@@ -112,16 +140,15 @@ impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-        pre_fetched_rev_reg_def: Option<&RevocationRegistryDefinition>,
+        // unused, we need to fetch anyway for resourceName
+        _pre_fetched_rev_reg_def: Option<&RevocationRegistryDefinition>,
     ) -> VcxLedgerResult<(RevocationStatusList, u64)> {
         let rev_reg_def_url = DidUrl::parse(rev_reg_id.to_string())?;
 
-        let rev_reg_def = match pre_fetched_rev_reg_def {
-            Some(v) => v,
-            None => &self.get_rev_reg_def_json(rev_reg_id).await?,
-        };
+        let (_def, rev_reg_def_metadata) = self.get_rev_reg_def_with_metadata(rev_reg_id).await?;
 
-        let name = &rev_reg_def.tag; // TODO - credo-ts uses the metadata.name or fails (https://docs.cheqd.io/product/advanced/anoncreds/revocation-status-list#same-resource-name-different-resource-type)
+        //credo-ts uses the metadata.name or fails (https://docs.cheqd.io/product/advanced/anoncreds/revocation-status-list#same-resource-name-different-resource-type)
+        let name = &rev_reg_def_metadata.resource_name;
 
         let did = rev_reg_def_url
             .did()
@@ -141,8 +168,10 @@ impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
         let query_url = DidUrl::parse(query)?;
 
         let resource = self.resolver.resolve_resource(&query_url).await?;
-        let data: CheqdAnoncredsRevocationStatusList = serde_json::from_slice(&resource)?;
-        let timestamp = 0; // TODO - from metadata
+        self.check_resource_type(&resource, STATUS_LIST_RESOURCE_TYPE)?;
+
+        let data: CheqdAnoncredsRevocationStatusList = serde_json::from_slice(&resource.content)?;
+        let timestamp = resource.metadata.created.timestamp() as u64;
 
         let status_list = RevocationStatusList {
             rev_reg_def_id: Some(rev_reg_id.to_owned()),

@@ -6,7 +6,10 @@ use did_resolver::{
     did_doc::schema::did_doc::DidDocument,
     did_parser_nom::{Did, DidUrl},
     error::GenericError,
-    shared_types::did_document_metadata::DidDocumentMetadata,
+    shared_types::{
+        did_document_metadata::DidDocumentMetadata,
+        did_resource::{DidResource, DidResourceMetadata},
+    },
     traits::resolvable::{resolution_output::DidResolutionOutput, DidResolvable},
 };
 use http_body_util::combinators::UnsyncBoxBody;
@@ -18,6 +21,7 @@ use hyper_util::{
 use tokio::sync::Mutex;
 use tonic::{transport::Uri, Status};
 
+use super::transformer::CheqdResourceMetadataWithUri;
 use crate::{
     error::{DidCheqdError, DidCheqdResult},
     proto::cheqd::{
@@ -184,7 +188,7 @@ impl DidCheqdResolver {
     }
 
     // TODO - better return structure
-    pub async fn resolve_resource(&self, url: &DidUrl) -> DidCheqdResult<Vec<u8>> {
+    pub async fn resolve_resource(&self, url: &DidUrl) -> DidCheqdResult<DidResource> {
         let method = url.method();
         if method != Some("cheqd") {
             return Err(DidCheqdError::MethodNotSupported(format!("{method:?}")));
@@ -219,7 +223,7 @@ impl DidCheqdResolver {
         did_id: &str,
         resource_id: &str,
         network: &str,
-    ) -> DidCheqdResult<Vec<u8>> {
+    ) -> DidCheqdResult<DidResource> {
         let mut client = self.client_for_network(network).await?;
 
         let request = QueryResourceRequest {
@@ -239,9 +243,23 @@ impl DidCheqdResolver {
             .ok_or(DidCheqdError::InvalidResponse(
                 "Resource query did not return a resource".into(),
             ))?;
-        // TODO - metadata
+        let query_metadata = query_response
+            .metadata
+            .ok_or(DidCheqdError::InvalidResponse(
+                "Resource query did not return metadata".into(),
+            ))?;
+        let metadata = DidResourceMetadata::try_from(CheqdResourceMetadataWithUri {
+            uri: format!(
+                "did:cheqd:{network}:{}/resources/{}",
+                query_metadata.collection_id, query_metadata.id
+            ),
+            meta: query_metadata,
+        })?;
 
-        Ok(query_resource.data)
+        Ok(DidResource {
+            content: query_resource.data,
+            metadata,
+        })
     }
 }
 

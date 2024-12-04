@@ -607,6 +607,7 @@ dependencies = [
  "chrono",
  "did_cheqd",
  "did_parser_nom",
+ "did_resolver",
  "indy-ledger-response-parser",
  "indy-vdr",
  "indy-vdr-proxy-client",
@@ -1844,6 +1845,7 @@ dependencies = [
  "did_parser_nom",
  "serde",
  "serde_json",
+ "typed-builder",
 ]
 
 [[package]]
