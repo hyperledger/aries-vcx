@@ -43,9 +43,12 @@ pub enum ProposePresentationAttachmentFormatType {
     DifPresentationExchangeDefinitions1_0,
     #[serde(rename = "hlindy/proof-req@v2.0")]
     HyperledgerIndyProofRequest2_0,
-    // TODO - FIX - wrong ver, match acapy
-    #[serde(rename = "anoncreds/proof-req@v2.0")]
-    AnoncredsProofRequest2_0,
+    #[serde(
+        rename = "anoncreds/proof-request@v1.0",
+        // TODO - FIX - wrong ver, match acapy
+        alias = "anoncreds/proof-req@v2.0"
+    )]
+    AnoncredsProofRequest1_0,
 }
 
 #[cfg(test)]

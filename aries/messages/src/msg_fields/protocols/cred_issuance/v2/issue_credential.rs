@@ -43,8 +43,11 @@ pub struct IssueCredentialV2Decorators {
 pub enum IssueCredentialAttachmentFormatType {
     #[serde(rename = "aries/ld-proof-vc@v1.0")]
     AriesLdProofVc1_0,
-    #[serde(rename = "anoncreds/cred@v2.0")]
-    AnoncredsCredential2_0,
+    #[serde(
+        rename = "anoncreds/credential@v1.0",
+        alias = "anoncreds/cred@v2.0" // TODO - this is wrong, fix once acapy fixes
+    )]
+    AnoncredsCredential1_0,
     #[serde(rename = "hlindy/cred@v2.0")]
     HyperledgerIndyCredential2_0,
 }
