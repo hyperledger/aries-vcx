@@ -24,6 +24,8 @@ pub enum DidCheqdError {
     InvalidDidDocument(String),
     #[error("Invalid DID Url: {0}")]
     InvalidDidUrl(String),
+    #[error("Resource could not be found: {0}")]
+    ResourceNotFound(String),
     #[error("Parsing error: {0}")]
     ParsingError(#[from] ParsingErrorSource),
     #[error(transparent)]

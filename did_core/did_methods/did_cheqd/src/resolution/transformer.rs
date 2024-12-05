@@ -11,9 +11,7 @@ use did_resolver::{
         verification_method::{PublicKeyField, VerificationMethod, VerificationMethodType},
     },
     did_parser_nom::Did,
-    shared_types::{
-        did_document_metadata::DidDocumentMetadata, did_resource::DidResourceMetadata,
-    },
+    shared_types::{did_document_metadata::DidDocumentMetadata, did_resource::DidResourceMetadata},
 };
 use serde_json::json;
 
@@ -244,7 +242,7 @@ impl TryFrom<CheqdResourceMetadataWithUri> for DidResourceMetadata {
             })
             .collect();
 
-        DidResourceMetadata::builder()
+        Ok(DidResourceMetadata::builder()
             .resource_uri(uri)
             .resource_collection_id(value.collection_id)
             .resource_id(value.id)
@@ -258,8 +256,7 @@ impl TryFrom<CheqdResourceMetadataWithUri> for DidResourceMetadata {
             .checksum(value.checksum)
             .previous_version_id(previous_version_id)
             .next_version_id(next_version_id)
-            .build();
-        todo!()
+            .build())
     }
 }
 

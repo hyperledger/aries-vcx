@@ -1,7 +1,8 @@
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 
 use async_trait::async_trait;
 use bytes::Bytes;
+use chrono::{DateTime, Utc};
 use did_resolver::{
     did_doc::schema::did_doc::DidDocument,
     did_parser_nom::{Did, DidUrl},
@@ -26,7 +27,10 @@ use crate::{
     error::{DidCheqdError, DidCheqdResult},
     proto::cheqd::{
         did::v2::{query_client::QueryClient as DidQueryClient, QueryDidDocRequest},
-        resource::v2::{query_client::QueryClient as ResourceQueryClient, QueryResourceRequest},
+        resource::v2::{
+            query_client::QueryClient as ResourceQueryClient, Metadata as CheqdResourceMetadata,
+            QueryCollectionResourcesRequest, QueryResourceRequest,
+        },
     },
 };
 
@@ -187,7 +191,7 @@ impl DidCheqdResolver {
         Ok(output_builder.build())
     }
 
-    // TODO - better return structure
+    /// TODO - explain what is and isn't supported
     pub async fn resolve_resource(&self, url: &DidUrl) -> DidCheqdResult<DidResource> {
         let method = url.method();
         if method != Some("cheqd") {
@@ -195,27 +199,50 @@ impl DidCheqdResolver {
         }
 
         let network = url.namespace().unwrap_or(MAINNET_NAMESPACE);
+        let did_id = url
+            .id()
+            .ok_or(DidCheqdError::InvalidDidUrl(format!("missing ID {url}")))?;
 
         // 1. resolve by exact reference: /reference/asdf
         if let Some(path) = url.path() {
             let Some(resource_id) = path.strip_prefix("/resources/") else {
-                // TODO
-                todo!()
+                return Err(DidCheqdError::InvalidDidUrl(format!(
+                    "DID Resource URL has a path without `/resources/`: {path}"
+                )));
             };
-            let did_id = url
-                .id()
-                .ok_or(DidCheqdError::InvalidDidUrl(format!("missing ID {url}")))?;
 
             return self
                 .resolve_resource_by_id(did_id, resource_id, network)
                 .await;
         }
 
-        // 2. resolve by name & type
-        // 2.a. resolve by name & type & `version`
-        // 2.b. resolve by name & type & closest to `resourceVersion`
-        // 2.c. resolve by name & type & closest to `now`
-        todo!()
+        // 2. resolve by name & type & time (if any)
+        let params = url.queries();
+        let resource_name = params.get("resourceName");
+        let resource_type = params.get("resourceType");
+        let version_time = params.get("resourceVersionTime");
+
+        let (Some(resource_name), Some(resource_type)) = (resource_name, resource_type) else {
+            return Err(DidCheqdError::InvalidDidUrl(format!(
+                "Resolver can only resolve by resource ID or name+type combination"
+            )))?;
+        };
+        // determine desired version_time, either from param, or *now*
+        let version_time = match version_time {
+            Some(v) => DateTime::parse_from_rfc3339(v)
+                .map_err(|e| DidCheqdError::InvalidDidUrl(e.to_string()))?
+                .to_utc(),
+            None => Utc::now(),
+        };
+
+        self.resolve_resource_by_name_type_and_time(
+            did_id,
+            resource_name,
+            resource_type,
+            version_time,
+            network,
+        )
+        .await
     }
 
     async fn resolve_resource_by_id(
@@ -261,6 +288,43 @@ impl DidCheqdResolver {
             metadata,
         })
     }
+
+    async fn resolve_resource_by_name_type_and_time(
+        &self,
+        did_id: &str,
+        name: &str,
+        rtyp: &str,
+        time: DateTime<Utc>,
+        network: &str,
+    ) -> DidCheqdResult<DidResource> {
+        let mut client = self.client_for_network(network).await?;
+
+        let response = client
+            .resources
+            .collection_resources(QueryCollectionResourcesRequest {
+                collection_id: did_id.to_owned(),
+                // FUTURE - pagination
+                pagination: None,
+            })
+            .await?;
+
+        let query_response = response.into_inner();
+        let resources = query_response.resources;
+        let mut filtered: Vec<_> =
+            filter_resources_by_name_and_type(resources.iter(), name, rtyp).collect();
+        filtered.sort_by(|a, b| desc_chronological_sort_resources(*a, *b));
+
+        let resource_meta = find_resource_just_before_time(filtered.into_iter(), time);
+
+        let Some(meta) = resource_meta else {
+            return Err(DidCheqdError::ResourceNotFound(format!(
+                "network: {network}, collection: {did_id}, name: {name}, type: {rtyp}, time: \
+                 {time}"
+            )));
+        };
+
+        self.resolve_resource_by_id(did_id, &meta.id, network).await
+    }
 }
 
 /// Assembles a hyper client which:
@@ -280,6 +344,72 @@ fn native_tls_hyper_client() -> DidCheqdResult<HyperClient> {
     Ok(Client::builder(TokioExecutor::new())
         .http2_only(true)
         .build(connector))
+}
+
+fn filter_resources_by_name_and_type<'a>(
+    resources: impl Iterator<Item = &'a CheqdResourceMetadata> + 'a,
+    name: &'a str,
+    rtyp: &'a str,
+) -> impl Iterator<Item = &'a CheqdResourceMetadata> + 'a {
+    resources.filter(move |r| r.name == name && r.resource_type == rtyp)
+}
+
+fn desc_chronological_sort_resources(
+    b: &CheqdResourceMetadata,
+    a: &CheqdResourceMetadata,
+) -> Ordering {
+    let (a_secs, a_ns) = a
+        .created
+        .map(|v| {
+            let v = v.normalized();
+            (v.seconds, v.nanos)
+        })
+        .unwrap_or((0, 0));
+    let (b_secs, b_ns) = b
+        .created
+        .map(|v| {
+            let v = v.normalized();
+            (v.seconds, v.nanos)
+        })
+        .unwrap_or((0, 0));
+
+    match a_secs.cmp(&b_secs) {
+        Ordering::Equal => a_ns.cmp(&b_ns),
+        res => res,
+    }
+}
+
+/// assuming `resources` is sorted by `.created` time in descending order, find
+/// the resource which is closest to `before_time`, but NOT after.
+///
+/// Returns a reference to this resource if it exists.
+///
+/// e.g.:
+/// resources: [{created: 20}, {created: 15}, {created: 10}, {created: 5}]
+/// before_time: 14
+/// returns: {created: 10}
+///
+/// resources: [{created: 20}, {created: 15}, {created: 10}, {created: 5}]
+/// before_time: 4
+/// returns: None
+fn find_resource_just_before_time<'a>(
+    resources: impl Iterator<Item = &'a CheqdResourceMetadata>,
+    before_time: DateTime<Utc>,
+) -> Option<&'a CheqdResourceMetadata> {
+    let before_epoch = before_time.timestamp();
+
+    for r in resources {
+        let Some(created) = r.created else {
+            continue;
+        };
+
+        let created_epoch = created.normalized().seconds;
+        if created_epoch < before_epoch {
+            return Some(r);
+        }
+    }
+
+    None
 }
 
 #[cfg(test)]
