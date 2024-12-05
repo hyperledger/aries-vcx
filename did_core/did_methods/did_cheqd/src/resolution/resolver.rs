@@ -446,4 +446,6 @@ mod unit_tests {
         let e = resolver.resolve_did(&did).await.unwrap_err();
         assert!(matches!(e, DidCheqdError::BadConfiguration(_)));
     }
+    
+    // TODO - unit test resources etc
 }

@@ -109,6 +109,7 @@ async fn test_resolve_rev_reg_def_vector() {
     );
 }
 
+// test status list resolution from credo-ts uploaded vectors
 // https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:8bbd2026-03f5-42c7-bf80-09f46fc4d67b?resourceName=275990cc056b46176a7122cfd888f46a2bd8e3d45a71d5ff20764a874ed02edd&resourceType=anonCredsStatusList&resourceMetadata=true
 // reset:    https://testnet-explorer.cheqd.io/transactions/356F65125E585B9F439C423F2AD7DE73ADF4DC9A0811AA8EE5D03D63B1872DC0
 // 2024-12-04T22:14:55Z

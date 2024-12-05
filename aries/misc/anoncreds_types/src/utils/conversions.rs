@@ -16,14 +16,33 @@ pub fn from_revocation_registry_delta_to_revocation_status_list(
     let issuance_by_default = true;
     let default_state = if issuance_by_default { 0 } else { 1 };
     let mut revocation_list = bitvec![default_state; rev_reg_def.value.max_cred_num as usize];
+    let revocation_len = revocation_list.len();
 
     for issued in &delta.issued {
-        // TODO - bounds
+        if revocation_len <= *issued as usize {
+            return Err(crate::Error::from_msg(
+                crate::ErrorKind::ConversionError,
+                format!(
+                    "Error whilst constructing a revocation status list from the ledger's delta. \
+                     Ledger delta reported an issuance for cred_rev_id '{issued}', but the \
+                     revocation_list max size is {revocation_len}"
+                ),
+            ));
+        }
         revocation_list.insert(*issued as usize, false);
     }
 
     for revoked in &delta.revoked {
-        // TODO - bounds
+        if revocation_len <= *revoked as usize {
+            return Err(crate::Error::from_msg(
+                crate::ErrorKind::ConversionError,
+                format!(
+                    "Error whilst constructing a revocation status list from the ledger's delta. \
+                     Ledger delta reported an revocation for cred_rev_id '{revoked}', but the \
+                     revocation_list max size is {revocation_len}"
+                ),
+            ));
+        }
         revocation_list.insert(*revoked as usize, true);
     }
 
