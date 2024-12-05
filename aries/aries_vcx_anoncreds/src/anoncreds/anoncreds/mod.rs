@@ -33,39 +33,41 @@ use anoncreds::{
         RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
     },
 };
-use anoncreds_types::data_types::{
-    identifiers::{
-        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
-        schema_id::SchemaId,
-    },
-    ledger::{
-        cred_def::{CredentialDefinition, SignatureType},
-        rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition,
-        rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
-        rev_status_list::RevocationStatusList,
-        schema::{AttributeNames, Schema},
-    },
-    messages::{
-        cred_definition_config::CredentialDefinitionConfig,
-        cred_offer::CredentialOffer,
-        cred_request::{CredentialRequest, CredentialRequestMetadata},
-        cred_selection::{
-            RetrievedCredentialForReferent, RetrievedCredentialInfo, RetrievedCredentials,
+use anoncreds_types::{
+    data_types::{
+        identifiers::{
+            cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+            schema_id::SchemaId,
         },
-        credential::{Credential, CredentialValues},
-        nonce::Nonce,
-        pres_request::PresentationRequest,
-        presentation::{Presentation, RequestedCredentials},
-        revocation_state::CredentialRevocationState,
+        ledger::{
+            cred_def::{CredentialDefinition, SignatureType},
+            rev_reg::RevocationRegistry,
+            rev_reg_def::RevocationRegistryDefinition,
+            rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
+            rev_status_list::RevocationStatusList,
+            schema::{AttributeNames, Schema},
+        },
+        messages::{
+            cred_definition_config::CredentialDefinitionConfig,
+            cred_offer::CredentialOffer,
+            cred_request::{CredentialRequest, CredentialRequestMetadata},
+            cred_selection::{
+                RetrievedCredentialForReferent, RetrievedCredentialInfo, RetrievedCredentials,
+            },
+            credential::{Credential, CredentialValues},
+            nonce::Nonce,
+            pres_request::PresentationRequest,
+            presentation::{Presentation, RequestedCredentials},
+            revocation_state::CredentialRevocationState,
+        },
     },
+    utils::conversions::from_revocation_registry_delta_to_revocation_status_list,
 };
 use aries_vcx_wallet::wallet::{
     base_wallet::{record::Record, record_category::RecordCategory, BaseWallet},
     record_tags::{RecordTag, RecordTags},
 };
 use async_trait::async_trait;
-use bitvec::bitvec;
 use did_parser_nom::Did;
 use log::warn;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -81,36 +83,6 @@ use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{VcxAnoncredsError, VcxAnoncredsResult},
 };
-
-fn from_revocation_registry_delta_to_revocation_status_list(
-    delta: &RevocationRegistryDeltaValue,
-    rev_reg_def: &AnoncredsRevocationRegistryDefinition,
-    rev_reg_def_id: &RevocationRegistryDefinitionId,
-    timestamp: Option<u64>,
-    issuance_by_default: bool,
-) -> VcxAnoncredsResult<RevocationStatusList> {
-    let default_state = if issuance_by_default { 0 } else { 1 };
-    let mut revocation_list = bitvec![default_state; rev_reg_def.value.max_cred_num as usize];
-
-    for issued in &delta.issued {
-        revocation_list.insert(*issued as usize, false);
-    }
-
-    for revoked in &delta.revoked {
-        revocation_list.insert(*revoked as usize, true);
-    }
-
-    let accum = delta.accum.into();
-
-    RevocationStatusList::new(
-        Some(&rev_reg_def_id.to_string()),
-        rev_reg_def.issuer_id.clone().convert(())?,
-        revocation_list,
-        Some(accum),
-        timestamp,
-    )
-    .map_err(Into::into)
-}
 
 fn from_revocation_status_list_to_revocation_registry_delta(
     rev_status_list: &RevocationStatusList,
@@ -288,9 +260,29 @@ impl BaseAnonCreds for Anoncreds {
         let cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
             credential_defs_json.convert(())?;
 
+        // tack on issuerId for ease of processing status lists
+        let rev_regs_map_with_issuer_ids: Option<HashMap<_, _>> =
+            match (rev_regs_json, &rev_reg_defs_json) {
+                (Some(regs), Some(defs)) => Some(
+                    regs.into_iter()
+                        .filter_map(|(k, v)| {
+                            let Some(def) = defs.get(&k) else {
+                                return None;
+                            };
+                            Some((k, (v, def.issuer_id.clone())))
+                        })
+                        .collect(),
+                ),
+                _ => None,
+            };
+
         let rev_reg_defs: Option<
             HashMap<AnoncredsRevocationRegistryDefinitionId, AnoncredsRevocationRegistryDefinition>,
         > = rev_reg_defs_json.map(|v| v.convert(())).transpose()?;
+
+        let rev_status_lists = rev_regs_map_with_issuer_ids
+            .map(|r| r.convert(()))
+            .transpose()?;
 
         Ok(anoncreds::verifier::verify_presentation(
             &presentation,
@@ -298,7 +290,7 @@ impl BaseAnonCreds for Anoncreds {
             &schemas,
             &cred_defs,
             rev_reg_defs.as_ref(),
-            rev_regs_json.map(|r| r.convert(())).transpose()?,
+            rev_status_lists,
             None, // no idea what this is
         )?)
     }
@@ -947,18 +939,9 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         tails_dir: &Path,
         rev_reg_def_json: RevocationRegistryDefinition,
-        rev_reg_delta_json: RevocationRegistryDelta,
-        timestamp: u64,
+        rev_status_list: RevocationStatusList,
         cred_rev_id: u32,
     ) -> VcxAnoncredsResult<CredentialRevocationState> {
-        let cred_def_id = rev_reg_def_json.cred_def_id.to_string();
-        let max_cred_num = rev_reg_def_json.value.max_cred_num;
-        let rev_reg_def_id = rev_reg_def_json.id.to_string();
-        let (_cred_def_method, issuer_did, _signature_type, _schema_num, _tag) =
-            cred_def_parts(&cred_def_id).ok_or(VcxAnoncredsError::InvalidSchema(format!(
-                "Could not process cred_def_id {cred_def_id} as parts."
-            )))?;
-
         let revoc_reg_def: AnoncredsRevocationRegistryDefinition = rev_reg_def_json.convert(())?;
         let tails_file_hash = revoc_reg_def.value.tails_hash.as_str();
 
@@ -970,25 +953,6 @@ impl BaseAnonCreds for Anoncreds {
             VcxAnoncredsError::InvalidOption("tails file is not an unicode string".into())
         })?;
 
-        let RevocationRegistryDeltaValue { accum, revoked, .. } = rev_reg_delta_json.value;
-
-        let issuer_id = IssuerId::new(issuer_did.did()).unwrap();
-        let mut revocation_list = bitvec!(0; max_cred_num as usize);
-        revoked.into_iter().for_each(|id| {
-            revocation_list
-                .get_mut(id as usize)
-                .map(|mut b| *b = true)
-                .unwrap_or_default()
-        });
-        let registry = CryptoRevocationRegistry { accum };
-
-        let rev_status_list = RevocationStatusList::new(
-            Some(&rev_reg_def_id),
-            issuer_id.convert(())?,
-            revocation_list,
-            Some(registry),
-            Some(timestamp),
-        )?;
         let rev_state = anoncreds::prover::create_or_update_revocation_state(
             tails_path,
             &revoc_reg_def,
@@ -1164,10 +1128,8 @@ impl BaseAnonCreds for Anoncreds {
         let current_time = OffsetDateTime::now_utc().unix_timestamp() as u64;
         let rev_status_list = from_revocation_registry_delta_to_revocation_status_list(
             &last_rev_reg_delta.value,
-            &rev_reg_def.clone().convert(())?,
-            rev_reg_id,
+            &rev_reg_def,
             Some(current_time),
-            true,
         )?;
 
         let cred_def = self

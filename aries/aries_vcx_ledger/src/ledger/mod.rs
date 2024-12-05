@@ -5,6 +5,8 @@ pub mod common;
 
 pub mod indy;
 pub mod indy_vdr_ledger;
+#[cfg(feature = "cheqd")]
+pub mod cheqd;
 mod type_conversion;
 
 pub mod request_submitter;

@@ -8,7 +8,7 @@ use anoncreds_types::data_types::{
     ledger::{
         cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
         rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
-        schema::Schema,
+        rev_status_list::RevocationStatusList, schema::Schema,
     },
 };
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
@@ -95,6 +95,13 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxLedgerResult<(RevocationRegistryDelta, u64)>;
+    /// TODO - describe
+    async fn get_rev_status_list(
+        &self,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+        timestamp: u64,
+        pre_fetched_rev_reg_def: Option<&RevocationRegistryDefinition>,
+    ) -> VcxLedgerResult<(RevocationStatusList, u64)>;
     async fn get_rev_reg(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,

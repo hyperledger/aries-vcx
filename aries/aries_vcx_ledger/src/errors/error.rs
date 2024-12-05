@@ -15,8 +15,8 @@ pub enum VcxLedgerError {
     IOError(#[source] VdrError),
     #[error("Ledger item not found")]
     LedgerItemNotFound,
-    #[error("Invalid ledger response")]
-    InvalidLedgerResponse,
+    #[error("Invalid ledger response {0}")]
+    InvalidLedgerResponse(String),
     #[error("Duplicated schema")]
     DuplicationSchema,
     #[error("Invalid JSON: {0}")]
