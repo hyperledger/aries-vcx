@@ -292,6 +292,7 @@ mod unit_tests {
             fn get_cred_def<'life0,'life1,'life2,'async_trait>(&'life0 self,cred_def_id: &'life1 CredentialDefinitionId,submitter_did:Option< &'life2 Did> ,) ->  ::core::pin::Pin<Box<dyn ::core::future::Future<Output = VcxLedgerResult<CredentialDefinition> > + ::core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
             async fn get_rev_reg_def_json(&self, rev_reg_id: &RevocationRegistryDefinitionId) -> VcxLedgerResult<(RevocationRegistryDefinition, Value)>;
             async fn get_rev_reg_delta_json(&self, rev_reg_id: &RevocationRegistryDefinitionId, from: Option<u64>, to: Option<u64>) -> VcxLedgerResult<(RevocationRegistryDelta, u64)>;
+            #[allow(clippy::type_complexity)] // generated
             fn get_rev_status_list<'life0,'life1,'life2,'async_trait>(&'life0 self,rev_reg_id: &'life1 RevocationRegistryDefinitionId,timestamp:u64,rev_reg_def_meta:Option< &'life2 Value>) ->  ::core::pin::Pin<Box<dyn ::core::future::Future<Output = VcxLedgerResult<(RevocationStatusList,u64)> > + ::core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
             async fn get_rev_reg(&self, rev_reg_id: &RevocationRegistryDefinitionId, timestamp: u64) -> VcxLedgerResult<(RevocationRegistry, u64)>;
         }
@@ -548,7 +549,7 @@ mod unit_tests {
             "revRegDefId": "4xE68b6S5VRFrKMMG1U95M:4:4xE68b6S5VRFrKMMG1U95M:3:CL:59232:default:CL_ACCUM:4ae1cc6c-f6bd-486c-8057-88f2ce74e960",
             "revocationList": [0, 1, 1, 0],
             "currentAccumulator": "21 124C594B6B20E41B681E92B2C43FD165EA9E68BC3C9D63A82C8893124983CAE94 21 124C5341937827427B0A3A32113BD5E64FB7AB39BD3E5ABDD7970874501CA4897 6 5438CB6F442E2F807812FD9DC0C39AFF4A86B1E6766DBB5359E86A4D70401B0F 4 39D1CA5C4716FFC4FE0853C4FF7F081DFD8DF8D2C2CA79705211680AC77BF3A1 6 70504A5493F89C97C225B68310811A41AD9CD889301F238E93C95AD085E84191 4 39582252194D756D5D86D0EED02BF1B95CE12AED2FA5CD3C53260747D891993C",
-            "timestamp": 1669640864 as u64
+            "timestamp": 1669640864
         }))
         .unwrap();
         let output_timestamp = 876;

@@ -232,7 +232,7 @@ impl DidCheqdResolver {
 
         let (Some(resource_name), Some(resource_type)) = (resource_name, resource_type) else {
             return Err(DidCheqdError::InvalidDidUrl(format!(
-                "Resolver can only resolve by resource ID or name+type combination"
+                "Resolver can only resolve by exact resource ID or name+type combination {url}"
             )))?;
         };
         // determine desired version_time, either from param, or *now*
@@ -323,7 +323,7 @@ impl DidCheqdResolver {
         let resources = query_response.resources;
         let mut filtered: Vec<_> =
             filter_resources_by_name_and_type(resources.iter(), name, rtyp).collect();
-        filtered.sort_by(|a, b| desc_chronological_sort_resources(*a, *b));
+        filtered.sort_by(|a, b| desc_chronological_sort_resources(a, b));
 
         let resource_meta = find_resource_just_before_time(filtered.into_iter(), time);
 

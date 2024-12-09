@@ -585,7 +585,7 @@ where
         let status_list = from_revocation_registry_delta_to_revocation_status_list(
             &delta.value,
             entry_time,
-            &rev_reg_id,
+            rev_reg_id,
             rev_reg_def_meta.max_cred_num,
             rev_reg_def_meta.issuer_id.clone(),
         )
@@ -652,7 +652,7 @@ impl<T: RequestSubmitter, V: ResponseCacher> AnoncredsLedgerSupport for IndyVdrL
     }
 }
 
-fn did_method_is_supported(id: &String) -> bool {
+fn did_method_is_supported(id: &str) -> bool {
     let is_sov = id.starts_with("did:sov:");
     let is_unqualified = !id.starts_with("did");
 

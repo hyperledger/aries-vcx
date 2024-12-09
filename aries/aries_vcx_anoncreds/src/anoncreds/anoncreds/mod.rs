@@ -266,9 +266,7 @@ impl BaseAnonCreds for Anoncreds {
                 (Some(regs), Some(defs)) => Some(
                     regs.into_iter()
                         .filter_map(|(k, v)| {
-                            let Some(def) = defs.get(&k) else {
-                                return None;
-                            };
+                            let def = defs.get(&k)?;
                             Some((k, (v, def.issuer_id.clone())))
                         })
                         .collect(),
