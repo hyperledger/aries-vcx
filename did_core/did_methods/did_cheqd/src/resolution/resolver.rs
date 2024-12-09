@@ -490,7 +490,9 @@ mod unit_tests {
 
     #[tokio::test]
     async fn test_resolve_resource_fails_if_incomplete_query() {
-        let url = "did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J?resourceName=asdf".parse().unwrap();
+        let url = "did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J?resourceName=asdf"
+            .parse()
+            .unwrap();
         let resolver = DidCheqdResolver::new(Default::default());
         let e = resolver.resolve_resource(&url).await.unwrap_err();
         assert!(matches!(e, DidCheqdError::InvalidDidUrl(_)));
@@ -499,7 +501,10 @@ mod unit_tests {
     #[tokio::test]
     async fn test_resolve_resource_fails_if_invalid_resource_time() {
         // use epoch instead of XML DateTime
-        let url = "did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J?resourceName=asdf&resourceType=fdsa&resourceVersionTime=12341234".parse().unwrap();
+        let url = "did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J?resourceName=asdf&resourceType=fdsa&\
+                   resourceVersionTime=12341234"
+            .parse()
+            .unwrap();
         let resolver = DidCheqdResolver::new(Default::default());
         let e = resolver.resolve_resource(&url).await.unwrap_err();
         assert!(matches!(e, DidCheqdError::InvalidDidUrl(_)));

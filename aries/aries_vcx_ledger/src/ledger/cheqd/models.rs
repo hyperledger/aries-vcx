@@ -4,7 +4,8 @@ use anoncreds_types::data_types::{
     identifiers::{cred_def_id::CredentialDefinitionId, schema_id::SchemaId},
     ledger::{
         cred_def::{CredentialDefinitionData, SignatureType},
-        rev_reg_def::{RegistryType, RevocationRegistryDefinitionValue}, rev_status_list::serde_revocation_list,
+        rev_reg_def::{RegistryType, RevocationRegistryDefinitionValue},
+        rev_status_list::serde_revocation_list,
     },
 };
 use serde::{Deserialize, Serialize};
