@@ -40,11 +40,7 @@ pub enum RequestCredentialAttachmentFormatType {
     DifCredentialManifest1_0,
     #[serde(rename = "hlindy/cred-req@v2.0")]
     HyperledgerIndyCredentialRequest2_0,
-    #[serde(
-        rename = "anoncreds/credential-request@v1.0",
-        // TODO - this is wrong, fix once acapy fixes
-        alias = "anoncreds/cred-req@v2.0",
-    )]
+    #[serde(rename = "anoncreds/credential-request@v1.0")]
     AnoncredsCredentialRequest1_0,
     #[serde(rename = "aries/ld-proof-vc-detail@v1.0")]
     AriesLdProofVcDetail1_0,

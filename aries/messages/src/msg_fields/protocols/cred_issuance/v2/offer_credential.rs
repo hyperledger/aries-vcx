@@ -45,11 +45,7 @@ pub enum OfferCredentialAttachmentFormatType {
     DifCredentialManifest1_0,
     #[serde(rename = "hlindy/cred-abstract@v2.0")]
     HyperledgerIndyCredentialAbstract2_0,
-    #[serde(
-        rename = "anoncreds/credential-offer@v1.0",
-        alias = "anoncreds/cred-abstract@v2.0", // TODO - remove after acapy fix
-        alias = "anoncreds/credential@v1.0" // TODO - remove after credo-ts fix
-    )]
+    #[serde(rename = "anoncreds/credential-offer@v1.0")]
     AnoncredsCredentialOffer1_0,
     #[serde(rename = "aries/ld-proof-vc-detail@v1.0")]
     AriesLdProofVcDetail1_0,
