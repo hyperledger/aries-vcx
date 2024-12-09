@@ -1128,8 +1128,10 @@ impl BaseAnonCreds for Anoncreds {
         let current_time = OffsetDateTime::now_utc().unix_timestamp() as u64;
         let rev_status_list = from_revocation_registry_delta_to_revocation_status_list(
             &last_rev_reg_delta.value,
-            &rev_reg_def,
             Some(current_time),
+            &rev_reg_def.id,
+            rev_reg_def.value.max_cred_num as usize,
+            rev_reg_def.issuer_id.clone(),
         )?;
 
         let cred_def = self

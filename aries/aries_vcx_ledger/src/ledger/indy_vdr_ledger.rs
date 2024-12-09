@@ -7,8 +7,8 @@ use std::{
 use anoncreds_types::{
     data_types::{
         identifiers::{
-            cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
-            schema_id::SchemaId,
+            cred_def_id::CredentialDefinitionId, issuer_id::IssuerId,
+            rev_reg_def_id::RevocationRegistryDefinitionId, schema_id::SchemaId,
         },
         ledger::{
             cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
@@ -445,12 +445,20 @@ where
     }
 }
 
+pub struct RevocationRegistryDefinitionAdditionalMetadata {
+    pub max_cred_num: usize,
+    pub issuer_id: IssuerId,
+}
+
 #[async_trait]
 impl<T, V> AnoncredsLedgerRead for IndyVdrLedgerRead<T, V>
 where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
+    type RevocationRegistryDefinitionAdditionalMetadata =
+        RevocationRegistryDefinitionAdditionalMetadata;
+
     async fn get_schema(
         &self,
         schema_id: &SchemaId,
@@ -496,7 +504,10 @@ where
     async fn get_rev_reg_def_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
-    ) -> VcxLedgerResult<RevocationRegistryDefinition> {
+    ) -> VcxLedgerResult<(
+        RevocationRegistryDefinition,
+        RevocationRegistryDefinitionAdditionalMetadata,
+    )> {
         debug!("get_rev_reg_def_json >> rev_reg_id: {rev_reg_id}");
         let id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
         let request = self
@@ -509,7 +520,14 @@ where
         let rev_reg_def = self
             .response_parser
             .parse_get_revoc_reg_def_response(&response)?;
-        Ok(rev_reg_def.convert(())?)
+        let def = rev_reg_def.convert(())?;
+
+        let meta = RevocationRegistryDefinitionAdditionalMetadata {
+            max_cred_num: def.value.max_cred_num as usize,
+            issuer_id: def.issuer_id.clone(),
+        };
+
+        Ok((def, meta))
     }
 
     async fn get_rev_reg_delta_json(
@@ -548,21 +566,23 @@ where
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-        pre_fetched_rev_reg_def: Option<&RevocationRegistryDefinition>,
+        rev_reg_def_meta: Option<&RevocationRegistryDefinitionAdditionalMetadata>,
     ) -> VcxLedgerResult<(RevocationStatusList, u64)> {
         let (delta, entry_time) = self
             .get_rev_reg_delta_json(rev_reg_id, Some(0), Some(timestamp))
             .await?;
 
-        let rev_reg_def = match pre_fetched_rev_reg_def {
+        let rev_reg_def_meta = match rev_reg_def_meta {
             Some(x) => x,
-            None => &self.get_rev_reg_def_json(rev_reg_id).await?,
+            None => &self.get_rev_reg_def_json(rev_reg_id).await?.1,
         };
 
         let status_list = from_revocation_registry_delta_to_revocation_status_list(
             &delta.value,
-            &rev_reg_def,
             Some(entry_time),
+            &rev_reg_id,
+            rev_reg_def_meta.max_cred_num,
+            rev_reg_def_meta.issuer_id.clone(),
         )
         .map_err(|e| {
             VcxLedgerError::InvalidLedgerResponse(format!(

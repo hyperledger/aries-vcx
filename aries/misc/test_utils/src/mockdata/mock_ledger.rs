@@ -4,7 +4,9 @@ use anoncreds_types::data_types::{
         schema_id::SchemaId,
     },
     ledger::{
-        cred_def::CredentialDefinition, rev_reg::RevocationRegistry, rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta, rev_status_list::RevocationStatusList, schema::Schema
+        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+        rev_status_list::RevocationStatusList, schema::Schema,
     },
 };
 use aries_vcx_ledger::{
@@ -20,7 +22,8 @@ use did_parser_nom::Did;
 use public_key::Key;
 
 use crate::constants::{
-    rev_def_json, CRED_DEF_JSON, DEFAULT_AUTHOR_AGREEMENT, REQUEST_WITH_ENDORSER, REV_REG_DELTA_JSON, REV_REG_JSON, REV_STATUS_LIST_JSON, SCHEMA_JSON
+    rev_def_json, CRED_DEF_JSON, DEFAULT_AUTHOR_AGREEMENT, REQUEST_WITH_ENDORSER,
+    REV_REG_DELTA_JSON, REV_REG_JSON, REV_STATUS_LIST_JSON, SCHEMA_JSON,
 };
 
 #[derive(Debug)]
@@ -112,6 +115,8 @@ impl IndyLedgerWrite for MockLedger {
 #[allow(unused)]
 #[async_trait]
 impl AnoncredsLedgerRead for MockLedger {
+    type RevocationRegistryDefinitionAdditionalMetadata = ();
+
     async fn get_schema(
         &self,
         schema_id: &SchemaId,
@@ -131,8 +136,8 @@ impl AnoncredsLedgerRead for MockLedger {
     async fn get_rev_reg_def_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
-    ) -> VcxLedgerResult<RevocationRegistryDefinition> {
-        Ok(rev_def_json())
+    ) -> VcxLedgerResult<(RevocationRegistryDefinition, ())> {
+        Ok((rev_def_json(), ()))
     }
 
     async fn get_rev_reg_delta_json(
@@ -148,7 +153,7 @@ impl AnoncredsLedgerRead for MockLedger {
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-        pre_fetched_rev_reg_def: Option<&RevocationRegistryDefinition>,
+        meta: Option<&()>,
     ) -> VcxLedgerResult<(RevocationStatusList, u64)> {
         Ok((serde_json::from_str(REV_STATUS_LIST_JSON).unwrap(), 1))
     }

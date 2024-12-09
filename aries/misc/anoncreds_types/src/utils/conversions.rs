@@ -1,21 +1,23 @@
 use bitvec::bitvec;
 
-use crate::data_types::ledger::{
-    rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDeltaValue,
-    rev_status_list::RevocationStatusList,
+use crate::data_types::{
+    identifiers::{issuer_id::IssuerId, rev_reg_def_id::RevocationRegistryDefinitionId},
+    ledger::{rev_reg_delta::RevocationRegistryDeltaValue, rev_status_list::RevocationStatusList},
 };
 
 /// TODO - explain
 pub fn from_revocation_registry_delta_to_revocation_status_list(
     delta: &RevocationRegistryDeltaValue,
-    rev_reg_def: &RevocationRegistryDefinition,
     timestamp: Option<u64>,
+    rev_reg_id: &RevocationRegistryDefinitionId,
+    max_cred_num: usize,
+    issuer_id: IssuerId,
 ) -> Result<RevocationStatusList, crate::Error> {
     // no way to derive this value here. So we assume true, as false (ISSAUNCE_ON_DEAMAND) is not
     // recomended by anoncreds: https://hyperledger.github.io/anoncreds-spec/#anoncreds-issuer-setup-with-revocation
     let issuance_by_default = true;
     let default_state = if issuance_by_default { 0 } else { 1 };
-    let mut revocation_list = bitvec![default_state; rev_reg_def.value.max_cred_num as usize];
+    let mut revocation_list = bitvec![default_state; max_cred_num];
     let revocation_len = revocation_list.len();
 
     for issued in &delta.issued {
@@ -49,8 +51,8 @@ pub fn from_revocation_registry_delta_to_revocation_status_list(
     let accum = delta.accum.into();
 
     RevocationStatusList::new(
-        Some(&rev_reg_def.id.to_string()),
-        rev_reg_def.issuer_id.clone(),
+        Some(&rev_reg_id.to_string()),
+        issuer_id,
         revocation_list,
         Some(accum),
         timestamp,

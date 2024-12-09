@@ -53,7 +53,7 @@ impl CheqdAnoncredsLedgerRead {
         Ok(())
     }
 
-    async fn get_rev_reg_def_with_metadata(
+    async fn get_rev_reg_def_with_resource_metadata(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
     ) -> VcxLedgerResult<(RevocationRegistryDefinition, DidResourceMetadata)> {
@@ -77,8 +77,15 @@ impl CheqdAnoncredsLedgerRead {
     }
 }
 
+pub struct RevocationRegistryDefinitionAdditionalMetadata {
+    pub resource_name: String,
+}
+
 #[async_trait]
 impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
+    type RevocationRegistryDefinitionAdditionalMetadata =
+        RevocationRegistryDefinitionAdditionalMetadata;
+
     async fn get_schema(&self, schema_id: &SchemaId, _: Option<&Did>) -> VcxLedgerResult<Schema> {
         let url = DidUrl::parse(schema_id.to_string())?;
         let resource = self.resolver.resolve_resource(&url).await?;
@@ -118,10 +125,19 @@ impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
     async fn get_rev_reg_def_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
-    ) -> VcxLedgerResult<RevocationRegistryDefinition> {
-        self.get_rev_reg_def_with_metadata(rev_reg_id)
-            .await
-            .map(|v| v.0)
+    ) -> VcxLedgerResult<(
+        RevocationRegistryDefinition,
+        RevocationRegistryDefinitionAdditionalMetadata,
+    )> {
+        let (rev_reg_def, resource_meta) = self
+            .get_rev_reg_def_with_resource_metadata(rev_reg_id)
+            .await?;
+
+        let meta = RevocationRegistryDefinitionAdditionalMetadata {
+            resource_name: resource_meta.resource_name,
+        };
+
+        Ok((rev_reg_def, meta))
     }
 
     async fn get_rev_reg_delta_json(
@@ -140,15 +156,18 @@ impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-        // unused, we need to fetch anyway for resourceName
-        _pre_fetched_rev_reg_def: Option<&RevocationRegistryDefinition>,
+        rev_reg_def_meta: Option<&RevocationRegistryDefinitionAdditionalMetadata>,
     ) -> VcxLedgerResult<(RevocationStatusList, u64)> {
         let rev_reg_def_url = DidUrl::parse(rev_reg_id.to_string())?;
 
-        let (_def, rev_reg_def_metadata) = self.get_rev_reg_def_with_metadata(rev_reg_id).await?;
+        // refetch if needed
+        let rev_reg_def_meta = match rev_reg_def_meta {
+            Some(v) => v,
+            None => &self.get_rev_reg_def_json(rev_reg_id).await?.1,
+        };
 
         //credo-ts uses the metadata.name or fails (https://docs.cheqd.io/product/advanced/anoncreds/revocation-status-list#same-resource-name-different-resource-type)
-        let name = &rev_reg_def_metadata.resource_name;
+        let name = &rev_reg_def_meta.resource_name;
 
         let did = rev_reg_def_url
             .did()

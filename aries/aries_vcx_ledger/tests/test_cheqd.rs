@@ -81,7 +81,7 @@ async fn test_resolve_rev_reg_def_vector() {
               4f265d83-4657-4c37-ba80-c66cc399457e";
 
     let reader = CheqdAnoncredsLedgerRead::new(Arc::new(DidCheqdResolver::new(Default::default())));
-    let rev_reg_def = reader
+    let (rev_reg_def, meta) = reader
         .get_rev_reg_def_json(&RevocationRegistryDefinitionId::new_unchecked(id))
         .await
         .unwrap();
@@ -106,6 +106,11 @@ async fn test_resolve_rev_reg_def_vector() {
     assert_eq!(
         serde_json::to_value(rev_reg_def).unwrap(),
         expected_rev_reg_def
+    );
+
+    assert_eq!(
+        meta.resource_name,
+        "275990cc056b46176a7122cfd888f46a2bd8e3d45a71d5ff20764a874ed02edd"
     );
 }
 
@@ -140,10 +145,12 @@ async fn test_resolve_rev_status_list_versions() {
 
     let reader = CheqdAnoncredsLedgerRead::new(Arc::new(DidCheqdResolver::new(Default::default())));
 
+    let def_meta = reader.get_rev_reg_def_json(&def_id).await.unwrap().1;
+
     // scenario 1: get most recent
     let now = Utc::now().timestamp() as u64;
     let (status_list, update_time) = reader
-        .get_rev_status_list(&def_id, now, None)
+        .get_rev_status_list(&def_id, now, Some(&def_meta))
         .await
         .unwrap();
     assert_eq!(update_time, update3_time);
@@ -160,7 +167,7 @@ async fn test_resolve_rev_status_list_versions() {
 
     // scenario 2: between update 2 & 3
     let (status_list, update_time) = reader
-        .get_rev_status_list(&def_id, update2_time + 3, None)
+        .get_rev_status_list(&def_id, update2_time + 3, Some(&def_meta))
         .await
         .unwrap();
     assert_eq!(update_time, update2_time);
@@ -177,7 +184,7 @@ async fn test_resolve_rev_status_list_versions() {
 
     // scenario 3: between update 1 & 2
     let (status_list, update_time) = reader
-        .get_rev_status_list(&def_id, update1_time + 3, None)
+        .get_rev_status_list(&def_id, update1_time + 3, Some(&def_meta))
         .await
         .unwrap();
     assert_eq!(update_time, update1_time);
@@ -194,7 +201,7 @@ async fn test_resolve_rev_status_list_versions() {
 
     // scenario 4: between init & update 1
     let (status_list, update_time) = reader
-        .get_rev_status_list(&def_id, init_time + 3, None)
+        .get_rev_status_list(&def_id, init_time + 3, Some(&def_meta))
         .await
         .unwrap();
     assert_eq!(update_time, init_time);

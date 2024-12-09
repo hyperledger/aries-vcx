@@ -168,11 +168,11 @@ pub async fn build_rev_states_json(
                 };
 
                 let parsed_id = &rev_reg_id.to_owned().try_into()?;
-                let rev_reg_def_json = ledger_read.get_rev_reg_def_json(parsed_id).await?;
+                let (rev_reg_def_json, meta) = ledger_read.get_rev_reg_def_json(parsed_id).await?;
 
                 let on_or_before = to.unwrap_or(Utc::now().timestamp() as u64);
                 let (rev_status_list, timestamp) = ledger_read
-                    .get_rev_status_list(parsed_id, on_or_before, Some(&rev_reg_def_json))
+                    .get_rev_status_list(parsed_id, on_or_before, Some(&meta))
                     .await?;
 
                 let rev_state_json = anoncreds

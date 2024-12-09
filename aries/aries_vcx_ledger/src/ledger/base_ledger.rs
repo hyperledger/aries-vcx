@@ -73,8 +73,16 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
     ) -> VcxLedgerResult<String>;
 }
 
+/// Trait for reading anoncreds-related objects from some ledger/s.
 #[async_trait]
 pub trait AnoncredsLedgerRead: Debug + Send + Sync {
+    /// Opaque additional metadata associated with retrieving a revocation registry definition.
+    /// Returned as part of `get_rev_reg_def_json`, and optionally passed into
+    /// `get_rev_status_list`. Depending on the ledger anoncreds-method, this metadata may be
+    /// used in the subsequent revocation status list fetch as an optimization (e.g. to save an
+    /// additional ledger call).
+    type RevocationRegistryDefinitionAdditionalMetadata;
+
     async fn get_schema(
         &self,
         schema_id: &SchemaId,
@@ -85,22 +93,34 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
         cred_def_id: &CredentialDefinitionId,
         submitter_did: Option<&Did>,
     ) -> VcxLedgerResult<CredentialDefinition>;
+
+    /// Get the anoncreds [RevocationRegistryDefinition] associated with the given ID.
+    /// Also returns any trait-specific additional metadata for the rev reg.
     async fn get_rev_reg_def_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
-    ) -> VcxLedgerResult<RevocationRegistryDefinition>;
+    ) -> VcxLedgerResult<(
+        RevocationRegistryDefinition,
+        Self::RevocationRegistryDefinitionAdditionalMetadata,
+    )>;
     async fn get_rev_reg_delta_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxLedgerResult<(RevocationRegistryDelta, u64)>;
-    /// TODO - describe
+
+    /// Fetch the revocation status list associated with the ID at the given epoch second
+    /// `timestamp`. Optionally, metadata from a revocation registry definition fetch can be
+    /// passed in to optimize required ledger calls.
+    ///
+    /// Returns the complete [RevocationStatusList] closest to (at or before) the timestamp, and
+    /// also returns the actual timestamp that the returned status list entry was made.
     async fn get_rev_status_list(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
-        pre_fetched_rev_reg_def: Option<&RevocationRegistryDefinition>,
+        rev_reg_def_meta: Option<&Self::RevocationRegistryDefinitionAdditionalMetadata>,
     ) -> VcxLedgerResult<(RevocationStatusList, u64)>;
     async fn get_rev_reg(
         &self,
