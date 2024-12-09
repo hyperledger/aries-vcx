@@ -67,6 +67,7 @@ pub static REQUEST_WITH_ENDORSER: &str = r#"{"seqNo":344,"reqId":152286672972686
 
 pub fn rev_def_json() -> RevocationRegistryDefinition {
     serde_json::from_value(json!({
+        "issuerId": INSTITUTION_DID,
         "ver":"1.0",
         "id": REV_REG_ID.to_string(),
         "revocDefType":"CL_ACCUM",
