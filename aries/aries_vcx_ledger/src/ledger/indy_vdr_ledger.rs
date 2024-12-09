@@ -28,6 +28,7 @@ use indy_ledger_response_parser::{
 use indy_vdr as vdr;
 use log::{debug, trace};
 use public_key::Key;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use time::OffsetDateTime;
 use vdr::{
@@ -48,7 +49,10 @@ pub use vdr::{
 };
 
 use super::{
-    base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
+    base_ledger::{
+        AnoncredsLedgerRead, AnoncredsLedgerSupport, AnoncredsLedgerWrite, IndyLedgerRead,
+        IndyLedgerWrite,
+    },
     map_error_not_found_to_none,
     request_submitter::{
         vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
@@ -445,6 +449,7 @@ where
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RevocationRegistryDefinitionAdditionalMetadata {
     pub max_cred_num: usize,
     pub issuer_id: IssuerId,
@@ -621,6 +626,41 @@ where
     }
 }
 
+impl<T: RequestSubmitter, V: ResponseCacher> AnoncredsLedgerSupport for IndyVdrLedgerRead<T, V> {
+    fn supports_schema(&self, id: &SchemaId) -> bool {
+        if id.is_legacy() {
+            // unqualified
+            return true;
+        }
+        did_method_is_supported(&id.0)
+    }
+
+    fn supports_credential_definition(&self, id: &CredentialDefinitionId) -> bool {
+        if id.is_legacy_cred_def_identifier() {
+            // unqualified
+            return true;
+        }
+        did_method_is_supported(&id.0)
+    }
+
+    fn supports_revocation_registry(&self, id: &RevocationRegistryDefinitionId) -> bool {
+        if id.is_legacy() {
+            // unqualified
+            return true;
+        }
+        did_method_is_supported(&id.0)
+    }
+}
+
+fn did_method_is_supported(id: &String) -> bool {
+    let is_sov = id.starts_with("did:sov:");
+    let is_unqualified = !id.starts_with("did");
+
+    // FUTURE - indy & namespace
+
+    is_sov || is_unqualified
+}
+
 #[async_trait]
 impl<T> AnoncredsLedgerWrite for IndyVdrLedgerWrite<T>
 where
@@ -763,4 +803,109 @@ pub fn build_ledger_components(
     let ledger_write = indyvdr_build_ledger_write(request_submitter, None);
 
     Ok((ledger_read, ledger_write))
+}
+
+#[cfg(test)]
+mod unit_tests {
+    use mockall::mock;
+
+    use super::*;
+    use crate::ledger::response_cacher::noop::NoopResponseCacher;
+
+    mock! {
+        pub RequestSubmitter {}
+        #[async_trait]
+        impl RequestSubmitter for RequestSubmitter {
+            async fn submit(&self, request: indy_vdr::pool::PreparedRequest) -> VcxLedgerResult<String>;
+        }
+    }
+
+    fn dummy_indy_vdr_reader() -> IndyVdrLedgerRead<MockRequestSubmitter, NoopResponseCacher> {
+        IndyVdrLedgerRead::new(IndyVdrLedgerReadConfig {
+            request_submitter: MockRequestSubmitter::new(),
+            response_parser: indy_ledger_response_parser::ResponseParser,
+            response_cacher: NoopResponseCacher,
+            protocol_version: ProtocolVersion::Node1_4,
+        })
+    }
+
+    #[test]
+    fn test_anoncreds_schema_support() {
+        let reader = dummy_indy_vdr_reader();
+
+        // legacy
+        assert!(reader.supports_schema(
+            &SchemaId::new("7BPMqYgYLQni258J8JPS8K:2:degree schema:46.58.87").unwrap()
+        ));
+        // qualified sov
+        assert!(reader.supports_schema(
+            &SchemaId::new("did:sov:7BPMqYgYLQni258J8JPS8K:2:degree schema:46.58.87").unwrap()
+        ));
+        // qualified cheqd
+        assert!(!reader.supports_schema(
+            &SchemaId::new(
+                "did:cheqd:mainnet:7BPMqYgYLQni258J8JPS8K/resources/\
+                 6259d357-eeb1-4b98-8bee-12a8390d3497"
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn test_anoncreds_cred_def_support() {
+        let reader = dummy_indy_vdr_reader();
+
+        // legacy
+        assert!(reader.supports_credential_definition(
+            &CredentialDefinitionId::new(
+                "7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.degree_schema"
+            )
+            .unwrap()
+        ));
+        // qualified sov
+        assert!(reader.supports_credential_definition(
+            &CredentialDefinitionId::new(
+                "did:sov:7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.degree_schema"
+            )
+            .unwrap()
+        ));
+        // qualified cheqd
+        assert!(!reader.supports_credential_definition(
+            &CredentialDefinitionId::new(
+                "did:cheqd:mainnet:7BPMqYgYLQni258J8JPS8K/resources/\
+                 6259d357-eeb1-4b98-8bee-12a8390d3497"
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn test_anoncreds_rev_reg_support() {
+        let reader = dummy_indy_vdr_reader();
+
+        // legacy
+        assert!(reader.supports_revocation_registry(
+            &RevocationRegistryDefinitionId::new(
+                "7BPMqYgYLQni258J8JPS8K:4:7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.\
+                 degree_schema:CL_ACCUM:61d5a381-30be-4120-9307-b150b49c203c"
+            )
+            .unwrap()
+        ));
+        // qualified sov
+        assert!(reader.supports_revocation_registry(
+            &RevocationRegistryDefinitionId::new(
+                "did:sov:7BPMqYgYLQni258J8JPS8K:4:7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.\
+                 degree_schema:CL_ACCUM:61d5a381-30be-4120-9307-b150b49c203c"
+            )
+            .unwrap()
+        ));
+        // qualified cheqd
+        assert!(!reader.supports_revocation_registry(
+            &RevocationRegistryDefinitionId::new(
+                "did:cheqd:mainnet:7BPMqYgYLQni258J8JPS8K/resources/\
+                 6259d357-eeb1-4b98-8bee-12a8390d3497"
+            )
+            .unwrap()
+        ));
+    }
 }

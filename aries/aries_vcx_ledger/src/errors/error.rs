@@ -29,6 +29,8 @@ pub enum VcxLedgerError {
     InvalidOption(String),
     #[error("Invalid input: {0}")]
     InvalidInput(String),
+    #[error("Unsupported ledger identifier: {0}")]
+    UnsupportedLedgerIdentifier(String),
     #[error("Unknown error: {0}")]
     UnknownError(String),
     #[error("Indy Vdr Validation error: {0}")]

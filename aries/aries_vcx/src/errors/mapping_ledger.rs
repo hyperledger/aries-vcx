@@ -33,7 +33,9 @@ impl From<VcxLedgerError> for AriesVcxError {
                 Self::from_msg(AriesVcxErrorKind::PoolLedgerConnect, value)
             }
             VcxLedgerError::IOError(_) => Self::from_msg(AriesVcxErrorKind::IOError, value),
-            VcxLedgerError::InvalidInput(_) | VcxLedgerError::IndyVdrValidation(_) => {
+            VcxLedgerError::InvalidInput(_)
+            | VcxLedgerError::IndyVdrValidation(_)
+            | VcxLedgerError::UnsupportedLedgerIdentifier(_) => {
                 Self::from_msg(AriesVcxErrorKind::InvalidInput, value)
             }
             VcxLedgerError::UnknownError(_) => {

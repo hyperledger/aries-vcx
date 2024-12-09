@@ -23,8 +23,9 @@ use models::{
     CheqdAnoncredsCredentialDefinition, CheqdAnoncredsRevocationRegistryDefinition,
     CheqdAnoncredsRevocationStatusList, CheqdAnoncredsSchema,
 };
+use serde::{Deserialize, Serialize};
 
-use super::base_ledger::AnoncredsLedgerRead;
+use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerSupport};
 use crate::errors::error::{VcxLedgerError, VcxLedgerResult};
 
 mod models;
@@ -34,6 +35,10 @@ const CRED_DEF_RESOURCE_TYPE: &str = "anonCredsCredDef";
 const REV_REG_DEF_RESOURCE_TYPE: &str = "anonCredsRevocRegDef";
 const STATUS_LIST_RESOURCE_TYPE: &str = "anonCredsStatusList";
 
+/// Struct for resolving anoncreds objects from cheqd ledgers using the cheqd
+/// anoncreds object method: https://docs.cheqd.io/product/advanced/anoncreds.
+///
+/// Relies on a cheqd DID resolver ([DidCheqdResolver]) to fetch DID resources.
 pub struct CheqdAnoncredsLedgerRead {
     resolver: Arc<DidCheqdResolver>,
 }
@@ -77,6 +82,7 @@ impl CheqdAnoncredsLedgerRead {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RevocationRegistryDefinitionAdditionalMetadata {
     pub resource_name: String,
 }
@@ -234,8 +240,123 @@ fn extract_issuer_id(url: &DidUrl) -> VcxLedgerResult<IssuerId> {
         .map_err(|e| VcxLedgerError::InvalidInput(format!("DID is not an IssuerId {e}")))
 }
 
+impl AnoncredsLedgerSupport for CheqdAnoncredsLedgerRead {
+    fn supports_schema(&self, id: &SchemaId) -> bool {
+        let Ok(url) = DidUrl::parse(id.to_string()) else {
+            return false;
+        };
+        url.method() == Some("cheqd")
+    }
+
+    fn supports_credential_definition(&self, id: &CredentialDefinitionId) -> bool {
+        let Ok(url) = DidUrl::parse(id.to_string()) else {
+            return false;
+        };
+        url.method() == Some("cheqd")
+    }
+
+    fn supports_revocation_registry(&self, id: &RevocationRegistryDefinitionId) -> bool {
+        let Ok(url) = DidUrl::parse(id.to_string()) else {
+            return false;
+        };
+        url.method() == Some("cheqd")
+    }
+}
+
 impl Debug for CheqdAnoncredsLedgerRead {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "CheqdAnoncredsLedgerRead instance")
+    }
+}
+
+#[cfg(test)]
+mod unit_tests {
+    use super::*;
+
+    fn default_cheqd_reader() -> CheqdAnoncredsLedgerRead {
+        CheqdAnoncredsLedgerRead::new(Arc::new(DidCheqdResolver::new(Default::default())))
+    }
+
+    #[test]
+    fn test_anoncreds_schema_support() {
+        let reader = default_cheqd_reader();
+
+        // qualified cheqd
+        assert!(reader.supports_schema(
+            &SchemaId::new(
+                "did:cheqd:mainnet:7BPMqYgYLQni258J8JPS8K/resources/\
+                 6259d357-eeb1-4b98-8bee-12a8390d3497"
+            )
+            .unwrap()
+        ));
+
+        // unqualified
+        assert!(!reader.supports_schema(
+            &SchemaId::new("7BPMqYgYLQni258J8JPS8K:2:degree schema:46.58.87").unwrap()
+        ));
+        // qualified sov
+        assert!(!reader.supports_schema(
+            &SchemaId::new("did:sov:7BPMqYgYLQni258J8JPS8K:2:degree schema:46.58.87").unwrap()
+        ));
+    }
+
+    #[test]
+    fn test_anoncreds_cred_def_support() {
+        let reader = default_cheqd_reader();
+
+        // qualified cheqd
+        assert!(reader.supports_credential_definition(
+            &CredentialDefinitionId::new(
+                "did:cheqd:mainnet:7BPMqYgYLQni258J8JPS8K/resources/\
+                 6259d357-eeb1-4b98-8bee-12a8390d3497"
+            )
+            .unwrap()
+        ));
+
+        // unqualified
+        assert!(!reader.supports_credential_definition(
+            &CredentialDefinitionId::new(
+                "7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.degree_schema"
+            )
+            .unwrap()
+        ));
+        // qualified sov
+        assert!(!reader.supports_credential_definition(
+            &CredentialDefinitionId::new(
+                "did:sov:7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.degree_schema"
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn test_anoncreds_rev_reg_support() {
+        let reader = default_cheqd_reader();
+
+        // qualified cheqd
+        assert!(reader.supports_revocation_registry(
+            &RevocationRegistryDefinitionId::new(
+                "did:cheqd:mainnet:7BPMqYgYLQni258J8JPS8K/resources/\
+                 6259d357-eeb1-4b98-8bee-12a8390d3497"
+            )
+            .unwrap()
+        ));
+
+        // unqualified
+        assert!(!reader.supports_revocation_registry(
+            &RevocationRegistryDefinitionId::new(
+                "7BPMqYgYLQni258J8JPS8K:4:7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.\
+                 degree_schema:CL_ACCUM:61d5a381-30be-4120-9307-b150b49c203c"
+            )
+            .unwrap()
+        ));
+        // qualified sov
+        assert!(!reader.supports_revocation_registry(
+            &RevocationRegistryDefinitionId::new(
+                "did:sov:7BPMqYgYLQni258J8JPS8K:4:7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.\
+                 degree_schema:CL_ACCUM:61d5a381-30be-4120-9307-b150b49c203c"
+            )
+            .unwrap()
+        ));
     }
 }

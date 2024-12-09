@@ -159,6 +159,14 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
     ) -> VcxLedgerResult<()>;
 }
 
+/// Simple utility trait to determine whether the implementor can support reading/writing
+/// the specific identifier types.
+pub trait AnoncredsLedgerSupport {
+    fn supports_schema(&self, id: &SchemaId) -> bool;
+    fn supports_credential_definition(&self, id: &CredentialDefinitionId) -> bool;
+    fn supports_revocation_registry(&self, id: &RevocationRegistryDefinitionId) -> bool;
+}
+
 pub trait TaaConfigurator: Debug + Send + Sync {
     fn set_txn_author_agreement_options(
         &self,
