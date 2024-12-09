@@ -5,10 +5,14 @@ use crate::data_types::{
     ledger::{rev_reg_delta::RevocationRegistryDeltaValue, rev_status_list::RevocationStatusList},
 };
 
-/// TODO - explain
+/// Converts from a [RevocationRegistryDeltaValue] into a completed [RevocationStatusList]
+/// (newer format).
+///
+/// NOTE: this conversion only works if the delta was calculated from START (timestamp 0/None)
+/// to `timestamp`.
 pub fn from_revocation_registry_delta_to_revocation_status_list(
     delta: &RevocationRegistryDeltaValue,
-    timestamp: Option<u64>,
+    timestamp: u64,
     rev_reg_id: &RevocationRegistryDefinitionId,
     max_cred_num: usize,
     issuer_id: IssuerId,
@@ -55,7 +59,7 @@ pub fn from_revocation_registry_delta_to_revocation_status_list(
         issuer_id,
         revocation_list,
         Some(accum),
-        timestamp,
+        Some(timestamp),
     )
     .map_err(Into::into)
 }

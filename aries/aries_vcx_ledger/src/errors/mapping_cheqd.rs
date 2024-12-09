@@ -25,7 +25,7 @@ impl From<DidCheqdError> for VcxLedgerError {
                 VcxLedgerError::ParseError(e)
             }
             DidCheqdError::Other(_) => VcxLedgerError::UnknownError(value.to_string()),
-            _ => todo!(),
+            _ => VcxLedgerError::UnknownError(value.to_string()),
         }
     }
 }

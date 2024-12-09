@@ -44,11 +44,12 @@ pub struct DidResourceMetadata {
     pub also_known_as: Option<Vec<Value>>,
     /// A string that identifies the IANA-media type of the resource.
     pub media_type: String,
-    // TODO - check datetime serializes into XML-date-time
     /// A string that identifies the time the resource was created, as an XML date-time.
+    #[serde(with = "xml_datetime")]
     pub created: DateTime<Utc>,
     /// (Optional) A string that identifies the time the resource was updated, as an XML date-time.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(with = "xml_datetime::optional")]
     pub updated: Option<DateTime<Utc>>,
     /// A string that may be used to prove that the resource has not been tampered with.
     pub checksum: String,
@@ -58,4 +59,58 @@ pub struct DidResourceMetadata {
     /// (Optional) A string that identifies the next version of the resource.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub next_version_id: Option<String>,
+}
+
+/// Custom serialization module for XMLDateTime format.
+/// Uses Z and removes subsecond precision
+mod xml_datetime {
+    use chrono::{DateTime, SecondsFormat, Utc};
+    use serde::{self, Deserialize, Deserializer, Serializer};
+
+    pub fn serialize<S>(dt: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let s = dt.to_rfc3339_opts(SecondsFormat::Secs, true);
+        serializer.serialize_str(&s)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        s.parse::<DateTime<Utc>>().map_err(serde::de::Error::custom)
+    }
+
+    pub mod optional {
+        use chrono::{DateTime, Utc};
+        use serde::{self, Deserialize, Deserializer, Serializer};
+
+        pub fn serialize<S>(dt: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            match dt {
+                Some(dt) => super::serialize(dt, serializer),
+                None => serializer.serialize_none(),
+            }
+        }
+
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            let s = Option::<String>::deserialize(deserializer)?;
+            match s {
+                Some(s) => {
+                    let parsed = s
+                        .parse::<DateTime<Utc>>()
+                        .map_err(serde::de::Error::custom)?;
+                    Ok(Some(parsed))
+                }
+                None => Ok(None),
+            }
+        }
+    }
 }

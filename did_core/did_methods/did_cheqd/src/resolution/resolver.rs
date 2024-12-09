@@ -191,7 +191,15 @@ impl DidCheqdResolver {
         Ok(output_builder.build())
     }
 
-    /// TODO - explain what is and isn't supported
+    /// Resolve a cheqd DID resource & associated metadata from the given [DidUrl].
+    /// Resolution is done according to the [DID-Linked Resources](https://w3c-ccg.github.io/DID-Linked-Resources/)
+    /// specification, however only a subset of query types are supported currently:
+    /// * by resource path: `did:example:<unique-identifier>/resources/<unique-identifier>`
+    /// * by name & type: `did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J?resourceName=universityDegree&
+    ///   resourceType=anonCredsStatusList`
+    /// * by name & type & time:
+    ///   `did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J?resourceName=universityDegree&
+    ///   resourceType=anonCredsStatusList&versionTime=2022-08-21T08:40:00Z`
     pub async fn resolve_resource(&self, url: &DidUrl) -> DidCheqdResult<DidResource> {
         let method = url.method();
         if method != Some("cheqd") {
@@ -203,7 +211,7 @@ impl DidCheqdResolver {
             .id()
             .ok_or(DidCheqdError::InvalidDidUrl(format!("missing ID {url}")))?;
 
-        // 1. resolve by exact reference: /reference/asdf
+        // 1. resolve by exact reference: /resources/asdf
         if let Some(path) = url.path() {
             let Some(resource_id) = path.strip_prefix("/resources/") else {
                 return Err(DidCheqdError::InvalidDidUrl(format!(
@@ -245,6 +253,7 @@ impl DidCheqdResolver {
         .await
     }
 
+    /// Resolve a resource from a collection (did_id) and network by an exact id.
     async fn resolve_resource_by_id(
         &self,
         did_id: &str,
@@ -289,6 +298,8 @@ impl DidCheqdResolver {
         })
     }
 
+    /// Resolve a resource from a given collection (did_id) & network, that has a given name & type,
+    /// as of a given time.
     async fn resolve_resource_by_name_type_and_time(
         &self,
         did_id: &str,
@@ -346,6 +357,7 @@ fn native_tls_hyper_client() -> DidCheqdResult<HyperClient> {
         .build(connector))
 }
 
+/// Filter for resources which have a matching name and type
 fn filter_resources_by_name_and_type<'a>(
     resources: impl Iterator<Item = &'a CheqdResourceMetadata> + 'a,
     name: &'a str,
@@ -354,6 +366,7 @@ fn filter_resources_by_name_and_type<'a>(
     resources.filter(move |r| r.name == name && r.resource_type == rtyp)
 }
 
+/// Sort resources chronologically by their created timestamps
 fn desc_chronological_sort_resources(
     b: &CheqdResourceMetadata,
     a: &CheqdResourceMetadata,
@@ -446,6 +459,49 @@ mod unit_tests {
         let e = resolver.resolve_did(&did).await.unwrap_err();
         assert!(matches!(e, DidCheqdError::BadConfiguration(_)));
     }
-    
-    // TODO - unit test resources etc
+
+    #[tokio::test]
+    async fn test_resolve_resource_fails_if_wrong_method() {
+        let url = "did:notcheqd:zF7rhDBfUt9d1gJPjx7s1J/resources/123"
+            .parse()
+            .unwrap();
+        let resolver = DidCheqdResolver::new(Default::default());
+        let e = resolver.resolve_resource(&url).await.unwrap_err();
+        assert!(matches!(e, DidCheqdError::MethodNotSupported(_)));
+    }
+
+    #[tokio::test]
+    async fn test_resolve_resource_fails_if_wrong_path() {
+        let url = "did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J/resource/123"
+            .parse()
+            .unwrap();
+        let resolver = DidCheqdResolver::new(Default::default());
+        let e = resolver.resolve_resource(&url).await.unwrap_err();
+        assert!(matches!(e, DidCheqdError::InvalidDidUrl(_)));
+    }
+
+    #[tokio::test]
+    async fn test_resolve_resource_fails_if_no_query() {
+        let url = "did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J".parse().unwrap();
+        let resolver = DidCheqdResolver::new(Default::default());
+        let e = resolver.resolve_resource(&url).await.unwrap_err();
+        assert!(matches!(e, DidCheqdError::InvalidDidUrl(_)));
+    }
+
+    #[tokio::test]
+    async fn test_resolve_resource_fails_if_incomplete_query() {
+        let url = "did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J?resourceName=asdf".parse().unwrap();
+        let resolver = DidCheqdResolver::new(Default::default());
+        let e = resolver.resolve_resource(&url).await.unwrap_err();
+        assert!(matches!(e, DidCheqdError::InvalidDidUrl(_)));
+    }
+
+    #[tokio::test]
+    async fn test_resolve_resource_fails_if_invalid_resource_time() {
+        // use epoch instead of XML DateTime
+        let url = "did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J?resourceName=asdf&resourceType=fdsa&resourceVersionTime=12341234".parse().unwrap();
+        let resolver = DidCheqdResolver::new(Default::default());
+        let e = resolver.resolve_resource(&url).await.unwrap_err();
+        assert!(matches!(e, DidCheqdError::InvalidDidUrl(_)));
+    }
 }
