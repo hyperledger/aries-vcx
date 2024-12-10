@@ -24,6 +24,7 @@ use models::{
     CheqdAnoncredsRevocationStatusList, CheqdAnoncredsSchema,
 };
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerSupport};
 use crate::errors::error::{VcxLedgerError, VcxLedgerResult};
@@ -185,12 +186,17 @@ impl AnoncredsLedgerRead for CheqdAnoncredsLedgerRead {
             DateTime::from_timestamp(timestamp as i64, 0).ok_or(VcxLedgerError::InvalidInput(
                 format!("input status list timestamp is not valid {timestamp}"),
             ))?;
+
+        // assemble query
         let xml_dt = resource_dt.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-        let query = format!(
-            "{did}?resourceType={STATUS_LIST_RESOURCE_TYPE}&resourceName={name}&\
-             resourceVersionTime={xml_dt}"
-        );
-        let query_url = DidUrl::parse(query)?;
+        let mut query = Url::parse(did)
+            .map_err(|e| VcxLedgerError::InvalidInput(format!("cannot parse DID as URL: {e}")))?;
+        query
+            .query_pairs_mut()
+            .append_pair("resourceType", STATUS_LIST_RESOURCE_TYPE)
+            .append_pair("resourceName", name)
+            .append_pair("resourceVersionTime", &xml_dt);
+        let query_url = DidUrl::parse(query.to_string())?;
 
         let resource = self.resolver.resolve_resource(&query_url).await?;
         self.check_resource_type(&resource, STATUS_LIST_RESOURCE_TYPE)?;
