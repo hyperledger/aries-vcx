@@ -59,8 +59,8 @@ impl DidUrl {
             .iter()
             .map(|(k, v)| {
                 (
-                    self.did_url[k.clone()].to_string(),
-                    self.did_url[v.clone()].to_string(),
+                    query_percent_decode(&self.did_url[k.clone()]),
+                    query_percent_decode(&self.did_url[v.clone()]),
                 )
             })
             .collect()
@@ -107,6 +107,14 @@ impl DidUrl {
             queries: HashMap::new(),
         }
     }
+}
+
+/// Decode percent-encoded URL query item (application/x-www-form-urlencoded encoded).
+/// Primary difference from general percent encoding is encoding of ' ' as '+'
+fn query_percent_decode(input: &str) -> String {
+    percent_encoding::percent_decode_str(&input.replace('+', " "))
+        .decode_utf8_lossy()
+        .into_owned()
 }
 
 impl TryFrom<String> for DidUrl {

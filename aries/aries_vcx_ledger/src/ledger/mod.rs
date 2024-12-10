@@ -3,8 +3,11 @@ use crate::errors::error::VcxLedgerError;
 pub mod base_ledger;
 pub mod common;
 
+#[cfg(feature = "cheqd")]
+pub mod cheqd;
 pub mod indy;
 pub mod indy_vdr_ledger;
+pub mod multi_ledger;
 mod type_conversion;
 
 pub mod request_submitter;

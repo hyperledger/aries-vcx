@@ -9,6 +9,7 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 vdr_proxy_ledger = ["dep:indy-vdr-proxy-client"]
+cheqd = ["dep:did_cheqd", "dep:did_resolver", "dep:url"]
 
 [dependencies]
 aries_vcx_wallet = { path = "../aries_vcx_wallet" }
@@ -17,12 +18,26 @@ did_parser_nom = { path = "../../did_core/did_parser_nom" }
 thiserror = "1.0.40"
 indy-vdr.workspace = true
 indy-vdr-proxy-client = { workspace = true, optional = true }
+did_cheqd = { path = "../../did_core/did_methods/did_cheqd", optional = true }
+did_resolver = { path = "../../did_core/did_resolver", optional = true }
+url = { version = "2.4.1", optional = true }
 serde_json = "1.0.95"
-public_key = { path = "../../did_core/public_key"}
+public_key = { path = "../../did_core/public_key" }
 async-trait = "0.1.68"
 time = "0.3.20"
 indy-ledger-response-parser = { path = "../misc/indy_ledger_response_parser" }
 log = "0.4.17"
 serde = { version = "1.0.159", features = ["derive"] }
-lru = { version = "0.12.0"  }
+lru = { version = "0.12.0" }
 tokio = { version = "1.38" }
+chrono = { version = "0.4", default-features = false, features = ["alloc"] }
+bitvec = "1.0.1"
+
+[dev-dependencies]
+tokio = { version = "1.38.0", default-features = false, features = [
+    "macros",
+    "rt",
+] }
+chrono = { version = "0.4", default-features = true }
+mockall = "0.13.1"
+uuid = { version = "1.4.1", default-features = false, features = ["v4"] }
