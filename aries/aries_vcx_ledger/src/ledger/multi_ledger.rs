@@ -20,9 +20,9 @@ use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerSupport};
 use crate::errors::error::{VcxLedgerError, VcxLedgerResult};
 
 // FUTURE - this multi-ledger anoncreds reader finds the first impl that supports the identifier
-// and attempts to use it. This behaviour may need some enhancements in the future when 
+// and attempts to use it. This behaviour may need some enhancements in the future when
 // considering coordination of unqualified object resolution, when multiple capable anoncreds
-// readers are available (e.g. sovrin testnet & sovrin mainnet). 
+// readers are available (e.g. sovrin testnet & sovrin mainnet).
 // Enhancements may include:
 // * priority system - try A resolver before B if A & B both support the identifier
 // * fallback/chain system - try A resolver, if it fails, try B resolver
