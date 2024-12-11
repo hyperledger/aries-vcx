@@ -54,9 +54,10 @@ There's 2 best way to reach us:
 
 Contributions are very welcome! If you have questions or issues, please let us know on [Discord](https://chat.hyperledger.org/channel/aries) or at our [bi-weekly community call](https://wiki.hyperledger.org/display/ARIES/Community+calls).
 
-For contributions, please run `clippy` and format prior to creating a PR. This can be done via:
+For contributions, please run `clippy` and format prior to creating a PR. This can be done via `just`:
 
 ```
-cargo clippy
-cargo fmt
+cargo install just
+just clippy
+just fmt
 ```

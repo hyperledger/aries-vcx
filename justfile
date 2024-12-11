@@ -7,6 +7,9 @@ fmt:
 fmt-check:
     cargo fmt --check
 
+clippy:
+    cargo clippy --examples --tests
+
 clippy-workspace wallet:
     cargo clippy --examples --tests --no-default-features -F anoncreds,vdr_proxy_ledger,legacy_proof,{{wallet}}
 
