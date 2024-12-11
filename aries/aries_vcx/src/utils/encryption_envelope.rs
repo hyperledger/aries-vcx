@@ -149,18 +149,13 @@ impl EncryptionEnvelope {
     ) -> VcxResult<Vec<u8>> {
         let mut forward_to_key = recipient_key;
 
-        for routing_key in routing_keys {
+        for routing_key in routing_keys.iter() {
             debug!(
                 "Wrapping message in forward message; forward_to_key: {}, routing_key: {}",
                 forward_to_key, routing_key
             );
-            data = EncryptionEnvelope::wrap_into_forward(
-                wallet,
-                data,
-                forward_to_key.clone(),
-                routing_key.clone(),
-            )
-            .await?;
+            data = EncryptionEnvelope::wrap_into_forward(wallet, data, forward_to_key, routing_key)
+                .await?;
             forward_to_key.clone_from(&routing_key);
         }
         Ok(data)
