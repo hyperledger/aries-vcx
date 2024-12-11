@@ -8,14 +8,9 @@ fmt-check:
     cargo fmt --check
 
 clippy:
-    cargo clippy --examples --tests
+    cargo clippy --examples --tests --all-features
 
-clippy-workspace wallet:
-    cargo clippy --examples --tests --no-default-features -F anoncreds,vdr_proxy_ledger,legacy_proof,{{wallet}}
-
-clippy-aries-vcx features:
-    cargo clippy -p aries_vcx --features legacy_proof --features {{features}} --no-default-features
-
+# The following need review:
 check-workspace:
     cargo check --tests --all-features
 
