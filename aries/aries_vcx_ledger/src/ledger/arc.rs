@@ -15,31 +15,33 @@ use anoncreds_types::data_types::{
 use async_trait::async_trait;
 use did_parser_nom::Did;
 
-use super::base_ledger::AnoncredsLedgerRead;
+use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerSupport};
 use crate::errors::error::VcxLedgerResult;
 
-/// Convenience trait to convert something into an [AnoncredsLedgerRead] implementation.
-pub trait IntoAnoncredsLedgerRead {
-    fn into_impl(self) -> impl AnoncredsLedgerRead;
+/// Trait designed to convert [Arc<T>] into [ArcLedgerTraitWrapper<T>], such that
+/// [Arc<T>] can inherit any trait implementation of [ArcLedgerTraitWrapper]. (e.g.
+/// [AnoncredsLedgerRead], [AnoncredsLedgerSupport]).
+pub trait IntoArcLedgerTrait<T>
+where
+    Self: Sized,
+{
+    fn into_impl(self) -> ArcLedgerTraitWrapper<T>;
 }
 
-/// Convenience to convert any Arc<AnoncredsLedgerRead> into AnoncredsLedgerRead.
-/// This is possible because all methods of [AnoncredsLedgerRead] only require a reference
-/// of self.
-impl<T> IntoAnoncredsLedgerRead for Arc<T>
-where
-    T: AnoncredsLedgerRead,
-{
-    fn into_impl(self) -> impl AnoncredsLedgerRead {
-        ArcAnoncredsLedgerRead(self)
+impl<T> IntoArcLedgerTrait<T> for Arc<T> {
+    fn into_impl(self) -> ArcLedgerTraitWrapper<T> {
+        ArcLedgerTraitWrapper(self)
     }
 }
 
+/// Thin wrapper over some [Arc<T>]. Designed to implement relevant aries_vcx_ledger
+/// traits on behalf of [Arc<T>], if [T] implements those traits. Necessary since [Arc<T>]
+/// would not inherit those implementations automatically.
 #[derive(Debug)]
-struct ArcAnoncredsLedgerRead<T: AnoncredsLedgerRead>(Arc<T>);
+pub struct ArcLedgerTraitWrapper<T>(Arc<T>);
 
 #[async_trait]
-impl<T> AnoncredsLedgerRead for ArcAnoncredsLedgerRead<T>
+impl<T> AnoncredsLedgerRead for ArcLedgerTraitWrapper<T>
 where
     T: AnoncredsLedgerRead,
 {
@@ -96,5 +98,22 @@ where
         timestamp: u64,
     ) -> VcxLedgerResult<(RevocationRegistry, u64)> {
         self.get_rev_reg(rev_reg_id, timestamp).await
+    }
+}
+
+impl<T> AnoncredsLedgerSupport for ArcLedgerTraitWrapper<T>
+where
+    T: AnoncredsLedgerSupport,
+{
+    fn supports_schema(&self, id: &SchemaId) -> bool {
+        self.0.supports_schema(id)
+    }
+
+    fn supports_credential_definition(&self, id: &CredentialDefinitionId) -> bool {
+        self.0.supports_credential_definition(id)
+    }
+
+    fn supports_revocation_registry(&self, id: &RevocationRegistryDefinitionId) -> bool {
+        self.0.supports_revocation_registry(id)
     }
 }
