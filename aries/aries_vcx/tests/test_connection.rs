@@ -61,9 +61,10 @@ async fn decrypt_message(
     >,
     received: Vec<u8>,
 ) -> AriesMessage {
-    let (message, _, _) = EncryptionEnvelope::unpack_aries_msg(&consumer.wallet, received, None)
-        .await
-        .unwrap();
+    let (message, _, _) =
+        EncryptionEnvelope::unpack_aries_msg(&consumer.wallet, received.as_slice(), &None)
+            .await
+            .unwrap();
     message
 }
 
