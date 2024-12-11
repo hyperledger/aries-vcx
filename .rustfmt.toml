@@ -3,12 +3,16 @@
 #    "rust-analyzer.rustfmt.extraArgs": [
 #        "+nightly"
 #    ],
-unstable_features = true
-group_imports = "StdExternalCrate"
-imports_granularity = "Crate"
-format_code_in_doc_comments = true
-format_macro_bodies = true
-format_macro_matchers = true
-format_strings = true
-comment_width = 100
-wrap_comments = true
+
+# The following have been commented out as we are no longer targeting nightly, 
+# therefore these are no longer accessible:
+# 
+# unstable_features = true
+# group_imports = "StdExternalCrate"
+# imports_granularity = "Crate"
+# format_code_in_doc_comments = true
+# format_macro_bodies = true
+# format_macro_matchers = true
+# format_strings = true
+# comment_width = 100
+# wrap_comments = true
