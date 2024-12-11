@@ -48,7 +48,7 @@ impl EncryptionEnvelope {
             .map(|routing_key| Key::from_base58(routing_key, KeyType::Ed25519))
             .collect::<Result<Vec<_>, _>>()?;
         let sender_key = sender_vk
-            .map(|key| Key::from_base58(&key, KeyType::Ed25519))
+            .map(|key| Key::from_base58(key, KeyType::Ed25519))
             .transpose()?;
         Self::create_from_keys(wallet, data, sender_key, recipient_key, routing_keys).await
     }
