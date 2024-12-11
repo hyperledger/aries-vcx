@@ -361,4 +361,27 @@ test_cases_positive! {
         Some("/anoncreds/v0/REV_REG_DEF/56495/npdb/TAG1"),
         None,
         HashMap::new()
+    test_case28:
+        "did:cheqd:testnet:d8ac0372-0d4b-413e-8ef5-8e8f07822b2c/resources/40829caf-b415-4b1d-91a3-b56dfb6374f4",
+        Some("did:cheqd:testnet:d8ac0372-0d4b-413e-8ef5-8e8f07822b2c"),
+        Some("cheqd"),
+        Some("testnet"),
+        Some("d8ac0372-0d4b-413e-8ef5-8e8f07822b2c"),
+        Some("/resources/40829caf-b415-4b1d-91a3-b56dfb6374f4"),
+        None,
+        HashMap::new()
+    test_case29:
+        "did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J?resourceName=universityDegree&resourceType=anonCredsCredDef",
+        Some("did:cheqd:mainnet:zF7rhDBfUt9d1gJPjx7s1J"),
+        Some("cheqd"),
+        Some("mainnet"),
+        Some("zF7rhDBfUt9d1gJPjx7s1J"),
+        None,
+        None,
+        {
+            vec![
+                ("resourceName".to_string(), "universityDegree".to_string()),
+                ("resourceType".to_string(), "anonCredsCredDef".to_string()),
+            ].into_iter().collect()
+        }
 }

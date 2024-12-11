@@ -38,7 +38,7 @@ eg. for Android ARM64 on host linux platform.
 rustup target add aarch64-linux-android
 ```
 
-More documentation can be found [here](https://rust-lang.github.io/rustup/cross-compilation.html). Information on supported platforms can be found [here](https://doc.rust-lang.org/nightly/rustc/platform-support.html).
+More documentation can be found [here](https://rust-lang.github.io/rustup/cross-compilation.html). Information on supported platforms can be found [here](https://doc.rust-lang.org/stable/rustc/platform-support.html).
 
 3. `cargo-ndk` requires Android NDK to be set up on the host machine. The recommended way of doing this is using Android Studio as described [here](https://developer.android.com/studio/projects/install-ndk#default-version).
 

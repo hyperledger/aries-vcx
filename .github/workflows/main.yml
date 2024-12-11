@@ -18,7 +18,7 @@ env:
   DOCKER_REPO_LOCAL_VDRPROXY: vdrproxy
   DOCKER_REPO_LOCAL_AATH: aath-backchannel
 
-  RUST_TOOLCHAIN_VERSION: 1.79.0
+  RUST_TOOLCHAIN_VERSION: 1.79
   NODE_VERSION: 18.x
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2023-05-08
+          toolchain: ${{ env.RUST_TOOLCHAIN_VERSION }}
           components: rustfmt
           override: true
       - name: "Install just"
@@ -97,11 +97,8 @@ jobs:
           echo "DOCKER_IMG_CACHED_VDRPROXY ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}"
           echo "DOCKER_IMG_CACHED_AATH ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}"
 
-  workspace_clippy:
+  clippy:
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        wallet: ["askar_wallet"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -117,29 +114,7 @@ jobs:
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
           sudo snap install --edge --classic just
       - name: "Verify clippy across the entire workspace"
-        run: just clippy-workspace ${{ matrix.wallet }}
-
-  aries_vcx_clippy:
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        backend: ["anoncreds,askar_wallet", "vdr_proxy_ledger,askar_wallet"]
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ env.RUST_TOOLCHAIN_VERSION }}
-          default: true
-          components: clippy
-      - name: "Install dependencies"
-        shell: bash
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-          sudo snap install --edge --classic just
-      - name: "Verify clippy across the entire workspace with default features"
-        run: just clippy-aries-vcx ${{ matrix.backend }}
+        run: just clippy
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
@@ -150,7 +125,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    needs: [ workflow-setup ]
+    needs: [workflow-setup]
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
@@ -183,7 +158,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    needs: [ workflow-setup ]
+    needs: [workflow-setup]
     if: ${{ needs.workflow-setup.outputs.IS_MAIN_BRANCH == 'true' }}
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}
@@ -218,7 +193,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    needs: [ workflow-setup, build-docker-vdrproxy ]
+    needs: [workflow-setup, build-docker-vdrproxy]
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
@@ -249,7 +224,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    needs: [ workflow-setup, build-docker-aath-backchannel ]
+    needs: [workflow-setup, build-docker-aath-backchannel]
     if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_AATH }}
@@ -391,14 +366,14 @@ jobs:
           breakingLabels: backwards-incompatible,breaking
           deprecatedLabels: deprecated
           headerLabel: "# Changelog"
-          breakingLabel: '### Breaking changes'
-          enhancementLabel: '### Enhancements'
-          bugsLabel: '### Bug fixes'
-          deprecatedLabel: '###  Deprecations'
-          removedLabel: '### Removals'
-          securityLabel: '### Security fixes'
-          issuesLabel: '### Other issues'
-          prLabel: '### Other pull requests'
+          breakingLabel: "### Breaking changes"
+          enhancementLabel: "### Enhancements"
+          bugsLabel: "### Bug fixes"
+          deprecatedLabel: "###  Deprecations"
+          removedLabel: "### Removals"
+          securityLabel: "### Security fixes"
+          issuesLabel: "### Other issues"
+          prLabel: "### Other pull requests"
           addSections: '{"ci":{"prefix":"### CI changes","labels":["ci"]},"wrappers":{"prefix":"### Wrapper changes","labels":["wrappers"]},"agents":{"prefix":"### Changes to agents","labels":["agents"]},"features":{"prefix":"### Features","labels":["features"]},"hotfix":{"prefix":"### Hotfixes","labels":["hotfix"]},"security":{"prefix":"### Security fixes","labels":["security"]},"refactoring":{"prefix":"### Refactoring","labels":["refactoring"]},"tests":{"prefix":"### Tests","labels":["tests"]},"update":{"prefix":"### Updates","labels":["update"]}}'
           excludeTagsRegex: '^((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))+)?)$'
 

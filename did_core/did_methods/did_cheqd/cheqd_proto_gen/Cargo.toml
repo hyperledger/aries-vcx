@@ -1,0 +1,11 @@
+[package]
+name = "cheqd_proto_gen"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "cheqd-proto-gen"
+path = "src/main.rs"
+
+[dependencies]
+tonic-build = "0.12.3"
