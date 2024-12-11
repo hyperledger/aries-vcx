@@ -61,7 +61,7 @@ where
         cred_def_id: &CredentialDefinitionId,
         submitter_did: Option<&Did>,
     ) -> VcxLedgerResult<CredentialDefinition> {
-        self.get_cred_def(cred_def_id, submitter_did).await
+        self.0.get_cred_def(cred_def_id, submitter_did).await
     }
     async fn get_rev_reg_def_json(
         &self,
@@ -70,7 +70,7 @@ where
         RevocationRegistryDefinition,
         Self::RevocationRegistryDefinitionAdditionalMetadata,
     )> {
-        self.get_rev_reg_def_json(rev_reg_id).await
+        self.0.get_rev_reg_def_json(rev_reg_id).await
     }
 
     async fn get_rev_reg_delta_json(
@@ -80,7 +80,7 @@ where
         to: Option<u64>,
     ) -> VcxLedgerResult<(RevocationRegistryDelta, u64)> {
         #[allow(deprecated)]
-        self.get_rev_reg_delta_json(rev_reg_id, from, to).await
+        self.0.get_rev_reg_delta_json(rev_reg_id, from, to).await
     }
 
     async fn get_rev_status_list(
@@ -89,7 +89,8 @@ where
         timestamp: u64,
         rev_reg_def_meta: Option<&Self::RevocationRegistryDefinitionAdditionalMetadata>,
     ) -> VcxLedgerResult<(RevocationStatusList, u64)> {
-        self.get_rev_status_list(rev_reg_id, timestamp, rev_reg_def_meta)
+        self.0
+            .get_rev_status_list(rev_reg_id, timestamp, rev_reg_def_meta)
             .await
     }
     async fn get_rev_reg(
@@ -97,7 +98,7 @@ where
         rev_reg_id: &RevocationRegistryDefinitionId,
         timestamp: u64,
     ) -> VcxLedgerResult<(RevocationRegistry, u64)> {
-        self.get_rev_reg(rev_reg_id, timestamp).await
+        self.0.get_rev_reg(rev_reg_id, timestamp).await
     }
 }
 
