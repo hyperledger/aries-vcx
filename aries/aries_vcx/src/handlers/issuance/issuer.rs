@@ -241,6 +241,7 @@ impl Issuer {
             revocation_info.rev_reg_id,
             revocation_info.tails_file,
         ) {
+            #[allow(deprecated)] // TODO - https://github.com/hyperledger/aries-vcx/issues/1309
             let rev_reg_delta_json = ledger
                 .get_rev_reg_delta_json(&rev_reg_id.to_owned().try_into()?, None, None)
                 .await?

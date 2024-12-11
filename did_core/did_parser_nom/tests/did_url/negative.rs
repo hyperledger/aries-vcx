@@ -32,6 +32,10 @@ test_cases_negative! {
         "did:example:123456789abcdefghi&query1=value1"
     query_invalid_char:
         "did:example:123456789abcdefghi?query1=v^lue1"
+    query_unfinished_pct_encoding:
+        "did:example:123456789?query=a%3&query2=b"
+    query_invalid_space_char:
+        "did:example:123456789?query=a b"
     relative_empty_path: "/"
     relative_empty_path_and_query: "/?"
     relative_empty_path_and_fragment: "/#"
