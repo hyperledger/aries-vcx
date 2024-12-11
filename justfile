@@ -2,10 +2,10 @@ default:
     just --list
 
 fmt:
-    cargo +nightly-2023-05-08 fmt
+    cargo fmt
 
 fmt-check:
-    cargo +nightly-2023-05-08 fmt --check
+    cargo fmt --check
 
 clippy-workspace wallet:
     cargo clippy --examples --tests --no-default-features -F anoncreds,vdr_proxy_ledger,legacy_proof,{{wallet}}
