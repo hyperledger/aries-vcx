@@ -217,8 +217,8 @@ impl HarnessAgent {
     pub async fn receive_message(&self, payload: Vec<u8>) -> HarnessResult<HttpResponse> {
         let (message, sender_vk, recipient_vk) = EncryptionEnvelope::unpack_aries_msg(
             self.aries_agent.wallet().as_ref(),
-            payload.clone(),
-            None,
+            &payload,
+            &None,
         )
         .await?;
         let sender_vk = sender_vk.ok_or_else(|| {

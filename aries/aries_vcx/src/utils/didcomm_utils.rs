@@ -36,7 +36,7 @@ pub(crate) fn resolve_service_key_to_typed_key(
 
 /// Resolves the first ed25519 base58 public key (a.k.a. verkey) within the DIDDocuments key
 /// agreement keys. Useful for resolving keys that can be used for packing DIDCommV1 messages.
-pub fn resolve_ed25519_base58_key_agreement(did_document: &DidDocument) -> VcxResult<Key> {
+pub fn resolve_ed25519_key_agreement(did_document: &DidDocument) -> VcxResult<Key> {
     let vm_types = [
         VerificationMethodType::Ed25519VerificationKey2018,
         VerificationMethodType::Ed25519VerificationKey2020,
@@ -53,7 +53,7 @@ pub fn resolve_ed25519_base58_key_agreement(did_document: &DidDocument) -> VcxRe
     Ok(key.validate_key_type(KeyType::Ed25519)?.to_owned())
 }
 
-pub fn get_ed25519_base58_routing_keys(
+pub fn get_ed25519_routing_keys(
     their_did_doc: &DidDocument,
     service_id: &Uri,
 ) -> VcxResult<Vec<Key>> {
@@ -62,13 +62,13 @@ pub fn get_ed25519_base58_routing_keys(
         return Ok(vec![]);
     };
 
-    let mut naked_routing_keys = Vec::new();
+    let mut ed25519_routing_keys = Vec::new();
 
     for key in routing_keys.iter() {
         let pub_key = resolve_service_key_to_typed_key(key, their_did_doc)?;
 
         if pub_key.key_type() == &KeyType::Ed25519 {
-            naked_routing_keys.push(pub_key);
+            ed25519_routing_keys.push(pub_key);
         } else {
             warn!(
                 "Unexpected key with type {} in routing keys list",
@@ -77,10 +77,10 @@ pub fn get_ed25519_base58_routing_keys(
         }
     }
 
-    Ok(naked_routing_keys)
+    Ok(ed25519_routing_keys)
 }
 
-pub fn get_ed25519_base58_recipient_keys(
+pub fn get_ed25519_recipient_keys(
     their_did_doc: &DidDocument,
     service_id: &Uri,
 ) -> VcxResult<Vec<Key>> {
@@ -89,12 +89,12 @@ pub fn get_ed25519_base58_recipient_keys(
         return Ok(vec![]);
     };
 
-    let mut naked_recipient_keys = Vec::new();
+    let mut ed25519_recipient_keys = Vec::new();
 
     for key in recipient_keys.iter() {
         let pub_key = resolve_service_key_to_typed_key(key, their_did_doc)?;
         if pub_key.key_type() == &KeyType::Ed25519 {
-            naked_recipient_keys.push(pub_key);
+            ed25519_recipient_keys.push(pub_key);
         } else {
             warn!(
                 "Unexpected key with type {} in recipient keys list",
@@ -103,5 +103,5 @@ pub fn get_ed25519_base58_recipient_keys(
         }
     }
 
-    Ok(naked_recipient_keys)
+    Ok(ed25519_recipient_keys)
 }
