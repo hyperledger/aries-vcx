@@ -16,8 +16,10 @@ pub enum DidWebError {
     InvalidDid(String),
     #[error("Parsing error: {0}")]
     ParsingError(#[from] ParsingErrorSource),
-    #[error("URL parsing error: {0}")]
-    HttpError(#[from] hyper::Error),
+    #[error("Network error: {0}")]
+    NetworkError(#[from] hyper::Error),
+    #[error("Network error: {0}")]
+    NetworkClientError(#[from] hyper_util::client::legacy::Error),
     #[error("Non-success server response: {0}")]
     NonSuccessResponse(StatusCode),
     #[error(transparent)]

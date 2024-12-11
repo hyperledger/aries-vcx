@@ -8,12 +8,20 @@ use did_resolver::{
         DidResolvable,
     },
 };
+use http_body_util::{combinators::BoxBody, BodyExt as _};
 use hyper::{
-    client::{connect::Connect, HttpConnector},
+    body::Bytes,
     http::uri::{self, Scheme},
-    Body, Client, Uri,
+    Uri,
 };
 use hyper_tls::HttpsConnector;
+use hyper_util::{
+    client::legacy::{
+        connect::{Connect, HttpConnector},
+        Client,
+    },
+    rt::TokioExecutor,
+};
 
 use crate::error::DidWebError;
 
@@ -21,14 +29,15 @@ pub struct DidWebResolver<C>
 where
     C: Connect + Send + Sync + Clone + 'static,
 {
-    client: Client<C>,
+    client: Client<C, BoxBody<Bytes, GenericError>>,
     scheme: Scheme,
 }
 
 impl DidWebResolver<HttpConnector> {
     pub fn http() -> DidWebResolver<HttpConnector> {
         DidWebResolver {
-            client: Client::builder().build::<_, Body>(HttpConnector::new()),
+            client: Client::builder(TokioExecutor::new())
+                .build::<_, BoxBody<Bytes, GenericError>>(HttpConnector::new()),
             scheme: Scheme::HTTP,
         }
     }
@@ -37,7 +46,8 @@ impl DidWebResolver<HttpConnector> {
 impl DidWebResolver<HttpsConnector<HttpConnector>> {
     pub fn https() -> DidWebResolver<HttpsConnector<HttpConnector>> {
         DidWebResolver {
-            client: Client::builder().build::<_, Body>(HttpsConnector::new()),
+            client: Client::builder(TokioExecutor::new())
+                .build::<_, BoxBody<Bytes, GenericError>>(HttpsConnector::new()),
             scheme: Scheme::HTTPS,
         }
     }
@@ -54,7 +64,7 @@ where
             return Err(DidWebError::NonSuccessResponse(res.status()));
         }
 
-        let body = hyper::body::to_bytes(res.into_body()).await?;
+        let body = res.into_body().collect().await?.to_bytes();
 
         String::from_utf8(body.to_vec()).map_err(|err| err.into())
     }

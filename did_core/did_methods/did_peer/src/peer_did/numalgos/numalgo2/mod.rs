@@ -123,7 +123,6 @@ mod test {
         let ddo_decoded: DidDocument = did_peer
             .to_did_doc_builder(PublicKeyEncoding::Multibase)
             .unwrap();
-        dbg!(&ddo_decoded);
         assert_eq!(ddo_original, ddo_decoded);
     }
 

@@ -1,0 +1,87 @@
+syntax = "proto3";
+package cheqd.did.v2;
+import "cheqd/did/v2/diddoc.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "google/api/annotations.proto";
+option go_package = "github.com/cheqd/cheqd-node/x/did/types";
+// Query defines the gRPC querier service for the DID module
+service Query {
+  // Fetch latest version of a DID Document for a given DID
+  rpc DidDoc(QueryDidDocRequest) returns (QueryDidDocResponse) {
+    option (google.api.http) = {get: "/cheqd/did/v2/{id}"};
+  }
+  // Fetch specific version of a DID Document for a given DID
+  rpc DidDocVersion(QueryDidDocVersionRequest) returns (QueryDidDocVersionResponse) {
+    option (google.api.http) = {get: "/cheqd/did/v2/{id}/version/{version}"};
+  }
+  // Fetch list of all versions of DID Documents for a given DID
+  rpc AllDidDocVersionsMetadata(QueryAllDidDocVersionsMetadataRequest) returns (QueryAllDidDocVersionsMetadataResponse) {
+    option (google.api.http) = {get: "/cheqd/did/v2/{id}/versions"};
+  }
+}
+// QueryDidDocRequest is the request type for the Query/DidDoc method
+message QueryDidDocRequest {
+  // DID unique identifier of the DID Document to fetch.
+  // UUID-style DIDs as well as Indy-style DID are supported.
+  //
+  // Format: did:cheqd:<namespace>:<unique-identifier>
+  //
+  // Examples:
+  // - did:cheqd:mainnet:c82f2b02-bdab-4dd7-b833-3e143745d612
+  // - did:cheqd:testnet:wGHEXrZvJxR8vw5P3UWH1j
+  string id = 1;
+}
+// QueryDidDocResponse is the response type for the Query/DidDoc method
+message QueryDidDocResponse {
+  // Successful resolution of the DID Document returns the following:
+  // - did_doc is the latest version of the DID Document
+  // - metadata is is the DID Document metadata associated with the latest version of the DID Document
+  DidDocWithMetadata value = 1;
+}
+// QueryDidDocVersionRequest is the request type for the Query/DidDocVersion method
+message QueryDidDocVersionRequest {
+  // DID unique identifier of the DID Document to fetch.
+  // UUID-style DIDs as well as Indy-style DID are supported.
+  //
+  // Format: did:cheqd:<namespace>:<unique-identifier>
+  //
+  // Examples:
+  // - did:cheqd:mainnet:c82f2b02-bdab-4dd7-b833-3e143745d612
+  // - did:cheqd:testnet:wGHEXrZvJxR8vw5P3UWH1j
+  string id = 1;
+  // Unique version identifier of the DID Document to fetch.
+  // Returns the specified version of the DID Document.
+  //
+  // Format: <uuid>
+  //
+  // Example: 93f2573c-eca9-4098-96cb-a1ec676a29ed
+  string version = 2;
+}
+// QueryDidDocVersionResponse is the response type for the Query/DidDocVersion method
+message QueryDidDocVersionResponse {
+  // Successful resolution of the DID Document returns the following:
+  // - did_doc is the requested version of the DID Document
+  // - metadata is DID Document metadata associated with the requested version of the DID Document
+  DidDocWithMetadata value = 1;
+}
+// QueryAllDidDocVersionsMetadataRequest is the request type for the Query/AllDidDocVersionsMetadata method
+message QueryAllDidDocVersionsMetadataRequest {
+  // DID unique identifier of the DID Document to fetch version metadata.
+  // UUID-style DIDs as well as Indy-style DID are supported.
+  //
+  // Format: did:cheqd:<namespace>:<unique-identifier>
+  //
+  // Examples:
+  // - did:cheqd:mainnet:c82f2b02-bdab-4dd7-b833-3e143745d612
+  // - did:cheqd:testnet:wGHEXrZvJxR8vw5P3UWH1j
+  string id = 1;
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+// QueryAllDidDocVersionsMetadataResponse is the response type for the Query/AllDidDocVersionsMetadata method
+message QueryAllDidDocVersionsMetadataResponse {
+  // versions is the list of all versions of the requested DID Document
+  repeated Metadata versions = 1;
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
