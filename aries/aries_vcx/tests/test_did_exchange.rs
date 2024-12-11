@@ -193,7 +193,7 @@ async fn did_exchange_test(
     let requesters_peer_did = requesters_peer_did.resolve_did_doc()?;
     let expected_sender_vk = resolve_ed25519_base58_key_agreement(&requesters_peer_did)?;
     let unpacked =
-        EncryptionEnvelope::auth_unpack(&agent_inviter.wallet, m.0, &expected_sender_vk).await?;
+        EncryptionEnvelope::unpack(&agent_inviter.wallet, m.0, Some(expected_sender_vk)).await?;
 
     info!("Unpacked message: {:?}", unpacked);
 
