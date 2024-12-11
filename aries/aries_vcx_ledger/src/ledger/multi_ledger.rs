@@ -19,6 +19,16 @@ use serde_json::Value;
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerSupport};
 use crate::errors::error::{VcxLedgerError, VcxLedgerResult};
 
+// FUTURE - this multi-ledger anoncreds reader finds the first impl that supports the identifier
+// and attempts to use it. This behaviour may need some enhancements in the future when 
+// considering coordination of unqualified object resolution, when multiple capable anoncreds
+// readers are available (e.g. sovrin testnet & sovrin mainnet). 
+// Enhancements may include:
+// * priority system - try A resolver before B if A & B both support the identifier
+// * fallback/chain system - try A resolver, if it fails, try B resolver
+// Alternatively these enhancements can be skipped if qualified DIDs/objects are used instead,
+// e.g. did:indy:a:123, did:indy:b:123
+
 /// Struct to aggregate multiple [AnoncredsLedgerRead] implementations into a single
 /// [AnoncredsLedgerRead]. The child [AnoncredsLedgerRead] implementations are
 /// utilized depending on whether or not they support resolution of the given object ID
