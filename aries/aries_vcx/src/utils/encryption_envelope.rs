@@ -31,7 +31,7 @@ impl EncryptionEnvelope {
             did_doc
         );
 
-        let recipient_key =
+        let recipient_key_base58 =
             did_doc
                 .recipient_keys()?
                 .first()
@@ -40,8 +40,17 @@ impl EncryptionEnvelope {
                     AriesVcxErrorKind::InvalidState,
                     format!("No recipient key found in DIDDoc: {:?}", did_doc),
                 ))?;
-        let routing_keys = did_doc.routing_keys();
-        Self::create_from_keys(wallet, data, sender_vk, recipient_key, routing_keys).await
+
+        let recipient_key = Key::from_base58(&recipient_key_base58, KeyType::Ed25519)?;
+        let routing_keys = did_doc
+            .routing_keys()
+            .iter()
+            .map(|routing_key| Key::from_base58(routing_key, KeyType::Ed25519))
+            .collect::<Result<Vec<_>, _>>()?;
+        let sender_key = sender_vk
+            .map(|key| Key::from_base58(&key, KeyType::Ed25519))
+            .transpose()?;
+        Self::create_from_keys(wallet, data, sender_key, recipient_key, routing_keys).await
     }
 
     /// Create encrypted message based on key agreement keys of our did document, counterparties
@@ -78,7 +87,7 @@ impl EncryptionEnvelope {
         EncryptionEnvelope::create_from_keys(
             wallet,
             data,
-            Some(&sender_vk),
+            Some(sender_vk),
             recipient_key,
             routing_keys,
         )
@@ -88,17 +97,24 @@ impl EncryptionEnvelope {
     pub async fn create_from_keys(
         wallet: &impl BaseWallet,
         data: &[u8],
-        sender_vk: Option<&str>,
-        // TODO - why not have encryption envelope take typed [Key]s, and enforce they are
-        // KeyType::Ed25519
-        recipient_key: String,
-        routing_keys: Vec<String>,
+        sender_vk: Option<Key>,
+        recipient_key: Key,
+        routing_keys: Vec<Key>,
     ) -> VcxResult<EncryptionEnvelope> {
+        // Validate keys are Ed25519
+        sender_vk
+            .as_ref()
+            .map(|key| key.validate_key_type(KeyType::Ed25519))
+            .transpose()?;
+        for key in routing_keys.iter().as_ref() {
+            key.validate_key_type(KeyType::Ed25519)?;
+        }
+
         let message = EncryptionEnvelope::encrypt_for_pairwise(
             wallet,
             data,
             sender_vk,
-            recipient_key.clone(),
+            recipient_key.validate_key_type(KeyType::Ed25519)?.clone(),
         )
         .await?;
         EncryptionEnvelope::wrap_into_forward_messages(wallet, message, recipient_key, routing_keys)
@@ -109,24 +125,18 @@ impl EncryptionEnvelope {
     async fn encrypt_for_pairwise(
         wallet: &impl BaseWallet,
         data: &[u8],
-        sender_vk: Option<&str>,
-        recipient_key: String,
+        sender_vk: Option<Key>,
+        recipient_key: Key,
     ) -> VcxResult<Vec<u8>> {
         debug!(
-            "Encrypting for pairwise; sender_vk: {:?}, recipient_key: {}",
+            "Encrypting for pairwise; sender_vk: {:?}, recipient_key: {:?}",
             sender_vk, recipient_key
         );
 
-        let recipient_keys = vec![Key::from_base58(&recipient_key, KeyType::Ed25519)?];
+        let recipient_keys = vec![recipient_key];
 
         wallet
-            .pack_message(
-                sender_vk
-                    .map(|key| Key::from_base58(key, KeyType::Ed25519))
-                    .transpose()?,
-                recipient_keys,
-                data,
-            )
+            .pack_message(sender_vk, recipient_keys, data)
             .await
             .map_err(|err| err.into())
     }
@@ -134,20 +144,25 @@ impl EncryptionEnvelope {
     async fn wrap_into_forward_messages(
         wallet: &impl BaseWallet,
         mut data: Vec<u8>,
-        recipient_key: String,
-        routing_keys: Vec<String>,
+        recipient_key: Key,
+        routing_keys: Vec<Key>,
     ) -> VcxResult<Vec<u8>> {
         let mut forward_to_key = recipient_key;
 
-        for routing_key in routing_keys.iter() {
+        for routing_key in routing_keys {
             debug!(
                 "Wrapping message in forward message; forward_to_key: {}, routing_key: {}",
-                forward_to_key, routing_key
+                forward_to_key.base58(),
+                routing_key.base58()
             );
-            data =
-                EncryptionEnvelope::wrap_into_forward(wallet, data, &forward_to_key, routing_key)
-                    .await?;
-            forward_to_key.clone_from(routing_key);
+            data = EncryptionEnvelope::wrap_into_forward(
+                wallet,
+                data,
+                forward_to_key.clone(),
+                routing_key.clone(),
+            )
+            .await?;
+            forward_to_key.clone_from(&routing_key);
         }
         Ok(data)
     }
@@ -155,11 +170,11 @@ impl EncryptionEnvelope {
     async fn wrap_into_forward(
         wallet: &impl BaseWallet,
         data: Vec<u8>,
-        forward_to_key: &str,
-        routing_key: &str,
+        forward_to_key: Key,
+        routing_key: Key,
     ) -> VcxResult<Vec<u8>> {
         let content = ForwardContent::builder()
-            .to(forward_to_key.to_string())
+            .to(forward_to_key.base58())
             .msg(serde_json::from_slice(&data)?)
             .build();
 
@@ -170,10 +185,7 @@ impl EncryptionEnvelope {
 
         let message = json!(AriesMessage::from(message)).to_string();
 
-        let receiver_keys = vec![routing_key]
-            .into_iter()
-            .map(|item| Key::from_base58(item, KeyType::Ed25519))
-            .collect::<Result<_, _>>()?;
+        let receiver_keys = vec![routing_key];
 
         wallet
             .pack_message(None, receiver_keys, message.as_bytes())
@@ -307,7 +319,7 @@ pub mod unit_tests {
             &setup.wallet,
             data_original.as_bytes(),
             None,
-            did_data.verkey().base58(),
+            did_data.verkey().clone(),
             [].to_vec(),
         )
         .await
@@ -336,24 +348,25 @@ pub mod unit_tests {
             .await
             .unwrap();
 
-        let sender_vk = sender_data.verkey().base58();
-        let recipient_vk = recipient_data.verkey().base58();
+        let sender_vk = sender_data.verkey().clone();
+        let recipient_vk = recipient_data.verkey();
 
         let data_original = "foobar";
 
         let envelope = EncryptionEnvelope::create_from_keys(
             &setup.wallet,
             data_original.as_bytes(),
-            Some(&sender_vk),
+            Some(sender_vk.clone()),
             recipient_vk.clone(),
             [].to_vec(),
         )
         .await
         .unwrap();
 
-        let data_unpacked = EncryptionEnvelope::auth_unpack(&setup.wallet, envelope.0, &sender_vk)
-            .await
-            .unwrap();
+        let data_unpacked =
+            EncryptionEnvelope::auth_unpack(&setup.wallet, envelope.0, &sender_vk.base58())
+                .await
+                .unwrap();
 
         assert_eq!(data_original, data_unpacked);
     }
@@ -382,9 +395,9 @@ pub mod unit_tests {
         let envelope = EncryptionEnvelope::create_from_keys(
             &setup.wallet,
             data_original.as_bytes(),
-            Some(&sender_data.verkey().base58()),
-            recipient_data.verkey().base58(),
-            [routing_data.verkey().base58()].to_vec(),
+            Some(sender_data.verkey().clone()),
+            recipient_data.verkey().clone(),
+            [routing_data.verkey().clone()].to_vec(),
         )
         .await
         .unwrap();
@@ -429,8 +442,8 @@ pub mod unit_tests {
         let envelope = EncryptionEnvelope::create_from_keys(
             &setup.wallet,
             data_original.as_bytes(),
-            Some(&bob_data.verkey().base58()), // bob trying to impersonate alice
-            recipient_data.verkey().base58(),
+            Some(bob_data.verkey().clone()), // bob trying to impersonate alice
+            recipient_data.verkey().clone(),
             [].to_vec(),
         )
         .await

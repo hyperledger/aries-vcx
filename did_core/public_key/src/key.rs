@@ -22,6 +22,16 @@ impl Key {
         &self.key_type
     }
 
+    pub fn validate_key_type(&self, key_type: KeyType) -> Result<&Self, PublicKeyError> {
+        if self.key_type() != &key_type {
+            return Err(PublicKeyError::InvalidKeyType(
+                self.key_type().to_owned(),
+                key_type,
+            ));
+        }
+        Ok(self)
+    }
+
     pub fn key(&self) -> &[u8] {
         self.key.as_ref()
     }
