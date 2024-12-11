@@ -81,7 +81,7 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
     /// `get_rev_status_list`. Depending on the ledger anoncreds-method, this metadata may be
     /// used in the subsequent revocation status list fetch as an optimization (e.g. to save an
     /// additional ledger call).
-    type RevocationRegistryDefinitionAdditionalMetadata;
+    type RevocationRegistryDefinitionAdditionalMetadata: Send + Sync;
 
     async fn get_schema(
         &self,

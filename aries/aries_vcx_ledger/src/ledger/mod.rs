@@ -1,5 +1,6 @@
 use crate::errors::error::VcxLedgerError;
 
+pub mod arc;
 pub mod base_ledger;
 pub mod common;
 
