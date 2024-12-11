@@ -42,6 +42,7 @@ authors = [
 description = "Library to work with Aries protocols & collection of supporting components"
 license = "Apache-2.0"
 edition = "2021"
+rust-version = "1.79"
 
 [profile.release]
 debug = 0

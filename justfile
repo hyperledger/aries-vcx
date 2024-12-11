@@ -2,17 +2,15 @@ default:
     just --list
 
 fmt:
-    cargo +nightly-2023-05-08 fmt
+    cargo fmt
 
 fmt-check:
-    cargo +nightly-2023-05-08 fmt --check
+    cargo fmt --check
 
-clippy-workspace wallet:
-    cargo clippy --examples --tests --no-default-features -F anoncreds,vdr_proxy_ledger,legacy_proof,{{wallet}}
+clippy:
+    cargo clippy --examples --tests --all-features
 
-clippy-aries-vcx features:
-    cargo clippy -p aries_vcx --features legacy_proof --features {{features}} --no-default-features
-
+# The following need review:
 check-workspace:
     cargo check --tests --all-features
 
