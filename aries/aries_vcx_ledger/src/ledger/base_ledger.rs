@@ -103,6 +103,8 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
         RevocationRegistryDefinition,
         Self::RevocationRegistryDefinitionAdditionalMetadata,
     )>;
+
+    #[deprecated(note = "use revocation status lists instead")]
     async fn get_rev_reg_delta_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,

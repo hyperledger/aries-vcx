@@ -475,6 +475,7 @@ async fn test_pool_get_rev_reg_delta_json() -> Result<(), Box<dyn Error>> {
     .await?;
 
     let ledger = &setup.ledger_read;
+    #[allow(deprecated)] // TODO - https://github.com/hyperledger/aries-vcx/issues/1309
     let (_delta, _timestamp) = ledger
         .get_rev_reg_delta_json(&rev_reg.rev_reg_id.to_owned().try_into()?, None, None)
         .await?;

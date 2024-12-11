@@ -21,7 +21,7 @@ use crate::errors::error::{VcxLedgerError, VcxLedgerResult};
 
 /// Struct to aggregate multiple [AnoncredsLedgerRead] implementations into a single
 /// [AnoncredsLedgerRead]. The child [AnoncredsLedgerRead] implementations are
-/// utiliized depending on whether or not they support resolution of the given object ID
+/// utilized depending on whether or not they support resolution of the given object ID
 /// (e.g. based on the DID Method).
 #[derive(Default, Debug)]
 pub struct MultiLedgerAnoncredsRead {
@@ -95,6 +95,7 @@ impl AnoncredsLedgerRead for MultiLedgerAnoncredsRead {
                 rev_reg_id.to_string(),
             ))?;
 
+        #[allow(deprecated)] // TODO - https://github.com/hyperledger/aries-vcx/issues/1309
         reader.get_rev_reg_delta_json(rev_reg_id, from, to).await
     }
 
@@ -236,6 +237,7 @@ where
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxLedgerResult<(RevocationRegistryDelta, u64)> {
+        #[allow(deprecated)] // TODO - https://github.com/hyperledger/aries-vcx/issues/1309
         self.inner
             .get_rev_reg_delta_json(rev_reg_id, from, to)
             .await
@@ -594,6 +596,7 @@ mod unit_tests {
         );
     }
 
+    #[allow(deprecated)] // TODO - https://github.com/hyperledger/aries-vcx/issues/1309
     #[tokio::test]
     async fn test_get_rev_reg_delta_proxy() {
         let id = RevocationRegistryDefinitionId::new_unchecked(uuid::Uuid::new_v4().to_string());

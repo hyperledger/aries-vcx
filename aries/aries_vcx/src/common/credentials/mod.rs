@@ -25,6 +25,7 @@ pub async fn is_cred_revoked(
     rev_id: u32,
 ) -> VcxResult<bool> {
     let to = Some(OffsetDateTime::now_utc().unix_timestamp() as u64 + 100);
+    #[allow(deprecated)] // TODO - https://github.com/hyperledger/aries-vcx/issues/1309
     let (rev_reg_delta, _) = ledger
         .get_rev_reg_delta_json(&rev_reg_id.try_into()?, None, to)
         .await?;

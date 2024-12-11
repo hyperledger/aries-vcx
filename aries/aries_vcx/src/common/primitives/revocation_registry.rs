@@ -234,6 +234,7 @@ impl RevocationRegistry {
         ledger: &impl AnoncredsLedgerRead,
         cred_rev_id: u32,
     ) -> VcxResult<()> {
+        #[allow(deprecated)] // TODO - https://github.com/hyperledger/aries-vcx/issues/1309
         let rev_reg_delta_json = ledger
             .get_rev_reg_delta_json(&self.rev_reg_id.to_string().try_into()?, None, None)
             .await?

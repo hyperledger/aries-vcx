@@ -573,6 +573,7 @@ where
         timestamp: u64,
         rev_reg_def_meta: Option<&RevocationRegistryDefinitionAdditionalMetadata>,
     ) -> VcxLedgerResult<(RevocationStatusList, u64)> {
+        #[allow(deprecated)] // TODO - https://github.com/hyperledger/aries-vcx/issues/1309
         let (delta, entry_time) = self
             .get_rev_reg_delta_json(rev_reg_id, Some(0), Some(timestamp))
             .await?;
