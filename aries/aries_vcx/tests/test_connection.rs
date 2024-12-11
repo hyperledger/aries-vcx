@@ -60,15 +60,12 @@ async fn decrypt_message(
         impl BaseWallet,
     >,
     received: Vec<u8>,
-    consumer_to_institution: &GenericConnection,
 ) -> AriesMessage {
-    EncryptionEnvelope::auth_unpack_aries_msg(
-        &consumer.wallet,
-        received,
-        &consumer_to_institution.remote_vk().unwrap(),
-    )
-    .await
-    .unwrap()
+    let (message, _, _) =
+        EncryptionEnvelope::unpack_aries_msg(&consumer.wallet, received.as_slice(), &None)
+            .await
+            .unwrap();
+    message
 }
 
 async fn send_and_receive_message(
@@ -85,7 +82,6 @@ async fn send_and_receive_message(
         impl BaseWallet,
     >,
     institution_to_consumer: &GenericConnection,
-    consumer_to_institution: &GenericConnection,
     message: &AriesMessage,
 ) -> AriesMessage {
     let encrypted_message = institution_to_consumer
@@ -93,7 +89,7 @@ async fn send_and_receive_message(
         .await
         .unwrap()
         .0;
-    decrypt_message(consumer, encrypted_message, consumer_to_institution).await
+    decrypt_message(consumer, encrypted_message).await
 }
 
 async fn create_service(
@@ -126,7 +122,7 @@ async fn test_agency_pool_establish_connection_via_public_invite() -> Result<(),
     let mut consumer = create_test_agent(setup.genesis_file_path).await;
     create_service(&institution).await;
 
-    let (consumer_to_institution, institution_to_consumer) =
+    let (_consumer_to_institution, institution_to_consumer) =
         create_connections_via_public_invite(&mut consumer, &mut institution).await;
 
     let basic_message = build_basic_message("Hello TestAgent".to_string());
@@ -134,7 +130,6 @@ async fn test_agency_pool_establish_connection_via_public_invite() -> Result<(),
         &consumer,
         &institution,
         &institution_to_consumer,
-        &consumer_to_institution,
         &basic_message.clone().into(),
     )
     .await
@@ -153,7 +148,7 @@ async fn test_agency_pool_establish_connection_via_pairwise_invite() -> Result<(
     let mut institution = create_test_agent(setup.genesis_file_path.clone()).await;
     let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-    let (consumer_to_institution, institution_to_consumer) =
+    let (_consumer_to_institution, institution_to_consumer) =
         create_connections_via_pairwise_invite(&mut consumer, &mut institution).await;
 
     let basic_message = build_basic_message("Hello TestAgent".to_string());
@@ -161,7 +156,6 @@ async fn test_agency_pool_establish_connection_via_pairwise_invite() -> Result<(
         &consumer,
         &institution,
         &institution_to_consumer,
-        &consumer_to_institution,
         &basic_message.clone().into(),
     )
     .await
@@ -190,7 +184,7 @@ async fn test_agency_pool_establish_connection_via_out_of_band() -> Result<(), B
     let mut consumer = create_test_agent(setup.genesis_file_path).await;
     create_service(&endorser).await;
 
-    let (consumer_to_endorser, endorser_to_consumer) =
+    let (_consumer_to_endorser, endorser_to_consumer) =
         create_connections_via_oob_invite(&mut consumer, &mut endorser).await;
 
     let basic_message = build_basic_message("Hello TestAgent".to_string());
@@ -198,7 +192,6 @@ async fn test_agency_pool_establish_connection_via_out_of_band() -> Result<(), B
         &consumer,
         &endorser,
         &endorser_to_consumer,
-        &consumer_to_endorser,
         &basic_message.clone().into(),
     )
     .await

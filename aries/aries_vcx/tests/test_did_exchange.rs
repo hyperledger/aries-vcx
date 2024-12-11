@@ -16,8 +16,7 @@ use aries_vcx::{
         transition::transition_result::TransitionResult,
     },
     utils::{
-        didcomm_utils::resolve_ed25519_base58_key_agreement,
-        encryption_envelope::EncryptionEnvelope,
+        didcomm_utils::resolve_ed25519_key_agreement, encryption_envelope::EncryptionEnvelope,
     },
 };
 use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
@@ -53,8 +52,8 @@ pub mod utils;
 
 fn assert_key_agreement(a: DidDocument, b: DidDocument) {
     log::warn!("comparing did doc a: {}, b: {}", a, b);
-    let a_key = resolve_ed25519_base58_key_agreement(&a).unwrap();
-    let b_key = resolve_ed25519_base58_key_agreement(&b).unwrap();
+    let a_key = resolve_ed25519_key_agreement(&a).unwrap();
+    let b_key = resolve_ed25519_key_agreement(&b).unwrap();
     assert_eq!(a_key, b_key);
 }
 
@@ -191,9 +190,9 @@ async fn did_exchange_test(
     info!("Encrypted message: {:?}", m);
 
     let requesters_peer_did = requesters_peer_did.resolve_did_doc()?;
-    let expected_sender_vk = resolve_ed25519_base58_key_agreement(&requesters_peer_did)?;
+    let expected_sender_vk = resolve_ed25519_key_agreement(&requesters_peer_did)?;
     let unpacked =
-        EncryptionEnvelope::auth_unpack(&agent_inviter.wallet, m.0, &expected_sender_vk).await?;
+        EncryptionEnvelope::unpack(&agent_inviter.wallet, &m.0, &Some(expected_sender_vk)).await?;
 
     info!("Unpacked message: {:?}", unpacked);
 

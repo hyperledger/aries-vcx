@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 use crate::error::PublicKeyError;
@@ -55,6 +57,21 @@ impl TryFrom<u64> for KeyType {
             KeyType::C_P384 => Ok(KeyType::P384),
             KeyType::C_P521 => Ok(KeyType::P521),
             p => Err(PublicKeyError::UnsupportedMulticodecDescriptor(p)),
+        }
+    }
+}
+
+impl Display for KeyType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            KeyType::Bls12381g1 => write!(f, "Bls12381g1"),
+            KeyType::Bls12381g2 => write!(f, "Bls12381g2"),
+            KeyType::X25519 => write!(f, "X25519"),
+            KeyType::Ed25519 => write!(f, "Ed25519"),
+            KeyType::Bls12381g1g2 => write!(f, "Bls12381g1g2"),
+            KeyType::P256 => write!(f, "P256"),
+            KeyType::P384 => write!(f, "P384"),
+            KeyType::P521 => write!(f, "P521"),
         }
     }
 }
