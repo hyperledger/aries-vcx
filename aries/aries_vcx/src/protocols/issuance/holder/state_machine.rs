@@ -1,6 +1,8 @@
 use std::fmt;
 
-use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
+use anoncreds_types::data_types::{
+    identifiers::schema_id::SchemaId, messages::cred_offer::CredentialOffer,
+};
 use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
@@ -597,20 +599,22 @@ pub async fn create_anoncreds_credential_request(
     wallet: &impl BaseWallet,
     ledger: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
-    cred_def_id: &str,
     prover_did: &Did,
     cred_offer: &str,
 ) -> VcxResult<(String, String, String, String, SchemaId)> {
-    let cred_def_json = ledger
-        .get_cred_def(&cred_def_id.to_string().try_into()?, None)
-        .await?;
+    let offer: CredentialOffer = serde_json::from_str(cred_offer)?;
+
+    let schema_id = offer.schema_id.clone();
+    let cred_def_id = offer.cred_def_id.clone();
+
+    let cred_def_json = ledger.get_cred_def(&cred_def_id, None).await?;
 
     let master_secret_id = settings::DEFAULT_LINK_SECRET_ALIAS;
     anoncreds
         .prover_create_credential_req(
             wallet,
             prover_did,
-            serde_json::from_str(cred_offer)?,
+            offer,
             cred_def_json.try_clone()?,
             &master_secret_id.to_string(),
         )
@@ -627,7 +631,7 @@ pub async fn create_anoncreds_credential_request(
                 serde_json::to_string(&s2).unwrap(),
                 cred_def_id.to_string(),
                 serde_json::to_string(&cred_def_json).unwrap(),
-                cred_def_json.schema_id,
+                schema_id,
             )
         })
 }
@@ -651,17 +655,9 @@ async fn build_credential_request_msg(
     let cred_offer = get_attach_as_string!(&offer.content.offers_attach);
 
     trace!("Parsed cred offer attachment: {}", cred_offer);
-    let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
     let (req, req_meta, _cred_def_id, cred_def_json, schema_id) =
-        create_anoncreds_credential_request(
-            wallet,
-            ledger,
-            anoncreds,
-            &cred_def_id,
-            &my_pw_did,
-            &cred_offer,
-        )
-        .await?;
+        create_anoncreds_credential_request(wallet, ledger, anoncreds, &my_pw_did, &cred_offer)
+            .await?;
     trace!("Created cred def json: {}", cred_def_json);
     let credential_request_msg = _build_credential_request_msg(req, &thread_id);
     Ok((credential_request_msg, req_meta, cred_def_json, schema_id))
