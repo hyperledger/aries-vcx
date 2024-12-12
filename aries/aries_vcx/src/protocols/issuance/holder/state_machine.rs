@@ -1,5 +1,6 @@
 use std::fmt;
 
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use aries_vcx_anoncreds::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
@@ -277,9 +278,7 @@ impl HolderSM {
         trace!("HolderSM::receive_credential >>");
         let state = match self.state {
             HolderFullState::RequestSet(state_data) => {
-                let schema = ledger
-                    .get_schema(&state_data.schema_id.clone().try_into()?, None)
-                    .await?;
+                let schema = ledger.get_schema(&state_data.schema_id, None).await?;
                 let schema_json = serde_json::to_string(&schema)?;
                 match _store_credential(
                     wallet,
@@ -601,7 +600,7 @@ pub async fn create_anoncreds_credential_request(
     cred_def_id: &str,
     prover_did: &Did,
     cred_offer: &str,
-) -> VcxResult<(String, String, String, String, String)> {
+) -> VcxResult<(String, String, String, String, SchemaId)> {
     let cred_def_json = ledger
         .get_cred_def(&cred_def_id.to_string().try_into()?, None)
         .await?;
@@ -628,7 +627,7 @@ pub async fn create_anoncreds_credential_request(
                 serde_json::to_string(&s2).unwrap(),
                 cred_def_id.to_string(),
                 serde_json::to_string(&cred_def_json).unwrap(),
-                cred_def_json.schema_id.to_string(),
+                cred_def_json.schema_id,
             )
         })
 }
@@ -642,7 +641,7 @@ async fn build_credential_request_msg(
     thread_id: String,
     my_pw_did: Did,
     offer: &OfferCredentialV1,
-) -> VcxResult<(RequestCredentialV1, String, String, String)> {
+) -> VcxResult<(RequestCredentialV1, String, String, SchemaId)> {
     trace!(
         "Holder::_make_credential_request >>> my_pw_did: {:?}, offer: {:?}",
         my_pw_did,
