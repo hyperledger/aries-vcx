@@ -188,10 +188,11 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn prover_store_credential(
         &self,
         _wallet: &impl BaseWallet,
-        _cred_req_metadata_json: CredentialRequestMetadata,
-        _cred_json: Credential,
-        _cred_def_json: CredentialDefinition,
-        _rev_reg_def_json: Option<RevocationRegistryDefinition>,
+        _cred_req_metadata: CredentialRequestMetadata,
+        _cred: Credential,
+        _schema: Schema,
+        _cred_def: CredentialDefinition,
+        _rev_reg_def: Option<RevocationRegistryDefinition>,
     ) -> VcxAnoncredsResult<CredentialId> {
         Ok("cred_id".to_string())
     }

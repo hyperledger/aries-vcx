@@ -146,10 +146,11 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn prover_store_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_req_metadata_json: CredentialRequestMetadata,
-        cred_json: Credential,
-        cred_def_json: CredentialDefinition,
-        rev_reg_def_json: Option<RevocationRegistryDefinition>,
+        cred_req_metadata: CredentialRequestMetadata,
+        unprocessed_cred: Credential,
+        schema: Schema,
+        cred_def: CredentialDefinition,
+        rev_reg_def: Option<RevocationRegistryDefinition>,
     ) -> VcxAnoncredsResult<CredentialId>;
 
     async fn prover_delete_credential(

@@ -966,26 +966,21 @@ impl BaseAnonCreds for Anoncreds {
     async fn prover_store_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_req_metadata_json: CredentialRequestMetadata,
-        cred_json: Credential,
-        cred_def_json: CredentialDefinition,
-        rev_reg_def_json: Option<RevocationRegistryDefinition>,
+        cred_req_metadata: CredentialRequestMetadata,
+        unprocessed_cred: Credential,
+        schema: Schema,
+        cred_def: CredentialDefinition,
+        rev_reg_def: Option<RevocationRegistryDefinition>,
     ) -> VcxAnoncredsResult<CredentialId> {
-        let mut credential: AnoncredsCredential = cred_json.convert(())?;
-
-        let cred_def_id = credential.cred_def_id.to_string();
-        let (_cred_def_method, issuer_did, _signature_type, _schema_num, _tag) =
-            cred_def_parts(&cred_def_id).ok_or(VcxAnoncredsError::InvalidSchema(
-                "Could not process credential.cred_def_id as parts.".into(),
-            ))?;
+        let mut credential: AnoncredsCredential = unprocessed_cred.convert(())?;
 
         let cred_request_metadata: AnoncredsCredentialRequestMetadata =
-            cred_req_metadata_json.convert(())?;
+            cred_req_metadata.convert(())?;
         let link_secret_id = &cred_request_metadata.link_secret_name;
         let link_secret = self.get_link_secret(wallet, link_secret_id).await?;
-        let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;
+        let cred_def: AnoncredsCredentialDefinition = cred_def.convert(())?;
         let rev_reg_def: Option<AnoncredsRevocationRegistryDefinition> =
-            if let Some(rev_reg_def_json) = rev_reg_def_json {
+            if let Some(rev_reg_def_json) = rev_reg_def {
                 Some(rev_reg_def_json.convert(())?)
             } else {
                 None
@@ -1000,19 +995,20 @@ impl BaseAnonCreds for Anoncreds {
         )?;
 
         let schema_id = &credential.schema_id;
+        let cred_def_id = &credential.cred_def_id;
+        let issuer_did = &cred_def.issuer_id;
 
-        let (_schema_method, schema_issuer_did, schema_name, schema_version) =
-            schema_parts(schema_id.0.as_str()).ok_or(VcxAnoncredsError::InvalidSchema(format!(
-                "Could not process credential.schema_id {schema_id} as parts."
-            )))?;
+        let schema_issuer_did = schema.issuer_id;
+        let schema_name = schema.name;
+        let schema_version = schema.version;
 
         let mut tags = RecordTags::new(vec![
             RecordTag::new("schema_id", &schema_id.0),
-            RecordTag::new("schema_issuer_did", schema_issuer_did.did()),
+            RecordTag::new("schema_issuer_did", &schema_issuer_did.0),
             RecordTag::new("schema_name", &schema_name),
             RecordTag::new("schema_version", &schema_version),
-            RecordTag::new("issuer_did", issuer_did.did()),
-            RecordTag::new("cred_def_id", &cred_def_id),
+            RecordTag::new("issuer_did", &issuer_did.0),
+            RecordTag::new("cred_def_id", &cred_def_id.0),
         ]);
 
         if let Some(rev_reg_id) = &credential.rev_reg_id {
@@ -1399,87 +1395,6 @@ pub fn schema_parts(id: &str) -> Option<(Option<&str>, Did, String, String)> {
         let name = parts[6].to_string();
         let version = parts[7].to_string();
         return Some((Some(method), did, name, version));
-    }
-
-    None
-}
-
-pub fn cred_def_parts(id: &str) -> Option<(Option<&str>, Did, String, SchemaId, String)> {
-    let parts = id.split_terminator(':').collect::<Vec<&str>>();
-
-    if parts.len() == 4 {
-        // Th7MpTaRZVRYnPiabds81Y:3:CL:1
-        let did = parts[0].to_string();
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[2].to_string();
-        let schema_id = parts[3].to_string();
-        let tag = String::new();
-        return Some((None, did, signature_type, SchemaId(schema_id), tag));
-    }
-
-    if parts.len() == 5 {
-        // Th7MpTaRZVRYnPiabds81Y:3:CL:1:tag
-        let did = parts[0].to_string();
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[2].to_string();
-        let schema_id = parts[3].to_string();
-        let tag = parts[4].to_string();
-        return Some((None, did, signature_type, SchemaId(schema_id), tag));
-    }
-
-    if parts.len() == 7 {
-        // NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0
-        let did = parts[0].to_string();
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[2].to_string();
-        let schema_id = parts[3..7].join(":");
-        let tag = String::new();
-        return Some((None, did, signature_type, SchemaId(schema_id), tag));
-    }
-
-    if parts.len() == 8 {
-        // NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag
-        let did = parts[0].to_string();
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[2].to_string();
-        let schema_id = parts[3..7].join(":");
-        let tag = parts[7].to_string();
-        return Some((None, did, signature_type, SchemaId(schema_id), tag));
-    }
-
-    if parts.len() == 9 {
-        // creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:3:tag
-        let method = parts[1];
-        let did = parts[2..5].join(":");
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[6].to_string();
-        let schema_id = parts[7].to_string();
-        let tag = parts[8].to_string();
-        return Some((Some(method), did, signature_type, SchemaId(schema_id), tag));
-    }
-
-    if parts.len() == 16 {
-        // creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:
-        // NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag
-        let method = parts[1];
-        let did = parts[2..5].join(":");
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[6].to_string();
-        let schema_id = parts[7..15].join(":");
-        let tag = parts[15].to_string();
-        return Some((Some(method), did, signature_type, SchemaId(schema_id), tag));
     }
 
     None

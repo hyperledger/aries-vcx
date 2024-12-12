@@ -147,6 +147,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds(
         &setup.anoncreds,
         &setup.anoncreds,
         &setup.institution_did,
+        &schema,
         &cred_def,
         None,
     )

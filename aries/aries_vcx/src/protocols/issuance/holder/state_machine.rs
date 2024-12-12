@@ -224,11 +224,12 @@ impl HolderSM {
                 )
                 .await
                 {
-                    Ok((msg_credential_request, req_meta, cred_def_json)) => {
+                    Ok((msg_credential_request, req_meta, cred_def_json, schema_id)) => {
                         HolderFullState::RequestSet(RequestSetState {
                             msg_credential_request,
                             req_meta,
                             cred_def_json,
+                            schema_id,
                         })
                     }
                     Err(err) => {
@@ -276,6 +277,10 @@ impl HolderSM {
         trace!("HolderSM::receive_credential >>");
         let state = match self.state {
             HolderFullState::RequestSet(state_data) => {
+                let schema = ledger
+                    .get_schema(&state_data.schema_id.clone().try_into()?, None)
+                    .await?;
+                let schema_json = serde_json::to_string(&schema)?;
                 match _store_credential(
                     wallet,
                     ledger,
@@ -283,6 +288,7 @@ impl HolderSM {
                     &credential,
                     &state_data.req_meta,
                     &state_data.cred_def_json,
+                    &schema_json,
                 )
                 .await
                 {
@@ -549,6 +555,7 @@ async fn _store_credential(
     credential: &IssueCredentialV1,
     req_meta: &str,
     cred_def_json: &str,
+    schema_json: &str,
 ) -> VcxResult<(String, Option<String>)> {
     trace!(
         "Holder::_store_credential >>> credential: {:?}, req_meta: {}, cred_def_json: {}",
@@ -572,6 +579,7 @@ async fn _store_credential(
             wallet,
             serde_json::from_str(req_meta)?,
             serde_json::from_str(&credential_json)?,
+            serde_json::from_str(schema_json)?,
             serde_json::from_str(cred_def_json)?,
             rev_reg_def_json.clone(),
         )
@@ -585,6 +593,7 @@ async fn _store_credential(
     ))
 }
 
+/// On success, returns: credential request, request metadata, cred_def_id, cred def, schema_id
 pub async fn create_anoncreds_credential_request(
     wallet: &impl BaseWallet,
     ledger: &impl AnoncredsLedgerRead,
@@ -592,7 +601,7 @@ pub async fn create_anoncreds_credential_request(
     cred_def_id: &str,
     prover_did: &Did,
     cred_offer: &str,
-) -> VcxResult<(String, String, String, String)> {
+) -> VcxResult<(String, String, String, String, String)> {
     let cred_def_json = ledger
         .get_cred_def(&cred_def_id.to_string().try_into()?, None)
         .await?;
@@ -619,10 +628,13 @@ pub async fn create_anoncreds_credential_request(
                 serde_json::to_string(&s2).unwrap(),
                 cred_def_id.to_string(),
                 serde_json::to_string(&cred_def_json).unwrap(),
+                cred_def_json.schema_id.to_string(),
             )
         })
 }
 
+/// On success, returns: message with cred request, request metadata, cred def (for caching),
+/// schema_id
 async fn build_credential_request_msg(
     wallet: &impl BaseWallet,
     ledger: &impl AnoncredsLedgerRead,
@@ -630,7 +642,7 @@ async fn build_credential_request_msg(
     thread_id: String,
     my_pw_did: Did,
     offer: &OfferCredentialV1,
-) -> VcxResult<(RequestCredentialV1, String, String)> {
+) -> VcxResult<(RequestCredentialV1, String, String, String)> {
     trace!(
         "Holder::_make_credential_request >>> my_pw_did: {:?}, offer: {:?}",
         my_pw_did,
@@ -641,16 +653,17 @@ async fn build_credential_request_msg(
 
     trace!("Parsed cred offer attachment: {}", cred_offer);
     let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
-    let (req, req_meta, _cred_def_id, cred_def_json) = create_anoncreds_credential_request(
-        wallet,
-        ledger,
-        anoncreds,
-        &cred_def_id,
-        &my_pw_did,
-        &cred_offer,
-    )
-    .await?;
+    let (req, req_meta, _cred_def_id, cred_def_json, schema_id) =
+        create_anoncreds_credential_request(
+            wallet,
+            ledger,
+            anoncreds,
+            &cred_def_id,
+            &my_pw_did,
+            &cred_offer,
+        )
+        .await?;
     trace!("Created cred def json: {}", cred_def_json);
     let credential_request_msg = _build_credential_request_msg(req, &thread_id);
-    Ok((credential_request_msg, req_meta, cred_def_json))
+    Ok((credential_request_msg, req_meta, cred_def_json, schema_id))
 }

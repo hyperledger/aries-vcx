@@ -110,6 +110,7 @@ async fn test_pool_revoke_credential() -> Result<(), Box<dyn Error>> {
         &setup.anoncreds,
         &setup.anoncreds,
         &setup.institution_did,
+        &schema,
         &cred_def,
         Some(&rev_reg),
     )

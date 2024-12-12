@@ -71,6 +71,7 @@ async fn test_agency_pool_generate_proof_with_predicates() -> Result<(), Box<dyn
         &setup.anoncreds,
         &setup.anoncreds,
         &setup.institution_did,
+        &schema,
         &cred_def,
         Some(&rev_reg),
     )

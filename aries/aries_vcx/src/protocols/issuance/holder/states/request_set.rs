@@ -11,6 +11,7 @@ use crate::{
 pub struct RequestSetState {
     pub req_meta: String,
     pub cred_def_json: String,
+    pub schema_id: String,
     pub msg_credential_request: RequestCredentialV1,
 }
 
