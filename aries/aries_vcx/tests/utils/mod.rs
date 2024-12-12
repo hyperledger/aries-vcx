@@ -101,6 +101,7 @@ pub async fn create_and_publish_test_rev_reg(
     rev_reg
 }
 
+#[allow(clippy::too_many_arguments)] // test util code
 pub async fn create_and_write_credential(
     wallet_issuer: &impl BaseWallet,
     wallet_holder: &impl BaseWallet,

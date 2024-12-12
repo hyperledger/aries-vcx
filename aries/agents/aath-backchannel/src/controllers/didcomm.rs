@@ -215,9 +215,10 @@ impl HarnessAgent {
     }
 
     pub async fn receive_message(&self, payload: Vec<u8>) -> HarnessResult<HttpResponse> {
-        let (message, sender_vk, recipient_vk) = EncryptionEnvelope::anon_unpack_aries_msg(
+        let (message, sender_vk, recipient_vk) = EncryptionEnvelope::unpack_aries_msg(
             self.aries_agent.wallet().as_ref(),
-            payload.clone(),
+            &payload,
+            &None,
         )
         .await?;
         let sender_vk = sender_vk.ok_or_else(|| {
@@ -245,7 +246,10 @@ impl HarnessAgent {
                 }
             }
             AriesMessage::TrustPing(TrustPing::Ping(msg)) => {
-                let connection_id = self.aries_agent.connections().get_by_sender_vk(sender_vk)?;
+                let connection_id = self
+                    .aries_agent
+                    .connections()
+                    .get_by_sender_vk(sender_vk.base58())?;
                 self.aries_agent
                     .connections()
                     .process_trust_ping(msg, &connection_id)
@@ -253,14 +257,21 @@ impl HarnessAgent {
             }
             AriesMessage::Connection(msg) => self.handle_connection_msg(msg).await?,
             AriesMessage::CredentialIssuance(msg) => {
-                let connection_id = self.aries_agent.connections().get_by_sender_vk(sender_vk)?;
+                let connection_id = self
+                    .aries_agent
+                    .connections()
+                    .get_by_sender_vk(sender_vk.base58())?;
                 self.handle_issuance_msg(msg, &connection_id).await?
             }
             AriesMessage::DidExchange(msg) => {
-                self.handle_did_exchange_msg(msg, recipient_vk).await?
+                self.handle_did_exchange_msg(msg, recipient_vk.base58())
+                    .await?
             }
             AriesMessage::PresentProof(msg) => {
-                let connection_id = self.aries_agent.connections().get_by_sender_vk(sender_vk)?;
+                let connection_id = self
+                    .aries_agent
+                    .connections()
+                    .get_by_sender_vk(sender_vk.base58())?;
                 self.handle_presentation_msg(msg, &connection_id).await?
             }
             m => {

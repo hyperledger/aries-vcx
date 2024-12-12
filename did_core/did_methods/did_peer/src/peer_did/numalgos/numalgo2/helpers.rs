@@ -144,11 +144,10 @@ mod tests {
 
     #[test]
     fn test_process_elements_with_multiple_elements() {
-        let did: Did =
-            "did:peer:2.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V.\
+        let did: Did = "did:peer:2.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V.\
              SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCJ9"
-                .parse()
-                .unwrap();
+            .parse()
+            .unwrap();
 
         let did_doc = diddoc_from_peerdid2_elements(
             DidDocument::new(did.clone()),
@@ -164,12 +163,11 @@ mod tests {
 
     #[test]
     fn test_process_elements_error_on_invalid_element() {
-        let did: Did =
-            "did:peer:2.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V.\
+        let did: Did = "did:peer:2.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V.\
              SeyJpZCI6IiNzZXJ2aWNlLTAiLCJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCJ9.\
              Xinvalid"
-                .parse()
-                .unwrap();
+            .parse()
+            .unwrap();
 
         match diddoc_from_peerdid2_elements(
             DidDocument::new(did.clone()),

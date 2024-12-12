@@ -196,7 +196,7 @@ pub async fn dev_build_featured_wallet(key_seed: &str) -> (String, impl BaseWall
     {
         use crate::{constants::INSTITUTION_DID, mock_wallet::MockWallet};
 
-        return (INSTITUTION_DID.to_owned(), MockWallet);
+        (INSTITUTION_DID.to_owned(), MockWallet)
     }
 }
 

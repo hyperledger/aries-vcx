@@ -2,6 +2,8 @@ use std::error::Error;
 
 use thiserror::Error;
 
+use crate::KeyType;
+
 #[derive(Debug, Error)]
 pub enum PublicKeyError {
     #[error("Base 64 decoding error")]
@@ -18,6 +20,8 @@ pub enum PublicKeyError {
     UnsupportedMulticodecDescriptor(u64),
     #[error("Unsupported multicodec descriptor: {0}")]
     UnsupportedKeyType(String),
+    #[error("Invalid KeyType {0}, expected KeyType: {1}")]
+    InvalidKeyType(KeyType, KeyType),
 }
 
 #[derive(Debug, Error)]

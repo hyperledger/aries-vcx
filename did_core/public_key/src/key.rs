@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 use super::KeyType;
@@ -20,6 +22,16 @@ impl Key {
 
     pub fn key_type(&self) -> &KeyType {
         &self.key_type
+    }
+
+    pub fn validate_key_type(&self, key_type: KeyType) -> Result<&Self, PublicKeyError> {
+        if self.key_type() != &key_type {
+            return Err(PublicKeyError::InvalidKeyType(
+                self.key_type().to_owned(),
+                key_type,
+            ));
+        }
+        Ok(self)
     }
 
     pub fn key(&self) -> &[u8] {
@@ -85,6 +97,12 @@ impl Key {
         } else {
             key
         }
+    }
+}
+
+impl Display for Key {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.base58())
     }
 }
 
