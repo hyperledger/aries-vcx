@@ -529,7 +529,7 @@ where
             .response_parser
             .parse_get_cred_def_response(&response, None)?;
 
-        // extract a map seqNo -> schemaId if required
+        // extract and map seqNo -> schemaId if required
         let IndyVdrCredentialDefinition::CredentialDefinitionV1(mut cred_def) = cred_def;
         if let Ok(seq_no) = cred_def.schema_id.0.parse::<i32>() {
             cred_def.schema_id = self
