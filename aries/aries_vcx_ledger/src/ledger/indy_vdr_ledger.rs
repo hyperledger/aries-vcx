@@ -22,10 +22,17 @@ pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
 use indy_ledger_response_parser::{
     ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo,
 };
-use indy_vdr as vdr;
+use indy_vdr::{
+    self as vdr,
+    ledger::{
+        identifiers::SchemaId as IndyVdrSchemaId,
+        requests::cred_def::CredentialDefinition as IndyVdrCredentialDefinition,
+    },
+    utils::{did::DidValue, Validatable},
+};
 use log::{debug, trace};
 use public_key::Key;
-use serde_json::Value;
+use serde_json::{json, Value};
 use time::OffsetDateTime;
 use vdr::{
     config::PoolConfig,
@@ -161,6 +168,40 @@ where
         };
         trace!("submit_request << ledger response (is from cache: {is_from_cache}): {response}");
         Ok(response)
+    }
+
+    async fn resolve_schema_id_from_seq_no(
+        &self,
+        seq_no: i32,
+        submitter_did: Option<&Did>,
+    ) -> VcxLedgerResult<IndyVdrSchemaId> {
+        let response = self.get_ledger_txn(seq_no, submitter_did).await?;
+        let mut txn_response = self.response_parser.parse_get_txn_response(&response)?;
+        let txn = txn_response["txn"].take();
+
+        // mimic acapy & credo-ts behaviour - assumes node protocol >= 1.4
+
+        // check correct tx
+        if txn["type"] != json!("101") {
+            return Err(VcxLedgerError::InvalidLedgerResponse);
+        }
+
+        // pull schema identifier parts
+        let schema_did = &txn["metadata"]["from"];
+        let schema_name = &txn["data"]["data"]["name"];
+        let schema_version = &txn["data"]["data"]["version"];
+        let (Value::String(did), Value::String(name), Value::String(ver)) =
+            (schema_did, schema_name, schema_version)
+        else {
+            return Err(VcxLedgerError::InvalidLedgerResponse);
+        };
+
+        // construct indy schema ID from parts
+        let did = DidValue::new(did, None);
+        did.validate()?;
+        let schema_id = IndyVdrSchemaId::new(&did, name, ver);
+        schema_id.validate()?;
+        Ok(schema_id)
     }
 }
 
@@ -487,7 +528,18 @@ where
         let cred_def = self
             .response_parser
             .parse_get_cred_def_response(&response, None)?;
-        Ok(cred_def.convert(())?)
+
+        // extract and map seqNo -> schemaId if required
+        let IndyVdrCredentialDefinition::CredentialDefinitionV1(mut cred_def) = cred_def;
+        if let Ok(seq_no) = cred_def.schema_id.0.parse::<i32>() {
+            cred_def.schema_id = self
+                .resolve_schema_id_from_seq_no(seq_no, submitter_did)
+                .await?;
+        }
+
+        let cred_def = IndyVdrCredentialDefinition::CredentialDefinitionV1(cred_def).convert(())?;
+
+        Ok(cred_def)
     }
 
     async fn get_rev_reg_def_json(
