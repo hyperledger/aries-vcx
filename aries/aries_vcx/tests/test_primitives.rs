@@ -1,5 +1,8 @@
 use std::error::Error;
 
+use anoncreds_types::{
+    data_types::ledger::cred_def::CredentialDefinition, utils::validation::Validatable,
+};
 use aries_vcx::common::primitives::{
     credential_definition::generate_cred_def, revocation_registry::generate_rev_reg,
 };
@@ -46,13 +49,24 @@ async fn test_pool_create_cred_def_real() -> Result<(), Box<dyn Error>> {
         .publish_cred_def(&setup.wallet, cred_def.try_clone()?, &setup.institution_did)
         .await?;
 
-    std::thread::sleep(std::time::Duration::from_secs(2));
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     let cred_def_json_ledger = ledger_read
         .get_cred_def(&cred_def.id, Some(&setup.institution_did))
         .await?;
+    cred_def_json_ledger.validate()?;
 
-    assert!(serde_json::to_string(&cred_def_json_ledger)?.contains(&cred_def.id.to_string()));
+    // same as the original generated cred def, but schema ID corrected to the qualified version
+    let cred_def_corrected_schema_id = CredentialDefinition {
+        schema_id: schema.schema_id,
+        ..cred_def.try_clone().unwrap()
+    };
+
+    // check cred def matches originally, but with corected schema ID.
+    assert_eq!(
+        serde_json::to_value(cred_def_json_ledger)?,
+        serde_json::to_value(cred_def_corrected_schema_id)?
+    );
     Ok(())
 }
 

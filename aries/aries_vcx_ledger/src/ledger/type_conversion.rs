@@ -145,13 +145,13 @@ impl Convert for IndyVdrCredentialDefinition {
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
         match self {
             IndyVdrCredentialDefinition::CredentialDefinitionV1(cred_def) => {
-                let Some((_method, issuer_id, _sig_type, _schema_id, _tag)) = cred_def.id.parts()
-                else {
-                    return Err(format!("cred def ID is not valid: {}", cred_def.id).into());
+                let id = &cred_def.id;
+                let Some((_method, issuer_id, _sig_type, _schema_id, _tag)) = id.parts() else {
+                    return Err(format!("cred def ID is malformed. cannot convert. {}", id).into());
                 };
                 Ok(OurCredentialDefinition {
-                    id: OurCredentialDefinitionId::new(cred_def.id.to_string())?,
-                    schema_id: OurSchemaId::new_unchecked(cred_def.schema_id.to_string()),
+                    id: OurCredentialDefinitionId::new(id.to_string())?,
+                    schema_id: OurSchemaId::new(cred_def.schema_id.to_string())?,
                     signature_type: OurSignatureType::CL,
                     tag: cred_def.tag,
                     value: OurCredentialDefinitionData {
