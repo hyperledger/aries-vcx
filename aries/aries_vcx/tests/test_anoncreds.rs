@@ -73,6 +73,7 @@ async fn test_pool_proof_req_attribute_names() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[allow(deprecated)] // TODO - https://github.com/hyperledger/aries-vcx/issues/1309
 #[tokio::test]
 #[ignore]
 async fn test_pool_revoke_credential() -> Result<(), Box<dyn Error>> {
@@ -109,6 +110,7 @@ async fn test_pool_revoke_credential() -> Result<(), Box<dyn Error>> {
         &setup.anoncreds,
         &setup.anoncreds,
         &setup.institution_did,
+        &schema,
         &cred_def,
         Some(&rev_reg),
     )

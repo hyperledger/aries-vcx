@@ -319,6 +319,7 @@ async fn create_and_store_nonrevocable_credential(
         anoncreds_issuer,
         anoncreds_holder,
         issuer_did,
+        &schema,
         &cred_def,
         None,
     )

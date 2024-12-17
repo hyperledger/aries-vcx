@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
-    character::complete::{char, one_of},
+    character::complete::{char, one_of, satisfy},
     combinator::{all_consuming, cut, opt, recognize, success},
-    multi::{many0, separated_list0},
-    sequence::{preceded, separated_pair},
-    IResult,
+    multi::{many0, many1, separated_list0},
+    sequence::{preceded, separated_pair, tuple},
+    AsChar, IResult,
 };
 
 type UrlPart<'a> = (&'a str, Option<Vec<(&'a str, &'a str)>>, Option<&'a str>);
@@ -27,14 +27,29 @@ fn is_sub_delims(c: char) -> bool {
     "!$&'()*+,;=".contains(c)
 }
 
+// pct-encoded = "%" HEXDIG HEXDIG
+fn pct_encoded(input: &str) -> IResult<&str, &str> {
+    recognize(tuple((
+        tag("%"),
+        satisfy(|c| c.is_hex_digit()),
+        satisfy(|c| c.is_hex_digit()),
+    )))(input)
+}
+
 // pchar = unreserved / pct-encoded / sub-delims / ":" / "@"
-fn is_pchar(c: char) -> bool {
-    is_unreserved(c) || is_sub_delims(c) || ":@".contains(c)
+fn pchar(input: &str) -> IResult<&str, &str> {
+    alt((
+        recognize(satisfy(is_unreserved)),
+        pct_encoded,
+        recognize(satisfy(is_sub_delims)),
+        tag(":"),
+        tag("@"),
+    ))(input)
 }
 
 // segment = *pchar
 fn segment(input: &str) -> IResult<&str, &str> {
-    take_while1(is_pchar)(input)
+    recognize(many1(pchar))(input)
 }
 
 // path-abempty = *( "/" segment )
@@ -44,17 +59,17 @@ fn path_abempty(input: &str) -> IResult<&str, &str> {
 
 // fragment = *( pchar / "/" / "?" )
 pub(super) fn fragment_parser(input: &str) -> IResult<&str, &str> {
-    fn is_fragment_char(c: char) -> bool {
-        is_pchar(c) || "/?".contains(c)
+    fn fragment_element(input: &str) -> IResult<&str, &str> {
+        alt(((pchar), tag("/"), tag("?")))(input)
     }
 
-    take_while1(is_fragment_char)(input)
+    recognize(many1(fragment_element))(input)
 }
 
 // query = *( pchar / "/" / "?" )
 fn query_key_value_pair(input: &str) -> IResult<&str, (&str, &str)> {
-    fn is_query_char(c: char) -> bool {
-        is_pchar(c) || "/?".contains(c)
+    fn query_element(input: &str) -> IResult<&str, &str> {
+        alt(((pchar), tag("/"), tag("?")))(input)
     }
 
     let (remaining, (key, value)) = cut(separated_pair(
@@ -63,9 +78,9 @@ fn query_key_value_pair(input: &str) -> IResult<&str, (&str, &str)> {
         alt((take_while1(|c| !"&#?".contains(c)), success(""))),
     ))(input)?;
 
-    cut(all_consuming(take_while1(is_query_char)))(key)?;
+    cut(all_consuming(many1(query_element)))(key)?;
     if !value.is_empty() {
-        cut(all_consuming(take_while1(is_query_char)))(value)?;
+        cut(all_consuming(many1(query_element)))(value)?;
     }
 
     Ok((remaining, (key, value)))

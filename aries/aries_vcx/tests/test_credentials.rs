@@ -48,6 +48,7 @@ async fn test_pool_prover_get_credential() -> Result<(), Box<dyn Error>> {
         &setup.anoncreds,
         &setup.anoncreds,
         &setup.institution_did,
+        &schema,
         &cred_def,
         Some(&rev_reg),
     )
@@ -102,6 +103,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
         &setup.anoncreds,
         &setup.anoncreds,
         &setup.institution_did,
+        &schema,
         &cred_def,
         Some(&rev_reg),
     )
@@ -110,6 +112,7 @@ async fn test_pool_is_cred_revoked() -> Result<(), Box<dyn Error>> {
 
     assert!(!is_cred_revoked(&setup.ledger_read, &rev_reg.rev_reg_id, cred_rev_id).await?);
 
+    #[allow(deprecated)] // TODO - https://github.com/hyperledger/aries-vcx/issues/1309
     let rev_reg_delta_json = setup
         .ledger_read
         .get_rev_reg_delta_json(&rev_reg.rev_reg_id.to_owned().try_into()?, None, None)

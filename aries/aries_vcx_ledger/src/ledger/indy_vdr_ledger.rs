@@ -4,16 +4,19 @@ use std::{
     sync::RwLock,
 };
 
-use anoncreds_types::data_types::{
-    identifiers::{
-        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
-        schema_id::SchemaId,
+use anoncreds_types::{
+    data_types::{
+        identifiers::{
+            cred_def_id::CredentialDefinitionId, issuer_id::IssuerId,
+            rev_reg_def_id::RevocationRegistryDefinitionId, schema_id::SchemaId,
+        },
+        ledger::{
+            cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
+            rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
+            rev_status_list::RevocationStatusList, schema::Schema,
+        },
     },
-    ledger::{
-        cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
-        schema::Schema,
-    },
+    utils::conversions::from_revocation_registry_delta_to_revocation_status_list,
 };
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
 use async_trait::async_trait;
@@ -32,6 +35,7 @@ use indy_vdr::{
 };
 use log::{debug, trace};
 use public_key::Key;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use time::OffsetDateTime;
 use vdr::{
@@ -52,7 +56,10 @@ pub use vdr::{
 };
 
 use super::{
-    base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
+    base_ledger::{
+        AnoncredsLedgerRead, AnoncredsLedgerSupport, AnoncredsLedgerWrite, IndyLedgerRead,
+        IndyLedgerWrite,
+    },
     map_error_not_found_to_none,
     request_submitter::{
         vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
@@ -182,8 +189,11 @@ where
         // mimic acapy & credo-ts behaviour - assumes node protocol >= 1.4
 
         // check correct tx
-        if txn["type"] != json!("101") {
-            return Err(VcxLedgerError::InvalidLedgerResponse);
+        let txn_type = &txn["type"];
+        if txn_type != &json!("101") {
+            return Err(VcxLedgerError::InvalidLedgerResponse(format!(
+                "Expected indy schema transaction type (101), found: {txn_type}"
+            )));
         }
 
         // pull schema identifier parts
@@ -193,7 +203,9 @@ where
         let (Value::String(did), Value::String(name), Value::String(ver)) =
             (schema_did, schema_name, schema_version)
         else {
-            return Err(VcxLedgerError::InvalidLedgerResponse);
+            return Err(VcxLedgerError::InvalidLedgerResponse(
+                "Could not resolve schema DID, name & version from txn".into(),
+            ));
         };
 
         // construct indy schema ID from parts
@@ -483,12 +495,21 @@ where
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RevocationRegistryDefinitionAdditionalMetadata {
+    pub max_cred_num: usize,
+    pub issuer_id: IssuerId,
+}
+
 #[async_trait]
 impl<T, V> AnoncredsLedgerRead for IndyVdrLedgerRead<T, V>
 where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
+    type RevocationRegistryDefinitionAdditionalMetadata =
+        RevocationRegistryDefinitionAdditionalMetadata;
+
     async fn get_schema(
         &self,
         schema_id: &SchemaId,
@@ -545,7 +566,10 @@ where
     async fn get_rev_reg_def_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
-    ) -> VcxLedgerResult<RevocationRegistryDefinition> {
+    ) -> VcxLedgerResult<(
+        RevocationRegistryDefinition,
+        RevocationRegistryDefinitionAdditionalMetadata,
+    )> {
         debug!("get_rev_reg_def_json >> rev_reg_id: {rev_reg_id}");
         let id = RevocationRegistryId::from_str(&rev_reg_id.to_string())?;
         let request = self
@@ -558,7 +582,14 @@ where
         let rev_reg_def = self
             .response_parser
             .parse_get_revoc_reg_def_response(&response)?;
-        Ok(rev_reg_def.convert(())?)
+        let def = rev_reg_def.convert(())?;
+
+        let meta = RevocationRegistryDefinitionAdditionalMetadata {
+            max_cred_num: def.value.max_cred_num as usize,
+            issuer_id: def.issuer_id.clone(),
+        };
+
+        Ok((def, meta))
     }
 
     async fn get_rev_reg_delta_json(
@@ -593,6 +624,38 @@ where
         Ok((revoc_reg_delta.convert(())?, timestamp))
     }
 
+    async fn get_rev_status_list(
+        &self,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+        timestamp: u64,
+        rev_reg_def_meta: Option<&RevocationRegistryDefinitionAdditionalMetadata>,
+    ) -> VcxLedgerResult<(RevocationStatusList, u64)> {
+        #[allow(deprecated)] // TODO - https://github.com/hyperledger/aries-vcx/issues/1309
+        let (delta, entry_time) = self
+            .get_rev_reg_delta_json(rev_reg_id, Some(0), Some(timestamp))
+            .await?;
+
+        let rev_reg_def_meta = match rev_reg_def_meta {
+            Some(x) => x,
+            None => &self.get_rev_reg_def_json(rev_reg_id).await?.1,
+        };
+
+        let status_list = from_revocation_registry_delta_to_revocation_status_list(
+            &delta.value,
+            entry_time,
+            rev_reg_id,
+            rev_reg_def_meta.max_cred_num,
+            rev_reg_def_meta.issuer_id.clone(),
+        )
+        .map_err(|e| {
+            VcxLedgerError::InvalidLedgerResponse(format!(
+                "received rev status delta could not be translated to status list: {e} {delta:?}"
+            ))
+        })?;
+
+        Ok((status_list, entry_time))
+    }
+
     async fn get_rev_reg(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
@@ -619,6 +682,41 @@ where
 
         Ok((revoc_reg.convert(())?, timestamp))
     }
+}
+
+impl<T: RequestSubmitter, V: ResponseCacher> AnoncredsLedgerSupport for IndyVdrLedgerRead<T, V> {
+    fn supports_schema(&self, id: &SchemaId) -> bool {
+        if id.is_legacy() {
+            // unqualified
+            return true;
+        }
+        did_method_is_supported(&id.0)
+    }
+
+    fn supports_credential_definition(&self, id: &CredentialDefinitionId) -> bool {
+        if id.is_legacy_cred_def_identifier() {
+            // unqualified
+            return true;
+        }
+        did_method_is_supported(&id.0)
+    }
+
+    fn supports_revocation_registry(&self, id: &RevocationRegistryDefinitionId) -> bool {
+        if id.is_legacy() {
+            // unqualified
+            return true;
+        }
+        did_method_is_supported(&id.0)
+    }
+}
+
+fn did_method_is_supported(id: &str) -> bool {
+    let is_sov = id.starts_with("did:sov:");
+    let is_unqualified = !id.starts_with("did");
+
+    // FUTURE - indy & namespace
+
+    is_sov || is_unqualified
 }
 
 #[async_trait]
@@ -648,7 +746,7 @@ where
             .sign_and_submit_request(wallet, submitter_did, request)
             .await;
 
-        if let Err(VcxLedgerError::InvalidLedgerResponse) = &sign_result {
+        if matches!(sign_result, Err(VcxLedgerError::InvalidLedgerResponse(_))) {
             return Err(VcxLedgerError::DuplicationSchema);
         }
         sign_result.map(|_| ())
@@ -763,4 +861,109 @@ pub fn build_ledger_components(
     let ledger_write = indyvdr_build_ledger_write(request_submitter, None);
 
     Ok((ledger_read, ledger_write))
+}
+
+#[cfg(test)]
+mod unit_tests {
+    use mockall::mock;
+
+    use super::*;
+    use crate::ledger::response_cacher::noop::NoopResponseCacher;
+
+    mock! {
+        pub RequestSubmitter {}
+        #[async_trait]
+        impl RequestSubmitter for RequestSubmitter {
+            async fn submit(&self, request: indy_vdr::pool::PreparedRequest) -> VcxLedgerResult<String>;
+        }
+    }
+
+    fn dummy_indy_vdr_reader() -> IndyVdrLedgerRead<MockRequestSubmitter, NoopResponseCacher> {
+        IndyVdrLedgerRead::new(IndyVdrLedgerReadConfig {
+            request_submitter: MockRequestSubmitter::new(),
+            response_parser: indy_ledger_response_parser::ResponseParser,
+            response_cacher: NoopResponseCacher,
+            protocol_version: ProtocolVersion::Node1_4,
+        })
+    }
+
+    #[test]
+    fn test_anoncreds_schema_support() {
+        let reader = dummy_indy_vdr_reader();
+
+        // legacy
+        assert!(reader.supports_schema(
+            &SchemaId::new("7BPMqYgYLQni258J8JPS8K:2:degree schema:46.58.87").unwrap()
+        ));
+        // qualified sov
+        assert!(reader.supports_schema(
+            &SchemaId::new("did:sov:7BPMqYgYLQni258J8JPS8K:2:degree schema:46.58.87").unwrap()
+        ));
+        // qualified cheqd
+        assert!(!reader.supports_schema(
+            &SchemaId::new(
+                "did:cheqd:mainnet:7BPMqYgYLQni258J8JPS8K/resources/\
+                 6259d357-eeb1-4b98-8bee-12a8390d3497"
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn test_anoncreds_cred_def_support() {
+        let reader = dummy_indy_vdr_reader();
+
+        // legacy
+        assert!(reader.supports_credential_definition(
+            &CredentialDefinitionId::new(
+                "7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.degree_schema"
+            )
+            .unwrap()
+        ));
+        // qualified sov
+        assert!(reader.supports_credential_definition(
+            &CredentialDefinitionId::new(
+                "did:sov:7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.degree_schema"
+            )
+            .unwrap()
+        ));
+        // qualified cheqd
+        assert!(!reader.supports_credential_definition(
+            &CredentialDefinitionId::new(
+                "did:cheqd:mainnet:7BPMqYgYLQni258J8JPS8K/resources/\
+                 6259d357-eeb1-4b98-8bee-12a8390d3497"
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn test_anoncreds_rev_reg_support() {
+        let reader = dummy_indy_vdr_reader();
+
+        // legacy
+        assert!(reader.supports_revocation_registry(
+            &RevocationRegistryDefinitionId::new(
+                "7BPMqYgYLQni258J8JPS8K:4:7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.\
+                 degree_schema:CL_ACCUM:61d5a381-30be-4120-9307-b150b49c203c"
+            )
+            .unwrap()
+        ));
+        // qualified sov
+        assert!(reader.supports_revocation_registry(
+            &RevocationRegistryDefinitionId::new(
+                "did:sov:7BPMqYgYLQni258J8JPS8K:4:7BPMqYgYLQni258J8JPS8K:3:CL:70:faber.agent.\
+                 degree_schema:CL_ACCUM:61d5a381-30be-4120-9307-b150b49c203c"
+            )
+            .unwrap()
+        ));
+        // qualified cheqd
+        assert!(!reader.supports_revocation_registry(
+            &RevocationRegistryDefinitionId::new(
+                "did:cheqd:mainnet:7BPMqYgYLQni258J8JPS8K/resources/\
+                 6259d357-eeb1-4b98-8bee-12a8390d3497"
+            )
+            .unwrap()
+        ));
+    }
 }

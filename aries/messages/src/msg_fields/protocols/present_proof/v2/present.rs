@@ -42,6 +42,8 @@ pub struct PresentationV2Decorators {
 pub enum PresentationAttachmentFormatType {
     #[serde(rename = "hlindy/proof@v2.0")]
     HyperledgerIndyProof2_0,
+    #[serde(rename = "anoncreds/proof@v1.0")]
+    AnoncredsProof1_0,
     #[serde(rename = "dif/presentation-exchange/submission@v1.0")]
     DifPresentationExchangeSubmission1_0,
 }

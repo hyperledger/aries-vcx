@@ -10,6 +10,7 @@ use anoncreds_types::data_types::{
         rev_reg::RevocationRegistry,
         rev_reg_def::RevocationRegistryDefinition,
         rev_reg_delta::RevocationRegistryDelta,
+        rev_status_list::RevocationStatusList,
         schema::{AttributeNames, Schema},
     },
     messages::{
@@ -138,18 +139,18 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         &self,
         tails_dir: &Path,
         rev_reg_def_json: RevocationRegistryDefinition,
-        rev_reg_delta_json: RevocationRegistryDelta,
-        timestamp: u64,
+        rev_status_list: RevocationStatusList,
         cred_rev_id: u32,
     ) -> VcxAnoncredsResult<CredentialRevocationState>;
 
     async fn prover_store_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_req_metadata_json: CredentialRequestMetadata,
-        cred_json: Credential,
-        cred_def_json: CredentialDefinition,
-        rev_reg_def_json: Option<RevocationRegistryDefinition>,
+        cred_req_metadata: CredentialRequestMetadata,
+        unprocessed_cred: Credential,
+        schema: Schema,
+        cred_def: CredentialDefinition,
+        rev_reg_def: Option<RevocationRegistryDefinition>,
     ) -> VcxAnoncredsResult<CredentialId>;
 
     async fn prover_delete_credential(
@@ -175,6 +176,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not
     // PURE Anoncreds)
     // ^ YES
+    // TODO - review functionality below and convert to using statuslists (https://github.com/hyperledger/aries-vcx/issues/1309)
     async fn revoke_credential_local(
         &self,
         wallet: &impl BaseWallet,

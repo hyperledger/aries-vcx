@@ -8,7 +8,7 @@ use anoncreds_types::data_types::{
     ledger::{
         cred_def::CredentialDefinition, rev_reg::RevocationRegistry,
         rev_reg_def::RevocationRegistryDefinition, rev_reg_delta::RevocationRegistryDelta,
-        schema::Schema,
+        rev_status_list::RevocationStatusList, schema::Schema,
     },
 };
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
@@ -73,8 +73,16 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
     ) -> VcxLedgerResult<String>;
 }
 
+/// Trait for reading anoncreds-related objects from some ledger/s.
 #[async_trait]
 pub trait AnoncredsLedgerRead: Debug + Send + Sync {
+    /// Opaque additional metadata associated with retrieving a revocation registry definition.
+    /// Returned as part of `get_rev_reg_def_json`, and optionally passed into
+    /// `get_rev_status_list`. Depending on the ledger anoncreds-method, this metadata may be
+    /// used in the subsequent revocation status list fetch as an optimization (e.g. to save an
+    /// additional ledger call).
+    type RevocationRegistryDefinitionAdditionalMetadata: Send + Sync;
+
     async fn get_schema(
         &self,
         schema_id: &SchemaId,
@@ -85,16 +93,37 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
         cred_def_id: &CredentialDefinitionId,
         submitter_did: Option<&Did>,
     ) -> VcxLedgerResult<CredentialDefinition>;
+
+    /// Get the anoncreds [RevocationRegistryDefinition] associated with the given ID.
+    /// Also returns any trait-specific additional metadata for the rev reg.
     async fn get_rev_reg_def_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
-    ) -> VcxLedgerResult<RevocationRegistryDefinition>;
+    ) -> VcxLedgerResult<(
+        RevocationRegistryDefinition,
+        Self::RevocationRegistryDefinitionAdditionalMetadata,
+    )>;
+
+    #[deprecated(note = "use revocation status lists instead")]
     async fn get_rev_reg_delta_json(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxLedgerResult<(RevocationRegistryDelta, u64)>;
+
+    /// Fetch the revocation status list associated with the ID at the given epoch second
+    /// `timestamp`. Optionally, metadata from a revocation registry definition fetch can be
+    /// passed in to optimize required ledger calls.
+    ///
+    /// Returns the complete [RevocationStatusList] closest to (at or before) the timestamp, and
+    /// also returns the actual timestamp that the returned status list entry was made.
+    async fn get_rev_status_list(
+        &self,
+        rev_reg_id: &RevocationRegistryDefinitionId,
+        timestamp: u64,
+        rev_reg_def_meta: Option<&Self::RevocationRegistryDefinitionAdditionalMetadata>,
+    ) -> VcxLedgerResult<(RevocationStatusList, u64)>;
     async fn get_rev_reg(
         &self,
         rev_reg_id: &RevocationRegistryDefinitionId,
@@ -130,6 +159,14 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
         rev_reg_entry_json: RevocationRegistryDelta,
         submitter_did: &Did,
     ) -> VcxLedgerResult<()>;
+}
+
+/// Simple utility trait to determine whether the implementor can support reading/writing
+/// the specific identifier types.
+pub trait AnoncredsLedgerSupport {
+    fn supports_schema(&self, id: &SchemaId) -> bool;
+    fn supports_credential_definition(&self, id: &CredentialDefinitionId) -> bool;
+    fn supports_revocation_registry(&self, id: &RevocationRegistryDefinitionId) -> bool;
 }
 
 pub trait TaaConfigurator: Debug + Send + Sync {

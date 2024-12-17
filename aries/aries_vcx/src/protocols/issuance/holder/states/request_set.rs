@@ -1,3 +1,4 @@
+use anoncreds_types::data_types::identifiers::schema_id::SchemaId;
 use messages::msg_fields::protocols::cred_issuance::v1::{
     issue_credential::IssueCredentialV1, request_credential::RequestCredentialV1,
 };
@@ -11,6 +12,7 @@ use crate::{
 pub struct RequestSetState {
     pub req_meta: String,
     pub cred_def_json: String,
+    pub schema_id: SchemaId,
     pub msg_credential_request: RequestCredentialV1,
 }
 

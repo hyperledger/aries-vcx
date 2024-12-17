@@ -8,7 +8,7 @@ impl From<LedgerResponseParserError> for VcxLedgerError {
             LedgerResponseParserError::JsonError(err) => VcxLedgerError::InvalidJson(err),
             LedgerResponseParserError::LedgerItemNotFound(_) => VcxLedgerError::LedgerItemNotFound,
             LedgerResponseParserError::InvalidTransaction(_) => {
-                VcxLedgerError::InvalidLedgerResponse
+                VcxLedgerError::InvalidLedgerResponse(err.to_string())
             }
         }
     }

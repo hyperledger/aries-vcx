@@ -13,18 +13,18 @@ use crate::{
 #[serde(rename_all = "camelCase")]
 pub struct RevocationStatusList {
     #[serde(skip_serializing_if = "Option::is_none")]
-    rev_reg_def_id: Option<RevocationRegistryDefinitionId>,
-    issuer_id: IssuerId,
+    pub rev_reg_def_id: Option<RevocationRegistryDefinitionId>,
+    pub issuer_id: IssuerId,
     #[serde(with = "serde_revocation_list")]
-    revocation_list: bitvec::vec::BitVec,
+    pub revocation_list: bitvec::vec::BitVec,
     #[serde(
         rename = "currentAccumulator",
         alias = "accum",
         skip_serializing_if = "Option::is_none"
     )]
-    accum: Option<Accumulator>,
+    pub accum: Option<Accumulator>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    timestamp: Option<u64>,
+    pub timestamp: Option<u64>,
 }
 
 impl From<&RevocationStatusList> for Option<CryptoRevocationRegistry> {

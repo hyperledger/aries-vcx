@@ -11,15 +11,18 @@ use did_resolver::{
         verification_method::{PublicKeyField, VerificationMethod, VerificationMethodType},
     },
     did_parser_nom::Did,
-    shared_types::did_document_metadata::DidDocumentMetadata,
+    shared_types::{did_document_metadata::DidDocumentMetadata, did_resource::DidResourceMetadata},
 };
 use serde_json::json;
 
 use crate::{
     error::{DidCheqdError, DidCheqdResult},
-    proto::cheqd::did::v2::{
-        DidDoc as CheqdDidDoc, Metadata as CheqdDidDocMetadata, Service as CheqdService,
-        VerificationMethod as CheqdVerificationMethod,
+    proto::cheqd::{
+        did::v2::{
+            DidDoc as CheqdDidDoc, Metadata as CheqdDidDocMetadata, Service as CheqdService,
+            VerificationMethod as CheqdVerificationMethod,
+        },
+        resource::v2::Metadata as CheqdResourceMetadata,
     },
 };
 
@@ -201,6 +204,59 @@ impl TryFrom<CheqdDidDocMetadata> for DidDocumentMetadata {
             .next_version_id(value.next_version_id);
 
         Ok(builder.build())
+    }
+}
+
+pub(super) struct CheqdResourceMetadataWithUri {
+    pub uri: String,
+    pub meta: CheqdResourceMetadata,
+}
+
+impl TryFrom<CheqdResourceMetadataWithUri> for DidResourceMetadata {
+    type Error = DidCheqdError;
+
+    fn try_from(value: CheqdResourceMetadataWithUri) -> Result<Self, Self::Error> {
+        let uri = value.uri;
+        let value = value.meta;
+
+        let Some(created) = value.created else {
+            return Err(DidCheqdError::InvalidDidDocument(format!(
+                "created field missing from resource: {value:?}"
+            )))?;
+        };
+
+        let version = (!value.version.trim().is_empty()).then_some(value.version);
+        let previous_version_id =
+            (!value.previous_version_id.trim().is_empty()).then_some(value.previous_version_id);
+        let next_version_id =
+            (!value.next_version_id.trim().is_empty()).then_some(value.next_version_id);
+
+        let also_known_as = value
+            .also_known_as
+            .into_iter()
+            .map(|aka| {
+                json!({
+                    "uri": aka.uri,
+                    "description": aka.description
+                })
+            })
+            .collect();
+
+        Ok(DidResourceMetadata::builder()
+            .resource_uri(uri)
+            .resource_collection_id(value.collection_id)
+            .resource_id(value.id)
+            .resource_name(value.name)
+            .resource_type(value.resource_type)
+            .resource_version(version)
+            .also_known_as(Some(also_known_as))
+            .media_type(value.media_type)
+            .created(prost_timestamp_to_dt(created)?)
+            .updated(None)
+            .checksum(value.checksum)
+            .previous_version_id(previous_version_id)
+            .next_version_id(next_version_id)
+            .build())
     }
 }
 

@@ -167,7 +167,7 @@ pub async fn build_rev_reg_defs_json(
             ))?;
 
         if rev_reg_defs_json.get(rev_reg_id).is_none() {
-            let json = ledger
+            let (json, _meta) = ledger
                 .get_rev_reg_def_json(&rev_reg_id.to_string().try_into()?)
                 .await?;
             let rev_reg_def_json = serde_json::to_value(&json).or(Err(AriesVcxError::from_msg(

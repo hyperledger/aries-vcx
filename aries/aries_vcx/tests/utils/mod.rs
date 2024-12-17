@@ -101,12 +101,14 @@ pub async fn create_and_publish_test_rev_reg(
     rev_reg
 }
 
+#[allow(clippy::too_many_arguments)] // test util code
 pub async fn create_and_write_credential(
     wallet_issuer: &impl BaseWallet,
     wallet_holder: &impl BaseWallet,
     anoncreds_issuer: &impl BaseAnonCreds,
     anoncreds_holder: &impl BaseAnonCreds,
     institution_did: &Did,
+    schema: &Schema,
     cred_def: &CredentialDef,
     rev_reg: Option<&RevocationRegistry>,
 ) -> String {
@@ -159,6 +161,7 @@ pub async fn create_and_write_credential(
             wallet_holder,
             req_meta,
             cred,
+            schema.schema_json.clone(),
             cred_def.get_cred_def_json().try_clone().unwrap(),
             rev_reg_def_json
                 .as_deref()

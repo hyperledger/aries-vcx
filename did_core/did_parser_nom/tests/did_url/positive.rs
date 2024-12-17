@@ -384,4 +384,34 @@ test_cases_positive! {
                 ("resourceType".to_string(), "anonCredsCredDef".to_string()),
             ].into_iter().collect()
         }
+    test_case30:
+        "did:cheqd:testnet:36e695a3-f133-46ec-ac1e-79900a927f67?resourceType=anonCredsStatusList&resourceName=Example+schema-default-0&resourceVersionTime=2024-12-10T04%3A13%3A50.000Z",
+        Some("did:cheqd:testnet:36e695a3-f133-46ec-ac1e-79900a927f67"),
+        Some("cheqd"),
+        Some("testnet"),
+        Some("36e695a3-f133-46ec-ac1e-79900a927f67"),
+        None,
+        None,
+        {
+            vec![
+                ("resourceName".to_string(), "Example schema-default-0".to_string()),
+                ("resourceType".to_string(), "anonCredsStatusList".to_string()),
+                ("resourceVersionTime".to_string(), "2024-12-10T04:13:50.000Z".to_string()),
+            ].into_iter().collect()
+        }
+    test_case31:
+        "did:example:123?foo+bar=123&bar%20foo=123%20123&h3%21%210%20=w%40rld%3D%3D",
+        Some("did:example:123"),
+        Some("example"),
+        None,
+        Some("123"),
+        None,
+        None,
+        {
+            vec![
+                ("foo bar".to_string(), "123".to_string()),
+                ("bar foo".to_string(), "123 123".to_string()),
+                ("h3!!0 ".to_string(), "w@rld==".to_string())
+            ].into_iter().collect()
+        }
 }

@@ -12,6 +12,7 @@ use aries_vcx_anoncreds::anoncreds::base_anoncreds::{
     BaseAnonCreds, CredentialDefinitionsMap, RevocationStatesMap, SchemasMap,
 };
 use aries_vcx_ledger::ledger::base_ledger::AnoncredsLedgerRead;
+use chrono::Utc;
 
 use crate::errors::error::prelude::*;
 
@@ -160,26 +161,25 @@ pub async fn build_rev_states_json(
             if !rtn.contains_key(rev_reg_id) {
                 // Does this make sense in case cred_info's for same rev_reg_ids have different
                 // revocation intervals
-                let (from, to) = if let Some(ref interval) = cred_info.revocation_interval {
+                let (_from, to) = if let Some(ref interval) = cred_info.revocation_interval {
                     (interval.from, interval.to)
                 } else {
                     (None, None)
                 };
 
-                let rev_reg_def_json = ledger_read
-                    .get_rev_reg_def_json(&rev_reg_id.to_owned().try_into()?)
-                    .await?;
+                let parsed_id = &rev_reg_id.to_owned().try_into()?;
+                let (rev_reg_def_json, meta) = ledger_read.get_rev_reg_def_json(parsed_id).await?;
 
-                let (rev_reg_delta_json, timestamp) = ledger_read
-                    .get_rev_reg_delta_json(&rev_reg_id.to_owned().try_into()?, from, to)
+                let on_or_before = to.unwrap_or(Utc::now().timestamp() as u64);
+                let (rev_status_list, timestamp) = ledger_read
+                    .get_rev_status_list(parsed_id, on_or_before, Some(&meta))
                     .await?;
 
                 let rev_state_json = anoncreds
                     .create_revocation_state(
                         Path::new(tails_dir),
                         rev_reg_def_json,
-                        rev_reg_delta_json,
-                        timestamp,
+                        rev_status_list,
                         *cred_rev_id,
                     )
                     .await?;

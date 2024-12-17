@@ -33,39 +33,41 @@ use anoncreds::{
         RevocationRegistryDefinition as AnoncredsRevocationRegistryDefinition,
     },
 };
-use anoncreds_types::data_types::{
-    identifiers::{
-        cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
-        schema_id::SchemaId,
-    },
-    ledger::{
-        cred_def::{CredentialDefinition, SignatureType},
-        rev_reg::RevocationRegistry,
-        rev_reg_def::RevocationRegistryDefinition,
-        rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
-        rev_status_list::RevocationStatusList,
-        schema::{AttributeNames, Schema},
-    },
-    messages::{
-        cred_definition_config::CredentialDefinitionConfig,
-        cred_offer::CredentialOffer,
-        cred_request::{CredentialRequest, CredentialRequestMetadata},
-        cred_selection::{
-            RetrievedCredentialForReferent, RetrievedCredentialInfo, RetrievedCredentials,
+use anoncreds_types::{
+    data_types::{
+        identifiers::{
+            cred_def_id::CredentialDefinitionId, rev_reg_def_id::RevocationRegistryDefinitionId,
+            schema_id::SchemaId,
         },
-        credential::{Credential, CredentialValues},
-        nonce::Nonce,
-        pres_request::PresentationRequest,
-        presentation::{Presentation, RequestedCredentials},
-        revocation_state::CredentialRevocationState,
+        ledger::{
+            cred_def::{CredentialDefinition, SignatureType},
+            rev_reg::RevocationRegistry,
+            rev_reg_def::RevocationRegistryDefinition,
+            rev_reg_delta::{RevocationRegistryDelta, RevocationRegistryDeltaValue},
+            rev_status_list::RevocationStatusList,
+            schema::{AttributeNames, Schema},
+        },
+        messages::{
+            cred_definition_config::CredentialDefinitionConfig,
+            cred_offer::CredentialOffer,
+            cred_request::{CredentialRequest, CredentialRequestMetadata},
+            cred_selection::{
+                RetrievedCredentialForReferent, RetrievedCredentialInfo, RetrievedCredentials,
+            },
+            credential::{Credential, CredentialValues},
+            nonce::Nonce,
+            pres_request::PresentationRequest,
+            presentation::{Presentation, RequestedCredentials},
+            revocation_state::CredentialRevocationState,
+        },
     },
+    utils::conversions::from_revocation_registry_delta_to_revocation_status_list,
 };
 use aries_vcx_wallet::wallet::{
     base_wallet::{record::Record, record_category::RecordCategory, BaseWallet},
     record_tags::{RecordTag, RecordTags},
 };
 use async_trait::async_trait;
-use bitvec::bitvec;
 use did_parser_nom::Did;
 use log::warn;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -81,36 +83,6 @@ use crate::{
     anoncreds::anoncreds::type_conversion::Convert,
     errors::error::{VcxAnoncredsError, VcxAnoncredsResult},
 };
-
-fn from_revocation_registry_delta_to_revocation_status_list(
-    delta: &RevocationRegistryDeltaValue,
-    rev_reg_def: &AnoncredsRevocationRegistryDefinition,
-    rev_reg_def_id: &RevocationRegistryDefinitionId,
-    timestamp: Option<u64>,
-    issuance_by_default: bool,
-) -> VcxAnoncredsResult<RevocationStatusList> {
-    let default_state = if issuance_by_default { 0 } else { 1 };
-    let mut revocation_list = bitvec![default_state; rev_reg_def.value.max_cred_num as usize];
-
-    for issued in &delta.issued {
-        revocation_list.insert(*issued as usize, false);
-    }
-
-    for revoked in &delta.revoked {
-        revocation_list.insert(*revoked as usize, true);
-    }
-
-    let accum = delta.accum.into();
-
-    RevocationStatusList::new(
-        Some(&rev_reg_def_id.to_string()),
-        rev_reg_def.issuer_id.clone().convert(())?,
-        revocation_list,
-        Some(accum),
-        timestamp,
-    )
-    .map_err(Into::into)
-}
 
 fn from_revocation_status_list_to_revocation_registry_delta(
     rev_status_list: &RevocationStatusList,
@@ -288,9 +260,27 @@ impl BaseAnonCreds for Anoncreds {
         let cred_defs: HashMap<AnoncredsCredentialDefinitionId, AnoncredsCredentialDefinition> =
             credential_defs_json.convert(())?;
 
+        // tack on issuerId for ease of processing status lists
+        let rev_regs_map_with_issuer_ids: Option<HashMap<_, _>> =
+            match (rev_regs_json, &rev_reg_defs_json) {
+                (Some(regs), Some(defs)) => Some(
+                    regs.into_iter()
+                        .filter_map(|(k, v)| {
+                            let def = defs.get(&k)?;
+                            Some((k, (v, def.issuer_id.clone())))
+                        })
+                        .collect(),
+                ),
+                _ => None,
+            };
+
         let rev_reg_defs: Option<
             HashMap<AnoncredsRevocationRegistryDefinitionId, AnoncredsRevocationRegistryDefinition>,
         > = rev_reg_defs_json.map(|v| v.convert(())).transpose()?;
+
+        let rev_status_lists = rev_regs_map_with_issuer_ids
+            .map(|r| r.convert(()))
+            .transpose()?;
 
         Ok(anoncreds::verifier::verify_presentation(
             &presentation,
@@ -298,7 +288,7 @@ impl BaseAnonCreds for Anoncreds {
             &schemas,
             &cred_defs,
             rev_reg_defs.as_ref(),
-            rev_regs_json.map(|r| r.convert(())).transpose()?,
+            rev_status_lists,
             None, // no idea what this is
         )?)
     }
@@ -947,18 +937,9 @@ impl BaseAnonCreds for Anoncreds {
         &self,
         tails_dir: &Path,
         rev_reg_def_json: RevocationRegistryDefinition,
-        rev_reg_delta_json: RevocationRegistryDelta,
-        timestamp: u64,
+        rev_status_list: RevocationStatusList,
         cred_rev_id: u32,
     ) -> VcxAnoncredsResult<CredentialRevocationState> {
-        let cred_def_id = rev_reg_def_json.cred_def_id.to_string();
-        let max_cred_num = rev_reg_def_json.value.max_cred_num;
-        let rev_reg_def_id = rev_reg_def_json.id.to_string();
-        let (_cred_def_method, issuer_did, _signature_type, _schema_num, _tag) =
-            cred_def_parts(&cred_def_id).ok_or(VcxAnoncredsError::InvalidSchema(format!(
-                "Could not process cred_def_id {cred_def_id} as parts."
-            )))?;
-
         let revoc_reg_def: AnoncredsRevocationRegistryDefinition = rev_reg_def_json.convert(())?;
         let tails_file_hash = revoc_reg_def.value.tails_hash.as_str();
 
@@ -970,25 +951,6 @@ impl BaseAnonCreds for Anoncreds {
             VcxAnoncredsError::InvalidOption("tails file is not an unicode string".into())
         })?;
 
-        let RevocationRegistryDeltaValue { accum, revoked, .. } = rev_reg_delta_json.value;
-
-        let issuer_id = IssuerId::new(issuer_did.did()).unwrap();
-        let mut revocation_list = bitvec!(0; max_cred_num as usize);
-        revoked.into_iter().for_each(|id| {
-            revocation_list
-                .get_mut(id as usize)
-                .map(|mut b| *b = true)
-                .unwrap_or_default()
-        });
-        let registry = CryptoRevocationRegistry { accum };
-
-        let rev_status_list = RevocationStatusList::new(
-            Some(&rev_reg_def_id),
-            issuer_id.convert(())?,
-            revocation_list,
-            Some(registry),
-            Some(timestamp),
-        )?;
         let rev_state = anoncreds::prover::create_or_update_revocation_state(
             tails_path,
             &revoc_reg_def,
@@ -1004,26 +966,21 @@ impl BaseAnonCreds for Anoncreds {
     async fn prover_store_credential(
         &self,
         wallet: &impl BaseWallet,
-        cred_req_metadata_json: CredentialRequestMetadata,
-        cred_json: Credential,
-        cred_def_json: CredentialDefinition,
-        rev_reg_def_json: Option<RevocationRegistryDefinition>,
+        cred_req_metadata: CredentialRequestMetadata,
+        unprocessed_cred: Credential,
+        schema: Schema,
+        cred_def: CredentialDefinition,
+        rev_reg_def: Option<RevocationRegistryDefinition>,
     ) -> VcxAnoncredsResult<CredentialId> {
-        let mut credential: AnoncredsCredential = cred_json.convert(())?;
-
-        let cred_def_id = credential.cred_def_id.to_string();
-        let (_cred_def_method, issuer_did, _signature_type, _schema_num, _tag) =
-            cred_def_parts(&cred_def_id).ok_or(VcxAnoncredsError::InvalidSchema(
-                "Could not process credential.cred_def_id as parts.".into(),
-            ))?;
+        let mut credential: AnoncredsCredential = unprocessed_cred.convert(())?;
 
         let cred_request_metadata: AnoncredsCredentialRequestMetadata =
-            cred_req_metadata_json.convert(())?;
+            cred_req_metadata.convert(())?;
         let link_secret_id = &cred_request_metadata.link_secret_name;
         let link_secret = self.get_link_secret(wallet, link_secret_id).await?;
-        let cred_def: AnoncredsCredentialDefinition = cred_def_json.convert(())?;
+        let cred_def: AnoncredsCredentialDefinition = cred_def.convert(())?;
         let rev_reg_def: Option<AnoncredsRevocationRegistryDefinition> =
-            if let Some(rev_reg_def_json) = rev_reg_def_json {
+            if let Some(rev_reg_def_json) = rev_reg_def {
                 Some(rev_reg_def_json.convert(())?)
             } else {
                 None
@@ -1038,19 +995,20 @@ impl BaseAnonCreds for Anoncreds {
         )?;
 
         let schema_id = &credential.schema_id;
+        let cred_def_id = &credential.cred_def_id;
+        let issuer_did = &cred_def.issuer_id;
 
-        let (_schema_method, schema_issuer_did, schema_name, schema_version) =
-            schema_parts(schema_id.0.as_str()).ok_or(VcxAnoncredsError::InvalidSchema(format!(
-                "Could not process credential.schema_id {schema_id} as parts."
-            )))?;
+        let schema_issuer_did = schema.issuer_id;
+        let schema_name = schema.name;
+        let schema_version = schema.version;
 
         let mut tags = RecordTags::new(vec![
             RecordTag::new("schema_id", &schema_id.0),
-            RecordTag::new("schema_issuer_did", schema_issuer_did.did()),
+            RecordTag::new("schema_issuer_did", &schema_issuer_did.0),
             RecordTag::new("schema_name", &schema_name),
             RecordTag::new("schema_version", &schema_version),
-            RecordTag::new("issuer_did", issuer_did.did()),
-            RecordTag::new("cred_def_id", &cred_def_id),
+            RecordTag::new("issuer_did", &issuer_did.0),
+            RecordTag::new("cred_def_id", &cred_def_id.0),
         ]);
 
         if let Some(rev_reg_id) = &credential.rev_reg_id {
@@ -1164,10 +1122,10 @@ impl BaseAnonCreds for Anoncreds {
         let current_time = OffsetDateTime::now_utc().unix_timestamp() as u64;
         let rev_status_list = from_revocation_registry_delta_to_revocation_status_list(
             &last_rev_reg_delta.value,
-            &rev_reg_def.clone().convert(())?,
-            rev_reg_id,
-            Some(current_time),
-            true,
+            current_time,
+            &rev_reg_def.id,
+            rev_reg_def.value.max_cred_num as usize,
+            rev_reg_def.issuer_id.clone(),
         )?;
 
         let cred_def = self
@@ -1437,87 +1395,6 @@ pub fn schema_parts(id: &str) -> Option<(Option<&str>, Did, String, String)> {
         let name = parts[6].to_string();
         let version = parts[7].to_string();
         return Some((Some(method), did, name, version));
-    }
-
-    None
-}
-
-pub fn cred_def_parts(id: &str) -> Option<(Option<&str>, Did, String, SchemaId, String)> {
-    let parts = id.split_terminator(':').collect::<Vec<&str>>();
-
-    if parts.len() == 4 {
-        // Th7MpTaRZVRYnPiabds81Y:3:CL:1
-        let did = parts[0].to_string();
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[2].to_string();
-        let schema_id = parts[3].to_string();
-        let tag = String::new();
-        return Some((None, did, signature_type, SchemaId(schema_id), tag));
-    }
-
-    if parts.len() == 5 {
-        // Th7MpTaRZVRYnPiabds81Y:3:CL:1:tag
-        let did = parts[0].to_string();
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[2].to_string();
-        let schema_id = parts[3].to_string();
-        let tag = parts[4].to_string();
-        return Some((None, did, signature_type, SchemaId(schema_id), tag));
-    }
-
-    if parts.len() == 7 {
-        // NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0
-        let did = parts[0].to_string();
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[2].to_string();
-        let schema_id = parts[3..7].join(":");
-        let tag = String::new();
-        return Some((None, did, signature_type, SchemaId(schema_id), tag));
-    }
-
-    if parts.len() == 8 {
-        // NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag
-        let did = parts[0].to_string();
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[2].to_string();
-        let schema_id = parts[3..7].join(":");
-        let tag = parts[7].to_string();
-        return Some((None, did, signature_type, SchemaId(schema_id), tag));
-    }
-
-    if parts.len() == 9 {
-        // creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:3:tag
-        let method = parts[1];
-        let did = parts[2..5].join(":");
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[6].to_string();
-        let schema_id = parts[7].to_string();
-        let tag = parts[8].to_string();
-        return Some((Some(method), did, signature_type, SchemaId(schema_id), tag));
-    }
-
-    if parts.len() == 16 {
-        // creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:
-        // NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag
-        let method = parts[1];
-        let did = parts[2..5].join(":");
-        let Ok(did) = Did::parse(did) else {
-            return None;
-        };
-        let signature_type = parts[6].to_string();
-        let schema_id = parts[7..15].join(":");
-        let tag = parts[15].to_string();
-        return Some((Some(method), did, signature_type, SchemaId(schema_id), tag));
     }
 
     None

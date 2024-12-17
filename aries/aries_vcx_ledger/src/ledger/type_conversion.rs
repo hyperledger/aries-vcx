@@ -232,8 +232,12 @@ impl Convert for IndyVdrRevocationRegistryDefinition {
     fn convert(self, (): Self::Args) -> Result<Self::Target, Self::Error> {
         match self {
             IndyVdrRevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def) => {
+                let Some((issuer_id, _cred_def, _type, _tag)) = rev_reg_def.id.parts() else {
+                    return Err(format!("rev reg id is not valid: {}", rev_reg_def.id).into());
+                };
                 Ok(OurRevocationRegistryDefinition {
                     id: OurRevocationRegistryDefinitionId::new(rev_reg_def.id.to_string())?,
+                    issuer_id: IssuerId::new(issuer_id.to_string())?,
                     revoc_def_type:
                         anoncreds_types::data_types::ledger::rev_reg_def::RegistryType::CL_ACCUM,
                     tag: rev_reg_def.tag,
