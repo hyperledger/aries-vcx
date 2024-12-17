@@ -54,6 +54,30 @@ There's 2 best way to reach us:
 
 Contributions are very welcome! If you have questions or issues, please let us know on [Discord](https://chat.hyperledger.org/channel/aries) or at our [bi-weekly community call](https://wiki.hyperledger.org/display/ARIES/Community+calls).
 
+## Install
+
+Install Rust: https://www.rust-lang.org/tools/install
+
+We recommend using rustup, as VCX is currently tied to Rust v1.79.x (this maintains consistency between local and CI environments). 
+
+Anoncreds and Indy require the use of openssl and zmq. These may be vendored by consuming applications, but for development installation is required. 
+
+> [!NOTE]
+> For those familiar with the Indy SDK dependencies (which is no longer in use as it has been replaced by [anoncreds-rs](https://github.com/openwallet-foundation/askar), [indy-vdr](https://github.com/hyperledger/indy-vdr/tree/main), and [aries-askar](https://github.com/openwallet-foundation/askar)) note that: 
+> - Openssl requirements are no longer restricted to the out of support 1.1 version.
+> - Libsodium is no longer required (as it's been replaced by [anoncreds-clsignatures](https://github.com/hyperledger/anoncreds-clsignatures-rs))
+
+### Linux / MacOS:
+
+- ZMQ: https://zeromq.org/download/
+- Openssl: https://docs.rs/openssl/latest/openssl/#automatic
+
+### Windows
+
+If you get a VCX development environment running in Windows, we'd love a contribution documenting that process here!
+
+## Formatting / Linting
+
 For contributions, please run `clippy` and format prior to creating a PR. This can be done via `just`:
 
 ```
@@ -61,3 +85,9 @@ cargo install just
 just clippy
 just fmt
 ```
+
+## Signed Commits
+
+We enforce [developer certificate of origin](https://developercertificate.org/) (DCO) commit signing — [guidance](https://github.com/apps/dco) on this is available.
+
+See this [guide](https://hackmd.io/@James-Ebert/HyYOcRAXo) for signing previously unsigned commits.
