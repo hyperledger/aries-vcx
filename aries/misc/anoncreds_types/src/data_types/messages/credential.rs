@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "zeroize")]
-use zeroize::Zeroize;
+// #[cfg(feature = "zeroize")]
+// use zeroize::Zeroize;
 
 use crate::{
     cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessProof, Witness},
@@ -125,12 +125,12 @@ impl Validatable for Credential {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct CredentialValues(pub HashMap<String, AttributeValues>);
 
-#[cfg(feature = "zeroize")]
-impl Drop for CredentialValues {
-    fn drop(&mut self) {
-        self.zeroize();
-    }
-}
+// #[cfg(feature = "zeroize")]
+// impl Drop for CredentialValues {
+//     fn drop(&mut self) {
+//         self.zeroize();
+//     }
+// }
 
 impl Validatable for CredentialValues {
     fn validate(&self) -> Result<(), crate::error::Error> {
@@ -145,17 +145,17 @@ impl Validatable for CredentialValues {
     }
 }
 
-#[cfg(feature = "zeroize")]
-impl Zeroize for CredentialValues {
-    fn zeroize(&mut self) {
-        for attr in self.0.values_mut() {
-            attr.zeroize();
-        }
-    }
-}
+// #[cfg(feature = "zeroize")]
+// impl Zeroize for CredentialValues {
+//     fn zeroize(&mut self) {
+//         for attr in self.0.values_mut() {
+//             attr.zeroize();
+//         }
+//     }
+// }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[cfg_attr(feature = "zeroize", derive(Zeroize))]
+// #[cfg_attr(feature = "zeroize", derive(Zeroize))]
 pub struct AttributeValues {
     pub raw: String,
     pub encoded: String,

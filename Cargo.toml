@@ -77,10 +77,20 @@ unused_qualifications = "warn"
 let_underscore_drop = "allow"
 
 [workspace.dependencies]
+# aries
 indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", tag = "v0.4.3", default-features = false, features = [
     "log",
 ] }
 indy-vdr-proxy-client = { git = "https://github.com/hyperledger/indy-vdr.git", tag = "v0.4.3" }
 anoncreds = { git = "https://github.com/hyperledger/anoncreds-rs.git", tag = "v0.2.0" }
-aries-askar = { version = "0.3.1" }
-askar-crypto = { version = "0.3.1", default-features = false }
+aries-askar = { version = "0.4.0" }
+askar-crypto = { version = "0.3.3", default-features = false }
+
+# common
+
+# TODO - await new indy-vdr release
+[patch.'https://github.com/hyperledger/indy-vdr']
+indy-vdr = { git = "https://github.com/anonyome/indy-vdr.git", rev = "34ada55", default-features = false, features = [
+    "log",
+] }
+indy-vdr-proxy-client = { git = "https://github.com/anonyome/indy-vdr.git", rev = "34ada55" }

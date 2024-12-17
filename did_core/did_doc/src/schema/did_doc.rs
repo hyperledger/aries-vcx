@@ -94,7 +94,7 @@ impl DidDocument {
         &'a self,
         vm: &'a VerificationMethodKind,
         id: &str,
-    ) -> Option<&VerificationMethod> {
+    ) -> Option<&'a VerificationMethod> {
         return match vm {
             VerificationMethodKind::Resolved(vm) => {
                 if vm.id().fragment() == Some(id) {
