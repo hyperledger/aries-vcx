@@ -64,7 +64,7 @@ Anoncreds and Indy require the use of openssl and zmq. These may be vendored by 
 
 > [!NOTE]
 > For those familiar with the Indy SDK dependencies (which is no longer in use as it has been replaced by [anoncreds-rs](https://github.com/openwallet-foundation/askar), [indy-vdr](https://github.com/hyperledger/indy-vdr/tree/main), and [aries-askar](https://github.com/openwallet-foundation/askar)) note that: 
-> - Openssl requirements are now no longer restricted to version no-longer supported 1.1 version.
+> - Openssl requirements are no longer restricted to the out of support 1.1 version.
 > - Libsodium is no longer required (as it's been replaced by [anoncreds-clsignatures](https://github.com/hyperledger/anoncreds-clsignatures-rs))
 
 ### Linux / MacOS:
