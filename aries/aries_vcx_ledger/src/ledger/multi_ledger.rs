@@ -300,6 +300,8 @@ mod unit_tests {
         impl AnoncredsLedgerRead for Reader {
             type RevocationRegistryDefinitionAdditionalMetadata = Value;
 
+            // NOTE: these method signatures were generated as a result of the expanded #[async_trait] form.
+            //  this was needed to escape some #[async_trait] compiling issues
             fn get_schema<'life0,'life1,'life2,'async_trait>(&'life0 self,schema_id: &'life1 SchemaId,submitter_did:Option< &'life2 Did> ,) ->  ::core::pin::Pin<Box<dyn ::core::future::Future<Output = VcxLedgerResult<Schema> > + ::core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
             fn get_cred_def<'life0,'life1,'life2,'async_trait>(&'life0 self,cred_def_id: &'life1 CredentialDefinitionId,submitter_did:Option< &'life2 Did> ,) ->  ::core::pin::Pin<Box<dyn ::core::future::Future<Output = VcxLedgerResult<CredentialDefinition> > + ::core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
             async fn get_rev_reg_def_json(&self, rev_reg_id: &RevocationRegistryDefinitionId) -> VcxLedgerResult<(RevocationRegistryDefinition, Value)>;
