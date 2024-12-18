@@ -15,6 +15,9 @@ path = "uniffi-bindgen.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+# TODO: look at how features should be done in regards to UniFFI.
+# TODO: add zmq vendoring and openssl vendoring
+
 [dependencies]
 uniffi = { version = "0.23.0", features = ["cli"] }
 aries_vcx = { path = "../../../aries_vcx", features = [
