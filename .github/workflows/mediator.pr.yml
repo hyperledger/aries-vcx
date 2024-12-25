@@ -8,7 +8,7 @@ on:
     branches:
       - "**"
     paths:
-      - 'aries/agents/mediator/**'
+      - "aries/agents/mediator/**"
 
 env:
   DOCKER_BUILDKIT: 1
@@ -17,7 +17,6 @@ env:
   RUST_TOOLCHAIN_VERSION: 1.79.0
 
 jobs:
-
   setup-variables:
     runs-on: ubuntu-22.04
     outputs:
@@ -51,7 +50,7 @@ jobs:
           echo "SKIP_CI ${{ needs.setup-variables.outputs.SKIP_CI }}"
 
   test-integration-mediator:
-    needs: [ setup-variables ]
+    needs: [setup-variables]
     if: ${{ needs.setup-variables.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-22.04
     services:
@@ -63,7 +62,7 @@ jobs:
           MYSQL_PASSWORD: github.ci.password.no.prod
           MYSQL_ROOT_PASSWORD: github.ci.password.no.prod
         ports:
-          - '3326:3306'
+          - "3326:3306"
     env:
       MYSQL_URL: mysql://admin:github.ci.password.no.prod@localhost:3326/mediator-persistence.mysql
     steps:
@@ -77,7 +76,7 @@ jobs:
           skip-vdrproxy-setup: true
       - name: Install prerequisites (sqlx)
         # uses: Swatinem/rust-cache@v2
-        run: cargo install sqlx-cli
+        run: cargo install sqlx-cli@0.8.2 --locked
       - name: Setup database
         run: DATABASE_URL=${MYSQL_URL} sqlx migrate run --source aries/agents/mediator/migrations
       - name: "Run mediator integration tests"
@@ -89,7 +88,7 @@ jobs:
           name: "docker-services-${{ github.job }}"
 
   docker-mediator-build:
-    needs: [ test-integration-mediator, setup-variables ]
+    needs: [test-integration-mediator, setup-variables]
     if: ${{ needs.setup-variables.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-22.04
     env:
@@ -120,4 +119,4 @@ jobs:
           docker-img: ${{ env.DOCKER_IMAGE }}
           publish-version: ${{ needs.setup-variables.outputs.PUBLISH_VERSION }}
         env:
-          URL_DOCKER_REGISTRY: ghcr.io  # Required by .github/actions/publish-image
+          URL_DOCKER_REGISTRY: ghcr.io # Required by .github/actions/publish-image
