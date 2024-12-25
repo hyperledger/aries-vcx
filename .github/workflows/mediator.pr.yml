@@ -9,6 +9,7 @@ on:
       - "**"
     paths:
       - "aries/agents/mediator/**"
+      - ".github/workflows/mediator.pr.yml"
 
 env:
   DOCKER_BUILDKIT: 1
