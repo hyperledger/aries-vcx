@@ -113,6 +113,8 @@ sha2 = "0.10.8"
 unsigned-varint = "0.8.0"
 strum = "0.26.3"
 strum_macros = "0.26.4"
+syn = "2.0.93"
+quote = "1.0.38"
 
 # common drivers
 tokio = "1.42.0"
@@ -120,10 +122,16 @@ sqlx = "0.8.2"
 reqwest = "0.12.11"
 axum = "0.7.9"
 axum-macros = "0.4.2"
+tower-http = "0.6.2"
+hyper= "1.5.2"
+hyper-tls = "0.6.0"
+hyper-util = "0.1.10"
+http-body-util = "0.1.2"
 
 # common dev
 mockall = "0.13.1"
 env_logger = "0.11.6"
+uniffi = "0.23.0"
 
 # TODO - await new indy-vdr release
 [patch.'https://github.com/hyperledger/indy-vdr']

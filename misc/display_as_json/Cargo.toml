@@ -10,8 +10,8 @@ license = "MIT"
 proc-macro = true
 
 [dependencies]
-syn = "2.0.72"
-quote = "1.0"
+syn.workspace = true
+quote.workspace = true
 
 [dev-dependencies]
 serde.workspace = true

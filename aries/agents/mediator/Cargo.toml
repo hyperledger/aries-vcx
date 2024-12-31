@@ -30,7 +30,7 @@ serde_json.workspace = true
 sqlx = { workspace = true, features = ["mysql"] }
 thiserror.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
-tower-http = { version = "0.5.2", features = ["catch-panic"] }
+tower-http = { workspace = true, features = ["catch-panic"] }
 url.workspace = true
 uuid.workspace = true
 test_utils = { path = "../../misc/test_utils" }

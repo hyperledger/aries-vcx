@@ -10,14 +10,14 @@ did_resolver = { path = "../../did_resolver" }
 async-trait.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
-hyper = { version = "1.5.1" }
-hyper-tls = "0.6.0"
-hyper-util = { version = "0.1.10", features = ["client-legacy", "http1", "http2"] }
-http-body-util = "0.1.2"
+hyper.workspace = true
+hyper-tls.workspace = true
+hyper-util = { workspace = true, features = ["client-legacy", "http1", "http2"] }
+http-body-util.workspace = true
 
 [dev-dependencies]
-hyper = { version = "1.5.1", features = ["server"] }
-hyper-util = { version = "0.1.10", features = ["server"] }
+hyper = { workspace = true, features = ["server"] }
+hyper-util = { workspace = true, features = ["server"] }
 tokio = { workspace = true, default-features = false, features = [
     "macros",
     "rt",
