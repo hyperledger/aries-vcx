@@ -8,4 +8,4 @@ public_key = { path = "../../public_key" }
 did_parser_nom = { path = "../../did_parser_nom" }
 serde.workspace = true
 serde_json.workspace = true
-thiserror = "1.0.44"
+thiserror.workspace = true

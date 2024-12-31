@@ -21,9 +21,9 @@ did_resolver_sov = { path = "../../../did_core/did_methods/did_resolver_sov" }
 did_peer = { path = "../../../did_core/did_methods/did_peer" }
 did_key = { path = "../../../did_core/did_methods/did_key" }
 public_key = { path = "../../../did_core/public_key" }
-async-trait = "0.1.64"
-log = "0.4.17"
-uuid = "1.2.1"
-thiserror = "1.0.37"
-url = { version = "2.3.1", features = ["serde"] }
+async-trait.workspace = true
+log.workspace = true
+uuid.workspace = true
+thiserror.workspace = true
+url = { workspace = true, features = ["serde"] }
 display_as_json = { path = "../../../misc/display_as_json" }

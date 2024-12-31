@@ -444,9 +444,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.94"
+version = "1.0.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1fd03a028ef38ba2276dce7e33fcd6369c158a1bca17946c4b1b701891c1ff7"
+checksum = "34ac096ce696dc2fcabef30516bb13c0a68a11d30131d3df6f04711467681b04"
 
 [[package]]
 name = "arc-swap"
@@ -476,7 +476,7 @@ dependencies = [
  "askar-storage",
  "async-lock",
  "ciborium",
- "env_logger 0.11.5",
+ "env_logger 0.11.6",
  "ffi-support",
  "log",
  "once_cell",
@@ -520,10 +520,10 @@ dependencies = [
  "clap 4.5.23",
  "derive_more",
  "display_as_json",
- "env_logger 0.11.5",
+ "env_logger 0.11.6",
  "log",
  "rand",
- "reqwest 0.12.9",
+ "reqwest 0.12.11",
  "serde",
  "serde_json",
  "uuid",
@@ -552,7 +552,7 @@ dependencies = [
  "did_resolver_registry",
  "did_resolver_sov",
  "diddoc_legacy",
- "env_logger 0.11.5",
+ "env_logger 0.11.6",
  "futures",
  "lazy_static",
  "log",
@@ -1338,7 +1338,7 @@ dependencies = [
  "log",
  "mediator",
  "messages",
- "reqwest 0.12.9",
+ "reqwest 0.12.11",
  "serde_json",
  "tokio",
 ]
@@ -1798,7 +1798,7 @@ dependencies = [
  "did_key",
  "did_parser_nom",
  "display_as_json",
- "env_logger 0.11.5",
+ "env_logger 0.11.6",
  "hex",
  "log",
  "multibase",
@@ -1844,7 +1844,7 @@ dependencies = [
 name = "did_parser_nom"
 version = "0.1.0"
 dependencies = [
- "env_logger 0.11.5",
+ "env_logger 0.11.6",
  "log",
  "nom",
  "percent-encoding",
@@ -1863,7 +1863,7 @@ dependencies = [
  "did_parser_nom",
  "did_resolver",
  "display_as_json",
- "env_logger 0.11.5",
+ "env_logger 0.11.6",
  "log",
  "multibase",
  "once_cell",
@@ -2163,9 +2163,9 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.11.5"
+version = "0.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e13fa619b91fb2381732789fc5de83b45675e882f66623b7d8cb4f643017018d"
+checksum = "dcaee3d8e3cfc3fd92428d477bc97fc29ec8716d180c0d74c643bb26166660e0"
 dependencies = [
  "anstream",
  "anstyle",
@@ -3422,11 +3422,11 @@ dependencies = [
  "chrono",
  "diddoc_legacy",
  "dotenvy",
- "env_logger 0.11.5",
+ "env_logger 0.11.6",
  "futures",
  "log",
  "messages",
- "reqwest 0.12.9",
+ "reqwest 0.12.11",
  "serde",
  "serde_json",
  "sqlx",
@@ -4351,9 +4351,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.9"
+version = "0.12.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a77c62af46e79de0a562e1a9849205ffcb7fc1238876e9bd743357570e04046f"
+checksum = "7fe060fe50f524be480214aba758c71f99f90ee8c83c5a36b5e9e1d568eb4eb3"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -4386,6 +4386,7 @@ dependencies = [
  "system-configuration 0.6.1",
  "tokio",
  "tokio-native-tls",
+ "tower 0.5.2",
  "tower-service",
  "url",
  "wasm-bindgen",
@@ -4743,7 +4744,7 @@ dependencies = [
  "lazy_static",
  "log",
  "regex",
- "reqwest 0.12.9",
+ "reqwest 0.12.11",
  "serde",
  "serde_json",
  "thiserror",
@@ -5287,7 +5288,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "did_parser_nom",
- "env_logger 0.11.5",
+ "env_logger 0.11.6",
  "indy-ledger-response-parser",
  "indy-vdr-proxy-client",
  "lazy_static",

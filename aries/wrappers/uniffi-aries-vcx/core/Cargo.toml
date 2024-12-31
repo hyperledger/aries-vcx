@@ -24,18 +24,18 @@ aries_vcx = { path = "../../../aries_vcx", features = [
 aries_vcx_ledger = { path = "../../../aries_vcx_ledger" }
 aries_vcx_anoncreds = { path = "../../../aries_vcx_anoncreds" }
 indy-vdr.workspace = true
-tokio = { version = "1.38.0", features = ["rt-multi-thread"] }
-once_cell = "1.17.0"
-thiserror = "1.0.38"
+tokio = { workspace = true, features = ["rt-multi-thread"] }
+once_cell.workspace = true
+thiserror.workspace = true
 serde_json.workspace = true
 serde = { workspace = true, features = ["derive"] }
-async-trait = "0.1.64"
+async-trait.workspace = true
 did_parser_nom = { path = "../../../../did_core/did_parser_nom" }
 diddoc_legacy = { path = "../../../misc/legacy/diddoc_legacy" }
 shared = { path = "../../../misc/shared" }
-url = "2.3.1"
+url.workspace = true
 android_logger = "0.14.1"
-log = "0.4.16"
+log.workspace = true
 
 [build-dependencies]
 uniffi = { version = "0.23.0", features = ["build", "cli"] }

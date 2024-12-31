@@ -27,12 +27,12 @@ aries_vcx_ledger = { path = "../../aries_vcx_ledger" }
 public_key = { path = "../../../did_core/public_key" }
 indy-ledger-response-parser = { path = "../indy_ledger_response_parser", optional = true }
 indy-vdr-proxy-client = { workspace = true, optional = true }
-lazy_static = "1"
+lazy_static.workspace = true
 serde_json.workspace = true
-rand = "0.8"
-uuid = { version = "1", default-features = false, features = ["v4"] }
-async-trait = "0.1"
-chrono = "0.4"
-env_logger = "0.11.3"
-log = "0.4"
-thiserror = "1.0.40"
+rand.workspace = true
+uuid = { workspace = true, default-features = false, features = ["v4"] }
+async-trait.workspace = true
+chrono.workspace = true
+env_logger.workspace = true
+log.workspace = true
+thiserror.workspace = true

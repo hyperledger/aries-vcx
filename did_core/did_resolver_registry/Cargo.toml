@@ -7,9 +7,9 @@ edition = "2021"
 did_resolver = { path = "../did_resolver" }
 serde_json.workspace = true
 serde.workspace = true
-async-trait = "0.1.72"
+async-trait.workspace = true
 
 [dev-dependencies]
-tokio = { version = "1.38.0", default-features = false, features = ["macros", "rt"] }
-mockall = "0.13.0"
-async-trait = "0.1.68"
+tokio = { workspace = true, default-features = false, features = ["macros", "rt"] }
+mockall.workspace = true
+async-trait.workspace = true

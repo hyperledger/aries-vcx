@@ -10,31 +10,31 @@ default = ["client"]
 client = []
 
 [dependencies]
-anyhow = "1.0.75"
+anyhow.workspace = true
 aries_vcx = { path = "../../aries_vcx" }
 aries_vcx_wallet = { path = "../../aries_vcx_wallet", features = [
     "askar_wallet",
 ] }
-async-trait = "0.1.73"
-axum = "0.7.5"
-axum-macros = "0.4.1"
+async-trait.workspace = true
+axum.workspace = true
+axum-macros.workspace = true
 diddoc_legacy = { path = "../../misc/legacy/diddoc_legacy" }
 dotenvy = "0.15"
-env_logger = "0.11.3"
-futures = "0.3.28"
-log = "0.4.20"
+env_logger.workspace = true
+futures.workspace = true
+log.workspace = true
 messages = { path = "../../messages" }
-reqwest = { version = "0.12.5", features = ["json"] }
+reqwest = { workspace = true, features = ["json"] }
 serde.workspace = true
 serde_json.workspace = true
-sqlx = { version = "0.8.2", features = ["mysql"] }
-thiserror = "1.0.49"
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+sqlx = { workspace = true, features = ["mysql"] }
+thiserror.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 tower-http = { version = "0.5.2", features = ["catch-panic"] }
-url = "2.4.1"
-uuid = "1.4.1"
+url.workspace = true
+uuid.workspace = true
 test_utils = { path = "../../misc/test_utils" }
 base64-url = "3.0.0"
 
 [dev-dependencies]
-chrono = "0.4.31"
+chrono.workspace = true

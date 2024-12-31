@@ -11,8 +11,8 @@ doctest = false
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
-url = { version = "2.3", features = ["serde"] }
-thiserror = "1.0.37"
+url = { workspace = true, features = ["serde"] }
+thiserror.workspace = true
 shared = { path = "../../shared" }
 display_as_json = { path = "../../../../misc/display_as_json" }
 

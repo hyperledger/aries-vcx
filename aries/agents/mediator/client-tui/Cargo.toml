@@ -9,13 +9,13 @@ edition = "2021"
 aries_vcx_wallet = { path = "../../../aries_vcx_wallet", features = [
     "askar_wallet",
 ] }
-axum = "0.7.5"
+axum.workspace = true
 cursive = { version = "0.20.0", features = ["crossterm-backend"] }
-futures = "0.3.28"
-log = "0.4.20"
+futures.workspace = true
+log.workspace = true
 mediator = { path = ".." }
 messages = { path = "../../../messages" }
-reqwest = "0.12.5"
+reqwest.workspace = true
 serde_json.workspace = true
 
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

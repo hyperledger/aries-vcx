@@ -7,9 +7,9 @@ edition = "2021"
 
 [dependencies]
 did_resolver = { path = "../../did_resolver" }
-async-trait = "0.1.68"
+async-trait.workspace = true
 serde_json.workspace = true
-thiserror = "1.0.40"
+thiserror.workspace = true
 hyper = { version = "1.5.1" }
 hyper-tls = "0.6.0"
 hyper-util = { version = "0.1.10", features = ["client-legacy", "http1", "http2"] }
@@ -18,7 +18,7 @@ http-body-util = "0.1.2"
 [dev-dependencies]
 hyper = { version = "1.5.1", features = ["server"] }
 hyper-util = { version = "0.1.10", features = ["server"] }
-tokio = { version = "1.38.0", default-features = false, features = [
+tokio = { workspace = true, default-features = false, features = [
     "macros",
     "rt",
 ] }

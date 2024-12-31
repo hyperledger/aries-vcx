@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
-time = "0.3.20"
+time.workspace = true
 indy-vdr.workspace = true
-thiserror = "1.0.44"
-anoncreds-clsignatures = "0.3.2"
+thiserror.workspace = true
+anoncreds-clsignatures.workspace = true

@@ -7,13 +7,13 @@ edition = "2021"
 jwk = ["dep:askar-crypto"]
 
 [dependencies]
-thiserror = "1.0.40"
+thiserror.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 base64.workspace = true
 bs58.workspace = true
-multibase = "0.9.1"
-unsigned-varint = "0.8.0"
+multibase.workspace = true
+unsigned-varint.workspace = true
 # askar-crypto used for jwk conversion. maintain minimal feature set
 askar-crypto = { workspace = true, features = [
     "std",
