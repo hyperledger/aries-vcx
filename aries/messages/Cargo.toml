@@ -19,7 +19,7 @@ strum_macros.workspace = true
 thiserror.workspace = true
 derive_more = { workspace = true, features = [
     "from",
-    "try_from",
+    "try_into",
     "display",
     "error",
 ] }
