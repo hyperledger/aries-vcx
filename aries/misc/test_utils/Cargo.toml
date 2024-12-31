@@ -28,7 +28,7 @@ public_key = { path = "../../../did_core/public_key" }
 indy-ledger-response-parser = { path = "../indy_ledger_response_parser", optional = true }
 indy-vdr-proxy-client = { workspace = true, optional = true }
 lazy_static = "1"
-serde_json = "1"
+serde_json.workspace = true
 rand = "0.8"
 uuid = { version = "1", default-features = false, features = ["v4"] }
 async-trait = "0.1"

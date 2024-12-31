@@ -21,13 +21,13 @@ indy-vdr-proxy-client = { workspace = true, optional = true }
 did_cheqd = { path = "../../did_core/did_methods/did_cheqd", optional = true }
 did_resolver = { path = "../../did_core/did_resolver", optional = true }
 url = { version = "2.4.1", optional = true }
-serde_json = "1.0.95"
+serde_json.workspace = true
 public_key = { path = "../../did_core/public_key" }
 async-trait = "0.1.68"
 time = "0.3.20"
 indy-ledger-response-parser = { path = "../misc/indy_ledger_response_parser" }
 log = "0.4.17"
-serde = { version = "1.0.159", features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
 lru = { version = "0.12.0" }
 tokio = { version = "1.38" }
 chrono = { version = "0.4", default-features = false, features = ["alloc"] }

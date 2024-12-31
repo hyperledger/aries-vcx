@@ -7,13 +7,13 @@ edition = "2021"
 did_resolver = { path = "../../did_resolver" }
 aries_vcx_ledger = { path = "../../../aries/aries_vcx_ledger" }
 async-trait = "0.1.68"
-serde_json = "1.0.96"
-serde = { version = "1.0.160", features = ["derive"] }
+serde_json.workspace = true
+serde = { workspace = true, features = ["derive"] }
 chrono = { version = "0.4.24", default-features = false }
 thiserror = "1.0.40"
 url = "2.3.1"
 log = "0.4.16"
-bs58 = "0.5.0" 
+bs58.workspace = true
 
 [dev-dependencies]
 mockall = "0.13.0"

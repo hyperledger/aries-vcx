@@ -5,8 +5,8 @@ edition = "2021"
 
 [dependencies]
 did_resolver = { path = "../did_resolver" }
-serde_json = "1.0.103"
-serde = "1.0.174"
+serde_json.workspace = true
+serde.workspace = true
 async-trait = "0.1.72"
 
 [dev-dependencies]

@@ -14,11 +14,11 @@ askar_wallet = ["dep:aries-askar"]
 anyhow = "1.0"
 aries-askar = { workspace = true, optional = true }
 async-trait = "0.1.68"
-bs58 = { version = "0.5" }
-base64 = "0.22.1"
+bs58.workspace = true
+base64.workspace = true
 log = "0.4.17"
-serde = { version = "1.0.159", features = ["derive"] }
-serde_json = "1.0.95"
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
 public_key = { path = "../../did_core/public_key" }
 rand = "0.8.5"
 thiserror = "1.0.40"

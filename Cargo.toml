@@ -87,6 +87,10 @@ aries-askar = { version = "0.4.0" }
 askar-crypto = { version = "0.3.3", default-features = false }
 
 # common
+base64 = "0.22.1"
+bs58 = "0.5.1"
+serde = "1.0.217"
+serde_json = "1.0.134"
 
 # TODO - await new indy-vdr release
 [patch.'https://github.com/hyperledger/indy-vdr']

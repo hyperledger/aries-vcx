@@ -3,9 +3,8 @@ mod controllers;
 mod error;
 mod setup;
 
-extern crate serde;
 #[macro_use]
-extern crate serde_derive;
+extern crate serde;
 #[macro_use]
 extern crate serde_json;
 #[macro_use]
