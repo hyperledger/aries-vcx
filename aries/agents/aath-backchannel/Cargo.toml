@@ -23,7 +23,7 @@ serde.workspace = true
 serde_json.workspace = true
 log.workspace = true
 env_logger.workspace = true
-uuid = { workspace = true, features = ["serde", "v4"] }
+uuid = { workspace = true, features = ["serde"] }
 aries-vcx-agent = { path = "../../../aries/agents/aries-vcx-agent" }
 anoncreds_types = { path = "../../../aries/misc/anoncreds_types" }
 display_as_json = { path = "../../../misc/display_as_json" }

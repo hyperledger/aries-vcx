@@ -68,7 +68,7 @@ impl<'de, N: Numalgo> Deserialize<'de> for PeerDid<N> {
     {
         struct PeerDidVisitor<N: Numalgo>(PhantomData<N>);
 
-        impl<'de, N: Numalgo> Visitor<'de> for PeerDidVisitor<N> {
+        impl<N: Numalgo> Visitor<'_> for PeerDidVisitor<N> {
             type Value = PeerDid<N>;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

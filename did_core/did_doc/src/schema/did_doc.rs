@@ -95,7 +95,7 @@ impl DidDocument {
         vm: &'a VerificationMethodKind,
         id: &str,
     ) -> Option<&'a VerificationMethod> {
-        return match vm {
+        match vm {
             VerificationMethodKind::Resolved(vm) => {
                 if vm.id().fragment() == Some(id) {
                     Some(vm)
@@ -110,7 +110,7 @@ impl DidDocument {
                     None
                 }
             }
-        };
+        }
     }
 
     pub fn authentication_by_id(&self, id: &str) -> Option<&VerificationMethod> {

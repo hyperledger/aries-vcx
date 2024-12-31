@@ -39,4 +39,4 @@ tokio = { workspace = true, default-features = false, features = [
     "rt",
 ] }
 mockall.workspace = true
-uuid = { workspace = true, default-features = false, features = ["v4"] }
+uuid = { workspace = true }

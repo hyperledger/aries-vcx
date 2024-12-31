@@ -24,7 +24,7 @@ rand.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true }
 typed-builder.workspace = true
-uuid = { workspace = true, default-features = false, features = ["v4"] }
+uuid = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt", "macros", "rt-multi-thread"] }

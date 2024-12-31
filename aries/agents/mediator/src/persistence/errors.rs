@@ -23,7 +23,6 @@ pub struct DecodeError(#[from] pub Box<dyn std::error::Error>);
 /// with the help of thiserror.
 /// Usage:
 /// errorset!(ComposedError\[ErrorVariant1, ErrorVariant2\]);
-
 macro_rules! error_compose {
     ($errorset_name:ident[$($error_name: ident),*]) => {
         #[derive(Error, Debug)]

@@ -11,7 +11,7 @@ aries_vcx_wallet = { path = "../../../aries_vcx_wallet", features = [
 ] }
 axum.workspace = true
 cursive = { version = "0.20.0", features = ["crossterm-backend"] }
-futures.workspace = true
+futures = { workspace = true, default-features = true }
 log.workspace = true
 mediator = { path = ".." }
 messages = { path = "../../../messages" }

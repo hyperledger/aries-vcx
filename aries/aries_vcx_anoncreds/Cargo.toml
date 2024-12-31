@@ -19,7 +19,7 @@ did_parser_nom = { path = "../../did_core/did_parser_nom" }
 async-trait.workspace = true
 thiserror.workspace = true
 log.workspace = true
-uuid = { workspace = true, default-features = false, features = ["v4"] }
+uuid = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 time.workspace = true
