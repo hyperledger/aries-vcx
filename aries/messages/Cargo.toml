@@ -17,7 +17,12 @@ url = { workspace = true, features = ["serde"] }
 strum.workspace = true
 strum_macros.workspace = true
 thiserror.workspace = true
-derive_more.workspace = true
+derive_more = { workspace = true, features = [
+    "from",
+    "try_from",
+    "display",
+    "error",
+] }
 transitive = "1.0.1"
 isolang = { version = "2.2.0" }
 typed-builder.workspace = true
