@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 use std::sync::Arc;
 
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use log::info;
 use messages::{
     decorators::attachment::{Attachment, AttachmentData, AttachmentType},
@@ -95,7 +96,9 @@ async fn handle_pickup_delivery_req<T: MediatorPersistence>(
                 .id(message_id)
                 .data(
                     AttachmentData::builder()
-                        .content(AttachmentType::Base64(base64_url::encode(&message_content)))
+                        .content(AttachmentType::Base64(
+                            URL_SAFE_NO_PAD.encode(&message_content),
+                        ))
                         .build(),
                 )
                 .build()
