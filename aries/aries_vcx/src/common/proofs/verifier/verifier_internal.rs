@@ -128,7 +128,7 @@ pub async fn build_schemas_json_verifier(
     let mut schemas_json = json!({});
 
     for cred_info in credential_data.iter() {
-        if schemas_json.get(&cred_info.schema_id.to_string()).is_none() {
+        if schemas_json.get(cred_info.schema_id.to_string()).is_none() {
             let schema_id = &cred_info.schema_id;
             let schema_json = ledger.get_schema(schema_id, None).await.map_err(|_err| {
                 AriesVcxError::from_msg(AriesVcxErrorKind::InvalidSchema, "Cannot get schema")

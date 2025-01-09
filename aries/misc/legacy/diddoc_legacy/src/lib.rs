@@ -6,7 +6,7 @@
 #![allow(clippy::large_enum_variant)]
 
 #[macro_use]
-extern crate serde_derive;
+extern crate serde;
 extern crate shared;
 pub mod aries;
 pub mod errors;

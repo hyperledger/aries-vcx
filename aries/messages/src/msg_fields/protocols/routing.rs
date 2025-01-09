@@ -20,7 +20,6 @@ pub struct ForwardContent {
 into_msg_with_type!(Forward, RoutingTypeV1_0, Forward);
 
 #[cfg(test)]
-
 mod tests {
     use serde_json::json;
     // Bind `shared::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.

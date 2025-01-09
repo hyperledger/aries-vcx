@@ -1,7 +1,7 @@
 extern crate display_as_json;
 extern crate serde;
 
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::display_as_json::Display;
 

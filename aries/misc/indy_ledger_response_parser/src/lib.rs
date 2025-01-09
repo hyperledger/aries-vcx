@@ -58,7 +58,7 @@ impl ResponseParser {
             GetNymReplyResult::GetNymReplyResultV0(res) => {
                 let data: GetNymResultDataV0 = res
                     .data
-                    .ok_or_else(|| LedgerResponseParserError::LedgerItemNotFound("NYM"))
+                    .ok_or(LedgerResponseParserError::LedgerItemNotFound("NYM"))
                     .and_then(|data| serde_json::from_str(&data).map_err(Into::into))?;
 
                 NymData {
@@ -192,7 +192,7 @@ impl ResponseParser {
         let data = match reply.result() {
             GetTxnAuthorAgreementResult::GetTxnAuthorAgreementResultV1(res) => res
                 .data
-                .ok_or_else(|| LedgerResponseParserError::LedgerItemNotFound("TAA"))?,
+                .ok_or(LedgerResponseParserError::LedgerItemNotFound("TAA"))?,
         };
 
         Ok(GetTxnAuthorAgreementData {
