@@ -17,6 +17,7 @@ vdr_proxy_ledger = [
     "test_utils/vdr_proxy_ledger",
 ]
 backtrace_errors = ["backtrace"]
+openssl_vendored = ["aries_vcx_ledger/openssl_vendored", "aries_vcx_anoncreds/openssl_vendored", "anoncreds_types/openssl_vendored"]
 
 # Feature for allowing legacy proof verification
 legacy_proof = ["aries_vcx_anoncreds/legacy_proof"]

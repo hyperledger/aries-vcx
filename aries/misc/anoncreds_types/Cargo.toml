@@ -11,6 +11,7 @@ path = "src/lib.rs"
 messages = []
 ledger = []
 default = ["messages", "ledger"]
+openssl_vendored = ["anoncreds-clsignatures/openssl_vendored"]
 
 [dependencies]
 anoncreds-clsignatures = "0.3.2"

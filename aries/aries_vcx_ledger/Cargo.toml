@@ -10,6 +10,7 @@ edition.workspace = true
 [features]
 vdr_proxy_ledger = ["dep:indy-vdr-proxy-client"]
 cheqd = ["dep:did_cheqd", "dep:did_resolver", "dep:url"]
+openssl_vendored = ["indy-ledger-response-parser/openssl_vendored", "anoncreds_types/openssl_vendored"]
 
 [dependencies]
 aries_vcx_wallet = { path = "../aries_vcx_wallet" }
