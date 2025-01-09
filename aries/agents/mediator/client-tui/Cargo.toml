@@ -9,7 +9,6 @@ edition = "2021"
 aries_vcx_wallet = { path = "../../../aries_vcx_wallet", features = [
     "askar_wallet",
 ] }
-axum = "0.7.5"
 cursive = { version = "0.20.0", features = ["crossterm-backend"] }
 futures = "0.3.28"
 log = "0.4.20"
