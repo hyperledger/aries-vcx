@@ -1783,7 +1783,6 @@ dependencies = [
  "did_parser_nom",
  "display_as_json",
  "hex",
- "log",
  "multibase",
  "pem",
  "public_key",

@@ -22,4 +22,3 @@ display_as_json = { path = "../../misc/display_as_json" }
 did_key = { path = "../did_methods/did_key" }
 thiserror.workspace = true
 typed-builder.workspace = true
-log.workspace = true
