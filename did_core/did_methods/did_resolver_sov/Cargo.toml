@@ -19,6 +19,5 @@ bs58.workspace = true
 mockall.workspace = true
 aries_vcx = { path = "../../../aries/aries_vcx" }
 tokio = { workspace = true, default-features = false, features = ["macros", "rt"] }
-uuid.workspace = true
 test_utils = {path = "../../../aries/misc/test_utils", features = ["askar_wallet"] }
 aries_vcx_wallet = { path = "../../../aries/aries_vcx_wallet" }

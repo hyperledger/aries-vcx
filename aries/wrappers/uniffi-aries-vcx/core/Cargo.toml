@@ -28,10 +28,8 @@ tokio = { workspace = true, features = ["rt-multi-thread"] }
 once_cell.workspace = true
 thiserror.workspace = true
 serde_json.workspace = true
-serde = { workspace = true, features = ["derive"] }
 async-trait.workspace = true
 did_parser_nom = { path = "../../../../did_core/did_parser_nom" }
-diddoc_legacy = { path = "../../../misc/legacy/diddoc_legacy" }
 shared = { path = "../../../misc/shared" }
 url.workspace = true
 android_logger = "0.14.1"

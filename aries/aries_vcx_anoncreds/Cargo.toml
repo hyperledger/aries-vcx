@@ -23,4 +23,3 @@ uuid = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 time.workspace = true
-bitvec.workspace = true

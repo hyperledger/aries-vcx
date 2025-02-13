@@ -11,7 +11,11 @@ path = "src/lib.rs"
 doctest = false
 
 [features]
-anoncreds = ["aries_vcx_anoncreds/anoncreds", "test_utils/anoncreds", "test_utils/askar_wallet"]
+anoncreds = [
+    "aries_vcx_anoncreds/anoncreds",
+    "test_utils/anoncreds",
+    "test_utils/askar_wallet",
+]
 vdr_proxy_ledger = [
     "aries_vcx_wallet/askar_wallet",
     "test_utils/vdr_proxy_ledger",
@@ -21,9 +25,7 @@ backtrace_errors = ["backtrace"]
 # Feature for allowing legacy proof verification
 legacy_proof = ["aries_vcx_anoncreds/legacy_proof"]
 
-askar_wallet = [
-    "aries_vcx_wallet/askar_wallet"
-]
+askar_wallet = ["aries_vcx_wallet/askar_wallet"]
 
 [dependencies]
 messages = { path = "../messages" }
@@ -42,12 +44,10 @@ did_peer = { path = "../../did_core/did_methods/did_peer" }
 did_resolver_registry = { path = "../../did_core/did_resolver_registry" }
 bs58.workspace = true
 async-trait.workspace = true
-env_logger.workspace = true
 log.workspace = true
 chrono.workspace = true
 time.workspace = true
 lazy_static.workspace = true
-rand.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 regex.workspace = true
@@ -66,7 +66,6 @@ backtrace = { optional = true, version = "0.3" }
 
 [dev-dependencies]
 test_utils = { path = "../misc/test_utils" }
-async-channel = "2.3.1"
 tokio = { workspace = true, features = ["rt", "macros", "rt-multi-thread"] }
 pretty_assertions = "1.4.0"
 did_resolver_sov = { path = "../../did_core/did_methods/did_resolver_sov" }

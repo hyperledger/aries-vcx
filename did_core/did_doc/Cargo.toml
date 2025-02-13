@@ -23,8 +23,3 @@ did_key = { path = "../did_methods/did_key" }
 thiserror.workspace = true
 typed-builder.workspace = true
 log.workspace = true
-
-[dev-dependencies]
-pretty_assertions = "1.4.0"
-env_logger.workspace = true
-

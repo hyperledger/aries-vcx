@@ -25,7 +25,6 @@ hyper-util = { version = "0.1.10", features = ["client-legacy", "http2"] }
 http-body-util = "0.1.2"
 async-trait.workspace = true
 serde_json.workspace = true
-serde = { workspace = true, features = ["derive"] }
 thiserror.workspace = true
 tokio = { workspace = true }
 chrono = { workspace = true, default-features = false, features = ["now"] }

@@ -27,7 +27,6 @@ aries_vcx_ledger = { path = "../../aries_vcx_ledger" }
 public_key = { path = "../../../did_core/public_key" }
 indy-ledger-response-parser = { path = "../indy_ledger_response_parser", optional = true }
 indy-vdr-proxy-client = { workspace = true, optional = true }
-lazy_static.workspace = true
 serde_json.workspace = true
 rand.workspace = true
 uuid = { workspace = true }

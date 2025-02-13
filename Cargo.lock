@@ -537,7 +537,6 @@ dependencies = [
  "aries_vcx_anoncreds",
  "aries_vcx_ledger",
  "aries_vcx_wallet",
- "async-channel",
  "async-trait",
  "backtrace",
  "base64 0.22.1",
@@ -552,7 +551,6 @@ dependencies = [
  "did_resolver_registry",
  "did_resolver_sov",
  "diddoc_legacy",
- "env_logger 0.11.6",
  "futures",
  "lazy_static",
  "log",
@@ -560,7 +558,6 @@ dependencies = [
  "num-bigint",
  "pretty_assertions",
  "public_key",
- "rand",
  "regex",
  "serde",
  "serde_json",
@@ -584,7 +581,6 @@ dependencies = [
  "anoncreds_types",
  "aries_vcx_wallet",
  "async-trait",
- "bitvec",
  "did_parser_nom",
  "log",
  "serde",
@@ -759,18 +755,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-channel"
-version = "2.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89b47800b0be77592da0afd425cc03468052844aff33b84e33cc696f64e77b6a"
-dependencies = [
- "concurrent-queue",
- "event-listener-strategy",
- "futures-core",
- "pin-project-lite",
-]
-
-[[package]]
 name = "async-lock"
 version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -899,17 +883,6 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
-]
-
-[[package]]
-name = "axum-macros"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57d123550fa8d071b7255cb0cc04dc302baa6c8c4a79f55701552684d8399bce"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.93",
 ]
 
 [[package]]
@@ -1323,7 +1296,6 @@ name = "client-tui"
 version = "0.1.1"
 dependencies = [
  "aries_vcx_wallet",
- "axum",
  "cursive",
  "futures",
  "log",
@@ -1793,7 +1765,6 @@ dependencies = [
  "native-tls",
  "prost",
  "prost-types",
- "serde",
  "serde_json",
  "thiserror 2.0.9",
  "tokio",
@@ -1810,12 +1781,10 @@ dependencies = [
  "did_key",
  "did_parser_nom",
  "display_as_json",
- "env_logger 0.11.6",
  "hex",
  "log",
  "multibase",
  "pem",
- "pretty_assertions",
  "public_key",
  "serde",
  "serde_json",
@@ -1870,7 +1839,6 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
- "bs58",
  "did_doc",
  "did_parser_nom",
  "did_resolver",
@@ -1878,7 +1846,6 @@ dependencies = [
  "env_logger 0.11.6",
  "log",
  "multibase",
- "once_cell",
  "pretty_assertions",
  "public_key",
  "regex",
@@ -1888,7 +1855,6 @@ dependencies = [
  "thiserror 2.0.9",
  "tokio",
  "typed-builder",
- "unsigned-varint",
  "url",
 ]
 
@@ -1936,7 +1902,6 @@ dependencies = [
  "thiserror 2.0.9",
  "tokio",
  "url",
- "uuid",
 ]
 
 [[package]]
@@ -3152,7 +3117,6 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.9",
- "time",
 ]
 
 [[package]]
@@ -3429,7 +3393,6 @@ dependencies = [
  "aries_vcx_wallet",
  "async-trait",
  "axum",
- "axum-macros",
  "base64 0.22.1",
  "chrono",
  "diddoc_legacy",
@@ -5303,7 +5266,6 @@ dependencies = [
  "env_logger 0.11.6",
  "indy-ledger-response-parser",
  "indy-vdr-proxy-client",
- "lazy_static",
  "log",
  "public_key",
  "rand",
@@ -5780,11 +5742,9 @@ dependencies = [
  "aries_vcx_ledger",
  "async-trait",
  "did_parser_nom",
- "diddoc_legacy",
  "indy-vdr",
  "log",
  "once_cell",
- "serde",
  "serde_json",
  "shared",
  "thiserror 2.0.9",
