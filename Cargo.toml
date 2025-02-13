@@ -84,3 +84,73 @@ indy-vdr-proxy-client = { git = "https://github.com/hyperledger/indy-vdr.git", t
 anoncreds = { git = "https://github.com/hyperledger/anoncreds-rs.git", tag = "v0.2.0" }
 aries-askar = { version = "0.3.1" }
 askar-crypto = { version = "0.3.1", default-features = false }
+
+actix-web = "4"
+android_logger = "0.14.1"
+anoncreds-clsignatures = "0.3.2"
+anyhow = "1.0.75"
+async-trait = "0.1.73"
+axum = "0.7.5"
+backtrace = "0.3"
+base64 = "0.22.1"
+base64-url = "3.0.0"
+bitvec = "1.0.1"
+bs58 = "0.5.1"
+bytes = "1.8.0"
+chrono = { version = "0.4.31", default-features = false }
+clap = "4.5.6"
+cursive = "0.20.0"
+darling = "0.20.1"
+derive_builder = "0.20.0"
+derive_more = "0.99.17"
+dotenvy = "0.15"
+env_logger = "0.11.3"
+futures = { version = "0.3.28", default-features = false }
+hex = "0.4.3"
+http-body-util = "0.1.2"
+hyper = "1.5.1"
+hyper-tls = "0.6.0"
+hyper-util = "0.1.10"
+isolang = "2.2.0"
+lazy_static = "1.3"
+log = "0.4.22"
+lru = "0.12.0"
+mockall = "0.13.1"
+multibase = "0.9.1"
+native-tls = "0.2.12"
+nom = "7.1.3"
+num-bigint = "0.4.5"
+once_cell = "1.19.0"
+pem = "3.0.4"
+percent-encoding = "2"
+pretty_assertions = "1.4.0"
+proc-macro2 = "1.0.58"
+prost = { version = "0.13.3", default-features = false }
+prost-types = "0.13.3"
+quote = "1.0.27"
+rand = "0.8.5"
+regex = "1.10.5"
+reqwest = "0.12.5"
+serde = { version = "1.0.203", default-features = false }
+serde_derive = "1.0.97"
+serde_json = "1.0.120"
+serde_test = "1.0.176"
+sha2 = "0.10.8"
+sqlx = "0.7"
+strum = "0.26.3"
+strum_macros = "0.26.4"
+syn = "2.0.72"
+thiserror = "1.0.49"
+time = "0.3.20"
+tokio = { version = "1.38.0", default-features = false }
+tokio-test = "0.4.2"
+tonic = { version = "0.12.3", default-features = false }
+tonic-build = "0.12.3"
+tower-http = "0.5.2"
+transitive = "1.0.1"
+typed-builder = "0.19.1"
+uniffi = "0.23.0"
+uniresid = { version = "0.1.4", default-features = false }
+unsigned-varint = "0.8.0"
+url = { version = "2.4.1", default-features = false }
+uuid = { version = "1.8.0", default-features = false }
