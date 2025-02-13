@@ -191,8 +191,10 @@ async fn test_agency_pool_local_revocation() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[tokio::test]
-#[ignore]
+// TODO - re-enable after https://github.com/hyperledger/aries-vcx/issues/1309
+// #[tokio::test]
+// #[ignore]
+#[allow(unused)]
 async fn test_agency_batch_revocation() -> Result<(), Box<dyn Error>> {
     let setup = SetupPoolDirectory::init().await;
     let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;

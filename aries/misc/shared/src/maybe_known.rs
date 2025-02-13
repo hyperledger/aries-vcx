@@ -17,7 +17,6 @@ pub enum MaybeKnown<T, U = String> {
 }
 
 #[cfg(test)]
-
 mod tests {
     use serde::Deserialize;
     use serde_json::json;

@@ -57,7 +57,7 @@ impl BaseWallet for AskarWallet {
         let tg: Vec<_> = tags.clone().into();
         let key = LocalKey::from_secret_bytes(KeyAlg::Ed25519, &value.signkey().decode()?[0..32])?;
         Ok(session
-            .insert_key(name, &key, None, Some(&tg), None)
+            .insert_key(name, &key, None, None, Some(&tg), None)
             .await?)
     }
 }
@@ -145,7 +145,7 @@ impl AskarWallet {
         let key = LocalKey::from_secret_bytes(alg, seed)?;
         let key_name = local_key_to_bs58_public_key(&key)?.into_inner();
         session
-            .insert_key(&key_name, &key, None, None, None)
+            .insert_key(&key_name, &key, None, None, None, None)
             .await?;
         Ok((key_name, key))
     }

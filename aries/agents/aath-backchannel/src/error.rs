@@ -10,28 +10,28 @@ pub type HarnessResult<T> = Result<T, HarnessError>;
 
 #[derive(Debug, Display, Error, Clone)]
 pub enum HarnessErrorType {
-    #[display(fmt = "Internal server error")]
+    #[display("Internal server error")]
     InternalServerError,
-    #[display(fmt = "Request not accepted")]
+    #[display("Request not accepted")]
     RequestNotAcceptedError,
-    #[display(fmt = "Request not received")]
+    #[display("Request not received")]
     RequestNotReceived,
-    #[display(fmt = "Not found")]
+    #[display("Not found")]
     NotFoundError,
-    #[display(fmt = "Invalid JSON")]
+    #[display("Invalid JSON")]
     InvalidJson,
-    #[display(fmt = "Protocol error")]
+    #[display("Protocol error")]
     ProtocolError,
-    #[display(fmt = "Invalid state for requested operation")]
+    #[display("Invalid state for requested operation")]
     InvalidState,
-    #[display(fmt = "Encryption error")]
+    #[display("Encryption error")]
     EncryptionError,
-    #[display(fmt = "Multiple credential definitions found")]
+    #[display("Multiple credential definitions found")]
     MultipleCredDefinitions,
 }
 
 #[derive(Debug, Display, Error, Clone)]
-#[display(fmt = "Error: {}", message)]
+#[display("Error: {}", message)]
 pub struct HarnessError {
     pub message: String,
     pub kind: HarnessErrorType,

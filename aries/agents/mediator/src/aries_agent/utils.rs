@@ -2,7 +2,7 @@ use aries_vcx::{
     common::signing::sign_connection_response, errors::error::VcxResult, transport::Transport,
 };
 use aries_vcx_wallet::wallet::base_wallet::BaseWallet;
-use axum::async_trait;
+use async_trait::async_trait;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     decorators::thread::Thread,

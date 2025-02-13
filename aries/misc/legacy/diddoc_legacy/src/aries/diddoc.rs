@@ -42,10 +42,9 @@ impl AriesDidDoc {
     }
 
     pub fn set_service_endpoint(&mut self, service_endpoint: Url) {
-        self.service.get_mut(0).map(|service| {
+        if let Some(service) = self.service.get_mut(0) {
             service.service_endpoint = service_endpoint;
-            service
-        });
+        }
     }
 
     pub fn set_recipient_keys(&mut self, recipient_keys: Vec<String>) {
@@ -68,10 +67,9 @@ impl AriesDidDoc {
                 public_key: key_reference,
             });
 
-            self.service.get_mut(0).map(|service| {
+            if let Some(service) = self.service.get_mut(0) {
                 service.recipient_keys.push(key_in_base58.clone());
-                service
-            });
+            }
         });
     }
 
@@ -91,10 +89,9 @@ impl AriesDidDoc {
             //         public_key_base_58: key.clone(),
             //     });
 
-            self.service.get_mut(0).map(|service| {
+            if let Some(service) = self.service.get_mut(0) {
                 service.routing_keys.push(key.to_string());
-                service
-            });
+            }
         });
     }
 
@@ -487,7 +484,6 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-
 mod unit_tests {
     use serde_json::json;
 
