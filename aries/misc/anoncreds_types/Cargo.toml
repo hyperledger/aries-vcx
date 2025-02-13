@@ -10,7 +10,8 @@ path = "src/lib.rs"
 [features]
 messages = []
 ledger = []
-default = ["messages", "ledger"]
+zeroize = ["dep:zeroize"]
+default = ["messages", "ledger", "zeroize"]
 
 [dependencies]
 anoncreds-clsignatures.workspace = true
@@ -21,6 +22,7 @@ regex.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 typed-builder.workspace = true
+zeroize = { workspace = true, optional = true, features = ["zeroize_derive"] }
 
 [dev-dependencies]
 rand.workspace = true

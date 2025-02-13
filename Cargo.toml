@@ -116,7 +116,8 @@ strum = "0.27.0"
 strum_macros = "0.27.0"
 syn = "2.0.98"
 quote = "1.0.38"
-clap = "4.5.6"
+clap = "4.5.29"
+zeroize = "1"
 
 # common drivers
 tokio = { version = "1.42.0", default-features = false }
