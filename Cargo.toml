@@ -89,6 +89,7 @@ askar-crypto = { version = "0.3.3", default-features = false }
 base64 = "0.22.1"
 bs58 = "0.5.1"
 multibase = "0.9.1"
+percent-encoding = "2"
 hex = "0.4.3"
 pem = "3.0.4"
 serde = { version = "1.0.217", default-features = false }
@@ -115,22 +116,27 @@ strum = "0.27.0"
 strum_macros = "0.27.0"
 syn = "2.0.98"
 quote = "1.0.38"
+clap = "4.5.6"
 
 # common drivers
 tokio = { version = "1.42.0", default-features = false }
 sqlx = "0.8.2"
 reqwest = "0.12.12"
 axum = "0.8.1"
+actix-web = "4"
 tower-http = "0.6.2"
 hyper= "1.6.0"
 hyper-tls = "0.6.0"
 hyper-util = "0.1.10"
 http-body-util = "0.1.2"
+native-tls = "0.2.12"
 
 # common dev
 mockall = "0.13.1"
 env_logger = "0.11.6"
 uniffi = "0.23.0"
+pretty_assertions = "1.4.0"
+dotenvy = "0.15"
 
 # TODO - await new indy-vdr release
 [patch.'https://github.com/hyperledger/indy-vdr']

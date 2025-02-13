@@ -67,5 +67,5 @@ backtrace = { optional = true, version = "0.3" }
 [dev-dependencies]
 test_utils = { path = "../misc/test_utils" }
 tokio = { workspace = true, features = ["rt", "macros", "rt-multi-thread"] }
-pretty_assertions = "1.4.0"
+pretty_assertions.workspace = true
 did_resolver_sov = { path = "../../did_core/did_methods/did_resolver_sov" }

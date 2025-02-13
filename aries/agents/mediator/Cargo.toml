@@ -18,7 +18,7 @@ aries_vcx_wallet = { path = "../../aries_vcx_wallet", features = [
 async-trait.workspace = true
 axum.workspace = true
 diddoc_legacy = { path = "../../misc/legacy/diddoc_legacy" }
-dotenvy = "0.15"
+dotenvy.workspace = true
 env_logger.workspace = true
 futures.workspace = true
 log.workspace = true

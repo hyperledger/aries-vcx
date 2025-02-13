@@ -25,5 +25,5 @@ typed-builder.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, default-features = false, features = ["macros", "rt"] }
-pretty_assertions = "1.4.0"
+pretty_assertions.workspace = true
 env_logger.workspace = true
