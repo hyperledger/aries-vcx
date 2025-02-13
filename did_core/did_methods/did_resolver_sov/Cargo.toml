@@ -3,6 +3,9 @@ name = "did_resolver_sov"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+openssl_vendored = ["aries_vcx_ledger/openssl_vendored"]
+
 [dependencies]
 did_resolver = { path = "../../did_resolver" }
 aries_vcx_ledger = { path = "../../../aries/aries_vcx_ledger" }
