@@ -1,4 +1,3 @@
-
 use rand::{distr::Alphanumeric, Rng};
 
 use crate::errors::error::VcxWalletResult;
