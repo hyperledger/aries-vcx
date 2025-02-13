@@ -417,13 +417,13 @@ fn parse_single_operator(
 
 #[cfg(test)]
 mod tests {
-    use rand::{distributions::Alphanumeric, thread_rng, Rng};
+    use rand::{distr::Alphanumeric, rng, Rng};
     use serde_json::json;
 
     use super::*;
 
     fn _random_string(len: usize) -> String {
-        String::from_utf8(thread_rng().sample_iter(&Alphanumeric).take(len).collect()).unwrap()
+        String::from_utf8(rng().sample_iter(&Alphanumeric).take(len).collect()).unwrap()
     }
 
     /// parse

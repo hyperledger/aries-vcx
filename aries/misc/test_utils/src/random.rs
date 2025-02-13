@@ -1,10 +1,10 @@
-use rand::{distributions::Alphanumeric, Rng};
+use rand::{distr::Alphanumeric, Rng};
 
 use crate::settings::DEFAULT_DID;
 
 pub fn generate_random_schema_name() -> String {
     String::from_utf8(
-        rand::thread_rng()
+        rand::rng()
             .sample_iter(&Alphanumeric)
             .take(25)
             .collect(),
@@ -14,7 +14,7 @@ pub fn generate_random_schema_name() -> String {
 
 pub fn generate_random_name() -> String {
     String::from_utf8(
-        rand::thread_rng()
+        rand::rng()
             .sample_iter(&Alphanumeric)
             .take(25)
             .collect(),
@@ -24,7 +24,7 @@ pub fn generate_random_name() -> String {
 
 pub fn generate_random_seed() -> String {
     String::from_utf8(
-        rand::thread_rng()
+        rand::rng()
             .sample_iter(&Alphanumeric)
             .take(32)
             .collect(),
@@ -35,8 +35,8 @@ pub fn generate_random_seed() -> String {
 pub fn generate_random_schema_version() -> String {
     format!(
         "{}.{}",
-        rand::thread_rng().gen::<u32>(),
-        rand::thread_rng().gen::<u32>()
+        rand::rng().random::<u32>(),
+        rand::rng().random::<u32>()
     )
 }
 
