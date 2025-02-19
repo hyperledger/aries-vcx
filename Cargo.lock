@@ -3124,7 +3124,7 @@ dependencies = [
 [[package]]
 name = "indy-vdr"
 version = "0.4.3"
-source = "git+https://github.com/anonyome/indy-vdr.git?rev=34ada55#34ada550152f2e100be6444473a0fe0e6b6c96f5"
+source = "git+https://github.com/hyperledger/indy-vdr.git?rev=b4dc08b#b4dc08bf36913c6ce32b4b56f5b66825cbac14d1"
 dependencies = [
  "base64 0.21.7",
  "bs58",
@@ -3158,7 +3158,7 @@ dependencies = [
 [[package]]
 name = "indy-vdr-proxy-client"
 version = "0.1.0"
-source = "git+https://github.com/anonyome/indy-vdr.git?rev=34ada55#34ada550152f2e100be6444473a0fe0e6b6c96f5"
+source = "git+https://github.com/hyperledger/indy-vdr.git?rev=b4dc08b#b4dc08bf36913c6ce32b4b56f5b66825cbac14d1"
 dependencies = [
  "indy-vdr",
  "reqwest 0.11.27",
