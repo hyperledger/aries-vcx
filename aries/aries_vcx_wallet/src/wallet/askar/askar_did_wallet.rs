@@ -168,7 +168,7 @@ impl DidWallet for AskarWallet {
                 "recipient keys should not be empty for 'pack_message'".into(),
             ))
         } else {
-            let enc_key = LocalKey::generate(KeyAlg::Chacha20(Chacha20Types::C20P), true)?;
+            let enc_key = LocalKey::generate_with_rng(KeyAlg::Chacha20(Chacha20Types::C20P), true)?;
 
             let base64_data = if let Some(sender_verkey) = sender_vk {
                 let mut session = self.session().await?;

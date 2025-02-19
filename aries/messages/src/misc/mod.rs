@@ -5,7 +5,6 @@ pub use mime_type::MimeType;
 pub use shared::misc::{serde_ignored::SerdeIgnored as NoDecorators, utils::CowStr};
 
 #[cfg(test)]
-
 pub mod test_utils {
     use chrono::{DateTime, Utc};
     use serde::{Deserialize, Serialize};
@@ -21,7 +20,7 @@ pub mod test_utils {
 
     pub struct DateTimeRfc3339<'a>(pub &'a DateTime<Utc>);
 
-    impl<'a> Serialize for DateTimeRfc3339<'a> {
+    impl Serialize for DateTimeRfc3339<'_> {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: serde::Serializer,
@@ -32,7 +31,7 @@ pub mod test_utils {
 
     pub struct OptDateTimeRfc3339<'a>(pub &'a Option<DateTime<Utc>>);
 
-    impl<'a> Serialize for OptDateTimeRfc3339<'a> {
+    impl Serialize for OptDateTimeRfc3339<'_> {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: serde::Serializer,

@@ -42,7 +42,6 @@ impl Serialize for DdoKeyReference {
 }
 
 #[cfg(test)]
-
 mod unit_test {
     use crate::{aries::diddoc::test_utils::_did, w3c::model::DdoKeyReference};
 
