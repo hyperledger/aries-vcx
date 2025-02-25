@@ -16,7 +16,7 @@ multibase.workspace = true
 pem.workspace = true
 serde = { workspace = true, default-features = false, features = ["derive"] }
 serde_json.workspace = true
-uniresid = { version = "0.1.4", default-features = false, features = ["serde"] }
+uniresid = { workspace = true, default-features = false, features = ["serde"] }
 url = { workspace = true, features = ["serde"] }
 display_as_json = { path = "../../misc/display_as_json" }
 did_key = { path = "../did_methods/did_key" }

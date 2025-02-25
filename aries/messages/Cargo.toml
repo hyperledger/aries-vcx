@@ -23,8 +23,8 @@ derive_more = { workspace = true, features = [
     "display",
     "error",
 ] }
-transitive = "1.0.1"
-isolang = { version = "2.2.0" }
+transitive.workspace = true
+isolang.workspace = true
 typed-builder.workspace = true
 messages_macros = { path = "../messages_macros" }
 diddoc_legacy = { path = "../misc/legacy/diddoc_legacy" }

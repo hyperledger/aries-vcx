@@ -22,4 +22,4 @@ tokio = { workspace = true, default-features = false, features = [
     "macros",
     "rt",
 ] }
-tokio-test = "0.4.2"
+tokio-test.workspace = true

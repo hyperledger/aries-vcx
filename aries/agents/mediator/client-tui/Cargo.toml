@@ -9,7 +9,7 @@ edition = "2021"
 aries_vcx_wallet = { path = "../../../aries_vcx_wallet", features = [
     "askar_wallet",
 ] }
-cursive = { version = "0.20.0", features = ["crossterm-backend"] }
+cursive = { workspace = true, features = ["crossterm-backend"] }
 futures = { workspace = true, default-features = true }
 log.workspace = true
 mediator = { path = ".." }

@@ -32,7 +32,7 @@ async-trait.workspace = true
 did_parser_nom = { path = "../../../../did_core/did_parser_nom" }
 shared = { path = "../../../misc/shared" }
 url.workspace = true
-android_logger = "0.14.1"
+android_logger.workspace = true
 log.workspace = true
 
 [build-dependencies]
