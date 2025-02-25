@@ -48,7 +48,7 @@ There's 2 best way to reach us:
   - We bump minor version on releases containing new features, significant refactors or breaking changes.
   - We bump patch version if release only contains fixes or smaller refactoring.
 - See [releases](https://github.com/hyperledger/aries-vcx/releases) page.
-- Crates are known to be stable with atleast Rust version 1.79
+- Crates are known to be stable with atleast Rust version 1.84
 
 # Contributions
 
@@ -58,7 +58,7 @@ Contributions are very welcome! If you have questions or issues, please let us k
 
 Install Rust: https://www.rust-lang.org/tools/install
 
-We recommend using rustup, as VCX is currently tied to Rust v1.79.x (this maintains consistency between local and CI environments). 
+We recommend using rustup, as VCX is currently tied to Rust v1.84.x (this maintains consistency between local and CI environments). 
 
 Anoncreds and Indy require the use of openssl and zmq. These may be vendored by consuming applications, but for development installation is required. 
 
