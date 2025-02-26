@@ -4,7 +4,7 @@ use aries_vcx_agent::{
     aries_vcx::aries_vcx_wallet::wallet::askar::AskarWallet, build_askar_wallet,
     Agent as AriesAgent, WalletInitConfig,
 };
-use rand::{thread_rng, Rng};
+use rand::{rng, Rng};
 use reqwest::Url;
 
 #[derive(Debug, Deserialize)]
@@ -23,11 +23,11 @@ struct WriterSeed {
 async fn get_writer_seed() -> WriterSeed {
     if let Ok(ledger_url) = std::env::var("LEDGER_URL") {
         let url = format!("{}/register", ledger_url);
-        let mut rng = thread_rng();
+        let mut rng = rng();
         let client = reqwest::Client::new();
         let body = json!({
             "role": "TRUST_ANCHOR",
-            "seed": format!("my_seed_000000000000000000{}", rng.gen_range(100000..1000000))
+            "seed": format!("my_seed_000000000000000000{}", rng.random_range(100000..1000000))
         })
         .to_string();
         let seed = client

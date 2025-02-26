@@ -2,6 +2,7 @@ mod common;
 
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
 use aries_vcx_wallet::wallet::askar::AskarWallet;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use mediator::aries_agent::client::transports::AriesTransport;
 use messages::{
@@ -158,7 +159,7 @@ async fn test_pickup_flow() -> Result<()> {
     if let AttachmentType::Base64(base64message) =
         &delivery.content.attach.first().unwrap().data.content
     {
-        let encrypted_message_bytes = base64_url::decode(base64message)?;
+        let encrypted_message_bytes = URL_SAFE_NO_PAD.decode(base64message)?;
         info!(
             "Decoding attachment to packed_message {}",
             String::from_utf8(message_bytes.clone())?

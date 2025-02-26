@@ -7,19 +7,19 @@ edition = "2021"
 
 [dependencies]
 did_resolver = { path = "../../did_resolver" }
-async-trait = "0.1.68"
-serde_json = "1.0.96"
-thiserror = "1.0.40"
-hyper = { version = "1.5.1" }
-hyper-tls = "0.6.0"
-hyper-util = { version = "0.1.10", features = ["client-legacy", "http1", "http2"] }
-http-body-util = "0.1.2"
+async-trait.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+hyper.workspace = true
+hyper-tls.workspace = true
+hyper-util = { workspace = true, features = ["client-legacy", "http1", "http2"] }
+http-body-util.workspace = true
 
 [dev-dependencies]
-hyper = { version = "1.5.1", features = ["server"] }
-hyper-util = { version = "0.1.10", features = ["server"] }
-tokio = { version = "1.38.0", default-features = false, features = [
+hyper = { workspace = true, features = ["server"] }
+hyper-util = { workspace = true, features = ["server"] }
+tokio = { workspace = true, default-features = false, features = [
     "macros",
     "rt",
 ] }
-tokio-test = "0.4.2"
+tokio-test.workspace = true

@@ -10,21 +10,20 @@ did_parser_nom = { path = "../../did_parser_nom" }
 did_doc = { path = "../../did_doc" }
 did_resolver = { path = "../../did_resolver" }
 public_key = { path = "../../public_key" }
-thiserror = "1.0.40"
-regex = "1.8.4"
-serde = { version = "1.0.164", features = ["derive"] }
-serde_json = "1.0.96"
-async-trait = "0.1.68"
-base64 = "0.22.1"
-multibase = "0.9.1"
-sha2 = "0.10.8"
-log = "0.4.16"
-url = { version = "2.3.1", features = ["serde"] }
+thiserror.workspace = true
+regex.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+async-trait.workspace = true
+base64.workspace = true
+multibase.workspace = true
+sha2.workspace = true
+log.workspace = true
+url = { workspace = true, features = ["serde"] }
 display_as_json = { path = "../../../misc/display_as_json" }
-typed-builder = "0.19.1"
+typed-builder.workspace = true
 
 [dev-dependencies]
-tokio = { version = "1.38.0", default-features = false, features = ["macros", "rt"] }
-pretty_assertions = "1.4.0"
-env_logger = "0.11.3"
-log = "0.4"
+tokio = { workspace = true, default-features = false, features = ["macros", "rt"] }
+pretty_assertions.workspace = true
+env_logger.workspace = true

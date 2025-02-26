@@ -10,17 +10,19 @@ path = "src/lib.rs"
 [features]
 messages = []
 ledger = []
-default = ["messages", "ledger"]
+zeroize = ["dep:zeroize"]
+default = ["messages", "ledger", "zeroize"]
 
 [dependencies]
-anoncreds-clsignatures = "0.3.2"
-bitvec = "1.0.1"
-log = "0.4.22"
-once_cell = "1.19.0"
-regex = "1.10.5"
-serde = { version = "1.0.203", features = ["derive"] }
-serde_json = "1.0.120"
-typed-builder = "0.19.1"
+anoncreds-clsignatures.workspace = true
+bitvec.workspace = true
+log.workspace = true
+once_cell.workspace = true
+regex.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+typed-builder.workspace = true
+zeroize = { workspace = true, optional = true, features = ["zeroize_derive"] }
 
 [dev-dependencies]
-rand = "0.8.5"
+rand.workspace = true

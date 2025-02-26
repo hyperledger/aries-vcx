@@ -2,21 +2,28 @@
 name = "aries-vcx-backchannel"
 version = "0.1.0"
 edition = "2018"
-authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
+authors = [
+    "Absa Group Limited",
+    "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>",
+]
 description = "Backchannel for aries-vcx"
 
 [dependencies]
-actix-web = "4"
-derive_more = "0.99.14"
-clap = { version = "4.5.6", features = ["derive"] }
-reqwest = { version = "0.12.4", features = ["json", "multipart", "blocking"] }
-rand = "0.8.5"
-serde = "1.0.97"
-serde_json = "1.0.40"
-serde_derive = "1.0.97"
-log = "^0.4.20"
-env_logger = "0.11.3"
-uuid = { version = "1.8.0", features = ["serde", "v4"] }
+derive_more = { workspace = true, features = [
+    "from",
+    "try_into",
+    "display",
+    "error",
+] }
+actix-web.workspace = true
+clap = { workspace = true, features = ["derive"] }
+reqwest = { workspace = true, features = ["json", "multipart", "blocking"] }
+rand.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+log.workspace = true
+env_logger.workspace = true
+uuid = { workspace = true, features = ["serde"] }
 aries-vcx-agent = { path = "../../../aries/agents/aries-vcx-agent" }
 anoncreds_types = { path = "../../../aries/misc/anoncreds_types" }
 display_as_json = { path = "../../../misc/display_as_json" }

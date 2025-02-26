@@ -1,10 +1,10 @@
-use rand::{distributions::Alphanumeric, Rng};
+use rand::{distr::Alphanumeric, Rng};
 
 use crate::errors::error::VcxWalletResult;
 
 #[allow(dead_code)]
 pub fn random_seed() -> String {
-    rand::thread_rng()
+    rand::rng()
         .sample_iter(Alphanumeric)
         .take(32)
         .map(char::from)

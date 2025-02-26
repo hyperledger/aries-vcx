@@ -141,7 +141,7 @@ impl<'a> From<&'a CredentialPreviewV2MsgType> for CredentialIssuanceTypeV2_0 {
     }
 }
 
-impl<'a> TryFrom<CowStr<'a>> for CredentialPreviewV2MsgType {
+impl TryFrom<CowStr<'_>> for CredentialPreviewV2MsgType {
     type Error = String;
 
     fn try_from(value: CowStr) -> Result<Self, Self::Error> {

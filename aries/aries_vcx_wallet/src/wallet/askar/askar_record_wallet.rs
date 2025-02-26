@@ -105,7 +105,7 @@ impl RecordWallet for AskarWallet {
         Ok(self
             .session()
             .await?
-            .fetch_all(Some(&category.to_string()), filter, None, false)
+            .fetch_all(Some(&category.to_string()), filter, None, None, true, false)
             .await?
             .into_iter()
             .map(TryFrom::try_from)
@@ -117,7 +117,9 @@ impl RecordWallet for AskarWallet {
     async fn all_records(&self) -> VcxWalletResult<Box<dyn AllRecords + Send>> {
         let mut session = self.session().await?;
 
-        let recs = session.fetch_all(None, None, None, false).await?;
+        let recs = session
+            .fetch_all(None, None, None, None, true, false)
+            .await?;
 
         let mut recs = recs
             .into_iter()
