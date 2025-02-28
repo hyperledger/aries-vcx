@@ -32,7 +32,7 @@ RUN apk update && apk upgrade && \
 USER indy
 RUN git clone https://github.com/hyperledger/indy-vdr.git
 WORKDIR /home/indy/indy-vdr/indy-vdr-proxy
-RUN git checkout c143268
+RUN git checkout b4dc08b
 RUN cargo build --release
 
 FROM alpine:3.18
